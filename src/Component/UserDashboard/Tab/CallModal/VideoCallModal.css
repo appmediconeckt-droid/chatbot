@@ -1,0 +1,1126 @@
+/* VideoCallModal.css - COMPLETELY REVISED FOR PROPER RESPONSIVE SIZING */
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Modal Overlay */
+.video-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    animation: fadeIn 0.3s ease;
+    backdrop-filter: blur(10px);
+    padding: 0;
+    margin: 0;
+}
+
+.video-modal-overlay.fullscreen {
+    padding: 0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Modal Container - Proper viewport sizing */
+.video-modal-container {
+    width: 100vw;
+    height: 100vh;
+    background: #1a1f2e;
+    overflow: hidden;
+    box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.5);
+    animation: slideUp 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+.video-modal-container.fullscreen {
+    width: 100vw;
+    height: 100vh;
+    border-radius: 0;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Modal Header - Fixed height */
+.video-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: clamp(10px, 2vh, 20px) clamp(15px, 3vw, 30px);
+    background: linear-gradient(135deg, #1e2b3a, #16222e);
+    color: white;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    height: 8vh;
+    min-height: 60px;
+    max-height: 80px;
+    flex-shrink: 0;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 2vw, 15px);
+}
+
+.header-icon {
+    font-size: clamp(20px, 4vh, 28px);
+}
+
+.call-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.video-modal-header h3 {
+    font-size: clamp(14px, 2.5vh, 20px);
+    font-weight: 600;
+    margin: 0;
+    color: #fff;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 40vw;
+}
+
+.connection-quality {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: clamp(10px, 1.5vh, 12px);
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.1);
+    width: fit-content;
+}
+
+.quality-icon {
+    font-size: clamp(10px, 1.5vh, 12px);
+}
+
+.quality-good {
+    color: #4ade80;
+}
+
+.quality-medium {
+    color: #fbbf24;
+}
+
+.quality-poor {
+    color: #f87171;
+}
+
+.header-right {
+    display: flex;
+    gap: clamp(5px, 1vw, 10px);
+}
+
+.header-btn {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    font-size: clamp(18px, 3.5vh, 24px);
+    cursor: pointer;
+    width: clamp(32px, 5vh, 44px);
+    height: clamp(32px, 5vh, 44px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.header-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+}
+
+.close-btn:hover {
+    background: #ef4444;
+}
+
+/* Modal Content - Takes remaining height */
+.video-modal-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #0f1319;
+    overflow: hidden;
+    position: relative;
+    height: calc(100vh - 8vh); /* Subtract header height */
+    min-height: 0; /* Important for flex child */
+}
+
+/* Main Video Area - Full height */
+.video-main-area {
+    flex: 1;
+    position: relative;
+    background: #000;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* Remote Video Container - Proper aspect ratio */
+.remote-video-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    background: linear-gradient(145deg, #1e2b3a, #0f1a24);
+    overflow: hidden;
+}
+
+.remote-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures video covers area without distortion */
+    opacity: 0; /* Hidden since we're using placeholder for demo */
+}
+
+.remote-video-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #1e2b3a, #0f1a24);
+}
+
+.remote-video-placeholder {
+    text-align: center;
+    color: white;
+    padding: 20px;
+    max-width: 90%;
+}
+
+.remote-avatar {
+    font-size: clamp(60px, 20vh, 150px);
+    margin-bottom: clamp(10px, 3vh, 30px);
+    animation: pulse 2s infinite;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.3));
+    display: block;
+    line-height: 1;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.9; }
+}
+
+.remote-info {
+    text-align: center;
+}
+
+.remote-info h2 {
+    font-size: clamp(20px, 5vh, 48px);
+    margin-bottom: clamp(5px, 1.5vh, 15px);
+    font-weight: 600;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80vw;
+}
+
+.call-status {
+    font-size: clamp(12px, 2.5vh, 18px);
+}
+
+.status-connected {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #4ade80;
+}
+
+.pulse-dot {
+    width: clamp(8px, 1.5vh, 12px);
+    height: clamp(8px, 1.5vh, 12px);
+    background: #4ade80;
+    border-radius: 50%;
+    animation: pulseDot 1.5s infinite;
+}
+
+@keyframes pulseDot {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.7; }
+}
+
+.status-ended {
+    color: #f87171;
+}
+
+.video-disabled {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #1a1f2e;
+    color: white;
+}
+
+.video-off-icon {
+    font-size: clamp(50px, 15vh, 100px);
+    margin-bottom: clamp(10px, 3vh, 30px);
+    opacity: 0.5;
+}
+
+/* Call Duration Badge */
+.call-duration-badge {
+    position: absolute;
+    top: clamp(10px, 2vh, 20px);
+    left: clamp(10px, 2vw, 20px);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: clamp(5px, 1vh, 10px) clamp(10px, 2vw, 20px);
+    border-radius: 30px;
+    font-size: clamp(12px, 2vh, 16px);
+    font-weight: 600;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255,255,255,0.2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+}
+
+.duration-icon {
+    font-size: clamp(12px, 2vh, 16px);
+}
+
+/* Recording Indicator */
+.recording-indicator {
+    position: absolute;
+    top: clamp(10px, 2vh, 20px);
+    right: clamp(10px, 2vw, 20px);
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    padding: clamp(4px, 0.8vh, 8px) clamp(8px, 1.5vw, 16px);
+    border-radius: 30px;
+    font-size: clamp(10px, 1.5vh, 14px);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    animation: pulse 1.5s infinite;
+    z-index: 5;
+}
+
+.recording-dot {
+    width: clamp(6px, 1vh, 10px);
+    height: clamp(6px, 1vh, 10px);
+    background: white;
+    border-radius: 50%;
+    animation: recordingPulse 1s infinite;
+}
+
+@keyframes recordingPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Screen Share Indicator */
+.screen-share-indicator {
+    position: absolute;
+    top: clamp(50px, 8vh, 80px);
+    right: clamp(10px, 2vw, 20px);
+    background: rgba(59, 130, 246, 0.9);
+    color: white;
+    padding: clamp(4px, 0.8vh, 8px) clamp(8px, 1.5vw, 16px);
+    border-radius: 30px;
+    font-size: clamp(10px, 1.5vh, 14px);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 5;
+}
+
+/* Local Video Container - Proper PiP sizing */
+.local-video-container {
+    position: absolute;
+    bottom: clamp(80px, 15vh, 120px);
+    right: clamp(10px, 2vw, 20px);
+    width: min(200px, 25vw);
+    height: min(280px, 35vh);
+    border-radius: clamp(12px, 2vh, 20px);
+    overflow: hidden;
+    border: 3px solid white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #1a1f2e;
+    z-index: 10;
+    aspect-ratio: 3/4;
+}
+
+@media (orientation: landscape) {
+    .local-video-container {
+        width: min(200px, 20vw);
+        height: min(150px, 30vh);
+        aspect-ratio: 4/3;
+    }
+}
+
+.local-video-container:hover {
+    transform: scale(1.05);
+    border-color: #3b82f6;
+}
+
+.local-video-container.video-off {
+    border-color: #ef4444;
+}
+
+.local-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.local-video-off {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(30px, 8vh, 50px);
+}
+
+.local-video-label {
+    position: absolute;
+    bottom: 5px;
+    left: 5px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: clamp(10px, 1.5vh, 12px);
+    backdrop-filter: blur(5px);
+}
+
+.muted-indicator {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background: rgba(239, 68, 68, 0.9);
+    color: white;
+    width: clamp(25px, 5vh, 35px);
+    height: clamp(25px, 5vh, 35px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(14px, 2.5vh, 18px);
+}
+
+/* Settings Panel - Centered and responsive */
+.settings-panel {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(26, 31, 46, 0.95);
+    backdrop-filter: blur(10px);
+    padding: clamp(15px, 3vh, 30px);
+    border-radius: clamp(15px, 3vh, 25px);
+    color: white;
+    width: min(350px, 90vw);
+    max-width: 400px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    border: 1px solid rgba(255,255,255,0.1);
+    z-index: 20;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.settings-panel h4 {
+    margin: 0 0 clamp(15px, 3vh, 25px) 0;
+    font-size: clamp(16px, 2.5vh, 20px);
+    text-align: center;
+}
+
+.setting-item {
+    margin-bottom: clamp(15px, 3vh, 25px);
+}
+
+.setting-item label {
+    display: block;
+    margin-bottom: clamp(5px, 1vh, 10px);
+    font-size: clamp(12px, 2vh, 14px);
+    color: rgba(255,255,255,0.8);
+}
+
+.setting-item input[type="range"] {
+    width: 100%;
+    height: 4px;
+    -webkit-appearance: none;
+    background: rgba(255,255,255,0.2);
+    border-radius: 2px;
+    outline: none;
+}
+
+.setting-item input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: clamp(16px, 3vh, 22px);
+    height: clamp(16px, 3vh, 22px);
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.setting-item select {
+    width: 100%;
+    padding: clamp(6px, 1.5vh, 12px) clamp(8px, 1.5vw, 16px);
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    color: white;
+    font-size: clamp(12px, 2vh, 14px);
+    outline: none;
+}
+
+.setting-item select option {
+    background: #1a1f2e;
+}
+
+.close-settings {
+    width: 100%;
+    padding: clamp(8px, 2vh, 14px);
+    background: #3b82f6;
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: clamp(12px, 2vh, 16px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.close-settings:hover {
+    background: #2563eb;
+}
+
+/* Video Call Controls - Responsive and adaptive */
+.video-call-controls {
+    position: absolute;
+    bottom: clamp(15px, 3vh, 25px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: clamp(5px, 1vw, 12px);
+    background: rgba(0, 0, 0, 0.8);
+    padding: clamp(8px, 2vh, 15px) clamp(10px, 2vw, 20px);
+    border-radius: 50px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.2);
+    animation: slideUpControls 0.5s ease;
+    z-index: 15;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 95vw;
+    width: fit-content;
+}
+
+@keyframes slideUpControls {
+    from {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+.control-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: white;
+    padding: clamp(4px, 1vh, 10px) clamp(6px, 1vw, 12px);
+    border-radius: clamp(8px, 1.5vh, 12px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: clamp(50px, 10vw, 80px);
+}
+
+.control-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+}
+
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.control-btn.active {
+    background: #3b82f6;
+}
+
+.control-btn.recording {
+    background: #ef4444;
+    animation: recordingPulse 1.5s infinite;
+}
+
+@keyframes recordingPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.control-btn.end-call {
+    background: #ef4444;
+}
+
+.control-btn.end-call:hover {
+    background: #dc2626;
+}
+
+.btn-icon {
+    font-size: clamp(18px, 3.5vh, 28px);
+}
+
+.btn-label {
+    font-size: clamp(8px, 1.5vh, 12px);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Responsive breakpoints with viewport-based adjustments */
+
+/* Extra Large Devices (Desktops, 1200px and up) */
+@media screen and (min-width: 1200px) {
+    .video-modal-container {
+        max-width: 100vw;
+    }
+    
+    .remote-avatar {
+        font-size: 150px;
+    }
+    
+    .remote-info h2 {
+        font-size: 48px;
+    }
+    
+    .control-btn {
+        min-width: 80px;
+        padding: 10px 12px;
+    }
+    
+    .btn-icon {
+        font-size: 28px;
+    }
+    
+    .btn-label {
+        font-size: 12px;
+    }
+}
+
+/* Large Devices (Desktops, 992px to 1199px) */
+@media screen and (min-width: 992px) and (max-width: 1199px) {
+    .remote-avatar {
+        font-size: 120px;
+    }
+    
+    .remote-info h2 {
+        font-size: 40px;
+    }
+    
+    .control-btn {
+        min-width: 70px;
+    }
+    
+    .btn-icon {
+        font-size: 24px;
+    }
+}
+
+/* Medium Devices (Tablets, 768px to 991px) */
+@media screen and (min-width: 768px) and (max-width: 991px) {
+    .video-modal-header h3 {
+        max-width: 300px;
+    }
+    
+    .remote-avatar {
+        font-size: 100px;
+    }
+    
+    .remote-info h2 {
+        font-size: 32px;
+    }
+    
+    .local-video-container {
+        width: 160px;
+        height: 220px;
+        bottom: 100px;
+    }
+    
+    .control-btn {
+        min-width: 60px;
+        padding: 6px 8px;
+    }
+    
+    .btn-icon {
+        font-size: 22px;
+    }
+    
+    .btn-label {
+        font-size: 10px;
+    }
+}
+
+/* Small Devices (Landscape Phones, 576px to 767px) */
+@media screen and (min-width: 576px) and (max-width: 767px) {
+    .video-modal-header {
+        padding: 10px 15px;
+    }
+    
+    .video-modal-header h3 {
+        font-size: 14px;
+        max-width: 200px;
+    }
+    
+    .header-icon {
+        font-size: 20px;
+    }
+    
+    .remote-avatar {
+        font-size: 80px;
+    }
+    
+    .remote-info h2 {
+        font-size: 24px;
+    }
+    
+    .local-video-container {
+        width: 120px;
+        height: 160px;
+        bottom: 90px;
+        border-width: 2px;
+    }
+    
+    .video-call-controls {
+        padding: 8px 12px;
+        gap: 5px;
+        bottom: 10px;
+    }
+    
+    .control-btn {
+        min-width: 50px;
+        padding: 4px 6px;
+    }
+    
+    .btn-icon {
+        font-size: 18px;
+    }
+    
+    .btn-label {
+        font-size: 9px;
+    }
+    
+    .call-duration-badge {
+        font-size: 11px;
+        padding: 4px 10px;
+    }
+}
+
+/* Extra Small Devices (Portrait Phones, less than 576px) */
+@media screen and (max-width: 575px) {
+    .video-modal-header {
+        padding: 8px 12px;
+        min-height: 50px;
+    }
+    
+    .header-icon {
+        font-size: 18px;
+    }
+    
+    .video-modal-header h3 {
+        font-size: 12px;
+        max-width: 150px;
+    }
+    
+    .connection-quality {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+    
+    .header-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+    }
+    
+    .remote-avatar {
+        font-size: 60px;
+        margin-bottom: 10px;
+    }
+    
+    .remote-info h2 {
+        font-size: 18px;
+    }
+    
+    .call-status {
+        font-size: 11px;
+    }
+    
+    .pulse-dot {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .local-video-container {
+        width: 90px;
+        height: 120px;
+        bottom: 80px;
+        right: 8px;
+        border-width: 2px;
+        border-radius: 10px;
+    }
+    
+    .local-video-label {
+        font-size: 8px;
+        padding: 1px 4px;
+    }
+    
+    .muted-indicator {
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+    }
+    
+    .video-call-controls {
+        padding: 6px 8px;
+        gap: 3px;
+        bottom: 8px;
+        border-radius: 30px;
+        flex-wrap: wrap;
+        max-width: 98%;
+    }
+    
+    .control-btn {
+        min-width: 40px;
+        padding: 4px 3px;
+        border-radius: 6px;
+    }
+    
+    .btn-icon {
+        font-size: 16px;
+    }
+    
+    .btn-label {
+        font-size: 7px;
+    }
+    
+    .call-duration-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+        top: 8px;
+        left: 8px;
+    }
+    
+    .recording-indicator,
+    .screen-share-indicator {
+        font-size: 9px;
+        padding: 3px 6px;
+        top: 8px;
+        right: 8px;
+    }
+    
+    .screen-share-indicator {
+        top: 45px;
+    }
+    
+    .video-off-icon {
+        font-size: 40px;
+    }
+    
+    .settings-panel {
+        padding: 15px;
+        width: 85%;
+    }
+    
+    .settings-panel h4 {
+        font-size: 14px;
+        margin-bottom: 15px;
+    }
+    
+    .setting-item label {
+        font-size: 11px;
+    }
+    
+    .setting-item select {
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+    
+    .close-settings {
+        font-size: 12px;
+        padding: 6px;
+    }
+}
+
+/* Very Small Devices (less than 360px) */
+@media screen and (max-width: 359px) {
+    .video-modal-header h3 {
+        max-width: 100px;
+        font-size: 11px;
+    }
+    
+    .remote-avatar {
+        font-size: 50px;
+    }
+    
+    .remote-info h2 {
+        font-size: 16px;
+    }
+    
+    .local-video-container {
+        width: 70px;
+        height: 95px;
+        bottom: 0px;
+    }
+    
+    .video-call-controls {
+        padding: 4px;
+    }
+    
+    .control-btn {
+        min-width: 35px;
+        padding: 3px 2px;
+    }
+    
+    .btn-icon {
+        font-size: 14px;
+    }
+    
+    .btn-label {
+        font-size: 6px;
+    }
+    
+    .call-duration-badge {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+}
+
+/* Landscape Mode for Phones */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .video-modal-header {
+        height: 40px;
+        min-height: 40px;
+    }
+    
+    .remote-avatar {
+        font-size: 50px;
+    }
+    
+    .remote-info h2 {
+        font-size: 18px;
+    }
+    
+    .local-video-container {
+        width: 100px;
+        height: 75px;
+        bottom: 0px;
+        right: 10px;
+        border-width: 2px;
+    }
+    
+    .video-call-controls {
+        padding: 5px 8px;
+        bottom: 5px;
+    }
+    
+    .control-btn {
+        min-width: 45px;
+    }
+    
+    .btn-icon {
+        font-size: 16px;
+    }
+    
+    .btn-label {
+        font-size: 7px;
+    }
+}
+
+/* Tablet Landscape */
+@media screen and (orientation: landscape) and (min-width: 768px) and (max-height: 600px) {
+    .local-video-container {
+        width: 140px;
+        height: 100px;
+        bottom: 80px;
+    }
+}
+
+/* High-DPI Screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .video-modal-container {
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .video-modal-container {
+        background: #0f1319;
+    }
+    
+    .video-modal-header {
+        background: linear-gradient(135deg, #16222e, #0f1a24);
+    }
+    
+    .video-modal-content {
+        background: #0a0d12;
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .video-modal-container {
+        border: 2px solid white;
+    }
+    
+    .control-btn {
+        border: 1px solid white;
+    }
+    
+    .local-video-container {
+        border: 3px solid yellow;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    .video-modal-overlay,
+    .video-modal-container,
+    .remote-avatar,
+    .control-btn,
+    .recording-indicator,
+    .pulse-dot {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+    .control-btn:hover {
+        transform: none;
+    }
+    
+    .local-video-container:hover {
+        transform: none;
+    }
+    
+    .header-btn:hover {
+        transform: none;
+    }
+    
+    .control-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .control-btn {
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+/* Accessibility */
+.control-btn:focus-visible,
+.header-btn:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
+/* Prevent text selection */
+.video-modal-container {
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* Ensure proper rendering on all devices */
+* {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Print Styles */
+@media print {
+    .video-modal-overlay {
+        display: none;
+    }
+}
+
+/* Loading States */
+.loading-indicator {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: clamp(12px, 2vh, 16px);
+    background: rgba(0,0,0,0.7);
+    padding: clamp(8px, 1.5vh, 15px) clamp(15px, 3vw, 25px);
+    border-radius: 30px;
+    z-index: 10;
+}
+
+/* Fix for iOS Safari */
+@supports (-webkit-touch-callout: none) {
+    .video-modal-container {
+        height: -webkit-fill-available;
+    }
+    
+    .video-modal-content {
+        height: -webkit-fill-available;
+    }
+}
+
+/* Ensure video elements don't overflow */
+video {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* Smooth scrolling for settings panel */
+.settings-panel {
+    -webkit-overflow-scrolling: touch;
+}

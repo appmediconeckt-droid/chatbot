@@ -1,0 +1,580 @@
+/* ===== RESET & BASE ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== MAIN WRAPPER (fixed full viewport) ===== */
+.menthy-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* ===== MAIN CARD (fixed size, no overflow) ===== */
+.menthy-container {
+  width: 100%;
+  max-width: 1200px;
+  height: 90vh;
+  max-height: 800px;
+  background: #ffffff;
+  border-radius: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  overflow: hidden; /* crucial - no outer scroll */
+  animation: menthySlideIn 0.5s ease-out;
+}
+
+@keyframes menthySlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== BRAND SECTION (static) ===== */
+.menthy-brand-section {
+  background: linear-gradient(145deg, #4776e6 0%, #8e54e9 100%);
+  padding: 60px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.menthy-brand-section::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: menthyPulse 8s infinite;
+}
+
+@keyframes menthyPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.menthy-brand-content {
+  position: relative;
+  z-index: 1;
+  color: white;
+  max-width: 400px;
+}
+
+.menthy-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.menthy-logo-icon {
+  font-size: 40px;
+  animation: menthyRotate 20s linear infinite;
+}
+
+@keyframes menthyRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.menthy-logo-text {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.menthy-brand-title {
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  animation: menthyFadeInUp 0.8s ease-out;
+}
+
+.menthy-brand-subtitle {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  opacity: 0.9;
+  animation: menthyFadeInUp 1s ease-out;
+}
+
+@keyframes menthyFadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.menthy-features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: menthyFadeInUp 1.2s ease-out;
+}
+
+.menthy-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 16px;
+}
+
+.menthy-feature-icon {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* ===== FORM SECTION (scrolls internally) ===== */
+.menthy-form-section {
+  padding: 40px;
+  background: white;
+  overflow-y: auto; /* ONLY this section scrolls */
+  height: 100%;
+  scrollbar-width: thin;
+  scrollbar-color: #8e54e9 #f1f1f1;
+}
+
+/* Custom scrollbar for webkit */
+.menthy-form-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.menthy-form-section::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.menthy-form-section::-webkit-scrollbar-thumb {
+  background: linear-gradient(145deg, #4776e6, #8e54e9);
+  border-radius: 10px;
+}
+
+.menthy-form-section::-webkit-scrollbar-thumb:hover {
+  background: #4776e6;
+}
+
+/* ===== FORM HEADER ===== */
+.menthy-form-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.menthy-form-header h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  background: linear-gradient(145deg, #4776e6, #8e54e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.menthy-form-header p {
+  color: #666;
+  font-size: 16px;
+}
+
+.menthy-toggle-btn {
+  background: none;
+  border: none;
+  color: #4776e6;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 16px;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.menthy-toggle-btn:hover {
+  color: #8e54e9;
+}
+
+/* ===== FORM STYLES ===== */
+.menthy-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.menthy-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.menthy-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.menthy-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.menthy-field-icon {
+  color: #4776e6;
+  font-size: 14px;
+}
+
+.menthy-required {
+  color: #ff4444;
+  margin-left: 4px;
+}
+
+.menthy-input,
+.menthy-select,
+.menthy-textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  font-size: 15px;
+  transition: all 0.3s;
+  background: #f8f9fa;
+}
+
+.menthy-input:focus,
+.menthy-select:focus,
+.menthy-textarea:focus {
+  outline: none;
+  border-color: #4776e6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(71, 118, 230, 0.1);
+}
+
+.menthy-input-error {
+  border-color: #ff4444 !important;
+}
+
+.menthy-error-text {
+  color: #ff4444;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Password Input */
+.menthy-password-input {
+  position: relative;
+  width: 100%;
+}
+
+.menthy-password-input input {
+  padding-right: 70px;
+}
+
+.menthy-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #4776e6;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+
+.menthy-password-toggle:hover {
+  background: rgba(71, 118, 230, 0.1);
+}
+
+/* Checkbox Groups */
+.menthy-checkbox-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  padding: 5px 0;
+}
+
+.menthy-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #555;
+  cursor: pointer;
+}
+
+.menthy-checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #4776e6;
+}
+
+/* Form Options (remember me / forgot) */
+.menthy-form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.menthy-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+}
+
+.menthy-forgot-link {
+  color: #4776e6;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.menthy-forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* File Input */
+.menthy-file-input {
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed #e0e0e0;
+  border-radius: 12px;
+  background: #f8f9fa;
+  cursor: pointer;
+}
+
+.menthy-file-input:hover {
+  border-color: #4776e6;
+}
+
+/* Textarea */
+.menthy-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Submit Button */
+.menthy-submit-btn {
+  background: linear-gradient(145deg, #4776e6, #8e54e9);
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin-top: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.menthy-submit-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.menthy-submit-btn:hover::before {
+  left: 100%;
+}
+
+.menthy-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(71, 118, 230, 0.4);
+}
+
+/* Terms */
+.menthy-terms {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-top: 10px;
+}
+
+.menthy-terms a {
+  color: #4776e6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.menthy-terms a:hover {
+  text-decoration: underline;
+}
+
+/* ===== FULLY RESPONSIVE ===== */
+@media (max-width: 968px) {
+  .menthy-container {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    height: auto;
+    max-height: 90vh;
+  }
+
+  .menthy-brand-section {
+    padding: 40px 30px;
+    display: none; /* Hide on small screens for better focus */
+  }
+
+  .menthy-form-section {
+    padding: 30px;
+    max-height: 90vh;
+  }
+
+  .menthy-form-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 768px) {
+  .menthy-wrapper {
+    padding: 10px;
+  }
+
+  .menthy-container {
+    max-width: 100%;
+    height: 95vh;
+  }
+
+  .menthy-form-section {
+    padding: 25px 20px;
+  }
+
+  .menthy-form-header h2 {
+    font-size: 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .menthy-form-section {
+    padding: 20px 15px;
+  }
+
+  .menthy-form-header h2 {
+    font-size: 24px;
+  }
+
+  .menthy-checkbox-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .menthy-form-options {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+/* Fix for very small heights */
+@media (max-height: 700px) {
+  .menthy-container {
+    height: 98vh;
+  }
+  
+  .menthy-form-section {
+    padding: 20px;
+  }
+}
+
+
+
+/* Add to your LoginSignup.css file */
+
+/* Loading Spinner */
+.menthy-spinner {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: menthy-spin 1s ease-in-out infinite;
+  margin-right: 10px;
+}
+
+@keyframes menthy-spin {
+  to { transform: rotate(360deg); }
+}
+
+.menthy-btn-loading {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+/* Disabled States */
+.menthy-input:disabled,
+.menthy-select:disabled,
+.menthy-textarea:disabled,
+.menthy-checkbox-label input:disabled,
+.menthy-file-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+.menthy-password-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menthy-disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.menthy-checkbox-label input:disabled {
+  accent-color: #ccc;
+}
+
+/* Success Message Animation (optional) */
+@keyframes menthy-success {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.menthy-success {
+  animation: menthy-success 0.5s ease;
+}

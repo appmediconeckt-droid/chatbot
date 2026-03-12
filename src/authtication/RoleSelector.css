@@ -1,0 +1,483 @@
+/* ===== RoleSelector.css - COMPLETELY RESPONSIVE & SMALLER BUTTONS ===== */
+
+/* ---- base resets ---- */
+
+
+/* ---- main container with gradient background ---- */
+body {
+
+  
+  
+  align-items: center;
+  justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+}
+
+/* ---- main container (fully responsive) ---- */
+.x9k3-role-panel {
+  width: 100%;
+ margin-top: 120px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: rgba(255, 255, 255, 0.68);
+  -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
+  border-radius: clamp(30px, 5vw, 56px) clamp(30px, 5vw, 56px) 
+               clamp(25px, 4vw, 40px) clamp(25px, 4vw, 40px);
+  box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.3),
+              inset 0 1px 2px rgba(255, 255, 255, 0.7);
+  padding: clamp(20px, 4vw, 45px) clamp(15px, 3vw, 40px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---- glass morphism enhancement ---- */
+.x9k3-role-panel::before {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.3), transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.5;
+}
+
+/* ---- heading area (responsive) ---- */
+.m7v2-greeting-area {
+  text-align: center;
+  margin-bottom: clamp(20px, 4vw, 50px);
+}
+
+.menthy-logo-icon {
+  margin-bottom: 10px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.p4h1-gradient-title {
+  font-size: clamp(24px, 6vw, 43px);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  background: linear-gradient(145deg, #2d3748, #1a202c);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 2px 5px rgba(255, 255, 255, 0.5);
+  line-height: 1.2;
+}
+
+.r8t2-sub-line {
+  font-size: clamp(14px, 3vw, 19px);
+  color: #2d3748;
+  font-weight: 400;
+  margin-top: clamp(5px, 1.5vw, 10px);
+  border-bottom: 1px dashed rgba(102, 126, 234, 0.3);
+  padding-bottom: clamp(8px, 2vw, 16px);
+  display: inline-block;
+}
+
+/* ---- dual card grid (responsive) ---- */
+.z6w9-dual-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(15px, 3vw, 35px);
+  justify-content: center;
+  align-items: stretch;
+}
+
+/* ---- base tile styles (SMALLER BUTTONS) ---- */
+.q5b3-role-tile {
+  flex: 1 1 200px;
+  min-width: 160px;
+  max-width: 280px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.75);
+  border-radius: clamp(20px, 4vw, 35px);
+  padding: clamp(15px, 3vw, 25px) clamp(12px, 2.5vw, 20px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.1);
+  box-shadow: 0 12px 22px -8px rgba(0, 0, 0, 0.2),
+              inset 0 2px 4px rgba(255,255,255,0.8);
+  color: #1e3f55;
+  user-select: none;
+}
+
+/* ---- unique variant backgrounds ---- */
+.a2f1-user-tile {
+  background: linear-gradient(145deg, rgba(235, 247, 255, 0.85), rgba(255, 255, 255, 0.9));
+}
+
+.d4m7-counselor-tile {
+  background: linear-gradient(145deg, rgba(245, 240, 255, 0.9), rgba(255, 250, 255, 0.85));
+}
+
+/* ---- selected state ---- */
+.l9p3-selected-state {
+  border: 3px solid #ffffff;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.5), 0 20px 30px -10px #4a2b6e;
+  transform: scale(1.02);
+  filter: drop-shadow(0 8px 12px rgba(102, 126, 234, 0.3));
+  transition: all 0.18s ease-out;
+}
+
+/* ---- hover interaction ---- */
+.q5b3-role-tile:hover {
+  transform: scale(1.02) translateY(-4px);
+  border-color: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 28px 38px -15px rgba(102, 126, 234, 0.4),
+              inset 0 1px 5px white;
+}
+
+.q5b3-role-tile:active {
+  transform: scale(0.98) translateY(0);
+  box-shadow: 0 5px 12px -5px rgba(0, 0, 0, 0.3);
+  transition: 0.08s;
+}
+
+/* ---- icon circle (SMALLER) ---- */
+.n4d2-icon-circle {
+  font-size: clamp(35px, 8vw, 55px);
+  line-height: 1;
+  filter: drop-shadow(2px 8px 12px rgba(102, 126, 234, 0.3));
+  margin-bottom: clamp(8px, 2vw, 15px);
+  background: rgba(255,255,255,0.25);
+  width: clamp(60px, 15vw, 85px);
+  height: clamp(60px, 15vw, 85px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 2px solid rgba(255,255,255,0.5);
+  transition: 0.2s;
+}
+
+.q5b3-role-tile:hover .n4d2-icon-circle {
+  background: rgba(255,255,255,0.45);
+  border-color: white;
+}
+
+.j7h3-unicode-symbol {
+  font-size: inherit;
+  display: block;
+  transform: translateZ(0);
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+/* ---- typography elements (SMALLER) ---- */
+.c8v6-role-label {
+  font-size: clamp(20px, 5vw, 28px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  margin-bottom: clamp(4px, 1vw, 8px);
+  text-shadow: 0 2px 5px white;
+  line-height: 1.2;
+}
+
+.e3w1-role-hint {
+  font-size: clamp(11px, 2.5vw, 14px);
+  font-weight: 400;
+  color: #4a5568;
+  background: rgba(255,255,240,0.4);
+  padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 15px);
+  border-radius: 40px;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(255,255,255,0.3);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ---- micro divider (smaller) ---- */
+.v9b2-micro-divider {
+  width: min(60px, 15vw);
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.5), transparent);
+  border-radius: 4px;
+  margin: clamp(10px, 2vw, 15px) auto clamp(4px, 1vw, 8px) auto;
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+}
+
+.t5n6-footer-note {
+  font-size: clamp(10px, 2vw, 12px);
+  margin-top: clamp(4px, 1vw, 6px);
+  opacity: 0.7;
+  letter-spacing: 0.3px;
+  font-weight: 400;
+  text-transform: uppercase;
+  color: #667eea;
+}
+
+/* ---- bottom action bar (responsive) ---- */
+.h8k1-bottom-actions {
+  margin-top: clamp(20px, 4vw, 40px);
+  display: flex;
+  justify-content: center;
+  font-size: clamp(12px, 2.5vw, 15px);
+  color: #2d3748;
+  border-top: 2px solid rgba(255, 255, 255, 0.5);
+  padding-top: clamp(15px, 3vw, 25px);
+  flex-wrap: wrap;
+  gap: clamp(8px, 2vw, 15px);
+}
+
+.w2p3-action-pill {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  padding: clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 18px);
+  border-radius: 60px;
+  font-weight: 500;
+  color: #2d3748;
+  transition: all 0.2s;
+  box-shadow: inset 0 0 0 0 rgba(255,255,255,0);
+  cursor: default;
+  font-size: clamp(11px, 2.2vw, 13px);
+  white-space: nowrap;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+}
+
+.w2p3-action-pill:hover {
+  background: rgba(255,255,255,0.5);
+  border-color: white;
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
+}
+
+/* ---- accessibility focus ---- */
+.q5b3-role-tile:focus-visible {
+  outline: 3px solid #667eea;
+  outline-offset: 3px;
+}
+
+/* ===== RESPONSIVE BREAKPOINTS FOR ALL DEVICES ===== */
+
+/* Extra Small Devices (phones, < 480px) */
+@media (max-width: 480px) {
+  .x9k3-role-panel {
+    
+    border-radius: 25px;
+    
+  }
+  
+  .z6w9-dual-grid {
+    gap: 12px;
+  }
+  
+  .q5b3-role-tile {
+    min-width: 140px;
+    flex: 1 1 140px;
+    padding: 15px 10px;
+  }
+  
+  .n4d2-icon-circle {
+    width: 50px;
+    height: 50px;
+    font-size: 30px;
+  }
+  
+  .c8v6-role-label {
+    font-size: 18px;
+  }
+  
+  .e3w1-role-hint {
+    font-size: 10px;
+    padding: 3px 8px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+  
+  .t5n6-footer-note {
+    font-size: 9px;
+  }
+  
+  .w2p3-action-pill {
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+}
+
+/* Small Devices (phones, 481px - 640px) */
+@media (min-width: 481px) and (max-width: 640px) {
+  .x9k3-role-panel {
+    padding: 20px 15px;
+    margin: 15px;
+  }
+  
+  .q5b3-role-tile {
+    min-width: 180px;
+    padding: 18px 12px;
+  }
+  
+  .n4d2-icon-circle {
+    width: 65px;
+    height: 65px;
+    font-size: 40px;
+  }
+  
+  .c8v6-role-label {
+    font-size: 22px;
+  }
+}
+
+/* Medium Devices (tablets, 641px - 768px) */
+@media (min-width: 641px) and (max-width: 768px) {
+  .x9k3-role-panel {
+    margin: 20px;
+  }
+  
+  .q5b3-role-tile {
+    min-width: 200px;
+    padding: 20px 15px;
+  }
+  
+  .n4d2-icon-circle {
+    width: 75px;
+    height: 75px;
+    font-size: 45px;
+  }
+}
+
+/* Large Devices (tablets/desktops, 769px - 1024px) */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .x9k3-role-panel {
+    max-width: 800px;
+    margin: 30px auto;
+  }
+  
+  .q5b3-role-tile {
+    min-width: 220px;
+  }
+}
+
+/* Extra Large Devices (> 1024px) */
+@media (min-width: 1025px) {
+  .x9k3-role-panel {
+    max-width: 900px;
+    margin: 40px auto;
+  }
+  
+  .q5b3-role-tile {
+    min-width: 240px;
+  }
+}
+
+/* Landscape mode for phones */
+@media (max-height: 500px) and (orientation: landscape) {
+  .x9k3-role-panel {
+    padding: 15px;
+    margin: 10px;
+  }
+  
+  .m7v2-greeting-area {
+    margin-bottom: 15px;
+  }
+  
+  .menthy-logo-icon {
+    height: 60px;
+  }
+  
+  .z6w9-dual-grid {
+    flex-direction: row;
+    gap: 15px;
+  }
+  
+  .q5b3-role-tile {
+    padding: 12px 15px;
+  }
+  
+  .n4d2-icon-circle {
+    width: 45px;
+    height: 45px;
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+  
+  .c8v6-role-label {
+    font-size: 18px;
+    margin-bottom: 3px;
+  }
+  
+  .e3w1-role-hint {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+  
+  .v9b2-micro-divider {
+    margin: 6px auto 3px auto;
+  }
+  
+  .t5n6-footer-note {
+    font-size: 8px;
+    margin-top: 2px;
+  }
+}
+
+/* Fix for very small devices */
+@media (max-width: 320px) {
+  .x9k3-role-panel {
+    padding: 10px;
+    margin: 5px;
+  }
+  
+  .q5b3-role-tile {
+    min-width: 120px;
+    padding: 12px 8px;
+  }
+  
+  .e3w1-role-hint {
+    font-size: 9px;
+    white-space: normal;
+  }
+  
+  .w2p3-action-pill {
+    white-space: normal;
+    text-align: center;
+  }
+  
+  .menthy-logo-icon {
+    height: 70px;
+  }
+}
+
+/* High-resolution screens */
+@media (min-width: 1440px) {
+  .x9k3-role-panel {
+    max-width: 1000px;
+  }
+  
+  .q5b3-role-tile {
+    min-width: 260px;
+    max-width: 300px;
+  }
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+  }
+  
+  .x9k3-role-panel {
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}

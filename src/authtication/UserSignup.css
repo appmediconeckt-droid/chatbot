@@ -1,0 +1,578 @@
+/* ===== RESET & BASE ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* ===== MAIN WRAPPER ===== */
+.user-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden; /* Prevent wrapper from scrolling */
+}
+
+/* ===== MAIN CARD ===== */
+.user-container {
+  width: 100%;
+  max-width: 1100px;
+  height: 85vh;
+  max-height: 700px;
+  background: #ffffff;
+  border-radius: 30px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  overflow: hidden; /* Hide overflow on container */
+  animation: userSlideIn 0.5s ease-out;
+}
+
+@keyframes userSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ===== BRAND SECTION ===== */
+.user-brand-section {
+  background: linear-gradient(145deg, #667eea 0%, #764ba2 100%);
+  padding: 50px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  height: 100%; /* Take full height */
+}
+
+.user-brand-section::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  animation: userPulse 8s infinite;
+}
+
+@keyframes userPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.user-brand-content {
+  position: relative;
+  z-index: 1;
+  color: white;
+  max-width: 400px;
+}
+
+.user-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+
+.user-logo-icon {
+  font-size: 40px;
+  animation: userFloat 3s ease-in-out infinite;
+}
+
+@keyframes userFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.user-logo-text {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.user-brand-title {
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1.2;
+  margin-bottom: 20px;
+  animation: userFadeInUp 0.8s ease-out;
+}
+
+.user-brand-subtitle {
+  font-size: 16px;
+  line-height: 1.6;
+  margin-bottom: 40px;
+  opacity: 0.9;
+  animation: userFadeInUp 1s ease-out;
+}
+
+@keyframes userFadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.user-features {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: userFadeInUp 1.2s ease-out;
+}
+
+.user-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 15px;
+}
+
+.user-feature-icon {
+  width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+/* ===== FORM SECTION - FIXED SCROLLING ===== */
+.user-form-section {
+  padding: 30px 30px 20px 30px;
+  background: white;
+  height: 100%; /* Take full height */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* Hide overflow on section */
+}
+
+/* Make the form scrollable */
+.user-form {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 10px; /* Space for scrollbar */
+  margin-right: -10px; /* Offset the padding */
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Custom scrollbar for the form */
+.user-form::-webkit-scrollbar {
+  width: 6px;
+}
+
+.user-form::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.user-form::-webkit-scrollbar-thumb {
+  background: linear-gradient(145deg, #667eea, #764ba2);
+  border-radius: 10px;
+}
+
+/* Firefox scrollbar */
+.user-form {
+  scrollbar-width: thin;
+  scrollbar-color: #764ba2 #f1f1f1;
+}
+
+/* Form header - fixed at top */
+.user-form-header {
+  text-align: center;
+  margin-bottom: 20px;
+  flex-shrink: 0; /* Prevent header from shrinking */
+}
+
+.user-form-header h2 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  background: linear-gradient(145deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.user-form-header p {
+  color: #666;
+  font-size: 15px;
+}
+
+.user-toggle-btn {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+  text-decoration: underline;
+  transition: color 0.3s;
+}
+
+.user-toggle-btn:hover {
+  color: #764ba2;
+}
+
+/* ===== FORM STYLES ===== */
+.user-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.user-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.user-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-field-icon {
+  color: #667eea;
+  font-size: 14px;
+}
+
+.user-required {
+  color: #ff4444;
+  margin-left: 4px;
+}
+
+.user-input,
+.user-select {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 14px;
+  transition: all 0.3s;
+  background: #f8f9fa;
+}
+
+.user-input:focus,
+.user-select:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.user-input-error {
+  border-color: #ff4444 !important;
+}
+
+.user-error-text {
+  color: #ff4444;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* Password Input */
+.user-password-input {
+  position: relative;
+  width: 100%;
+}
+
+.user-password-input input {
+  padding-right: 70px;
+}
+
+.user-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #667eea;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.user-password-toggle:hover {
+  background: rgba(102, 126, 234, 0.1);
+}
+
+/* Form Options */
+.user-form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.user-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+}
+
+.user-forgot-link {
+  color: #667eea;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.user-forgot-link:hover {
+  text-decoration: underline;
+}
+
+/* Submit Button */
+.user-submit-btn {
+  background: linear-gradient(145deg, #667eea, #764ba2);
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  margin: 10px 0;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0; /* Prevent button from shrinking */
+}
+
+.user-submit-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.user-submit-btn:hover::before {
+  left: 100%;
+}
+
+.user-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Loading Spinner */
+.user-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: userSpin 1s ease-in-out infinite;
+  margin-right: 8px;
+}
+
+@keyframes userSpin {
+  to { transform: rotate(360deg); }
+}
+
+.user-btn-loading {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+/* Disabled States */
+.user-input:disabled,
+.user-select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #f5f5f5;
+}
+
+.user-password-toggle:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.user-disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+/* Terms */
+.user-terms {
+  text-align: center;
+  font-size: 12px;
+  color: #666;
+  margin: 10px 0 0 0;
+  flex-shrink: 0; /* Prevent terms from shrinking */
+}
+
+.user-terms a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.user-terms a:hover {
+  text-decoration: underline;
+}
+
+/* ===== RESPONSIVE FIXES ===== */
+@media (max-width: 968px) {
+  .user-wrapper {
+    padding: 15px;
+  }
+
+  .user-container {
+    grid-template-columns: 1fr;
+    max-width: 500px;
+    height: 95vh; /* Use more screen space */
+    max-height: none; /* Remove max-height constraint */
+  }
+
+  .user-brand-section {
+    display: none;
+  }
+
+  .user-form-section {
+    padding: 20px 20px 15px 20px;
+  }
+
+  .user-form-header h2 {
+    font-size: 28px;
+  }
+
+  .user-form-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Ensure form takes full height and scrolls properly */
+  .user-form {
+    padding-right: 8px;
+    margin-right: -8px;
+  }
+
+  /* Adjust input sizes for mobile */
+  .user-input,
+  .user-select {
+    padding: 10px 12px;
+    font-size: 16px; /* Better for mobile */
+  }
+
+  /* Make password toggle easier to tap */
+  .user-password-toggle {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .user-wrapper {
+    padding: 10px;
+  }
+
+  .user-container {
+    border-radius: 20px;
+    height: 98vh; /* Almost full screen */
+  }
+
+  .user-form-section {
+    padding: 15px 15px 10px 15px;
+  }
+
+  .user-form-header {
+    margin-bottom: 15px;
+  }
+
+  .user-form-header h2 {
+    font-size: 24px;
+  }
+
+  .user-form-header p {
+    font-size: 14px;
+  }
+
+  .user-form-options {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .user-form-group {
+    gap: 4px;
+  }
+
+  .user-label {
+    font-size: 13px;
+  }
+
+  /* Improve touch targets */
+  .user-toggle-btn,
+  .user-password-toggle,
+  .user-submit-btn {
+    min-height: 44px; /* Minimum touch target size */
+  }
+
+  .user-checkbox {
+    min-height: 44px;
+    padding: 5px 0;
+  }
+
+  .user-forgot-link {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* Landscape mode on mobile */
+@media (max-width: 968px) and (orientation: landscape) {
+  .user-container {
+    height: 90vh;
+  }
+
+  .user-form-section {
+    padding: 15px;
+  }
+
+  .user-form-grid {
+    grid-template-columns: repeat(2, 1fr); /* Back to 2 columns in landscape */
+  }
+
+  .user-form-header h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+  }
+
+  .user-form-header {
+    margin-bottom: 10px;
+  }
+}
