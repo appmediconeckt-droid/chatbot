@@ -2,8 +2,7 @@
 .chatAppContainer {
   width: 100%;
   height: 100vh;
- background-color: white;
-
+  background-color: white;
   justify-content: center;
   align-items: center;
   padding: 10px;
@@ -11,8 +10,6 @@
 }
 
 .chatAppLayout {
- 
-
   height: 90vh;
   background: white;
   border-radius: 20px;
@@ -23,9 +20,7 @@
 
 /* Left Sidebar Styles */
 .counselorSidebar {
-
   border-right: 1px solid #e5e7eb;
-  
   display: flex;
   flex-direction: column;
 }
@@ -33,7 +28,6 @@
 .counselorSidebarHeader {
   padding: 24px;
   border-bottom: 1px solid #e5e7eb;
-
 }
 
 .counselorListTitle {
@@ -74,8 +68,20 @@
 
 .counselorListContainer {
   flex: 1;
-  
   padding: 0px;
+}
+
+.counselorListItemWrapper {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  margin-bottom: 8px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* Improves touch behavior */
 }
 
 .counselorListItem {
@@ -83,9 +89,7 @@
   align-items: center;
   padding: 16px;
   border-radius: 12px;
-  cursor: pointer;
   transition: all 0.3s ease;
-  margin-bottom: 8px;
   background: white;
   border: 2px solid transparent;
 }
@@ -93,6 +97,12 @@
 .counselorListItem:hover {
   background: #f1f5f9;
   transform: translateX(4px);
+}
+
+/* Active state for touch feedback */
+.counselorListItemWrapper:active .counselorListItem {
+  background: #f0f0f0;
+  transform: scale(0.98);
 }
 
 .counselorListItemActive {
@@ -205,6 +215,12 @@
   border-radius: 10px;
   min-width: 20px;
   text-align: center;
+}
+
+.counselorSpecialization {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
 }
 
 /* Main Chat Area Styles */
@@ -531,6 +547,45 @@
   transform: rotate(90deg);
 }
 
+/* No chats message styles */
+.no-chats-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #64748b;
+}
+
+.start-chat-link {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 10px;
+}
+
+.clear-search-link {
+  background: none;
+  border: none;
+  color: #667eea;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 10px;
+}
+
+/* Loading spinner */
+.loading-spinner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  font-size: 18px;
+  color: #667eea;
+}
+
 /* Scrollbar Styling */
 .counselorListContainer::-webkit-scrollbar,
 .chatMessagesContainer::-webkit-scrollbar {
@@ -554,6 +609,208 @@
   background: #94a3b8;
 }
 
+/* Context Menu */
+.context-menu {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+  overflow: hidden;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.context-menu-header {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.context-menu-counselor-name {
+  font-size: 14px;
+  font-weight: 600;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-menu-time {
+  font-size: 11px;
+  opacity: 0.8;
+  display: block;
+  margin-top: 4px;
+}
+
+.context-menu-items {
+  padding: 8px;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  color: #333;
+}
+
+.context-menu-item:hover {
+  background: #f5f5f5;
+}
+
+.context-menu-item.delete:hover {
+  background: #fee;
+  color: #dc3545;
+}
+
+.context-menu-icon {
+  margin-right: 12px;
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.context-menu-text {
+  flex: 1;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  animation: fadeIn 0.3s ease;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 400px;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #eee;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+.modal-body {
+  padding: 20px 24px;
+}
+
+.delete-warning {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 10px;
+  padding: 10px;
+  background: #fee;
+  border-radius: 8px;
+}
+
+.modal-footer {
+  padding: 16px 24px 24px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  padding: 10px 20px;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary:hover {
+  background: #f5f5f5;
+}
+
+.btn-danger {
+  padding: 10px 20px;
+  border: none;
+  background: #dc3545;
+  color: white;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+}
+
+/* Avatar fallback */
+.avatar-fallback {
+  position: relative;
+}
+
+.avatar-fallback::before {
+  content: attr(data-initials);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Chat time info */
+.chat-time-info {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 8px;
+  font-style: italic;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .chatAppLayout {
@@ -573,13 +830,9 @@
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .chatAppContainer {
-    padding: 10px;
-  }
-  
-  .chatAppLayout {
-    border-radius: 12px;
+    padding: 0;
   }
   
   .counselorSidebarHeader,
@@ -587,11 +840,64 @@
     padding: 16px;
   }
   
+  .counselorListTitle {
+    font-size: 20px;
+  }
+  
+  .counselorAvatar {
+    width: 45px;
+    height: 45px;
+    font-size: 16px;
+  }
+  
+  .counselorName {
+    font-size: 15px;
+  }
+  
+  .counselorLastMessage {
+    font-size: 13px;
+  }
+  
+  .context-menu {
+    position: fixed !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 300px;
+  }
+  
+  .counselorListItemWrapper:active .counselorListItem {
+    background: #f0f0f0;
+    transform: scale(0.98);
+  }
+}
+
+@media (max-width: 640px) {
+  .chatAppContainer {
+    padding: 0;
+  }
+  
+  .chatAppLayout {
+    border-radius: 0;
+    height: 100vh;
+  }
+  
+  .counselorSidebarHeader,
+  .chatHeader {
+    padding: 12px;
+  }
+  
   .chatMessagesContainer {
-    padding: 16px;
+    padding: 12px;
   }
   
   .chatMessageBubble {
     max-width: 90%;
+  }
+  
+  .modal-container {
+    width: 95%;
+    margin: 10px;
   }
 }

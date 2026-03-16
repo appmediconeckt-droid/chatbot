@@ -22,7 +22,8 @@ import {
   FaRobot,
   FaPaperPlane,
   FaCommentMedical,
-  FaUser
+  FaUser,
+  FaCalendarAlt
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
@@ -31,6 +32,8 @@ import WalletDashboard from "../Tab/Wallet/WalletDashboard";
 import CallHistory from "../Tab/Callls/CallHistory";
 import useVibration from '../../../hooks/useVibration';
 import PatientProfile from '../../PatientProfile/PatientProfile';
+import BookAppointment from '../Tab/Appointment/BookAppointment';
+import LiveChatSupport from '../Tab/Appointment/BookAppointment';
 
 // ChatPopup Component
 const ChatPopup = ({ 
@@ -56,7 +59,7 @@ const ChatPopup = ({
           </div>
         </div>
         <button className="chat-close-btn" onClick={onClose}>
-         +
+         ×
         </button>
       </div>
 
@@ -271,10 +274,12 @@ export default function UserDashboard() {
 
   const allMenuItems = [
     { id: "Chat", icon: <FaCommentDots />, label: "Chat" },
-    { id: "Counselor", icon: <FaUserMd />, label: "Counselor" },
+    { id: "Live Chat", icon: <FaUserMd />, label: "Counselor" },
+    // { id: "Counselor", icon: <FaUserMd />, label: "Counselor" },
     { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
     { id: "Video", icon: <FaVideo />, label: "Video Call" },
     { id: "profile", icon: <FaUser />, label: "Profile" },
+    
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
     { id: "privacy", icon: <FaLock />, label: "Privacy" }
   ];
@@ -332,14 +337,6 @@ export default function UserDashboard() {
                   <span className="sidebar-icon"><FaSignOutAlt /></span>
                   <span className="sidebar-text">Logout</span>
                 </button>
-
-                {/* <button
-                  className="delete-account-btn"
-                  onClick={handleDeleteClick}
-                >
-                  <span className="delete-icon"><FaTrash /></span>
-                  <span>Delete Account</span>
-                </button> */}
               </div>
             </div>
           </aside>
@@ -348,11 +345,12 @@ export default function UserDashboard() {
         {/* Main Content Area */}
         <div className={`dashboard-content ${isMobile ? 'mobile' : ''}`}>
           <div className="content-scrollable">
-            {active === "Chat" && <ChatInterface />}
+            {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
             {active === "Counselor" && <CounselorDirectory />}
             {active === "Wallet" && <WalletDashboard />}
             {active === "Video" && <CallHistory />}
             {active === "profile" && <PatientProfile />}
+            {active === "Live Chat" && <LiveChatSupport />}
 
             {active === "help" && (
               <div className="content-section">

@@ -1,36 +1,31 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import axios from 'axios';
+import { Link, useParams, useLocation } from 'react-router-dom';
 import './ChatBox.css';
-import { Link } from 'react-router-dom';
 import VideoCallModal from '../CallModal/VideoCallModal';
 import VoiceCallModal from '../CallModal/VoiceCallModal';
 
-
 const ChatBox = () => {
-    // State for current counselor
-    const [currentCounselor, setCurrentCounselor] = useState({
-        id: 1,
+    const { counselorId } = useParams();
+    const location = useLocation();
+    const { chatId, counselor: initialCounselor, user: initialUser } = location.state || {};
+
+    // State for current chat
+    const [currentChat, setCurrentChat] = useState(null);
+    const [messages, setMessages] = useState([]);
+    const [currentCounselor, setCurrentCounselor] = useState(initialCounselor || {
+        id: parseInt(counselorId),
         name: 'Dr. Suresh Reddy',
-        type: 'video', // or 'voice'
-        profilePic: '👨‍⚕️',
-        phoneNumber: '+91 98765 43215',
-        online: true
+        specialization: 'Clinical Psychologist',
+        online: true,
+        avatar: '👨‍⚕️',
+        phoneNumber: '+91 98765 43215'
     });
 
     // Call modal states
     const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
     const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
     const [selectedCall, setSelectedCall] = useState(null);
-
-    const [messages, setMessages] = useState([
-        { id: 1, text: 'Hello! How can I help you today?', sender: 'counselor', time: '10:15 AM' },
-        { id: 2, text: 'I\'ve been feeling anxious lately', sender: 'user', time: '10:20 AM' },
-        { id: 3, text: 'I understand. Let\'s talk about what triggers this anxiety.', sender: 'counselor', time: '10:25 AM' },
-        { id: 4, text: 'Mostly during work presentations', sender: 'user', time: '10:28 AM' },
-        { id: 5, text: 'That\'s common. We can work on coping strategies.', sender: 'counselor', time: '10:30 AM' },
-        { id: 6, text: 'Can you suggest some techniques?', sender: 'user', time: '10:32 AM' },
-        { id: 7, text: 'Yes, deep breathing exercises and mindfulness can help.', sender: 'counselor', time: '10:35 AM' },
-        { id: 8, text: 'Thank you, I\'ll try those.', sender: 'user', time: '10:36 AM' },
-    ]);
 
     const [newMessage, setNewMessage] = useState('');
     const [showOptions, setShowOptions] = useState(false);
@@ -42,11 +37,102 @@ const ChatBox = () => {
     const messagesContainerRef = useRef(null);
     const optionsRef = useRef(null);
     const emojiPickerRef = useRef(null);
+    const timeoutRef = useRef(null);
 
-    // Scroll to bottom when new messages are added
+    // Scroll to bottom function
+    const scrollToBottom = useCallback(() => {
+        if (messagesEndRef.current) {
+            setTimeout(() => {
+                messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+            }, 100);
+        }
+    }, []);
+
+    // Load chat data from localStorage
+    useEffect(() => {
+        const loadChat = () => {
+            try {
+                const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
+                
+                // Try to find chat by chatId or counselorId
+                let chat = savedChats.find(c => c.id === chatId) || 
+                          savedChats.find(c => c.counselorId === parseInt(counselorId));
+                
+                if (chat) {
+                    setCurrentChat(chat);
+                    setMessages(chat.messages || []);
+                    setCurrentCounselor(chat.counselor);
+                    
+                    // Mark as read
+                    if (chat.unread) {
+                        const updatedChats = savedChats.map(c => {
+                            if (c.id === chat.id) {
+                                return { ...c, unread: false };
+                            }
+                            return c;
+                        });
+                        localStorage.setItem('activeChats', JSON.stringify(updatedChats));
+                    }
+                } else if (initialCounselor) {
+                    // Create a new chat if not found
+                    const newChat = {
+                        id: Date.now(),
+                        counselorId: parseInt(counselorId),
+                        counselor: initialCounselor,
+                        user: initialUser || { name: 'User', email: 'user@example.com' },
+                        messages: [
+                            {
+                                id: Date.now(),
+                                text: `Hello! I'm ${initialCounselor.name}. How can I help you today?`,
+                                sender: 'counselor',
+                                time: new Date().toLocaleTimeString()
+                            }
+                        ],
+                        unread: false,
+                        startedAt: new Date().toISOString()
+                    };
+                    setCurrentChat(newChat);
+                    setMessages(newChat.messages);
+                    
+                    const updatedChats = [...savedChats, newChat];
+                    localStorage.setItem('activeChats', JSON.stringify(updatedChats));
+                }
+            } catch (error) {
+                console.error('Error loading chat:', error);
+            }
+        };
+
+        loadChat();
+    }, [counselorId, chatId, initialCounselor, initialUser]);
+
+    // Save messages to localStorage whenever they change
+    useEffect(() => {
+        if (currentChat && messages.length > 0) {
+            try {
+                const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
+                const updatedChats = savedChats.map(chat => {
+                    if (chat.id === currentChat.id) {
+                        return { 
+                            ...chat, 
+                            messages: messages,
+                            lastMessage: messages[messages.length - 1]?.text,
+                            lastMessageTime: messages[messages.length - 1]?.time,
+                            unread: false
+                        };
+                    }
+                    return chat;
+                });
+                localStorage.setItem('activeChats', JSON.stringify(updatedChats));
+            } catch (error) {
+                console.error('Error saving messages:', error);
+            }
+        }
+    }, [messages, currentChat]);
+
+    // Scroll to bottom when messages change
     useEffect(() => {
         scrollToBottom();
-    }, [messages]);
+    }, [messages, scrollToBottom]);
 
     // Handle click outside for dropdowns
     useEffect(() => {
@@ -63,38 +149,90 @@ const ChatBox = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const scrollToBottom = () => {
-        if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
+
+    // Handle sending a new message
+    const sendMessageToAPI = async (message) => {
+        try {
+            const response = await axios.post(
+                'https://sdpd86vs-5000.inc1.devtunnels.ms/api/chat',
+                { message },
+                { headers: { 'Content-Type': 'application/json' } }
+            );
+            return response.data;
+        } catch (error) {
+            console.error('Error calling AI API:', error);
+            throw error;
         }
     };
 
-    // Handle sending a new message
-    const handleSendMessage = () => {
+    const handleSendMessage = async () => {
         if (newMessage.trim() === '') return;
-        
+
+        const messageText = newMessage;
+
         const newMsg = {
-            id: messages.length + 1,
-            text: newMessage,
+            id: Date.now(),
+            text: messageText,
             sender: 'user',
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         };
-        
+
         setMessages(prev => [...prev, newMsg]);
         setNewMessage('');
         setShowEmojiPicker(false);
-        setIsTyping(false);
-        
-        // Simulate counselor reply after 1 second
-        setTimeout(() => {
+        setIsTyping(true);
+
+        // Clear any existing timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+
+        try {
+            const apiResp = await sendMessageToAPI(messageText);
+            const aiText = apiResp?.response || apiResp?.message || apiResp?.text || getCounselorReply(messageText);
+
             const counselorReply = {
-                id: messages.length + 2,
-                text: 'Thank you for sharing. I\'ll help you work through this.',
+                id: Date.now() + 1,
+                text: aiText,
                 sender: 'counselor',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             setMessages(prev => [...prev, counselorReply]);
-        }, 1000);
+        } catch (err) {
+            const counselorReply = {
+                id: Date.now() + 1,
+                text: "I'm having trouble connecting to the assistant. Please try again later.",
+                sender: 'counselor',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            };
+            setMessages(prev => [...prev, counselorReply]);
+        } finally {
+            setIsTyping(false);
+        }
+    };
+
+    // Generate counselor reply based on message
+    const getCounselorReply = (message) => {
+        const replies = [
+            "I understand how you feel. Can you tell me more?",
+            "That's completely normal. Let's work through this together.",
+            "Thank you for sharing that with me.",
+            "I'm here to support you. What specific aspect would you like to discuss?",
+            "Let's take a moment to explore this further.",
+            "Your feelings are valid. How long have you been experiencing this?",
+            "I appreciate you opening up about this.",
+            "We can work on some coping strategies together."
+        ];
+        return replies[Math.floor(Math.random() * replies.length)];
     };
 
     // Handle key press for sending message
@@ -108,7 +246,10 @@ const ChatBox = () => {
     // Add emoji to message
     const addEmoji = (emoji) => {
         setNewMessage(prev => prev + emoji);
-        document.getElementById('messageInput').focus();
+        const input = document.getElementById('messageInput');
+        if (input) {
+            input.focus();
+        }
     };
 
     // Emoji list
@@ -130,7 +271,7 @@ const ChatBox = () => {
             const file = e.target.files[0];
             if (file) {
                 const newMsg = {
-                    id: messages.length + 1,
+                    id: Date.now(),
                     text: `📎 Attached file: ${file.name}`,
                     sender: 'user',
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -154,7 +295,7 @@ const ChatBox = () => {
             id: currentCounselor.id,
             name: currentCounselor.name,
             type: 'video',
-            profilePic: currentCounselor.profilePic,
+            profilePic: currentCounselor.avatar,
             phoneNumber: currentCounselor.phoneNumber,
             status: 'outgoing',
             date: 'Today',
@@ -170,7 +311,7 @@ const ChatBox = () => {
             id: currentCounselor.id,
             name: currentCounselor.name,
             type: 'voice',
-            profilePic: currentCounselor.profilePic,
+            profilePic: currentCounselor.avatar,
             phoneNumber: currentCounselor.phoneNumber,
             status: 'outgoing',
             date: 'Today',
@@ -198,7 +339,7 @@ const ChatBox = () => {
                         </Link>
                         <div className="chatUserDetails">
                             <div className="chatProfilePic" aria-label="Counselor profile picture">
-                                {currentCounselor.name.charAt(0)}
+                                {currentCounselor.avatar || currentCounselor.name.charAt(0)}
                                 <span className={`chatActiveDot ${currentCounselor.online ? 'chatActiveOnline' : 'chatActiveOffline'}`} />
                             </div>
                             <div className="chatProfileInfo">
@@ -253,7 +394,11 @@ const ChatBox = () => {
                                             className="chatDropdownItem"
                                             onClick={() => {
                                                 setShowOptions(false);
-                                                alert(`${item.label} clicked`);
+                                                if (item.label === 'Clear Chat') {
+                                                    setMessages([]);
+                                                } else {
+                                                    alert(`${item.label} clicked`);
+                                                }
                                             }}
                                             role="menuitem"
                                         >
@@ -272,22 +417,26 @@ const ChatBox = () => {
                     <div className="chatWelcomeCard">
                         <div className="chatWelcomeInner">
                             <div className="chatWelcomeAvatar" aria-hidden="true">
-                                {currentCounselor.name.charAt(0)}
+                                {currentCounselor.avatar || currentCounselor.name.charAt(0)}
                             </div>
                             <div className="chatWelcomeMsg">
-                                <h3 className="chatWelcomeTitle">Welcome to your session with {currentCounselor.name}</h3>
+                                <h3 className="chatWelcomeTitle">
+                                    Welcome to your session with {currentCounselor.name}
+                                </h3>
                                 <p className="chatWelcomeDesc">
                                     This is a safe space to share your thoughts and feelings.
                                     Everything discussed here is confidential.
                                 </p>
-                                <time className="chatWelcomeTime">Today at 10:00 AM</time>
+                                <time className="chatWelcomeTime">
+                                    {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+                                </time>
                             </div>
                         </div>
                     </div>
 
-                    {messages.map(message => (
+                    {messages.map((message, index) => (
                         <article 
-                            key={message.id} 
+                            key={message.id || index} 
                             className={`chatMsgBubble ${message.sender === 'user' ? 'chatMsgRight' : 'chatMsgLeft'}`}
                         >
                             <div className="chatMsgContent">
@@ -346,7 +495,7 @@ const ChatBox = () => {
                                 value={newMessage}
                                 onChange={handleInputChange}
                                 onKeyPress={handleKeyPress}
-                                placeholder="Type your message here..."
+                                placeholder={`Message ${currentCounselor.name}...`}
                                 className="chatTextInput"
                                 autoComplete="off"
                                 aria-label="Message input"

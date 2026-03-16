@@ -10,6 +10,7 @@ import RoleSelector from './authtication/RoleSelector'
 import CounselorSignup from './authtication/CounselorSignup'
 import UserSignup from './authtication/UserSignup'
 import CounselorDashboard from './Component/counselor-dashboard/Dashboard/dashboard'
+import CounselorTable from './Component/UserDashboard/Tab/Counselor/CounselorDirectory'
 
 
 function App() {
@@ -49,10 +50,11 @@ function App() {
         <Route path="/" element={<Leanding />} />
         <Route path="/login" element={<Login />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
-        <Route path="/chatbox/:id" element={<ChatBox />} />
+        <Route path="/chat/:id" element={<ChatBox />} />
         <Route path="/role-selector" element={<RoleSelector />} />
          <Route path="/counselor-signup" element={<CounselorSignup />} />
           <Route path="/user-signup" element={<UserSignup />} />
+          <Route path="/counselor-directory" element={<CounselorTable />} />
 
              <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
 

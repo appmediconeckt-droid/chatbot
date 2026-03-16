@@ -1,17 +1,23 @@
 // hooks/useVibration.js
-import { useCallback } from 'react';
+import { useCallback } from "react";
 
 const useVibration = () => {
-    const vibrate = useCallback((pattern = 50) => {
-        // Check if vibration is supported
-        if (window.navigator && window.navigator.vibrate) {
-            window.navigator.vibrate(pattern);
-        } else {
-            console.log('Vibration not supported on this device');
-        }
-    }, []);
+  const vibrate = useCallback((pattern = 50) => {
 
-    return vibrate;
+    // check support
+    if ("vibrate" in navigator) {
+      navigator.vibrate(pattern);
+    } else {
+      // fallback for iPhone
+      console.log("Vibration not supported (likely iPhone)");
+      
+      // optional: play sound or trigger animation
+      const audio = new Audio("/click.mp3");
+      audio.play();
+    }
+
+  }, []);
+
+  return vibrate;
 };
-
 export default useVibration;
