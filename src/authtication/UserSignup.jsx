@@ -56,7 +56,7 @@ const UserSignup = () => {
     const newErrors = {};
     
     if (!formData.fullName) newErrors.fullName = 'Full name is required';
-    if (!formData.username) newErrors.username = 'Username is required';
+    if (!formData.username) newErrors.username = 'anonymous is required';
     
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -275,7 +275,7 @@ const UserSignup = () => {
                   <div className="user-form-group">
                     <label className="user-label">
                       <FaUser className="user-field-icon" />
-                      Username <span className="user-required">*</span>
+                      anonymous <span className="user-required">*</span>
                     </label>
                     <input
                       type="text"

@@ -22,8 +22,11 @@ import {
 } from "react-icons/fa";
 // Custom Hooks
 import useVibration from '../../../hooks/useVibration';
+import Dashboard from '../Tab/CounselorDashboard/Dashboardcou';
+import Messagesou from '../Tab/Messages/Messagesou';
+
 export default function CounselorDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('messages');
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -56,7 +59,7 @@ export default function CounselorDashboard() {
     specializations: ["Anxiety", "Depression", "Trauma", "Couples Therapy"]
   });
   const navItems = [
-    { id: 'dashboard', icon: <FaHome />, label: 'Dashboard', badge: 0 },
+    // { id: 'dashboard', icon: <FaHome />, label: 'Dashboard', badge: 0 },
     { id: 'messages', icon: <FaComments />, label: 'Messages', badge: 1 },
     { id: 'appointments', icon: <FaCalendarAlt />, label: 'Appointments', },
     { id: 'sessions', icon: <FaVideo />, label: 'Sessions', badge: 0 },
@@ -213,13 +216,13 @@ export default function CounselorDashboard() {
       )}
 
       {/* Main Content */}
-      <main className={`couns-main-content ${isMobile ? 'mobile' : ''}`}>
+      <div className={`couns-main-content ${isMobile ? 'mobile' : ''}`}>
        
         {activeTab === 'dashboard' && (
           <>
             <div className="couns-tab-content">
               <div className="couns-tab-header">
-                <h2>Dashboard</h2>
+               <Dashboard/>
               </div>
             </div>
           </>
@@ -265,7 +268,7 @@ export default function CounselorDashboard() {
         {activeTab === 'messages' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
-              <h2>Messages</h2>
+              <Messagesou/>
             </div>
 
           </div>
@@ -288,7 +291,7 @@ export default function CounselorDashboard() {
             </div>
           </div>
         )}
-      </main>
+      </div>
 
       {/* Session Notes Modal */}
       {showNotesModal && (
