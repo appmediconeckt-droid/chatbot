@@ -9,13 +9,22 @@ const RoleSelector = () => {
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
-    console.log(`${role} selected`);
-    
-    // Add routing based on role selection
-    if (role === 'user') {
-      navigate('/user-signup');
-    } else if (role === 'counselor') {
-      navigate('/counselor-signup');
+
+    // Clear old roles
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("userType");
+
+    // Save only one role
+    localStorage.setItem("role", role);
+
+    console.log(role + " selected");
+
+    if (role === "user") {
+      navigate("/user-signup");
+    }
+
+    if (role === "counselor") {
+      navigate("/counselor-signup");
     }
   };
 
@@ -28,6 +37,7 @@ const RoleSelector = () => {
       </div>
 
       <div className="z6w9-dual-grid">
+
         {/* USER CARD */}
         <div
           className={`q5b3-role-tile a2f1-user-tile ${
@@ -67,6 +77,7 @@ const RoleSelector = () => {
           <div className="v9b2-micro-divider"></div>
           <span className="t5n6-footer-note">guide</span>
         </div>
+
       </div>
 
       <div className="h8k1-bottom-actions">

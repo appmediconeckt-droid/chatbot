@@ -1,47 +1,134 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './Leanding.css';
 import logo from '../image/Mediconect Logo-3.png';
 
 const Leanding = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, text: "Namaste! I'm your AI assistant. How can I help you today?", sender: 'ai' },
-    { id: 2, text: "I'm feeling anxious about my exams.", sender: 'user' }
+    { 
+      id: 1, 
+      text: "Namaste! I'm your AI assistant. Main aapki kaise madad kar sakta hoon? (How can I help you today?)", 
+      sender: 'ai' 
+    }
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
 
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     if (chatBodyRef.current) {
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
     }
   }, [chatMessages, isLoading]);
 
-  const sendMessage = () => {
+  // Handle viewport height for mobile
+  useEffect(() => {
+    const handleResize = () => {
+      const vh = window.innerHeight * 0.01;
+      document.documentElement.style.setProperty('--vh', `${vh}px`);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Send message to API
+  const sendMessageToAPI = async (message) => {
+    try {
+      const response = await axios.post(
+        'https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat',
+        {
+          message: message
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000 // 10 second timeout
+        }
+      );
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      throw error;
+    }
+  };
+
+  // Send message handler
+  const sendMessage = async () => {
     if (newMessage.trim()) {
-      const userMessage = { id: Date.now(), text: newMessage, sender: 'user' };
+      const userMessage = { 
+        id: Date.now(), 
+        text: newMessage, 
+        sender: 'user' 
+      };
+      
       setChatMessages(prev => [...prev, userMessage]);
       setNewMessage('');
       setIsLoading(true);
 
-      setTimeout(() => {
-        const aiResponses = [
-          "I understand exam stress. Would you like to try some breathing exercises?",
-          "Thank you for sharing. How long have you been feeling this way?",
-          "I'm here to listen. Would you like me to suggest some coping strategies?",
-          "Would you like me to connect you with one of our mental health professionals in Mumbai?"
-        ];
+      try {
+        const response = await sendMessageToAPI(newMessage);
+        
+        // Extract AI response from the API response structure
+        let aiResponseText = "I understand. Could you tell me more about how you're feeling?";
+        
+        if (response && response.success && response.data) {
+          // New API response structure
+          aiResponseText = response.data.aiResponse || response.data.message || response.data.text;
+        } else if (response && response.response) {
+          // Alternative response structure
+          aiResponseText = response.response;
+        } else if (response && response.message) {
+          aiResponseText = response.message;
+        } else if (response && response.text) {
+          aiResponseText = response.text;
+        } else if (response && response.data) {
+          aiResponseText = response.data;
+        }
+        
         const aiMessage = {
           id: Date.now() + 1,
-          text: aiResponses[Math.floor(Math.random() * aiResponses.length)],
+          text: aiResponseText,
           sender: 'ai'
         };
+        
         setChatMessages(prev => [...prev, aiMessage]);
+        
+      } catch (error) {
+        // Handle error - show error message to user
+        let errorMessageText = "I'm having trouble connecting. Please try again or call our crisis helpline at 9152987821 if you need immediate support.";
+        
+        if (error.response) {
+          // Server responded with error
+          console.error('Server Error:', error.response.data);
+          errorMessageText = "Server is busy. Please try again in a moment.";
+        } else if (error.request) {
+          // Request made but no response
+          console.error('No response:', error.request);
+          errorMessageText = "Network issue. Please check your internet connection.";
+        } else {
+          // Something else happened
+          console.error('Error:', error.message);
+        }
+        
+        const errorMessage = {
+          id: Date.now() + 1,
+          text: errorMessageText,
+          sender: 'ai'
+        };
+        
+        setChatMessages(prev => [...prev, errorMessage]);
+      } finally {
         setIsLoading(false);
-      }, 1000);
+      }
     }
   };
 
@@ -62,10 +149,11 @@ const Leanding = () => {
         <FeaturesSection />
         <DoctorsSection />
         <TestimonialsSection />
-     
         <FAQSection />
       </main>
       <Footer />
+      
+      {/* Chat Popup */}
       {chatOpen && (
         <ChatPopup
           messages={chatMessages}
@@ -78,11 +166,14 @@ const Leanding = () => {
           chatBodyRef={chatBodyRef}
         />
       )}
-      <ChatButton onClick={() => setChatOpen(true)} />
+      
+      {/* Chat Button */}
+      {!chatOpen && <ChatButton onClick={() => setChatOpen(true)} />}
     </div>
   );
 };
 
+// ========== HEADER COMPONENT ==========
 const Header = ({ onLoginClick }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -100,7 +191,6 @@ const Header = ({ onLoginClick }) => {
     { href: '#how-it-works', label: 'How It Works' },
     { href: '#features', label: 'Features' },
     { href: '#doctors', label: 'Our Doctors' },
-    // { href: '#pricing', label: 'Pricing' },
     { href: '#testimonials', label: 'Testimonials' }
   ];
 
@@ -142,6 +232,7 @@ const Header = ({ onLoginClick }) => {
   );
 };
 
+// ========== HERO SECTION ==========
 const HeroSection = () => (
   <section className="section hero" id="home">
     <div className="container">
@@ -204,6 +295,7 @@ const StatItem = ({ number, label }) => (
   </div>
 );
 
+// ========== SERVICES SECTION ==========
 const ServicesSection = () => {
   const services = [
     {
@@ -266,6 +358,7 @@ const ServicesSection = () => {
   );
 };
 
+// ========== HOW IT WORKS SECTION ==========
 const HowItWorksSection = () => {
   const steps = [
     {
@@ -320,6 +413,7 @@ const HowItWorksSection = () => {
   );
 };
 
+// ========== FEATURES SECTION ==========
 const FeaturesSection = () => {
   const features = [
     {
@@ -379,6 +473,7 @@ const FeaturesSection = () => {
   );
 };
 
+// ========== DOCTORS SECTION ==========
 const DoctorsSection = () => {
   const doctors = [
     {
@@ -426,7 +521,6 @@ const DoctorsSection = () => {
       languages: ["English", "Hindi", "Punjabi"],
       hospital: "Fortis Hospital, Delhi"
     },
-
   ];
 
   return (
@@ -496,6 +590,7 @@ const DoctorsSection = () => {
   );
 };
 
+// ========== TESTIMONIALS SECTION ==========
 const TestimonialsSection = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const testimonials = [
@@ -533,7 +628,7 @@ const TestimonialsSection = () => {
     <section className="section testimonials" id="testimonials">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">Stories from Across </h2>
+          <h2 className="section-title">Stories from Across India</h2>
           <p className="section-description">
             Real stories from people across India who found support and healing through MediConeckt.
           </p>
@@ -568,8 +663,7 @@ const TestimonialsSection = () => {
   );
 };
 
-
-
+// ========== FAQ SECTION ==========
 const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState(null);
   const faqs = [
@@ -629,6 +723,7 @@ const FAQSection = () => {
   );
 };
 
+// ========== FOOTER ==========
 const Footer = () => (
   <footer className="footer">
     <div className="container">
@@ -684,17 +779,13 @@ const Footer = () => (
           <p>&copy; {new Date().getFullYear()} MediConeckt India. All rights reserved.</p>
           <p className="emergency-notice">
             <i className="fas fa-exclamation-triangle"></i>
-            <strong>24/7 Crisis Support:</strong> Call +91-XXX-XXX-XXXX (India) or 
+            <strong>24/7 Crisis Support:</strong> Call +91-9152987821 (India) or 
             <a href="tel:9152987821" style={{color: '#fff', marginLeft: '5px'}}> 9152987821</a> (Toll-Free)
           </p>
           <p className="emergency-notice">
             <i className="fas fa-map-marker-alt"></i>
             <strong>Corporate Office:</strong> Saket Nagar, Indore, Madhya Pradesh 452018, India
           </p>
-          {/* <p className="emergency-notice">
-            <i className="fas fa-building"></i>
-            <strong>Regional Offices:</strong> Delhi NCR | Bangalore | Chennai | Kolkata | Pune | Hyderabad
-          </p> */}
         </div>
         <div className="footer-legal">
           <a href="#">Privacy Policy (India)</a>
@@ -707,6 +798,7 @@ const Footer = () => (
   </footer>
 );
 
+// ========== CHAT POPUP COMPONENT ==========
 const ChatPopup = ({ 
   messages, 
   newMessage, 
@@ -726,10 +818,13 @@ const ChatPopup = ({
           </div>
           <div>
             <h3>MediConeckt AI Assistant</h3>
-            <p className="chat-status">Available in English, हिन्दी, தமிழ், తెలుగు</p>
+            <p className="chat-status">
+              <span className="status-dot"></span>
+              Available in English, हिन्दी, தமிழ், తెలుగు
+            </p>
           </div>
         </div>
-        <button className="chat-close-btn" onClick={onClose}>
+        <button className="chat-close-btn" onClick={onClose} aria-label="Close chat">
           <i className="fas fa-times"></i>
         </button>
       </div>
@@ -738,21 +833,29 @@ const ChatPopup = ({
         {messages.map(message => (
           <div key={message.id} className={`chat-message-wrapper ${message.sender}`}>
             {message.sender === 'ai' && (
-              <div className="chat-avatar">
+              <div className="chat-avatar small">
                 <i className="fas fa-robot"></i>
               </div>
             )}
-            <div className="chat-bubble">{message.text}</div>
+            <div className="chat-bubble">
+              {message.text.split('\n').map((line, i) => (
+                <React.Fragment key={i}>
+                  {line}
+                  {i < message.text.split('\n').length - 1 && <br />}
+                </React.Fragment>
+              ))}
+            </div>
             {message.sender === 'user' && (
-              <div className="chat-avatar">
+              <div className="chat-avatar small">
                 <i className="fas fa-user"></i>
               </div>
             )}
           </div>
         ))}
+        
         {isLoading && (
           <div className="chat-message-wrapper ai">
-            <div className="chat-avatar">
+            <div className="chat-avatar small">
               <i className="fas fa-robot"></i>
             </div>
             <div className="chat-bubble">
@@ -773,11 +876,14 @@ const ChatPopup = ({
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={handleKeyPress}
+          disabled={isLoading}
+          aria-label="Chat message input"
         />
         <button 
           className="btn btn-primary send-btn"
           onClick={sendMessage}
-          disabled={isLoading}
+          disabled={isLoading || !newMessage.trim()}
+          aria-label="Send message"
         >
           <i className="fas fa-paper-plane"></i>
         </button>
@@ -786,8 +892,9 @@ const ChatPopup = ({
   </div>
 );
 
+// ========== CHAT BUTTON COMPONENT ==========
 const ChatButton = ({ onClick }) => (
-  <button className="chat-button" onClick={onClick}>
+  <button className="chat-button" onClick={onClick} aria-label="Open chat">
     <i className="fas fa-comment-medical"></i>
     <span className="pulse-indicator"></span>
   </button>

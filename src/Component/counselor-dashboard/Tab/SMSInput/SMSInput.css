@@ -1,0 +1,1001 @@
+/* SMSInput.css - Fully Responsive with NO BORDER on Input Field */
+/* Icon-only call buttons, fixed back navigation on mobile */
+
+/* CSS Variables for Consistent Theming */
+:root {
+  --primary-color: #2563eb;
+  --primary-dark: #1d4ed8;
+  --primary-light: #3b82f6;
+  --success-color: #22c55e;
+  --danger-color: #dc2626;
+  --danger-dark: #b91c1c;
+  --gray-50: #f8fafc;
+  --gray-100: #f1f5f9;
+  --gray-200: #e2e8f0;
+  --gray-300: #cbd5e1;
+  --gray-400: #94a3b8;
+  --gray-500: #64748b;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1e293b;
+  --gray-900: #0f172a;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+  --radius-full: 9999px;
+}
+
+/* Base Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Main Container */
+.smsinput-container {
+  width: 100%;
+  height: 100vh;
+  background: white;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.02);
+  position: relative;
+  overflow: hidden;
+}
+
+/* No User Selected State */
+.smsinput-container.no-user {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+}
+
+.smsinput-empty-state {
+  text-align: center;
+  padding: clamp(20px, 8vw, 40px);
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+.smsinput-empty-state .empty-icon {
+  font-size: clamp(3rem, 15vw, 5rem);
+  display: block;
+  margin-bottom: clamp(16px, 5vw, 20px);
+  opacity: 0.3;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.smsinput-empty-state h3 {
+  font-size: clamp(1.25rem, 5vw, 1.5rem);
+  color: var(--gray-800);
+  margin-bottom: clamp(8px, 3vw, 10px);
+  font-weight: 600;
+}
+
+.smsinput-empty-state p {
+  color: var(--gray-500);
+  font-size: clamp(0.9rem, 3vw, 1rem);
+  margin-bottom: clamp(16px, 5vw, 20px);
+}
+
+/* Header Styles - Fixed for mobile back button */
+.smsinput-header {
+  padding: clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px);
+  background: white;
+  border-bottom: 1px solid var(--gray-200);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(10px, 2vw, 15px);
+  box-shadow: var(--shadow-sm);
+  z-index: 10;
+  position: sticky;
+  top: 0;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 16px);
+  flex: 1;
+  min-width: 200px;
+}
+
+/* Back Button Styles - Fixed for mobile */
+.back-button {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 1.5vw, 8px);
+  padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px);
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-full);
+  color: var(--gray-600);
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 20;
+  position: relative;
+}
+
+.back-button:hover:not(:active) {
+  background: var(--gray-200);
+  border-color: var(--gray-400);
+  transform: translateX(-4px);
+  color: var(--gray-800);
+}
+
+.back-button:active {
+  transform: translateX(-2px) scale(0.98);
+  background: var(--gray-300);
+}
+
+.back-button svg {
+  width: clamp(18px, 4vw, 20px);
+  height: clamp(18px, 4vw, 20px);
+}
+
+.back-text {
+  display: inline;
+}
+
+/* User Info */
+.smsinput-user-info {
+  display: flex;
+  align-items: center;
+  gap: clamp(12px, 3vw, 16px);
+  flex: 1;
+  min-width: 200px;
+}
+
+.smsinput-user-avatar {
+  width: clamp(48px, 12vw, 56px);
+  height: clamp(48px, 12vw, 56px);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: clamp(14px, 4vw, 18px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(1.5rem, 5vw, 1.8rem);
+  color: white;
+  position: relative;
+  flex-shrink: 0;
+  box-shadow: var(--shadow-md);
+}
+
+.smsinput-user-avatar .status-dot {
+  width: clamp(10px, 3vw, 14px);
+  height: clamp(10px, 3vw, 14px);
+  border-radius: 50%;
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  border: 2px solid white;
+  box-shadow: var(--shadow-sm);
+}
+
+.smsinput-user-avatar .status-dot.online {
+  background: var(--success-color);
+  animation: pulse 2s infinite;
+}
+
+.smsinput-user-avatar .status-dot.offline {
+  background: var(--gray-400);
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+}
+
+.smsinput-user-details {
+  min-width: 0;
+  flex: 1;
+}
+
+.smsinput-user-details h3 {
+  font-size: clamp(1rem, 4vw, 1.2rem);
+  color: var(--gray-800);
+  margin-bottom: clamp(2px, 1vw, 4px);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.smsinput-user-phone {
+  font-size: clamp(0.7rem, 2.5vw, 0.85rem);
+  color: var(--gray-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.smsinput-user-email {
+  font-size: clamp(0.65rem, 2vw, 0.75rem);
+  color: var(--gray-400);
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Call Buttons - ICON ONLY, no text */
+.smsinput-call-buttons {
+  display: flex;
+  gap: clamp(8px, 2vw, 12px);
+  flex-wrap: wrap;
+}
+
+.call-btn {
+  padding: clamp(10px, 2.5vw, 14px);
+  border: none;
+  border-radius: 50%;
+  font-size: 0; /* Hide any potential text */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+  width: clamp(44px, 10vw, 52px);
+  height: clamp(44px, 10vw, 52px);
+  box-shadow: var(--shadow-sm);
+}
+
+.call-btn .call-icon {
+  font-size: clamp(1.3rem, 4vw, 1.6rem);
+  line-height: 1;
+}
+
+.call-btn.voice {
+  background: #eef2ff;
+  color: var(--primary-color);
+}
+
+.call-btn.voice:hover:not(:active) {
+  background: #dbeafe;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.call-btn.video {
+  background: var(--primary-color);
+  color: white;
+}
+
+.call-btn.video:hover:not(:active) {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.call-btn:active {
+  transform: scale(0.92);
+}
+
+/* Messages Area */
+.smsinput-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: clamp(16px, 4vw, 24px);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(12px, 3vw, 16px);
+  background: linear-gradient(135deg, var(--gray-50) 0%, #ffffff 100%);
+  -webkit-overflow-scrolling: touch;
+}
+
+.smsinput-message {
+  display: flex;
+  max-width: min(80%, 400px);
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.smsinput-message.sent {
+  align-self: flex-end;
+}
+
+.smsinput-message.received {
+  align-self: flex-start;
+}
+
+.message-bubble {
+  padding: clamp(10px, 3vw, 14px) clamp(14px, 4vw, 18px);
+  border-radius: clamp(16px, 4vw, 20px);
+  position: relative;
+  word-wrap: break-word;
+  max-width: 100%;
+  box-shadow: var(--shadow-sm);
+}
+
+.sent .message-bubble {
+  background: var(--primary-color);
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.received .message-bubble {
+  background: white;
+  color: var(--gray-800);
+  border-bottom-left-radius: 4px;
+  box-shadow: var(--shadow-md);
+}
+
+.message-text {
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+  line-height: 1.5;
+  margin-bottom: 6px;
+  word-break: break-word;
+}
+
+.message-time {
+  font-size: clamp(0.55rem, 2vw, 0.65rem);
+  opacity: 0.7;
+  display: block;
+  text-align: right;
+}
+
+/* Message Input Form */
+.smsinput-form {
+  padding: clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px);
+  background: white;
+  border-top: 1px solid var(--gray-200);
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.02);
+}
+
+.smsinput-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: clamp(8px, 2vw, 12px);
+  background: var(--gray-50);
+  border-radius: var(--radius-full);
+  padding: 4px 4px 4px clamp(12px, 3vw, 16px);
+  transition: all 0.2s ease;
+}
+
+/* NO BORDER ON INPUT FIELD - Critical fix */
+.smsinput-input-wrapper,
+.smsinput-input-wrapper:focus-within,
+.smsinput-input,
+.smsinput-input:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Keep the wrapper background change on focus but no border */
+.smsinput-input-wrapper:focus-within {
+  background: white;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.attach-btn, .emoji-btn {
+  background: none;
+  border: none;
+  font-size: clamp(1.2rem, 3.5vw, 1.3rem);
+  cursor: pointer;
+  padding: clamp(6px, 2vw, 8px);
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  color: var(--gray-500);
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.attach-btn:hover:not(:active), .emoji-btn:hover:not(:active) {
+  background: var(--gray-200);
+  transform: scale(1.1);
+}
+
+.attach-btn:active, .emoji-btn:active {
+  transform: scale(0.95);
+}
+
+.smsinput-input {
+  flex: 1;
+  padding: clamp(10px, 3vw, 14px) 8px;
+  background: none;
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+  min-width: 50px;
+  color: var(--gray-800);
+}
+
+/* Additional reinforcement for no border */
+.smsinput-input,
+.smsinput-input:focus,
+.smsinput-input:active,
+.smsinput-input:hover {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.smsinput-input::placeholder {
+  color: var(--gray-400);
+}
+
+.send-btn {
+  padding: clamp(8px, 2.5vw, 12px) clamp(16px, 5vw, 28px);
+  background: var(--gray-200);
+  color: var(--gray-400);
+  border: none;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  cursor: not-allowed;
+  transition: all 0.2s ease;
+  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+  white-space: nowrap;
+}
+
+.send-btn.active {
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+}
+
+.send-btn.active:hover:not(:active) {
+  background: var(--primary-dark);
+  transform: scale(1.05);
+  box-shadow: var(--shadow-md);
+}
+
+.send-btn.active:active {
+  transform: scale(0.95);
+}
+
+/* Quick Reply Suggestions */
+.smsinput-suggestions {
+  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px) clamp(16px, 4vw, 20px);
+  display: flex;
+  gap: clamp(8px, 2vw, 10px);
+  flex-wrap: wrap;
+  background: white;
+  border-top: 1px solid var(--gray-100);
+}
+
+.suggestion-btn {
+  padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px);
+  background: var(--gray-100);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-full);
+  font-size: clamp(0.75rem, 2.5vw, 0.85rem);
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.suggestion-btn:hover:not(:active) {
+  background: var(--gray-200);
+  border-color: var(--gray-400);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.suggestion-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Back to List Button (for empty state) */
+.back-to-list-btn {
+  margin-top: 20px;
+  padding: clamp(10px, 3vw, 12px) clamp(20px, 6vw, 24px);
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: clamp(0.9rem, 3vw, 1rem);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.back-to-list-btn:hover:not(:active) {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.back-to-list-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Custom Scrollbar */
+.smsinput-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.smsinput-messages::-webkit-scrollbar-track {
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+}
+
+.smsinput-messages::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: var(--radius-full);
+}
+
+.smsinput-messages::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-400);
+}
+
+/* Firefox Scrollbar */
+.smsinput-messages {
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-300) var(--gray-100);
+}
+
+/* New Message Animation */
+.smsinput-message:last-child .message-bubble {
+  animation: newMessage 0.5s ease;
+}
+
+@keyframes newMessage {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+/* Touch Device Optimizations */
+@media (hover: none) and (pointer: coarse) {
+  .back-button,
+  .call-btn,
+  .send-btn.active,
+  .suggestion-btn,
+  .back-to-list-btn,
+  .attach-btn,
+  .emoji-btn {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .back-button:active,
+  .call-btn:active,
+  .send-btn.active:active,
+  .suggestion-btn:active,
+  .back-to-list-btn:active,
+  .attach-btn:active,
+  .emoji-btn:active {
+    transform: scale(0.95);
+  }
+  
+  .smsinput-messages {
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Small Phones (320px and up) - Critical mobile fixes */
+@media (max-width: 374px) {
+  .smsinput-user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-size: 1.3rem;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .back-button {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  
+  .smsinput-user-info {
+    width: 100%;
+  }
+  
+  .smsinput-call-buttons {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  
+  .call-btn {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+  }
+  
+  .call-btn .call-icon {
+    font-size: 1.4rem;
+  }
+  
+  .smsinput-message {
+    max-width: 90%;
+  }
+  
+  .smsinput-suggestions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 16px;
+  }
+  
+  .suggestion-btn {
+    flex-shrink: 0;
+  }
+  
+  .smsinput-user-details h3 {
+    font-size: 0.95rem;
+  }
+  
+  .smsinput-user-phone,
+  .smsinput-user-email {
+    font-size: 0.65rem;
+  }
+  
+  /* Back button fix for mobile - ensure it's tappable */
+  .back-button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Medium Phones (375px to 424px) */
+@media (min-width: 375px) and (max-width: 424px) {
+  .smsinput-user-avatar {
+    width: 48px;
+    height: 48px;
+  }
+  
+  .header-left {
+    gap: 10px;
+  }
+  
+  .call-btn {
+    width: 48px;
+    height: 48px;
+    padding: 0;
+  }
+  
+  .call-btn .call-icon {
+    font-size: 1.5rem;
+  }
+  
+  .smsinput-message {
+    max-width: 85%;
+  }
+  
+  .back-button {
+    min-height: 44px;
+  }
+}
+
+/* Large Phones (425px to 767px) */
+@media (min-width: 425px) and (max-width: 767px) {
+  .smsinput-container {
+    max-width: 100%;
+  }
+  
+  .header-left {
+    flex: 1;
+  }
+  
+  .call-btn {
+    width: 50px;
+    height: 50px;
+    padding: 0;
+  }
+  
+  .call-btn .call-icon {
+    font-size: 1.6rem;
+  }
+  
+  .smsinput-message {
+    max-width: 80%;
+  }
+  
+  .back-button {
+    min-height: 44px;
+  }
+}
+
+/* Tablets (768px to 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .smsinput-container {
+    max-width: 100%;
+  }
+  
+  .smsinput-header {
+    padding: 16px 20px;
+  }
+  
+  .smsinput-user-avatar {
+    width: 52px;
+    height: 52px;
+  }
+  
+  .call-btn {
+    width: 52px;
+    height: 52px;
+    padding: 0;
+  }
+  
+  .call-btn .call-icon {
+    font-size: 1.7rem;
+  }
+  
+  .smsinput-message {
+    max-width: 70%;
+  }
+  
+  .smsinput-suggestions {
+    padding: 12px 20px 16px;
+  }
+}
+
+/* Small Laptops (1024px to 1279px) */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .smsinput-container {
+    max-width: calc(100% - 360px);
+    margin-left: auto;
+  }
+  
+  .smsinput-message {
+    max-width: 60%;
+  }
+  
+  .call-btn {
+    width: 52px;
+    height: 52px;
+  }
+}
+
+/* Large Laptops and Desktops (1280px and up) */
+@media (min-width: 1280px) {
+  .smsinput-container {
+    margin-left: auto;
+  }
+  
+  .smsinput-message {
+    max-width: 55%;
+  }
+  
+  .smsinput-message:hover .message-bubble {
+    transform: scale(1.02);
+    transition: transform 0.2s;
+  }
+  
+  .call-btn {
+    width: 54px;
+    height: 54px;
+  }
+}
+
+/* Landscape Mode */
+@media (orientation: landscape) and (max-height: 600px) {
+  .smsinput-container {
+    height: 100vh;
+  }
+  
+  .smsinput-header {
+    padding: 8px 16px;
+  }
+  
+  .smsinput-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 1.2rem;
+  }
+  
+  .smsinput-messages {
+    padding: 12px 16px;
+  }
+  
+  .smsinput-form {
+    padding: 8px 16px;
+  }
+  
+  .smsinput-suggestions {
+    display: none;
+  }
+  
+  .call-btn {
+    width: 42px;
+    height: 42px;
+    padding: 0;
+  }
+  
+  .call-btn .call-icon {
+    font-size: 1.3rem;
+  }
+  
+  .back-button {
+    min-height: 40px;
+  }
+}
+
+/* High Resolution Screens */
+@media (min-width: 1440px) {
+  .smsinput-message {
+    max-width: 50%;
+  }
+  
+  .call-btn {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --gray-50: #1a1a1a;
+    --gray-100: #2d2d2d;
+    --gray-200: #404040;
+    --gray-300: #525252;
+    --gray-400: #737373;
+    --gray-500: #a3a3a3;
+    --gray-600: #d4d4d4;
+    --gray-700: #e5e5e5;
+    --gray-800: #f5f5f5;
+    --gray-900: #ffffff;
+  }
+  
+  .smsinput-container {
+    background: var(--gray-900);
+  }
+  
+  .smsinput-header {
+    background: var(--gray-900);
+    border-bottom-color: var(--gray-700);
+  }
+  
+  .back-button {
+    background: var(--gray-800);
+    border-color: var(--gray-600);
+    color: var(--gray-300);
+  }
+  
+  .back-button:hover {
+    background: var(--gray-700);
+    color: var(--gray-100);
+  }
+  
+  .smsinput-user-details h3 {
+    color: white;
+  }
+  
+  .smsinput-user-phone,
+  .smsinput-user-email {
+    color: var(--gray-400);
+  }
+  
+  .smsinput-messages {
+    background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
+  }
+  
+  .received .message-bubble {
+    background: var(--gray-800);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+  
+  .smsinput-form {
+    background: var(--gray-900);
+    border-top-color: var(--gray-700);
+  }
+  
+  .smsinput-input-wrapper {
+    background: var(--gray-800);
+  }
+  
+  .smsinput-input {
+    color: white;
+  }
+  
+  .smsinput-input::placeholder {
+    color: var(--gray-500);
+  }
+  
+  /* Dark mode - no border */
+  .smsinput-input-wrapper,
+  .smsinput-input-wrapper:focus-within,
+  .smsinput-input,
+  .smsinput-input:focus {
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+  }
+  
+  .attach-btn, .emoji-btn {
+    color: var(--gray-400);
+  }
+  
+  .attach-btn:hover, .emoji-btn:hover {
+    background: var(--gray-700);
+    color: white;
+  }
+  
+  .smsinput-suggestions {
+    background: var(--gray-900);
+    border-top-color: var(--gray-700);
+  }
+  
+  .suggestion-btn {
+    background: var(--gray-800);
+    border-color: var(--gray-700);
+    color: var(--gray-300);
+  }
+  
+  .suggestion-btn:hover {
+    background: var(--gray-700);
+    color: white;
+  }
+  
+  .smsinput-empty-state {
+    background: var(--gray-900);
+  }
+  
+  .smsinput-empty-state h3 {
+    color: white;
+  }
+  
+  .smsinput-empty-state p {
+    color: var(--gray-400);
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .back-button,
+  .call-btn,
+  .send-btn,
+  .suggestion-btn,
+  .message-bubble,
+  .smsinput-message,
+  .back-to-list-btn,
+  .attach-btn,
+  .emoji-btn {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Focus Styles for Keyboard Navigation */
+.back-button:focus-visible,
+.call-btn:focus-visible,
+.send-btn:focus-visible,
+.suggestion-btn:focus-visible,
+.back-to-list-btn:focus-visible,
+.attach-btn:focus-visible,
+.emoji-btn:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}

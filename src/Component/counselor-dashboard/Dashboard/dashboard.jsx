@@ -7,16 +7,10 @@ import {
   FaVideo,
   FaComments,
   FaUserCircle,
-  FaClock,
-  FaCheckCircle,
-  FaTimesCircle,
   FaStar,
   FaBell,
   FaArrowRight,
   FaExclamationTriangle,
-  FaSmile,
-  FaFrown,
-  FaMeh,
   FaUsers,
   FaMoneyBillWave,
   FaChartPie,
@@ -26,36 +20,28 @@ import {
   FaTimes,
   FaHome,
 } from "react-icons/fa";
-
 // Custom Hooks
 import useVibration from '../../../hooks/useVibration';
+import Dashboard from '../Tab/CounselorDashboard/Dashboardcou';
+import Messagesou from '../Tab/Messages/Messagesou';
 
 export default function CounselorDashboard() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState('messages');
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(new Date());
   const [showNotesModal, setShowNotesModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [isLoading, setIsLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-
   const navigate = useNavigate();
   const vibrate = useVibration();
-
   // Check screen size
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-
     checkMobile();
     window.addEventListener('resize', checkMobile);
-
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
   // Counselor Data - All Indian names
   const [counselorData, setCounselorData] = useState({
     name: "Dr. Priya Sharma",
@@ -72,39 +58,31 @@ export default function CounselorDashboard() {
     languages: ["Hindi", "English"],
     specializations: ["Anxiety", "Depression", "Trauma", "Couples Therapy"]
   });
-
   const navItems = [
-    { id: 'dashboard', icon: <FaHome />, label: 'Dashboard', badge: 0 },
-      { id: 'messages', icon: <FaComments />, label: 'Messages', badge: 5 },
+    // { id: 'dashboard', icon: <FaHome />, label: 'Dashboard', badge: 0 },
+    { id: 'messages', icon: <FaComments />, label: 'Messages', badge: 1 },
     { id: 'appointments', icon: <FaCalendarAlt />, label: 'Appointments', },
     { id: 'sessions', icon: <FaVideo />, label: 'Sessions', badge: 0 },
     { id: 'patients', icon: <FaUsers />, label: 'Patients', badge: 0 },
-  
+
     { id: 'earnings', icon: <FaMoneyBillWave />, label: 'Earnings', badge: 0 },
     { id: 'analytics', icon: <FaChartPie />, label: 'Analytics', badge: 0 },
     { id: 'settings', icon: <FaCog />, label: 'Settings', badge: 0 }
   ];
-
   // Handle appointment status change
-
-
   // Handle logout
   const handleLogout = () => {
     vibrate([50, 30, 50]);
     setShowLogoutConfirm(false);
     navigate('/role-selector');
   };
-
   // Handle tab change
   const handleTabChange = (tabId) => {
     vibrate(20);
     setActiveTab(tabId);
     setShowMobileMenu(false);
   };
-
   // Filter appointments based on status and search
-
-
   return (
     <div className="couns-dashboard">
       {/* Desktop Sidebar */}
@@ -238,32 +216,13 @@ export default function CounselorDashboard() {
       )}
 
       {/* Main Content */}
-      <main className={`couns-main-content ${isMobile ? 'mobile' : ''}`}>
-        {/* Welcome Banner */}
-        {/* <div className="couns-welcome-banner">
-          <div className="couns-welcome-text">
-            <h1>Welcome back, Dr. Sharma! 👋</h1>
-            <p>You have {todayAppointments.length} sessions scheduled for today</p>
-          </div>
-          <div className="couns-quick-actions">
-            <button 
-              className="couns-quick-btn"
-              onClick={() => handleTabChange('appointments')}
-            >
-              <FaCalendarCheck /> View Schedule
-            </button>
-            <button className="couns-quick-btn primary">
-              <FaVideo /> Start Next Session
-            </button>
-          </div>
-        </div> */}
-
-        {/* Dashboard Tab */}
+      <div className={`couns-main-content ${isMobile ? 'mobile' : ''}`}>
+       
         {activeTab === 'dashboard' && (
           <>
             <div className="couns-tab-content">
               <div className="couns-tab-header">
-                <h2>Dashboard</h2>
+               <Dashboard/>
               </div>
             </div>
           </>
@@ -309,7 +268,7 @@ export default function CounselorDashboard() {
         {activeTab === 'messages' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
-              <h2>Messages</h2>
+              <Messagesou/>
             </div>
 
           </div>
@@ -332,7 +291,7 @@ export default function CounselorDashboard() {
             </div>
           </div>
         )}
-      </main>
+      </div>
 
       {/* Session Notes Modal */}
       {showNotesModal && (

@@ -10,6 +10,9 @@ import RoleSelector from './authtication/RoleSelector'
 import CounselorSignup from './authtication/CounselorSignup'
 import UserSignup from './authtication/UserSignup'
 import CounselorDashboard from './Component/counselor-dashboard/Dashboard/dashboard'
+import CounselorTable from './Component/UserDashboard/Tab/Counselor/CounselorDirectory'
+import SMSInput from './Component/counselor-dashboard/Tab/SMSInput/SMSInput.'
+import OTPVerification from './authtication/OTPVerification'
 
 
 function App() {
@@ -22,14 +25,14 @@ function App() {
     const checkScreenSize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      
+
       const currentPath = location.pathname;
-      
+
       // Agar mobile hai to sirf login page dikhao, home page mat dikhao
       if (mobile && currentPath === '/') {
         navigate('/');
       }
-      
+
       // Agar mobile nahi hai (desktop) to kuch mat karo - user jo chahe wahan ja sakta hai
     };
 
@@ -49,13 +52,16 @@ function App() {
         <Route path="/" element={<Leanding />} />
         <Route path="/login" element={<Login />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
-        <Route path="/chatbox/:id" element={<ChatBox />} />
+        <Route path="/chat/:id" element={<ChatBox />} />
         <Route path="/role-selector" element={<RoleSelector />} />
-         <Route path="/counselor-signup" element={<CounselorSignup />} />
-         <Route path="/user-signup" element={<UserSignup />} />       
-       <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
+        <Route path="/counselor-signup" element={<CounselorSignup />} />
+        <Route path="/user-signup" element={<UserSignup />} />
+        <Route path="/counselor-directory" element={<CounselorTable />} />
+        <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
+        <Route path="/sms-input" element={<SMSInput />} />
+        <Route path="/otp-verification" element={<OTPVerification />} />
 
-        
+
       </Routes>
     </>
   )

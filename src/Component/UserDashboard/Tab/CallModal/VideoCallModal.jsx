@@ -1,4 +1,5 @@
-// VideoCallModal.jsx
+// VideoCallModal.jsx - Fixed Camera Switching
+
 import React, { useState, useEffect, useRef } from 'react';
 import './VideoCallModal.css';
 
@@ -6,7 +7,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeakerOn, setIsSpeakerOn] = useState(false);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-    const [isCameraSwitched, setIsCameraSwitched] = useState(false);
+    const [isCameraSwitched, setIsCameraSwitched] = useState(false); // false = front camera, true = back camera
     const [callDuration, setCallDuration] = useState(0);
     const [isCallActive, setIsCallActive] = useState(true);
     const [isFullScreen, setIsFullScreen] = useState(false);
@@ -37,7 +38,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
 
     useEffect(() => {
         if (isOpen && !isCameraInitialized) {
-            initializeCamera();
+            initializeCamera(false); // Initialize with front camera (false)
             getAvailableCameras();
         }
 
@@ -49,6 +50,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         };
     }, [isOpen]);
 
+    // Rest of your useEffect hooks remain the same...
     useEffect(() => {
         let timer;
         if (isOpen && isCallActive) {
@@ -96,7 +98,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
             setIsMuted(false);
             setIsSpeakerOn(false);
             setIsVideoEnabled(true);
-            setIsCameraSwitched(false);
+            setIsCameraSwitched(false); // Reset to front camera
             setCallDuration(0);
             setIsCallActive(true);
             setIsFullScreen(false);
@@ -118,16 +120,27 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         }
     }, [isOpen]);
 
-    const initializeCamera = async () => {
+    // FIXED: Initialize camera with proper facing mode
+    const initializeCamera = async (useBackCamera = false) => {
         try {
+            // Stop any existing tracks
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            }
+
+            // Set facing mode: 'user' for front camera, 'environment' for back camera
+            const facingMode = useBackCamera ? 'environment' : 'user';
+            
             const constraints = {
                 video: {
                     width: { ideal: 1920 },
                     height: { ideal: 1080 },
-                    facingMode: isCameraSwitched ? 'user' : 'environment'
+                    facingMode: facingMode, // 'user' = front camera, 'environment' = back camera
                 },
                 audio: true
             };
+
+            console.log(`Initializing camera with facingMode: ${facingMode}`); // For debugging
 
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             mediaStreamRef.current = stream;
@@ -141,34 +154,120 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
             }
 
             setIsCameraInitialized(true);
+            
+            // Get the current camera info
+            const videoTrack = stream.getVideoTracks()[0];
+            const settings = videoTrack.getSettings();
+            if (settings.deviceId) {
+                setCurrentCamera(settings.deviceId);
+            }
+            
         } catch (error) {
             console.error('Error accessing camera:', error);
-            alert('Unable to access camera. Please check permissions.');
+            
+            // Fallback: Try with basic constraints if facingMode fails
+            try {
+                console.log('Trying fallback camera access...');
+                const fallbackStream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                
+                mediaStreamRef.current = fallbackStream;
+                
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = fallbackStream;
+                }
+                
+                setIsCameraInitialized(true);
+                
+            } catch (fallbackError) {
+                console.error('Fallback camera access also failed:', fallbackError);
+                alert('Unable to access camera. Please check permissions.');
+            }
         }
     };
 
+    // FIXED: Get all available cameras and identify front/back
     const getAvailableCameras = async () => {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            setAvailableCameras(videoDevices);
-            if (videoDevices.length > 0) {
-                setCurrentCamera(videoDevices[0].deviceId);
+            
+            // Enhance camera info with labels and identify front/back
+            const enhancedCameras = videoDevices.map(device => {
+                const label = device.label.toLowerCase();
+                return {
+                    ...device,
+                    isFrontCamera: label.includes('front') || label.includes('user') || label.includes('face'),
+                    isBackCamera: label.includes('back') || label.includes('environment') || label.includes('rear'),
+                };
+            });
+            
+            setAvailableCameras(enhancedCameras);
+            
+            // Try to set front camera as default
+            const frontCamera = enhancedCameras.find(cam => cam.isFrontCamera);
+            if (frontCamera) {
+                setCurrentCamera(frontCamera.deviceId);
+            } else if (enhancedCameras.length > 0) {
+                setCurrentCamera(enhancedCameras[0].deviceId);
             }
+            
         } catch (error) {
             console.error('Error getting cameras:', error);
         }
     };
 
+    // FIXED: Switch camera function
     const switchCamera = async () => {
-        setIsCameraSwitched(!isCameraSwitched);
+        // Toggle camera state
+        const newCameraState = !isCameraSwitched; // false -> true (front to back), true -> false (back to front)
+        setIsCameraSwitched(newCameraState);
+        
+        console.log(`Switching camera to: ${newCameraState ? 'back' : 'front'} camera`);
+        
+        // Reinitialize camera with new facing mode
+        await initializeCamera(newCameraState);
+    };
 
-        if (mediaStreamRef.current) {
-            mediaStreamRef.current.getTracks().forEach(track => track.stop());
-            await initializeCamera();
+    // FIXED: Select specific camera by deviceId
+    const selectCamera = async (deviceId) => {
+        try {
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            }
+
+            const constraints = {
+                video: {
+                    deviceId: { exact: deviceId },
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                },
+                audio: true
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            mediaStreamRef.current = stream;
+
+            if (localVideoRef.current) {
+                localVideoRef.current.srcObject = stream;
+            }
+
+            setCurrentCamera(deviceId);
+            
+            // Update isCameraSwitched based on camera type
+            const selectedCamera = availableCameras.find(cam => cam.deviceId === deviceId);
+            if (selectedCamera) {
+                setIsCameraSwitched(selectedCamera.isBackCamera || false);
+            }
+            
+        } catch (error) {
+            console.error('Error selecting camera:', error);
         }
     };
 
+    // Rest of your functions remain the same...
     const toggleScreenShare = async () => {
         if (!isScreenSharing) {
             try {
@@ -192,14 +291,14 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
 
                 screenStream.getVideoTracks()[0].onended = () => {
                     setIsScreenSharing(false);
-                    initializeCamera();
+                    initializeCamera(isCameraSwitched); // Maintain current camera setting
                 };
             } catch (error) {
                 console.error('Error sharing screen:', error);
             }
         } else {
             setIsScreenSharing(false);
-            initializeCamera();
+            initializeCamera(isCameraSwitched); // Maintain current camera setting
         }
     };
 
@@ -385,6 +484,14 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                     <span className="share-text">Sharing screen</span>
                                 </div>
                             )}
+
+                            {/* Camera Indicator - Shows which camera is active */}
+                            <div className="camera-indicator">
+                                <span className="camera-icon">📷</span>
+                                <span className="camera-text">
+                                    {isCameraSwitched ? 'Back Camera' : 'Front Camera'}
+                                </span>
+                            </div>
                         </div>
 
                         {/* Local Video (Picture in Picture) */}
@@ -407,7 +514,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 </div>
                             )}
                             <div className="local-video-label">
-                                <span>You</span>
+                                <span>You ({isCameraSwitched ? 'Back' : 'Front'})</span>
                             </div>
                         </div>
 
@@ -427,14 +534,26 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                     <span>{volumeLevel}%</span>
                                 </div>
                                 <div className="setting-item">
-                                    <label>Camera</label>
-                                    <select value={currentCamera} onChange={(e) => setCurrentCamera(e.target.value)}>
+                                    <label>Select Camera</label>
+                                    <select 
+                                        value={currentCamera} 
+                                        onChange={(e) => selectCamera(e.target.value)}
+                                    >
                                         {availableCameras.map(camera => (
                                             <option key={camera.deviceId} value={camera.deviceId}>
-                                                {camera.label || `Camera ${camera.deviceId.slice(0, 5)}`}
+                                                {camera.label || 
+                                                 (camera.isFrontCamera ? 'Front Camera' : 
+                                                  camera.isBackCamera ? 'Back Camera' : 
+                                                  `Camera ${camera.deviceId.slice(0, 5)}...`)}
                                             </option>
                                         ))}
                                     </select>
+                                </div>
+                                <div className="setting-item">
+                                    <label>Current Camera</label>
+                                    <p className="current-camera-info">
+                                        {isCameraSwitched ? '📷 Back Camera' : '🤳 Front Camera'}
+                                    </p>
                                 </div>
                                 <button className="close-settings" onClick={() => setShowSettings(false)}>
                                     Close
@@ -474,11 +593,13 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                             <button
                                 className="control-btn"
                                 onClick={switchCamera}
-                                title="Switch camera"
+                                title={isCameraSwitched ? 'Switch to front camera' : 'Switch to back camera'}
                                 disabled={availableCameras.length < 2}
                             >
                                 <span className="btn-icon">🔄</span>
-                                <span className="btn-label">Switch</span>
+                                <span className="btn-label">
+                                    {isCameraSwitched ? 'Front' : 'Back'}
+                                </span>
                             </button>
 
                             <button
@@ -490,9 +611,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 <span className="btn-label">{isScreenSharing ? 'Stop share' : 'Share'}</span>
                             </button>
 
-
-
-
+                           
 
                             <button
                                 className="control-btn end-call"
