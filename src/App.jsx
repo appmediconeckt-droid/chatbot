@@ -52,9 +52,8 @@ function App() {
         <Route path="/chatbox/:id" element={<ChatBox />} />
         <Route path="/role-selector" element={<RoleSelector />} />
          <Route path="/counselor-signup" element={<CounselorSignup />} />
-          <Route path="/user-signup" element={<UserSignup />} />
-
-             <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
+         <Route path="/user-signup" element={<UserSignup />} />       
+       <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
 
         
       </Routes>
