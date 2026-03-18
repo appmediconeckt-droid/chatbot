@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Base URL for API
-export const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/api';
+export const API_BASE_URL = 'https://sdpd86vs-5000.inc1.devtunnels.ms/api';
 
 // Create axios instance with default config
 const axiosInstance = axios.create({
@@ -16,8 +16,7 @@ const axiosInstance = axios.create({
 // Request interceptor to add token to headers
 axiosInstance.interceptors.request.use(
   (config) => {
-    // Accept either accessToken or legacy token key
-    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+    const token = localStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
       console.log('Token added to header:', token.substring(0, 20) + '...');

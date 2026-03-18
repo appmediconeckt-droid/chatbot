@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../axiosConfig';
-import { updateVerificationStatus, getUserEmail, getAccessToken } from './authUtils';
+import { updateVerificationStatus, setUserEmail, getAccessToken } from './authUtils';
 import './OTPVerification.css';
 
 const OTPVerification = () => {
   const navigate = useNavigate();
-  const location = useLocation();
+  const [step, setStep] = useState('email');
+  const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [timer, setTimer] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -16,29 +17,65 @@ const OTPVerification = () => {
   const [success, setSuccess] = useState('');
   const inputRefs = useRef([]);
 
-  // Get email from location state or localStorage
-  const email = location.state?.email || getUserEmail();
-
-  useEffect(() => {
-    // Redirect if no email is available
-    if (!email) {
-      navigate('/user-signup');
+  // Handle email submission
+  const handleSendCode = async (e) => {
+    e.preventDefault();
+    
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('Please enter a valid email address');
+      return;
     }
 
-    // Start timer
-    const interval = setInterval(() => {
-      setTimer((prevTimer) => {
-        if (prevTimer <= 1) {
-          setCanResend(true);
-          clearInterval(interval);
-          return 0;
-        }
-        return prevTimer - 1;
-      });
-    }, 1000);
+    setIsLoading(true);
+    setError('');
+    setSuccess('');
 
-    return () => clearInterval(interval);
-  }, [email, navigate]);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/auth/generateOtp`,
+        { email: email },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        setSuccess('Verification code sent to your email!');
+        setStep('otp');
+        setTimer(60);
+        setCanResend(false);
+        setUserEmail(email);
+        
+        // Start timer
+        const interval = setInterval(() => {
+          setTimer((prevTimer) => {
+            if (prevTimer <= 1) {
+              setCanResend(true);
+              clearInterval(interval);
+              return 0;
+            }
+            return prevTimer - 1;
+          });
+        }, 1000);
+
+        // Focus first OTP input
+        setTimeout(() => {
+          if (inputRefs.current[0]) {
+            inputRefs.current[0].focus();
+          }
+        }, 100);
+
+        return () => clearInterval(interval);
+      }
+    } catch (error) {
+      console.error('Send code error:', error);
+      setError('Failed to send verification code. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleOtpChange = (index, value) => {
     if (value.length > 1) {
@@ -91,7 +128,7 @@ const OTPVerification = () => {
       const token = getAccessToken();
       
       const response = await axios.post(
-        `${API_BASE_URL}/auth/verify-otp`,
+        `${API_BASE_URL}/auth/verifyOtp`,
         {
           email: email,
           otp: otpString
@@ -105,9 +142,14 @@ const OTPVerification = () => {
       );
 
       if (response.data.success) {
-        setSuccess('OTP verified successfully!');
+        setSuccess('Login successful!');
         
-        // Update verification status in localStorage
+        // Store auth token if provided
+        if (response.data.token) {
+          localStorage.setItem('accessToken', response.data.token);
+        }
+        
+        // Update verification status
         updateVerificationStatus(true);
         
         // Redirect to dashboard after short delay
@@ -169,64 +211,103 @@ const OTPVerification = () => {
     }
   };
 
+  const handleBackToEmail = () => {
+    setStep('email');
+    setOtp(['', '', '', '', '', '']);
+    setError('');
+    setSuccess('');
+  };
+
   return (
     <div className="otp-container">
       <div className="otp-card">
         <div className="otp-header">
-          <h2>Verify Your Email</h2>
-          <p>We've sent a verification code to</p>
-          <p className="otp-email">{email}</p>
+          <h2>{step === 'email' ? 'Login with Email' : 'Verify OTP'}</h2>
+          {step === 'otp' && (
+            <p className="otp-email-info">Code sent to: {email}</p>
+          )}
         </div>
 
         <div className="otp-form">
-          <div className="otp-input-group">
-            {otp.map((digit, index) => (
-              <input
-                key={index}
-                type="text"
-                maxLength="1"
-                value={digit}
-                onChange={(e) => handleOtpChange(index, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(index, e)}
-                ref={(el) => (inputRefs.current[index] = el)}
-                className="otp-input"
-                disabled={isLoading}
-                autoFocus={index === 0}
-              />
-            ))}
-          </div>
+          {step === 'email' ? (
+            // Email Input Step
+            <form onSubmit={handleSendCode}>
+              <div className="email-input-group">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="email-input"
+                  disabled={isLoading}
+                  autoFocus
+                  required
+                />
+              </div>
 
-          {error && <div className="otp-error">{error}</div>}
-          {success && <div className="otp-success">{success}</div>}
+              {error && <div className="otp-error">{error}</div>}
+              {success && <div className="otp-success">{success}</div>}
 
-          <div className="otp-timer">
-            {canResend ? (
               <button
-                onClick={handleResendOtp}
+                type="submit"
                 disabled={isLoading}
-                className="otp-resend-btn"
+                className="otp-verify-btn"
               >
-                Resend OTP
+                {isLoading ? 'Sending...' : 'Send Code'}
               </button>
-            ) : (
-              <p>Resend OTP in {timer} seconds</p>
-            )}
-          </div>
+            </form>
+          ) : (
+            // OTP Verification Step
+            <>
+              <div className="otp-input-group">
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    type="text"
+                    maxLength="1"
+                    value={digit}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    ref={(el) => (inputRefs.current[index] = el)}
+                    className="otp-input"
+                    disabled={isLoading}
+                  />
+                ))}
+              </div>
 
-          <button
-            onClick={handleVerifyOtp}
-            disabled={isLoading || otp.join('').length !== 6}
-            className="otp-verify-btn"
-          >
-            {isLoading ? 'Verifying...' : 'Verify OTP'}
-          </button>
+              {error && <div className="otp-error">{error}</div>}
+              {success && <div className="otp-success">{success}</div>}
 
-          <button
-            onClick={() => navigate('/user-signup')}
-            className="otp-back-btn"
-          >
-            Back to Login
-          </button>
+              <div className="otp-timer">
+                {canResend ? (
+                  <button
+                    onClick={handleResendOtp}
+                    disabled={isLoading}
+                    className="otp-resend-btn"
+                  >
+                    Resend OTP
+                  </button>
+                ) : (
+                  <p>Resend OTP in {timer} seconds</p>
+                )}
+              </div>
+
+              <button
+                onClick={handleVerifyOtp}
+                disabled={isLoading || otp.join('').length !== 6}
+                className="otp-verify-btn"
+              >
+                {isLoading ? 'Verifying...' : 'Verify & Login'}
+              </button>
+
+              <button
+                onClick={handleBackToEmail}
+                className="otp-back-btn"
+              >
+                Change Email
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
