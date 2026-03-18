@@ -162,7 +162,7 @@ const ChatBox = () => {
     const sendMessageToAPI = async (message) => {
         try {
             const response = await axios.post(
-                'https://sdpd86vs-5000.inc1.devtunnels.ms/api/chat',
+                'https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat',
                 { message },
                 { headers: { 'Content-Type': 'application/json' } }
             );

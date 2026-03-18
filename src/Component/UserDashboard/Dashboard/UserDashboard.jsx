@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import "./UserDashboard.css";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from '../../../axiosConfig';
 import {
   FaCommentDots,
   FaUserMd,
@@ -23,7 +24,9 @@ import {
   FaPaperPlane,
   FaCommentMedical,
   FaUser,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaVenusMars,
+  FaBirthdayCake
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
@@ -34,6 +37,11 @@ import useVibration from '../../../hooks/useVibration';
 import PatientProfile from '../../PatientProfile/PatientProfile';
 import BookAppointment from '../Tab/Appointment/BookAppointment';
 import LiveChatSupport from '../Tab/Appointment/BookAppointment';
+
+// API Base URLs
+const API_BASE_URL =  'https://td6lmn5q-5000.inc1.devtunnels.ms';
+const LOGOUT_URL = `${API_BASE_URL}/api/auth/logout`;
+const userId = localStorage.getItem("userId");
 
 // ChatPopup Component
 const ChatPopup = ({ 
@@ -135,21 +143,33 @@ export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
+  const [apiLoading, setApiLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
   
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
   const vibrate = useVibration();
+  
 
   const [userData, setUserData] = useState({
-    name: "Dr. Ashish Sharma",
-    email: "ashish.sharma@mediconeckt.com",
-    phone: "91+ 9876543210"
+    fullName: "",
+    anonymous: "",
+    email: "",
+    phoneNum: "",
+    age: "",
+    gender: "",
+    _id: ""
   });
+
 
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: "Hello! I'm your AI assistant. How can I help you today?", sender: 'ai' },
     { id: 2, text: "I'm feeling anxious today.", sender: 'user' }
   ]);
+
+  // Fetch user data on component mount
+
+  
 
   // Check screen size on mount and resize
   useEffect(() => {
@@ -227,10 +247,33 @@ export default function UserDashboard() {
     }
   };
 
-  const handleLogout = () => {
-    vibrate([50, 30, 50]);
-    setShowLogoutConfirm(false);
-    navigate(isMobile ? '/role-selector' : '/role-selector');
+  const handleLogout = async () => {
+    try {
+      const refreshToken = localStorage.getItem("refreshToken") || localStorage.getItem("refresh_token");
+
+      if (refreshToken) {
+        await axiosInstance.post(LOGOUT_URL, {
+          refreshToken
+        }, {
+          timeout: 5000 // 5 second timeout for logout
+        });
+      }
+    } catch (e) {
+      // ignore errors (still force logout locally)
+      console.warn('Logout request failed:', e?.response?.data || e.message || e);
+    }
+
+    // Clear auth tokens and user data
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('user');
+    localStorage.removeItem('userData');
+    localStorage.removeItem('userEmail');
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('isVerified');
+
+    navigate('/role-selector');
   };
 
   const handleLogoutClick = () => {
@@ -248,7 +291,7 @@ export default function UserDashboard() {
     setShowDeleteConfirm(false);
     setDeleteSuccess(true);
     setTimeout(() => {
-      navigate(isMobile ? '/role-selector' : '/role-selector');
+      navigate('/role-selector');
     }, 2500);
   };
 
@@ -275,44 +318,38 @@ export default function UserDashboard() {
   const allMenuItems = [
     { id: "Chat", icon: <FaCommentDots />, label: "Chat" },
     { id: "Live Chat", icon: <FaUserMd />, label: "Counselor" },
-    // { id: "Counselor", icon: <FaUserMd />, label: "Counselor" },
     { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
     { id: "Video", icon: <FaVideo />, label: "Video Call" },
     { id: "profile", icon: <FaUser />, label: "Profile" },
-    
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
     { id: "privacy", icon: <FaLock />, label: "Privacy" }
   ];
 
   const bottomMenuItems = allMenuItems.slice(0, 4);
 
+  // Format phone number for display
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return "Not provided";
+    return phone;
+  };
+
+  // Get gender display with icon
+  const getGenderDisplay = (gender) => {
+    if (!gender) return "Not specified";
+    return gender.charAt(0).toUpperCase() + gender.slice(1);
+  };
+
   return (
     <div className="user-dashboard">
       {/* Mobile Header */}
-      {isMobile && (
-        <div className="mobile-header">
-          <div className="mobile-header-info">
-            <FaUserCircle className="mobile-user-icon" />
-            <div>
-              <h2 className="mobile-title">{userData.name}</h2>
-              <p className="mobile-subtitle">{active}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      
 
       <div className="dashboard-container">
         {/* Desktop Sidebar */}
         {!isMobile && (
           <aside className="user-sidebar">
             <div className="sidebar-content">
-              <div className="sidebar-header">
-                <div className="user-avatar">
-                  <FaUserCircle />
-                </div>
-                <h3 className="sidebar-title">{userData.name}</h3>
-                <p className="sidebar-subtitle">{userData.email}</p>
-              </div>
+             
 
               <div className="sidebar-menu">
                 {allMenuItems.map(item => (
@@ -337,6 +374,13 @@ export default function UserDashboard() {
                   <span className="sidebar-icon"><FaSignOutAlt /></span>
                   <span className="sidebar-text">Logout</span>
                 </button>
+                <button
+                  className="sidebar-item delete"
+                  onClick={handleDeleteClick}
+                >
+                  <span className="sidebar-icon"><FaTrash /></span>
+                  <span className="sidebar-text">Delete Account</span>
+                </button>
               </div>
             </div>
           </aside>
@@ -345,11 +389,24 @@ export default function UserDashboard() {
         {/* Main Content Area */}
         <div className={`dashboard-content ${isMobile ? 'mobile' : ''}`}>
           <div className="content-scrollable">
+            {apiError && (
+              <div className="error-banner">
+                <p>{apiError}</p>
+                <button onClick={fetchUserData} className="retry-btn">
+                  Retry
+                </button>
+              </div>
+            )}
+
             {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
             {active === "Counselor" && <CounselorDirectory />}
             {active === "Wallet" && <WalletDashboard />}
             {active === "Video" && <CallHistory />}
-            {active === "profile" && <PatientProfile />}
+            {active === "profile" && (
+              <PatientProfile 
+               
+              />
+            )}
             {active === "Live Chat" && <LiveChatSupport />}
 
             {active === "help" && (
@@ -492,6 +549,17 @@ export default function UserDashboard() {
                   >
                     <FaSignOutAlt className="action-icon" />
                     <span>Logout</span>
+                  </button>
+                  <button
+                    className="more-action-btn delete-btn"
+                    onClick={() => {
+                      vibrate(30);
+                      setShowMoreModal(false);
+                      setShowDeleteConfirm(true);
+                    }}
+                  >
+                    <FaTrash className="action-icon" />
+                    <span>Delete Account</span>
                   </button>
                 </div>
               </div>

@@ -12,6 +12,7 @@ import UserSignup from './authtication/UserSignup'
 import CounselorDashboard from './Component/counselor-dashboard/Dashboard/dashboard'
 import CounselorTable from './Component/UserDashboard/Tab/Counselor/CounselorDirectory'
 import SMSInput from './Component/counselor-dashboard/Tab/SMSInput/SMSInput.'
+import OTPVerification from './authtication/OTPVerification'
 
 
 function App() {
@@ -58,6 +59,7 @@ function App() {
         <Route path="/counselor-directory" element={<CounselorTable />} />
         <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
         <Route path="/sms-input" element={<SMSInput />} />
+        <Route path="/otp-verification" element={<OTPVerification />} />
 
 
       </Routes>

@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { FaEnvelope, FaLock, FaUser, FaPhone, FaCalendarAlt, FaVenusMars } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import './UserSignup.css';
 import logo from '../image/Mediconect Logo-3.png';
+import { useEffect } from "react";
 
 const UserSignup = () => {
   const navigate = useNavigate();
@@ -14,7 +16,7 @@ const UserSignup = () => {
     
     // Signup Fields
     fullName: '',
-    username: '',
+    anonymous: '',
     phoneNumber: '',
     age: '',
     gender: '',
@@ -25,6 +27,22 @@ const UserSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState('');
+  const [showVerifyButton, setShowVerifyButton] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verifySuccess, setVerifySuccess] = useState(false);
+
+  // API Base URLs
+  const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth';
+  const LOGIN_URL = `${API_BASE_URL}/login`;
+  const REGISTER_URL = `${API_BASE_URL}/register`;
+
+  useEffect(() => {
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+    if (token) {
+      navigate("/user-dashboard"); // already logged in → redirect
+    }
+  }, [navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,6 +51,10 @@ const UserSignup = () => {
     // Clear error for this field
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
+    }
+    // Clear API error when user starts typing
+    if (apiError) {
+      setApiError('');
     }
   };
 
@@ -52,11 +74,12 @@ const UserSignup = () => {
     return newErrors;
   };
 
+
   const validateSignup = () => {
     const newErrors = {};
     
     if (!formData.fullName) newErrors.fullName = 'Full name is required';
-    if (!formData.username) newErrors.username = 'anonymous is required';
+    if (!formData.anonymous) newErrors.anonymous = 'Anonymous name is required';
     
     if (!formData.email) {
       newErrors.email = 'Email is required';
@@ -80,8 +103,8 @@ const UserSignup = () => {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+    } else if (formData.password.length < 3) {
+      newErrors.password = 'Password must be at least 3 characters';
     }
     
     if (!formData.confirmPassword) {
@@ -92,53 +115,236 @@ const UserSignup = () => {
     
     return newErrors;
   };
+ 
+ const handleLogin = async () => {
+  try {
+    const response = await axios.post(LOGIN_URL, {
+      email: formData.email,
+      password: formData.password
+    });
+
+    console.log("Login response:", response.data);
+
+    // Normalize token/refreshToken from different possible payload shapes
+    const token =
+      response.data?.token ||
+      response.data?.accessToken ||
+      response.data?.data?.token ||
+      response.data?.data?.accessToken;
+
+    const refreshToken =
+      response.data?.refreshToken ||
+      response.data?.data?.refreshToken;
+
+    // ✅ CASE 1: USER ALREADY LOGGED IN (backend message)
+    if (response.data?.message === "User already logged in") {
+      setApiError("User already logged in");
+      setShowVerifyButton(true);
+      return; // ❌ STOP → no redirect
+    }
+
+    // ✅ CASE 2: SUCCESS LOGIN (TOKEN PROVIDED)
+    if (token) {
+      localStorage.setItem("isAuthenticated", "true");
+      localStorage.setItem("userType", "user");
+      localStorage.setItem("userEmail", formData.email);
+
+      // Support both legacy and new token key naming
+      localStorage.setItem("token", token);
+      localStorage.setItem("accessToken", token);
+
+      if (refreshToken) {
+        localStorage.setItem("refreshToken", refreshToken);
+      }
+
+      if (response.data.user) {
+        localStorage.setItem("userData", JSON.stringify(response.data.user));
+      }
+
+      // ✅ DIRECT REDIRECT (NO MESSAGE SHOW)
+      navigate("/user-dashboard");
+      return;
+    }
+
+    // ✅ CASE 3: LOGIN SUCCESS MESSAGE (NO TOKEN)
+    if (response.data?.message?.toLowerCase().includes("success")) {
+      // Guard against treating "already logged in" as success.
+      if (response.data.message !== "User already logged in") {
+        navigate("/user-dashboard");
+        return;
+      }
+    }
+
+    // ❌ CASE 4: OTHER ERROR
+    if (response.data?.message) {
+      setApiError(response.data.message);
+      return;
+    }
+
+    setApiError("Login failed");
+
+  } catch (error) {
+    console.error("Login error:", error);
+
+    if (error.response?.data?.message) {
+      setApiError(error.response.data.message);
+    } else if (error.response?.status === 401) {
+      setApiError("Invalid email or password");
+    } else if (error.request) {
+      setApiError("Network error. Please check your connection.");
+    } else {
+      setApiError("Something went wrong");
+    }
+  }
+};
+
+  const handleSignup = async () => {
+    try {
+      // Prepare signup data according to API requirements
+      const signupData = {
+        fullName: formData.fullName,
+        email: formData.email,
+        anonymous: formData.anonymous,
+        phoneNum: formData.phoneNumber,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        age: parseInt(formData.age),
+        gender: formData.gender,
+        role: "user"
+      };
+
+      console.log('Signup data:', signupData);
+
+      const response = await axios.post(REGISTER_URL, signupData);
+
+      console.log('Signup response:', response.data);
+
+      if (response.data) {
+        // Store user data in localStorage
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userType', 'user');
+        localStorage.setItem('userName', formData.fullName);
+        localStorage.setItem('userEmail', formData.email);
+
+        // Normalize token/refreshToken
+        const token =
+          response.data?.token ||
+          response.data?.accessToken ||
+          response.data?.data?.token ||
+          response.data?.data?.accessToken;
+
+        const refreshToken =
+          response.data?.refreshToken ||
+          response.data?.data?.refreshToken;
+
+        if (token) {
+          localStorage.setItem('token', token);
+        }
+        if (refreshToken) {
+          localStorage.setItem('refreshToken', refreshToken);
+        }
+
+        // Navigate to dashboard
+        navigate('/user-dashboard');
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      
+      // Handle different error scenarios
+      if (error.response) {
+        // Server responded with error status
+        if (error.response.status === 400) {
+          // Handle validation errors
+          if (error.response.data.errors) {
+            // If server returns field-specific errors
+            const serverErrors = {};
+            Object.keys(error.response.data.errors).forEach(key => {
+              serverErrors[key] = error.response.data.errors[key][0];
+            });
+            setErrors(serverErrors);
+          } else if (error.response.data.message) {
+            setApiError(error.response.data.message);
+          } else {
+            setApiError('Registration failed. Please check your information.');
+          }
+        } else if (error.response.status === 409) {
+          setApiError('User with this email already exists');
+        } else {
+          setApiError('Registration failed. Please try again.');
+        }
+      } else if (error.request) {
+        // Request was made but no response
+        setApiError('Network error. Please check your connection.');
+      } else {
+        // Something else happened
+        setApiError('An error occurred. Please try again.');
+      }
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+    setApiError('');
     
     if (isLogin) {
       const loginErrors = validateLogin();
       if (Object.keys(loginErrors).length === 0) {
-        // Simulate API call
-        setTimeout(() => {
-          setIsLoading(false);
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('userType', 'user');
-          localStorage.setItem('userEmail', formData.email);
-          navigate('/user-dashboard');
-        }, 1500);
+        await handleLogin();
       } else {
-        setIsLoading(false);
         setErrors(loginErrors);
       }
     } else {
       const signupErrors = validateSignup();
       if (Object.keys(signupErrors).length === 0) {
-        // Simulate API call
-        setTimeout(() => {
-          setIsLoading(false);
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('userType', 'user');
-          localStorage.setItem('userName', formData.fullName);
-          localStorage.setItem('userEmail', formData.email);
-          navigate('/user-dashboard');
-        }, 1500);
+        await handleSignup();
       } else {
-        setIsLoading(false);
         setErrors(signupErrors);
       }
+    }
+    
+    setIsLoading(false);
+  };
+
+  const handleVerify = async () => {
+    try {
+      setIsVerifying(true);
+      setVerifySuccess(false);
+      
+      // Send verification email API call
+      const verifyResponse = await axios.post(
+        `${API_BASE_URL}/send-verification-email`,
+        { email: formData.email }
+      );
+      
+      console.log("Verification email response:", verifyResponse.data);
+      
+      if (verifyResponse.data?.success || verifyResponse.data?.message) {
+        setVerifySuccess(true);
+        // Show success message for 3 seconds
+        setTimeout(() => {
+          setVerifySuccess(false);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      setApiError(error.response?.data?.message || 'Failed to send verification email. Please try again.');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setErrors({});
+    setApiError('');
+    setShowVerifyButton(false);
+    setVerifySuccess(false);
     setFormData({
       email: '',
       password: '',
       fullName: '',
-      username: '',
+      anonymous: '',
       phoneNumber: '',
       age: '',
       gender: '',
@@ -153,8 +359,8 @@ const UserSignup = () => {
         <div className="user-brand-section">
           <div className="user-brand-content">
             <div className="user-logo">
-              <span className="user-logo-icon">🧠</span>
-              <span className="user-logo-text">MindSpace</span>
+              <img src={logo} alt="Mediconnect Logo" className="user-logo-image" />
+              <span className="user-logo-text">Mediconnect</span>
             </div>
             <h1 className="user-brand-title">
               {isLogin ? 'Welcome Back!' : 'Begin Your Journey'}
@@ -188,11 +394,49 @@ const UserSignup = () => {
             <h2>{isLogin ? 'Login to Account' : 'Create Account'}</h2>
             <p>
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={toggleMode} className="user-toggle-btn">
+              <button onClick={toggleMode} className="user-toggle-btn" disabled={isLoading}>
                 {isLogin ? 'Sign Up' : 'Login'}
               </button>
             </p>
           </div>
+
+          {apiError && (
+            <div className="user-api-error">
+              <span className="user-error-icon">⚠️</span>
+              {apiError}
+            </div>
+          )}
+
+          {showVerifyButton && (
+            <div className="user-verify-section">
+              {verifySuccess ? (
+                <div className="user-verify-success">
+                  <span className="user-verify-icon">✓</span>
+                  <p>Verification email sent successfully! Check your inbox.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="user-verify-message">
+                    Your account is already logged in on another device.
+                  </p>
+                  <button 
+                    onClick={handleVerify} 
+                    className="user-verify-btn" 
+                    disabled={isVerifying || isLoading}
+                  >
+                    {isVerifying ? (
+                      <>
+                        <span className="user-spinner-small"></span>
+                        Sending...
+                      </>
+                    ) : (
+                      '📧 Verify Mail'
+                    )}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="user-form">
             {isLogin ? (
@@ -275,18 +519,18 @@ const UserSignup = () => {
                   <div className="user-form-group">
                     <label className="user-label">
                       <FaUser className="user-field-icon" />
-                      anonymous <span className="user-required">*</span>
+                      Anonymous Name <span className="user-required">*</span>
                     </label>
                     <input
                       type="text"
-                      name="username"
-                      value={formData.username}
+                      name="anonymous"
+                      value={formData.anonymous}
                       onChange={handleChange}
-                      className={`user-input ${errors.username ? 'user-input-error' : ''}`}
-                      placeholder="Choose a username"
+                      className={`user-input ${errors.anonymous ? 'user-input-error' : ''}`}
+                      placeholder="Choose an anonymous name"
                       disabled={isLoading}
                     />
-                    {errors.username && <span className="user-error-text">{errors.username}</span>}
+                    {errors.anonymous && <span className="user-error-text">{errors.anonymous}</span>}
                   </div>
 
                   <div className="user-form-group">
