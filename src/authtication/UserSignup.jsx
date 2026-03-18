@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { FaEnvelope, FaLock, FaUser, FaPhone, FaCalendarAlt, FaVenusMars } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './UserSignup.css';
 import logo from '../image/Mediconect Logo-3.png';
@@ -490,9 +490,11 @@ const UserSignup = () => {
                   <label className="user-checkbox">
                     <input type="checkbox" disabled={isLoading} /> Remember me
                   </label>
-                  <a href="#" className={`user-forgot-link ${isLoading ? 'user-disabled' : ''}`}>
-                    Forgot password?
-                  </a>
+                  <Link to="/otp-verification">
+                    <button className="user-forgot-link" disabled={isLoading}>
+                      Email
+                    </button>
+                  </Link>
                 </div>
               </>
             ) : (
