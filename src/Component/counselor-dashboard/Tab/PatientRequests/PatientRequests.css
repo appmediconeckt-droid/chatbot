@@ -1,0 +1,353 @@
+/* PatientRequests.css */
+
+/* Container Styles */
+.counselor-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+/* Header Styles */
+.counselor-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 2rem;
+  border-radius: 15px;
+  margin-bottom: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.counselor-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 2.2rem;
+  font-weight: 600;
+}
+
+/* Stats Section */
+.counselor-stats {
+  display: flex;
+  gap: 2rem;
+  justify-content: space-around;
+}
+
+.stat-box {
+  flex: 1;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  backdrop-filter: blur(5px);
+  transition: transform 0.3s ease;
+}
+
+.stat-box:hover {
+  transform: translateY(-5px);
+}
+
+.stat-label {
+  display: block;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.9;
+}
+
+.stat-value {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.stat-pending { background: linear-gradient(135deg, #f39c12, #f1c40f); }
+.stat-accepted { background: linear-gradient(135deg, #27ae60, #2ecc71); }
+.stat-cancelled { background: linear-gradient(135deg, #e74c3c, #c0392b); }
+
+/* Filter Section */
+.filter-section {
+  background: white;
+  padding: 1rem 2rem;
+  border-radius: 10px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.filter-label {
+  font-weight: 600;
+  color: #555;
+}
+
+.filter-select {
+  padding: 0.5rem 1rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.filter-select:hover {
+  border-color: #667eea;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #764ba2;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Patients Grid */
+.patients-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+/* Patient Card Styles */
+.patient-card {
+  background: white;
+  border-radius: 15px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.patient-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Unique card variations for each patient */
+.patient-card-pt001 { border-left: 5px solid #ff6b6b; }
+.patient-card-pt002 { border-left: 5px solid #4ecdc4; }
+.patient-card-pt003 { border-left: 5px solid #45b7d1; }
+.patient-card-pt004 { border-left: 5px solid #96ceb4; }
+
+/* Patient Header */
+.patient-header {
+  background: #f8f9fa;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.patient-id-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.patient-id-label {
+  font-size: 0.85rem;
+  color: #777;
+}
+
+.patient-id-value {
+  font-weight: 700;
+  color: #333;
+  background: #e8e8e8;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+}
+
+/* Priority Badge */
+.priority-badge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.priority-high { 
+  background: #ffebee; 
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+.priority-medium { 
+  background: #fff3e0; 
+  color: #ef6c00;
+  border: 1px solid #ffe0b2;
+}
+
+.priority-low { 
+  background: #e8f5e8; 
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+/* Patient Details */
+.patient-details {
+  padding: 1.5rem;
+}
+
+.patient-name {
+  margin: 0 0 1rem 0;
+  font-size: 1.3rem;
+  color: #333;
+}
+
+/* Unique name colors */
+.patient-name-pt001 { color: #ff6b6b; }
+.patient-name-pt002 { color: #4ecdc4; }
+.patient-name-pt003 { color: #45b7d1; }
+.patient-name-pt004 { color: #96ceb4; }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.info-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-label {
+  font-size: 0.8rem;
+  color: #777;
+  margin-bottom: 0.2rem;
+}
+
+.info-value {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 0.3rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: #fff3e0;
+  color: #ef6c00;
+  border: 1px solid #ffe0b2;
+}
+
+.status-accepted {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.status-cancelled {
+  background: #ffebee;
+  color: #c62828;
+  border: 1px solid #ffcdd2;
+}
+
+/* Action Buttons */
+.action-buttons {
+  padding: 1rem 1.5rem;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-accept,
+.btn-cancel {
+  flex: 1;
+  padding: 0.8rem;
+  border: none;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+}
+
+.btn-accept {
+  background: linear-gradient(135deg, #27ae60, #2ecc71);
+  color: white;
+}
+
+.btn-accept:hover {
+  background: linear-gradient(135deg, #229954, #27ae60);
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3);
+}
+
+.btn-cancel {
+  background: linear-gradient(135deg, #e74c3c, #c0392b);
+  color: white;
+}
+
+.btn-cancel:hover {
+  background: linear-gradient(135deg, #cb4335, #a93226);
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+}
+
+/* No Patients Message */
+.no-patients {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 4rem;
+  background: white;
+  border-radius: 15px;
+  color: #777;
+  font-size: 1.2rem;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .counselor-container {
+    padding: 1rem;
+  }
+
+  .counselor-title {
+    font-size: 1.8rem;
+  }
+
+  .counselor-stats {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .patients-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+}
+
+/* Animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.patient-card {
+  animation: slideIn 0.3s ease-out;
+}

@@ -36,10 +36,6 @@ import PatientProfile from '../../PatientProfile/PatientProfile';
 import BookAppointment from '../Tab/Appointment/BookAppointment';
 import LiveChatSupport from '../Tab/Appointment/BookAppointment';
 
-// API Base URLs
-
-
-
 // ChatPopup Component
 const ChatPopup = ({ 
   messages, 
@@ -232,32 +228,71 @@ export default function UserDashboard() {
     }
   };
 
-const handleLogout = async () => {
-  try {
-    const refreshToken = localStorage.getItem("refreshToken");
+  // FIXED: Correct logout function with proper API call
+  const handleLogout = async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
 
-    const response = await axiosInstance.post(
-      `${API_BASE_URL}/auth/logout`,
-      { refreshToken }, // body
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+      // Option 1: If your API expects refreshToken in the body
+      const response = await axiosInstance.post(
+        `${API_BASE_URL}/auth/logout`,
+        { refreshToken: refreshToken }, // Send as object with refreshToken property
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
         }
-      }
-    );
+      );
 
-    console.log("Logout success:", response.data);
+      console.log("Logout success:", response.data);
+      
+      // Clear local storage after successful logout
+      localStorage.clear();
+      
+      // Redirect to role selector
+      navigate("/role-selector");
+      
+    } catch (error) {
+      console.error("Logout error:", error?.response?.data || error.message);
+      
+      // Even if API fails, clear local storage and redirect
+      localStorage.clear();
+      navigate("/role-selector");
+    }
+  };
 
-  } catch (error) {
-    console.log("Logout error:", error?.response?.data || error.message);
-  } finally {
-    // ALWAYS clear storage
-    localStorage.clear();
+  // Alternative logout function if your API expects refreshToken as string directly
+  const handleLogoutAlternative = async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
 
-    // redirect
-    window.location.href = "/role-selector";
-  }
-};
+      const response = await axiosInstance.post(
+        `${API_BASE_URL}/auth/logout`,
+        refreshToken, // Send as plain string if API expects that
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log("Logout success:", response.data);
+      
+    } catch (error) {
+      console.error("Logout error:", error?.response?.data || error.message);
+    } finally {
+      // ALWAYS clear storage
+      localStorage.clear();
+      
+      // redirect
+      navigate("/role-selector");
+    }
+  };
+
   const handleLogoutClick = () => {
     vibrate(30);
     setShowLogoutConfirm(true);
@@ -273,7 +308,7 @@ const handleLogout = async () => {
     setShowDeleteConfirm(false);
     setDeleteSuccess(true);
     setTimeout(() => {
-      navigate(isMobile ? '/role-selector' : '/role-selector');
+      navigate('/role-selector');
     }, 2500);
   };
 
@@ -300,11 +335,9 @@ const handleLogout = async () => {
   const allMenuItems = [
     { id: "Chat", icon: <FaCommentDots />, label: "Chat" },
     { id: "Live Chat", icon: <FaUserMd />, label: "Counselor" },
-    // { id: "Counselor", icon: <FaUserMd />, label: "Counselor" },
     { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
     { id: "Video", icon: <FaVideo />, label: "Video Call" },
     { id: "profile", icon: <FaUser />, label: "Profile" },
-    
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
     { id: "privacy", icon: <FaLock />, label: "Privacy" }
   ];
