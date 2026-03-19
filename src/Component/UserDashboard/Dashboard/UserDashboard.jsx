@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import "./UserDashboard.css";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from '../../../axiosConfig';
+import axiosInstance, { API_BASE_URL } from '../../../axiosConfig';
 import {
   FaCommentDots,
   FaUserMd,
@@ -37,8 +37,8 @@ import BookAppointment from '../Tab/Appointment/BookAppointment';
 import LiveChatSupport from '../Tab/Appointment/BookAppointment';
 
 // API Base URLs
-const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/api';
-const LOGOUT_URL = `${API_BASE_URL}/auth/logout`;
+
+
 
 // ChatPopup Component
 const ChatPopup = ({ 
@@ -234,15 +234,30 @@ export default function UserDashboard() {
 
 const handleLogout = async () => {
   try {
-    await axios.post(LOGOUT_URL, {
-      refreshToken: localStorage.getItem("refreshToken")
-    });
-  } catch (e) {}
+    const refreshToken = localStorage.getItem("refreshToken");
 
-  localStorage.clear();
-  window.location.href = "/role-selector";
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/auth/logout`,
+      { refreshToken }, // body
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("accessToken")}`
+        }
+      }
+    );
+
+    console.log("Logout success:", response.data);
+
+  } catch (error) {
+    console.log("Logout error:", error?.response?.data || error.message);
+  } finally {
+    // ALWAYS clear storage
+    localStorage.clear();
+
+    // redirect
+    window.location.href = "/role-selector";
+  }
 };
-
   const handleLogoutClick = () => {
     vibrate(30);
     setShowLogoutConfirm(true);
