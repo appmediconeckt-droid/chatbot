@@ -208,3 +208,155 @@
     font-size: 20px;
   }
 }
+
+/* Container */
+.otp-container {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Card */
+.otp-card {
+  background: #fff;
+  padding: 30px;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 380px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+
+/* Header */
+.otp-card h2 {
+  margin-bottom: 20px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Email Input */
+.otp-card input[type="email"] {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  outline: none;
+  margin-bottom: 15px;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.otp-card input[type="email"]:focus {
+  border-color: #4facfe;
+  box-shadow: 0 0 5px rgba(79,172,254,0.4);
+}
+
+/* OTP Inputs */
+.otp-input-group {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 20px 0;
+}
+
+.otp-input-group input {
+  width: 45px;
+  height: 50px;
+  text-align: center;
+  font-size: 18px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  outline: none;
+  transition: 0.3s;
+}
+
+.otp-input-group input:focus {
+  border-color: #4facfe;
+  box-shadow: 0 0 5px rgba(79,172,254,0.5);
+}
+
+/* Buttons */
+.otp-card button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  background: #4facfe;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: 0.3s;
+}
+
+.otp-card button:hover {
+  background: #3a8de0;
+}
+
+.otp-card button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Resend */
+.otp-card button.otp-resend-btn {
+  background: transparent;
+  color: #4facfe;
+  font-size: 14px;
+  margin-top: 5px;
+}
+
+.otp-card button.otp-resend-btn:hover {
+  text-decoration: underline;
+  background: transparent;
+}
+
+/* Timer */
+.otp-card p {
+  font-size: 14px;
+  color: #555;
+}
+
+/* Error */
+.otp-error {
+  color: #ff4d4f;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+/* Success */
+.otp-success {
+  color: #28a745;
+  font-size: 13px;
+  margin-top: 5px;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .otp-card {
+    padding: 20px;
+    margin: 10px;
+  }
+
+  .otp-input-group input {
+    width: 40px;
+    height: 45px;
+    font-size: 16px;
+  }
+}

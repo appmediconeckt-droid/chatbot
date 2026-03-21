@@ -24,6 +24,7 @@ import {
 import useVibration from '../../../hooks/useVibration';
 import Dashboard from '../Tab/CounselorDashboard/Dashboardcou';
 import Messagesou from '../Tab/Messages/Messagesou';
+import PatientRequests from '../Tab/PatientRequests/PatientRequests';
 
 export default function CounselorDashboard() {
   const [activeTab, setActiveTab] = useState('messages');
@@ -250,7 +251,7 @@ export default function CounselorDashboard() {
         {activeTab === 'patients' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
-              <h2>My Patients</h2>
+              <PatientRequests/>
             </div>
           </div>
         )}
