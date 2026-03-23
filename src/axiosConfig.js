@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Base URL for API
-export const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/api';
+export const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms';
 
 // Create axios instance with default config
 const axiosInstance = axios.create({

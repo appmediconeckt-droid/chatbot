@@ -40,35 +40,51 @@ export default function CounselorDashboard() {
     try {
       vibrate([50, 30, 50]);
 
-      const token = localStorage.getItem("token");
+      // Get tokens from localStorage - using correct keys
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
 
-      await axios.post(
-        "https://td6lmn5q-5000.inc1.devtunnels.ms/api/counsellor/auth/logout",
-        {
-          refreshToken: token
-        }
+      // If no tokens found, just clear storage and redirect
+      if (!accessToken && !refreshToken) {
+        console.warn("No tokens found, clearing storage and redirecting");
+        localStorage.clear();
+        navigate("/role-selector");
+        return;
+      }
 
-      );
+      // Only attempt API logout if we have tokens
+      if (accessToken) {
+        await axios.post(
+          "https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/logout",
+          { refreshToken: refreshToken },
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            }
+          }
+        );
+      }
 
-      // ✅ Token remove karo
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken"); // agar hai
-      localStorage.removeItem("userData"); // optional
+      // Clear all localStorage items
+      localStorage.clear();
 
-      // ✅ Modal band karo
+      // Close modal
       setShowLogoutConfirm(false);
 
-      // ✅ Redirect
+      // Redirect to role selector
       navigate("/role-selector");
 
     } catch (error) {
       console.error("Logout Error:", error);
 
-      // Even if API fails, force logout
+      // Even if API fails, force logout on client side
       localStorage.clear();
+      setShowLogoutConfirm(false);
       navigate("/role-selector");
     }
   };
+
   // Check screen size
   useEffect(() => {
     const checkMobile = () => {
@@ -78,6 +94,7 @@ export default function CounselorDashboard() {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
   // Counselor Data - All Indian names
   const [counselorData, setCounselorData] = useState({
     name: "Dr. Priya Sharma",
@@ -94,19 +111,16 @@ export default function CounselorDashboard() {
     languages: ["Hindi", "English"],
     specializations: ["Anxiety", "Depression", "Trauma", "Couples Therapy"]
   });
+
   const navItems = [
-    // { id: 'dashboard', icon: <FaHome />, label: 'Dashboard', badge: 0 },
     { id: 'messages', icon: <FaComments />, label: 'Messages', badge: 1 },
     { id: 'appointments', icon: <FaCalendarAlt />, label: 'Appointments', },
     { id: 'sessions', icon: <FaVideo />, label: 'Sessions', badge: 0 },
     { id: 'patients', icon: <FaUsers />, label: 'Patients', badge: 0 },
-
     { id: 'earnings', icon: <FaMoneyBillWave />, label: 'Earnings', badge: 0 },
     { id: 'analytics', icon: <FaChartPie />, label: 'Analytics', badge: 0 },
     { id: 'settings', icon: <FaCog />, label: 'Settings', badge: 0 }
   ];
-  // Handle appointment status change
-  // Handle logout
 
   // Handle tab change
   const handleTabChange = (tabId) => {
@@ -114,7 +128,7 @@ export default function CounselorDashboard() {
     setActiveTab(tabId);
     setShowMobileMenu(false);
   };
-  // Filter appointments based on status and search
+
   return (
     <div className="couns-dashboard">
       {/* Desktop Sidebar */}
@@ -329,7 +343,7 @@ export default function CounselorDashboard() {
       {showNotesModal && (
         <div className="couns-modal-overlay" onClick={() => setShowNotesModal(false)}>
           <div className="couns-modal-content" onClick={e => e.stopPropagation()}>
-            <SessionNotes onClose={() => setShowNotesModal(false)} />
+            {/* <SessionNotes onClose={() => setShowNotesModal(false)} /> */}
           </div>
         </div>
       )}

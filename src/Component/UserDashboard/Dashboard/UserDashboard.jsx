@@ -236,7 +236,7 @@ export default function UserDashboard() {
 
       // Option 1: If your API expects refreshToken in the body
       const response = await axiosInstance.post(
-        `${API_BASE_URL}/auth/logout`,
+        `${API_BASE_URL}/api/auth/logout`,
         { refreshToken: refreshToken }, // Send as object with refreshToken property
         {
           headers: {

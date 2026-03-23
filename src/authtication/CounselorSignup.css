@@ -578,3 +578,87 @@
 .menthy-success {
   animation: menthy-success 0.5s ease;
 }
+
+/* Notification Styles */
+.menthy-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  animation: slideIn 0.3s ease-out;
+  max-width: 350px;
+  width: 100%;
+}
+
+.menthy-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px 20px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-left: 4px solid;
+}
+
+.menthy-notification-success {
+  border-left-color: #28a745;
+}
+
+.menthy-notification-success .menthy-notification-icon {
+  color: #28a745;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.menthy-notification-error {
+  border-left-color: #dc3545;
+}
+
+.menthy-notification-error .menthy-notification-icon {
+  color: #dc3545;
+  font-size: 20px;
+}
+
+.menthy-notification-info {
+  border-left-color: #17a2b8;
+}
+
+.menthy-notification-info .menthy-notification-icon {
+  color: #17a2b8;
+  font-size: 20px;
+}
+
+.menthy-notification-message {
+  flex: 1;
+  font-size: 14px;
+  color: #333;
+  line-height: 1.4;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Animation for notification removal */
+.menthy-notification-exit {
+  animation: slideOut 0.3s ease-in forwards;
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
