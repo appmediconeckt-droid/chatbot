@@ -3,6 +3,7 @@ import { FaBrain, FaEnvelope, FaLock, FaUser, FaPhone, FaIdCard, FaGraduationCap
 import { useNavigate } from 'react-router-dom';
 import './CounselorSignup.css';
 import logo from '../image/Mediconect Logo-3.png';
+import axios from 'axios';
 
 
 const CounselorSignup = () => {
@@ -12,10 +13,10 @@ const CounselorSignup = () => {
     // Login Fields
     email: '',
     password: '',
-    
+
     // Signup Fields
     fullName: '',
-    username: '',
+
     phoneNumber: '',
     age: '',
     gender: '',
@@ -40,7 +41,7 @@ const CounselorSignup = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
-    
+
     if (type === 'file') {
       setFormData({ ...formData, [name]: files[0] });
     } else if (type === 'checkbox') {
@@ -64,7 +65,7 @@ const CounselorSignup = () => {
     } else {
       setFormData({ ...formData, [name]: value });
     }
-    
+
     // Clear error for this field
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
@@ -73,28 +74,27 @@ const CounselorSignup = () => {
 
   const validateLogin = () => {
     const newErrors = {};
-    
+
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 6) {
       newErrors.password = 'Password must be at least 6 characters';
     }
-    
+
     return newErrors;
   };
 
   const validateSignup = () => {
     const newErrors = {};
-    
+
     // Required Fields Validation
     if (!formData.fullName) newErrors.fullName = 'Full name is required';
-    if (!formData.username) newErrors.username = 'Username is required';
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -126,7 +126,7 @@ const CounselorSignup = () => {
       newErrors.languages = 'Select at least one language';
     }
     if (!formData.aboutMe) newErrors.aboutMe = 'About me is required';
-    
+
     // Password Validation
     if (!formData.password) {
       newErrors.password = 'Password is required';
@@ -135,62 +135,99 @@ const CounselorSignup = () => {
     } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
       newErrors.password = 'Password must contain uppercase, lowercase and number';
     }
-    
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     return newErrors;
   };
+
+
+
+  const API_BASE_URL = "https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    if (isLogin) {
-      const loginErrors = validateLogin();
-      if (Object.keys(loginErrors).length === 0) {
-        console.log('Login Data:', {
+
+    try {
+      if (isLogin) {
+        // ================= LOGIN API =================
+        const loginErrors = validateLogin();
+        if (Object.keys(loginErrors).length > 0) {
+          setErrors(loginErrors);
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await axios.post(`${API_BASE_URL}/login`, {
           email: formData.email,
-          password: formData.password
+          password: formData.password,
         });
-        
-        // Simulate API call
-        setTimeout(() => {
-          setIsLoading(false);
-          // Store user data in localStorage/session (optional)
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('userEmail', formData.email);
-          
-          // Navigate to dashboard
-          navigate('/counselor-dashboard');
-        }, 1500);
+
+        console.log("Login Response:", response.data);
+
+        if (response.data.success) {
+          localStorage.setItem("isAuthenticated", "true");
+          localStorage.setItem("userEmail", formData.email);
+          localStorage.setItem("token", response.data.token); // if backend sends token
+
+          navigate("/counselor-dashboard");
+        }
+
       } else {
-        setIsLoading(false);
-        setErrors(loginErrors);
-      }
-    } else {
-      const signupErrors = validateSignup();
-      if (Object.keys(signupErrors).length === 0) {
-        console.log('Signup Data:', formData);
-        
-        // Simulate API call
-        setTimeout(() => {
+        // ================= SIGNUP API =================
+        const signupErrors = validateSignup();
+        if (Object.keys(signupErrors).length > 0) {
+          setErrors(signupErrors);
           setIsLoading(false);
-          // Store user data in localStorage/session (optional)
-          localStorage.setItem('isAuthenticated', 'true');
-          localStorage.setItem('userName', formData.fullName);
-          localStorage.setItem('userEmail', formData.email);
-          
-          // Navigate to dashboard
-          navigate('/dashboard');
-        }, 1500);
-      } else {
-        setIsLoading(false);
-        setErrors(signupErrors);
+          return;
+        }
+
+        const payload = {
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim(),
+          phoneNumber: formData.phoneNumber.trim(),
+          age: Number(formData.age),
+          gender: formData.gender, // "Male"
+          qualification: formData.qualification.trim(),
+          specialization: formData.specialization.trim(),
+          experience: Number(formData.experience),
+          location: formData.location.trim(),
+          consultationMode: formData.consultationMode,
+          languages: formData.languages,
+          aboutMe: formData.aboutMe.trim(),
+          password: formData.password,
+          confirmPassword: formData.confirmPassword
+        };
+
+        const response = await axios.post(`${API_BASE_URL}/register/counsellor`, payload);
+
+        console.log("Signup Response:", response.data);
+
+        if (response.data.success) {
+          localStorage.setItem("isAuthenticated", "true");
+          localStorage.setItem("userName", formData.fullName);
+          localStorage.setItem("userEmail", formData.email);
+
+          navigate("/counselor-dashboard");
+        }
       }
+
+    } catch (error) {
+      console.error("API Error:", error);
+
+      if (error.response && error.response.data) {
+        alert(error.response.data.message || "Something went wrong");
+      } else {
+        alert("Server error. Try again later.");
+      }
+
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -201,7 +238,7 @@ const CounselorSignup = () => {
       email: '',
       password: '',
       fullName: '',
-      username: '',
+
       phoneNumber: '',
       age: '',
       gender: '',
@@ -225,18 +262,18 @@ const CounselorSignup = () => {
           <div className="menthy-brand-content">
             <div className="menthy-logo ">
               <img src={logo} height={50} alt="Mediconect Logo" className="menthy-logo-icon" />
-             
+
               <span className="menthy-logo-text">Counselors</span>
             </div>
             <h1 className="menthy-brand-title">
               {isLogin ? 'Welcome Back!' : 'Join Our Community'}
             </h1>
             <p className="menthy-brand-subtitle">
-              {isLogin 
-                ? 'Connect with expert counselors and find the support you need.' 
+              {isLogin
+                ? 'Connect with expert counselors and find the support you need.'
                 : 'Start your journey as a certified mental health counselor.'}
             </p>
-            
+
             <div className="menthy-features">
               <div className="menthy-feature-item">
                 <div className="menthy-feature-icon">✓</div>
@@ -343,22 +380,7 @@ const CounselorSignup = () => {
                     {errors.fullName && <span className="menthy-error-text">{errors.fullName}</span>}
                   </div>
 
-                  <div className="menthy-form-group">
-                    <label className="menthy-label">
-                      <FaUser className="menthy-field-icon" />
-                      Username <span className="menthy-required">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="username"
-                      value={formData.username}
-                      onChange={handleChange}
-                      className={`menthy-input ${errors.username ? 'menthy-input-error' : ''}`}
-                      placeholder="Choose a username"
-                      disabled={isLoading}
-                    />
-                    {errors.username && <span className="menthy-error-text">{errors.username}</span>}
-                  </div>
+
 
                   <div className="menthy-form-group">
                     <label className="menthy-label">
@@ -427,9 +449,9 @@ const CounselorSignup = () => {
                       disabled={isLoading}
                     >
                       <option value="">Select Gender</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
                     </select>
                     {errors.gender && <span className="menthy-error-text">{errors.gender}</span>}
                   </div>
@@ -635,8 +657,8 @@ const CounselorSignup = () => {
               </>
             )}
 
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               className={`menthy-submit-btn ${isLoading ? 'menthy-btn-loading' : ''}`}
               disabled={isLoading}
             >

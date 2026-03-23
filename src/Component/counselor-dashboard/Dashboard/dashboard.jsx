@@ -25,6 +25,7 @@ import useVibration from '../../../hooks/useVibration';
 import Dashboard from '../Tab/CounselorDashboard/Dashboardcou';
 import Messagesou from '../Tab/Messages/Messagesou';
 import PatientRequests from '../Tab/PatientRequests/PatientRequests';
+import axios from 'axios';
 
 export default function CounselorDashboard() {
   const [activeTab, setActiveTab] = useState('messages');
@@ -34,6 +35,40 @@ export default function CounselorDashboard() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const navigate = useNavigate();
   const vibrate = useVibration();
+
+  const handleLogout = async () => {
+    try {
+      vibrate([50, 30, 50]);
+
+      const token = localStorage.getItem("token");
+
+      await axios.post(
+        "https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/logout",
+        {
+          refreshToken: token
+        }
+
+      );
+
+      // ✅ Token remove karo
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken"); // agar hai
+      localStorage.removeItem("userData"); // optional
+
+      // ✅ Modal band karo
+      setShowLogoutConfirm(false);
+
+      // ✅ Redirect
+      navigate("/role-selector");
+
+    } catch (error) {
+      console.error("Logout Error:", error);
+
+      // Even if API fails, force logout
+      localStorage.clear();
+      navigate("/role-selector");
+    }
+  };
   // Check screen size
   useEffect(() => {
     const checkMobile = () => {
@@ -72,11 +107,7 @@ export default function CounselorDashboard() {
   ];
   // Handle appointment status change
   // Handle logout
-  const handleLogout = () => {
-    vibrate([50, 30, 50]);
-    setShowLogoutConfirm(false);
-    navigate('/role-selector');
-  };
+
   // Handle tab change
   const handleTabChange = (tabId) => {
     vibrate(20);
@@ -218,12 +249,12 @@ export default function CounselorDashboard() {
 
       {/* Main Content */}
       <div className={`couns-main-content ${isMobile ? 'mobile' : ''}`}>
-       
+
         {activeTab === 'dashboard' && (
           <>
             <div className="couns-tab-content">
               <div className="couns-tab-header">
-               <Dashboard/>
+                <Dashboard />
               </div>
             </div>
           </>
@@ -251,7 +282,7 @@ export default function CounselorDashboard() {
         {activeTab === 'patients' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
-              <PatientRequests/>
+              <PatientRequests />
             </div>
           </div>
         )}
@@ -269,7 +300,7 @@ export default function CounselorDashboard() {
         {activeTab === 'messages' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
-              <Messagesou/>
+              <Messagesou />
             </div>
 
           </div>
