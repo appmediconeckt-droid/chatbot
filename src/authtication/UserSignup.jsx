@@ -33,9 +33,9 @@ const UserSignup = () => {
   const [verifySuccess, setVerifySuccess] = useState(false);
 
   // API Base URLs
-  const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth';
-  const LOGIN_URL = `${API_BASE_URL}/login`;
-  const REGISTER_URL = `${API_BASE_URL}/register`;
+  const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/';
+  const LOGIN_URL = `${API_BASE_URL}api/auth/login`;
+  const REGISTER_URL = `${API_BASE_URL}api/auth/register/user `;
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
