@@ -178,6 +178,7 @@ const handleSubmit = async (e) => {
         localStorage.setItem("userRole", response.data.user.role);
         localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("isAuthenticated", "true");
+         localStorage.setItem("counsellorId", response.data.user._id);
         
         // Also store for backward compatibility
         if (response.data.token) {
@@ -250,87 +251,7 @@ const handleSubmit = async (e) => {
     setIsLoading(false);
   }
 };
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-
-  //   try {
-  //     if (isLogin) {
-  //       // ================= LOGIN API =================
-  //       const loginErrors = validateLogin();
-  //       if (Object.keys(loginErrors).length > 0) {
-  //         setErrors(loginErrors);
-  //         setIsLoading(false);
-  //         return;
-  //       }
-
-  //       const response = await axios.post(`${API_BASE_URL}/login`, {
-  //         email: formData.email,
-  //         password: formData.password,
-  //       });
-
-  //       console.log("Login Response:", response.data);
-
-  //       if (response.data.success) {
-  //         localStorage.setItem("isAuthenticated", "true");
-  //         localStorage.setItem("userEmail", formData.email);
-  //         localStorage.setItem("token", response.data.token); // if backend sends token
-
-  //         navigate("/counselor-dashboard");
-  //       }
-
-  //     } else {
-  //       // ================= SIGNUP API =================
-  //       const signupErrors = validateSignup();
-  //       if (Object.keys(signupErrors).length > 0) {
-  //         setErrors(signupErrors);
-  //         setIsLoading(false);
-  //         return;
-  //       }
-
-  //       const payload = {
-  //         fullName: formData.fullName.trim(),
-  //         email: formData.email.trim(),
-  //         phoneNumber: formData.phoneNumber.trim(),
-  //         age: Number(formData.age),
-  //         gender: formData.gender, // "Male"
-  //         qualification: formData.qualification.trim(),
-  //         specialization: formData.specialization.trim(),
-  //         experience: Number(formData.experience),
-  //         location: formData.location.trim(),
-  //         consultationMode: formData.consultationMode,
-  //         languages: formData.languages,
-  //         aboutMe: formData.aboutMe.trim(),
-  //         password: formData.password,
-  //         confirmPassword: formData.confirmPassword
-  //       };
-
-  //       const response = await axios.post(`${API_BASE_URL}/register/counsellor`, payload);
-
-  //       console.log("Signup Response:", response.data);
-
-  //       if (response.data.success) {
-  //         localStorage.setItem("isAuthenticated", "true");
-  //         localStorage.setItem("userName", formData.fullName);
-  //         localStorage.setItem("userEmail", formData.email);
-
-  //         navigate("/counselor-dashboard");
-  //       }
-  //     }
-
-  //   } catch (error) {
-  //     console.error("API Error:", error);
-
-  //     if (error.response && error.response.data) {
-  //       alert(error.response.data.message || "Something went wrong");
-  //     } else {
-  //       alert("Server error. Try again later.");
-  //     }
-
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
+ 
 
   const toggleMode = () => {
     setIsLogin(!isLogin);

@@ -96,21 +96,57 @@ export default function CounselorDashboard() {
   }, []);
 
   // Counselor Data - All Indian names
-  const [counselorData, setCounselorData] = useState({
-    name: "Dr. Priya Sharma",
-    specialization: "Clinical Psychologist",
-    experience: "8 years",
-    patients: 127,
-    rating: 4.9,
-    email: "priya.sharma@counseling.com",
-    phone: "+91 98765 43210",
-    license: "PSY-12345",
-    education: "Ph.D. in Clinical Psychology",
-    university: "University of Delhi",
-    hourlyRate: 1500,
-    languages: ["Hindi", "English"],
-    specializations: ["Anxiety", "Depression", "Trauma", "Couples Therapy"]
-  });
+  const [counselorData, setCounselorData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCounsellor = async () => {
+      try {
+        const counsellorId = localStorage.getItem("counsellorId"); // dynamic kar sakte ho
+
+        const res = await axios.get(
+          `https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/counsellors/${counsellorId}`
+        );
+
+        const data = res.data.counsellor;
+
+        // ✅ API → UI mapping
+        setCounselorData({
+          name: data.fullName,
+          specialization: data.specialization?.join(", "),
+          experience: `${data.experience} years`,
+          patients: 0,
+          rating: 4.5, // dummy (API me nahi hai)
+          email: data.email,
+          phone: data.phoneNum,
+          license: "N/A",
+          education: data.qualification,
+          university: "N/A",
+          hourlyRate: 0,
+          languages: data.languages || [],
+          specializations: data.specialization || [],
+          aboutMe: data.aboutMe,
+          location: data.location,
+          consultationMode: data.consultationMode,
+          profilePhoto: data.profilePhoto
+        });
+
+      } catch (error) {
+        console.error("Error fetching counsellor:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCounsellor();
+  }, []);
+
+  // ✅ Loading state
+  if (loading) {
+    return <div className="couns-loading">
+      <div className="couns-loading-spinner"></div>
+    </div>;
+  }
 
   const navItems = [
     { id: 'messages', icon: <FaComments />, label: 'Messages', badge: 1 },
@@ -136,13 +172,39 @@ export default function CounselorDashboard() {
         <aside className="couns-sidebar">
           <div className="couns-sidebar-header">
             <div className="couns-counselor-profile">
-              <FaUserCircle className="couns-profile-avatar" />
-              <h3>{counselorData.name}</h3>
-              <p>{counselorData.specialization}</p>
-              <div className="couns-rating-badge">
-                <FaStar className="couns-star" />
-                <span>{counselorData.rating}</span>
+
+              {/* ✅ Profile Image */}
+              {counselorData?.profilePhoto ? (
+                <img
+                  src={counselorData.profilePhoto}
+                  alt="profile"
+                  className="couns-profile-avatar-img"
+                />
+              ) : (
+                <FaUserCircle className="couns-profile-avatar" />
+              )}
+
+              {/* ✅ Name */}
+              <h3>{counselorData?.name}</h3>
+
+              {/* ✅ Specialization */}
+              <p><strong>Specialization:</strong> {counselorData?.specialization}</p>
+
+              {/* ✅ Rating */}
+
+
+              {/* ✅ Extra Details */}
+              <div className="couns-extra-info">
+                <p><strong>Email:</strong> {counselorData?.email}</p>
+                <p><strong>Phone:</strong> {counselorData?.phone}</p>
+
+                <p><strong>Experience:</strong> {counselorData?.experience}</p>
+                <div className="couns-rating-badge">
+                  <FaStar className="couns-star" />
+                  <span>{counselorData?.rating}</span>
+                </div>
               </div>
+
             </div>
           </div>
 
@@ -200,15 +262,43 @@ export default function CounselorDashboard() {
       {isMobile && showMobileMenu && (
         <div className="couns-mobile-menu-overlay">
           <div className="couns-mobile-menu">
-            <div className="couns-mobile-menu-header">
-              <FaUserCircle className="couns-mobile-avatar" />
-              <h3>{counselorData.name}</h3>
-              <p>{counselorData.specialization}</p>
-              <div className="couns-mobile-rating">
-                <FaStar className="couns-star" />
-                <span>{counselorData.rating}</span>
+           <div className="couns-sidebar-header">
+            <div className="couns-counselor-profile">
+
+              {/* ✅ Profile Image */}
+              {counselorData?.profilePhoto ? (
+                <img
+                  src={counselorData.profilePhoto}
+                  alt="profile"
+                  className="couns-profile-avatar-img"
+                />
+              ) : (
+                <FaUserCircle className="couns-profile-avatar" />
+              )}
+
+              {/* ✅ Name */}
+              <h3>{counselorData?.name}</h3>
+
+              {/* ✅ Specialization */}
+              <p><strong>Specialization:</strong> {counselorData?.specialization}</p>
+
+              {/* ✅ Rating */}
+
+
+              {/* ✅ Extra Details */}
+              <div className="couns-extra-info">
+                <p><strong>Email:</strong> {counselorData?.email}</p>
+                <p><strong>Phone:</strong> {counselorData?.phone}</p>
+
+                <p><strong>Experience:</strong> {counselorData?.experience}</p>
+                <div className="couns-rating-badge">
+                  <FaStar className="couns-star" />
+                  <span>{counselorData?.rating}</span>
+                </div>
               </div>
+
             </div>
+          </div>
 
             <nav className="couns-mobile-nav">
               {navItems.map(item => (
@@ -279,6 +369,26 @@ export default function CounselorDashboard() {
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <h2>My Appointments</h2>
+              <div className="couns-appointment-filters">
+                <div className="couns-search-box">
+                  <span className="couns-search-icon">🔍</span>
+                  <input type="text" placeholder="Search appointments..." />
+                </div>
+                <select className="couns-filter-select">
+                  <option>All Appointments</option>
+                  <option>Today</option>
+                  <option>Upcoming</option>
+                  <option>Completed</option>
+                </select>
+              </div>
+            </div>
+            <div className="couns-appointments-grid">
+              {/* Appointment cards will go here */}
+              <div className="couns-coming-soon">
+                <FaCalendarAlt className="couns-coming-icon" />
+                <h3>Coming Soon</h3>
+                <p>Your appointments will appear here</p>
+              </div>
             </div>
           </div>
         )}
@@ -288,6 +398,13 @@ export default function CounselorDashboard() {
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <h2>Today's Sessions</h2>
+            </div>
+            <div className="couns-sessions-list">
+              <div className="couns-coming-soon">
+                <FaVideo className="couns-coming-icon" />
+                <h3>No Sessions Today</h3>
+                <p>Your scheduled sessions will appear here</p>
+              </div>
             </div>
           </div>
         )}
@@ -307,6 +424,35 @@ export default function CounselorDashboard() {
             <div className="couns-tab-header">
               <h2>Earnings Overview</h2>
             </div>
+            <div className="couns-earnings-summary">
+              <div className="couns-earnings-card">
+                <h3>Total Earnings</h3>
+                <div className="couns-earnings-amount">₹0</div>
+                <div className="couns-earnings-badge">+0% from last month</div>
+              </div>
+              <div className="couns-earnings-card pending">
+                <h3>Pending Payout</h3>
+                <div className="couns-earnings-amount">₹0</div>
+                <div className="couns-earnings-badge">Awaiting processing</div>
+              </div>
+              <div className="couns-earnings-card">
+                <h3>This Month</h3>
+                <div className="couns-earnings-amount">₹0</div>
+                <div className="couns-earnings-badge">0 sessions completed</div>
+              </div>
+            </div>
+            <div className="couns-earnings-chart">
+              <h3>Earnings Overview</h3>
+              <div className="couns-chart-placeholder">
+                <div className="couns-chart-bars">
+                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => (
+                    <div key={i} className="couns-chart-bar" style={{ height: '0px' }}>
+                      {month}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -316,7 +462,6 @@ export default function CounselorDashboard() {
             <div className="couns-tab-header">
               <Messagesou />
             </div>
-
           </div>
         )}
 
@@ -326,6 +471,38 @@ export default function CounselorDashboard() {
             <div className="couns-tab-header">
               <h2>Analytics</h2>
             </div>
+            <div className="couns-analytics-grid">
+              <div className="couns-analytics-card couns-purple">
+                <div className="couns-analytics-icon">
+                  <FaUsers />
+                </div>
+                <div className="couns-analytics-info">
+                  <h4>Total Patients</h4>
+                  <div className="couns-analytics-value">0</div>
+                  <div className="couns-analytics-change">+0 this month</div>
+                </div>
+              </div>
+              <div className="couns-analytics-card couns-blue">
+                <div className="couns-analytics-icon">
+                  <FaCalendarAlt />
+                </div>
+                <div className="couns-analytics-info">
+                  <h4>Sessions Completed</h4>
+                  <div className="couns-analytics-value">0</div>
+                  <div className="couns-analytics-change">This month</div>
+                </div>
+              </div>
+              <div className="couns-analytics-card couns-green">
+                <div className="couns-analytics-icon">
+                  <FaStar />
+                </div>
+                <div className="couns-analytics-info">
+                  <h4>Average Rating</h4>
+                  <div className="couns-analytics-value">{counselorData?.rating || 0}</div>
+                  <div className="couns-analytics-change">⭐ from 0 reviews</div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -334,6 +511,16 @@ export default function CounselorDashboard() {
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <h2>Settings</h2>
+            </div>
+            <div className="couns-section">
+              <div className="couns-section-header">
+                <h2>Profile Settings</h2>
+              </div>
+              <div className="couns-coming-soon">
+                <FaCog className="couns-coming-icon" />
+                <h3>Coming Soon</h3>
+                <p>Profile settings will be available here</p>
+              </div>
             </div>
           </div>
         )}
