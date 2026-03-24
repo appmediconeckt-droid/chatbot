@@ -5,8 +5,8 @@
   box-sizing: border-box;
 }
 
-/* ===== MAIN WRAPPER (fixed full viewport) ===== */
-.menthy-wrapper {
+/* ===== MAIN WRAPPER ===== */
+.cs-wrapper {
   position: fixed;
   top: 0;
   left: 0;
@@ -15,13 +15,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
- background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* ===== MAIN CARD (fixed size, no overflow) ===== */
-.menthy-container {
+/* ===== MAIN CARD ===== */
+.cs-container {
   width: 100%;
   max-width: 1200px;
   height: 90vh;
@@ -31,23 +31,11 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   display: grid;
   grid-template-columns: 1fr 1.2fr;
-  overflow: hidden; /* crucial - no outer scroll */
-  animation: menthySlideIn 0.5s ease-out;
+  overflow: hidden;
 }
 
-@keyframes menthySlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ===== BRAND SECTION (static) ===== */
-.menthy-brand-section {
+/* ===== BRAND SECTION ===== */
+.cs-brand {
   background: linear-gradient(145deg, #4776e6 0%, #8e54e9 100%);
   padding: 60px 40px;
   display: flex;
@@ -58,150 +46,117 @@
   height: 100%;
 }
 
-.menthy-brand-section::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  right: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  animation: menthyPulse 8s infinite;
-}
-
-@keyframes menthyPulse {
-  0%, 100% { transform: scale(1); opacity: 0.5; }
-  50% { transform: scale(1.1); opacity: 0.8; }
-}
-
-.menthy-brand-content {
+.cs-brand-content {
   position: relative;
   z-index: 1;
   color: white;
   max-width: 400px;
 }
 
-.menthy-logo {
+.cs-logo {
   display: flex;
-  justify-content: center;
   align-items: center;
   gap: 12px;
   margin-bottom: 40px;
 }
 
-.menthy-logo-icon {
-  font-size: 40px;
-  animation: menthyRotate 20s linear infinite;
+.cs-logo-img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 
-@keyframes menthyRotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.menthy-logo-text {
-  font-size: 24px;
+.cs-logo-text {
+  font-size: 28px;
   font-weight: 700;
   letter-spacing: 1px;
 }
 
-.menthy-brand-title {
+.cs-brand-title {
   font-size: 42px;
   font-weight: 800;
   line-height: 1.2;
   margin-bottom: 20px;
-  animation: menthyFadeInUp 0.8s ease-out;
 }
 
-.menthy-brand-subtitle {
+.cs-brand-subtitle {
   font-size: 18px;
   line-height: 1.6;
   margin-bottom: 40px;
   opacity: 0.9;
-  animation: menthyFadeInUp 1s ease-out;
 }
 
-@keyframes menthyFadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.menthy-features {
+.cs-features {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  animation: menthyFadeInUp 1.2s ease-out;
 }
 
-.menthy-feature-item {
+.cs-feature {
   display: flex;
   align-items: center;
   gap: 15px;
   font-size: 16px;
 }
 
-.menthy-feature-icon {
+.cs-feature::before {
+  content: "✓";
   width: 24px;
   height: 24px;
   background: rgba(255, 255, 255, 0.2);
   border-radius: 50%;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 14px;
   font-weight: bold;
 }
 
-/* ===== FORM SECTION (scrolls internally) ===== */
-.menthy-form-section {
+/* ===== FORM SECTION ===== */
+.cs-form-section {
   padding: 40px;
   background: white;
-  overflow-y: auto; /* ONLY this section scrolls */
+  overflow-y: auto;
   height: 100%;
   scrollbar-width: thin;
   scrollbar-color: #8e54e9 #f1f1f1;
 }
 
-/* Custom scrollbar for webkit */
-.menthy-form-section::-webkit-scrollbar {
+.cs-form-section::-webkit-scrollbar {
   width: 6px;
 }
 
-.menthy-form-section::-webkit-scrollbar-track {
+.cs-form-section::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 10px;
 }
 
-.menthy-form-section::-webkit-scrollbar-thumb {
+.cs-form-section::-webkit-scrollbar-thumb {
   background: linear-gradient(145deg, #4776e6, #8e54e9);
   border-radius: 10px;
 }
 
-.menthy-form-section::-webkit-scrollbar-thumb:hover {
-  background: #4776e6;
-}
-
-/* ===== FORM HEADER ===== */
-.menthy-form-header {
+.cs-form-header {
   text-align: center;
   margin-bottom: 30px;
 }
 
-.menthy-form-header h2 {
+.cs-form-header h2 {
   font-size: 32px;
   font-weight: 700;
   margin-bottom: 10px;
   background: linear-gradient(145deg, #4776e6, #8e54e9);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.menthy-form-header p {
+.cs-form-header p {
   color: #666;
   font-size: 16px;
 }
 
-.menthy-toggle-btn {
+.cs-toggle {
   background: none;
   border: none;
   color: #4776e6;
@@ -212,30 +167,30 @@
   transition: color 0.3s;
 }
 
-.menthy-toggle-btn:hover {
+.cs-toggle:hover {
   color: #8e54e9;
 }
 
-/* ===== FORM STYLES ===== */
-.menthy-form {
+/* ===== FORM FIELDS ===== */
+.cs-form {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.menthy-form-grid {
+.cs-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 20px;
 }
 
-.menthy-form-group {
+.cs-field {
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.menthy-label {
+.cs-label {
   font-size: 14px;
   font-weight: 600;
   color: #444;
@@ -244,19 +199,19 @@
   gap: 6px;
 }
 
-.menthy-field-icon {
+.cs-field-icon {
   color: #4776e6;
   font-size: 14px;
 }
 
-.menthy-required {
+.cs-required {
   color: #ff4444;
   margin-left: 4px;
 }
 
-.menthy-input,
-.menthy-select,
-.menthy-textarea {
+.cs-input,
+.cs-select,
+.cs-textarea {
   width: 100%;
   padding: 12px 15px;
   border: 2px solid #e0e0e0;
@@ -266,36 +221,95 @@
   background: #f8f9fa;
 }
 
-.menthy-input:focus,
-.menthy-select:focus,
-.menthy-textarea:focus {
+.cs-input:focus,
+.cs-select:focus,
+.cs-textarea:focus {
   outline: none;
   border-color: #4776e6;
   background: white;
   box-shadow: 0 0 0 4px rgba(71, 118, 230, 0.1);
 }
 
-.menthy-input-error {
+.cs-input-error {
   border-color: #ff4444 !important;
 }
 
-.menthy-error-text {
+.cs-verified-input {
+  border-color: #10b981 !important;
+  background-color: #f0fdf4 !important;
+}
+
+.cs-error {
   color: #ff4444;
   font-size: 12px;
   margin-top: 4px;
 }
 
-/* Password Input */
-.menthy-password-input {
+.cs-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Verify Input Group */
+.cs-verify-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.cs-verify-group .cs-input {
+  flex: 1;
+  padding-right: 90px;
+}
+
+.cs-verify-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #4776e6, #8e54e9);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.cs-verify-btn:hover:not(:disabled) {
+  transform: translateY(-50%) scale(1.02);
+  box-shadow: 0 2px 8px rgba(71, 118, 230, 0.4);
+}
+
+.cs-verified-badge {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: white;
+  padding-left: 8px;
+}
+
+/* Password Wrapper */
+.cs-password-wrapper {
   position: relative;
   width: 100%;
 }
 
-.menthy-password-input input {
+.cs-password-wrapper .cs-input {
   padding-right: 70px;
 }
 
-.menthy-password-toggle {
+.cs-password-toggle {
   position: absolute;
   right: 12px;
   top: 50%;
@@ -311,19 +325,19 @@
   transition: background 0.2s;
 }
 
-.menthy-password-toggle:hover {
+.cs-password-toggle:hover {
   background: rgba(71, 118, 230, 0.1);
 }
 
-/* Checkbox Groups */
-.menthy-checkbox-group {
+/* Checkbox Group */
+.cs-checkbox-group {
   display: flex;
   flex-wrap: wrap;
   gap: 15px;
   padding: 5px 0;
 }
 
-.menthy-checkbox-label {
+.cs-checkbox-label {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -332,43 +346,15 @@
   cursor: pointer;
 }
 
-.menthy-checkbox-label input[type="checkbox"] {
+.cs-checkbox-label input[type="checkbox"] {
   width: 18px;
   height: 18px;
   cursor: pointer;
   accent-color: #4776e6;
 }
 
-/* Form Options (remember me / forgot) */
-.menthy-form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin: 5px 0;
-}
-
-.menthy-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  color: #666;
-  cursor: pointer;
-}
-
-.menthy-forgot-link {
-  color: #4776e6;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.menthy-forgot-link:hover {
-  text-decoration: underline;
-}
-
 /* File Input */
-.menthy-file-input {
+.cs-file {
   width: 100%;
   padding: 10px;
   border: 2px dashed #e0e0e0;
@@ -377,18 +363,40 @@
   cursor: pointer;
 }
 
-.menthy-file-input:hover {
+.cs-file:hover {
   border-color: #4776e6;
 }
 
-/* Textarea */
-.menthy-textarea {
-  resize: vertical;
-  min-height: 100px;
+/* Form Options */
+.cs-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.cs-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #666;
+  cursor: pointer;
+}
+
+.cs-forgot {
+  color: #4776e6;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cs-forgot:hover {
+  text-decoration: underline;
 }
 
 /* Submit Button */
-.menthy-submit-btn {
+.cs-submit {
   background: linear-gradient(145deg, #4776e6, #8e54e9);
   color: white;
   border: none;
@@ -403,262 +411,451 @@
   overflow: hidden;
 }
 
-.menthy-submit-btn::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s;
-}
-
-.menthy-submit-btn:hover::before {
-  left: 100%;
-}
-
-.menthy-submit-btn:hover {
+.cs-submit:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 25px rgba(71, 118, 230, 0.4);
 }
 
-/* Terms */
-.menthy-terms {
-  text-align: center;
-  font-size: 13px;
-  color: #666;
-  margin-top: 10px;
+.cs-submit-loading {
+  opacity: 0.8;
+  cursor: not-allowed;
 }
 
-.menthy-terms a {
-  color: #4776e6;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.menthy-terms a:hover {
-  text-decoration: underline;
-}
-
-/* ===== FULLY RESPONSIVE ===== */
-@media (max-width: 968px) {
-  .menthy-container {
-    grid-template-columns: 1fr;
-    max-width: 600px;
-    height: auto;
-    max-height: 90vh;
-  }
-
-  .menthy-brand-section {
-    padding: 40px 30px;
-    display: none; /* Hide on small screens for better focus */
-  }
-
-  .menthy-form-section {
-    padding: 30px;
-    max-height: 90vh;
-  }
-
-  .menthy-form-grid {
-    grid-template-columns: 1fr;
-    gap: 15px;
-  }
-}
-
-@media (max-width: 768px) {
-  .menthy-wrapper {
-    padding: 10px;
-  }
-
-  .menthy-container {
-    max-width: 100%;
-    height: 95vh;
-  }
-
-  .menthy-form-section {
-    padding: 25px 20px;
-  }
-
-  .menthy-form-header h2 {
-    font-size: 28px;
-  }
-}
-
-@media (max-width: 480px) {
-  .menthy-form-section {
-    padding: 20px 15px;
-  }
-
-  .menthy-form-header h2 {
-    font-size: 24px;
-  }
-
-  .menthy-checkbox-group {
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .menthy-form-options {
-    flex-direction: column;
-    gap: 10px;
-    align-items: flex-start;
-  }
-}
-
-/* Fix for very small heights */
-@media (max-height: 700px) {
-  .menthy-container {
-    height: 98vh;
-  }
-  
-  .menthy-form-section {
-    padding: 20px;
-  }
-}
-
-
-
-/* Add to your LoginSignup.css file */
-
-/* Loading Spinner */
-.menthy-spinner {
+.cs-spinner {
   display: inline-block;
   width: 20px;
   height: 20px;
   border: 3px solid rgba(255, 255, 255, 0.3);
   border-radius: 50%;
   border-top-color: white;
-  animation: menthy-spin 1s ease-in-out infinite;
+  animation: csSpin 1s ease-in-out infinite;
   margin-right: 10px;
 }
 
-@keyframes menthy-spin {
+@keyframes csSpin {
   to { transform: rotate(360deg); }
 }
 
-.menthy-btn-loading {
-  opacity: 0.8;
-  cursor: not-allowed;
+/* Terms */
+.cs-terms {
+  text-align: center;
+  font-size: 13px;
+  color: #666;
+  margin-top: 10px;
 }
 
-/* Disabled States */
-.menthy-input:disabled,
-.menthy-select:disabled,
-.menthy-textarea:disabled,
-.menthy-checkbox-label input:disabled,
-.menthy-file-input:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: #f5f5f5;
+.cs-terms a {
+  color: #4776e6;
+  text-decoration: none;
+  font-weight: 500;
 }
 
-.menthy-password-toggle:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.cs-terms a:hover {
+  text-decoration: underline;
 }
 
-.menthy-disabled {
+.cs-disabled {
   pointer-events: none;
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.menthy-checkbox-label input:disabled {
-  accent-color: #ccc;
+/* ===== OTP MODAL - NO ANIMATIONS ===== */
+.cs-otp-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
 }
 
-/* Success Message Animation (optional) */
-@keyframes menthy-success {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+.cs-otp-modal {
+  background: white;
+  border-radius: 32px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  position: relative;
 }
 
-.menthy-success {
-  animation: menthy-success 0.5s ease;
+.cs-otp-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #4776e6, #8e54e9);
 }
 
-/* Notification Styles */
-.menthy-notification {
+.cs-otp-modal-phone::before {
+  background: linear-gradient(90deg, #10b981, #34d399);
+}
+
+.cs-otp-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 24px 28px;
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
+  position: relative;
+}
+
+.cs-otp-icon-wrapper {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #4776e615, #8e54e915);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #4776e6;
+}
+
+.cs-otp-modal-phone .cs-otp-icon-wrapper {
+  background: linear-gradient(135deg, #10b98115, #34d39915);
+  color: #10b981;
+}
+
+.cs-otp-header h3 {
+  flex: 1;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  background: linear-gradient(135deg, #4776e6, #8e54e9);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cs-otp-modal-phone .cs-otp-header h3 {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cs-otp-close {
+  background: #f5f5f5;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #666;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.cs-otp-close:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+.cs-otp-body {
+  padding: 28px 28px 32px;
+}
+
+.cs-otp-body p {
+  color: #666;
+  margin-bottom: 8px;
+  font-size: 14px;
+  text-align: center;
+}
+
+.cs-otp-recipient {
+  text-align: center;
+  font-weight: 700;
+  font-size: 16px;
+  color: #333;
+  background: #f8f9fa;
+  padding: 8px 16px;
+  border-radius: 12px;
+  margin-bottom: 28px;
+  display: inline-block;
+  width: auto;
+  margin-left: auto;
+  margin-right: auto;
+  font-family: monospace;
+}
+
+.cs-otp-input-group {
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.cs-otp-input {
+  width: 100%;
+  padding: 18px 20px;
+  font-size: 32px;
+  text-align: center;
+  letter-spacing: 12px;
+  border: 2px solid #e5e7eb;
+  border-radius: 20px;
+  transition: all 0.3s;
+  font-weight: 700;
+  font-family: 'Courier New', monospace;
+  background: #fafbfc;
+}
+
+.cs-otp-input:focus {
+  outline: none;
+  border-color: #4776e6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(71, 118, 230, 0.1);
+}
+
+.cs-otp-modal-phone .cs-otp-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+}
+
+.cs-otp-input-success {
+  border-color: #10b981;
+  background-color: #f0fdf4;
+}
+
+.cs-otp-success-icon {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #10b981;
+  font-size: 28px;
+}
+
+.cs-otp-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.cs-otp-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cs-otp-verify,
+.cs-otp-resend {
+  flex: 1;
+  padding: 14px 20px;
+  border: none;
+  border-radius: 16px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.cs-otp-verify {
+  background: linear-gradient(135deg, #4776e6, #8e54e9);
+  color: white;
+  box-shadow: 0 4px 12px rgba(71, 118, 230, 0.3);
+}
+
+.cs-otp-modal-phone .cs-otp-verify {
+  background: linear-gradient(135deg, #10b981, #34d399);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.cs-otp-verify:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(71, 118, 230, 0.4);
+}
+
+.cs-otp-resend {
+  background: white;
+  border: 2px solid #e5e7eb;
+  color: #4776e6;
+}
+
+.cs-otp-modal-phone .cs-otp-resend {
+  color: #10b981;
+}
+
+.cs-otp-resend:hover:not(:disabled) {
+  background: #f9fafb;
+  border-color: #4776e6;
+  transform: translateY(-1px);
+}
+
+.cs-otp-verify:disabled,
+.cs-otp-resend:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cs-otp-success {
+  margin-top: 20px;
+  padding: 12px 16px;
+  background: #f0fdf4;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #10b981;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.cs-spin {
+  animation: csSpin 0.8s linear infinite;
+}
+
+/* ===== NOTIFICATION ===== */
+.cs-notification {
   position: fixed;
   top: 20px;
   right: 20px;
   z-index: 1000;
-  animation: slideIn 0.3s ease-out;
   max-width: 350px;
   width: 100%;
 }
 
-.menthy-notification-content {
+.cs-notification-content {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 15px 20px;
-  border-radius: 10px;
+  border-radius: 12px;
   background: white;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   border-left: 4px solid;
 }
 
-.menthy-notification-success {
+.cs-notification-success {
   border-left-color: #28a745;
 }
 
-.menthy-notification-success .menthy-notification-icon {
+.cs-notification-success .cs-notification-icon {
   color: #28a745;
   font-size: 20px;
   font-weight: bold;
 }
 
-.menthy-notification-error {
+.cs-notification-error {
   border-left-color: #dc3545;
 }
 
-.menthy-notification-error .menthy-notification-icon {
+.cs-notification-error .cs-notification-icon {
   color: #dc3545;
   font-size: 20px;
 }
 
-.menthy-notification-info {
+.cs-notification-info {
   border-left-color: #17a2b8;
 }
 
-.menthy-notification-info .menthy-notification-icon {
+.cs-notification-info .cs-notification-icon {
   color: #17a2b8;
   font-size: 20px;
 }
 
-.menthy-notification-message {
+.cs-notification-message {
   flex: 1;
   font-size: 14px;
   color: #333;
   line-height: 1.4;
 }
 
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-    opacity: 0;
+/* ===== RESPONSIVE ===== */
+@media (max-width: 968px) {
+  .cs-container {
+    grid-template-columns: 1fr;
+    max-width: 600px;
+    height: auto;
+    max-height: 90vh;
   }
-  to {
-    transform: translateX(0);
-    opacity: 1;
+
+  .cs-brand {
+    display: none;
+  }
+
+  .cs-form-section {
+    padding: 30px;
+  }
+
+  .cs-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
   }
 }
 
-/* Animation for notification removal */
-.menthy-notification-exit {
-  animation: slideOut 0.3s ease-in forwards;
+@media (max-width: 768px) {
+  .cs-wrapper {
+    padding: 10px;
+  }
+
+  .cs-form-section {
+    padding: 25px 20px;
+  }
+
+  .cs-form-header h2 {
+    font-size: 28px;
+  }
 }
 
-@keyframes slideOut {
-  from {
-    transform: translateX(0);
-    opacity: 1;
+@media (max-width: 480px) {
+  .cs-form-section {
+    padding: 20px 15px;
   }
-  to {
-    transform: translateX(100%);
-    opacity: 0;
+
+  .cs-form-header h2 {
+    font-size: 24px;
+  }
+
+  .cs-checkbox-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cs-options {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .cs-otp-input {
+    font-size: 24px;
+    letter-spacing: 8px;
+    padding: 14px 16px;
+  }
+
+  .cs-otp-actions {
+    flex-direction: column;
+  }
+}
+
+@media (max-height: 700px) {
+  .cs-container {
+    height: 98vh;
+  }
+  
+  .cs-form-section {
+    padding: 20px;
   }
 }

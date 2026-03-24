@@ -1,20 +1,16 @@
-import React, { useState } from 'react';
-import { FaEnvelope, FaLock, FaUser, FaPhone, FaCalendarAlt, FaVenusMars } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaEnvelope, FaLock, FaUser, FaPhone, FaCalendarAlt, FaVenusMars, FaCheckCircle, FaSpinner, FaTimes } from 'react-icons/fa';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './UserSignup.css';
 import logo from '../image/Mediconect Logo-3.png';
-import { useEffect } from "react";
 
 const UserSignup = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    // Login Fields
     email: '',
     password: '',
-    
-    // Signup Fields
     fullName: '',
     anonymous: '',
     phoneNumber: '',
@@ -22,6 +18,24 @@ const UserSignup = () => {
     gender: '',
     confirmPassword: ''
   });
+
+  // Verification states
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [showEmailOtpModal, setShowEmailOtpModal] = useState(false);
+  const [showPhoneOtpModal, setShowPhoneOtpModal] = useState(false);
+  const [emailOtp, setEmailOtp] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
+  const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
+  const [isVerifyingEmailOtp, setIsVerifyingEmailOtp] = useState(false);
+  const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
+  const [emailOtpError, setEmailOtpError] = useState('');
+  const [phoneOtpError, setPhoneOtpError] = useState('');
+  const [emailOtpSuccess, setEmailOtpSuccess] = useState(false);
+  const [phoneOtpSuccess, setPhoneOtpSuccess] = useState(false);
+  const [emailResendTimer, setEmailResendTimer] = useState(0);
+  const [phoneResendTimer, setPhoneResendTimer] = useState(0);
 
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -36,16 +50,40 @@ const UserSignup = () => {
   // API Base URLs
   const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/';
   const LOGIN_URL = `${API_BASE_URL}api/auth/login`;
-  const REGISTER_URL = `${API_BASE_URL}api/auth/register/user `;
+  const REGISTER_URL = `${API_BASE_URL}api/auth/complete-registration`;
+  const SEND_EMAIL_OTP_URL = `${API_BASE_URL}api/auth/send-email-otp`;
+  const VERIFY_EMAIL_OTP_URL = `${API_BASE_URL}api/auth/verify-email-otp`;
+  const SEND_PHONE_OTP_URL = `${API_BASE_URL}api/auth/send-phone-otp`;
+  const VERIFY_PHONE_OTP_URL = `${API_BASE_URL}api/auth/verify-phone-otp`;
+
+  // Resend timers
+  useEffect(() => {
+    let interval;
+    if (emailResendTimer > 0) {
+      interval = setInterval(() => {
+        setEmailResendTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [emailResendTimer]);
+
+  useEffect(() => {
+    let interval;
+    if (phoneResendTimer > 0) {
+      interval = setInterval(() => {
+        setPhoneResendTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [phoneResendTimer]);
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
     if (token) {
-      navigate("/user-dashboard"); // already logged in → redirect
+      navigate("/user-dashboard");
     }
   }, [navigate]);
 
-  // Function to show notification
   const showNotification = (message, type = 'success') => {
     setNotification({ show: true, message, type });
     setTimeout(() => {
@@ -56,74 +94,213 @@ const UserSignup = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    
-    // Clear error for this field
+
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
     }
-    // Clear API error when user starts typing
     if (apiError) {
       setApiError('');
     }
+
+    if (name === 'email') setEmailVerified(false);
+    if (name === 'phoneNumber') setPhoneVerified(false);
   };
 
   const validateLogin = () => {
     const newErrors = {};
-    
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
     }
-    
     if (!formData.password) {
       newErrors.password = 'Password is required';
     }
-    
     return newErrors;
   };
 
   const validateSignup = () => {
     const newErrors = {};
-    
+
     if (!formData.fullName) newErrors.fullName = 'Full name is required';
     if (!formData.anonymous) newErrors.anonymous = 'Anonymous name is required';
-    
+
     if (!formData.email) {
       newErrors.email = 'Email is required';
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = 'Email is invalid';
+    } else if (!emailVerified) {
+      newErrors.email = 'Please verify your email first';
     }
-    
+
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = 'Phone number is required';
     } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
       newErrors.phoneNumber = 'Phone number must be 10 digits';
+    } else if (!phoneVerified) {
+      newErrors.phoneNumber = 'Please verify your phone number first';
     }
-    
+
     if (!formData.age) {
       newErrors.age = 'Age is required';
     } else if (formData.age < 13 || formData.age > 120) {
       newErrors.age = 'Age must be between 13 and 120';
     }
-    
+
     if (!formData.gender) newErrors.gender = 'Gender is required';
-    
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 3) {
       newErrors.password = 'Password must be at least 3 characters';
     }
-    
+
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = 'Please confirm password';
     } else if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     return newErrors;
   };
- 
+
+  const handleSendEmailOtp = async () => {
+    if (!formData.email) {
+      setEmailOtpError("Please enter email first");
+      return;
+    }
+
+    try {
+      setIsSendingEmailOtp(true);
+      setEmailOtpError("");
+
+      const response = await axios.post(SEND_EMAIL_OTP_URL, {
+        email: formData.email,
+      });
+
+      if (response.data.success) {
+        setEmailResendTimer(60);
+        showNotification("OTP sent to email successfully!", "success");
+      } else {
+        setEmailOtpError(response.data.message || "Failed to send OTP");
+      }
+    } catch (error) {
+      setEmailOtpError(
+        error.response?.data?.message || "Something went wrong"
+      );
+    } finally {
+      setIsSendingEmailOtp(false);
+    }
+  };
+
+  const handleVerifyEmailOtp = async () => {
+    try {
+      setIsVerifyingEmailOtp(true);
+      setEmailOtpError("");
+
+      const response = await axios.post(VERIFY_EMAIL_OTP_URL, {
+        email: formData.email,
+        otp: emailOtp,
+      });
+
+      if (response.data.success) {
+        setEmailOtpSuccess(true);
+        setEmailVerified(true);
+        showNotification("Email verified successfully!", "success");
+        setTimeout(() => {
+          setShowEmailOtpModal(false);
+          resetEmailOtpState();
+        }, 1000);
+      } else {
+        setEmailOtpError(response.data.message || "Invalid OTP");
+      }
+    } catch (error) {
+      setEmailOtpError(
+        error.response?.data?.message || "Verification failed"
+      );
+    } finally {
+      setIsVerifyingEmailOtp(false);
+    }
+  };
+
+  const resetEmailOtpState = () => {
+    setEmailOtp("");
+    setEmailOtpError("");
+    setEmailOtpSuccess(false);
+    setEmailResendTimer(0);
+  };
+
+  const handleSendPhoneOtp = async () => {
+    if (!formData.phoneNumber) {
+      setPhoneOtpError("Enter phone number first");
+      return;
+    }
+
+    try {
+      setIsSendingPhoneOtp(true);
+      setPhoneOtpError("");
+
+      const response = await axios.post(SEND_PHONE_OTP_URL, {
+        phoneNumber: `+${formData.phoneNumber}`,
+      });
+
+      if (response.data.success) {
+        showNotification("OTP sent successfully!", "success");
+        setPhoneResendTimer(60);
+      } else {
+        setPhoneOtpError(response.data.message || "Failed to send OTP");
+      }
+    } catch (error) {
+      setPhoneOtpError(
+        error.response?.data?.message || "Error sending OTP"
+      );
+    } finally {
+      setIsSendingPhoneOtp(false);
+    }
+  };
+
+  const handleVerifyPhoneOtp = async () => {
+    if (phoneOtp.length !== 6) {
+      setPhoneOtpError("Enter 6 digit OTP");
+      return;
+    }
+
+    try {
+      setIsVerifyingPhoneOtp(true);
+      setPhoneOtpError("");
+
+      const response = await axios.post(VERIFY_PHONE_OTP_URL, {
+        phoneNumber: `+${formData.phoneNumber}`,
+        otp: phoneOtp,
+      });
+
+      if (response.data.success) {
+        setPhoneVerified(true);
+        setPhoneOtpSuccess(true);
+        showNotification("Phone verified successfully!", "success");
+        setTimeout(() => {
+          setShowPhoneOtpModal(false);
+          resetPhoneOtpState();
+        }, 1000);
+      } else {
+        setPhoneOtpError(response.data.message || "Invalid OTP");
+      }
+    } catch (error) {
+      setPhoneOtpError(
+        error.response?.data?.message || "Verification failed"
+      );
+    } finally {
+      setIsVerifyingPhoneOtp(false);
+    }
+  };
+
+  const resetPhoneOtpState = () => {
+    setPhoneOtp('');
+    setPhoneOtpError('');
+    setPhoneOtpSuccess(false);
+    setPhoneResendTimer(0);
+  };
+
   const handleLogin = async () => {
     try {
       const response = await axios.post(LOGIN_URL, {
@@ -131,66 +308,35 @@ const UserSignup = () => {
         password: formData.password
       });
 
-      console.log("Login response:", response.data);
+      const token = response.data?.token || response.data?.accessToken || response.data?.data?.token || response.data?.data?.accessToken;
+      const refreshToken = response.data?.refreshToken || response.data?.data?.refreshToken;
 
-      // Normalize token/refreshToken from different possible payload shapes
-      const token =
-        response.data?.token ||
-        response.data?.accessToken ||
-        response.data?.data?.token ||
-        response.data?.data?.accessToken;
-
-      const refreshToken =
-        response.data?.refreshToken ||
-        response.data?.data?.refreshToken;
-
-      // ✅ CASE 1: USER ALREADY LOGGED IN (backend message)
       if (response.data?.message === "User already logged in") {
         setApiError("User already logged in");
         setShowVerifyButton(true);
-        return; // ❌ STOP → no redirect
+        return;
       }
 
-      // ✅ CASE 2: SUCCESS LOGIN (TOKEN PROVIDED)
       if (token) {
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userType", "user");
         localStorage.setItem("userEmail", formData.email);
-
-        // Support both legacy and new token key naming
         localStorage.setItem("token", token);
         localStorage.setItem("accessToken", token);
-
-        if (refreshToken) {
-          localStorage.setItem("refreshToken", refreshToken);
-        }
-
-        if (response.data.user) {
-          localStorage.setItem("userData", JSON.stringify(response.data.user));
-        }
+        if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+        if (response.data.user) localStorage.setItem("userData", JSON.stringify(response.data.user));
 
         showNotification('Login successful! Redirecting to dashboard...', 'success');
-        
-        // ✅ DELAY REDIRECT TO SHOW NOTIFICATION
-        setTimeout(() => {
-          navigate("/user-dashboard");
-        }, 1500);
+        setTimeout(() => navigate("/user-dashboard"), 1500);
         return;
       }
 
-      // ✅ CASE 3: LOGIN SUCCESS MESSAGE (NO TOKEN)
-      if (response.data?.message?.toLowerCase().includes("success")) {
-        // Guard against treating "already logged in" as success.
-        if (response.data.message !== "User already logged in") {
-          showNotification('Login successful! Redirecting to dashboard...', 'success');
-          setTimeout(() => {
-            navigate("/user-dashboard");
-          }, 1500);
-          return;
-        }
+      if (response.data?.message?.toLowerCase().includes("success") && response.data.message !== "User already logged in") {
+        showNotification('Login successful! Redirecting to dashboard...', 'success');
+        setTimeout(() => navigate("/user-dashboard"), 1500);
+        return;
       }
 
-      // ❌ CASE 4: OTHER ERROR
       if (response.data?.message) {
         setApiError(response.data.message);
         showNotification(response.data.message, 'error');
@@ -202,7 +348,6 @@ const UserSignup = () => {
 
     } catch (error) {
       console.error("Login error:", error);
-
       let errorMessage = "Something went wrong";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -211,15 +356,24 @@ const UserSignup = () => {
       } else if (error.request) {
         errorMessage = "Network error. Please check your connection.";
       }
-      
       setApiError(errorMessage);
       showNotification(errorMessage, 'error');
     }
   };
 
   const handleSignup = async () => {
+    if (!emailVerified) {
+      setErrors(prev => ({ ...prev, email: 'Please verify your email first' }));
+      showNotification('Please verify your email first', 'error');
+      return;
+    }
+    if (!phoneVerified) {
+      setErrors(prev => ({ ...prev, phoneNumber: 'Please verify your phone number first' }));
+      showNotification('Please verify your phone number first', 'error');
+      return;
+    }
+
     try {
-      // Prepare signup data according to API requirements
       const signupData = {
         fullName: formData.fullName,
         email: formData.email,
@@ -229,58 +383,45 @@ const UserSignup = () => {
         confirmPassword: formData.confirmPassword,
         age: parseInt(formData.age),
         gender: formData.gender,
-        role: "user"
+        role: "user",
+        isEmailVerified: true,
+        isPhoneVerified: true
       };
 
-      console.log('Signup data:', signupData);
+      console.log("Sending signup data:", signupData);
 
       const response = await axios.post(REGISTER_URL, signupData);
 
-      console.log('Signup response:', response.data);
-
       if (response.data && (response.data.message?.includes('success') || response.data.success)) {
-        // Show success notification
-        showNotification('Account created successfully! Please login to continue.', 'success');
+        showNotification('Account created successfully! Redirecting to dashboard...', 'success');
         
-        // Clear form data
-        setFormData({
-          email: '',
-          password: '',
-          fullName: '',
-          anonymous: '',
-          phoneNumber: '',
-          age: '',
-          gender: '',
-          confirmPassword: ''
-        });
+        // Store user data after successful signup
+        const token = response.data?.token || response.data?.accessToken;
+        if (token) {
+          localStorage.setItem("isAuthenticated", "true");
+          localStorage.setItem("userType", "user");
+          localStorage.setItem("userEmail", formData.email);
+          localStorage.setItem("token", token);
+          localStorage.setItem("accessToken", token);
+          if (response.data.user) localStorage.setItem("userData", JSON.stringify(response.data.user));
+        }
         
-        // Clear any existing errors
-        setErrors({});
-        setApiError('');
-        
-        // Switch to login mode after a short delay
+        // Redirect to dashboard after successful signup
         setTimeout(() => {
-          setIsLogin(true);
-          // Show additional notification to inform user to login
-          showNotification('Please login with your credentials', 'info');
-        }, 2000);
+          navigate("/user-dashboard");
+        }, 1500);
       } else {
-        // Handle case where signup was successful but response format is unexpected
-        showNotification('Account created successfully! Please login to continue.', 'success');
+        showNotification('Account created successfully! Redirecting to dashboard...', 'success');
         setTimeout(() => {
-          setIsLogin(true);
-        }, 2000);
+          navigate("/user-dashboard");
+        }, 1500);
       }
     } catch (error) {
       console.error('Signup error:', error);
-      
-      // Handle different error scenarios
+
       if (error.response) {
-        // Server responded with error status
         if (error.response.status === 400) {
-          // Handle validation errors
           if (error.response.data.errors) {
-            // If server returns field-specific errors
             const serverErrors = {};
             Object.keys(error.response.data.errors).forEach(key => {
               serverErrors[key] = error.response.data.errors[key][0];
@@ -302,11 +443,9 @@ const UserSignup = () => {
           showNotification('Registration failed. Please try again.', 'error');
         }
       } else if (error.request) {
-        // Request was made but no response
         setApiError('Network error. Please check your connection.');
         showNotification('Network error. Please check your connection.', 'error');
       } else {
-        // Something else happened
         setApiError('An error occurred. Please try again.');
         showNotification('An error occurred. Please try again.', 'error');
       }
@@ -317,7 +456,7 @@ const UserSignup = () => {
     e.preventDefault();
     setIsLoading(true);
     setApiError('');
-    
+
     if (isLogin) {
       const loginErrors = validateLogin();
       if (Object.keys(loginErrors).length === 0) {
@@ -335,7 +474,7 @@ const UserSignup = () => {
         showNotification('Please fill in all required fields correctly', 'error');
       }
     }
-    
+
     setIsLoading(false);
   };
 
@@ -343,22 +482,11 @@ const UserSignup = () => {
     try {
       setIsVerifying(true);
       setVerifySuccess(false);
-      
-      // Send verification email API call
-      const verifyResponse = await axios.post(
-        `${API_BASE_URL}/send-verification-email`,
-        { email: formData.email }
-      );
-      
-      console.log("Verification email response:", verifyResponse.data);
-      
+      const verifyResponse = await axios.post(`${API_BASE_URL}/send-verification-email`, { email: formData.email });
       if (verifyResponse.data?.success || verifyResponse.data?.message) {
         setVerifySuccess(true);
         showNotification('Verification email sent successfully! Check your inbox.', 'success');
-        // Show success message for 3 seconds
-        setTimeout(() => {
-          setVerifySuccess(false);
-        }, 3000);
+        setTimeout(() => setVerifySuccess(false), 3000);
       }
     } catch (error) {
       console.error("Verification error:", error);
@@ -376,6 +504,8 @@ const UserSignup = () => {
     setApiError('');
     setShowVerifyButton(false);
     setVerifySuccess(false);
+    setEmailVerified(false);
+    setPhoneVerified(false);
     setFormData({
       email: '',
       password: '',
@@ -386,99 +516,242 @@ const UserSignup = () => {
       gender: '',
       confirmPassword: ''
     });
-    // Clear notification when toggling mode
     setNotification({ show: false, message: '', type: '' });
   };
 
+  const EmailOtpModal = () => (
+    <div className="us-otp-overlay" onClick={() => {
+      if (!emailOtpSuccess) {
+        setShowEmailOtpModal(false);
+        resetEmailOtpState();
+      }
+    }}>
+      <div className="us-otp-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="us-otp-header">
+          <div className="us-otp-icon">
+            <FaEnvelope />
+          </div>
+          <h3>Verify Email Address</h3>
+          <button
+            className="us-otp-close"
+            onClick={() => {
+              setShowEmailOtpModal(false);
+              resetEmailOtpState();
+            }}
+            disabled={isVerifyingEmailOtp}
+          >
+            <FaTimes />
+          </button>
+        </div>
+        <div className="us-otp-body">
+          <p>Enter the 6-digit code sent to</p>
+          <div className="us-otp-recipient">{formData.email}</div>
+
+          <div className="us-otp-input-wrapper">
+            <input
+              type="text"
+              placeholder="000000"
+              value={emailOtp}
+              onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              className={`us-otp-input ${emailOtpSuccess ? 'us-otp-input-success' : ''}`}
+              maxLength="6"
+              disabled={isVerifyingEmailOtp || emailOtpSuccess}
+              autoFocus
+            />
+            {emailOtpSuccess && <FaCheckCircle className="us-otp-success-icon" />}
+          </div>
+
+          {emailOtpError && <div className="us-otp-error">{emailOtpError}</div>}
+
+          <div className="us-otp-actions">
+            <button
+              onClick={handleVerifyEmailOtp}
+              className="us-otp-verify"
+              disabled={isVerifyingEmailOtp || emailOtpSuccess || !emailOtp}
+            >
+              {isVerifyingEmailOtp ? <FaSpinner className="us-spin" /> : 'Verify'}
+            </button>
+            <button
+              onClick={handleSendEmailOtp}
+              className="us-otp-resend"
+              disabled={isSendingEmailOtp || emailResendTimer > 0 || emailOtpSuccess}
+            >
+              {isSendingEmailOtp ? (
+                <><FaSpinner className="us-spin" /> Sending</>
+              ) : emailResendTimer > 0 ? (
+                `Resend in ${emailResendTimer}s`
+              ) : (
+                'Resend Code'
+              )}
+            </button>
+          </div>
+
+          {emailOtpSuccess && (
+            <div className="us-otp-success">
+              <FaCheckCircle /> Email verified successfully!
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const PhoneOtpModal = () => (
+    <div className="us-otp-overlay" onClick={() => {
+      if (!phoneOtpSuccess) {
+        setShowPhoneOtpModal(false);
+        resetPhoneOtpState();
+      }
+    }}>
+      <div className="us-otp-modal us-otp-modal-phone" onClick={(e) => e.stopPropagation()}>
+        <div className="us-otp-header">
+          <div className="us-otp-icon">
+            <FaPhone />
+          </div>
+          <h3>Verify Phone Number</h3>
+          <button
+            className="us-otp-close"
+            onClick={() => {
+              setShowPhoneOtpModal(false);
+              resetPhoneOtpState();
+            }}
+            disabled={isVerifyingPhoneOtp}
+          >
+            <FaTimes />
+          </button>
+        </div>
+        <div className="us-otp-body">
+          <p>Enter the 6-digit code sent to</p>
+          <div className="us-otp-recipient">{formData.phoneNumber}</div>
+
+          <div className="us-otp-input-wrapper">
+            <input
+              type="text"
+              placeholder="000000"
+              value={phoneOtp}
+              onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              className={`us-otp-input ${phoneOtpSuccess ? 'us-otp-input-success' : ''}`}
+              maxLength="6"
+              disabled={isVerifyingPhoneOtp || phoneOtpSuccess}
+              autoFocus
+            />
+            {phoneOtpSuccess && <FaCheckCircle className="us-otp-success-icon" />}
+          </div>
+
+          {phoneOtpError && <div className="us-otp-error">{phoneOtpError}</div>}
+
+          <div className="us-otp-actions">
+            <button
+              onClick={handleVerifyPhoneOtp}
+              className="us-otp-verify"
+              disabled={isVerifyingPhoneOtp || phoneOtpSuccess || !phoneOtp}
+            >
+              {isVerifyingPhoneOtp ? <FaSpinner className="us-spin" /> : 'Verify'}
+            </button>
+            <button
+              onClick={handleSendPhoneOtp}
+              className="us-otp-resend"
+              disabled={isSendingPhoneOtp || phoneResendTimer > 0 || phoneOtpSuccess}
+            >
+              {isSendingPhoneOtp ? (
+                <><FaSpinner className="us-spin" /> Sending</>
+              ) : phoneResendTimer > 0 ? (
+                `Resend in ${phoneResendTimer}s`
+              ) : (
+                'Resend Code'
+              )}
+            </button>
+          </div>
+
+          {phoneOtpSuccess && (
+            <div className="us-otp-success">
+              <FaCheckCircle /> Phone verified successfully!
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="user-wrapper">
-      {/* Notification Component */}
+    <div className="us-wrapper">
       {notification.show && (
-        <div className={`user-notification user-notification-${notification.type}`}>
-          <div className="user-notification-content">
-            <span className="user-notification-icon">
+        <div className={`us-notification us-notification-${notification.type}`}>
+          <div className="us-notification-content">
+            <span className="us-notification-icon">
               {notification.type === 'success' && '✓'}
               {notification.type === 'error' && '⚠️'}
               {notification.type === 'info' && 'ℹ️'}
             </span>
-            <span className="user-notification-message">{notification.message}</span>
+            <span className="us-notification-message">{notification.message}</span>
           </div>
         </div>
       )}
 
-      <div className="user-container">
-        {/* Left Side - Brand Section */}
-        <div className="user-brand-section">
-          <div className="user-brand-content">
-            <div className="user-logo">
-              <img src={logo} alt="Mediconnect Logo" className="user-logo-image" />
-              <span className="user-logo-text">Mediconnect</span>
+      {showEmailOtpModal && <EmailOtpModal />}
+      {showPhoneOtpModal && <PhoneOtpModal />}
+
+      <div className="us-container">
+        <div className="us-brand">
+          <div className="us-brand-content">
+            <div className="us-logo">
+              <img src={logo} alt="Mediconnect Logo" className="us-logo-img" />
+              <span className="us-logo-text">Mediconnect</span>
             </div>
-            <h1 className="user-brand-title">
+            <h1 className="us-brand-title">
               {isLogin ? 'Welcome Back!' : 'Begin Your Journey'}
             </h1>
-            <p className="user-brand-subtitle">
-              {isLogin 
-                ? 'Connect with professional counselors and start your healing journey.' 
+            <p className="us-brand-subtitle">
+              {isLogin
+                ? 'Connect with professional counselors and start your healing journey.'
                 : 'Join thousands of people who have found peace and clarity.'}
             </p>
-            
-            <div className="user-features">
-              <div className="user-feature-item">
-                <div className="user-feature-icon">✓</div>
-                <span>24/7 Confidential Support</span>
-              </div>
-              <div className="user-feature-item">
-                <div className="user-feature-icon">✓</div>
-                <span>Expert Mental Health Professionals</span>
-              </div>
-              <div className="user-feature-item">
-                <div className="user-feature-icon">✓</div>
-                <span>Safe & Anonymous Sessions</span>
-              </div>
+            <div className="us-features">
+              <div className="us-feature">✓ 24/7 Confidential Support</div>
+              <div className="us-feature">✓ Expert Mental Health Professionals</div>
+              <div className="us-feature">✓ Safe & Anonymous Sessions</div>
             </div>
           </div>
         </div>
 
-        {/* Right Side - Form Section */}
-        <div className="user-form-section">
-          <div className="user-form-header">
+        <div className="us-form-section">
+          <div className="us-form-header">
             <h2>{isLogin ? 'Login to Account' : 'Create Account'}</h2>
             <p>
               {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={toggleMode} className="user-toggle-btn" disabled={isLoading}>
+              <button onClick={toggleMode} className="us-toggle" disabled={isLoading}>
                 {isLogin ? 'Sign Up' : 'Login'}
               </button>
             </p>
           </div>
 
           {apiError && (
-            <div className="user-api-error">
-              <span className="user-error-icon">⚠️</span>
+            <div className="us-api-error">
+              <span className="us-error-icon">⚠️</span>
               {apiError}
             </div>
           )}
 
           {showVerifyButton && (
-            <div className="user-verify-section">
+            <div className="us-verify-section">
               {verifySuccess ? (
-                <div className="user-verify-success">
-                  <span className="user-verify-icon">✓</span>
+                <div className="us-verify-success">
+                  <span className="us-verify-icon">✓</span>
                   <p>Verification email sent successfully! Check your inbox.</p>
                 </div>
               ) : (
                 <>
-                  <p className="user-verify-message">
+                  <p className="us-verify-message">
                     Your account is already logged in on another device.
                   </p>
-                  <button 
-                    onClick={handleVerify} 
-                    className="user-verify-btn" 
+                  <button
+                    onClick={handleVerify}
+                    className="us-verify-btn"
                     disabled={isVerifying || isLoading}
                   >
                     {isVerifying ? (
                       <>
-                        <span className="user-spinner-small"></span>
+                        <span className="us-spinner-small"></span>
                         Sending...
                       </>
                     ) : (
@@ -490,167 +763,207 @@ const UserSignup = () => {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="user-form">
+          <form onSubmit={handleSubmit} className="us-form">
             {isLogin ? (
-              /* Login Form */
               <>
-                <div className="user-form-group">
-                  <label className="user-label">
-                    <FaEnvelope className="user-field-icon" />
-                    Email Address <span className="user-required">*</span>
+                <div className="us-field">
+                  <label className="us-label">
+                    <FaEnvelope className="us-field-icon" />
+                    Email Address <span className="us-required">*</span>
                   </label>
                   <input
                     type="email"
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`user-input ${errors.email ? 'user-input-error' : ''}`}
+                    className={`us-input ${errors.email ? 'us-input-error' : ''}`}
                     placeholder="Enter your email"
                     disabled={isLoading}
                   />
-                  {errors.email && <span className="user-error-text">{errors.email}</span>}
+                  {errors.email && <span className="us-error">{errors.email}</span>}
                 </div>
 
-                <div className="user-form-group">
-                  <label className="user-label">
-                    <FaLock className="user-field-icon" />
-                    Password <span className="user-required">*</span>
+                <div className="us-field">
+                  <label className="us-label">
+                    <FaLock className="us-field-icon" />
+                    Password <span className="us-required">*</span>
                   </label>
-                  <div className="user-password-input">
+                  <div className="us-password-wrapper">
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`user-input ${errors.password ? 'user-input-error' : ''}`}
+                      className={`us-input ${errors.password ? 'us-input-error' : ''}`}
                       placeholder="Enter your password"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="user-password-toggle"
+                      className="us-password-toggle"
                       disabled={isLoading}
                     >
                       {showPassword ? 'Hide' : 'Show'}
                     </button>
                   </div>
-                  {errors.password && <span className="user-error-text">{errors.password}</span>}
+                  {errors.password && <span className="us-error">{errors.password}</span>}
                 </div>
 
-                <div className="user-form-options">
-                  <label className="user-checkbox">
+                <div className="us-options">
+                  <label className="us-checkbox">
                     <input type="checkbox" disabled={isLoading} /> Remember me
                   </label>
                   <Link to="/otp-verification">
-                    <button className="user-forgot-link" disabled={isLoading}>
+                    <button className="us-forgot" disabled={isLoading}>
                       Forgot Password?
                     </button>
                   </Link>
                 </div>
               </>
             ) : (
-              /* Signup Form */
               <>
-                <div className="user-form-grid">
-                  <div className="user-form-group">
-                    <label className="user-label">
-                      <FaUser className="user-field-icon" />
-                      Full Name <span className="user-required">*</span>
+                <div className="us-grid">
+                  <div className="us-field">
+                    <label className="us-label">
+                      <FaUser className="us-field-icon" />
+                      Full Name <span className="us-required">*</span>
                     </label>
                     <input
                       type="text"
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
-                      className={`user-input ${errors.fullName ? 'user-input-error' : ''}`}
+                      className={`us-input ${errors.fullName ? 'us-input-error' : ''}`}
                       placeholder="Enter your full name"
                       disabled={isLoading}
                     />
-                    {errors.fullName && <span className="user-error-text">{errors.fullName}</span>}
+                    {errors.fullName && <span className="us-error">{errors.fullName}</span>}
                   </div>
 
-                  <div className="user-form-group">
-                    <label className="user-label">
-                      <FaUser className="user-field-icon" />
-                      Anonymous Name <span className="user-required">*</span>
+                  <div className="us-field">
+                    <label className="us-label">
+                      <FaUser className="us-field-icon" />
+                      Anonymous Name <span className="us-required">*</span>
                     </label>
                     <input
                       type="text"
                       name="anonymous"
                       value={formData.anonymous}
                       onChange={handleChange}
-                      className={`user-input ${errors.anonymous ? 'user-input-error' : ''}`}
+                      className={`us-input ${errors.anonymous ? 'us-input-error' : ''}`}
                       placeholder="Choose an anonymous name"
                       disabled={isLoading}
                     />
-                    {errors.anonymous && <span className="user-error-text">{errors.anonymous}</span>}
+                    {errors.anonymous && <span className="us-error">{errors.anonymous}</span>}
                   </div>
 
-                  <div className="user-form-group">
-                    <label className="user-label">
-                      <FaEnvelope className="user-field-icon" />
-                      Email <span className="user-required">*</span>
+                  <div className="us-field">
+                    <label className="us-label">
+                      <FaEnvelope className="us-field-icon" />
+                      Email <span className="us-required">*</span>
                     </label>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className={`user-input ${errors.email ? 'user-input-error' : ''}`}
-                      placeholder="Enter your email"
-                      disabled={isLoading}
-                    />
-                    {errors.email && <span className="user-error-text">{errors.email}</span>}
+                    <div className="us-verify-group">
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`us-input ${errors.email ? 'us-input-error' : ''} ${emailVerified ? 'us-verified-input' : ''}`}
+                        placeholder="Enter your email"
+                        disabled={isLoading || emailVerified}
+                      />
+                      {!emailVerified && formData.email && /\S+@\S+\.\S+/.test(formData.email) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            resetEmailOtpState();
+                            setShowEmailOtpModal(true);
+                            handleSendEmailOtp();
+                          }}
+                          className="us-verify-btn-sm"
+                          disabled={isLoading}
+                        >
+                          Verify
+                        </button>
+                      )}
+                      {emailVerified && (
+                        <span className="us-verified-badge">
+                          <FaCheckCircle /> Verified
+                        </span>
+                      )}
+                    </div>
+                    {errors.email && <span className="us-error">{errors.email}</span>}
                   </div>
 
-                  <div className="user-form-group">
-                    <label className="user-label">
-                      <FaPhone className="user-field-icon" />
-                      Phone Number <span className="user-required">*</span>
+                  <div className="us-field">
+                    <label className="us-label">
+                      <FaPhone className="us-field-icon" />
+                      Phone Number <span className="us-required">*</span>
                     </label>
-                    <input
-                      type="tel"
-                      name="phoneNumber"
-                      value={formData.phoneNumber}
-                      onChange={handleChange}
-                      className={`user-input ${errors.phoneNumber ? 'user-input-error' : ''}`}
-                      placeholder="10 digit mobile number"
-                      maxLength="10"
-                      disabled={isLoading}
-                    />
-                    {errors.phoneNumber && <span className="user-error-text">{errors.phoneNumber}</span>}
+                    <div className="us-verify-group">
+                      <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleChange}
+                        className={`us-input ${errors.phoneNumber ? 'us-input-error' : ''} ${phoneVerified ? 'us-verified-input' : ''}`}
+                        placeholder="10 digit mobile number"
+                        maxLength="10"
+                        disabled={isLoading || phoneVerified}
+                      />
+                      {!phoneVerified && formData.phoneNumber && /^\d{10}$/.test(formData.phoneNumber) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            resetPhoneOtpState();
+                            setShowPhoneOtpModal(true);
+                            handleSendPhoneOtp();
+                          }}
+                          className="us-verify-btn-sm"
+                          disabled={isLoading}
+                        >
+                          Verify
+                        </button>
+                      )}
+                      {phoneVerified && (
+                        <span className="us-verified-badge">
+                          <FaCheckCircle /> Verified
+                        </span>
+                      )}
+                    </div>
+                    {errors.phoneNumber && <span className="us-error">{errors.phoneNumber}</span>}
                   </div>
 
-                  <div className="user-form-group">
-                    <label className="user-label">
-                      <FaCalendarAlt className="user-field-icon" />
-                      Age <span className="user-required">*</span>
+                  <div className="us-field">
+                    <label className="us-label">
+                      <FaCalendarAlt className="us-field-icon" />
+                      Age <span className="us-required">*</span>
                     </label>
                     <input
                       type="number"
                       name="age"
                       value={formData.age}
                       onChange={handleChange}
-                      className={`user-input ${errors.age ? 'user-input-error' : ''}`}
+                      className={`us-input ${errors.age ? 'us-input-error' : ''}`}
                       placeholder="Your age"
                       min="13"
                       max="120"
                       disabled={isLoading}
                     />
-                    {errors.age && <span className="user-error-text">{errors.age}</span>}
+                    {errors.age && <span className="us-error">{errors.age}</span>}
                   </div>
 
-                  <div className="user-form-group">
-                    <label className="user-label">
-                      <FaVenusMars className="user-field-icon" />
-                      Gender <span className="user-required">*</span>
+                  <div className="us-field">
+                    <label className="us-label">
+                      <FaVenusMars className="us-field-icon" />
+                      Gender <span className="us-required">*</span>
                     </label>
                     <select
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className={`user-select ${errors.gender ? 'user-input-error' : ''}`}
+                      className={`us-select ${errors.gender ? 'us-input-error' : ''}`}
                       disabled={isLoading}
                     >
                       <option value="">Select Gender</option>
@@ -659,74 +972,74 @@ const UserSignup = () => {
                       <option value="other">Other</option>
                       <option value="prefer-not-to-say">Prefer not to say</option>
                     </select>
-                    {errors.gender && <span className="user-error-text">{errors.gender}</span>}
+                    {errors.gender && <span className="us-error">{errors.gender}</span>}
                   </div>
                 </div>
 
-                <div className="user-form-group">
-                  <label className="user-label">
-                    <FaLock className="user-field-icon" />
-                    Password <span className="user-required">*</span>
+                <div className="us-field">
+                  <label className="us-label">
+                    <FaLock className="us-field-icon" />
+                    Password <span className="us-required">*</span>
                   </label>
-                  <div className="user-password-input">
+                  <div className="us-password-wrapper">
                     <input
                       type={showPassword ? "text" : "password"}
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`user-input ${errors.password ? 'user-input-error' : ''}`}
+                      className={`us-input ${errors.password ? 'us-input-error' : ''}`}
                       placeholder="Create a password"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="user-password-toggle"
+                      className="us-password-toggle"
                       disabled={isLoading}
                     >
                       {showPassword ? 'Hide' : 'Show'}
                     </button>
                   </div>
-                  {errors.password && <span className="user-error-text">{errors.password}</span>}
+                  {errors.password && <span className="us-error">{errors.password}</span>}
                 </div>
 
-                <div className="user-form-group">
-                  <label className="user-label">
-                    <FaLock className="user-field-icon" />
-                    Confirm Password <span className="user-required">*</span>
+                <div className="us-field">
+                  <label className="us-label">
+                    <FaLock className="us-field-icon" />
+                    Confirm Password <span className="us-required">*</span>
                   </label>
-                  <div className="user-password-input">
+                  <div className="us-password-wrapper">
                     <input
                       type={showConfirmPassword ? "text" : "password"}
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className={`user-input ${errors.confirmPassword ? 'user-input-error' : ''}`}
+                      className={`us-input ${errors.confirmPassword ? 'us-input-error' : ''}`}
                       placeholder="Confirm your password"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="user-password-toggle"
+                      className="us-password-toggle"
                       disabled={isLoading}
                     >
                       {showConfirmPassword ? 'Hide' : 'Show'}
                     </button>
                   </div>
-                  {errors.confirmPassword && <span className="user-error-text">{errors.confirmPassword}</span>}
+                  {errors.confirmPassword && <span className="us-error">{errors.confirmPassword}</span>}
                 </div>
               </>
             )}
 
-            <button 
-              type="submit" 
-              className={`user-submit-btn ${isLoading ? 'user-btn-loading' : ''}`}
+            <button
+              type="submit"
+              className={`us-submit ${isLoading ? 'us-submit-loading' : ''}`}
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
-                  <span className="user-spinner"></span>
+                  <span className="us-spinner"></span>
                   {isLogin ? 'Logging in...' : 'Creating Account...'}
                 </>
               ) : (
@@ -735,10 +1048,10 @@ const UserSignup = () => {
             </button>
 
             {!isLogin && (
-              <p className="user-terms">
+              <p className="us-terms">
                 By signing up, you agree to our{' '}
-                <a href="#" className={isLoading ? 'user-disabled' : ''}>Terms of Service</a> and{' '}
-                <a href="#" className={isLoading ? 'user-disabled' : ''}>Privacy Policy</a>
+                <a href="#" className={isLoading ? 'us-disabled' : ''}>Terms of Service</a> and{' '}
+                <a href="#" className={isLoading ? 'us-disabled' : ''}>Privacy Policy</a>
               </p>
             )}
           </form>

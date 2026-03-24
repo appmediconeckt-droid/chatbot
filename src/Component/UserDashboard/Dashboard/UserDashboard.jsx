@@ -144,7 +144,7 @@ export default function UserDashboard() {
   const [userData, setUserData] = useState({
     name: "Dr. Ashish Sharma",
     email: "ashish.sharma@mediconeckt.com",
-    phone: "91+ 9876543210"
+    phone: "9876543210"
   });
 
   const [chatMessages, setChatMessages] = useState([
