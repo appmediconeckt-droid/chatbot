@@ -4,7 +4,7 @@ import './BookAppointment.css';
 
 const CounselorRequestChat = () => {
   const navigate = useNavigate();
-  
+
   // State for counselors list
   const [counselors, setCounselors] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -12,7 +12,7 @@ const CounselorRequestChat = () => {
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessage, setNewMessage] = useState('');
   const [userName, setUserName] = useState('');
-  
+
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedCounselorForRequest, setSelectedCounselorForRequest] = useState(null);
 
@@ -30,58 +30,44 @@ const CounselorRequestChat = () => {
   }, [activeChats]);
 
   // Mock counselors data
+  // Fetch counselors from API
   useEffect(() => {
-    const mockCounselors = [
-      {
-        id: 1,
-        name: 'Dr. Sarah Chen',
-        specialization: 'Clinical Psychologist',
-        experience: '12 years',
-        rating: 4.9,
-        online: true,
-        available: true,
-        avatar: '👩‍⚕️',
-        expertise: ['Anxiety', 'Depression', 'Stress'],
-        responseTime: '< 1 min'
-      },
-      {
-        id: 2,
-        name: 'Dr. James Wilson',
-        specialization: 'Marriage Counselor',
-        experience: '15 years',
-        rating: 4.8,
-        online: true,
-        available: true,
-        avatar: '👨‍⚕️',
-        expertise: ['Relationships', 'Family', 'Divorce'],
-        responseTime: '< 2 min'
-      },
-      {
-        id: 3,
-        name: 'Dr. Lisa Anderson',
-        specialization: 'Child Psychologist',
-        experience: '8 years',
-        rating: 4.7,
-        online: true,
-        available: false,
-        avatar: '👩‍⚕️',
-        expertise: ['Child Development', 'ADHD', 'Behavioral'],
-        responseTime: 'In session'
-      },
-      {
-        id: 4,
-        name: 'Dr. Michael Brown',
-        specialization: 'Addiction Specialist',
-        experience: '20 years',
-        rating: 4.9,
-        online: true,
-        available: true,
-        avatar: '👨‍⚕️',
-        expertise: ['Addiction', 'Recovery', 'Therapy'],
-        responseTime: '< 3 min'
+    const fetchCounselors = async () => {
+      try {
+        const response = await fetch(
+          "https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/counsellors"
+        );
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Map API data to your UI format
+          const formattedCounselors = data.counsellors.map((c, index) => ({
+            id: c._id,
+            name: c.fullName,
+            specialization: c.specialization?.join(" , ") || "General",
+            experience: `${c.experience || 0} years`,
+            rating: 4.5, // static (API me nahi hai)
+            online: true,
+            available: c.isActive,
+            avatar: "👨‍⚕️",
+            expertise: c.specialization || [],
+            responseTime: "< 5 min",
+            profilePhoto: c.profilePhoto,
+            email: c.email,
+            phone: c.phoneNumber,
+            location: c.location,
+            languages: c.languages || []
+          }));
+
+          setCounselors(formattedCounselors);
+        }
+      } catch (error) {
+        console.error("Error fetching counselors:", error);
       }
-    ];
-    setCounselors(mockCounselors);
+    };
+
+    fetchCounselors();
   }, []);
 
   // Show notification
@@ -123,8 +109,8 @@ const CounselorRequestChat = () => {
   // Send chat request
   const sendChatRequest = (e) => {
     e.preventDefault();
-    
-    if (!userName.trim() ) return;
+
+    if (!userName.trim()) return;
 
     // Add request notification
     addNotification(
@@ -149,9 +135,9 @@ const CounselorRequestChat = () => {
       id: Date.now(),
       counselorId: counselor.id,
       counselor: counselor,
-      user: { 
-        name: userName, 
-        
+      user: {
+        name: userName,
+
       },
       messages: [
         {
@@ -168,7 +154,7 @@ const CounselorRequestChat = () => {
     };
 
     setActiveChats(prev => [newChat, ...prev]);
-    
+
     // Add acceptance notification
     addNotification(
       'success',
@@ -180,17 +166,17 @@ const CounselorRequestChat = () => {
 
     // Reset form
     setUserName('');
-   
+
   };
 
   // Navigate to chat interface
   const goToChat = (chat) => {
-    navigate(`/chat/${chat.counselorId}`, { 
-      state: { 
+    navigate(`/chat/${chat.counselorId}`, {
+      state: {
         chatData: chat,
         counselor: chat.counselor,
         user: chat.user
-      } 
+      }
     });
   };
 
@@ -226,7 +212,7 @@ const CounselorRequestChat = () => {
               <div className="notification-message-unique">{notification.message}</div>
               <div className="notification-time-unique">{notification.timestamp}</div>
             </div>
-            <button 
+            <button
               className="notification-close-unique"
               onClick={(e) => {
                 e.stopPropagation();
@@ -263,7 +249,10 @@ const CounselorRequestChat = () => {
                 </div>
 
                 <h3 className="counselor-name-unique">{counselor.name}</h3>
-                <p className="counselor-specialization-unique">{counselor.specialization}</p>
+
+                <strong>Specialization</strong> <br />
+                <p className="counselor-specialization-unique" >{counselor.specialization}
+                </p>
 
                 <div className="counselor-rating-unique">
                   <span className="stars-unique">{'⭐'.repeat(Math.floor(counselor.rating))}</span>
@@ -273,10 +262,12 @@ const CounselorRequestChat = () => {
                 <p className="counselor-experience-unique">{counselor.experience} experience</p>
 
                 <div className="counselor-expertise-unique">
-                  {counselor.expertise.map((skill, index) => (
+                  {counselor.languages.map((skill, index) => (
                     <span key={index} className="expertise-tag-unique">{skill}</span>
                   ))}
                 </div>
+
+                <p className="counselor-location-unique">{counselor.location}</p>
 
                 <div className="counselor-response-unique">
                   Response Time: {counselor.responseTime}
@@ -337,8 +328,8 @@ const CounselorRequestChat = () => {
                     autoFocus
                   />
                 </div>
-                
-               
+
+
                 <div className="modal-info-unique">
                   <p>⏳ Your request will be sent to the counselor</p>
                   <p>✅ You'll be notified when they accept</p>

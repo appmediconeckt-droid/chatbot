@@ -28,14 +28,14 @@ import {
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
-import CounselorDirectory from "../Tab/Counselor/CounselorDirectory";
 import WalletDashboard from "../Tab/Wallet/WalletDashboard";
 import CallHistory from "../Tab/Callls/CallHistory";
 import useVibration from '../../../hooks/useVibration';
 import PatientProfile from '../../PatientProfile/PatientProfile';
 import BookAppointment from '../Tab/Appointment/BookAppointment';
 import LiveChatSupport from '../Tab/Appointment/BookAppointment';
-import axios from 'axios';
+import axios, { Axios } from 'axios';
+import CounselorTable from '../Tab/Counselor/CounselorDirectory';
 
 // ChatPopup Component
 const ChatPopup = ({
@@ -155,7 +155,7 @@ export default function UserDashboard() {
         const userId = localStorage.getItem("userId"); // 👈 id from localhost
 
         const response = await axios.get(
-          `https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/getUser/${userId}`
+          `${API_BASE_URL}/getUser/${userId}`
         );
 
         if (response.data.success) {
@@ -264,7 +264,7 @@ export default function UserDashboard() {
 
       // Option 1: If your API expects refreshToken in the body
       const response = await axiosInstance.post(
-        `${API_BASE_URL}/api/auth/logout`,
+        `${API_BASE_URL}/logout`,
         { refreshToken: refreshToken }, // Send as object with refreshToken property
         {
           headers: {
@@ -428,7 +428,7 @@ export default function UserDashboard() {
         <div className={`dashboard-content ${isMobile ? 'mobile' : ''}`}>
           <div className="content-scrollable">
             {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
-            {active === "Counselor" && <CounselorDirectory />}
+            {active === "Counselor" && <CounselorTable />}
             {active === "Wallet" && <WalletDashboard />}
             {active === "Video" && <CallHistory />}
             {active === "profile" && <PatientProfile />}

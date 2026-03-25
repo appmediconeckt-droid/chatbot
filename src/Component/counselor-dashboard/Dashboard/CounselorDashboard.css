@@ -59,9 +59,7 @@ body {
   border-bottom: 1px solid var(--couns-border);
 }
 
-.couns-counselor-profile {
-  text-align: center;
-}
+
 
 .couns-profile-avatar {
   font-size: 5rem;

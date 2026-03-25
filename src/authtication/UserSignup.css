@@ -550,24 +550,21 @@
 }
 
 .us-otp-close {
-  background: #f5f5f5;
-  border: none;
+  
+ 
   /* width: 36px;
   height: 36px; */
-  border-radius: 50%;
+
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: #666;
-  font-size: 16px;
+  
+  font-size: 20px;
   transition: all 0.2s;
 }
 
-.us-otp-close:hover:not(:disabled) {
-  background: #e8e8e8;
-  transform: scale(1.05);
-}
+
 
 .us-otp-body {
   padding: 28px 28px 32px;

@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import './CounselorSignup.css';
 import logo from '../image/Mediconect Logo-3.png';
 import axios from 'axios';
+import { API_BASE_URL } from '../axiosConfig';
 
 const CounselorSignup = () => {
   const navigate = useNavigate();
@@ -52,18 +53,6 @@ const CounselorSignup = () => {
 
   const consultationModes = ['Online', 'Offline', 'Both'];
   const languageOptions = ['Hindi', 'English', 'Gujarati', 'Marathi', 'Tamil', 'Telugu', 'Bengali', 'Punjabi'];
-
-  // API Base URLs
-  const API_BASE_URL = "https://td6lmn5q-5000.inc1.devtunnels.ms/";
-  const AUTH_BASE_URL = `${API_BASE_URL}api/auth`;
-  const SEND_EMAIL_OTP_URL = `${AUTH_BASE_URL}/send-email-otp`;
-  const VERIFY_EMAIL_OTP_URL = `${AUTH_BASE_URL}/verify-email-otp`;
-  const SEND_PHONE_OTP_URL = `${AUTH_BASE_URL}/send-phone-otp`;
-  const VERIFY_PHONE_OTP_URL = `${AUTH_BASE_URL}/verify-phone-otp`;
-  const LOGIN_URL = `${AUTH_BASE_URL}/login`;
-  const REGISTER_URL = `${AUTH_BASE_URL}/complete-registration`;
-
-  // Resend timers
   useEffect(() => {
     let interval;
     if (emailResendTimer > 0) {
@@ -131,7 +120,7 @@ const CounselorSignup = () => {
     if (errors[name]) {
       setErrors({ ...errors, [name]: '' });
     }
-    
+
     if (name === 'email') setEmailVerified(false);
     if (name === 'phoneNumber') setPhoneVerified(false);
   };
@@ -213,10 +202,10 @@ const CounselorSignup = () => {
     setIsSendingEmailOtp(true);
     setEmailOtpError('');
     try {
-      const response = await axios.post(SEND_EMAIL_OTP_URL, { 
-        email: formData.email 
+      const response = await axios.post(`${API_BASE_URL}/send-email-otp`, {
+        email: formData.email
       });
-      
+
       if (response.data.success) {
         showNotification('OTP sent to your email!', 'success');
         setEmailResendTimer(60);
@@ -242,11 +231,11 @@ const CounselorSignup = () => {
     setIsVerifyingEmailOtp(true);
     setEmailOtpError('');
     try {
-      const response = await axios.post(VERIFY_EMAIL_OTP_URL, {
+      const response = await axios.post(`${API_BASE_URL}/verify-email-otp`, {
         email: formData.email,
         otp: emailOtp
       });
-      
+
       if (response.data.success) {
         setEmailVerified(true);
         setEmailOtpSuccess(true);
@@ -286,10 +275,10 @@ const CounselorSignup = () => {
     setIsSendingPhoneOtp(true);
     setPhoneOtpError('');
     try {
-      const response = await axios.post(SEND_PHONE_OTP_URL, { 
+      const response = await axios.post(`${API_BASE_URL}/send-phone-otp`, {
         phoneNumber: formData.phoneNumber
       });
-      
+
       if (response.data.success) {
         showNotification('OTP sent to your phone!', 'success');
         setPhoneResendTimer(60);
@@ -315,11 +304,11 @@ const CounselorSignup = () => {
     setIsVerifyingPhoneOtp(true);
     setPhoneOtpError('');
     try {
-      const response = await axios.post(VERIFY_PHONE_OTP_URL, {
+      const response = await axios.post(`${API_BASE_URL}/verify-phone-otp`, {
         phoneNumber: formData.phoneNumber,
         otp: phoneOtp
       });
-      
+
       if (response.data.success) {
         setPhoneVerified(true);
         setPhoneOtpSuccess(true);
@@ -348,13 +337,13 @@ const CounselorSignup = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(LOGIN_URL, {
+      const response = await axios.post(`${API_BASE_URL}/login`, {
         email: formData.email,
         password: formData.password,
       });
 
       const token = response.data?.token || response.data?.accessToken;
-      
+
       if (token) {
         localStorage.setItem("accessToken", token);
         localStorage.setItem("token", token);
@@ -366,7 +355,7 @@ const CounselorSignup = () => {
         }
         localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("isAuthenticated", "true");
-        
+
         showNotification('Login successful! Redirecting to dashboard...', 'success');
         setTimeout(() => navigate("/counselor-dashboard"), 1500);
       } else {
@@ -410,11 +399,11 @@ const CounselorSignup = () => {
         role: "counselor"
       };
 
-      const response = await axios.post(REGISTER_URL, payload);
+      const response = await axios.post(`${API_BASE_URL}/complete-registration`, payload);
 
       if (response.data.success) {
         showNotification("Counselor registered successfully! Redirecting to dashboard...", 'success');
-        
+
         const token = response.data?.token || response.data?.accessToken;
         if (token) {
           localStorage.setItem("accessToken", token);
@@ -427,7 +416,7 @@ const CounselorSignup = () => {
             localStorage.setItem("counsellorId", response.data.user._id);
           }
         }
-        
+
         setTimeout(() => {
           navigate("/counselor-dashboard");
         }, 1500);
@@ -436,7 +425,7 @@ const CounselorSignup = () => {
       }
     } catch (error) {
       console.error('Signup error:', error);
-      
+
       if (error.response) {
         if (error.response.status === 400) {
           if (error.response.data.message && error.response.data.message.includes('duplicate key error')) {
@@ -489,7 +478,7 @@ const CounselorSignup = () => {
       }
       await handleSignup();
     }
-    
+
     setIsLoading(false);
   };
 
@@ -531,8 +520,8 @@ const CounselorSignup = () => {
             <FaEnvelope />
           </div>
           <h3>Verify Email Address</h3>
-          <button 
-            className="cs-otp-close" 
+          <button
+            className="cs-otp-close"
             onClick={() => {
               setShowEmailOtpModal(false);
               resetEmailOtpState();
@@ -545,7 +534,7 @@ const CounselorSignup = () => {
         <div className="cs-otp-body">
           <p>Enter the verification code sent to</p>
           <div className="cs-otp-recipient">{formData.email}</div>
-          
+
           <div className="cs-otp-input-group">
             <input
               type="text"
@@ -559,9 +548,9 @@ const CounselorSignup = () => {
             />
             {emailOtpSuccess && <FaCheckCircle className="cs-otp-success-icon" />}
           </div>
-          
+
           {emailOtpError && <div className="cs-otp-error">{emailOtpError}</div>}
-          
+
           <div className="cs-otp-actions">
             <button
               onClick={handleVerifyEmailOtp}
@@ -584,7 +573,7 @@ const CounselorSignup = () => {
               )}
             </button>
           </div>
-          
+
           {emailOtpSuccess && (
             <div className="cs-otp-success">
               <FaCheckCircle /> Email verified successfully!
@@ -608,8 +597,8 @@ const CounselorSignup = () => {
             <FaPhone />
           </div>
           <h3>Verify Phone Number</h3>
-          <button 
-            className="cs-otp-close" 
+          <button
+            className="cs-otp-close"
             onClick={() => {
               setShowPhoneOtpModal(false);
               resetPhoneOtpState();
@@ -622,7 +611,7 @@ const CounselorSignup = () => {
         <div className="cs-otp-body">
           <p>Enter the verification code sent to</p>
           <div className="cs-otp-recipient">{formData.phoneNumber}</div>
-          
+
           <div className="cs-otp-input-group">
             <input
               type="text"
@@ -636,9 +625,9 @@ const CounselorSignup = () => {
             />
             {phoneOtpSuccess && <FaCheckCircle className="cs-otp-success-icon" />}
           </div>
-          
+
           {phoneOtpError && <div className="cs-otp-error">{phoneOtpError}</div>}
-          
+
           <div className="cs-otp-actions">
             <button
               onClick={handleVerifyPhoneOtp}
@@ -661,7 +650,7 @@ const CounselorSignup = () => {
               )}
             </button>
           </div>
-          
+
           {phoneOtpSuccess && (
             <div className="cs-otp-success">
               <FaCheckCircle /> Phone verified successfully!

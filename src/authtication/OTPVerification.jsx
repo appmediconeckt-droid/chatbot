@@ -56,7 +56,7 @@ const OTPVerification = () => {
     setSuccess('');
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/generateOtp`, {
+      const res = await axios.post(`${API_BASE_URL}/generateOtp`, {
         email
       });
 
@@ -104,7 +104,7 @@ const OTPVerification = () => {
     setError('');
 
     try {
-      const res = await axios.post(`${API_BASE_URL}/api/auth/verifyOtp`, {
+      const res = await axios.post(`${API_BASE_URL}/verifyOtp`, {
         email,
         otp: otpString
       });
@@ -134,7 +134,7 @@ const OTPVerification = () => {
 
     try {
       const res = await axios.post(
-        `${API_BASE_URL}/api/auth/resendOtp`,
+        `${API_BASE_URL}/resendOtp`,
         { email }
       );
 

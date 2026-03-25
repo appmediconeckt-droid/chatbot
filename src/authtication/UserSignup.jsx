@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './UserSignup.css';
 import logo from '../image/Mediconect Logo-3.png';
+import { API_BASE_URL } from '../axiosConfig';
 
 const UserSignup = () => {
   const navigate = useNavigate();
@@ -47,18 +48,6 @@ const UserSignup = () => {
   const [verifySuccess, setVerifySuccess] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
-
-
-  // API Base URLs
-  const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/';
-  const LOGIN_URL = `${API_BASE_URL}api/auth/login`;
-  const REGISTER_URL = `${API_BASE_URL}api/auth/complete-registration`;
-  const SEND_EMAIL_OTP_URL = `${API_BASE_URL}api/auth/send-email-otp`;
-  const VERIFY_EMAIL_OTP_URL = `${API_BASE_URL}api/auth/verify-email-otp`;
-  const SEND_PHONE_OTP_URL = `${API_BASE_URL}api/auth/send-phone-otp`;
-  const VERIFY_PHONE_OTP_URL = `${API_BASE_URL}api/auth/verify-phone-otp`;
-
-  // Resend timers
   useEffect(() => {
     let interval;
     if (emailResendTimer > 0) {
@@ -176,7 +165,7 @@ const UserSignup = () => {
       setIsSendingEmailOtp(true);
       setEmailOtpError("");
 
-      const response = await axios.post(SEND_EMAIL_OTP_URL, {
+      const response = await axios.post(`${API_BASE_URL}/send-email-otp`, {
         email: formData.email,
       });
 
@@ -200,7 +189,7 @@ const UserSignup = () => {
       setIsVerifyingEmailOtp(true);
       setEmailOtpError("");
 
-      const response = await axios.post(VERIFY_EMAIL_OTP_URL, {
+      const response = await axios.post(`${API_BASE_URL}/verify-email-otp`, {
         email: formData.email,
         otp: emailOtp,
       });
@@ -242,7 +231,7 @@ const UserSignup = () => {
       setIsSendingPhoneOtp(true);
       setPhoneOtpError("");
 
-      const response = await axios.post(SEND_PHONE_OTP_URL, {
+      const response = await axios.post(`${API_BASE_URL}/send-phone-otp`, {
         phoneNumber: `+${formData.phoneNumber}`,
       });
 
@@ -271,7 +260,7 @@ const UserSignup = () => {
       setIsVerifyingPhoneOtp(true);
       setPhoneOtpError("");
 
-      const response = await axios.post(VERIFY_PHONE_OTP_URL, {
+      const response = await axios.post(`${API_BASE_URL}/verify-phone-otp`, {
         phoneNumber: `+${formData.phoneNumber}`,
         otp: phoneOtp,
       });
@@ -305,7 +294,7 @@ const UserSignup = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(LOGIN_URL, {
+      const response = await axios.post(`${API_BASE_URL}/login`, {
         email: formData.email,
         password: formData.password
       });
@@ -324,19 +313,22 @@ const UserSignup = () => {
         localStorage.setItem("userType", "user");
         localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("token", token);
-        localStorage.setItem("userId", response.data.user._id);
         localStorage.setItem("accessToken", token);
+
         if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-        if (response.data.user) localStorage.setItem("userData", JSON.stringify(response.data.user));
 
-        showNotification('Login successful! Redirecting to dashboard...', 'success');
-        setTimeout(() => navigate("/user-dashboard"), 1500);
-        return;
-      }
+        if (response.data.user) {
+          localStorage.setItem("userData", JSON.stringify(response.data.user));
+        }
 
-      if (response.data?.message?.toLowerCase().includes("success") && response.data.message !== "User already logged in") {
-        showNotification('Login successful! Redirecting to dashboard...', 'success');
+        // ✅ ADD THIS
+        if (response.data.user?._id) {
+  localStorage.setItem("userId", response.data.user._id);
+}
+
+        showNotification('Login successful!', 'success');
         setTimeout(() => navigate("/user-dashboard"), 1500);
+
         return;
       }
 
@@ -393,26 +385,36 @@ const UserSignup = () => {
 
       console.log("Sending signup data:", signupData);
 
-      const response = await axios.post(REGISTER_URL, signupData);
+      const response = await axios.post(`${API_BASE_URL}/complete-registration`, signupData);
 
       if (response.data && (response.data.message?.includes('success') || response.data.success)) {
-        showNotification('Account created successfully! Redirecting to dashboard...', 'success');
 
-        // Store user data after successful signup
         const token = response.data?.token || response.data?.accessToken;
+
         if (token) {
           localStorage.setItem("isAuthenticated", "true");
           localStorage.setItem("userType", "user");
           localStorage.setItem("userEmail", formData.email);
           localStorage.setItem("token", token);
           localStorage.setItem("accessToken", token);
-          if (response.data.user) localStorage.setItem("userData", JSON.stringify(response.data.user));
         }
 
-        // Redirect to dashboard after successful signup
+        // ✅ IMPORTANT: userId save karo
+        if (response.data.user?._id) {
+          localStorage.setItem("userId", response.data.user._id);
+        }
+
+        // optional
+        if (response.data.user) {
+          localStorage.setItem("userData", JSON.stringify(response.data.user));
+        }
+
+        showNotification('Account created successfully!', 'success');
+
         setTimeout(() => {
           navigate("/user-dashboard");
         }, 1500);
+
       } else {
         showNotification('Account created successfully! Redirecting to dashboard...', 'success');
         setTimeout(() => {

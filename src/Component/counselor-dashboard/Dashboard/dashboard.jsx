@@ -26,6 +26,7 @@ import Dashboard from '../Tab/CounselorDashboard/Dashboardcou';
 import Messagesou from '../Tab/Messages/Messagesou';
 import PatientRequests from '../Tab/PatientRequests/PatientRequests';
 import axios from 'axios';
+import { API_BASE_URL } from '../../../axiosConfig';
 
 export default function CounselorDashboard() {
   const [activeTab, setActiveTab] = useState('messages');
@@ -55,7 +56,7 @@ export default function CounselorDashboard() {
       // Only attempt API logout if we have tokens
       if (accessToken) {
         await axios.post(
-          "https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/logout",
+          `${API_BASE_URL}/logout`,
           { refreshToken: refreshToken },
           {
             headers: {
@@ -105,7 +106,7 @@ export default function CounselorDashboard() {
         const counsellorId = localStorage.getItem("counsellorId"); // dynamic kar sakte ho
 
         const res = await axios.get(
-          `https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/counsellors/${counsellorId}`
+          `${API_BASE_URL}/counsellors/${counsellorId}`
         );
 
         const data = res.data.counsellor;
@@ -118,7 +119,7 @@ export default function CounselorDashboard() {
           patients: 0,
           rating: 4.5, // dummy (API me nahi hai)
           email: data.email,
-          phone: data.phoneNum,
+          phoneNumber: data.phoneNumber,
           license: "N/A",
           education: data.qualification,
           university: "N/A",
@@ -174,15 +175,13 @@ export default function CounselorDashboard() {
             <div className="couns-counselor-profile">
 
               {/* ✅ Profile Image */}
-              {counselorData?.profilePhoto ? (
+             
                 <img
                   src={counselorData.profilePhoto}
                   alt="profile"
                   className="couns-profile-avatar-img"
                 />
-              ) : (
-                <FaUserCircle className="couns-profile-avatar" />
-              )}
+              
 
               {/* ✅ Name */}
               <h3>{counselorData?.name}</h3>
@@ -196,7 +195,7 @@ export default function CounselorDashboard() {
               {/* ✅ Extra Details */}
               <div className="couns-extra-info">
                 <p><strong>Email:</strong> {counselorData?.email}</p>
-                <p><strong>Phone:</strong> {counselorData?.phone}</p>
+                <p><strong>Phone:</strong> {counselorData?.phoneNumber}</p>
 
                 <p><strong>Experience:</strong> {counselorData?.experience}</p>
                 <div className="couns-rating-badge">
@@ -288,7 +287,7 @@ export default function CounselorDashboard() {
               {/* ✅ Extra Details */}
               <div className="couns-extra-info">
                 <p><strong>Email:</strong> {counselorData?.email}</p>
-                <p><strong>Phone:</strong> {counselorData?.phone}</p>
+                <p><strong>Phone:</strong> {counselorData?.phoneNumber}</p>
 
                 <p><strong>Experience:</strong> {counselorData?.experience}</p>
                 <div className="couns-rating-badge">

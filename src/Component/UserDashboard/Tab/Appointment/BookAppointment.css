@@ -248,11 +248,32 @@
   margin-bottom: 5px;
 }
 
-.counselor-specialization-unique {
+.counselor-location-unique {
   color: #667eea;
   font-weight: 600;
   margin-bottom: 15px;
   font-size: 1rem;
+}
+.counselor-specialization-unique {
+  display: inline-block;
+  background: linear-gradient(135deg, #eef2ff, #e0e7ff);
+  color: #4f46e5;
+  font-weight: 600;
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #c7d2fe;
+  letter-spacing: 0.3px;
+  transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.counselor-specialization-unique:hover {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .counselor-rating-unique {
