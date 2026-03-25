@@ -35,17 +35,18 @@ import useVibration from '../../../hooks/useVibration';
 import PatientProfile from '../../PatientProfile/PatientProfile';
 import BookAppointment from '../Tab/Appointment/BookAppointment';
 import LiveChatSupport from '../Tab/Appointment/BookAppointment';
+import axios from 'axios';
 
 // ChatPopup Component
-const ChatPopup = ({ 
-  messages, 
-  newMessage, 
-  setNewMessage, 
-  sendMessage, 
-  handleKeyPress, 
-  isLoading, 
-  onClose, 
-  chatBodyRef 
+const ChatPopup = ({
+  messages,
+  newMessage,
+  setNewMessage,
+  sendMessage,
+  handleKeyPress,
+  isLoading,
+  onClose,
+  chatBodyRef
 }) => (
   <div className="chat-popup-overlay">
     <div className="chat-popup">
@@ -60,7 +61,7 @@ const ChatPopup = ({
           </div>
         </div>
         <button className="chat-close-btn" onClick={onClose}>
-         ×
+          ×
         </button>
       </div>
 
@@ -105,7 +106,7 @@ const ChatPopup = ({
           onKeyPress={handleKeyPress}
           className="chat-input"
         />
-        <button 
+        <button
           className="send-btn"
           onClick={sendMessage}
           disabled={isLoading || !newMessage.trim()}
@@ -136,16 +137,43 @@ export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
-  
+  const userId = localStorage.getItem("userId");
+
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
   const vibrate = useVibration();
 
   const [userData, setUserData] = useState({
-    name: "Dr. Ashish Sharma",
-    email: "ashish.sharma@mediconeckt.com",
-    phone: "9876543210"
+    name: "",
+    email: "",
+    phone: ""
   });
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userId = localStorage.getItem("userId"); // 👈 id from localhost
+
+        const response = await axios.get(
+          `https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/getUser/${userId}`
+        );
+
+        if (response.data.success) {
+          const user = response.data.user;
+
+          setUserData({
+            name: user.fullName,
+            email: user.email,
+            phone: user.phoneNumber
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: "Hello! I'm your AI assistant. How can I help you today?", sender: 'ai' },
@@ -180,10 +208,10 @@ export default function UserDashboard() {
 
   const sendMessage = () => {
     if (newMessage.trim()) {
-      const userMessage = { 
-        id: Date.now(), 
-        text: newMessage, 
-        sender: 'user' 
+      const userMessage = {
+        id: Date.now(),
+        text: newMessage,
+        sender: 'user'
       };
       setChatMessages(prev => [...prev, userMessage]);
       setNewMessage('');
@@ -204,7 +232,7 @@ export default function UserDashboard() {
         };
         setChatMessages(prev => [...prev, aiMessage]);
         setIsLoading(false);
-        
+
         // Increment unread count if chat is closed
         if (!chatOpen) {
           setUnreadCount(prev => prev + 1);
@@ -247,16 +275,16 @@ export default function UserDashboard() {
       );
 
       console.log("Logout success:", response.data);
-      
+
       // Clear local storage after successful logout
       localStorage.clear();
-      
+
       // Redirect to role selector
       navigate("/role-selector");
-      
+
     } catch (error) {
       console.error("Logout error:", error?.response?.data || error.message);
-      
+
       // Even if API fails, clear local storage and redirect
       localStorage.clear();
       navigate("/role-selector");
@@ -264,34 +292,7 @@ export default function UserDashboard() {
   };
 
   // Alternative logout function if your API expects refreshToken as string directly
-  const handleLogoutAlternative = async () => {
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      const refreshToken = localStorage.getItem("refreshToken");
 
-      const response = await axiosInstance.post(
-        `${API_BASE_URL}/auth/logout`,
-        refreshToken, // Send as plain string if API expects that
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log("Logout success:", response.data);
-      
-    } catch (error) {
-      console.error("Logout error:", error?.response?.data || error.message);
-    } finally {
-      // ALWAYS clear storage
-      localStorage.clear();
-      
-      // redirect
-      navigate("/role-selector");
-    }
-  };
 
   const handleLogoutClick = () => {
     vibrate(30);
@@ -351,9 +352,10 @@ export default function UserDashboard() {
         <div className="mobile-header">
           <div className="mobile-header-info">
             <FaUserCircle className="mobile-user-icon" />
-            <div>
-              <h2 className="mobile-title">{userData.name}</h2>
-              <p className="mobile-subtitle">{active}</p>
+            <div className="sidebar-header">
+              <h3 className="sidebar-title">Name:-{userData.name}</h3>
+              <p className="sidebar-subtitle">{userData.email}</p>
+              <p className="sidebar-subtitle">{userData.phone}</p>
             </div>
           </div>
         </div>
@@ -365,11 +367,33 @@ export default function UserDashboard() {
           <aside className="user-sidebar">
             <div className="sidebar-content">
               <div className="sidebar-header">
-                <div className="user-avatar">
-                  <FaUserCircle />
+                <div className="profile-section">
+
+                  {/* Profile Image */}
+                  <div className="profile-image">
+                    {userData.profilePhoto ? (
+                      <img src={userData.profilePhoto} alt="Profile" />
+                    ) : (
+                      <FaUserCircle className="default-avatar" />
+                    )}
+                  </div>
+
+                  {/* User Info */}
+                  <div className="profile-info">
+                    <h3 className="sidebar-title">
+                      Name: <span>{userData.name}</span>
+                    </h3>
+
+                    <p className="sidebar-subtitle">
+                      Email: <span>{userData.email}</span>
+                    </p>
+
+                    <p className="sidebar-subtitle">
+                      Phone: <span>{userData.phone}</span>
+                    </p>
+                  </div>
+
                 </div>
-                <h3 className="sidebar-title">{userData.name}</h3>
-                <p className="sidebar-subtitle">{userData.email}</p>
               </div>
 
               <div className="sidebar-menu">
@@ -467,8 +491,8 @@ export default function UserDashboard() {
 
       {/* Floating Chat Button */}
       {!chatOpen && (
-        <ChatButton 
-          onClick={() => setChatOpen(true)} 
+        <ChatButton
+          onClick={() => setChatOpen(true)}
           unreadCount={unreadCount}
         />
       )}

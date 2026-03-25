@@ -47,6 +47,8 @@ const UserSignup = () => {
   const [verifySuccess, setVerifySuccess] = useState(false);
   const [notification, setNotification] = useState({ show: false, message: '', type: '' });
 
+
+
   // API Base URLs
   const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/';
   const LOGIN_URL = `${API_BASE_URL}api/auth/login`;
@@ -322,6 +324,7 @@ const UserSignup = () => {
         localStorage.setItem("userType", "user");
         localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("token", token);
+        localStorage.setItem("userId", response.data.user._id);
         localStorage.setItem("accessToken", token);
         if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
         if (response.data.user) localStorage.setItem("userData", JSON.stringify(response.data.user));
@@ -394,7 +397,7 @@ const UserSignup = () => {
 
       if (response.data && (response.data.message?.includes('success') || response.data.success)) {
         showNotification('Account created successfully! Redirecting to dashboard...', 'success');
-        
+
         // Store user data after successful signup
         const token = response.data?.token || response.data?.accessToken;
         if (token) {
@@ -405,7 +408,7 @@ const UserSignup = () => {
           localStorage.setItem("accessToken", token);
           if (response.data.user) localStorage.setItem("userData", JSON.stringify(response.data.user));
         }
-        
+
         // Redirect to dashboard after successful signup
         setTimeout(() => {
           navigate("/user-dashboard");
