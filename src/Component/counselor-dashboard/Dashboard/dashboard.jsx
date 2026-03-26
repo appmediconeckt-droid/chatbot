@@ -56,7 +56,7 @@ export default function CounselorDashboard() {
       // Only attempt API logout if we have tokens
       if (accessToken) {
         await axios.post(
-          `${API_BASE_URL}/logout`,
+          `${API_BASE_URL}/api/auth/logout`,
           { refreshToken: refreshToken },
           {
             headers: {
@@ -106,7 +106,7 @@ export default function CounselorDashboard() {
         const counsellorId = localStorage.getItem("counsellorId"); // dynamic kar sakte ho
 
         const res = await axios.get(
-          `${API_BASE_URL}/counsellors/${counsellorId}`
+          `${API_BASE_URL}/api/auth/counsellors/${counsellorId}`
         );
 
         const data = res.data.counsellor;

@@ -165,7 +165,7 @@ const UserSignup = () => {
       setIsSendingEmailOtp(true);
       setEmailOtpError("");
 
-      const response = await axios.post(`${API_BASE_URL}/send-email-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/send-email-otp`, {
         email: formData.email,
       });
 
@@ -189,7 +189,7 @@ const UserSignup = () => {
       setIsVerifyingEmailOtp(true);
       setEmailOtpError("");
 
-      const response = await axios.post(`${API_BASE_URL}/verify-email-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/verify-email-otp`, {
         email: formData.email,
         otp: emailOtp,
       });
@@ -231,7 +231,7 @@ const UserSignup = () => {
       setIsSendingPhoneOtp(true);
       setPhoneOtpError("");
 
-      const response = await axios.post(`${API_BASE_URL}/send-phone-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/send-phone-otp`, {
         phoneNumber: `+${formData.phoneNumber}`,
       });
 
@@ -260,7 +260,7 @@ const UserSignup = () => {
       setIsVerifyingPhoneOtp(true);
       setPhoneOtpError("");
 
-      const response = await axios.post(`${API_BASE_URL}/verify-phone-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/verify-phone-otp`, {
         phoneNumber: `+${formData.phoneNumber}`,
         otp: phoneOtp,
       });
@@ -294,7 +294,7 @@ const UserSignup = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/login`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email: formData.email,
         password: formData.password
       });
@@ -385,7 +385,7 @@ const UserSignup = () => {
 
       console.log("Sending signup data:", signupData);
 
-      const response = await axios.post(`${API_BASE_URL}/complete-registration`, signupData);
+      const response = await axios.post(`${API_BASE_URL}/api/auth/complete-registration`, signupData);
 
       if (response.data && (response.data.message?.includes('success') || response.data.success)) {
 
@@ -487,7 +487,7 @@ const UserSignup = () => {
     try {
       setIsVerifying(true);
       setVerifySuccess(false);
-      const verifyResponse = await axios.post(`${API_BASE_URL}/send-verification-email`, { email: formData.email });
+      const verifyResponse = await axios.post(`${API_BASE_URL}/api/auth/send-verification-email`, { email: formData.email });
       if (verifyResponse.data?.success || verifyResponse.data?.message) {
         setVerifySuccess(true);
         showNotification('Verification email sent successfully! Check your inbox.', 'success');

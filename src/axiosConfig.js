@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Base URL for API
-export const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth';
+export const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms';
 
 // Create axios instance with default config
 const axiosInstance = axios.create({
@@ -47,7 +47,7 @@ axiosInstance.interceptors.response.use(
         }
 
         // Try to refresh the token
-        const response = await axios.post(`${API_BASE_URL}/refresh-token`, {
+        const response = await axios.post(`${API_BASE_URL}/api/auth/refresh-token`, {
           refreshToken: refreshToken
         });
 

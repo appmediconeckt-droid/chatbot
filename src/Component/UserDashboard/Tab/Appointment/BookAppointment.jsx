@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './BookAppointment.css';
+import { API_BASE_URL } from '../../../../axiosConfig';
 
 const CounselorRequestChat = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const CounselorRequestChat = () => {
     const fetchCounselors = async () => {
       try {
         const response = await fetch(
-          "https://td6lmn5q-5000.inc1.devtunnels.ms/api/auth/counsellors"
+          `${API_BASE_URL}/api/auth/counsellors`
         );
 
         const data = await response.json();

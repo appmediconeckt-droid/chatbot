@@ -155,7 +155,7 @@ export default function UserDashboard() {
         const userId = localStorage.getItem("userId"); // 👈 id from localhost
 
         const response = await axios.get(
-          `${API_BASE_URL}/getUser/${userId}`
+          `${API_BASE_URL}/api/auth/getUser/${userId}`
         );
 
         if (response.data.success) {
@@ -264,7 +264,7 @@ export default function UserDashboard() {
 
       // Option 1: If your API expects refreshToken in the body
       const response = await axiosInstance.post(
-        `${API_BASE_URL}/logout`,
+        `${API_BASE_URL}/api/auth/logout`,
         { refreshToken: refreshToken }, // Send as object with refreshToken property
         {
           headers: {

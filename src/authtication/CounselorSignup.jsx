@@ -202,7 +202,7 @@ const CounselorSignup = () => {
     setIsSendingEmailOtp(true);
     setEmailOtpError('');
     try {
-      const response = await axios.post(`${API_BASE_URL}/send-email-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/send-email-otp`, {
         email: formData.email
       });
 
@@ -231,7 +231,7 @@ const CounselorSignup = () => {
     setIsVerifyingEmailOtp(true);
     setEmailOtpError('');
     try {
-      const response = await axios.post(`${API_BASE_URL}/verify-email-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/verify-email-otp`, {
         email: formData.email,
         otp: emailOtp
       });
@@ -275,7 +275,7 @@ const CounselorSignup = () => {
     setIsSendingPhoneOtp(true);
     setPhoneOtpError('');
     try {
-      const response = await axios.post(`${API_BASE_URL}/send-phone-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/send-phone-otp`, {
         phoneNumber: formData.phoneNumber
       });
 
@@ -304,7 +304,7 @@ const CounselorSignup = () => {
     setIsVerifyingPhoneOtp(true);
     setPhoneOtpError('');
     try {
-      const response = await axios.post(`${API_BASE_URL}/verify-phone-otp`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/verify-phone-otp`, {
         phoneNumber: formData.phoneNumber,
         otp: phoneOtp
       });
@@ -337,7 +337,7 @@ const CounselorSignup = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/login`, {
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email: formData.email,
         password: formData.password,
       });
@@ -399,7 +399,7 @@ const CounselorSignup = () => {
         role: "counselor"
       };
 
-      const response = await axios.post(`${API_BASE_URL}/complete-registration`, payload);
+      const response = await axios.post(`${API_BASE_URL}/api/auth/complete-registration`, payload);
 
       if (response.data.success) {
         showNotification("Counselor registered successfully! Redirecting to dashboard...", 'success');
