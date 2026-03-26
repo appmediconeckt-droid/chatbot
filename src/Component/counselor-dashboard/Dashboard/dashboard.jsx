@@ -53,7 +53,7 @@ export default function CounselorDashboard() {
         return;
       }
 
-      // Only attempt API logout if we have tokens
+      
       if (accessToken) {
         await axios.post(
           `${API_BASE_URL}/api/auth/logout`,
