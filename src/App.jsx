@@ -13,6 +13,7 @@ import CounselorDashboard from './Component/counselor-dashboard/Dashboard/dashbo
 import CounselorTable from './Component/UserDashboard/Tab/Counselor/CounselorDirectory'
 import SMSInput from './Component/counselor-dashboard/Tab/SMSInput/SMSInput.'
 import OTPVerification from './authtication/OTPVerification'
+import CounselorProfile from './Component/counselor-dashboard/Tab/Profile-Con/CounselorProfile'
 
 
 function App() {
@@ -51,15 +52,21 @@ function App() {
       <Routes>
         <Route path="/" element={<Leanding />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/role-selector" element={<RoleSelector />} />
+        <Route path="/otp-verification" element={<OTPVerification />} />
+        
+
+        <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/user-dashboard" element={<UserDashboard />} />
         <Route path="/chat/:id" element={<ChatBox />} />
-        <Route path="/role-selector" element={<RoleSelector />} />
+
+
         <Route path="/counselor-signup" element={<CounselorSignup />} />
-        <Route path="/user-signup" element={<UserSignup />} />
         <Route path="/counselor-directory" element={<CounselorTable />} />
         <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
         <Route path="/sms-input" element={<SMSInput />} />
-        <Route path="/otp-verification" element={<OTPVerification />} />
+
+
 
 
       </Routes>

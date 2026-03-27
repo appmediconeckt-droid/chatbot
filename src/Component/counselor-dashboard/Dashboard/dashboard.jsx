@@ -27,6 +27,7 @@ import Messagesou from '../Tab/Messages/Messagesou';
 import PatientRequests from '../Tab/PatientRequests/PatientRequests';
 import axios from 'axios';
 import { API_BASE_URL } from '../../../axiosConfig';
+import CounselorProfile from '../Tab/Profile-Con/CounselorProfile';
 
 export default function CounselorDashboard() {
   const [activeTab, setActiveTab] = useState('messages');
@@ -103,25 +104,50 @@ export default function CounselorDashboard() {
   useEffect(() => {
     const fetchCounsellor = async () => {
       try {
-        const counsellorId = localStorage.getItem("counsellorId"); // dynamic kar sakte ho
+        const counsellorId = localStorage.getItem("counsellorId");
+        const token = localStorage.getItem('token');
+
+        if (!counsellorId) {
+          console.error("No counsellor ID found");
+          setLoading(false);
+          return;
+        }
 
         const res = await axios.get(
-          `${API_BASE_URL}/api/auth/counsellors/${counsellorId}`
+          `${API_BASE_URL}/api/auth/counsellors/${counsellorId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
 
         const data = res.data.counsellor;
 
+        // ✅ FIXED: Extract profile photo URL correctly from nested object
+        let profilePhotoUrl = null;
+        if (data.profilePhoto) {
+          if (typeof data.profilePhoto === 'string') {
+            profilePhotoUrl = data.profilePhoto;
+          } else if (data.profilePhoto.url) {
+            profilePhotoUrl = data.profilePhoto.url;
+          } else if (data.profilePhoto.publicId) {
+            // If using Cloudinary, construct the URL
+            profilePhotoUrl = `https://res.cloudinary.com/dfll8lwos/image/upload/${data.profilePhoto.publicId}`;
+          }
+        }
+
         // ✅ API → UI mapping
         setCounselorData({
-          name: data.fullName,
-          specialization: data.specialization?.join(", "),
-          experience: `${data.experience} years`,
+          name: data.fullName || data.name,
+          specialization: Array.isArray(data.specialization) ? data.specialization.join(", ") : data.specialization,
+          experience: `${data.experience || 0} years`,
           patients: 0,
-          rating: 4.5, // dummy (API me nahi hai)
+          rating: data.rating || 4.5,
           email: data.email,
           phoneNumber: data.phoneNumber,
           license: "N/A",
-          education: data.qualification,
+          education: data.qualification || data.education,
           university: "N/A",
           hourlyRate: 0,
           languages: data.languages || [],
@@ -129,7 +155,7 @@ export default function CounselorDashboard() {
           aboutMe: data.aboutMe,
           location: data.location,
           consultationMode: data.consultationMode,
-          profilePhoto: data.profilePhoto
+          profilePhoto: profilePhotoUrl // ✅ FIXED: Set the correct URL
         });
 
       } catch (error) {
@@ -155,7 +181,7 @@ export default function CounselorDashboard() {
     { id: 'sessions', icon: <FaVideo />, label: 'Sessions', badge: 0 },
     { id: 'patients', icon: <FaUsers />, label: 'Patients', badge: 0 },
     { id: 'earnings', icon: <FaMoneyBillWave />, label: 'Earnings', badge: 0 },
-    { id: 'analytics', icon: <FaChartPie />, label: 'Analytics', badge: 0 },
+    { id: 'profile', icon: <FaChartPie />, label: 'Profile', badge: 0 },
     { id: 'settings', icon: <FaCog />, label: 'Settings', badge: 0 }
   ];
 
@@ -174,34 +200,44 @@ export default function CounselorDashboard() {
           <div className="couns-sidebar-header">
             <div className="couns-counselor-profile">
 
-              {/* ✅ Profile Image */}
-             
+              {/* ✅ Profile Image - FIXED */}
+              {counselorData?.profilePhoto ? (
                 <img
                   src={counselorData.profilePhoto}
-                  alt="profile"
+                  alt={counselorData?.name || 'Profile'}
                   className="couns-profile-avatar-img"
+                  onError={(e) => {
+                    console.error('Image failed to load:', counselorData?.profilePhoto);
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                    // Show fallback icon
+                    const fallbackIcon = e.target.nextElementSibling;
+                    if (fallbackIcon) fallbackIcon.style.display = 'block';
+                  }}
                 />
-              
+              ) : null}
+              {!counselorData?.profilePhoto && (
+                <FaUserCircle className="couns-profile-avatar" />
+              )}
+              <FaUserCircle className="couns-profile-avatar-fallback" style={{ display: 'none' }} />
 
               {/* ✅ Name */}
-              <h3>{counselorData?.name}</h3>
+              <h3>{counselorData?.name || 'Counselor'}</h3>
 
               {/* ✅ Specialization */}
-              <p><strong>Specialization:</strong> {counselorData?.specialization}</p>
+              <p><strong>Specialization:</strong> {counselorData?.specialization || 'Not specified'}</p>
 
               {/* ✅ Rating */}
-
+              <div className="couns-rating-badge">
+                <FaStar className="couns-star" />
+                <span>{counselorData?.rating || 0}</span>
+              </div>
 
               {/* ✅ Extra Details */}
               <div className="couns-extra-info">
-                <p><strong>Email:</strong> {counselorData?.email}</p>
-                <p><strong>Phone:</strong> {counselorData?.phoneNumber}</p>
-
-                <p><strong>Experience:</strong> {counselorData?.experience}</p>
-                <div className="couns-rating-badge">
-                  <FaStar className="couns-star" />
-                  <span>{counselorData?.rating}</span>
-                </div>
+                <p><strong>Email:</strong> {counselorData?.email || 'Not specified'}</p>
+                <p><strong>Phone:</strong> {counselorData?.phoneNumber || 'Not specified'}</p>
+                <p><strong>Experience:</strong> {counselorData?.experience || '0 years'}</p>
               </div>
 
             </div>
@@ -261,43 +297,50 @@ export default function CounselorDashboard() {
       {isMobile && showMobileMenu && (
         <div className="couns-mobile-menu-overlay">
           <div className="couns-mobile-menu">
-           <div className="couns-sidebar-header">
-            <div className="couns-counselor-profile">
+            <div className="couns-sidebar-header">
+              <div className="couns-counselor-profile">
 
-              {/* ✅ Profile Image */}
-              {counselorData?.profilePhoto ? (
-                <img
-                  src={counselorData.profilePhoto}
-                  alt="profile"
-                  className="couns-profile-avatar-img"
-                />
-              ) : (
-                <FaUserCircle className="couns-profile-avatar" />
-              )}
+                {/* ✅ Profile Image - FIXED for mobile */}
+                {counselorData?.profilePhoto ? (
+                  <img
+                    src={counselorData.profilePhoto}
+                    alt={counselorData?.name || 'Profile'}
+                    className="couns-profile-avatar-img"
+                    onError={(e) => {
+                      console.error('Image failed to load:', counselorData?.profilePhoto);
+                      e.target.onerror = null;
+                      e.target.style.display = 'none';
+                      const fallbackIcon = e.target.nextElementSibling;
+                      if (fallbackIcon) fallbackIcon.style.display = 'block';
+                    }}
+                  />
+                ) : null}
+                {!counselorData?.profilePhoto && (
+                  <FaUserCircle className="couns-profile-avatar" />
+                )}
+                <FaUserCircle className="couns-profile-avatar-fallback" style={{ display: 'none' }} />
 
-              {/* ✅ Name */}
-              <h3>{counselorData?.name}</h3>
+                {/* ✅ Name */}
+                <h3>{counselorData?.name || 'Counselor'}</h3>
 
-              {/* ✅ Specialization */}
-              <p><strong>Specialization:</strong> {counselorData?.specialization}</p>
+                {/* ✅ Specialization */}
+                <p><strong>Specialization:</strong> {counselorData?.specialization || 'Not specified'}</p>
 
-              {/* ✅ Rating */}
-
-
-              {/* ✅ Extra Details */}
-              <div className="couns-extra-info">
-                <p><strong>Email:</strong> {counselorData?.email}</p>
-                <p><strong>Phone:</strong> {counselorData?.phoneNumber}</p>
-
-                <p><strong>Experience:</strong> {counselorData?.experience}</p>
+                {/* ✅ Rating */}
                 <div className="couns-rating-badge">
                   <FaStar className="couns-star" />
-                  <span>{counselorData?.rating}</span>
+                  <span>{counselorData?.rating || 0}</span>
                 </div>
-              </div>
 
+                {/* ✅ Extra Details */}
+                <div className="couns-extra-info">
+                  <p><strong>Email:</strong> {counselorData?.email || 'Not specified'}</p>
+                  <p><strong>Phone:</strong> {counselorData?.phoneNumber || 'Not specified'}</p>
+                  <p><strong>Experience:</strong> {counselorData?.experience || '0 years'}</p>
+                </div>
+
+              </div>
             </div>
-          </div>
 
             <nav className="couns-mobile-nav">
               {navItems.map(item => (
@@ -465,43 +508,9 @@ export default function CounselorDashboard() {
         )}
 
         {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
+        {activeTab === 'profile' && (
           <div className="couns-tab-content">
-            <div className="couns-tab-header">
-              <h2>Analytics</h2>
-            </div>
-            <div className="couns-analytics-grid">
-              <div className="couns-analytics-card couns-purple">
-                <div className="couns-analytics-icon">
-                  <FaUsers />
-                </div>
-                <div className="couns-analytics-info">
-                  <h4>Total Patients</h4>
-                  <div className="couns-analytics-value">0</div>
-                  <div className="couns-analytics-change">+0 this month</div>
-                </div>
-              </div>
-              <div className="couns-analytics-card couns-blue">
-                <div className="couns-analytics-icon">
-                  <FaCalendarAlt />
-                </div>
-                <div className="couns-analytics-info">
-                  <h4>Sessions Completed</h4>
-                  <div className="couns-analytics-value">0</div>
-                  <div className="couns-analytics-change">This month</div>
-                </div>
-              </div>
-              <div className="couns-analytics-card couns-green">
-                <div className="couns-analytics-icon">
-                  <FaStar />
-                </div>
-                <div className="couns-analytics-info">
-                  <h4>Average Rating</h4>
-                  <div className="couns-analytics-value">{counselorData?.rating || 0}</div>
-                  <div className="couns-analytics-change">⭐ from 0 reviews</div>
-                </div>
-              </div>
-            </div>
+            <CounselorProfile/>
           </div>
         )}
 

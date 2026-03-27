@@ -1,234 +1,279 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import './PatientProfile.css';
+import { API_BASE_URL } from '../../axiosConfig';
 
 const PatientProfile = () => {
+  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [showNotification, setShowNotification] = useState({ show: false, message: '', type: '' });
 
-  // Complete patient data
+  // Essential patient data with complete insurance fields
   const [patientData, setPatientData] = useState({
     personalInfo: {
-      id: "P-12345",
-      name: "Ashish Sharma",
-      age: 45,
-      gender: "Male",
-      dateOfBirth: "1979-03-15",
-      bloodGroup: "O+",
-      maritalStatus: "Married",
-      occupation: "Software Engineer",
-      email: "ashish.sharma@email.com",
-      phone: "+91 98765-43210",
-      alternativePhone: "+91 98765-12345",
-      aadharNumber: "1234-5678-9012",
-      panNumber: "ABCDE1234F",
-      passportNumber: "Z1234567",
-      drivingLicense: "MP09-1234567890",
+      id: "",
+      name: "",
+      age: null,
+      gender: "",
+      dateOfBirth: "",
+      bloodGroup: "",
+      email: "",
+      phone: "",
+      address: {
+        line1: "",
+        line2: "",
+        city: "",
+        state: "",
+        pincode: "",
+        country: ""
+      },
       emergencyContact: {
-        name: "Priya Sharma",
-        relation: "Spouse",
-        phone: "+91 98765-43210",
-        alternativePhone: "+91 98765-54321",
-        email: "priya.sharma@email.com",
-        address: "123 Main Street, Indore, MP, India - 452001"
-      },
-      presentAddress: {
-        line1: "123 Main Street",
-        line2: "Near Anand Bazaar",
-        city: "Indore",
-        state: "Madhya Pradesh",
-        pincode: "452001",
-        country: "India",
-        landmark: "Near Anand Bazaar"
-      },
-      permanentAddress: {
-        line1: "456 Village Road",
-        line2: "Near Post Office",
-        city: "Ujjain",
-        state: "Madhya Pradesh",
-        pincode: "456001",
-        country: "India",
-        landmark: "Near Old Temple"
-      },
-      medicalInfo: {
-        bloodGroup: "O+",
-        height: "175 cm",
-        weight: "75 kg",
-        allergies: ["Penicillin", "Dust", "Pollen"],
-        chronicConditions: ["Hypertension", "Diabetes Type 2"],
-        pastSurgeries: ["Appendectomy - 2015", "Knee Surgery - 2020"],
-        familyHistory: ["Father - Hypertension", "Mother - Diabetes"],
-        currentMedications: ["Metformin 500mg", "Lisinopril 10mg"],
-        dietaryRestrictions: ["Low Sugar", "Low Salt"],
-        bloodPressure: "120/80",
-        heartRate: "72 bpm",
-        respiratoryRate: "16/min",
-        temperature: "98.6°F",
-        oxygenSaturation: "98%"
-      },
-      insuranceInfo: {
-        provider: "Star Health Insurance",
-        policyNumber: "SHI-12345-6789",
-        groupNumber: "GRP-2024-001",
-        validityDate: "2025-12-31",
-        coverageAmount: "₹5,00,000",
-        nominee: "Priya Sharma",
-        relationship: "Spouse",
-        insuranceType: "Family Floater",
-        tpaName: "MediAssist TPA",
-        tpaContact: "1800-123-4567"
-      },
-      workInfo: {
-        companyName: "Tech Solutions Ltd.",
-        designation: "Senior Software Engineer",
-        workEmail: "ashish.sharma@techsolutions.com",
-        workPhone: "+91 98765-11111",
-        officeAddress: "Tech Park, Vijay Nagar, Indore, MP - 452010",
-        joiningDate: "2020-06-01",
-        employeeId: "EMP-2020-1234"
-      },
-      socialInfo: {
-        twitter: "@ashish_sharma",
-        linkedin: "linkedin.com/in/ashish-sharma",
-        facebook: "facebook.com/ashish.sharma",
-        instagram: "@ashish_sharma"
-      },
-      preferences: {
-        language: "English, Hindi",
-        communicationMode: "Email, SMS",
-        appointmentReminder: true,
-        newsletterSubscription: true,
-        twoFactorAuth: true,
-        dataSharingConsent: true,
-        marketingConsent: false
-      },
-      emergencyContacts: [
-        {
-          name: "Priya Sharma",
-          relation: "Spouse",
-          phone: "+91 98765-43210",
-          priority: "Primary"
-        },
-        {
-          name: "Rahul Sharma",
-          relation: "Brother",
-          phone: "+91 98765-11111",
-          priority: "Secondary"
-        },
-        {
-          name: "Dr. Amit Patel",
-          relation: "Family Doctor",
-          phone: "+91 98765-22222",
-          priority: "Medical"
-        }
-      ],
-      documents: [
-        {
-          type: "Aadhar Card",
-          number: "1234-5678-9012",
-          issuedBy: "UIDAI",
-          validUntil: "Lifetime"
-        },
-        {
-          type: "PAN Card",
-          number: "ABCDE1234F",
-          issuedBy: "Income Tax Dept",
-          validUntil: "Lifetime"
-        },
-        {
-          type: "Passport",
-          number: "Z1234567",
-          issuedBy: "Passport Office",
-          validUntil: "2030-01-01"
-        },
-        {
-          type: "Driving License",
-          number: "MP09-1234567890",
-          issuedBy: "RTO Indore",
-          validUntil: "2030-12-31"
-        },
-        {
-          type: "Voter ID",
-          number: "MP/09/123/456789",
-          issuedBy: "Election Commission",
-          validUntil: "Lifetime"
-        }
-      ],
-      familyMembers: [
-        {
-          name: "Priya Sharma",
-          relation: "Spouse",
-          age: 42,
-          bloodGroup: "B+",
-          medicalConditions: "None"
-        },
-        {
-          name: "Aarav Sharma",
-          relation: "Son",
-          age: 15,
-          bloodGroup: "O+",
-          medicalConditions: "Asthma"
-        },
-        {
-          name: "Anaya Sharma",
-          relation: "Daughter",
-          age: 12,
-          bloodGroup: "A+",
-          medicalConditions: "None"
-        }
-      ],
-      appointments: [
-        {
-          date: "2024-01-15",
-          time: "10:30 AM",
-          doctor: "Dr. Rajesh Gupta",
-          specialty: "Cardiologist",
-          hospital: "Apollo Hospital",
-          status: "Completed"
-        },
-        {
-          date: "2024-02-20",
-          time: "11:00 AM",
-          doctor: "Dr. Priya Singh",
-          specialty: "Endocrinologist",
-          hospital: "Medanta Hospital",
-          status: "Upcoming"
-        }
-      ],
-      labReports: [
-        {
-          date: "2024-01-10",
-          testName: "Complete Blood Count",
-          labName: "Pathkind Labs",
-          result: "Normal",
-          fileUrl: "#"
-        },
-        {
-          date: "2024-01-10",
-          testName: "Blood Sugar Fasting",
-          labName: "Pathkind Labs",
-          result: "110 mg/dL",
-          fileUrl: "#"
-        }
-      ],
-      prescriptions: [
-        {
-          date: "2024-01-15",
-          doctor: "Dr. Rajesh Gupta",
-          medication: "Metformin 500mg",
-          dosage: "Twice daily",
-          duration: "3 months"
-        }
-      ]
+        name: "",
+        relation: "",
+        phone: ""
+      }
+    },
+    medicalInfo: {
+      height: "",
+      weight: "",
+      allergies: [],
+      chronicConditions: [],
+      currentMedications: []
+    },
+    insuranceInfo: {
+      provider: "",
+      policyNumber: "",
+      groupNumber: "",
+      coverageAmount: "",
+      validityDate: "",
+      nominee: "",
+      relationship: "",
+      insuranceType: ""
     }
   });
 
-  // Edit form state
-  const [editFormData, setEditFormData] = useState({...patientData.personalInfo});
+  // List of insurance providers for dropdown
+  const insuranceProviders = [
+    "Star Health Insurance",
+    "ICICI Lombard",
+    "HDFC ERGO",
+    "Bajaj Allianz",
+    "New India Assurance",
+    "National Insurance",
+    "Oriental Insurance",
+    "United India Insurance",
+    "Max Bupa Health Insurance",
+    "Care Health Insurance"
+  ];
 
-  // Initialize edit form data when opening modal
-  const initializeEditForm = () => {
-    setEditFormData({...patientData.personalInfo});
+  // List of insurance types for dropdown
+  const insuranceTypes = [
+    "Individual",
+    "Family Floater",
+    "Senior Citizen",
+    "Critical Illness",
+    "Group Health Insurance",
+    "Maternity Insurance"
+  ];
+
+  // Edit form state
+  const [editFormData, setEditFormData] = useState({
+    name: "",
+    age: "",
+    gender: "",
+    dateOfBirth: "",
+    bloodGroup: "",
+    email: "",
+    phone: "",
+    address: {
+      line1: "",
+      line2: "",
+      city: "",
+      state: "",
+      pincode: "",
+      country: ""
+    },
+    emergencyContact: {
+      name: "",
+      relation: "",
+      phone: ""
+    },
+    height: "",
+    weight: "",
+    allergies: "",
+    chronicConditions: "",
+    currentMedications: "",
+    insuranceProvider: "",
+    policyNumber: "",
+    groupNumber: "",
+    coverageAmount: "",
+    validityDate: "",
+    nominee: "",
+    relationship: "",
+    insuranceType: ""
+  });
+
+  // Fetch profile data on component mount
+  useEffect(() => {
+    fetchPatientProfile();
+  }, []);
+
+  // GET API - Fetch patient profile
+  const fetchPatientProfile = async () => {
+    try {
+      setLoading(true);
+      
+      const patientId = localStorage.getItem("patientId");
+      const token = localStorage.getItem('token');
+      
+      if (!patientId) {
+        showNotificationMessage('Patient ID not found. Please login again.', 'error');
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Fetching profile for Patient ID:', patientId);
+      
+      // GET request to fetch patient data
+      const response = await axios.get(`${API_BASE_URL}/api/auth/patients/${patientId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      console.log('GET API Response:', response.data);
+
+      // FIXED: API returns data in 'user' object
+      if (response.data.success && response.data.user) {
+        const userData = response.data.user;
+        
+        // Transform API data to match component structure
+        const formattedData = {
+          personalInfo: {
+            id: userData._id,
+            name: userData.fullName || '',
+            age: userData.age || null,
+            gender: userData.gender || '',
+            dateOfBirth: userData.dateOfBirth ? userData.dateOfBirth.split('T')[0] : '',
+            bloodGroup: userData.bloodGroup || '',
+            email: userData.email || '',
+            phone: userData.phoneNumber || '',
+            address: userData.address || {
+              line1: '',
+              line2: '',
+              city: '',
+              state: '',
+              pincode: '',
+              country: ''
+            },
+            emergencyContact: userData.emergencyContact || {
+              name: '',
+              relation: '',
+              phone: ''
+            }
+          },
+          medicalInfo: {
+            height: userData.medicalInfo?.height || '',
+            weight: userData.medicalInfo?.weight || '',
+            allergies: Array.isArray(userData.medicalInfo?.allergies) ? userData.medicalInfo.allergies : [],
+            chronicConditions: Array.isArray(userData.medicalInfo?.chronicConditions) ? userData.medicalInfo.chronicConditions : [],
+            currentMedications: Array.isArray(userData.medicalInfo?.currentMedications) ? userData.medicalInfo.currentMedications : []
+          },
+          insuranceInfo: {
+            provider: userData.insuranceInfo?.provider || '',
+            policyNumber: userData.insuranceInfo?.policyNumber || '',
+            groupNumber: userData.insuranceInfo?.groupNumber || '',
+            coverageAmount: userData.insuranceInfo?.coverageAmount || '',
+            validityDate: userData.insuranceInfo?.validityDate ? userData.insuranceInfo.validityDate.split('T')[0] : '',
+            nominee: userData.insuranceInfo?.nominee || '',
+            relationship: userData.insuranceInfo?.relationship || '',
+            insuranceType: userData.insuranceInfo?.insuranceType || ''
+          }
+        };
+        
+        setPatientData(formattedData);
+        
+        // Initialize edit form data
+        initializeEditForm(formattedData);
+      } else {
+        showNotificationMessage(response.data.message || 'Failed to load profile data', 'error');
+      }
+    } catch (err) {
+      console.error('Error fetching profile:', err);
+      if (err.response) {
+        showNotificationMessage(err.response.data?.message || `Error: ${err.response.status} - ${err.response.statusText}`, 'error');
+      } else if (err.request) {
+        showNotificationMessage('Network error. Please check your connection.', 'error');
+      } else {
+        showNotificationMessage('Failed to load profile data. Please try again.', 'error');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // PATCH API - Update patient profile
+  const updatePatientProfile = async (formData) => {
+    try {
+      const patientId = localStorage.getItem("patientId");
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.patch(`${API_BASE_URL}/api/auth/update-patient/${patientId}`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      return response;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // Initialize edit form data
+  const initializeEditForm = (data) => {
+    setEditFormData({
+      name: data.personalInfo.name || "",
+      age: data.personalInfo.age || "",
+      gender: data.personalInfo.gender || "",
+      dateOfBirth: data.personalInfo.dateOfBirth || "",
+      bloodGroup: data.personalInfo.bloodGroup || "",
+      email: data.personalInfo.email || "",
+      phone: data.personalInfo.phone || "",
+      address: {
+        line1: data.personalInfo.address?.line1 || "",
+        line2: data.personalInfo.address?.line2 || "",
+        city: data.personalInfo.address?.city || "",
+        state: data.personalInfo.address?.state || "",
+        pincode: data.personalInfo.address?.pincode || "",
+        country: data.personalInfo.address?.country || "India"
+      },
+      emergencyContact: {
+        name: data.personalInfo.emergencyContact?.name || "",
+        relation: data.personalInfo.emergencyContact?.relation || "",
+        phone: data.personalInfo.emergencyContact?.phone || ""
+      },
+      height: data.medicalInfo.height || "",
+      weight: data.medicalInfo.weight || "",
+      allergies: Array.isArray(data.medicalInfo.allergies) ? data.medicalInfo.allergies.join(', ') : "",
+      chronicConditions: Array.isArray(data.medicalInfo.chronicConditions) ? data.medicalInfo.chronicConditions.join(', ') : "",
+      currentMedications: Array.isArray(data.medicalInfo.currentMedications) ? data.medicalInfo.currentMedications.join(', ') : "",
+      insuranceProvider: data.insuranceInfo.provider || "",
+      policyNumber: data.insuranceInfo.policyNumber || "",
+      groupNumber: data.insuranceInfo.groupNumber || "",
+      coverageAmount: data.insuranceInfo.coverageAmount || "",
+      validityDate: data.insuranceInfo.validityDate || "",
+      nominee: data.insuranceInfo.nominee || "",
+      relationship: data.insuranceInfo.relationship || "",
+      insuranceType: data.insuranceInfo.insuranceType || ""
+    });
+  };
+
+  // Open edit modal
+  const initializeEditFormModal = () => {
+    initializeEditForm(patientData);
     setIsEditing(true);
   };
 
@@ -263,18 +308,98 @@ const PatientProfile = () => {
   };
 
   // Handle Save Profile
-  const handleSaveProfile = () => {
-    setPatientData({
-      ...patientData,
-      personalInfo: editFormData
-    });
-    setIsEditing(false);
-    showNotificationMessage('Profile updated successfully!', 'success');
+  const handleSaveProfile = async () => {
+    try {
+      setLoading(true);
+      
+      // Prepare form data for API
+      const formData = new FormData();
+      
+      // Add basic fields
+      formData.append('fullName', editFormData.name);
+      formData.append('email', editFormData.email);
+      formData.append('phoneNumber', editFormData.phone);
+      formData.append('age', editFormData.age.toString());
+      formData.append('gender', editFormData.gender);
+      formData.append('bloodGroup', editFormData.bloodGroup);
+      formData.append('dateOfBirth', editFormData.dateOfBirth);
+      
+      // Add address
+      const addressObj = {
+        line1: editFormData.address.line1,
+        line2: editFormData.address.line2,
+        city: editFormData.address.city,
+        state: editFormData.address.state,
+        pincode: editFormData.address.pincode,
+        country: editFormData.address.country || "India"
+      };
+      formData.append('address', JSON.stringify(addressObj));
+      
+      // Add emergency contact
+      const emergencyObj = {
+        name: editFormData.emergencyContact.name,
+        relation: editFormData.emergencyContact.relation,
+        phone: editFormData.emergencyContact.phone
+      };
+      formData.append('emergencyContact', JSON.stringify(emergencyObj));
+      
+      // Add medical info
+      const medicalObj = {
+        height: editFormData.height,
+        weight: editFormData.weight,
+        allergies: editFormData.allergies ? editFormData.allergies.split(',').map(item => item.trim()).filter(item => item) : [],
+        chronicConditions: editFormData.chronicConditions ? editFormData.chronicConditions.split(',').map(item => item.trim()).filter(item => item) : [],
+        currentMedications: editFormData.currentMedications ? editFormData.currentMedications.split(',').map(item => item.trim()).filter(item => item) : []
+      };
+      formData.append('medicalInfo', JSON.stringify(medicalObj));
+      
+      // Add insurance info
+      const insuranceObj = {
+        provider: editFormData.insuranceProvider,
+        policyNumber: editFormData.policyNumber,
+        groupNumber: editFormData.groupNumber,
+        coverageAmount: editFormData.coverageAmount,
+        validityDate: editFormData.validityDate,
+        nominee: editFormData.nominee,
+        relationship: editFormData.relationship,
+        insuranceType: editFormData.insuranceType
+      };
+      formData.append('insuranceInfo', JSON.stringify(insuranceObj));
+      
+      // Add profile photo if changed
+      if (profileImage && !profileImage.startsWith('http')) {
+        // Convert base64 to blob
+        const response = await fetch(profileImage);
+        const blob = await response.blob();
+        formData.append('profilePhoto', blob, 'profile.jpg');
+      }
+      
+      // Call the update API
+      const response = await updatePatientProfile(formData);
+      
+      if (response.data.success) {
+        showNotificationMessage('Profile updated successfully!', 'success');
+        
+        // Fetch fresh data to update the state
+        await fetchPatientProfile();
+        setIsEditing(false);
+        setProfileImage(null);
+      } else {
+        showNotificationMessage(response.data.message || 'Failed to update profile', 'error');
+      }
+    } catch (err) {
+      console.error('Error updating profile:', err);
+      console.error('Error details:', err.response?.data);
+      showNotificationMessage(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCancelEdit = () => {
     setIsEditing(false);
-    setEditFormData({...patientData.personalInfo});
+    initializeEditForm(patientData);
+    setProfileImage(null);
   };
 
   const handleEditFormChange = (e) => {
@@ -298,28 +423,14 @@ const PatientProfile = () => {
     }
   };
 
-  // Handle array fields
-  const handleArrayFieldChange = (parent, index, field, value) => {
-    setEditFormData(prev => ({
-      ...prev,
-      [parent]: prev[parent].map((item, i) => 
-        i === index ? { ...item, [field]: value } : item
-      )
-    }));
-  };
-
-  const addArrayItem = (parent, newItem) => {
-    setEditFormData(prev => ({
-      ...prev,
-      [parent]: [...prev[parent], newItem]
-    }));
-  };
-
-  const removeArrayItem = (parent, index) => {
-    setEditFormData(prev => ({
-      ...prev,
-      [parent]: prev[parent].filter((_, i) => i !== index)
-    }));
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Not specified';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   };
 
   // Notification Component
@@ -331,12 +442,24 @@ const PatientProfile = () => {
     )
   );
 
+  // Loading Spinner
+  if (loading && !patientData.personalInfo.id) {
+    return (
+      <div className="patient-profile">
+        <div className="loading-spinner">
+          <div className="spinner"></div>
+          <p>Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Render Edit Modal
   const renderEditModal = () => (
     <div className="modal-overlay">
       <div className="modal-content">
         <div className="modal-header">
-          <h3>Edit Complete Profile</h3>
+          <h3>Edit Profile</h3>
           <button className="close-btn" onClick={handleCancelEdit}>×</button>
         </div>
         
@@ -360,9 +483,7 @@ const PatientProfile = () => {
                   <label>Patient ID</label>
                   <input
                     type="text"
-                    name="id"
-                    value={editFormData.id || ''}
-                    onChange={handleEditFormChange}
+                    value={patientData.personalInfo.id}
                     readOnly
                     className="readonly-field"
                   />
@@ -401,36 +522,10 @@ const PatientProfile = () => {
                     required
                   >
                     <option value="">Select Gender</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                    <option value="Other">Other</option>
+                    <option value="male">Male</option>
+                    <option value="female">Female</option>
+                    <option value="other">Other</option>
                   </select>
-                </div>
-                <div className="form-group">
-                  <label>Marital Status</label>
-                  <select
-                    name="maritalStatus"
-                    value={editFormData.maritalStatus || ''}
-                    onChange={handleEditFormChange}
-                  >
-                    <option value="">Select</option>
-                    <option value="Single">Single</option>
-                    <option value="Married">Married</option>
-                    <option value="Divorced">Divorced</option>
-                    <option value="Widowed">Widowed</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Occupation</label>
-                  <input
-                    type="text"
-                    name="occupation"
-                    value={editFormData.occupation || ''}
-                    onChange={handleEditFormChange}
-                  />
                 </div>
                 <div className="form-group">
                   <label>Blood Group</label>
@@ -478,211 +573,102 @@ const PatientProfile = () => {
                   />
                 </div>
               </div>
+            </div>
 
+            {/* Address */}
+            <div className="form-section">
+              <h4>Address</h4>
               <div className="form-group">
-                <label>Alternative Phone</label>
+                <label>Address Line 1</label>
+                <input
+                  type="text"
+                  name="address.line1"
+                  value={editFormData.address?.line1 || ''}
+                  onChange={handleEditFormChange}
+                />
+              </div>
+              <div className="form-group">
+                <label>Address Line 2</label>
+                <input
+                  type="text"
+                  name="address.line2"
+                  value={editFormData.address?.line2 || ''}
+                  onChange={handleEditFormChange}
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>City</label>
+                  <input
+                    type="text"
+                    name="address.city"
+                    value={editFormData.address?.city || ''}
+                    onChange={handleEditFormChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>State</label>
+                  <input
+                    type="text"
+                    name="address.state"
+                    value={editFormData.address?.state || ''}
+                    onChange={handleEditFormChange}
+                  />
+                </div>
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Pincode</label>
+                  <input
+                    type="text"
+                    name="address.pincode"
+                    value={editFormData.address?.pincode || ''}
+                    onChange={handleEditFormChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Country</label>
+                  <input
+                    type="text"
+                    name="address.country"
+                    value={editFormData.address?.country || 'India'}
+                    onChange={handleEditFormChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Emergency Contact */}
+            <div className="form-section">
+              <h4>Emergency Contact</h4>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Name</label>
+                  <input
+                    type="text"
+                    name="emergencyContact.name"
+                    value={editFormData.emergencyContact?.name || ''}
+                    onChange={handleEditFormChange}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Relation</label>
+                  <input
+                    type="text"
+                    name="emergencyContact.relation"
+                    value={editFormData.emergencyContact?.relation || ''}
+                    onChange={handleEditFormChange}
+                  />
+                </div>
+              </div>
+              <div className="form-group">
+                <label>Phone</label>
                 <input
                   type="tel"
-                  name="alternativePhone"
-                  value={editFormData.alternativePhone || ''}
+                  name="emergencyContact.phone"
+                  value={editFormData.emergencyContact?.phone || ''}
                   onChange={handleEditFormChange}
                 />
-              </div>
-            </div>
-
-            {/* Identity Documents */}
-            <div className="form-section">
-              <h4>Identity Documents</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Aadhar Number</label>
-                  <input
-                    type="text"
-                    name="aadharNumber"
-                    value={editFormData.aadharNumber || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>PAN Number</label>
-                  <input
-                    type="text"
-                    name="panNumber"
-                    value={editFormData.panNumber || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Passport Number</label>
-                  <input
-                    type="text"
-                    name="passportNumber"
-                    value={editFormData.passportNumber || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Driving License</label>
-                  <input
-                    type="text"
-                    name="drivingLicense"
-                    value={editFormData.drivingLicense || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Present Address */}
-            <div className="form-section">
-              <h4>Present Address</h4>
-              <div className="form-group">
-                <label>Address Line 1</label>
-                <input
-                  type="text"
-                  name="presentAddress.line1"
-                  value={editFormData.presentAddress?.line1 || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-group">
-                <label>Address Line 2</label>
-                <input
-                  type="text"
-                  name="presentAddress.line2"
-                  value={editFormData.presentAddress?.line2 || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-group">
-                <label>Landmark</label>
-                <input
-                  type="text"
-                  name="presentAddress.landmark"
-                  value={editFormData.presentAddress?.landmark || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>City</label>
-                  <input
-                    type="text"
-                    name="presentAddress.city"
-                    value={editFormData.presentAddress?.city || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>State</label>
-                  <input
-                    type="text"
-                    name="presentAddress.state"
-                    value={editFormData.presentAddress?.state || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Pincode</label>
-                  <input
-                    type="text"
-                    name="presentAddress.pincode"
-                    value={editFormData.presentAddress?.pincode || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Country</label>
-                  <input
-                    type="text"
-                    name="presentAddress.country"
-                    value={editFormData.presentAddress?.country || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Permanent Address */}
-            <div className="form-section">
-              <h4>Permanent Address</h4>
-              <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setEditFormData(prev => ({
-                          ...prev,
-                          permanentAddress: {...prev.presentAddress}
-                        }));
-                      }
-                    }}
-                  /> Same as Present Address
-                </label>
-              </div>
-              <div className="form-group">
-                <label>Address Line 1</label>
-                <input
-                  type="text"
-                  name="permanentAddress.line1"
-                  value={editFormData.permanentAddress?.line1 || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-group">
-                <label>Address Line 2</label>
-                <input
-                  type="text"
-                  name="permanentAddress.line2"
-                  value={editFormData.permanentAddress?.line2 || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>City</label>
-                  <input
-                    type="text"
-                    name="permanentAddress.city"
-                    value={editFormData.permanentAddress?.city || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>State</label>
-                  <input
-                    type="text"
-                    name="permanentAddress.state"
-                    value={editFormData.permanentAddress?.state || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Pincode</label>
-                  <input
-                    type="text"
-                    name="permanentAddress.pincode"
-                    value={editFormData.permanentAddress?.pincode || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Country</label>
-                  <input
-                    type="text"
-                    name="permanentAddress.country"
-                    value={editFormData.permanentAddress?.country || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
               </div>
             </div>
 
@@ -694,8 +680,8 @@ const PatientProfile = () => {
                   <label>Height (cm)</label>
                   <input
                     type="text"
-                    name="medicalInfo.height"
-                    value={editFormData.medicalInfo?.height || ''}
+                    name="height"
+                    value={editFormData.height || ''}
                     onChange={handleEditFormChange}
                   />
                 </div>
@@ -703,29 +689,8 @@ const PatientProfile = () => {
                   <label>Weight (kg)</label>
                   <input
                     type="text"
-                    name="medicalInfo.weight"
-                    value={editFormData.medicalInfo?.weight || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Blood Pressure</label>
-                  <input
-                    type="text"
-                    name="medicalInfo.bloodPressure"
-                    value={editFormData.medicalInfo?.bloodPressure || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Heart Rate</label>
-                  <input
-                    type="text"
-                    name="medicalInfo.heartRate"
-                    value={editFormData.medicalInfo?.heartRate || ''}
+                    name="weight"
+                    value={editFormData.weight || ''}
                     onChange={handleEditFormChange}
                   />
                 </div>
@@ -735,18 +700,10 @@ const PatientProfile = () => {
                 <label>Allergies (comma separated)</label>
                 <input
                   type="text"
-                  name="medicalInfo.allergies"
-                  value={editFormData.medicalInfo?.allergies?.join(', ') || ''}
-                  onChange={(e) => {
-                    const allergies = e.target.value.split(',').map(item => item.trim());
-                    setEditFormData(prev => ({
-                      ...prev,
-                      medicalInfo: {
-                        ...prev.medicalInfo,
-                        allergies
-                      }
-                    }));
-                  }}
+                  name="allergies"
+                  value={editFormData.allergies || ''}
+                  onChange={handleEditFormChange}
+                  placeholder="e.g., Penicillin, Dust, Pollen"
                 />
               </div>
 
@@ -754,18 +711,10 @@ const PatientProfile = () => {
                 <label>Chronic Conditions (comma separated)</label>
                 <input
                   type="text"
-                  name="medicalInfo.chronicConditions"
-                  value={editFormData.medicalInfo?.chronicConditions?.join(', ') || ''}
-                  onChange={(e) => {
-                    const conditions = e.target.value.split(',').map(item => item.trim());
-                    setEditFormData(prev => ({
-                      ...prev,
-                      medicalInfo: {
-                        ...prev.medicalInfo,
-                        chronicConditions: conditions
-                      }
-                    }));
-                  }}
+                  name="chronicConditions"
+                  value={editFormData.chronicConditions || ''}
+                  onChange={handleEditFormChange}
+                  placeholder="e.g., Hypertension, Diabetes"
                 />
               </div>
 
@@ -773,87 +722,12 @@ const PatientProfile = () => {
                 <label>Current Medications (comma separated)</label>
                 <input
                   type="text"
-                  name="medicalInfo.currentMedications"
-                  value={editFormData.medicalInfo?.currentMedications?.join(', ') || ''}
-                  onChange={(e) => {
-                    const medications = e.target.value.split(',').map(item => item.trim());
-                    setEditFormData(prev => ({
-                      ...prev,
-                      medicalInfo: {
-                        ...prev.medicalInfo,
-                        currentMedications: medications
-                      }
-                    }));
-                  }}
+                  name="currentMedications"
+                  value={editFormData.currentMedications || ''}
+                  onChange={handleEditFormChange}
+                  placeholder="e.g., Metformin 500mg, Lisinopril 10mg"
                 />
               </div>
-            </div>
-
-            {/* Emergency Contacts */}
-            <div className="form-section">
-              <h4>Emergency Contacts</h4>
-              {editFormData.emergencyContacts?.map((contact, index) => (
-                <div key={index} className="emergency-contact-item">
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Name</label>
-                      <input
-                        type="text"
-                        value={contact.name || ''}
-                        onChange={(e) => handleArrayFieldChange('emergencyContacts', index, 'name', e.target.value)}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Relation</label>
-                      <input
-                        type="text"
-                        value={contact.relation || ''}
-                        onChange={(e) => handleArrayFieldChange('emergencyContacts', index, 'relation', e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Phone</label>
-                      <input
-                        type="tel"
-                        value={contact.phone || ''}
-                        onChange={(e) => handleArrayFieldChange('emergencyContacts', index, 'phone', e.target.value)}
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Priority</label>
-                      <select
-                        value={contact.priority || ''}
-                        onChange={(e) => handleArrayFieldChange('emergencyContacts', index, 'priority', e.target.value)}
-                      >
-                        <option value="Primary">Primary</option>
-                        <option value="Secondary">Secondary</option>
-                        <option value="Medical">Medical</option>
-                      </select>
-                    </div>
-                  </div>
-                  <button 
-                    type="button" 
-                    className="remove-btn"
-                    onClick={() => removeArrayItem('emergencyContacts', index)}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-              <button 
-                type="button" 
-                className="add-btn"
-                onClick={() => addArrayItem('emergencyContacts', {
-                  name: '',
-                  relation: '',
-                  phone: '',
-                  priority: 'Secondary'
-                })}
-              >
-                + Add Emergency Contact
-              </button>
             </div>
 
             {/* Insurance Information */}
@@ -861,42 +735,52 @@ const PatientProfile = () => {
               <h4>Insurance Information</h4>
               <div className="form-row">
                 <div className="form-group">
-                  <label>Provider</label>
-                  <input
-                    type="text"
-                    name="insuranceInfo.provider"
-                    value={editFormData.insuranceInfo?.provider || ''}
+                  <label>Insurance Provider</label>
+                  <select
+                    name="insuranceProvider"
+                    value={editFormData.insuranceProvider || ''}
                     onChange={handleEditFormChange}
-                  />
+                  >
+                    <option value="">Select Insurance Provider</option>
+                    {insuranceProviders.map(provider => (
+                      <option key={provider} value={provider}>{provider}</option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-group">
-                  <label>Policy Number</label>
-                  <input
-                    type="text"
-                    name="insuranceInfo.policyNumber"
-                    value={editFormData.insuranceInfo?.policyNumber || ''}
+                  <label>Insurance Type</label>
+                  <select
+                    name="insuranceType"
+                    value={editFormData.insuranceType || ''}
                     onChange={handleEditFormChange}
-                  />
+                  >
+                    <option value="">Select Insurance Type</option>
+                    {insuranceTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Group Number</label>
+                  <label>Policy Number</label>
                   <input
                     type="text"
-                    name="insuranceInfo.groupNumber"
-                    value={editFormData.insuranceInfo?.groupNumber || ''}
+                    name="policyNumber"
+                    value={editFormData.policyNumber || ''}
                     onChange={handleEditFormChange}
+                    placeholder="e.g., SHI-12345-6789"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Validity Date</label>
+                  <label>Group Number</label>
                   <input
-                    type="date"
-                    name="insuranceInfo.validityDate"
-                    value={editFormData.insuranceInfo?.validityDate || ''}
+                    type="text"
+                    name="groupNumber"
+                    value={editFormData.groupNumber || ''}
                     onChange={handleEditFormChange}
+                    placeholder="e.g., GRP-2024-001"
                   />
                 </div>
               </div>
@@ -906,42 +790,18 @@ const PatientProfile = () => {
                   <label>Coverage Amount</label>
                   <input
                     type="text"
-                    name="insuranceInfo.coverageAmount"
-                    value={editFormData.insuranceInfo?.coverageAmount || ''}
+                    name="coverageAmount"
+                    value={editFormData.coverageAmount || ''}
                     onChange={handleEditFormChange}
+                    placeholder="e.g., ₹5,00,000"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Nominee</label>
+                  <label>Validity Date</label>
                   <input
-                    type="text"
-                    name="insuranceInfo.nominee"
-                    value={editFormData.insuranceInfo?.nominee || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Work Information */}
-            <div className="form-section">
-              <h4>Work Information</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Company Name</label>
-                  <input
-                    type="text"
-                    name="workInfo.companyName"
-                    value={editFormData.workInfo?.companyName || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Designation</label>
-                  <input
-                    type="text"
-                    name="workInfo.designation"
-                    value={editFormData.workInfo?.designation || ''}
+                    type="date"
+                    name="validityDate"
+                    value={editFormData.validityDate || ''}
                     onChange={handleEditFormChange}
                   />
                 </div>
@@ -949,172 +809,36 @@ const PatientProfile = () => {
 
               <div className="form-row">
                 <div className="form-group">
-                  <label>Work Email</label>
-                  <input
-                    type="email"
-                    name="workInfo.workEmail"
-                    value={editFormData.workInfo?.workEmail || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Work Phone</label>
-                  <input
-                    type="tel"
-                    name="workInfo.workPhone"
-                    value={editFormData.workInfo?.workPhone || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Office Address</label>
-                <textarea
-                  name="workInfo.officeAddress"
-                  value={editFormData.workInfo?.officeAddress || ''}
-                  onChange={handleEditFormChange}
-                  rows="2"
-                />
-              </div>
-            </div>
-
-            {/* Social Media */}
-            <div className="form-section">
-              <h4>Social Media</h4>
-              <div className="form-group">
-                <label>Twitter</label>
-                <input
-                  type="text"
-                  name="socialInfo.twitter"
-                  value={editFormData.socialInfo?.twitter || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-group">
-                <label>LinkedIn</label>
-                <input
-                  type="text"
-                  name="socialInfo.linkedin"
-                  value={editFormData.socialInfo?.linkedin || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-group">
-                <label>Facebook</label>
-                <input
-                  type="text"
-                  name="socialInfo.facebook"
-                  value={editFormData.socialInfo?.facebook || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-group">
-                <label>Instagram</label>
-                <input
-                  type="text"
-                  name="socialInfo.instagram"
-                  value={editFormData.socialInfo?.instagram || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-            </div>
-
-            {/* Preferences */}
-            <div className="form-section">
-              <h4>Preferences</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Preferred Language</label>
+                  <label>Nominee Name</label>
                   <input
                     type="text"
-                    name="preferences.language"
-                    value={editFormData.preferences?.language || ''}
+                    name="nominee"
+                    value={editFormData.nominee || ''}
                     onChange={handleEditFormChange}
+                    placeholder="e.g., Priya Sharma"
                   />
                 </div>
                 <div className="form-group">
-                  <label>Communication Mode</label>
+                  <label>Relationship with Nominee</label>
                   <input
                     type="text"
-                    name="preferences.communicationMode"
-                    value={editFormData.preferences?.communicationMode || ''}
+                    name="relationship"
+                    value={editFormData.relationship || ''}
                     onChange={handleEditFormChange}
+                    placeholder="e.g., Spouse"
                   />
                 </div>
-              </div>
-
-              <div className="checkbox-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    name="preferences.appointmentReminder"
-                    checked={editFormData.preferences?.appointmentReminder || false}
-                    onChange={(e) => setEditFormData(prev => ({
-                      ...prev,
-                      preferences: {
-                        ...prev.preferences,
-                        appointmentReminder: e.target.checked
-                      }
-                    }))}
-                  />
-                  Appointment Reminders
-                </label>
-
-                <label>
-                  <input
-                    type="checkbox"
-                    name="preferences.newsletterSubscription"
-                    checked={editFormData.preferences?.newsletterSubscription || false}
-                    onChange={(e) => setEditFormData(prev => ({
-                      ...prev,
-                      preferences: {
-                        ...prev.preferences,
-                        newsletterSubscription: e.target.checked
-                      }
-                    }))}
-                  />
-                  Newsletter Subscription
-                </label>
-
-                <label>
-                  <input
-                    type="checkbox"
-                    name="preferences.twoFactorAuth"
-                    checked={editFormData.preferences?.twoFactorAuth || false}
-                    onChange={(e) => setEditFormData(prev => ({
-                      ...prev,
-                      preferences: {
-                        ...prev.preferences,
-                        twoFactorAuth: e.target.checked
-                      }
-                    }))}
-                  />
-                  Two Factor Authentication
-                </label>
-
-                <label>
-                  <input
-                    type="checkbox"
-                    name="preferences.dataSharingConsent"
-                    checked={editFormData.preferences?.dataSharingConsent || false}
-                    onChange={(e) => setEditFormData(prev => ({
-                      ...prev,
-                      preferences: {
-                        ...prev.preferences,
-                        dataSharingConsent: e.target.checked
-                      }
-                    }))}
-                  />
-                  Data Sharing Consent
-                </label>
               </div>
             </div>
           </div>
 
           <div className="modal-actions">
-            <button type="submit" className="btn-primary">Save All Changes</button>
-            <button type="button" className="btn-secondary" onClick={handleCancelEdit}>Cancel</button>
+            <button type="submit" className="btn-primary" disabled={loading}>
+              {loading ? 'Saving...' : 'Save Changes'}
+            </button>
+            <button type="button" className="btn-secondary" onClick={handleCancelEdit} disabled={loading}>
+              Cancel
+            </button>
           </div>
         </form>
       </div>
@@ -1148,7 +872,6 @@ const PatientProfile = () => {
               onChange={handleImageUpload}
               style={{ display: 'none' }}
             />
-            <p className="upload-hint">Max size: 5MB</p>
           </div>
         </div>
         
@@ -1163,13 +886,13 @@ const PatientProfile = () => {
         </div>
         
         <div className="header-actions">
-          <button className="btn-primary" onClick={initializeEditForm}>
-            <span className="btn-icon">✏️</span> Edit Complete Profile
+          <button className="btn-primary" onClick={initializeEditFormModal} disabled={loading}>
+            <span className="btn-icon">✏️</span> Edit Profile
           </button>
         </div>
       </div>
 
-      {/* Main Content - All Information Display */}
+      {/* Main Content - Essential Information Display */}
       <div className="profile-content">
         {/* Personal Information Section */}
         <div className="info-section">
@@ -1190,7 +913,7 @@ const PatientProfile = () => {
               <div className="info-icon">📅</div>
               <div className="info-content">
                 <label>Date of Birth</label>
-                <span>{patientData.personalInfo.dateOfBirth}</span>
+                <span>{formatDate(patientData.personalInfo.dateOfBirth)}</span>
               </div>
             </div>
 
@@ -1198,7 +921,7 @@ const PatientProfile = () => {
               <div className="info-icon">⚥</div>
               <div className="info-content">
                 <label>Gender</label>
-                <span>{patientData.personalInfo.gender}</span>
+                <span>{patientData.personalInfo.gender ? patientData.personalInfo.gender.charAt(0).toUpperCase() + patientData.personalInfo.gender.slice(1) : 'Not specified'}</span>
               </div>
             </div>
 
@@ -1206,35 +929,10 @@ const PatientProfile = () => {
               <div className="info-icon">💉</div>
               <div className="info-content">
                 <label>Blood Group</label>
-                <span>{patientData.personalInfo.bloodGroup}</span>
+                <span>{patientData.personalInfo.bloodGroup || 'Not specified'}</span>
               </div>
             </div>
 
-            <div className="info-card">
-              <div className="info-icon">💍</div>
-              <div className="info-content">
-                <label>Marital Status</label>
-                <span>{patientData.personalInfo.maritalStatus}</span>
-              </div>
-            </div>
-
-            <div className="info-card">
-              <div className="info-icon">💼</div>
-              <div className="info-content">
-                <label>Occupation</label>
-                <span>{patientData.personalInfo.occupation}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Information */}
-        <div className="info-section">
-          <div className="section-header">
-            <h2>Contact Information</h2>
-          </div>
-          
-          <div className="info-grid">
             <div className="info-card">
               <div className="info-icon">📧</div>
               <div className="info-content">
@@ -1250,77 +948,45 @@ const PatientProfile = () => {
                 <span>{patientData.personalInfo.phone}</span>
               </div>
             </div>
-
-            <div className="info-card">
-              <div className="info-icon">📞</div>
-              <div className="info-content">
-                <label>Alternative Phone</label>
-                <span>{patientData.personalInfo.alternativePhone}</span>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* Identity Documents */}
+        {/* Address Section */}
         <div className="info-section">
           <div className="section-header">
-            <h2>Identity Documents</h2>
-          </div>
-          
-          <div className="documents-grid">
-            {patientData.personalInfo.documents?.map((doc, index) => (
-              <div key={index} className="document-card">
-                <div className="document-icon">📄</div>
-                <div className="document-details">
-                  <h4>{doc.type}</h4>
-                  <p className="doc-number">{doc.number}</p>
-                  <p className="doc-issuer">Issued by: {doc.issuedBy}</p>
-                  <p className="doc-validity">Valid until: {doc.validUntil}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Present Address */}
-        <div className="info-section">
-          <div className="section-header">
-            <h2>Present Address</h2>
+            <h2>Address</h2>
           </div>
           
           <div className="address-card">
             <div className="address-icon">📍</div>
             <div className="address-details">
-              <p>{patientData.personalInfo.presentAddress?.line1}</p>
-              <p>{patientData.personalInfo.presentAddress?.line2}</p>
-              <p>{patientData.personalInfo.presentAddress?.landmark}</p>
+              {patientData.personalInfo.address?.line1 && <p>{patientData.personalInfo.address.line1}</p>}
+              {patientData.personalInfo.address?.line2 && <p>{patientData.personalInfo.address.line2}</p>}
               <p>
-                {patientData.personalInfo.presentAddress?.city}, 
-                {patientData.personalInfo.presentAddress?.state} - 
-                {patientData.personalInfo.presentAddress?.pincode}
+                {patientData.personalInfo.address?.city && `${patientData.personalInfo.address.city}, `}
+                {patientData.personalInfo.address?.state && `${patientData.personalInfo.address.state} `}
+                {patientData.personalInfo.address?.pincode && `- ${patientData.personalInfo.address.pincode}`}
               </p>
-              <p>{patientData.personalInfo.presentAddress?.country}</p>
+              {patientData.personalInfo.address?.country && <p>{patientData.personalInfo.address.country}</p>}
+              {!patientData.personalInfo.address?.line1 && !patientData.personalInfo.address?.city && (
+                <p>No address provided</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Permanent Address */}
+        {/* Emergency Contact */}
         <div className="info-section">
           <div className="section-header">
-            <h2>Permanent Address</h2>
+            <h2>Emergency Contact</h2>
           </div>
           
-          <div className="address-card">
-            <div className="address-icon">🏠</div>
-            <div className="address-details">
-              <p>{patientData.personalInfo.permanentAddress?.line1}</p>
-              <p>{patientData.personalInfo.permanentAddress?.line2}</p>
-              <p>
-                {patientData.personalInfo.permanentAddress?.city}, 
-                {patientData.personalInfo.permanentAddress?.state} - 
-                {patientData.personalInfo.permanentAddress?.pincode}
-              </p>
-              <p>{patientData.personalInfo.permanentAddress?.country}</p>
+          <div className="emergency-card">
+            <div className="emergency-icon">🆘</div>
+            <div className="emergency-details">
+              <h3>{patientData.personalInfo.emergencyContact?.name || 'Not specified'}</h3>
+              <p className="relation">{patientData.personalInfo.emergencyContact?.relation}</p>
+              <p className="phone">{patientData.personalInfo.emergencyContact?.phone}</p>
             </div>
           </div>
         </div>
@@ -1333,76 +999,61 @@ const PatientProfile = () => {
           
           <div className="medical-grid">
             <div className="vital-signs">
-              <h3>Vital Signs</h3>
+              <h3>Vital Stats</h3>
               <div className="vital-item">
-                <span className="vital-label">Blood Pressure:</span>
-                <span className="vital-value">{patientData.personalInfo.medicalInfo?.bloodPressure}</span>
+                <span className="vital-label">Height:</span>
+                <span className="vital-value">{patientData.medicalInfo?.height || 'Not specified'}</span>
               </div>
               <div className="vital-item">
-                <span className="vital-label">Heart Rate:</span>
-                <span className="vital-value">{patientData.personalInfo.medicalInfo?.heartRate}</span>
+                <span className="vital-label">Weight:</span>
+                <span className="vital-value">{patientData.medicalInfo?.weight || 'Not specified'}</span>
               </div>
               <div className="vital-item">
-                <span className="vital-label">Temperature:</span>
-                <span className="vital-value">{patientData.personalInfo.medicalInfo?.temperature}</span>
-              </div>
-              <div className="vital-item">
-                <span className="vital-label">O2 Saturation:</span>
-                <span className="vital-value">{patientData.personalInfo.medicalInfo?.oxygenSaturation}</span>
+                <span className="vital-label">Blood Group:</span>
+                <span className="vital-value">{patientData.personalInfo.bloodGroup || 'Not specified'}</span>
               </div>
             </div>
 
             <div className="medical-details">
-              <div className="detail-item">
-                <h4>Allergies</h4>
-                <ul>
-                  {patientData.personalInfo.medicalInfo?.allergies?.map((allergy, index) => (
-                    <li key={index}>{allergy}</li>
-                  ))}
-                </ul>
-              </div>
+              {patientData.medicalInfo?.allergies?.length > 0 && (
+                <div className="detail-item">
+                  <h4>Allergies</h4>
+                  <ul>
+                    {patientData.medicalInfo.allergies.map((allergy, index) => (
+                      <li key={index}>{allergy}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-              <div className="detail-item">
-                <h4>Chronic Conditions</h4>
-                <ul>
-                  {patientData.personalInfo.medicalInfo?.chronicConditions?.map((condition, index) => (
-                    <li key={index}>{condition}</li>
-                  ))}
-                </ul>
-              </div>
+              {patientData.medicalInfo?.chronicConditions?.length > 0 && (
+                <div className="detail-item">
+                  <h4>Chronic Conditions</h4>
+                  <ul>
+                    {patientData.medicalInfo.chronicConditions.map((condition, index) => (
+                      <li key={index}>{condition}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
-              <div className="detail-item">
-                <h4>Current Medications</h4>
-                <ul>
-                  {patientData.personalInfo.medicalInfo?.currentMedications?.map((med, index) => (
-                    <li key={index}>{med}</li>
-                  ))}
-                </ul>
-              </div>
+              {patientData.medicalInfo?.currentMedications?.length > 0 && (
+                <div className="detail-item">
+                  <h4>Current Medications</h4>
+                  <ul>
+                    {patientData.medicalInfo.currentMedications.map((med, index) => (
+                      <li key={index}>{med}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(!patientData.medicalInfo?.allergies?.length && 
+                !patientData.medicalInfo?.chronicConditions?.length && 
+                !patientData.medicalInfo?.currentMedications?.length) && (
+                <p className="no-data">No medical information provided</p>
+              )}
             </div>
-          </div>
-        </div>
-
-        {/* Emergency Contacts */}
-        <div className="info-section">
-          <div className="section-header">
-            <h2>Emergency Contacts</h2>
-          </div>
-          
-          <div className="emergency-contacts-grid">
-            {patientData.personalInfo.emergencyContacts?.map((contact, index) => (
-              <div key={index} className={`emergency-card priority-${contact.priority?.toLowerCase()}`}>
-                <div className="emergency-header">
-                  <span className="emergency-priority">{contact.priority}</span>
-                  <span className="emergency-icon">🆘</span>
-                </div>
-                <div className="emergency-details">
-                  <h3>{contact.name}</h3>
-                  <p className="relation">{contact.relation}</p>
-                  <p className="phone">{contact.phone}</p>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
 
@@ -1412,184 +1063,40 @@ const PatientProfile = () => {
             <h2>Insurance Information</h2>
           </div>
           
-          <div className="insurance-card">
-            <div className="insurance-header">
-              <h3>{patientData.personalInfo.insuranceInfo?.provider}</h3>
-              <span className="insurance-type">{patientData.personalInfo.insuranceInfo?.insuranceType}</span>
-            </div>
-            <div className="insurance-details">
-              <div className="detail-row">
-                <span className="label">Policy Number:</span>
-                <span className="value">{patientData.personalInfo.insuranceInfo?.policyNumber}</span>
+          {patientData.insuranceInfo?.provider ? (
+            <div className="insurance-card">
+              <div className="insurance-header">
+                <h3>{patientData.insuranceInfo.provider}</h3>
+                <span className="insurance-type">{patientData.insuranceInfo.insuranceType}</span>
               </div>
-              <div className="detail-row">
-                <span className="label">Group Number:</span>
-                <span className="value">{patientData.personalInfo.insuranceInfo?.groupNumber}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Coverage Amount:</span>
-                <span className="value">{patientData.personalInfo.insuranceInfo?.coverageAmount}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Validity:</span>
-                <span className="value">{patientData.personalInfo.insuranceInfo?.validityDate}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Nominee:</span>
-                <span className="value">{patientData.personalInfo.insuranceInfo?.nominee} ({patientData.personalInfo.insuranceInfo?.relationship})</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Work Information */}
-        <div className="info-section">
-          <div className="section-header">
-            <h2>Work Information</h2>
-          </div>
-          
-          <div className="work-card">
-            <div className="work-header">
-              <h3>{patientData.personalInfo.workInfo?.companyName}</h3>
-              <span className="designation">{patientData.personalInfo.workInfo?.designation}</span>
-            </div>
-            <div className="work-details">
-              <div className="detail-row">
-                <span className="label">Employee ID:</span>
-                <span className="value">{patientData.personalInfo.workInfo?.employeeId}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Work Email:</span>
-                <span className="value">{patientData.personalInfo.workInfo?.workEmail}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Work Phone:</span>
-                <span className="value">{patientData.personalInfo.workInfo?.workPhone}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Joining Date:</span>
-                <span className="value">{patientData.personalInfo.workInfo?.joiningDate}</span>
-              </div>
-              <div className="detail-row">
-                <span className="label">Office Address:</span>
-                <span className="value">{patientData.personalInfo.workInfo?.officeAddress}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Family Members */}
-        <div className="info-section">
-          <div className="section-header">
-            <h2>Family Members</h2>
-          </div>
-          
-          <div className="family-grid">
-            {patientData.personalInfo.familyMembers?.map((member, index) => (
-              <div key={index} className="family-card">
-                <div className="family-icon">👪</div>
-                <div className="family-details">
-                  <h4>{member.name}</h4>
-                  <p className="relation">{member.relation}</p>
-                  <p className="age">Age: {member.age}</p>
-                  <p className="blood-group">Blood Group: {member.bloodGroup}</p>
-                  {member.medicalConditions !== "None" && (
-                    <p className="medical-conditions">Medical: {member.medicalConditions}</p>
-                  )}
+              <div className="insurance-details">
+                <div className="detail-row">
+                  <span className="label">Policy Number:</span>
+                  <span className="value">{patientData.insuranceInfo.policyNumber}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Group Number:</span>
+                  <span className="value">{patientData.insuranceInfo.groupNumber}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Coverage Amount:</span>
+                  <span className="value">{patientData.insuranceInfo.coverageAmount}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Validity:</span>
+                  <span className="value">{formatDate(patientData.insuranceInfo.validityDate)}</span>
+                </div>
+                <div className="detail-row">
+                  <span className="label">Nominee:</span>
+                  <span className="value">{patientData.insuranceInfo.nominee} ({patientData.insuranceInfo.relationship})</span>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Recent Appointments */}
-        <div className="info-section">
-          <div className="section-header">
-            <h2>Recent Appointments</h2>
-          </div>
-          
-          <div className="appointments-list">
-            {patientData.personalInfo.appointments?.map((appointment, index) => (
-              <div key={index} className="appointment-item">
-                <div className="appointment-date">
-                  <span className="date">{appointment.date}</span>
-                  <span className="time">{appointment.time}</span>
-                </div>
-                <div className="appointment-details">
-                  <h4>{appointment.doctor}</h4>
-                  <p className="specialty">{appointment.specialty}</p>
-                  <p className="hospital">{appointment.hospital}</p>
-                </div>
-                <div className={`appointment-status ${appointment.status.toLowerCase()}`}>
-                  {appointment.status}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Preferences */}
-        <div className="info-section">
-          <div className="section-header">
-            <h2>Preferences</h2>
-          </div>
-          
-          <div className="preferences-grid">
-            <div className="preference-item">
-              <span className="pref-label">Preferred Language:</span>
-              <span className="pref-value">{patientData.personalInfo.preferences?.language}</span>
             </div>
-            <div className="preference-item">
-              <span className="pref-label">Communication Mode:</span>
-              <span className="pref-value">{patientData.personalInfo.preferences?.communicationMode}</span>
+          ) : (
+            <div className="no-insurance">
+              <p>No insurance information added yet.</p>
             </div>
-            <div className="preference-item">
-              <span className="pref-label">Appointment Reminders:</span>
-              <span className={`pref-status ${patientData.personalInfo.preferences?.appointmentReminder ? 'enabled' : 'disabled'}`}>
-                {patientData.personalInfo.preferences?.appointmentReminder ? '✓ Enabled' : '✗ Disabled'}
-              </span>
-            </div>
-            <div className="preference-item">
-              <span className="pref-label">Two Factor Auth:</span>
-              <span className={`pref-status ${patientData.personalInfo.preferences?.twoFactorAuth ? 'enabled' : 'disabled'}`}>
-                {patientData.personalInfo.preferences?.twoFactorAuth ? '✓ Enabled' : '✗ Disabled'}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Social Media */}
-        <div className="info-section">
-          <div className="section-header">
-            <h2>Social Media</h2>
-          </div>
-          
-          <div className="social-grid">
-            {patientData.personalInfo.socialInfo?.twitter && (
-              <div className="social-item">
-                <span className="social-icon">🐦</span>
-                <span className="social-handle">{patientData.personalInfo.socialInfo.twitter}</span>
-              </div>
-            )}
-            {patientData.personalInfo.socialInfo?.linkedin && (
-              <div className="social-item">
-                <span className="social-icon">💼</span>
-                <span className="social-handle">{patientData.personalInfo.socialInfo.linkedin}</span>
-              </div>
-            )}
-            {patientData.personalInfo.socialInfo?.facebook && (
-              <div className="social-item">
-                <span className="social-icon">📘</span>
-                <span className="social-handle">{patientData.personalInfo.socialInfo.facebook}</span>
-              </div>
-            )}
-            {patientData.personalInfo.socialInfo?.instagram && (
-              <div className="social-item">
-                <span className="social-icon">📷</span>
-                <span className="social-handle">{patientData.personalInfo.socialInfo.instagram}</span>
-              </div>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
