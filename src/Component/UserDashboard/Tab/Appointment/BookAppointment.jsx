@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './BookAppointment.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
+import axios from 'axios';
 
 const CounselorRequestChat = () => {
   const navigate = useNavigate();
@@ -12,10 +13,64 @@ const CounselorRequestChat = () => {
   const [activeChats, setActiveChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [newMessage, setNewMessage] = useState('');
-  const [userName, setUserName] = useState('');
+  const [userAnonymous, setUserAnonymous] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedCounselorForRequest, setSelectedCounselorForRequest] = useState(null);
+
+  // Get user ID and token from localStorage
+  const userId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+  // Function to fetch user data from API
+  const fetchUserData = async () => {
+    if (!userId) {
+      // If no user ID, generate anonymous name
+      const anonymousName = `Anonymous_${Math.floor(Math.random() * 10000)}`;
+      setUserAnonymous(anonymousName);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await axios.get(
+        `${API_BASE_URL}/api/auth/getUser/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (response.data.success) {
+        const user = response.data.user;
+        
+        // IMPORTANT: Use the anonymous field from API response
+        // The API returns "anonymous": "Arrru" field
+        const anonymousName = user.anonymous || user.fullName || user.name || "";
+        
+        setUserAnonymous(anonymousName);
+        
+        // Store anonymous name in localStorage for future use
+        if (anonymousName) {
+          localStorage.setItem("userAnonymousName", anonymousName);
+        }
+      } else {
+        // If API fails, generate anonymous name
+        const anonymousName = `Anonymous_${Math.floor(Math.random() * 10000)}`;
+        setUserAnonymous(anonymousName);
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      // Generate anonymous name on error
+      const anonymousName = `Anonymous_${Math.floor(Math.random() * 10000)}`;
+      setUserAnonymous(anonymousName);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Load active chats from localStorage on mount
   useEffect(() => {
@@ -30,7 +85,6 @@ const CounselorRequestChat = () => {
     localStorage.setItem('activeChats', JSON.stringify(activeChats));
   }, [activeChats]);
 
-  // Mock counselors data
   // Fetch counselors from API
   useEffect(() => {
     const fetchCounselors = async () => {
@@ -71,6 +125,13 @@ const CounselorRequestChat = () => {
     fetchCounselors();
   }, []);
 
+  // Fetch user data when modal opens
+  useEffect(() => {
+    if (showUserModal) {
+      fetchUserData();
+    }
+  }, [showUserModal]);
+
   // Show notification
   const addNotification = (type, title, message, counselorId = null, chatId = null) => {
     const newNotification = {
@@ -108,10 +169,18 @@ const CounselorRequestChat = () => {
   };
 
   // Send chat request
-  const sendChatRequest = (e) => {
+  const sendChatRequest = async (e) => {
     e.preventDefault();
 
-    if (!userName.trim()) return;
+    if (!userAnonymous.trim()) {
+      addNotification(
+        'error',
+        'Error',
+        'Unable to get your name. Please refresh and try again.',
+        null
+      );
+      return;
+    }
 
     // Add request notification
     addNotification(
@@ -137,20 +206,22 @@ const CounselorRequestChat = () => {
       counselorId: counselor.id,
       counselor: counselor,
       user: {
-        name: userName,
-
+        name: userAnonymous,
+        anonymousName: userAnonymous,
+        userId: userId || null,
+        isAnonymous: !userId || true
       },
       messages: [
         {
           id: Date.now(),
-          text: `Hello ${userName}! I'm ${counselor.name}. How can I help you today?`,
+          text: `Hello ${userAnonymous}! I'm ${counselor.name}. How can I help you today?`,
           sender: 'counselor',
           time: new Date().toLocaleTimeString()
         }
       ],
       unread: true,
       startedAt: new Date().toISOString(),
-      lastMessage: `Hello ${userName}! I'm ${counselor.name}. How can I help you today?`,
+      lastMessage: `Hello ${userAnonymous}! I'm ${counselor.name}. How can I help you today?`,
       lastMessageTime: new Date().toLocaleTimeString()
     };
 
@@ -164,10 +235,6 @@ const CounselorRequestChat = () => {
       counselor.id,
       newChat.id
     );
-
-    // Reset form
-    setUserName('');
-
   };
 
   // Navigate to chat interface
@@ -252,8 +319,7 @@ const CounselorRequestChat = () => {
                 <h3 className="counselor-name-unique">{counselor.name}</h3>
 
                 <strong>Specialization</strong> <br />
-                <p className="counselor-specialization-unique" >{counselor.specialization}
-                </p>
+                <p className="counselor-specialization-unique">{counselor.specialization}</p>
 
                 <div className="counselor-rating-unique">
                   <span className="stars-unique">{'⭐'.repeat(Math.floor(counselor.rating))}</span>
@@ -309,7 +375,7 @@ const CounselorRequestChat = () => {
           </div>
         )}
 
-        {/* User Info Modal */}
+        {/* User Info Modal - Shows Anonymous Name from API */}
         {showUserModal && (
           <div className="modal-overlay-unique" onClick={() => setShowUserModal(false)}>
             <div className="modal-content-unique" onClick={e => e.stopPropagation()}>
@@ -318,32 +384,140 @@ const CounselorRequestChat = () => {
                 <button className="modal-close-unique" onClick={() => setShowUserModal(false)}>×</button>
               </div>
               <form onSubmit={sendChatRequest}>
-                <div className="modal-form-group-unique">
-                  <label>Your Name</label>
-                  <input
-                    type="text"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    placeholder="Enter your full name"
-                    required
-                    autoFocus
-                  />
-                </div>
+                {/* Hidden input field - populated automatically */}
+                <input
+                  type="hidden"
+                  value={userAnonymous}
+                  name="anonymousName"
+                />
 
+                {/* Display user info with Anonymous Name from API */}
+                <div className="modal-user-info-unique">
+                  <div className="user-info-card-unique">
+                    <div className="user-info-icon-unique">
+                      🔒
+                    </div>
+                    <div className="user-info-details-unique">
+                      <div className="user-info-label-unique">
+                        You are chatting anonymously as:
+                      </div>
+                      <div className="user-info-name-unique">
+                        {isLoading ? (
+                          <span className="loading-text-unique">Loading your info...</span>
+                        ) : (
+                          <span className="anonymous-name-unique">
+                            {userAnonymous || 'Loading...'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="user-info-note-unique">
+                        This anonymous name will be shown to the counselor
+                      </div>
+                    </div>
+                  </div>
+                </div>
 
                 <div className="modal-info-unique">
                   <p>⏳ Your request will be sent to the counselor</p>
                   <p>✅ You'll be notified when they accept</p>
                   <p>💬 Average response time: {selectedCounselorForRequest?.responseTime}</p>
+                  <p className="privacy-note-unique">
+                    🔒 You are chatting anonymously. Your real identity is protected.
+                  </p>
                 </div>
-                <button type="submit" className="modal-submit-btn-unique">
-                  Send Chat Request
+                
+                <button 
+                  type="submit" 
+                  className="modal-submit-btn-unique"
+                  disabled={isLoading || !userAnonymous}
+                >
+                  {isLoading ? 'Loading...' : 'Send Chat Request'}
                 </button>
               </form>
             </div>
           </div>
         )}
       </div>
+
+      {/* Add CSS styles for the new elements */}
+      <style jsx>{`
+        .modal-user-info-unique {
+          margin-bottom: 20px;
+        }
+        
+        .user-info-card-unique {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          border-radius: 12px;
+          padding: 16px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          color: white;
+        }
+        
+        .user-info-icon-unique {
+          width: 48px;
+          height: 48px;
+          background: rgba(255, 255, 255, 0.2);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+        }
+        
+        .user-info-details-unique {
+          flex: 1;
+        }
+        
+        .user-info-label-unique {
+          font-size: 12px;
+          opacity: 0.8;
+          margin-bottom: 4px;
+        }
+        
+        .user-info-name-unique {
+          font-size: 20px;
+          font-weight: 700;
+          margin-bottom: 6px;
+          letter-spacing: 0.5px;
+        }
+        
+        .anonymous-name-unique {
+          background: rgba(255, 255, 255, 0.2);
+          padding: 4px 12px;
+          border-radius: 20px;
+          display: inline-block;
+          font-size: 18px;
+        }
+        
+        .user-info-note-unique {
+          font-size: 11px;
+          opacity: 0.9;
+        }
+        
+        .loading-text-unique {
+          display: inline-block;
+          animation: pulse 1.5s ease-in-out infinite;
+        }
+        
+        .privacy-note-unique {
+          font-size: 12px;
+          color: #666;
+          margin-top: 10px;
+          padding-top: 10px;
+          border-top: 1px solid #e5e7eb;
+        }
+        
+        @keyframes pulse {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+      `}</style>
     </div>
   );
 };

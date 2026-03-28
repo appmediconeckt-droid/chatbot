@@ -146,25 +146,56 @@ export default function UserDashboard() {
   const [userData, setUserData] = useState({
     name: "",
     email: "",
-    phone: ""
+    phone: "",
+    profilePhoto: ""
   });
+
+  // Helper function to get profile photo URL from API response
+  const getProfilePhotoUrl = (userData) => {
+    if (userData.profilePhoto) {
+      // Check if profilePhoto is an object with url property
+      if (typeof userData.profilePhoto === 'object' && userData.profilePhoto.url) {
+        return userData.profilePhoto.url;
+      }
+      // If it's a string, return as is
+      if (typeof userData.profilePhoto === 'string') {
+        return userData.profilePhoto;
+      }
+    }
+    return '';
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const userId = localStorage.getItem("userId"); // 👈 id from localhost
+        const userId = localStorage.getItem("userId");
+        const token = localStorage.getItem('token');
+
+        if (!userId) {
+          console.error("No user ID found");
+          return;
+        }
 
         const response = await axios.get(
-          `${API_BASE_URL}/api/auth/getUser/${userId}`
+          `${API_BASE_URL}/api/auth/getUser/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
         );
 
         if (response.data.success) {
           const user = response.data.user;
+          
+          // Get profile photo URL
+          const profilePhotoUrl = getProfilePhotoUrl(user);
 
           setUserData({
-            name: user.fullName,
-            email: user.email,
-            phone: user.phoneNumber
+            name: user.fullName || "",
+            email: user.email || "",
+            phone: user.phoneNumber || "",
+            profilePhoto: profilePhotoUrl
           });
         }
       } catch (error) {
@@ -291,9 +322,6 @@ export default function UserDashboard() {
     }
   };
 
-  // Alternative logout function if your API expects refreshToken as string directly
-
-
   const handleLogoutClick = () => {
     vibrate(30);
     setShowLogoutConfirm(true);
@@ -351,7 +379,20 @@ export default function UserDashboard() {
       {isMobile && (
         <div className="mobile-header">
           <div className="mobile-header-info">
-            <FaUserCircle className="mobile-user-icon" />
+            {userData.profilePhoto ? (
+              <img 
+                src={userData.profilePhoto} 
+                alt={userData.name} 
+                className="mobile-user-avatar"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.style.display = 'none';
+                  e.target.parentElement.innerHTML = '<div class="mobile-user-avatar-placeholder"><FaUserCircle class="mobile-user-icon" /></div>';
+                }}
+              />
+            ) : (
+              <FaUserCircle className="mobile-user-icon" />
+            )}
             <div className="sidebar-header">
               <h3 className="sidebar-title">Name:-{userData.name}</h3>
               <p className="sidebar-subtitle">{userData.email}</p>
@@ -372,7 +413,15 @@ export default function UserDashboard() {
                   {/* Profile Image */}
                   <div className="profile-image">
                     {userData.profilePhoto ? (
-                      <img src={userData.profilePhoto} alt="Profile" />
+                      <img 
+                        src={userData.profilePhoto} 
+                        alt={userData.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = '<FaUserCircle className="default-avatar" />';
+                        }}
+                      />
                     ) : (
                       <FaUserCircle className="default-avatar" />
                     )}

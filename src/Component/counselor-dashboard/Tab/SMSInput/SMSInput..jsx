@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
 import "./SMSInput.css";
+import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
+import VoiceCallModal from "../../../UserDashboard/Tab/CallModal/VoiceCallModal";
 
 /**
  * SMSInput Component - Message input with call buttons
@@ -13,6 +16,11 @@ const SMSInput = () => {
   const [callActive, setCallActive] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  
+  // Call modal states
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [selectedCall, setSelectedCall] = useState(null);
   
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
@@ -48,14 +56,48 @@ const SMSInput = () => {
     setMessage("");
   };
 
-  // Icon-only call buttons - no functionality, just visual buttons
-  const handleCall = (type) => {
-    // Completely empty - no modal, no functionality
-    // Just a visual button as requested
+  // Handle video call
+  const handleVideoCall = () => {
+    const callData = {
+      id: selectedUser.id || Date.now(),
+      name: selectedUser.name,
+      type: "video",
+      profilePic: selectedUser.avatar || "👤",
+      phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+      status: "outgoing",
+      date: "Today",
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+    setSelectedCall(callData);
+    setIsVideoModalOpen(true);
+  };
+
+  // Handle voice call
+  const handleVoiceCall = () => {
+    const callData = {
+      id: selectedUser.id || Date.now(),
+      name: selectedUser.name,
+      type: "voice",
+      profilePic: selectedUser.avatar || "👤",
+      phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+      status: "outgoing",
+      date: "Today",
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      location: selectedUser.location || "Unknown",
+      company: selectedUser.company || "Counseling Center"
+    };
+    setSelectedCall(callData);
+    setIsVoiceModalOpen(true);
+  };
+
+  // Handle close modal
+  const handleCloseModal = () => {
+    setIsVideoModalOpen(false);
+    setIsVoiceModalOpen(false);
+    setSelectedCall(null);
   };
 
   const handleBack = () => {
-    
     navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
   };
 
@@ -83,7 +125,6 @@ const SMSInput = () => {
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
             </svg>
-           
           </button>
           
           <div className="smsinput-user-info">
@@ -99,19 +140,19 @@ const SMSInput = () => {
           </div>
         </div>
 
-        {/* Icon-only call buttons - no text, no functionality */}
+        {/* Call buttons with full functionality */}
         <div className="smsinput-call-buttons">
           <button
             className="call-btn voice"
-            onClick={handleCall}
-            title="Voice call (demo)"
+            onClick={handleVoiceCall}
+            title="Voice call"
           >
             <span className="call-icon">📞</span>
           </button>
           <button
             className="call-btn video"
-            onClick={handleCall}
-            title="Video call (demo)"
+            onClick={handleVideoCall}
+            title="Video call"
           >
             <span className="call-icon">📹</span>
           </button>
@@ -161,8 +202,18 @@ const SMSInput = () => {
         </div>
       </form>
 
-      {/* Quick Reply Suggestions */}
-     
+      {/* Call Modals */}
+      <VideoCallModal
+        isOpen={isVideoModalOpen}
+        onClose={handleCloseModal}
+        callData={selectedCall}
+      />
+
+      <VoiceCallModal
+        isOpen={isVoiceModalOpen}
+        onClose={handleCloseModal}
+        callData={selectedCall}
+      />
     </div>
   );
 };

@@ -54,7 +54,7 @@ export default function CounselorDashboard() {
         return;
       }
 
-      
+
       if (accessToken) {
         await axios.post(
           `${API_BASE_URL}/api/auth/logout`,
@@ -225,16 +225,17 @@ export default function CounselorDashboard() {
               <h3>{counselorData?.name || 'Counselor'}</h3>
 
               {/* ✅ Specialization */}
-              <p><strong>Specialization:</strong> {counselorData?.specialization || 'Not specified'}</p>
 
               {/* ✅ Rating */}
-              <div className="couns-rating-badge">
+              {/* <div className="couns-rating-badge">
                 <FaStar className="couns-star" />
                 <span>{counselorData?.rating || 0}</span>
-              </div>
+              </div> */}
 
               {/* ✅ Extra Details */}
               <div className="couns-extra-info">
+                <p><strong>Specialization:</strong> {counselorData?.specialization || 'Not specified'}</p>
+
                 <p><strong>Email:</strong> {counselorData?.email || 'Not specified'}</p>
                 <p><strong>Phone:</strong> {counselorData?.phoneNumber || 'Not specified'}</p>
                 <p><strong>Experience:</strong> {counselorData?.experience || '0 years'}</p>
@@ -510,7 +511,7 @@ export default function CounselorDashboard() {
         {/* Analytics Tab */}
         {activeTab === 'profile' && (
           <div className="couns-tab-content">
-            <CounselorProfile/>
+            <CounselorProfile />
           </div>
         )}
 

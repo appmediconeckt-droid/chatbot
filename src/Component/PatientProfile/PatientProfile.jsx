@@ -7,6 +7,7 @@ const PatientProfile = () => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
+  const [profileImageFile, setProfileImageFile] = useState(null);
   const [showNotification, setShowNotification] = useState({ show: false, message: '', type: '' });
 
   // Essential patient data with complete insurance fields
@@ -20,6 +21,7 @@ const PatientProfile = () => {
       bloodGroup: "",
       email: "",
       phone: "",
+      profilePhoto: "",
       address: {
         line1: "",
         line2: "",
@@ -119,24 +121,39 @@ const PatientProfile = () => {
     fetchPatientProfile();
   }, []);
 
+  // Helper function to get profile photo URL
+  const getProfilePhotoUrl = (userData) => {
+    if (userData.profilePhoto) {
+      // Check if profilePhoto is an object with url property
+      if (typeof userData.profilePhoto === 'object' && userData.profilePhoto.url) {
+        return userData.profilePhoto.url;
+      }
+      // If it's a string, return as is
+      if (typeof userData.profilePhoto === 'string') {
+        return userData.profilePhoto;
+      }
+    }
+    return '';
+  };
+
   // GET API - Fetch patient profile
   const fetchPatientProfile = async () => {
     try {
       setLoading(true);
       
-      const patientId = localStorage.getItem("patientId");
+      const userId = localStorage.getItem("userId");
       const token = localStorage.getItem('token');
       
-      if (!patientId) {
-        showNotificationMessage('Patient ID not found. Please login again.', 'error');
+      if (!userId) {
+        showNotificationMessage('User ID not found. Please login again.', 'error');
         setLoading(false);
         return;
       }
       
-      console.log('Fetching profile for Patient ID:', patientId);
+      console.log('Fetching profile for User ID:', userId);
       
-      // GET request to fetch patient data
-      const response = await axios.get(`${API_BASE_URL}/api/auth/patients/${patientId}`, {
+      // GET request to fetch user data
+      const response = await axios.get(`${API_BASE_URL}/api/auth/getUser/${userId}`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -144,9 +161,12 @@ const PatientProfile = () => {
 
       console.log('GET API Response:', response.data);
 
-      // FIXED: API returns data in 'user' object
+      // Check if response is successful
       if (response.data.success && response.data.user) {
         const userData = response.data.user;
+        
+        // Get profile photo URL
+        const profilePhotoUrl = getProfilePhotoUrl(userData);
         
         // Transform API data to match component structure
         const formattedData = {
@@ -159,6 +179,7 @@ const PatientProfile = () => {
             bloodGroup: userData.bloodGroup || '',
             email: userData.email || '',
             phone: userData.phoneNumber || '',
+            profilePhoto: profilePhotoUrl,
             address: userData.address || {
               line1: '',
               line2: '',
@@ -216,10 +237,10 @@ const PatientProfile = () => {
   // PATCH API - Update patient profile
   const updatePatientProfile = async (formData) => {
     try {
-      const patientId = localStorage.getItem("patientId");
+      const userId = localStorage.getItem("userId");
       const token = localStorage.getItem('token');
       
-      const response = await axios.patch(`${API_BASE_URL}/api/auth/update-patient/${patientId}`, formData, {
+      const response = await axios.patch(`${API_BASE_URL}/api/auth/update/${userId}`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'multipart/form-data'
@@ -274,6 +295,9 @@ const PatientProfile = () => {
   // Open edit modal
   const initializeEditFormModal = () => {
     initializeEditForm(patientData);
+    // Reset profile image state when opening modal
+    setProfileImage(null);
+    setProfileImageFile(null);
     setIsEditing(true);
   };
 
@@ -285,7 +309,7 @@ const PatientProfile = () => {
     }, 3000);
   };
 
-  // Handle Profile Image Upload
+  // Handle Profile Image Upload in Edit Modal
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -298,13 +322,21 @@ const PatientProfile = () => {
         return;
       }
       
+      // Store both the base64 preview and the actual file
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfileImage(reader.result);
-        showNotificationMessage('Profile picture updated successfully!', 'success');
+        setProfileImageFile(file);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Handle Remove Profile Image
+  const handleRemoveImage = () => {
+    setProfileImage(null);
+    setProfileImageFile(null);
+    showNotificationMessage('Profile picture will be removed on save', 'success');
   };
 
   // Handle Save Profile
@@ -366,13 +398,16 @@ const PatientProfile = () => {
       };
       formData.append('insuranceInfo', JSON.stringify(insuranceObj));
       
-      // Add profile photo if changed
-      if (profileImage && !profileImage.startsWith('http')) {
-        // Convert base64 to blob
-        const response = await fetch(profileImage);
-        const blob = await response.blob();
-        formData.append('profilePhoto', blob, 'profile.jpg');
+      // Handle profile photo
+      if (profileImageFile) {
+        // If a new file was selected, upload it
+        formData.append('profilePhoto', profileImageFile);
+      } else if (profileImage === null && patientData.personalInfo.profilePhoto) {
+        // If image was removed (no preview and no file, but had existing photo)
+        formData.append('removeProfilePhoto', 'true');
       }
+      // If profileImage is null and no existing photo, do nothing
+      // If profileImage is the existing photo (no change), don't send anything
       
       // Call the update API
       const response = await updatePatientProfile(formData);
@@ -384,6 +419,7 @@ const PatientProfile = () => {
         await fetchPatientProfile();
         setIsEditing(false);
         setProfileImage(null);
+        setProfileImageFile(null);
       } else {
         showNotificationMessage(response.data.message || 'Failed to update profile', 'error');
       }
@@ -400,6 +436,7 @@ const PatientProfile = () => {
     setIsEditing(false);
     initializeEditForm(patientData);
     setProfileImage(null);
+    setProfileImageFile(null);
   };
 
   const handleEditFormChange = (e) => {
@@ -465,6 +502,48 @@ const PatientProfile = () => {
         
         <form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
           <div className="modal-body">
+            {/* Profile Picture Section */}
+            <div className="form-section">
+              <h4>Profile Picture</h4>
+              <div className="profile-picture-edit">
+                <div className="profile-avatar-edit">
+                  {(profileImage || patientData.personalInfo.profilePhoto) ? (
+                    <img 
+                      src={profileImage || patientData.personalInfo.profilePhoto} 
+                      alt="Profile" 
+                      className="avatar-image-edit"
+                    />
+                  ) : (
+                    <div className="avatar-placeholder-edit">
+                      {editFormData.name.split(' ').map(n => n[0]).join('')}
+                    </div>
+                  )}
+                </div>
+                <div className="profile-picture-actions">
+                  <label htmlFor="imageUploadEdit" className="upload-btn-edit">
+                    <span className="upload-icon">📷</span> Change Photo
+                  </label>
+                  <input
+                    type="file"
+                    id="imageUploadEdit"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    style={{ display: 'none' }}
+                  />
+                  {(profileImage || patientData.personalInfo.profilePhoto) && (
+                    <button 
+                      type="button" 
+                      className="remove-btn-edit"
+                      onClick={handleRemoveImage}
+                    >
+                      <span className="remove-icon">🗑️</span> Remove Photo
+                    </button>
+                  )}
+                </div>
+                <p className="image-hint">Supported formats: JPG, PNG, GIF. Max size: 5MB</p>
+              </div>
+            </div>
+
             {/* Personal Information Section */}
             <div className="form-section">
               <h4>Personal Information</h4>
@@ -853,25 +932,22 @@ const PatientProfile = () => {
       <div className="profile-header">
         <div className="profile-avatar-section">
           <div className="profile-avatar">
-            {profileImage ? (
-              <img src={profileImage} alt="Profile" className="avatar-image" />
+            {patientData.personalInfo.profilePhoto ? (
+              <img 
+                src={patientData.personalInfo.profilePhoto} 
+                alt={patientData.personalInfo.name} 
+                className="avatar-image"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.style.display = 'none';
+                  e.target.parentElement.innerHTML = `<div class="avatar-placeholder">${patientData.personalInfo.name.split(' ').map(n => n[0]).join('')}</div>`;
+                }}
+              />
             ) : (
               <div className="avatar-placeholder">
                 {patientData.personalInfo.name.split(' ').map(n => n[0]).join('')}
               </div>
             )}
-          </div>
-          <div className="avatar-upload">
-            <label htmlFor="imageUpload" className="upload-btn">
-              <span className="upload-icon">📷</span> Change Photo
-            </label>
-            <input
-              type="file"
-              id="imageUpload"
-              accept="image/*"
-              onChange={handleImageUpload}
-              style={{ display: 'none' }}
-            />
           </div>
         </div>
         

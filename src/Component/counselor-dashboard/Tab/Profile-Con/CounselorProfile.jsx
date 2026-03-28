@@ -438,27 +438,6 @@ const CounselorProfile = () => {
                 formData.append('emergencyContact[phone]', editedData.emergencyContact.phone || '');
             }
 
-            // Add medical info
-            if (editedData.medicalInfo) {
-                formData.append('medicalInfo[height]', editedData.medicalInfo.height || '');
-                formData.append('medicalInfo[weight]', editedData.medicalInfo.weight || '');
-                if (editedData.medicalInfo.allergies?.length) {
-                    editedData.medicalInfo.allergies.forEach((allergy, index) => {
-                        formData.append(`medicalInfo[allergies][${index}]`, allergy);
-                    });
-                }
-                if (editedData.medicalInfo.chronicConditions?.length) {
-                    editedData.medicalInfo.chronicConditions.forEach((condition, index) => {
-                        formData.append(`medicalInfo[chronicConditions][${index}]`, condition);
-                    });
-                }
-                if (editedData.medicalInfo.currentMedications?.length) {
-                    editedData.medicalInfo.currentMedications.forEach((medication, index) => {
-                        formData.append(`medicalInfo[currentMedications][${index}]`, medication);
-                    });
-                }
-            }
-
             // Add languages
             if (editedData.languages && editedData.languages.length > 0) {
                 editedData.languages.forEach((lang, index) => {
@@ -485,23 +464,39 @@ const CounselorProfile = () => {
                 formData.append('profilePhoto', editedData.profilePhoto);
             }
 
-            // Add certifications
+            // FIXED: Use nested field names for certifications
+            // Add certifications with nested field names
             if (editedData.certifications && editedData.certifications.length > 0) {
                 editedData.certifications.forEach((cert, index) => {
+                    // Add certification data
                     formData.append(`certifications[${index}][name]`, cert.name || '');
                     formData.append(`certifications[${index}][issuedBy]`, cert.issuedBy || '');
-                    formData.append(`certifications[${index}][issueDate]`, cert.issueDate || '');
-                    formData.append(`certifications[${index}][expiryDate]`, cert.expiryDate || '');
-                    formData.append(`certifications[${index}][documentName]`, cert.documentName || '');
 
-                    // existing id
+                    if (cert.issueDate) {
+                        formData.append(`certifications[${index}][issueDate]`, cert.issueDate);
+                    }
+                    if (cert.expiryDate) {
+                        formData.append(`certifications[${index}][expiryDate]`, cert.expiryDate);
+                    }
+
+                    // Keep existing _id if present
                     if (cert._id && !cert._id.toString().startsWith('temp_')) {
                         formData.append(`certifications[${index}][_id]`, cert._id);
                     }
 
-                    // file upload
+                    // Keep existing document info
+                    if (cert.documentUrl && !cert.document) {
+                        formData.append(`certifications[${index}][documentUrl]`, cert.documentUrl);
+                        formData.append(`certifications[${index}][documentName]`, cert.documentName || '');
+                        if (cert.documentPublicId) {
+                            formData.append(`certifications[${index}][documentPublicId]`, cert.documentPublicId);
+                        }
+                    }
+
+                    // Add new document file
                     if (cert.document instanceof File) {
                         formData.append(`certifications[${index}][document]`, cert.document);
+                        console.log(`Adding file for certification ${index}:`, cert.document.name);
                     }
                 });
             }
@@ -511,12 +506,9 @@ const CounselorProfile = () => {
 
             if (response.data.success) {
                 setSuccessMessage('Profile updated successfully!');
-
-                // Fetch fresh data to update the state
                 await fetchCounselorProfile();
                 setIsEditing(false);
 
-                // Clear success message after 3 seconds
                 setTimeout(() => {
                     setSuccessMessage('');
                 }, 3000);
@@ -528,7 +520,6 @@ const CounselorProfile = () => {
             console.error('Error details:', err.response?.data);
             setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile');
 
-            // Clear error message after 3 seconds
             setTimeout(() => {
                 setError('');
             }, 3000);
