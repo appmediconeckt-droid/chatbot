@@ -18,7 +18,9 @@ const ChatBox = () => {
         name: 'Dr. Suresh Reddy',
         specialization: 'Clinical Psychologist',
         online: true,
-        avatar: '👨‍⚕️',
+        avatar: null,
+        avatarType: 'text',
+        profilePhoto: null,
         phoneNumber: '+91 98765 43215'
     });
 
@@ -38,6 +40,27 @@ const ChatBox = () => {
     const optionsRef = useRef(null);
     const emojiPickerRef = useRef(null);
     const timeoutRef = useRef(null);
+
+    // Function to get profile photo URL
+    const getProfilePhotoUrl = (counselor) => {
+        if (counselor?.profilePhoto?.url) {
+            return counselor.profilePhoto.url;
+        }
+        if (counselor?.avatar && counselor.avatarType === 'image') {
+            return counselor.avatar;
+        }
+        return null;
+    };
+
+    // Function to get initials
+    const getInitials = (name) => {
+        return name
+            .split(' ')
+            .map(word => word[0])
+            .join('')
+            .toUpperCase()
+            .slice(0, 2);
+    };
 
     // Scroll to bottom function
     const scrollToBottom = useCallback(() => {
@@ -295,7 +318,7 @@ const ChatBox = () => {
             id: currentCounselor.id,
             name: currentCounselor.name,
             type: 'video',
-            profilePic: currentCounselor.avatar,
+            profilePic: getProfilePhotoUrl(currentCounselor) || currentCounselor.avatar || currentCounselor.name.charAt(0),
             phoneNumber: currentCounselor.phoneNumber,
             status: 'outgoing',
             date: 'Today',
@@ -311,7 +334,7 @@ const ChatBox = () => {
             id: currentCounselor.id,
             name: currentCounselor.name,
             type: 'voice',
-            profilePic: currentCounselor.avatar,
+            profilePic: getProfilePhotoUrl(currentCounselor) || currentCounselor.avatar || currentCounselor.name.charAt(0),
             phoneNumber: currentCounselor.phoneNumber,
             status: 'outgoing',
             date: 'Today',
@@ -328,6 +351,35 @@ const ChatBox = () => {
         setSelectedCall(null);
     };
 
+    // Render profile avatar
+    const renderProfileAvatar = (counselor, size = 'md') => {
+        const profilePhotoUrl = getProfilePhotoUrl(counselor);
+        
+        if (profilePhotoUrl) {
+            return (
+                <img 
+                    src={profilePhotoUrl} 
+                    alt={counselor.name}
+                    className={`chat-profile-image-${size}`}
+                    onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = `
+                            <div class="chat-profile-initials-${size}">
+                                ${getInitials(counselor.name)}
+                            </div>
+                        `;
+                    }}
+                />
+            );
+        }
+        
+        return (
+            <div className={`chat-profile-initials-${size}`}>
+                {getInitials(counselor.name)}
+            </div>
+        );
+    };
+
     return (
         <div className="chatContainerFull">
             <div className="chatBoxMain">
@@ -339,7 +391,7 @@ const ChatBox = () => {
                         </Link>
                         <div className="chatUserDetails">
                             <div className="chatProfilePic" aria-label="Counselor profile picture">
-                                {currentCounselor.avatar || currentCounselor.name.charAt(0)}
+                                {renderProfileAvatar(currentCounselor, 'md')}
                                 <span className={`chatActiveDot ${currentCounselor.online ? 'chatActiveOnline' : 'chatActiveOffline'}`} />
                             </div>
                             <div className="chatProfileInfo">
@@ -417,7 +469,7 @@ const ChatBox = () => {
                     <div className="chatWelcomeCard">
                         <div className="chatWelcomeInner">
                             <div className="chatWelcomeAvatar" aria-hidden="true">
-                                {currentCounselor.avatar || currentCounselor.name.charAt(0)}
+                                {renderProfileAvatar(currentCounselor, 'lg')}
                             </div>
                             <div className="chatWelcomeMsg">
                                 <h3 className="chatWelcomeTitle">

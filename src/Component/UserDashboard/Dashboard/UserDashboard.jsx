@@ -137,6 +137,7 @@ export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const userId = localStorage.getItem("userId");
 
   const chatBodyRef = useRef(null);
@@ -284,6 +285,16 @@ export default function UserDashboard() {
     setActive(id);
     if (isMobile) {
       setShowMoreModal(false);
+      setShowProfileMenu(false);
+    }
+  };
+
+  // Handle profile click to navigate to profile tab
+  const handleProfileClick = () => {
+    vibrate(30);
+    setActive("profile");
+    if (isMobile) {
+      setShowProfileMenu(false);
     }
   };
 
@@ -349,6 +360,7 @@ export default function UserDashboard() {
   const handleCloseModal = () => {
     vibrate(20);
     setShowMoreModal(false);
+    setShowProfileMenu(false);
   };
 
   const handleSupportClick = (type) => {
@@ -366,7 +378,7 @@ export default function UserDashboard() {
     { id: "Live Chat", icon: <FaUserMd />, label: "Counselor" },
     { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
     { id: "Video", icon: <FaVideo />, label: "Video Call" },
-    { id: "profile", icon: <FaUser />, label: "Profile" },
+    // { id: "profile", icon: <FaUser />, label: "Profile" },
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
     { id: "privacy", icon: <FaLock />, label: "Privacy" }
   ];
@@ -378,26 +390,66 @@ export default function UserDashboard() {
       {/* Mobile Header */}
       {isMobile && (
         <div className="mobile-header">
-          <div className="mobile-header-info">
-            {userData.profilePhoto ? (
-              <img 
-                src={userData.profilePhoto} 
-                alt={userData.name} 
-                className="mobile-user-avatar"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.style.display = 'none';
-                  e.target.parentElement.innerHTML = '<div class="mobile-user-avatar-placeholder"><FaUserCircle class="mobile-user-icon" /></div>';
-                }}
-              />
-            ) : (
-              <FaUserCircle className="mobile-user-icon" />
+          <div className="mobile-header-left">
+            <h2 className="mobile-logo">MChat</h2>
+          </div>
+          <div className="mobile-header-right">
+            <button 
+              className="mobile-profile-btn"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+            >
+              {userData.profilePhoto ? (
+                <img 
+                  src={userData.profilePhoto} 
+                  alt={userData.name} 
+                  className="mobile-user-avatar"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = 'none';
+                    e.target.parentElement.innerHTML = '<FaUserCircle class="mobile-user-icon" />';
+                  }}
+                />
+              ) : (
+                <FaUserCircle className="mobile-user-icon" />
+              )}
+            </button>
+            
+            {/* Profile Dropdown Menu */}
+            {showProfileMenu && (
+              <div className="profile-dropdown-menu">
+                <div className="profile-dropdown-header">
+                  {userData.profilePhoto ? (
+                    <img 
+                      src={userData.profilePhoto} 
+                      alt={userData.name} 
+                      className="dropdown-avatar"
+                    />
+                  ) : (
+                    <FaUserCircle className="dropdown-avatar-icon" />
+                  )}
+                  <div className="dropdown-user-info">
+                    <h4>{userData.name}</h4>
+                    <p>{userData.email}</p>
+                  </div>
+                </div>
+                <div className="profile-dropdown-items">
+                  <button 
+                    className="dropdown-item"
+                    onClick={handleProfileClick}
+                  >
+                    <FaUser className="dropdown-icon" />
+                    <span>My Profile</span>
+                  </button>
+                  <button 
+                    className="dropdown-item logout-item"
+                    onClick={handleLogoutClick}
+                  >
+                    <FaSignOutAlt className="dropdown-icon" />
+                    <span>Logout</span>
+                  </button>
+                </div>
+              </div>
             )}
-            <div className="sidebar-header">
-              <h3 className="sidebar-title">Name:-{userData.name}</h3>
-              <p className="sidebar-subtitle">{userData.email}</p>
-              <p className="sidebar-subtitle">{userData.phone}</p>
-            </div>
           </div>
         </div>
       )}

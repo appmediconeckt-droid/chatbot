@@ -405,9 +405,7 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-content {
-    padding: 20px;
-  }
+  
   
   .welcome-title {
     font-size: 1.8rem;

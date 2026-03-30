@@ -117,7 +117,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
       setShowMoreOptions(false);
       setBackgroundNoise(false);
       setIsVoicemail(false);
-      
+
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
@@ -127,14 +127,14 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
 
   const initializeAudio = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      const stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           echoCancellation: true,
           noiseSuppression: true,
           autoGainControl: true
-        } 
+        }
       });
-      
+
       mediaStreamRef.current = stream;
 
       if (localAudioRef.current) {
@@ -142,7 +142,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
       }
 
       audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      
+
       setIsAudioInitialized(true);
     } catch (error) {
       console.error('Error accessing microphone:', error);
@@ -152,11 +152,11 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
 
   const handleEndCall = () => {
     setIsCallActive(false);
-    
+
     if (mediaStreamRef.current) {
       mediaStreamRef.current.getTracks().forEach(track => track.stop());
     }
-    
+
     setTimeout(() => {
       onClose();
     }, 800);
@@ -166,7 +166,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
     const hrs = Math.floor(seconds / 3600);
     const mins = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    
+
     if (hrs > 0) {
       return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     }
@@ -192,17 +192,17 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
     if (audioContextRef.current) {
       const oscillator = audioContextRef.current.createOscillator();
       const gainNode = audioContextRef.current.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContextRef.current.destination);
-      
+
       const frequencies = {
         '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
         '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
         '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
         '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
       };
-      
+
       const freq = frequencies[digit];
       if (freq) {
         oscillator.frequency.setValueAtTime(freq[0], audioContextRef.current.currentTime);
@@ -240,7 +240,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
   };
 
   const getQualityIcon = () => {
-    switch(callQuality) {
+    switch (callQuality) {
       case 'good': return '📶';
       case 'medium': return '📶';
       case 'poor': return '📶';
@@ -249,7 +249,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
   };
 
   const getQualityClass = () => {
-    switch(callQuality) {
+    switch (callQuality) {
       case 'good': return 'quality-good';
       case 'medium': return 'quality-medium';
       case 'poor': return 'quality-poor';
@@ -261,8 +261,8 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
 
   return (
     <div className="voice-modal-overlay" onClick={onClose}>
-      <div 
-        className="voice-modal-container" 
+      <div
+        className="voice-modal-container"
         onClick={(e) => e.stopPropagation()}
       >
         <audio ref={localAudioRef} autoPlay muted />
@@ -290,12 +290,12 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
                 {isCallActive ? (isOnHold ? '⏸️' : '●') : '○'}
               </span>
             </div>
-            
+
             <h2 className="caller-name">{activeCall.name}</h2>
             {activeCall.phoneNumber && (
               <p className="caller-phone">{activeCall.phoneNumber}</p>
             )}
-            
+
             <div className="caller-details">
               {activeCall.location && (
                 <span className="caller-location">
@@ -310,7 +310,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
                 </span>
               )}
             </div>
-            
+
             <div className="call-timer-display">
               <span className="timer-icon">⏱️</span>
               <span className="timer-text">{formatTime(callDuration)}</span>
@@ -320,10 +320,10 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
 
           {showDialpad && (
             <div className="dialpad-display">
-              <input 
-                type="text" 
-                value={dialedNumber} 
-                readOnly 
+              <input
+                type="text"
+                value={dialedNumber}
+                readOnly
                 placeholder="Enter number"
               />
               <button className="clear-dialpad" onClick={() => setDialedNumber('')}>
@@ -335,12 +335,12 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
           {isCallActive && !isOnHold && (
             <div className="sound-wave-container">
               <div className="sound-wave">
-                <span style={{animationDelay: '0s'}}></span>
-                <span style={{animationDelay: '0.1s'}}></span>
-                <span style={{animationDelay: '0.2s'}}></span>
-                <span style={{animationDelay: '0.3s'}}></span>
-                <span style={{animationDelay: '0.4s'}}></span>
-                <span style={{animationDelay: '0.5s'}}></span>
+                <span style={{ animationDelay: '0s' }}></span>
+                <span style={{ animationDelay: '0.1s' }}></span>
+                <span style={{ animationDelay: '0.2s' }}></span>
+                <span style={{ animationDelay: '0.3s' }}></span>
+                <span style={{ animationDelay: '0.4s' }}></span>
+                <span style={{ animationDelay: '0.5s' }}></span>
               </div>
             </div>
           )}
@@ -348,24 +348,24 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
           {isKeypadOpen && (
             <div className="keypad-container">
               <div className="keypad-grid">
-                {[1,2,3,4,5,6,7,8,9,'*',0,'#'].map((key) => (
-                  <button 
-                    key={key} 
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, '*', 0, '#'].map((key) => (
+                  <button
+                    key={key}
                     className="keypad-btn"
                     onClick={() => handleKeypadPress(key)}
                   >
                     <span className="keypad-number">{key}</span>
                     <span className="keypad-letters">
-                      {key === 1 ? '' : 
-                       key === 2 ? 'ABC' :
-                       key === 3 ? 'DEF' :
-                       key === 4 ? 'GHI' :
-                       key === 5 ? 'JKL' :
-                       key === 6 ? 'MNO' :
-                       key === 7 ? 'PQRS' :
-                       key === 8 ? 'TUV' :
-                       key === 9 ? 'WXYZ' :
-                       key === 0 ? '+' : ''}
+                      {key === 1 ? '' :
+                        key === 2 ? 'ABC' :
+                          key === 3 ? 'DEF' :
+                            key === 4 ? 'GHI' :
+                              key === 5 ? 'JKL' :
+                                key === 6 ? 'MNO' :
+                                  key === 7 ? 'PQRS' :
+                                    key === 8 ? 'TUV' :
+                                      key === 9 ? 'WXYZ' :
+                                        key === 0 ? '+' : ''}
                     </span>
                   </button>
                 ))}
@@ -376,10 +376,10 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
           {showVolumeControl && (
             <div className="volume-control">
               <span className="volume-icon">🔊</span>
-              <input 
-                type="range" 
-                min="0" 
-                max="100" 
+              <input
+                type="range"
+                min="0"
+                max="100"
                 value={volumeLevel}
                 onChange={(e) => setVolumeLevel(e.target.value)}
                 className="volume-slider"
@@ -415,7 +415,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
 
           <div className="voice-call-controls">
             <div className="controls-grid">
-              <button 
+              <button
                 className={`control-item ${isMuted ? 'active' : ''}`}
                 onClick={() => setIsMuted(!isMuted)}
                 title={isMuted ? 'Unmute' : 'Mute'}
@@ -424,7 +424,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
                 <span className="control-label">{isMuted ? 'Unmute' : 'Mute'}</span>
               </button>
 
-              <button 
+              <button
                 className={`control-item ${isSpeakerOn ? 'active' : ''}`}
                 onClick={() => setIsSpeakerOn(!isSpeakerOn)}
                 title={isSpeakerOn ? 'Speaker off' : 'Speaker on'}
@@ -433,9 +433,9 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
                 <span className="control-label">{isSpeakerOn ? 'Spkr Off' : 'Spkr On'}</span>
               </button>
 
-              
 
-              <button 
+
+              <button
                 className={`control-item ${isOnHold ? 'active' : ''}`}
                 onClick={toggleHold}
                 title={isOnHold ? 'Resume call' : 'Hold call'}
@@ -444,14 +444,14 @@ const VoiceCallModal = ({ isOpen, onClose, callData }) => {
                 <span className="control-label">{isOnHold ? 'Resume' : 'Hold'}</span>
               </button>
 
-              
 
-              
-              
 
-             
 
-              
+
+
+
+
+
             </div>
 
             <button className="end-call-btn" onClick={handleEndCall}>

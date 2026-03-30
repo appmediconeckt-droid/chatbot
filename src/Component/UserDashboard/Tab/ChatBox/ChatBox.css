@@ -1,5 +1,3 @@
-/* ChatBox.css - Professional, responsive, and polished */
-
 /* Reset and base styles */
 *,
 *::before,
@@ -27,6 +25,49 @@
     flex-direction: column;
     background: #ffffff;
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
+/* Profile Photo Styles */
+.chat-profile-image-md {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.chat-profile-initials-md {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #6366f1, #8b5cf6);
+    color: white;
+    font-size: 1.125rem;
+    font-weight: 600;
+    border-radius: 50%;
+    text-transform: uppercase;
+}
+
+.chat-profile-image-lg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.chat-profile-initials-lg {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(145deg, #6366f1, #8b5cf6);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+    border-radius: 50%;
+    text-transform: uppercase;
 }
 
 /* Chat Header */
@@ -91,15 +132,12 @@
     height: 3rem;
     border-radius: 50%;
     background: linear-gradient(145deg, #6366f1, #8b5cf6);
-    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.125rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
+    overflow: hidden;
     flex-shrink: 0;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
 }
 
 .chatActiveDot {
@@ -111,6 +149,7 @@
     border-radius: 50%;
     border: 2px solid #ffffff;
     transition: background 0.2s ease;
+    z-index: 2;
 }
 
 .chatActiveOnline {
@@ -370,13 +409,8 @@
     width: 4rem;
     height: 4rem;
     border-radius: 50%;
+    overflow: hidden;
     background: linear-gradient(145deg, #6366f1, #8b5cf6);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-    font-weight: 600;
     flex-shrink: 0;
     box-shadow: 0 6px 12px rgba(99, 102, 241, 0.25);
 }
@@ -719,7 +753,6 @@
 
 .sendIcon {
     font-size: 1.25rem;
-    /* transform: rotate(90deg); */
     display: inline-block;
 }
 
@@ -755,7 +788,6 @@
     .chatProfilePic {
         width: 2.5rem;
         height: 2.5rem;
-        font-size: 1rem;
     }
     
     .chatProfileName {
@@ -789,7 +821,6 @@
     .chatWelcomeAvatar {
         width: 3.5rem;
         height: 3.5rem;
-        font-size: 1.25rem;
     }
     
     .chatWelcomeTitle {
@@ -888,7 +919,6 @@
     .chatProfilePic {
         width: 2.25rem;
         height: 2.25rem;
-        font-size: 0.875rem;
     }
     
     .chatActiveDot {
@@ -938,7 +968,6 @@
     .chatWelcomeAvatar {
         width: 3rem;
         height: 3rem;
-        font-size: 1.125rem;
     }
     
     .chatWelcomeTitle {
@@ -1027,7 +1056,7 @@
     }
 }
 
-/* Dark mode support - optional, but professional to include */
+/* Dark mode support */
 @media (prefers-color-scheme: dark) {
     .chatContainerFull {
         background: #0f172a;

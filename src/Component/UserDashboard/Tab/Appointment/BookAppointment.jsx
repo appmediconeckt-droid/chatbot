@@ -22,6 +22,10 @@ const CounselorRequestChat = () => {
   // Get user ID and token from localStorage
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+    const handleCounselorClick = (counselor) => {
+  setSelectedCounselorForRequest(counselor);
+  setShowUserModal(true);
+};
 
   // Function to fetch user data from API
   const fetchUserData = async () => {
@@ -31,6 +35,7 @@ const CounselorRequestChat = () => {
       setUserAnonymous(anonymousName);
       return;
     }
+  
 
     try {
       setIsLoading(true);
@@ -46,25 +51,17 @@ const CounselorRequestChat = () => {
 
       if (response.data.success) {
         const user = response.data.user;
-        
-        // IMPORTANT: Use the anonymous field from API response
-        // The API returns "anonymous": "Arrru" field
         const anonymousName = user.anonymous || user.fullName || user.name || "";
-        
         setUserAnonymous(anonymousName);
-        
-        // Store anonymous name in localStorage for future use
         if (anonymousName) {
           localStorage.setItem("userAnonymousName", anonymousName);
         }
       } else {
-        // If API fails, generate anonymous name
         const anonymousName = `Anonymous_${Math.floor(Math.random() * 10000)}`;
         setUserAnonymous(anonymousName);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
-      // Generate anonymous name on error
       const anonymousName = `Anonymous_${Math.floor(Math.random() * 10000)}`;
       setUserAnonymous(anonymousName);
     } finally {
@@ -85,6 +82,24 @@ const CounselorRequestChat = () => {
     localStorage.setItem('activeChats', JSON.stringify(activeChats));
   }, [activeChats]);
 
+  // Function to get counselor profile photo URL
+  const getProfilePhotoUrl = (counselor) => {
+    if (counselor.profilePhoto && counselor.profilePhoto.url) {
+      return counselor.profilePhoto.url;
+    }
+    return null;
+  };
+
+  // Function to get initials for avatar fallback
+  const getInitials = (name) => {
+    return name
+      .split(' ')
+      .map(word => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   // Fetch counselors from API
   useEffect(() => {
     const fetchCounselors = async () => {
@@ -96,23 +111,30 @@ const CounselorRequestChat = () => {
         const data = await response.json();
 
         if (data.success) {
-          // Map API data to your UI format
           const formattedCounselors = data.counsellors.map((c, index) => ({
             id: c._id,
             name: c.fullName,
             specialization: c.specialization?.join(" , ") || "General",
             experience: `${c.experience || 0} years`,
-            rating: 4.5, // static (API me nahi hai)
-            online: true,
+            rating: c.rating || 4.5,
+            online: c.isActive,
             available: c.isActive,
-            avatar: "👨‍⚕️",
+            avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
+            avatarType: getProfilePhotoUrl(c) ? 'image' : 'text',
             expertise: c.specialization || [],
-            responseTime: "< 5 min",
+            responseTime: "< 10 seconds",
             profilePhoto: c.profilePhoto,
             email: c.email,
             phone: c.phoneNumber,
             location: c.location,
-            languages: c.languages || []
+            languages: c.languages || [],
+            aboutMe: c.aboutMe,
+            qualification: c.qualification,
+            education: c.education,
+            certifications: c.certifications || [],
+            consultationMode: c.consultationMode || [],
+            totalSessions: c.totalSessions || 0,
+            activeClients: c.activeClients || 0
           }));
 
           setCounselors(formattedCounselors);
@@ -146,7 +168,6 @@ const CounselorRequestChat = () => {
     };
     setNotifications(prev => [newNotification, ...prev]);
 
-    // Auto remove notification after 5 seconds
     setTimeout(() => {
       setNotifications(prev => prev.filter(n => n.id !== newNotification.id));
     }, 5000);
@@ -168,39 +189,78 @@ const CounselorRequestChat = () => {
     setShowUserModal(true);
   };
 
-  // Send chat request
-  const sendChatRequest = async (e) => {
-    e.preventDefault();
 
-    if (!userAnonymous.trim()) {
-      addNotification(
-        'error',
-        'Error',
-        'Unable to get your name. Please refresh and try again.',
-        null
-      );
+  
+
+const startChatAPI = async (counselorId, token) => {
+  try {
+    const response = await axios.post(
+      "https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/start",
+      {
+        counselorId: counselorId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || error.message;
+  }
+};
+  // Send chat request
+const sendChatRequest = async (e) => {
+  e.preventDefault();
+
+  try {
+    setIsLoading(true);
+
+    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+    const counselorId = selectedCounselorForRequest?.id;
+
+    if (!counselorId) {
+      alert("❌ Counselor not selected");
       return;
     }
 
-    // Add request notification
-    addNotification(
-      'request',
-      'Chat Request Sent',
-      `Request sent to ${selectedCounselorForRequest.name}. Waiting for acceptance...`,
-      selectedCounselorForRequest.id
+    const res = await axios.post(
+      "https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/start",
+      {
+        counselorId: counselorId,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
     );
+
+    console.log("✅ Chat Started:", res.data);
+
+    alert("✅ Chat request sent successfully!");
+
+    // OPTIONAL: redirect to chat page
+    // navigate(`/chat/${res.data.chatId}`);
 
     setShowUserModal(false);
 
-    // Simulate counselor accepting request after 3 seconds
-    setTimeout(() => {
-      acceptChatRequest(selectedCounselorForRequest);
-    }, 3000);
-  };
+  } catch (error) {
+    console.error("❌ Error:", error);
+
+    alert(error?.response?.data?.message || "Failed to send request");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Accept chat request
   const acceptChatRequest = (counselor) => {
-    // Create new chat
     const newChat = {
       id: Date.now(),
       counselorId: counselor.id,
@@ -227,7 +287,6 @@ const CounselorRequestChat = () => {
 
     setActiveChats(prev => [newChat, ...prev]);
 
-    // Add acceptance notification
     addNotification(
       'success',
       'Chat Request Accepted',
@@ -300,53 +359,117 @@ const CounselorRequestChat = () => {
           <h1 className="page-title-unique">Online Counselors</h1>
           <p className="page-subtitle-unique">Click 'Chat Now' to send a request</p>
 
-          <div className="counselors-grid-unique">
+          {/* Desktop View - Cards Grid */}
+          <div className="counselors-grid-unique desktop-view">
             {counselors.map(counselor => (
-              <div
-                key={counselor.id}
-                className={`counselor-card-unique ${!counselor.available ? 'unavailable' : ''}`}
-              >
+              <div key={counselor.id} className={`counselor-card-unique ${!counselor.available ? 'unavailable' : ''}`}>
                 <div className="counselor-card-header-unique">
-                  <span className="counselor-avatar-unique">{counselor.avatar}</span>
+                  <div className="counselor-avatar-unique">
+                    {counselor.avatarType === 'image' ? (
+                      <img 
+                        src={counselor.avatar} 
+                        alt={counselor.name}
+                        className="counselor-avatar-image-unique"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = `<span>${getInitials(counselor.name)}</span>`;
+                        }}
+                      />
+                    ) : (
+                      <span>{counselor.avatar}</span>
+                    )}
+                  </div>
                   <div className="counselor-status-unique">
-                    <span className={`status-dot-unique ${counselor.online ? 'online' : 'offline'}`}></span>
-                    <span className="status-text-unique">
-                      {counselor.available ? 'Available' : 'In Session'}
-                    </span>
+                    <span className={`status-dot-unique ${counselor.available ? 'online' : 'offline'}`}></span>
+                    <span className="status-text-unique">{counselor.available ? 'Online' : 'Offline'}</span>
                   </div>
                 </div>
 
                 <h3 className="counselor-name-unique">{counselor.name}</h3>
-
-                <strong>Specialization</strong> <br />
-                <p className="counselor-specialization-unique">{counselor.specialization}</p>
-
-                <div className="counselor-rating-unique">
-                  <span className="stars-unique">{'⭐'.repeat(Math.floor(counselor.rating))}</span>
+                {counselor.location && (
+                  <div className="counselor-location-unique">📍 {counselor.location}</div>
+                )}
+                <div className="counselor-specialization-unique">{counselor.specialization}</div>
+                
+               
+                
+                <div className="counselor-experience-unique">
+                  💼 {counselor.experience} experience
+                </div>
+                
+                 <div className="counselor-rating-unique">
+                  <div className="stars-unique">
+                    {'★'.repeat(Math.floor(counselor.rating))}{'☆'.repeat(5 - Math.floor(counselor.rating))}
+                  </div>
                   <span className="rating-number-unique">{counselor.rating}</span>
                 </div>
-
-                <p className="counselor-experience-unique">{counselor.experience} experience</p>
-
-                <div className="counselor-expertise-unique">
-                  {counselor.languages.map((skill, index) => (
-                    <span key={index} className="expertise-tag-unique">{skill}</span>
-                  ))}
-                </div>
-
-                <p className="counselor-location-unique">{counselor.location}</p>
-
+                
                 <div className="counselor-response-unique">
-                  Response Time: {counselor.responseTime}
+                  ⚡ Avg response: {counselor.responseTime}
                 </div>
-
+                
                 <button
-                  className={`chat-now-btn-unique ${!counselor.available ? 'disabled' : ''}`}
                   onClick={() => handleChatNow(counselor)}
                   disabled={!counselor.available}
+                  className={`chat-now-btn-unique ${!counselor.available ? 'disabled' : ''}`}
                 >
-                  {counselor.available ? 'Chat Now 💬' : 'Currently Busy'}
+                  {counselor.available ? '💬 Chat Now' : '🔴 Unavailable'}
                 </button>
+              </div>
+            ))}
+          </div>
+
+          {/* Mobile View - Table/List Style */}
+          <div className="counselors-table-unique mobile-view">
+            {counselors.map(counselor => (
+              <div
+                key={counselor.id}
+                className="counselor-row-unique"
+                onClick={() => handleChatNow(counselor)}
+              >
+                {/* Avatar */}
+                <div className="row-avatar-unique">
+                  {counselor.avatarType === 'image' ? (
+                    <img 
+                      src={counselor.avatar} 
+                      alt={counselor.name}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = `<span>${getInitials(counselor.name)}</span>`;
+                      }}
+                    />
+                  ) : (
+                    <span>{counselor.avatar}</span>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="row-info-unique">
+                  <div className="row-name-unique">{counselor.name}</div>
+                  <div className="row-specialization-unique">
+                    {counselor.specialization}
+                  </div>
+                  {counselor.experience && (
+                    <div className="row-experience-unique">
+                      💼 {counselor.experience}
+                    </div>
+                  )}
+                </div>
+
+                {/* Status + Button */}
+                <div className="row-action-unique">
+                  <span className={`dot ${counselor.available ? 'online' : 'offline'}`}></span>
+                  <button
+                    disabled={!counselor.available}
+                    className="row-btn-unique"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleChatNow(counselor);
+                    }}
+                  >
+                    Chat
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -362,7 +485,27 @@ const CounselorRequestChat = () => {
                 className={`chat-tab-unique ${chat.unread ? 'unread' : ''}`}
                 onClick={() => goToChat(chat)}
               >
-                <span className="chat-tab-avatar-unique">{chat.counselor.avatar}</span>
+                <div className="chat-tab-avatar-container-unique">
+                  {chat.counselor.avatarType === 'image' ? (
+                    <img
+                      src={chat.counselor.avatar}
+                      alt={chat.counselor.name}
+                      className="chat-tab-avatar-image-unique"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.parentElement.innerHTML = `
+                          <div class="chat-tab-avatar-text-unique">
+                            ${getInitials(chat.counselor.name)}
+                          </div>
+                        `;
+                      }}
+                    />
+                  ) : (
+                    <div className="chat-tab-avatar-text-unique">
+                      {chat.counselor.avatar}
+                    </div>
+                  )}
+                </div>
                 <div className="chat-tab-info-unique">
                   <div className="chat-tab-name-unique">{chat.counselor.name}</div>
                   <div className="chat-tab-preview-unique">
@@ -375,7 +518,7 @@ const CounselorRequestChat = () => {
           </div>
         )}
 
-        {/* User Info Modal - Shows Anonymous Name from API */}
+        {/* User Info Modal */}
         {showUserModal && (
           <div className="modal-overlay-unique" onClick={() => setShowUserModal(false)}>
             <div className="modal-content-unique" onClick={e => e.stopPropagation()}>
@@ -384,14 +527,12 @@ const CounselorRequestChat = () => {
                 <button className="modal-close-unique" onClick={() => setShowUserModal(false)}>×</button>
               </div>
               <form onSubmit={sendChatRequest}>
-                {/* Hidden input field - populated automatically */}
                 <input
                   type="hidden"
                   value={userAnonymous}
                   name="anonymousName"
                 />
 
-                {/* Display user info with Anonymous Name from API */}
                 <div className="modal-user-info-unique">
                   <div className="user-info-card-unique">
                     <div className="user-info-icon-unique">
@@ -417,6 +558,34 @@ const CounselorRequestChat = () => {
                   </div>
                 </div>
 
+                {selectedCounselorForRequest && (
+                  <div className="counselor-preview-unique">
+                    <div className="counselor-preview-header-unique">
+                      <div className="counselor-preview-avatar-unique">
+                        {selectedCounselorForRequest.avatarType === 'image' ? (
+                          <img
+                            src={selectedCounselorForRequest.avatar}
+                            alt={selectedCounselorForRequest.name}
+                            className="counselor-preview-image-unique"
+                          />
+                        ) : (
+                          <div className="counselor-preview-text-unique">
+                            {selectedCounselorForRequest.avatar}
+                          </div>
+                        )}
+                      </div>
+                      <div className="counselor-preview-info-unique">
+                        <div className="counselor-preview-name-unique">
+                          {selectedCounselorForRequest.name}
+                        </div>
+                        <div className="counselor-preview-specialization-unique">
+                          {selectedCounselorForRequest.specialization}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="modal-info-unique">
                   <p>⏳ Your request will be sent to the counselor</p>
                   <p>✅ You'll be notified when they accept</p>
@@ -425,9 +594,9 @@ const CounselorRequestChat = () => {
                     🔒 You are chatting anonymously. Your real identity is protected.
                   </p>
                 </div>
-                
-                <button 
-                  type="submit" 
+
+                <button
+                  type="submit"
                   className="modal-submit-btn-unique"
                   disabled={isLoading || !userAnonymous}
                 >
@@ -439,8 +608,125 @@ const CounselorRequestChat = () => {
         )}
       </div>
 
-      {/* Add CSS styles for the new elements */}
       <style jsx>{`
+        /* Avatar Styles */
+        .counselor-avatar-container-unique {
+          width: 80px;
+          height: 80px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .counselor-avatar-image-unique {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .counselor-avatar-text-unique {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 32px;
+          font-weight: 600;
+          color: white;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .chat-tab-avatar-container-unique {
+          width: 48px;
+          height: 48px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .chat-tab-avatar-image-unique {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .chat-tab-avatar-text-unique {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+          font-weight: 600;
+          color: white;
+        }
+
+        .counselor-preview-unique {
+          margin-bottom: 20px;
+          padding: 16px;
+          background: #f8f9fa;
+          border-radius: 12px;
+          border: 1px solid #e5e7eb;
+        }
+
+        .counselor-preview-header-unique {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .counselor-preview-avatar-unique {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          overflow: hidden;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .counselor-preview-image-unique {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .counselor-preview-text-unique {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 24px;
+          font-weight: 600;
+          color: white;
+        }
+
+        .counselor-preview-info-unique {
+          flex: 1;
+        }
+
+        .counselor-preview-name-unique {
+          font-size: 18px;
+          font-weight: 600;
+          color: #1f2937;
+          margin-bottom: 4px;
+        }
+
+        .counselor-preview-specialization-unique {
+          font-size: 14px;
+          color: #6b7280;
+        }
+
         .modal-user-info-unique {
           margin-bottom: 20px;
         }
@@ -515,6 +801,22 @@ const CounselorRequestChat = () => {
           }
           50% {
             opacity: 0.5;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .counselor-avatar-container-unique {
+            width: 60px;
+            height: 60px;
+          }
+          
+          .counselor-avatar-text-unique {
+            font-size: 24px;
+          }
+          
+          .chat-tab-avatar-container-unique {
+            width: 40px;
+            height: 40px;
           }
         }
       `}</style>
