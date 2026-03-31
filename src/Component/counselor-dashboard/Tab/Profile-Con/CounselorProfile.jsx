@@ -196,11 +196,13 @@ const CounselorProfile = () => {
         try {
             const counsellorId = localStorage.getItem("counsellorId");
             const token = localStorage.getItem('token');
+            const refreshToken = localStorage.getItem('refreshToken');
+            const accessToken = localStorage.getItem('accessToken');
 
             const response = await axios.patch(`${API_BASE_URL}/api/auth/update/${counsellorId}`, formData, {
-                refreshToken: localStorage.getItem('refreshToken'),
+                refreshToken: refreshToken,
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${accessToken}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });

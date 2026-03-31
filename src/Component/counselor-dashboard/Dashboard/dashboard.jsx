@@ -37,189 +37,143 @@ export default function CounselorDashboard() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [loadingRequests, setLoadingRequests] = useState(false);
+  const [showNotificationPopup, setShowNotificationPopup] = useState(false);
+  const [latestRequest, setLatestRequest] = useState(null);
 
   // Modal state for patient requests
   const [showRequestModal, setShowRequestModal] = useState(false);
   const [currentRequest, setCurrentRequest] = useState(null);
-  const [modalCountdown, setModalCountdown] = useState(null);
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const modalTimerRef = useRef(null);
-  const [processedRequestIds, setProcessedRequestIds] = useState(new Set());
-  const [requestQueue, setRequestQueue] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
-
-  // Ref to track modal open state (used in fetch to avoid race conditions)
-  const isModalOpenRef = useRef(false);
-  useEffect(() => {
-    isModalOpenRef.current = isModalOpen;
-  }, [isModalOpen]);
+  const [modalTimer, setModalTimer] = useState(null);
+  const [modalCountdown, setModalCountdown] = useState(10);
 
   const navigate = useNavigate();
   const vibrate = useVibration();
 
-  // Show next request in queue
-  const showNextRequest = () => {
-    if (requestQueue.length > 0 && !isModalOpenRef.current) {
-      const nextRequest = requestQueue[0];
-      showRequestModalWithTimer(nextRequest);
-      setRequestQueue(prev => prev.slice(1));
-    }
-  };
-
-  // Show request modal with timer based on remainingSeconds from API
-  const showRequestModalWithTimer = (requestData) => {
-    // Clear any existing timer
-    if (modalTimerRef.current) {
-      clearInterval(modalTimerRef.current);
-      modalTimerRef.current = null;
-    }
-
-    // Don't show if already expired
-    if ((requestData.remainingSeconds || 10) <= 0) {
-      return;
-    }
-
-    setIsModalOpen(true);
-    setCurrentRequest(requestData);
-    setShowRequestModal(true);
-
-    const initialTime = requestData.remainingSeconds || 10;
-    setModalCountdown(initialTime);
-
-    modalTimerRef.current = setInterval(() => {
-      setModalCountdown(prev => {
-        const newVal = prev - 1;
-        if (newVal <= 0) {
-          // Time's up – close modal
-          clearInterval(modalTimerRef.current);
-          modalTimerRef.current = null;
-          closeRequestModal();
-          return 0;
-        }
-        return newVal;
-      });
-    }, 1000);
-  };
-
-  // Close modal function
-  const closeRequestModal = () => {
-    if (modalTimerRef.current) {
-      clearInterval(modalTimerRef.current);
-      modalTimerRef.current = null;
-    }
-
-    setShowRequestModal(false);
-    setCurrentRequest(null);
-    setIsModalOpen(false);
-    setModalCountdown(null);
-
-    // Show next request safely
-    setTimeout(() => {
-      showNextRequest();
-    }, 200);
-  };
-
-  // Fetch pending requests
+  // Function to fetch pending requests using Axios
   const fetchPendingRequests = async () => {
-    // Prevent multiple simultaneous fetches
-    if (isFetching) return;
-
-    setIsFetching(true);
+    setLoadingRequests(true);
     try {
       const token = localStorage.getItem('token');
-      const counsellorId = localStorage.getItem("counsellorId");
 
-      if (!token || !counsellorId) {
-        console.error("No token or counsellorId found");
-        setIsFetching(false);
-        return;
+      const response = await axios.get(`${API_BASE_URL}/api/chat/pending-requests`, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        timeout: 10000,
+      });
+
+      console.log('Pending requests response:', response.data);
+
+      const data = response.data;
+      const requests = data.requests || [];
+
+      // Check if there are new requests
+      if (requests.length > 0 && pendingRequests.length !== requests.length) {
+        setLatestRequest(requests[0]);
+        setShowNotificationPopup(true);
+
+        setTimeout(() => {
+          setShowNotificationPopup(false);
+        }, 5000);
+
+        showRequestModalWithTimer(requests[0]);
       }
 
-      const response = await axios.get(
-        `${API_BASE_URL}/api/chat/pending-requests`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      setPendingRequests(requests);
 
-      if (response.data && response.data.requests && response.data.requests.length > 0) {
-        setPendingRequests(response.data.requests);
-
-        // Process only new requests
-        const newRequests = response.data.requests.filter(
-          request => !processedRequestIds.has(request.id)
-        );
-
-        newRequests.forEach(request => {
-          // Mark as processed immediately to avoid duplicates
-          setProcessedRequestIds(prev => new Set(prev).add(request.id));
-
-          const displayName = request.user.anonymous || request.user.name;
-
-          const requestData = {
-            id: request.id,
-            chatId: request.chatId,
-            patientName: displayName,
-            originalName: request.user.name,
-            isAnonymous: !!request.user.anonymous,
-            patientAge: 'N/A',
-            patientGender: 'N/A',
-            requestType: 'Chat Request',
-            message: request.requestMessage,
-            requestedAt: request.requestedAt,
-            urgency: 'medium',
-            user: request.user,
-            remainingSeconds: request.remainingSeconds || 10,
-            avatar: request.user.avatar,
-            expiresAt: request.expiresAt,
-            status: request.status
-          };
-
-          // Show modal immediately if not already open, otherwise add to queue
-          if (!isModalOpenRef.current && !showRequestModal) {
-            showRequestModalWithTimer(requestData);
-          } else {
-            setRequestQueue(prev => [...prev, requestData]);
-          }
-        });
+      if (requests.length > 0) {
+        setShowNotesModal(true);
       } else {
-        setPendingRequests([]);
+        setShowNotesModal(false);
       }
+
+      return data;
     } catch (error) {
-      console.error('Error fetching pending requests:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error:', error.response?.data || error.message);
+        console.error('Status:', error.response?.status);
+      } else {
+        console.error('Error fetching pending requests:', error);
+      }
+      return null;
     } finally {
-      setIsFetching(false);
+      setLoadingRequests(false);
     }
   };
+
+  // Function to show request modal with auto-hide after 10 seconds
+  const showRequestModalWithTimer = (requestData) => {
+    if (modalTimer) {
+      clearInterval(modalTimer);
+    }
+
+    setCurrentRequest(requestData);
+    setShowRequestModal(true);
+    setModalCountdown(10);
+
+    const timer = setInterval(() => {
+      setModalCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setShowRequestModal(false);
+          setCurrentRequest(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setModalTimer(timer);
+  };
+
+  // Auto-hide modal after 10 seconds (fallback)
+  useEffect(() => {
+    if (showRequestModal) {
+      const timeout = setTimeout(() => {
+        setShowRequestModal(false);
+        setCurrentRequest(null);
+        if (modalTimer) {
+          clearInterval(modalTimer);
+          setModalTimer(null);
+        }
+      }, 10000);
+
+      return () => clearTimeout(timeout);
+    }
+  }, [showRequestModal]);
 
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
-      if (modalTimerRef.current) {
-        clearInterval(modalTimerRef.current);
-        modalTimerRef.current = null;
+      if (modalTimer) {
+        clearInterval(modalTimer);
       }
     };
-  }, []);
+  }, [modalTimer]);
 
-  // Handle accept request
+  // Function to handle accept request with automatic page reload
   const handleAcceptRequest = async () => {
     if (!currentRequest) return;
-
-    if (vibrate) vibrate([50, 30, 50]);
-
+    
+    vibrate([50, 30, 50]);
+    
     try {
       const token = localStorage.getItem('token');
-      const counsellorId = localStorage.getItem("counsellorId");
-
-      // Use the accept API with chatId
-      await axios.patch(
-        `${API_BASE_URL}/api/chat/accept/${currentRequest.chatId}`,
-        { counsellorId },
+      const chatId = currentRequest.chatId;
+      
+      if (!chatId) {
+        console.error('No chatId found in request');
+        showToastMessage('Unable to accept request: missing chat ID', 'error');
+        return;
+      }
+      
+      // Make API call to accept endpoint with chatId
+      const response = await axios.patch(
+        `${API_BASE_URL}/api/chat/accept/${chatId}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -227,46 +181,106 @@ export default function CounselorDashboard() {
           }
         }
       );
-
-      // Remove from processed IDs to allow future requests
-      setProcessedRequestIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(currentRequest.id);
-        return newSet;
-      });
-
-      closeRequestModal();
       
-      // Store the accepted request data
-      localStorage.setItem('acceptedRequest', JSON.stringify({
-        ...currentRequest,
-        acceptedAt: new Date().toISOString()
-      }));
+      console.log('Request accepted successfully:', response.data);
       
-      // Navigate to SMS input page
-      navigate("/sms-input");
-
+      // Close modal
+      if (modalTimer) {
+        clearInterval(modalTimer);
+        setModalTimer(null);
+      }
+      setShowRequestModal(false);
+      setCurrentRequest(null);
+      
+      showToastMessage('Request accepted successfully!', 'success');
+      
+      // Reload the page after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
     } catch (error) {
       console.error('Error accepting request:', error);
-      // Show error toast or notification here if needed
-      closeRequestModal();
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        showToastMessage(`Failed to accept request: ${errorMessage}`, 'error');
+      } else {
+        showToastMessage('Failed to accept request', 'error');
+      }
     }
   };
 
-  // Handle reject request
+  // Function to handle accept from session notes with automatic page reload
+  const handleAcceptFromSessionNotes = async (request) => {
+    if (!request) return;
+    
+    vibrate([50, 30, 50]);
+    setLoadingRequests(true);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const chatId = request.chatId;
+      
+      if (!chatId) {
+        console.error('No chatId found in request');
+        showToastMessage('Unable to accept request: missing chat ID', 'error');
+        return;
+      }
+      
+      const response = await axios.patch(
+        `${API_BASE_URL}/api/chat/accept/${chatId}`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('Request accepted successfully:', response.data);
+      
+      setShowNotesModal(false);
+      
+      showToastMessage('Request accepted successfully!', 'success');
+      
+      // Reload the page after a short delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
+      
+    } catch (error) {
+      console.error('Error accepting request:', error);
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        showToastMessage(`Failed to accept request: ${errorMessage}`, 'error');
+      } else {
+        showToastMessage('Failed to accept request', 'error');
+      }
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  // Function to handle reject request
   const handleRejectRequest = async () => {
     if (!currentRequest) return;
 
-    if (vibrate) vibrate([50]);
+    vibrate([50]);
 
     try {
       const token = localStorage.getItem('token');
-      const counsellorId = localStorage.getItem("counsellorId");
+      const chatId = currentRequest.chatId;
 
-      // Use the reject API with chatId
-      await axios.patch(
-        `${API_BASE_URL}/api/chat/reject/${currentRequest.chatId}`,
-        { counsellorId },
+      if (!chatId) {
+        console.error('No chatId found in request');
+        showToastMessage('Unable to reject request: missing chat ID', 'error');
+        return;
+      }
+
+      const response = await axios.patch(
+        `${API_BASE_URL}/api/chat/reject/${chatId}`,
+        {},
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -275,45 +289,58 @@ export default function CounselorDashboard() {
         }
       );
 
-      // Remove from processed IDs to allow future requests
-      setProcessedRequestIds(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(currentRequest.id);
-        return newSet;
-      });
+      console.log('Request rejected successfully:', response.data);
 
-      closeRequestModal();
-      console.log('Request rejected successfully');
+      if (modalTimer) {
+        clearInterval(modalTimer);
+        setModalTimer(null);
+      }
+      setShowRequestModal(false);
+      setCurrentRequest(null);
+
+      await fetchPendingRequests();
+
+      showToastMessage('Request rejected successfully', 'info');
+
     } catch (error) {
       console.error('Error rejecting request:', error);
-      closeRequestModal();
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        showToastMessage(`Failed to reject request: ${errorMessage}`, 'error');
+      } else {
+        showToastMessage('Failed to reject request', 'error');
+      }
     }
   };
 
-  // Poll for pending requests - set to 5 seconds interval
+  // Toast notification helper
+  const showToastMessage = (message, type = 'info') => {
+    console.log(`${type.toUpperCase()}: ${message}`);
+    // You can implement a proper toast notification here
+    // For now, we'll use a simple alert (you can replace with a proper toast component)
+    if (type === 'error') {
+      alert(`Error: ${message}`);
+    } else if (type === 'success') {
+      alert(`Success: ${message}`);
+    } else {
+      alert(message);
+    }
+  };
+
+  // Poll for pending requests every 10 seconds
   useEffect(() => {
-    // Initial fetch
     fetchPendingRequests();
 
-    const pollingInterval = setInterval(() => {
-      if (!isModalOpenRef.current && !showRequestModal) {
-        fetchPendingRequests();
-      }
-    }, 5000); // 5 seconds
+    const interval = setInterval(() => {
+      fetchPendingRequests();
+    }, 10000);
 
-    return () => {
-      clearInterval(pollingInterval);
-      setProcessedRequestIds(new Set());
-      setRequestQueue([]);
-      if (modalTimerRef.current) {
-        clearInterval(modalTimerRef.current);
-      }
-    };
-  }, []); // Run only once on mount, but use refs for modal state
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async () => {
     try {
-      if (vibrate) vibrate([50, 30, 50]);
+      vibrate([50, 30, 50]);
 
       const accessToken = localStorage.getItem("accessToken");
       const refreshToken = localStorage.getItem("refreshToken");
@@ -433,8 +460,8 @@ export default function CounselorDashboard() {
   }
 
   const navItems = [
-    { id: 'messages', icon: <FaComments />, label: 'Messages', badge: 0 },
-    { id: 'appointments', icon: <FaCalendarAlt />, label: 'Appointments' },
+    { id: 'messages', icon: <FaComments />, label: 'Messages', badge: pendingRequests.length },
+    { id: 'appointments', icon: <FaCalendarAlt />, label: 'Appointments', },
     { id: 'sessions', icon: <FaVideo />, label: 'Sessions', badge: 0 },
     { id: 'patients', icon: <FaUsers />, label: 'Patients', badge: 0 },
     { id: 'earnings', icon: <FaMoneyBillWave />, label: 'Earnings', badge: 0 },
@@ -443,7 +470,7 @@ export default function CounselorDashboard() {
   ];
 
   const handleTabChange = (tabId) => {
-    if (vibrate) vibrate(20);
+    vibrate(20);
     setActiveTab(tabId);
     setShowMobileMenu(false);
   };
@@ -482,6 +509,7 @@ export default function CounselorDashboard() {
                 <p><strong>Phone:</strong> {counselorData?.phoneNumber || 'Not specified'}</p>
                 <p><strong>Experience:</strong> {counselorData?.experience || '0 years'}</p>
               </div>
+
             </div>
           </div>
 
@@ -528,7 +556,7 @@ export default function CounselorDashboard() {
               year: 'numeric'
             })}</p>
           </div>
-          <div className="couns-mobile-notif">
+          <div className="couns-mobile-notif" onClick={() => fetchPendingRequests()}>
             <FaBell />
             {pendingRequests.length > 0 && (
               <span className="couns-notif-badge">{pendingRequests.length}</span>
@@ -539,10 +567,11 @@ export default function CounselorDashboard() {
 
       {/* Mobile Menu Overlay */}
       {isMobile && showMobileMenu && (
-        <div className="couns-mobile-menu-overlay" onClick={() => setShowMobileMenu(false)}>
-          <div className="couns-mobile-menu" onClick={e => e.stopPropagation()}>
+        <div className="couns-mobile-menu-overlay">
+          <div className="couns-mobile-menu">
             <div className="couns-sidebar-header">
               <div className="couns-counselor-profile">
+
                 {counselorData?.profilePhoto ? (
                   <img
                     src={counselorData.profilePhoto}
@@ -564,6 +593,8 @@ export default function CounselorDashboard() {
 
                 <h3>{counselorData?.name || 'Counselor'}</h3>
 
+                <p><strong>Specialization:</strong> {counselorData?.specialization || 'Not specified'}</p>
+
                 <div className="couns-rating-badge">
                   <FaStar className="couns-star" />
                   <span>{counselorData?.rating || 0}</span>
@@ -574,6 +605,7 @@ export default function CounselorDashboard() {
                   <p><strong>Phone:</strong> {counselorData?.phoneNumber || 'Not specified'}</p>
                   <p><strong>Experience:</strong> {counselorData?.experience || '0 years'}</p>
                 </div>
+
               </div>
             </div>
 
@@ -630,12 +662,18 @@ export default function CounselorDashboard() {
 
       {/* Main Content */}
       <div className={`couns-main-content ${isMobile ? 'mobile' : ''}`}>
+
         {activeTab === 'dashboard' && (
-          <div className="couns-tab-content">
-            <Dashboard />
-          </div>
+          <>
+            <div className="couns-tab-content">
+              <div className="couns-tab-header">
+                <Dashboard />
+              </div>
+            </div>
+          </>
         )}
 
+        {/* Appointments Tab */}
         {activeTab === 'appointments' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
@@ -663,6 +701,7 @@ export default function CounselorDashboard() {
           </div>
         )}
 
+        {/* Sessions Tab */}
         {activeTab === 'sessions' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
@@ -678,12 +717,16 @@ export default function CounselorDashboard() {
           </div>
         )}
 
+        {/* Patients Tab */}
         {activeTab === 'patients' && (
           <div className="couns-tab-content">
-            <PatientRequests />
+            <div className="couns-tab-header">
+              <PatientRequests />
+            </div>
           </div>
         )}
 
+        {/* Earnings Tab */}
         {activeTab === 'earnings' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
@@ -721,18 +764,23 @@ export default function CounselorDashboard() {
           </div>
         )}
 
+        {/* Messages Tab */}
         {activeTab === 'messages' && (
           <div className="couns-tab-content">
-            <Messagesou />
+            <div className="couns-tab-header">
+              <Messagesou />
+            </div>
           </div>
         )}
 
+        {/* Analytics Tab */}
         {activeTab === 'profile' && (
           <div className="couns-tab-content">
             <CounselorProfile />
           </div>
         )}
 
+        {/* Settings Tab */}
         {activeTab === 'settings' && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
@@ -752,9 +800,9 @@ export default function CounselorDashboard() {
         )}
       </div>
 
-      {/* Request Modal - Right Side with Timer based on remainingSeconds */}
+      {/* Request Modal - Right Side */}
       {showRequestModal && currentRequest && (
-        <div className="couns-request-modal-overlay" onClick={closeRequestModal}>
+        <div className="couns-request-modal-overlay" onClick={() => { }}>
           <div className="couns-request-modal" onClick={e => e.stopPropagation()}>
             <div className="couns-request-modal-header">
               <div className="couns-request-header-left">
@@ -771,33 +819,25 @@ export default function CounselorDashboard() {
             <div className="couns-request-modal-body">
               <div className="couns-request-patient-info">
                 <div className="couns-request-patient-name">
-                  <h4>
-                    {currentRequest.patientName}
-                    {currentRequest.isAnonymous && (
-                      <span className="couns-anonymous-badge"> (Anonymous)</span>
-                    )}
-                  </h4>
+                  <h4>{currentRequest.user?.anonymous || currentRequest.patientName || 'Unknown User'}</h4>
+
                 </div>
                 <div className="couns-request-type">
-                  <span className={`couns-request-type-badge ${currentRequest.urgency}`}>
-                    {currentRequest.requestType}
+                  <span className="couns-request-type-badge">
+                    Chat Request
                   </span>
                 </div>
               </div>
 
               <div className="couns-request-message">
-                <p>{currentRequest.message}</p>
+                <p>{currentRequest.requestMessage || currentRequest.message || 'Would like to start a conversation with you.'}</p>
               </div>
 
               <div className="couns-request-meta">
                 <span className="couns-request-time">
-                  Requested: {new Date(currentRequest.requestedAt).toLocaleTimeString()}
+                  Requested: {new Date(currentRequest.requestedAt || currentRequest.requestedAt).toLocaleTimeString()}
                 </span>
-                {currentRequest.remainingSeconds && (
-                  <span className="couns-request-expiry">
-                    ⏱️ Expires in: {modalCountdown}s
-                  </span>
-                )}
+
               </div>
             </div>
 
@@ -805,6 +845,7 @@ export default function CounselorDashboard() {
               <button
                 className="couns-request-btn couns-request-reject"
                 onClick={handleRejectRequest}
+                disabled={loadingRequests}
               >
                 <FaClose />
                 Reject
@@ -812,6 +853,7 @@ export default function CounselorDashboard() {
               <button
                 className="couns-request-btn couns-request-accept"
                 onClick={handleAcceptRequest}
+                disabled={loadingRequests}
               >
                 <FaCheck />
                 Accept
@@ -821,23 +863,9 @@ export default function CounselorDashboard() {
             <div className="couns-request-progress">
               <div
                 className="couns-request-progress-bar"
-                style={{
-                  width: `${((modalCountdown || 0) / (currentRequest.remainingSeconds || 10)) * 100}%`,
-                  transition: 'width 1s linear'
-                }}
-              >
-                <span className="couns-progress-text">{modalCountdown}s</span>
-              </div>
+                style={{ width: `${(modalCountdown / 10) * 100}%` }}
+              ></div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* Session Notes Modal */}
-      {showNotesModal && (
-        <div className="couns-modal-overlay" onClick={() => setShowNotesModal(false)}>
-          <div className="couns-modal-content" onClick={e => e.stopPropagation()}>
-            {/* <SessionNotes onClose={() => setShowNotesModal(false)} /> */}
           </div>
         </div>
       )}

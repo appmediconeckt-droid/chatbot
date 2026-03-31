@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
 import "./SMSInput.css";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
 import VoiceCallModal from "../../../UserDashboard/Tab/CallModal/VoiceCallModal";
@@ -8,6 +7,7 @@ import VoiceCallModal from "../../../UserDashboard/Tab/CallModal/VoiceCallModal"
 /**
  * SMSInput Component - Message input with call buttons
  * Receives selected user from route state
+ * Displays gender-based avatar icons (no photos)
  */
 const SMSInput = () => {
   const location = useLocation();
@@ -16,7 +16,7 @@ const SMSInput = () => {
   const [callActive, setCallActive] = useState(null);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
-  
+
   // Call modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
@@ -62,7 +62,7 @@ const SMSInput = () => {
       id: selectedUser.id || Date.now(),
       name: selectedUser.name,
       type: "video",
-      profilePic: selectedUser.avatar || "👤",
+      profilePic: "👤", // Fallback icon
       phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
       status: "outgoing",
       date: "Today",
@@ -78,7 +78,7 @@ const SMSInput = () => {
       id: selectedUser.id || Date.now(),
       name: selectedUser.name,
       type: "voice",
-      profilePic: selectedUser.avatar || "👤",
+      profilePic: "👤", // Fallback icon
       phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
       status: "outgoing",
       date: "Today",
@@ -99,6 +99,13 @@ const SMSInput = () => {
 
   const handleBack = () => {
     navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
+  };
+
+  // Get gender-based avatar icon
+  const getAvatarIcon = (gender) => {
+    if (gender === 'male') return '👨';
+    if (gender === 'female') return '👩';
+    return '👤';
   };
 
   if (!selectedUser) {
@@ -129,7 +136,10 @@ const SMSInput = () => {
           
           <div className="smsinput-user-info">
             <div className="smsinput-user-avatar">
-              {selectedUser.avatar || "👤"}
+              {/* Gender-based avatar icon instead of photo */}
+              <span className="avatar-icon">
+                {getAvatarIcon(selectedUser.gender)}
+              </span>
               <span className={`status-dot ${selectedUser.status || 'online'}`}></span>
             </div>
             <div className="smsinput-user-details">

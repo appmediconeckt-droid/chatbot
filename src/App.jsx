@@ -11,7 +11,7 @@ import CounselorSignup from './authtication/CounselorSignup'
 import UserSignup from './authtication/UserSignup'
 import CounselorDashboard from './Component/counselor-dashboard/Dashboard/dashboard'
 import CounselorTable from './Component/UserDashboard/Tab/Counselor/CounselorDirectory'
-import SMSInput from './Component/counselor-dashboard/Tab/SMSInput/SMSInput.'
+import SMSInput from './Component/counselor-dashboard/Tab/SMSInput/SMSInput'
 import OTPVerification from './authtication/OTPVerification'
 import CounselorProfile from './Component/counselor-dashboard/Tab/Profile-Con/CounselorProfile'
 

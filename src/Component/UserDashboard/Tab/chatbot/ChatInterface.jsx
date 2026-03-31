@@ -17,11 +17,15 @@ const ChatInterface = ({ setActiveTab }) => {
     });
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [counselorToDelete, setCounselorToDelete] = useState(null);
+    const [error, setError] = useState(null);
     
     // Refs for long press
     const longPressTimer = useRef(null);
     const pressedItem = useRef(null);
     const touchMoved = useRef(false);
+
+    // API base URL
+    const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/api';
 
     // Function to get profile photo URL
     const getProfilePhotoUrl = (counselor) => {
@@ -125,151 +129,255 @@ const ChatInterface = ({ setActiveTab }) => {
         }
     };
 
-    // Load active chats from localStorage
-    useEffect(() => {
-        const loadChats = () => {
+    // Fetch chats from API
+    const fetchChats = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            
+            // Get token from localStorage
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.log('No token found, redirecting to login');
+                navigate('/login');
+                return;
+            }
+
+            const response = await fetch(`${API_BASE_URL}/chat/chats`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Token expired or invalid
+                    localStorage.removeItem('token');
+                    navigate('/login');
+                    throw new Error('Session expired. Please login again.');
+                }
+                throw new Error(`Failed to fetch chats: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data && data.chats && Array.isArray(data.chats)) {
+                // Transform API data to counselor list format
+                const counselorList = data.chats.map(chat => {
+                    const otherParty = chat.otherParty || {};
+                    const lastMessage = chat.lastMessage?.content || 'No messages yet';
+                    const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
+                    
+                    // Get the specialization as string
+                    let specialization = 'Counselor';
+                    if (otherParty.specialization) {
+                        if (Array.isArray(otherParty.specialization) && otherParty.specialization.length > 0) {
+                            specialization = otherParty.specialization[0];
+                        } else if (typeof otherParty.specialization === 'string') {
+                            specialization = otherParty.specialization;
+                        }
+                    }
+                    
+                    return {
+                        id: otherParty.id || chat.chatId,
+                        name: otherParty.name || 'Unknown Counselor',
+                        lastMessage: lastMessage,
+                        lastMessageTime: lastMessageTime,
+                        time: formatTime(lastMessageTime),
+                        fullDateTime: formatFullDateTime(lastMessageTime),
+                        unread: chat.unreadCount || 0,
+                        online: otherParty.isActive || false,
+                        lastSeen: otherParty.lastSeen || null,
+                        avatar: otherParty.avatar || null,
+                        avatarType: 'image',
+                        specialization: specialization,
+                        chatId: chat.chatId,
+                        user: {},
+                        startedAt: chat.startedAt,
+                        acceptedAt: chat.acceptedAt,
+                        status: chat.status,
+                        isExpired: chat.isExpired,
+                        messages: [],
+                        messageCount: 0
+                    };
+                });
+                
+                // Sort by latest message time (most recent first)
+                counselorList.sort((a, b) => {
+                    const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+                    const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+                    return timeB - timeA;
+                });
+                
+                setCounselors(counselorList);
+                
+                // Also save to localStorage for offline access
+                try {
+                    localStorage.setItem('activeChats', JSON.stringify(data.chats));
+                } catch (error) {
+                    console.error('Error saving chats to localStorage:', error);
+                }
+            } else {
+                setCounselors([]);
+            }
+        } catch (error) {
+            console.error('Error fetching chats:', error);
+            setError(error.message);
+            
+            // Try to load from localStorage as fallback
             try {
                 const savedChats = localStorage.getItem('activeChats');
                 if (savedChats) {
                     const chats = JSON.parse(savedChats);
-                    
-                    // Remove duplicates - keep only the most recent chat per counselor
-                    const uniqueChats = removeDuplicateChats(chats);
-                    
-                    // Transform chats to counselor list format
-                    const counselorList = uniqueChats.map(chat => {
-                        // Get the last message properly
-                        const lastMessageObj = chat.messages && chat.messages.length > 0 
-                            ? chat.messages[chat.messages.length - 1] 
-                            : null;
+                    if (Array.isArray(chats)) {
+                        const counselorList = chats.map(chat => {
+                            const otherParty = chat.otherParty || {};
+                            const lastMessage = chat.lastMessage?.content || 'No messages yet';
+                            const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
+                            
+                            let specialization = 'Counselor';
+                            if (otherParty.specialization) {
+                                if (Array.isArray(otherParty.specialization) && otherParty.specialization.length > 0) {
+                                    specialization = otherParty.specialization[0];
+                                } else if (typeof otherParty.specialization === 'string') {
+                                    specialization = otherParty.specialization;
+                                }
+                            }
+                            
+                            return {
+                                id: otherParty.id || chat.chatId,
+                                name: otherParty.name || 'Unknown Counselor',
+                                lastMessage: lastMessage,
+                                lastMessageTime: lastMessageTime,
+                                time: formatTime(lastMessageTime),
+                                fullDateTime: formatFullDateTime(lastMessageTime),
+                                unread: chat.unreadCount || 0,
+                                online: otherParty.isActive || false,
+                                lastSeen: otherParty.lastSeen || null,
+                                avatar: otherParty.avatar || null,
+                                avatarType: 'image',
+                                specialization: specialization,
+                                chatId: chat.chatId,
+                                user: {},
+                                startedAt: chat.startedAt,
+                                acceptedAt: chat.acceptedAt,
+                                status: chat.status,
+                                isExpired: chat.isExpired,
+                                messages: [],
+                                messageCount: 0
+                            };
+                        });
                         
-                        const lastMessage = lastMessageObj?.text || chat.lastMessage || 'No messages yet';
-                        const lastMessageTime = lastMessageObj?.time || chat.lastMessageTime || chat.startedAt;
+                        counselorList.sort((a, b) => {
+                            const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+                            const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+                            return timeB - timeA;
+                        });
                         
-                        // Get counselor data
-                        const counselorData = chat.counselor || {};
-                        
-                        // Calculate message count (number of messages exchanged)
-                        const messageCount = chat.messages ? chat.messages.length : 0;
-                        
-                        return {
-                            id: chat.counselorId,
-                            name: counselorData.name || 'Unknown Counselor',
-                            lastMessage: lastMessage,
-                            lastMessageTime: lastMessageTime,
-                            time: formatTime(lastMessageTime),
-                            fullDateTime: formatFullDateTime(lastMessageTime),
-                            unread: chat.unread ? 1 : 0,
-                            online: counselorData.online || false,
-                            lastSeen: counselorData.lastSeen || counselorData.lastActive || null,
-                            avatar: getProfilePhotoUrl(counselorData) || counselorData.avatar || null,
-                            avatarType: counselorData.avatarType || 'text',
-                            specialization: counselorData.specialization || 'Counselor',
-                            chatId: chat.id,
-                            user: chat.user || {},
-                            startedAt: chat.startedAt,
-                            messages: chat.messages || [],
-                            messageCount: messageCount,
-                            profilePhoto: counselorData.profilePhoto
-                        };
-                    });
-                    
-                    // Sort by latest message time (most recent first)
-                    counselorList.sort((a, b) => {
-                        const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
-                        const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
-                        return timeB - timeA;
-                    });
-                    
-                    setCounselors(counselorList);
-                    
-                    // Save unique chats back to localStorage (clean up duplicates)
-                    if (uniqueChats.length !== chats.length) {
-                        localStorage.setItem('activeChats', JSON.stringify(uniqueChats));
+                        setCounselors(counselorList);
                     }
-                } else {
-                    setCounselors([]);
                 }
-            } catch (error) {
-                console.error('Error loading chats:', error);
-                setCounselors([]);
-            } finally {
-                setLoading(false);
+            } catch (localError) {
+                console.error('Error loading chats from localStorage:', localError);
             }
-        };
+        } finally {
+            setLoading(false);
+        }
+    };
 
-        loadChats();
+    // Mark chat as read
+    const markChatAsRead = async (chatId) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const response = await fetch(`${API_BASE_URL}/chat/chats/${chatId}/read`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                // Update local state
+                setCounselors(prev => prev.map(c => 
+                    c.id === chatId ? { ...c, unread: 0 } : c
+                ));
+            }
+        } catch (error) {
+            console.error('Error marking chat as read:', error);
+        }
+    };
+
+    // Delete chat
+    const deleteChat = async (chatId) => {
+        try {
+            const token = localStorage.getItem('token');
+            if (!token) return;
+
+            const response = await fetch(`${API_BASE_URL}/chat/chats/${chatId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                // Remove from local state
+                setCounselors(prev => prev.filter(c => c.id !== chatId));
+                
+                // Also remove from localStorage
+                try {
+                    const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
+                    const updatedChats = savedChats.filter(chat => chat.chatId !== chatId);
+                    localStorage.setItem('activeChats', JSON.stringify(updatedChats));
+                } catch (error) {
+                    console.error('Error updating localStorage:', error);
+                }
+                
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('Error deleting chat:', error);
+            return false;
+        }
+    };
+
+    // Load active chats from API
+    useEffect(() => {
+        fetchChats();
+
+        // Set up polling for new messages (every 30 seconds)
+        const intervalId = setInterval(() => {
+            fetchChats();
+        }, 30000);
 
         // Listen for storage changes (for multiple tabs)
         const handleStorageChange = (e) => {
             if (e.key === 'activeChats') {
-                loadChats();
+                fetchChats();
             }
         };
 
         window.addEventListener('storage', handleStorageChange);
-        return () => window.removeEventListener('storage', handleStorageChange);
+        
+        return () => {
+            clearInterval(intervalId);
+            window.removeEventListener('storage', handleStorageChange);
+        };
     }, []);
 
-    // Remove duplicate chats - keep only the latest one per counselor
-    const removeDuplicateChats = (chats) => {
-        if (!Array.isArray(chats) || chats.length === 0) return [];
-        
-        const counselorMap = new Map();
-        
-        chats.forEach(chat => {
-            if (!chat || !chat.counselorId) return;
-            
-            const counselorId = chat.counselorId;
-            const existingChat = counselorMap.get(counselorId);
-            
-            if (!existingChat) {
-                counselorMap.set(counselorId, chat);
-            } else {
-                const getChatTime = (c) => {
-                    if (c.messages && c.messages.length > 0) {
-                        const lastMsgTime = c.messages[c.messages.length - 1]?.time;
-                        if (lastMsgTime) return new Date(lastMsgTime).getTime();
-                    }
-                    if (c.lastMessageTime) return new Date(c.lastMessageTime).getTime();
-                    if (c.startedAt) return new Date(c.startedAt).getTime();
-                    return 0;
-                };
-                
-                const existingTime = getChatTime(existingChat);
-                const newTime = getChatTime(chat);
-                
-                if (newTime > existingTime) {
-                    counselorMap.set(counselorId, chat);
-                }
-            }
-        });
-        
-        return Array.from(counselorMap.values());
-    };
-
     // Handle counselor selection
-    const handleCounselorSelect = (counselor) => {
+    const handleCounselorSelect = async (counselor) => {
         if (contextMenu.visible) return;
         
-        // Mark messages as read in localStorage
-        try {
-            const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
-            const updatedChats = savedChats.map(chat => {
-                if (chat.id === counselor.chatId) {
-                    return { ...chat, unread: false };
-                }
-                return chat;
-            });
-            localStorage.setItem('activeChats', JSON.stringify(updatedChats));
-            
-            // Update local state
-            setCounselors(prev => prev.map(c => 
-                c.id === counselor.id ? { ...c, unread: 0 } : c
-            ));
-        } catch (error) {
-            console.error('Error updating chat read status:', error);
-        }
+        // Mark messages as read
+        await markChatAsRead(counselor.id);
         
         // Navigate to chat box
         navigate(`/chat/${counselor.id}`, { 
@@ -282,7 +390,7 @@ const ChatInterface = ({ setActiveTab }) => {
                     online: counselor.online,
                     lastSeen: counselor.lastSeen,
                     avatar: counselor.avatar,
-                    profilePhoto: counselor.profilePhoto,
+                    profilePhoto: counselor.avatar,
                     avatarType: counselor.avatarType
                 },
                 user: counselor.user
@@ -390,20 +498,12 @@ const ChatInterface = ({ setActiveTab }) => {
     };
 
     // Confirm delete chat
-    const confirmDeleteChat = () => {
+    const confirmDeleteChat = async () => {
         if (counselorToDelete) {
-            try {
-                const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
-                const updatedChats = savedChats.filter(chat => chat.counselorId !== counselorToDelete.id);
-                localStorage.setItem('activeChats', JSON.stringify(updatedChats));
-                
-                setCounselors(prev => prev.filter(c => c.id !== counselorToDelete.id));
-                
-                if (window.navigator.vibrate) {
-                    window.navigator.vibrate([50, 30, 50]);
-                }
-            } catch (error) {
-                console.error('Error deleting chat:', error);
+            const success = await deleteChat(counselorToDelete.id);
+            
+            if (success && window.navigator.vibrate) {
+                window.navigator.vibrate([50, 30, 50]);
             }
             
             setShowDeleteConfirm(false);
@@ -472,10 +572,13 @@ const ChatInterface = ({ setActiveTab }) => {
         );
     };
 
-    if (loading) {
+    if (loading && counselors.length === 0) {
         return (
             <div className="chatAppContainer">
-                <div className="loading-spinner">Loading chats...</div>
+                <div className="loading-spinner">
+                    <div className="spinner"></div>
+                    <p>Loading your chats...</p>
+                </div>
             </div>
         );
     }
@@ -498,7 +601,16 @@ const ChatInterface = ({ setActiveTab }) => {
                 </div>
 
                 <div className="counselorListContainer">
-                    {filteredCounselors.length > 0 ? (
+                    {error && (
+                        <div className="error-message">
+                            <p>⚠️ {error}</p>
+                            <button onClick={fetchChats} className="retry-button">
+                                Retry
+                            </button>
+                        </div>
+                    )}
+                    
+                    {!error && filteredCounselors.length > 0 ? (
                         filteredCounselors.map(counselor => (
                             <div 
                                 key={counselor.id} 
@@ -535,9 +647,12 @@ const ChatInterface = ({ setActiveTab }) => {
                                         
                                         <div className="counselorMetaInfo">
                                             <span className="counselorSpecialization">{counselor.specialization}</span>
-                                            <span className="counselorMessageCount">
-                                                💬 {counselor.messageCount} messages
-                                            </span>
+                                            {counselor.status === 'accepted' && (
+                                                <span className="counselorStatusBadge accepted">✓ Accepted</span>
+                                            )}
+                                            {counselor.isExpired && (
+                                                <span className="counselorStatusBadge expired">⌛ Expired</span>
+                                            )}
                                         </div>
                                         
                                         {!counselor.online && counselor.lastSeen && (
@@ -602,23 +717,7 @@ const ChatInterface = ({ setActiveTab }) => {
                         <button 
                             className="context-menu-item"
                             onClick={() => {
-                                // Mark as read
-                                try {
-                                    const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
-                                    const updatedChats = savedChats.map(chat => {
-                                        if (chat.counselorId === contextMenu.counselor.id) {
-                                            return { ...chat, unread: false };
-                                        }
-                                        return chat;
-                                    });
-                                    localStorage.setItem('activeChats', JSON.stringify(updatedChats));
-                                    
-                                    setCounselors(prev => prev.map(c => 
-                                        c.id === contextMenu.counselor.id ? { ...c, unread: 0 } : c
-                                    ));
-                                } catch (error) {
-                                    console.error('Error marking as read:', error);
-                                }
+                                markChatAsRead(contextMenu.counselor.id);
                                 closeContextMenu();
                             }}
                         >
@@ -662,7 +761,7 @@ const ChatInterface = ({ setActiveTab }) => {
                             </div>
                             <p>Are you sure you want to delete this chat?</p>
                             <p className="delete-warning">
-                                ⚠️ This action cannot be undone. All {counselorToDelete.messageCount} messages will be permanently deleted.
+                                ⚠️ This action cannot be undone. All messages will be permanently deleted.
                             </p>
                             {counselorToDelete.fullDateTime && (
                                 <p className="chat-time-info">
