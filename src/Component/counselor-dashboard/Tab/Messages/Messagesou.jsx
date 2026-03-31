@@ -27,7 +27,7 @@ const SMSList = () => {
     return past.toLocaleDateString();
   };
 
-  // Fetch chats from API
+  // Fetch chats from AP
   useEffect(() => {
     const fetchChats = async () => {
       const token = localStorage.getItem('accessToken');
