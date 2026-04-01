@@ -129,7 +129,7 @@ const ChatInterface = ({ setActiveTab }) => {
         }
     };
 
-    // Fetch chats from API
+    // Fetch chats from AP
     const fetchChats = async () => {
         try {
             setLoading(true);
