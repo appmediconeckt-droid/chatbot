@@ -4,6 +4,7 @@ import axios from "axios";
 import "./SMSInput.css";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
 import VoiceCallModal from "../../../UserDashboard/Tab/CallModal/VoiceCallModal";
+import { API_BASE_URL } from "../../../../axiosConfig";
 
 /**
  * SMSInput Component - Message input with call buttons
@@ -31,9 +32,25 @@ const SMSInput = () => {
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
   
+  // User data from localStorage (counselor)
+  const [currentUser, setCurrentUser] = useState(null);
+  
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
+
+  // Get current user from localStorage
+  useEffect(() => {
+    try {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        const parsedUser = JSON.parse(userData);
+        setCurrentUser(parsedUser);
+      }
+    } catch (error) {
+      console.error('Error getting user data:', error);
+    }
+  }, []);
 
   // Get the chat ID for API calls
   const getChatIdForAPI = () => {
@@ -54,14 +71,14 @@ const SMSInput = () => {
     
     try {
       const apiChatId = getChatIdForAPI();
-      const apiUrl = `https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chat/${apiChatId}/messages`;
+      
       const token = localStorage.getItem('token');
       
-      console.log('Fetching messages from API:', apiUrl);
+      
       setIsLoadingMessages(true);
       setError(null);
       
-      const response = await axios.get(apiUrl, {
+      const response = await axios.get(`${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`, {
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
@@ -162,16 +179,16 @@ const SMSInput = () => {
   const sendMessageToAPI = async (messageContent) => {
     try {
       const apiChatId = getChatIdForAPI();
-      const apiUrl = `https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chat/${apiChatId}/message`;
+    
       const token = localStorage.getItem('token');
       
       const requestBody = {
         content: messageContent
       };
       
-      console.log('Sending message to API:', { url: apiUrl, body: requestBody });
       
-      const response = await axios.post(apiUrl, requestBody, {
+      
+      const response = await axios.post(`${API_BASE_URL}/api/chat/chat/${apiChatId}/message`, requestBody, {
         headers: { 
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
@@ -275,8 +292,16 @@ const SMSInput = () => {
     return () => clearInterval(interval);
   }, [selectedUser]);
 
-  // Handle video call
+  // Handle video call - Updated with API integration
   const handleVideoCall = () => {
+    if (!currentUser) {
+      alert('Please login to make a call');
+      return;
+    }
+
+    // Determine if current user is counselor or user
+    const isCounselor = currentUser.role === 'counselor' || currentUser.userType === 'counselor';
+    
     const callData = {
       id: selectedUser.id || Date.now(),
       name: selectedUser.name,
@@ -285,14 +310,29 @@ const SMSInput = () => {
       phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
       status: "outgoing",
       date: "Today",
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      // API specific data
+      userId: isCounselor ? selectedUser.id : currentUser.id,
+      userName: isCounselor ? selectedUser.name : (currentUser.name || currentUser.userName),
+      counsellorId: isCounselor ? currentUser.id : selectedUser.id,
+      counsellorName: isCounselor ? currentUser.name : selectedUser.name,
+      role: isCounselor ? 'counselor' : 'user'
     };
+    
     setSelectedCall(callData);
     setIsVideoModalOpen(true);
   };
 
-  // Handle voice call
+  // Handle voice call - Updated with API integration
   const handleVoiceCall = () => {
+    if (!currentUser) {
+      alert('Please login to make a call');
+      return;
+    }
+
+    // Determine if current user is counselor or user
+    const isCounselor = currentUser.role === 'counselor' || currentUser.userType === 'counselor';
+    
     const callData = {
       id: selectedUser.id || Date.now(),
       name: selectedUser.name,
@@ -303,8 +343,15 @@ const SMSInput = () => {
       date: "Today",
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       location: selectedUser.location || "Unknown",
-      company: selectedUser.company || "Counseling Center"
+      company: selectedUser.company || "Counseling Center",
+      // API specific data
+      userId: isCounselor ? selectedUser.id : currentUser.id,
+      userName: isCounselor ? selectedUser.name : (currentUser.name || currentUser.userName),
+      counsellorId: isCounselor ? currentUser.id : selectedUser.id,
+      counsellorName: isCounselor ? currentUser.name : selectedUser.name,
+      role: isCounselor ? 'counselor' : 'user'
     };
+    
     setSelectedCall(callData);
     setIsVoiceModalOpen(true);
   };
@@ -314,6 +361,12 @@ const SMSInput = () => {
     setIsVideoModalOpen(false);
     setIsVoiceModalOpen(false);
     setSelectedCall(null);
+  };
+
+  // Handle call end
+  const handleCallEnd = () => {
+    console.log('Call ended');
+    // You can add additional logic here like logging call duration, etc.
   };
 
   const handleBack = () => {
@@ -510,12 +563,14 @@ const SMSInput = () => {
         isOpen={isVideoModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        onCallEnd={handleCallEnd}
       />
 
       <VoiceCallModal
         isOpen={isVoiceModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        onCallEnd={handleCallEnd}
       />
     </div>
   );

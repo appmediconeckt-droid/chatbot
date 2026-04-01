@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ChatInterface.css';
+import { API_BASE_URL } from '../../../../axiosConfig';
+import axios from 'axios';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
@@ -25,7 +27,7 @@ const ChatInterface = ({ setActiveTab }) => {
     const touchMoved = useRef(false);
 
     // API base URL
-    const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms/api';
+    
 
     // Function to get profile photo URL
     const getProfilePhotoUrl = (counselor) => {
@@ -143,7 +145,7 @@ const ChatInterface = ({ setActiveTab }) => {
                 return;
             }
 
-            const response = await fetch(`${API_BASE_URL}/chat/chats`, {
+            const response = await fetch(`${API_BASE_URL}/api/chat/chats`, {
                 method: 'GET',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -293,8 +295,9 @@ const ChatInterface = ({ setActiveTab }) => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await fetch(`${API_BASE_URL}/chat/chats/${chatId}/read`, {
-                method: 'PUT',
+            const response = await axios.post(`${API_BASE_URL}/api/chat/mark-all-read`, {
+                chatId: chatId
+            }, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

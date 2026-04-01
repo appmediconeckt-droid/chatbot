@@ -427,7 +427,7 @@ body {
 /* Main Content */
 .couns-main-content {
   flex: 1;
-  margin-left: 280px;
+  margin-left: 310px;
   background: var(--couns-bg-light);
   min-height: 100vh;
   transition: var(--couns-transition);

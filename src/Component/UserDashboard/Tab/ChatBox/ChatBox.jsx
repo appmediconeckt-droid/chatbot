@@ -4,6 +4,7 @@ import { Link, useParams, useLocation } from 'react-router-dom';
 import './ChatBox.css';
 import VideoCallModal from '../CallModal/VideoCallModal';
 import VoiceCallModal from '../CallModal/VoiceCallModal';
+import { API_BASE_URL } from '../../../../axiosConfig';
 
 const ChatBox = () => {
     const { counselorId } = useParams();
@@ -90,13 +91,13 @@ const ChatBox = () => {
     const fetchMessagesFromAPI = async () => {
         try {
             const apiChatId = getChatIdForAPI();
-            const apiUrl = `https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chat/${apiChatId}/messages`;
+        
             const token = localStorage.getItem('token');
             
-            console.log('Fetching messages from API:', apiUrl);
+           
             setIsLoadingMessages(true);
             
-            const response = await axios.get(apiUrl, {
+            const response = await axios.get(`${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`, {
                 headers: { 
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
@@ -166,16 +167,16 @@ const ChatBox = () => {
     const sendMessageToAPI = async (messageContent) => {
         try {
             const apiChatId = getChatIdForAPI();
-            const apiUrl = `https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chat/${apiChatId}/message`;
+
             const token = localStorage.getItem('token');
             
             const requestBody = {
                 content: messageContent
             };
             
-            console.log('Sending message to API:', { url: apiUrl, body: requestBody });
             
-            const response = await axios.post(apiUrl, requestBody, {
+            
+            const response = await axios.post(`${API_BASE_URL}/api/chat/chat/${apiChatId}/message`, requestBody, {
                 headers: { 
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`

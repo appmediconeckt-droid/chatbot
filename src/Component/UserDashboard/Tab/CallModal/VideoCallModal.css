@@ -1183,3 +1183,330 @@ video {
         padding: 6px;
     }
 }
+
+
+/* Add these styles to your VideoCallModal.css */
+
+/* Waiting Screen Styles */
+.call-waiting-screen,
+.incoming-call-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+}
+
+.waiting-animation,
+.incoming-animation {
+    text-align: center;
+    animation: fadeIn 0.5s ease;
+}
+
+.ringing-animation {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.incoming-ringing {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 20px;
+    position: relative;
+}
+
+.incoming-ringing::before,
+.incoming-ringing::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    animation: ripple 1.5s ease-out infinite;
+}
+
+.incoming-ringing::before {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.incoming-ringing::after {
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.2);
+    animation-delay: 0.5s;
+}
+
+.caller-avatar-large {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 20px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.call-waiting-screen h2,
+.incoming-call-screen h2 {
+    color: white;
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+.call-waiting-screen p,
+.incoming-call-screen p {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 16px;
+    margin: 0;
+}
+
+.waiting-status {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.waiting-dots {
+    display: flex;
+    gap: 5px;
+}
+
+.waiting-dots span {
+    width: 6px;
+    height: 6px;
+    background: white;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.waiting-dots span:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.waiting-dots span:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+.cancel-call-btn,
+.accept-call-btn,
+.reject-call-btn {
+    margin-top: 40px;
+    padding: 12px 32px;
+    border: none;
+    border-radius: 25px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cancel-call-btn,
+.reject-call-btn {
+    background: #ff4444;
+    color: white;
+}
+
+.cancel-call-btn:hover,
+.reject-call-btn:hover {
+    background: #cc0000;
+    transform: scale(1.05);
+}
+
+.accept-call-btn {
+    background: #44ff44;
+    color: #333;
+    margin-right: 15px;
+}
+
+.accept-call-btn:hover {
+    background: #33cc33;
+    transform: scale(1.05);
+}
+
+.incoming-call-actions {
+    display: flex;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+/* Animations */
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes ripple {
+    0% {
+        transform: translate(-50%, -50%) scale(0.8);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes bounce {
+    0%, 80%, 100% {
+        transform: scale(0);
+    }
+    40% {
+        transform: scale(1);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Camera Indicator */
+.camera-indicator {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 5px 10px;
+    border-radius: 20px;
+    color: white;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 10;
+    backdrop-filter: blur(5px);
+}
+
+.camera-icon {
+    font-size: 14px;
+}
+
+.camera-text {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Quality Indicators */
+.quality-good .quality-icon {
+    color: #44ff44;
+}
+
+.quality-medium .quality-icon {
+    color: #ffaa44;
+}
+
+.quality-poor .quality-icon {
+    color: #ff4444;
+}
+
+.quality-good .quality-text {
+    color: #44ff44;
+}
+
+.quality-medium .quality-text {
+    color: #ffaa44;
+}
+
+.quality-poor .quality-text {
+    color: #ff4444;
+}
+
+/* Control Button Disabled State */
+.control-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.control-btn:disabled:hover {
+    transform: none;
+}
+
+/* Settings Panel Enhancements */
+.settings-panel select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.current-camera-info {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #666;
+    padding: 5px;
+    background: #f5f5f5;
+    border-radius: 5px;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .caller-avatar-large {
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+    }
+    
+    .call-waiting-screen h2,
+    .incoming-call-screen h2 {
+        font-size: 20px;
+    }
+    
+    .cancel-call-btn,
+    .accept-call-btn,
+    .reject-call-btn {
+        padding: 10px 24px;
+        font-size: 14px;
+    }
+    
+    .camera-indicator {
+        bottom: 10px;
+        left: 10px;
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    
+    .camera-text {
+        font-size: 10px;
+    }
+}
