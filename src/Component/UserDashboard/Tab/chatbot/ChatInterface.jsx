@@ -129,7 +129,7 @@ const ChatInterface = ({ setActiveTab }) => {
         }
     };
 
-    // Fetch chats from AP
+    // Fetch chats from API
     const fetchChats = async () => {
         try {
             setLoading(true);
@@ -139,7 +139,7 @@ const ChatInterface = ({ setActiveTab }) => {
             const token = localStorage.getItem('token');
             if (!token) {
                 console.log('No token found, redirecting to login');
-                navigate('/login');
+                navigate('/user-signup');
                 return;
             }
 
@@ -155,7 +155,7 @@ const ChatInterface = ({ setActiveTab }) => {
                 if (response.status === 401) {
                     // Token expired or invalid
                     localStorage.removeItem('token');
-                    navigate('/login');
+                    navigate('/user-signup');
                     throw new Error('Session expired. Please login again.');
                 }
                 throw new Error(`Failed to fetch chats: ${response.status}`);
