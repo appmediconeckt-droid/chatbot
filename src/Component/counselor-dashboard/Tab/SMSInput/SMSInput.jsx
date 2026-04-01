@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 import "./SMSInput.css";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
 import VoiceCallModal from "../../../UserDashboard/Tab/CallModal/VoiceCallModal";
@@ -8,6 +9,7 @@ import VoiceCallModal from "../../../UserDashboard/Tab/CallModal/VoiceCallModal"
  * SMSInput Component - Message input with call buttons
  * Receives selected user from route state
  * Displays gender-based avatar icons (no photos)
+ * Fetches messages from API and displays them
  */
 const SMSInput = () => {
   const location = useLocation();
@@ -22,14 +24,228 @@ const SMSInput = () => {
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
   
+  // Message states
+  const [messages, setMessages] = useState([]);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState(null);
+  const [chatStatus, setChatStatus] = useState(null);
+  
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
+  const chatId = location.state?.chatId;
 
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "user", text: "Hi Dr. Sharma, when can we schedule our next session?", time: "10:30 AM" },
-    { id: 2, sender: "me", text: "Hello! How about Thursday at 11 AM?", time: "10:32 AM" },
-    { id: 3, sender: "user", text: "That works perfectly!", time: "10:33 AM" },
-  ]);
+  // Get the chat ID for API calls
+  const getChatIdForAPI = () => {
+    // Use chatId from location state if available
+    if (chatId) return chatId;
+    
+    // Create a new chat ID if none exists (based on user ID or name)
+    if (selectedUser) {
+      return `chat_${selectedUser.id || selectedUser.name.replace(/\s/g, '_')}_${Date.now()}`;
+    }
+    
+    return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  };
+
+  // Fetch messages from API
+  const fetchMessagesFromAPI = async () => {
+    if (!selectedUser) return;
+    
+    try {
+      const apiChatId = getChatIdForAPI();
+      const apiUrl = `https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chat/${apiChatId}/messages`;
+      const token = localStorage.getItem('token');
+      
+      console.log('Fetching messages from API:', apiUrl);
+      setIsLoadingMessages(true);
+      setError(null);
+      
+      const response = await axios.get(apiUrl, {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+      
+      console.log('GET API Response:', response.data);
+      
+      if (response.data && response.data.messages) {
+        // Update chat status
+        if (response.data.chatStatus) {
+          setChatStatus(response.data.chatStatus);
+        }
+        
+        // Transform API messages to UI format
+        const transformedMessages = response.data.messages.map((msg, index) => ({
+          id: msg.id || index,
+          messageId: msg.messageId,
+          text: msg.content,
+          sender: msg.senderRole === 'user' ? 'user' : 'me',
+          senderRole: msg.senderRole,
+          time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          fullTime: msg.createdAt,
+          contentType: msg.contentType,
+          isRead: msg.isRead,
+          status: 'sent'
+        }));
+        
+        setMessages(transformedMessages);
+        
+        // Save to localStorage as backup
+        saveMessagesToLocalStorage(transformedMessages);
+        
+        return transformedMessages;
+      } else if (response.data && response.data.messages === undefined && messages.length === 0) {
+        // If no messages, set empty array
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('Error fetching messages from API:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      setError('Failed to load messages. Please try again.');
+      
+      // Load from localStorage as fallback
+      loadMessagesFromLocalStorage();
+    } finally {
+      setIsLoadingMessages(false);
+    }
+  };
+
+  // Save messages to localStorage
+  const saveMessagesToLocalStorage = (messagesToSave) => {
+    try {
+      const savedChats = JSON.parse(localStorage.getItem('smsChats') || '[]');
+      const chatIdToSave = getChatIdForAPI();
+      const existingChatIndex = savedChats.findIndex(chat => chat.chatId === chatIdToSave);
+      
+      const chatData = {
+        chatId: chatIdToSave,
+        userId: selectedUser?.id,
+        userName: selectedUser?.name,
+        messages: messagesToSave,
+        chatStatus: chatStatus,
+        lastUpdated: new Date().toISOString()
+      };
+      
+      if (existingChatIndex >= 0) {
+        savedChats[existingChatIndex] = chatData;
+      } else {
+        savedChats.push(chatData);
+      }
+      
+      localStorage.setItem('smsChats', JSON.stringify(savedChats));
+    } catch (error) {
+      console.error('Error saving messages to localStorage:', error);
+    }
+  };
+
+  // Load messages from localStorage
+  const loadMessagesFromLocalStorage = () => {
+    try {
+      const savedChats = JSON.parse(localStorage.getItem('smsChats') || '[]');
+      const chatIdToLoad = getChatIdForAPI();
+      const savedChat = savedChats.find(chat => chat.chatId === chatIdToLoad);
+      
+      if (savedChat && savedChat.messages) {
+        setMessages(savedChat.messages);
+        if (savedChat.chatStatus) {
+          setChatStatus(savedChat.chatStatus);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading messages from localStorage:', error);
+    }
+  };
+
+  // Send message to API (POST)
+  const sendMessageToAPI = async (messageContent) => {
+    try {
+      const apiChatId = getChatIdForAPI();
+      const apiUrl = `https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chat/${apiChatId}/message`;
+      const token = localStorage.getItem('token');
+      
+      const requestBody = {
+        content: messageContent
+      };
+      
+      console.log('Sending message to API:', { url: apiUrl, body: requestBody });
+      
+      const response = await axios.post(apiUrl, requestBody, {
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+      
+      console.log('POST API Response:', response.data);
+      
+      if (response.data && response.data.success) {
+        // After successful POST, fetch all messages again to get updated list
+        await fetchMessagesFromAPI();
+        return response.data.message;
+      } else {
+        throw new Error('Invalid API response');
+      }
+    } catch (error) {
+      console.error('Error sending message to API:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      throw error;
+    }
+  };
+
+  // Handle sending a new message
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!message.trim() || !selectedUser || isSending) return;
+
+    const messageText = message.trim();
+    
+    // Create temporary message for optimistic UI update
+    const tempMessage = {
+      id: `temp_${Date.now()}`,
+      text: messageText,
+      sender: "me",
+      senderRole: "user",
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      createdAt: new Date().toISOString(),
+      status: "sending",
+      isTemporary: true
+    };
+    
+    // Add temporary message to UI
+    setMessages(prev => [...prev, tempMessage]);
+    setMessage("");
+    setIsSending(true);
+    setError(null);
+    
+    try {
+      // Send message to API
+      await sendMessageToAPI(messageText);
+      
+      // Remove temporary message (actual messages will be loaded by fetchMessagesFromAPI)
+      setMessages(prev => prev.filter(msg => !msg.isTemporary));
+      
+    } catch (err) {
+      console.error('Error sending message:', err);
+      
+      // Update temporary message to show error
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempMessage.id 
+          ? { ...msg, status: "error", error: "Failed to send" }
+          : msg
+      ));
+      
+      setError("Failed to send message. Please try again.");
+      
+      // Remove error message after 3 seconds
+      setTimeout(() => {
+        setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
+      }, 3000);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   // Auto-scroll to bottom function
   const scrollToBottom = () => {
@@ -41,20 +257,23 @@ const SMSInput = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!message.trim() || !selectedUser) return;
+  // Load messages when component mounts or selectedUser changes
+  useEffect(() => {
+    if (selectedUser) {
+      fetchMessagesFromAPI();
+    }
+  }, [selectedUser, chatId]);
 
-    const newMessage = {
-      id: messages.length + 1,
-      sender: "me",
-      text: message,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
-
-    setMessages([...messages, newMessage]);
-    setMessage("");
-  };
+  // Auto-refresh messages every 30 seconds
+  useEffect(() => {
+    if (!selectedUser) return;
+    
+    const interval = setInterval(() => {
+      fetchMessagesFromAPI();
+    }, 30000);
+    
+    return () => clearInterval(interval);
+  }, [selectedUser]);
 
   // Handle video call
   const handleVideoCall = () => {
@@ -62,7 +281,7 @@ const SMSInput = () => {
       id: selectedUser.id || Date.now(),
       name: selectedUser.name,
       type: "video",
-      profilePic: "👤", // Fallback icon
+      profilePic: "👤",
       phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
       status: "outgoing",
       date: "Today",
@@ -78,7 +297,7 @@ const SMSInput = () => {
       id: selectedUser.id || Date.now(),
       name: selectedUser.name,
       type: "voice",
-      profilePic: "👤", // Fallback icon
+      profilePic: "👤",
       phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
       status: "outgoing",
       date: "Today",
@@ -106,6 +325,53 @@ const SMSInput = () => {
     if (gender === 'male') return '👨';
     if (gender === 'female') return '👩';
     return '👤';
+  };
+
+  // Render chat status banner
+  const renderChatStatusBanner = () => {
+    if (!chatStatus) return null;
+    
+    let statusClass = '';
+    let statusText = '';
+    
+    switch (chatStatus) {
+      case 'accepted':
+        statusClass = 'status-accepted';
+        statusText = '✓ Chat session active';
+        break;
+      case 'pending':
+        statusClass = 'status-pending';
+        statusText = '⏳ Waiting for response...';
+        break;
+      case 'ended':
+        statusClass = 'status-ended';
+        statusText = '🔒 Chat session ended';
+        break;
+      default:
+        return null;
+    }
+    
+    // return (
+    //   <div className={`sms-chat-status-banner ${statusClass}`}>
+    //     {statusText}
+    //   </div>
+    // );
+  };
+
+  // Render message status indicator
+  const renderMessageStatus = (message) => {
+    if (message.sender !== 'me') return null;
+    
+    switch (message.status) {
+      case 'sending':
+        return <span className="sms-message-status sending">⌛</span>;
+      case 'sent':
+        return <span className="sms-message-status sent">✓</span>;
+      case 'error':
+        return <span className="sms-message-status error">⚠️</span>;
+      default:
+        return null;
+    }
   };
 
   if (!selectedUser) {
@@ -136,7 +402,6 @@ const SMSInput = () => {
           
           <div className="smsinput-user-info">
             <div className="smsinput-user-avatar">
-              {/* Gender-based avatar icon instead of photo */}
               <span className="avatar-icon">
                 {getAvatarIcon(selectedUser.gender)}
               </span>
@@ -150,7 +415,7 @@ const SMSInput = () => {
           </div>
         </div>
 
-        {/* Call buttons with full functionality */}
+        {/* Call buttons */}
         <div className="smsinput-call-buttons">
           <button
             className="call-btn voice"
@@ -169,19 +434,46 @@ const SMSInput = () => {
         </div>
       </div>
 
+      {/* Chat Status Banner */}
+      {renderChatStatusBanner()}
+
       {/* Messages Display Area */}
       <div className="smsinput-messages" ref={messagesContainerRef}>
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`smsinput-message ${msg.sender === 'me' ? 'sent' : 'received'}`}
-          >
-            <div className="message-bubble">
-              <p className="message-text">{msg.text}</p>
-              <span className="message-time">{msg.time}</span>
-            </div>
+        {isLoadingMessages && messages.length === 0 ? (
+          <div className="sms-loading-messages">
+            <div className="sms-loading-spinner"></div>
+            <p>Loading messages...</p>
           </div>
-        ))}
+        ) : error && messages.length === 0 ? (
+          <div className="sms-error-message">
+            <span className="error-icon">⚠️</span>
+            <p>{error}</p>
+            <button onClick={fetchMessagesFromAPI} className="retry-btn">
+              Retry
+            </button>
+          </div>
+        ) : messages.length === 0 ? (
+          <div className="sms-empty-messages">
+            <span className="empty-messages-icon">💬</span>
+            <p>No messages yet</p>
+            <p className="empty-messages-subtext">Start a conversation by sending a message</p>
+          </div>
+        ) : (
+          messages.map((msg) => (
+            <div
+              key={msg.id}
+              className={`smsinput-message ${msg.sender === 'me' ? 'sent' : 'received'}`}
+            >
+              <div className="message-bubble">
+                <p className="message-text">{msg.text}</p>
+                <div className="message-footer">
+                  <span className="message-time">{msg.time}</span>
+                  {renderMessageStatus(msg)}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
         {/* Empty div for scrolling reference */}
         <div ref={messagesEndRef} />
       </div>
@@ -189,25 +481,26 @@ const SMSInput = () => {
       {/* Message Input Form */}
       <form className="smsinput-form" onSubmit={handleSendMessage}>
         <div className="smsinput-input-wrapper">
-          <button type="button" className="attach-btn" title="Attach file">
+          <button type="button" className="attach-btn" title="Attach file" disabled={isSending}>
             📎
           </button>
-          <button type="button" className="emoji-btn" title="Add emoji">
+          <button type="button" className="emoji-btn" title="Add emoji" disabled={isSending}>
             😊
           </button>
           <input
             type="text"
             className="smsinput-input"
-            placeholder="Type your message..."
+            placeholder={isSending ? "Sending..." : "Type your message..."}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            disabled={isSending}
           />
           <button
             type="submit"
-            className={`send-btn ${message.trim() ? 'active' : ''}`}
-            disabled={!message.trim()}
+            className={`send-btn ${message.trim() && !isSending ? 'active' : ''}`}
+            disabled={!message.trim() || isSending}
           >
-            Send
+            {isSending ? 'Sending...' : 'Send'}
           </button>
         </div>
       </form>

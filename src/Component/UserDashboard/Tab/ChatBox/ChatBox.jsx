@@ -33,6 +33,9 @@ const ChatBox = () => {
     const [showOptions, setShowOptions] = useState(false);
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+    const [chatStatus, setChatStatus] = useState(null);
     
     // Refs for scrolling and container
     const messagesEndRef = useRef(null);
@@ -71,9 +74,196 @@ const ChatBox = () => {
         }
     }, []);
 
-    // Load chat data from localStorage
+    // Get the chat ID for API calls
+    const getChatIdForAPI = () => {
+        // Use chatId from location state if available
+        if (chatId) return chatId;
+        
+        // Otherwise use chatId from currentChat
+        if (currentChat?.chatId) return currentChat.chatId;
+        
+        // Create a new chat ID if none exists
+        return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    };
+
+    // GET messages from API
+    const fetchMessagesFromAPI = async () => {
+        try {
+            const apiChatId = getChatIdForAPI();
+            const apiUrl = `https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chat/${apiChatId}/messages`;
+            const token = localStorage.getItem('token');
+            
+            console.log('Fetching messages from API:', apiUrl);
+            setIsLoadingMessages(true);
+            
+            const response = await axios.get(apiUrl, {
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            console.log('GET API Response:', response.data);
+            
+            if (response.data && response.data.messages) {
+                // Update chat status
+                if (response.data.chatStatus) {
+                    setChatStatus(response.data.chatStatus);
+                }
+                
+                // Transform API messages to UI format
+                const transformedMessages = response.data.messages.map((msg, index) => ({
+                    id: msg.id || index,
+                    messageId: msg.messageId,
+                    text: msg.content,
+                    sender: msg.senderRole === 'user' ? 'user' : 'counselor',
+                    senderRole: msg.senderRole,
+                    time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    fullTime: msg.createdAt,
+                    contentType: msg.contentType,
+                    isRead: msg.isRead,
+                    status: 'sent' // Mark as sent since it's from API
+                }));
+                
+                setMessages(transformedMessages);
+                
+                // Update currentChat with messages
+                if (currentChat) {
+                    setCurrentChat(prev => ({
+                        ...prev,
+                        messages: transformedMessages,
+                        chatStatus: response.data.chatStatus
+                    }));
+                }
+                
+                return transformedMessages;
+            }
+        } catch (error) {
+            console.error('Error fetching messages from API:', error);
+            console.error('Error details:', error.response?.data || error.message);
+            
+            // If error, try to load from localStorage as fallback
+            loadMessagesFromLocalStorage();
+        } finally {
+            setIsLoadingMessages(false);
+        }
+    };
+
+    // Load messages from localStorage (fallback)
+    const loadMessagesFromLocalStorage = () => {
+        try {
+            const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
+            const chat = savedChats.find(c => c.id === currentChat?.id || c.chatId === getChatIdForAPI());
+            if (chat && chat.messages) {
+                setMessages(chat.messages);
+            }
+        } catch (error) {
+            console.error('Error loading messages from localStorage:', error);
+        }
+    };
+
+    // Send message to API (POST)
+    const sendMessageToAPI = async (messageContent) => {
+        try {
+            const apiChatId = getChatIdForAPI();
+            const apiUrl = `https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chat/${apiChatId}/message`;
+            const token = localStorage.getItem('token');
+            
+            const requestBody = {
+                content: messageContent
+            };
+            
+            console.log('Sending message to API:', { url: apiUrl, body: requestBody });
+            
+            const response = await axios.post(apiUrl, requestBody, {
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            
+            console.log('POST API Response:', response.data);
+            
+            if (response.data && response.data.success) {
+                // After successful POST, fetch all messages again to get updated list
+                await fetchMessagesFromAPI();
+                return response.data.message;
+            } else {
+                throw new Error('Invalid API response');
+            }
+        } catch (error) {
+            console.error('Error sending message to API:', error);
+            console.error('Error details:', error.response?.data || error.message);
+            throw error;
+        }
+    };
+
+    // Handle sending a new message
+    const handleSendMessage = async () => {
+        if (newMessage.trim() === '' || isSending) return;
+
+        const messageText = newMessage.trim();
+        
+        // Create temporary user message object for optimistic UI update
+        const tempUserMessage = {
+            id: `temp_${Date.now()}`,
+            text: messageText,
+            sender: 'user',
+            senderRole: 'user',
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            createdAt: new Date().toISOString(),
+            status: 'sending',
+            isTemporary: true
+        };
+        
+        // Add temporary user message to UI immediately
+        setMessages(prev => [...prev, tempUserMessage]);
+        setNewMessage('');
+        setShowEmojiPicker(false);
+        setIsSending(true);
+        
+        // Clear any existing timeout
+        if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+        }
+        
+        try {
+            // Send message to API
+            await sendMessageToAPI(messageText);
+            
+            // Remove temporary message and use the fetched messages from API
+            setMessages(prev => prev.filter(msg => !msg.isTemporary));
+            
+        } catch (err) {
+            console.error('Error in message sending flow:', err);
+            
+            // Update temporary message to show error
+            setMessages(prev => prev.map(msg => 
+                msg.id === tempUserMessage.id 
+                    ? { ...msg, status: 'error', error: 'Failed to send message' }
+                    : msg
+            ));
+            
+            // Show error message in chat
+            const errorMessage = {
+                id: `error_${Date.now()}`,
+                text: "⚠️ Failed to send message. Please check your internet connection and try again.",
+                sender: 'counselor',
+                senderRole: 'counsellor',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                isError: true,
+                status: 'error'
+            };
+            setMessages(prev => [...prev, errorMessage]);
+        } finally {
+            setIsSending(false);
+        }
+    };
+
+    // Load chat data and fetch messages
     useEffect(() => {
-        const loadChat = () => {
+        const initializeChat = async () => {
             try {
                 const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
                 
@@ -83,7 +273,6 @@ const ChatBox = () => {
                 
                 if (chat) {
                     setCurrentChat(chat);
-                    setMessages(chat.messages || []);
                     setCurrentCounselor(chat.counselor);
                     
                     // Mark as read
@@ -100,35 +289,32 @@ const ChatBox = () => {
                     // Create a new chat if not found
                     const newChat = {
                         id: Date.now(),
+                        chatId: chatId || `chat_${Date.now()}`,
                         counselorId: parseInt(counselorId),
                         counselor: initialCounselor,
                         user: initialUser || { name: 'User', email: 'user@example.com' },
-                        messages: [
-                            {
-                                id: Date.now(),
-                                text: `Hello! I'm ${initialCounselor.name}. How can I help you today?`,
-                                sender: 'counselor',
-                                time: new Date().toLocaleTimeString()
-                            }
-                        ],
+                        messages: [],
                         unread: false,
                         startedAt: new Date().toISOString()
                     };
                     setCurrentChat(newChat);
-                    setMessages(newChat.messages);
                     
                     const updatedChats = [...savedChats, newChat];
                     localStorage.setItem('activeChats', JSON.stringify(updatedChats));
                 }
+                
+                // Fetch messages from API
+                await fetchMessagesFromAPI();
+                
             } catch (error) {
                 console.error('Error loading chat:', error);
             }
         };
 
-        loadChat();
+        initializeChat();
     }, [counselorId, chatId, initialCounselor, initialUser]);
 
-    // Save messages to localStorage whenever they change
+    // Save messages to localStorage whenever they change (as backup)
     useEffect(() => {
         if (currentChat && messages.length > 0) {
             try {
@@ -140,7 +326,8 @@ const ChatBox = () => {
                             messages: messages,
                             lastMessage: messages[messages.length - 1]?.text,
                             lastMessageTime: messages[messages.length - 1]?.time,
-                            unread: false
+                            unread: false,
+                            chatStatus: chatStatus
                         };
                     }
                     return chat;
@@ -150,7 +337,7 @@ const ChatBox = () => {
                 console.error('Error saving messages:', error);
             }
         }
-    }, [messages, currentChat]);
+    }, [messages, currentChat, chatStatus]);
 
     // Scroll to bottom when messages change
     useEffect(() => {
@@ -181,86 +368,20 @@ const ChatBox = () => {
         };
     }, []);
 
-    // Handle sending a new message
-    const sendMessageToAPI = async (message) => {
-        try {
-            const response = await axios.post(
-                'https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat',
-                { message },
-                { headers: { 'Content-Type': 'application/json' } }
-            );
-            return response.data;
-        } catch (error) {
-            console.error('Error calling AI API:', error);
-            throw error;
-        }
-    };
-
-    const handleSendMessage = async () => {
-        if (newMessage.trim() === '') return;
-
-        const messageText = newMessage;
-
-        const newMsg = {
-            id: Date.now(),
-            text: messageText,
-            sender: 'user',
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        };
-
-        setMessages(prev => [...prev, newMsg]);
-        setNewMessage('');
-        setShowEmojiPicker(false);
-        setIsTyping(true);
-
-        // Clear any existing timeout
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-            timeoutRef.current = null;
-        }
-
-        try {
-            const apiResp = await sendMessageToAPI(messageText);
-            const aiText = apiResp?.response || apiResp?.message || apiResp?.text || getCounselorReply(messageText);
-
-            const counselorReply = {
-                id: Date.now() + 1,
-                text: aiText,
-                sender: 'counselor',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            setMessages(prev => [...prev, counselorReply]);
-        } catch (err) {
-            const counselorReply = {
-                id: Date.now() + 1,
-                text: "I'm having trouble connecting to the assistant. Please try again later.",
-                sender: 'counselor',
-                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            };
-            setMessages(prev => [...prev, counselorReply]);
-        } finally {
-            setIsTyping(false);
-        }
-    };
-
-    // Generate counselor reply based on message
-    const getCounselorReply = (message) => {
-        const replies = [
-            "I understand how you feel. Can you tell me more?",
-            "That's completely normal. Let's work through this together.",
-            "Thank you for sharing that with me.",
-            "I'm here to support you. What specific aspect would you like to discuss?",
-            "Let's take a moment to explore this further.",
-            "Your feelings are valid. How long have you been experiencing this?",
-            "I appreciate you opening up about this.",
-            "We can work on some coping strategies together."
-        ];
-        return replies[Math.floor(Math.random() * replies.length)];
-    };
+    // Auto-refresh messages every 30 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (currentChat) {
+                fetchMessagesFromAPI();
+            }
+        }, 30000);
+        
+        return () => clearInterval(interval);
+    }, [currentChat]);
 
     // Handle key press for sending message
     const handleKeyPress = (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
+        if (e.key === 'Enter' && !e.shiftKey && !isSending) {
             e.preventDefault();
             handleSendMessage();
         }
@@ -280,9 +401,9 @@ const ChatBox = () => {
 
     // Options menu items
     const optionsMenuItems = [
-        { id: 1, label: 'Clear Chat', icon: '🗑️' },
-        { id: 2, label: 'Report Issue', icon: '⚠️' },
-        { id: 3, label: 'Block Counselor', icon: '🚫' },
+        { id: 1, label: 'Refresh Messages', icon: '🔄' },
+        { id: 2, label: 'Clear Chat', icon: '🗑️' },
+        { id: 3, label: 'Report Issue', icon: '⚠️' },
         { id: 4, label: 'Chat Details', icon: '📋' },
     ];
 
@@ -290,23 +411,30 @@ const ChatBox = () => {
     const handleFileAttach = () => {
         const input = document.createElement('input');
         input.type = 'file';
-        input.onchange = (e) => {
+        input.onchange = async (e) => {
             const file = e.target.files[0];
             if (file) {
-                const newMsg = {
-                    id: Date.now(),
+                const fileMessage = {
+                    id: `temp_${Date.now()}`,
                     text: `📎 Attached file: ${file.name}`,
                     sender: 'user',
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    isFile: true
+                    isFile: true,
+                    status: 'sending',
+                    isTemporary: true
                 };
-                setMessages(prev => [...prev, newMsg]);
+                setMessages(prev => [...prev, fileMessage]);
+                
+                // TODO: Implement file upload to backend
+                setTimeout(() => {
+                    setMessages(prev => prev.filter(msg => !msg.isTemporary));
+                }, 1000);
             }
         };
         input.click();
     };
 
-    // Handle input change for typing indicator
+    // Handle input change
     const handleInputChange = (e) => {
         setNewMessage(e.target.value);
         setIsTyping(e.target.value.trim() !== '');
@@ -380,6 +508,53 @@ const ChatBox = () => {
         );
     };
 
+    // Render message status indicator
+    const renderMessageStatus = (message) => {
+        if (message.sender !== 'user') return null;
+        
+        switch (message.status) {
+            case 'sending':
+                return <span className="message-status sending">⌛ Sending...</span>;
+            case 'sent':
+                return <span className="message-status sent">✓ Sent</span>;
+            case 'error':
+                return <span className="message-status error">⚠️ Failed</span>;
+            default:
+                return null;
+        }
+    };
+
+    // Render chat status banner
+    const renderChatStatusBanner = () => {
+        if (!chatStatus) return null;
+        
+        let statusClass = '';
+        let statusText = '';
+        
+        switch (chatStatus) {
+            case 'accepted':
+                statusClass = 'status-accepted';
+                statusText = '✓ Chat session active';
+                break;
+            case 'pending':
+                statusClass = 'status-pending';
+                statusText = '⏳ Waiting for counselor to accept...';
+                break;
+            case 'ended':
+                statusClass = 'status-ended';
+                statusText = '🔒 Chat session ended';
+                break;
+            default:
+                return null;
+        }
+        
+        return (
+            <div className={`chat-status-banner ${statusClass}`}>
+                {statusText}
+            </div>
+        );
+    };
+
     return (
         <div className="chatContainerFull">
             <div className="chatBoxMain">
@@ -448,6 +623,8 @@ const ChatBox = () => {
                                                 setShowOptions(false);
                                                 if (item.label === 'Clear Chat') {
                                                     setMessages([]);
+                                                } else if (item.label === 'Refresh Messages') {
+                                                    fetchMessagesFromAPI();
                                                 } else {
                                                     alert(`${item.label} clicked`);
                                                 }
@@ -464,42 +641,57 @@ const ChatBox = () => {
                     </div>
                 </header>
 
+                {/* Chat Status Banner */}
+                {renderChatStatusBanner()}
+
                 {/* Messages Container */}
                 <main className="chatMessagesArea" ref={messagesContainerRef}>
-                    <div className="chatWelcomeCard">
-                        <div className="chatWelcomeInner">
-                            <div className="chatWelcomeAvatar" aria-hidden="true">
-                                {renderProfileAvatar(currentCounselor, 'lg')}
-                            </div>
-                            <div className="chatWelcomeMsg">
-                                <h3 className="chatWelcomeTitle">
-                                    Welcome to your session with {currentCounselor.name}
-                                </h3>
-                                <p className="chatWelcomeDesc">
-                                    This is a safe space to share your thoughts and feelings.
-                                    Everything discussed here is confidential.
-                                </p>
-                                <time className="chatWelcomeTime">
-                                    {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
-                                </time>
-                            </div>
+                    {isLoadingMessages && messages.length === 0 ? (
+                        <div className="chatLoadingMessages">
+                            <div className="loading-spinner"></div>
+                            <p>Loading messages...</p>
                         </div>
-                    </div>
-
-                    {messages.map((message, index) => (
-                        <article 
-                            key={message.id || index} 
-                            className={`chatMsgBubble ${message.sender === 'user' ? 'chatMsgRight' : 'chatMsgLeft'}`}
-                        >
-                            <div className="chatMsgContent">
-                                <p className="chatMsgText">{message.text}</p>
-                                <time className="chatMsgTimestamp">{message.time}</time>
+                    ) : (
+                        <>
+                            <div className="chatWelcomeCard">
+                                <div className="chatWelcomeInner">
+                                    <div className="chatWelcomeAvatar" aria-hidden="true">
+                                        {renderProfileAvatar(currentCounselor, 'lg')}
+                                    </div>
+                                    <div className="chatWelcomeMsg">
+                                        <h3 className="chatWelcomeTitle">
+                                            Welcome to your session with {currentCounselor.name}
+                                        </h3>
+                                        <p className="chatWelcomeDesc">
+                                            This is a safe space to share your thoughts and feelings.
+                                            Everything discussed here is confidential.
+                                        </p>
+                                        <time className="chatWelcomeTime">
+                                            {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+                                        </time>
+                                    </div>
+                                </div>
                             </div>
-                        </article>
-                    ))}
-                    
-                    {/* Empty div for scrolling to bottom */}
-                    <div ref={messagesEndRef} />
+
+                            {messages.map((message, index) => (
+                                <article 
+                                    key={message.id || index} 
+                                    className={`chatMsgBubble ${message.sender === 'user' ? 'chatMsgRight' : 'chatMsgLeft'} ${message.status === 'error' ? 'message-error' : ''}`}
+                                >
+                                    <div className="chatMsgContent">
+                                        <p className="chatMsgText">{message.text}</p>
+                                        <div className="chatMsgFooter">
+                                            <time className="chatMsgTimestamp">{message.time}</time>
+                                            {renderMessageStatus(message)}
+                                        </div>
+                                    </div>
+                                </article>
+                            ))}
+                            
+                            {/* Empty div for scrolling to bottom */}
+                            <div ref={messagesEndRef} />
+                        </>
+                    )}
                 </main>
 
                 {/* Emoji Picker */}
@@ -536,6 +728,7 @@ const ChatBox = () => {
                         <button 
                             className="chatAttachBtn"
                             onClick={handleFileAttach}
+                            disabled={isSending}
                             aria-label="Attach file"
                         >
                             <span className="attachIcon" aria-hidden="true">📎</span>
@@ -550,11 +743,13 @@ const ChatBox = () => {
                                 placeholder={`Message ${currentCounselor.name}...`}
                                 className="chatTextInput"
                                 autoComplete="off"
+                                disabled={isSending}
                                 aria-label="Message input"
                             />
                             <button 
                                 className="chatEmojiBtn"
                                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                disabled={isSending}
                                 aria-label="Open emoji picker"
                                 aria-expanded={showEmojiPicker}
                             >
@@ -564,11 +759,13 @@ const ChatBox = () => {
                         
                         <button 
                             onClick={handleSendMessage}
-                            disabled={!newMessage.trim()}
+                            disabled={!newMessage.trim() || isSending}
                             className="chatSendBtn"
                             aria-label="Send message"
                         >
-                            <span className="sendIcon" aria-hidden="true">➤</span>
+                            <span className="sendIcon" aria-hidden="true">
+                                {isSending ? '⏳' : '➤'}
+                            </span>
                         </button>
                     </div>
                 </footer>
