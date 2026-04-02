@@ -1018,3 +1018,132 @@
   border-radius: 50%;
   animation: sms-spin 1s linear infinite;
 }
+/* Call button styles with labels */
+.call-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 12px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: white;
+}
+
+.call-btn .call-icon {
+  font-size: 20px;
+}
+
+.call-btn .call-label {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.call-btn.voice {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.call-btn.video {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.call-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.call-btn.loading {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
+}
+
+.call-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Error banner styles */
+.sms-call-error-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-left: 4px solid #ef4444;
+  padding: 10px 16px;
+  margin: 0 16px 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sms-call-error-banner .error-icon {
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.sms-call-error-banner .error-text {
+  flex: 1;
+  color: #991b1b;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.sms-call-error-banner .error-close {
+  background: transparent;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  color: #991b1b;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.sms-call-error-banner .error-close:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Chat Status Banner */
+.sms-chat-status-banner {
+  padding: 8px 16px;
+  margin: 0 16px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  animation: slideDown 0.3s ease;
+}
+
+.sms-chat-status-banner.status-accepted {
+  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+  color: #065f46;
+  border-left: 3px solid #10b981;
+}
+
+.sms-chat-status-banner.status-pending {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #92400e;
+  border-left: 3px solid #f59e0b;
+}
+
+.sms-chat-status-banner.status-ended {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #991b1b;
+  border-left: 3px solid #ef4444;
+}
