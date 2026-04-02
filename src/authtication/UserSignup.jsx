@@ -297,7 +297,7 @@ const UserSignup = () => {
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email: formData.email,
         password: formData.password
-      });
+      },{ withCredentials: true });
 
       const token = response.data?.token || response.data?.accessToken || response.data?.data?.token || response.data?.data?.accessToken;
       const refreshToken = response.data?.refreshToken || response.data?.data?.refreshToken;
