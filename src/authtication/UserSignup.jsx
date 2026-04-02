@@ -311,6 +311,7 @@ const UserSignup = () => {
       if (token) {
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userType", "user");
+         localStorage.setItem('refreshToken', response?.data?.refreshToken); // ← CRITICAL
         localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("token", token);
         localStorage.setItem("accessToken", token);
