@@ -1,10 +1,9 @@
-// VideoCallModal.jsx - Fixed Camera Switching with API Integration
+// VideoCallModal.jsx - Updated to handle complete user and counselor data
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
 import './VideoCallModal.css';
 
-const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
+const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeakerOn, setIsSpeakerOn] = useState(false);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -21,146 +20,102 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
     const [showSettings, setShowSettings] = useState(false);
     const [volumeLevel, setVolumeLevel] = useState(70);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
-    const [callApiData, setCallApiData] = useState(null);
-    const [callStatus, setCallStatus] = useState('initiating'); // initiating, ringing, connected, ended
+    
+    // Complete call data states
+    const [callerInfo, setCallerInfo] = useState({
+        name: '',
+        id: '',
+        email: '',
+        phone: '',
+        specialization: '',
+        profilePic: ''
+    });
+    
+    const [userInfo, setUserInfo] = useState({
+        name: '',
+        id: '',
+        email: '',
+        phone: '',
+        role: ''
+    });
+    
+    const [callMetadata, setCallMetadata] = useState({
+        callId: '',
+        roomId: '',
+        type: 'video',
+        status: 'connecting',
+        startTime: null,
+        chatId: '',
+        apiCallData: null,
+        isFallback: false
+    });
 
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const mediaStreamRef = useRef(null);
     const pipWindowRef = useRef(null);
-    const statusCheckInterval = useRef(null);
 
-    const API_BASE_URL = 'http://localhost:5000';
-
-    const defaultCallData = {
-        id: 1,
-        name: "Dr. Priya Sharma",
-        profilePic: "👩‍⚕️",
-        type: "video",
-        status: "connected"
-    };
-
-    const activeCall = callData || defaultCallData;
-
-    // Initialize video call with API
-    const initiateVideoCall = async () => {
-        try {
-            const token = localStorage.getItem('token');
+    // Process callData when modal opens
+    useEffect(() => {
+        if (isOpen && callData) {
+            console.log('Video Call Modal - Received callData:', callData);
             
-            const requestBody = {
-                userId: activeCall.userId || "user_123",
-                userName: activeCall.userName || "John Doe",
-                counsellorId: activeCall.counsellorId || activeCall.id.toString(),
-                counsellorName: activeCall.name,
-                callType: "video"
-            };
-
-            console.log('Initiating video call:', requestBody);
-
-            const response = await axios.post(`${API_BASE_URL}/api/video/initiate`, requestBody, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
+            // Set caller (counselor) information
+            setCallerInfo({
+                name: callData.counselorName || callData.name || 'Counselor',
+                id: callData.counselorId || callData.id,
+                email: callData.counselorEmail || callData.email,
+                phone: callData.counselorPhone || callData.phoneNumber,
+                specialization: callData.counselorSpecialization || 'Mental Health Professional',
+                profilePic: callData.profilePic || callData.avatar
             });
-
-            console.log('Video call initiated:', response.data);
-
-            if (response.data.success) {
-                setCallApiData(response.data);
-                setCallStatus('ringing');
-                
-                // Start checking call status
-                startCallStatusCheck(response.data.callId);
-                
-                return response.data;
-            } else {
-                throw new Error('Failed to initiate call');
-            }
-        } catch (error) {
-            console.error('Error initiating video call:', error);
-            alert('Failed to initiate video call. Please try again.');
-            handleEndCall();
-            return null;
-        }
-    };
-
-    // Check call status periodically
-    const startCallStatusCheck = (callId) => {
-        if (statusCheckInterval.current) {
-            clearInterval(statusCheckInterval.current);
-        }
-
-        statusCheckInterval.current = setInterval(async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await axios.get(`${API_BASE_URL}/api/video/call/${callId}/status`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+            
+            // Set user information
+            if (currentUser) {
+                setUserInfo({
+                    name: currentUser.name || currentUser.fullName || 'User',
+                    id: currentUser.id || currentUser._id,
+                    email: currentUser.email,
+                    phone: currentUser.phoneNumber || currentUser.phone,
+                    role: currentUser.role || 'user'
                 });
-
-                console.log('Call status:', response.data);
-
-                if (response.data.status === 'accepted') {
-                    setCallStatus('connected');
-                    // Stop checking once call is accepted
-                    if (statusCheckInterval.current) {
-                        clearInterval(statusCheckInterval.current);
-                    }
-                } else if (response.data.status === 'rejected' || response.data.status === 'ended') {
-                    handleEndCall();
-                }
-            } catch (error) {
-                console.error('Error checking call status:', error);
+            } else if (callData.userName) {
+                setUserInfo({
+                    name: callData.userName,
+                    id: callData.userId,
+                    email: callData.userEmail,
+                    phone: callData.userPhone,
+                    role: 'user'
+                });
             }
-        }, 3000); // Check every 3 seconds
-    };
-
-    // Accept incoming call (for counsellor)
-    const acceptCall = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await axios.post(`${API_BASE_URL}/api/video/call/${callApiData.callId}/accept`, {}, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            
+            // Set call metadata
+            setCallMetadata({
+                callId: callData.callId || `call_${Date.now()}`,
+                roomId: callData.roomId || `room_${Date.now()}`,
+                type: callData.type || 'video',
+                status: callData.status || 'connecting',
+                startTime: callData.startTime || new Date().toISOString(),
+                chatId: callData.chatId,
+                apiCallData: callData.apiCallData || null,
+                isFallback: callData.isFallback || false
             });
-
-            if (response.data.success) {
-                setCallStatus('connected');
-                if (statusCheckInterval.current) {
-                    clearInterval(statusCheckInterval.current);
-                }
-            }
-        } catch (error) {
-            console.error('Error accepting call:', error);
-        }
-    };
-
-    // Reject incoming call
-    const rejectCall = async () => {
-        try {
-            const token = localStorage.getItem('token');
-            await axios.post(`${API_BASE_URL}/api/video/call/${callApiData.callId}/reject`, {}, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+            
+            setCallDuration(0);
+            
+            // Log complete call data for debugging
+            console.log('Video Call Modal - Processed Data:', {
+                caller: callerInfo,
+                user: userInfo,
+                metadata: callMetadata
             });
-            handleEndCall();
-        } catch (error) {
-            console.error('Error rejecting call:', error);
-            handleEndCall();
         }
-    };
+    }, [isOpen, callData, currentUser]);
 
     useEffect(() => {
         if (isOpen && !isCameraInitialized) {
-            // Initiate the call when modal opens
-            initiateVideoCall().then(() => {
-                initializeCamera(false);
-                getAvailableCameras();
-            });
+            initializeCamera(false);
+            getAvailableCameras();
         }
 
         return () => {
@@ -168,16 +123,13 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                 mediaStreamRef.current.getTracks().forEach(track => track.stop());
                 mediaStreamRef.current = null;
             }
-            if (statusCheckInterval.current) {
-                clearInterval(statusCheckInterval.current);
-            }
         };
     }, [isOpen]);
 
-    // Rest of your useEffect hooks remain the same...
+    // Call duration timer
     useEffect(() => {
         let timer;
-        if (isOpen && isCallActive && callStatus === 'connected') {
+        if (isOpen && isCallActive && callMetadata.startTime && callMetadata.status === 'connected') {
             timer = setInterval(() => {
                 setCallDuration(prev => prev + 1);
             }, 1000);
@@ -185,20 +137,21 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         return () => {
             if (timer) clearInterval(timer);
         };
-    }, [isOpen, isCallActive, callStatus]);
+    }, [isOpen, isCallActive, callMetadata.status]);
 
+    // Simulate connection quality changes
     useEffect(() => {
-        if (isOpen && isCallActive && callStatus === 'connected') {
+        if (isOpen && isCallActive) {
             const qualityInterval = setInterval(() => {
                 const qualities = ['good', 'medium', 'poor'];
                 const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
                 setConnectionQuality(randomQuality);
             }, 10000);
-
             return () => clearInterval(qualityInterval);
         }
-    }, [isOpen, isCallActive, callStatus]);
+    }, [isOpen, isCallActive]);
 
+    // Handle video track enable/disable
     useEffect(() => {
         if (mediaStreamRef.current) {
             const videoTracks = mediaStreamRef.current.getVideoTracks();
@@ -208,6 +161,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         }
     }, [isVideoEnabled]);
 
+    // Handle audio track mute/unmute
     useEffect(() => {
         if (mediaStreamRef.current) {
             const audioTracks = mediaStreamRef.current.getAudioTracks();
@@ -217,6 +171,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         }
     }, [isMuted]);
 
+    // Reset state when modal closes
     useEffect(() => {
         if (!isOpen) {
             setIsMuted(false);
@@ -231,8 +186,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
             setIsPiPMode(false);
             setIsScreenSharing(false);
             setShowSettings(false);
-            setCallApiData(null);
-            setCallStatus('initiating');
+            setCallMetadata(prev => ({ ...prev, status: 'ended' }));
 
             if (mediaStreamRef.current) {
                 mediaStreamRef.current.getTracks().forEach(track => track.stop());
@@ -243,14 +197,9 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                 pipWindowRef.current.close();
                 pipWindowRef.current = null;
             }
-
-            if (statusCheckInterval.current) {
-                clearInterval(statusCheckInterval.current);
-            }
         }
     }, [isOpen]);
 
-    // Initialize camera with proper facing mode
     const initializeCamera = async (useBackCamera = false) => {
         try {
             if (mediaStreamRef.current) {
@@ -277,11 +226,8 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                 localVideoRef.current.srcObject = stream;
             }
 
-            if (remoteVideoRef.current) {
-                remoteVideoRef.current.poster = '/api/placeholder/1280/720';
-            }
-
             setIsCameraInitialized(true);
+            setCallMetadata(prev => ({ ...prev, status: 'connected' }));
             
             const videoTrack = stream.getVideoTracks()[0];
             const settings = videoTrack.getSettings();
@@ -291,6 +237,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
             
         } catch (error) {
             console.error('Error accessing camera:', error);
+            setCallMetadata(prev => ({ ...prev, status: 'camera_error' }));
             
             try {
                 console.log('Trying fallback camera access...');
@@ -306,15 +253,15 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                 }
                 
                 setIsCameraInitialized(true);
+                setCallMetadata(prev => ({ ...prev, status: 'connected' }));
                 
             } catch (fallbackError) {
                 console.error('Fallback camera access also failed:', fallbackError);
-                alert('Unable to access camera. Please check permissions.');
+                setCallMetadata(prev => ({ ...prev, status: 'no_camera' }));
             }
         }
     };
 
-    // Get all available cameras
     const getAvailableCameras = async () => {
         try {
             const devices = await navigator.mediaDevices.enumerateDevices();
@@ -343,7 +290,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         }
     };
 
-    // Switch camera function
     const switchCamera = async () => {
         const newCameraState = !isCameraSwitched;
         setIsCameraSwitched(newCameraState);
@@ -351,7 +297,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         await initializeCamera(newCameraState);
     };
 
-    // Select specific camera by deviceId
     const selectCamera = async (deviceId) => {
         try {
             if (mediaStreamRef.current) {
@@ -386,7 +331,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         }
     };
 
-    // Toggle screen share
     const toggleScreenShare = async () => {
         if (!isScreenSharing) {
             try {
@@ -421,7 +365,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         }
     };
 
-    // Toggle PiP mode
     const togglePiPMode = async () => {
         if (!isPiPMode) {
             try {
@@ -442,35 +385,25 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         }
     };
 
-    // End call with API
-    const handleEndCall = async () => {
+    const handleEndCall = () => {
         setIsCallActive(false);
-        
-        // Update call status on backend
-        if (callApiData?.callId) {
-            try {
-                const token = localStorage.getItem('token');
-                await axios.post(`${API_BASE_URL}/api/video/call/${callApiData.callId}/end`, {}, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-            } catch (error) {
-                console.error('Error ending call:', error);
-            }
-        }
+        setCallMetadata(prev => ({ ...prev, status: 'ended' }));
 
         if (mediaStreamRef.current) {
             mediaStreamRef.current.getTracks().forEach(track => track.stop());
         }
 
-        if (statusCheckInterval.current) {
-            clearInterval(statusCheckInterval.current);
-        }
-
-        if (onCallEnd) {
-            onCallEnd();
-        }
+        // Log call end data for analytics
+        const callEndData = {
+            callId: callMetadata.callId,
+            roomId: callMetadata.roomId,
+            duration: callDuration,
+            endedAt: new Date().toISOString(),
+            caller: callerInfo,
+            user: userInfo,
+            type: callMetadata.type
+        };
+        console.log('Call ended:', callEndData);
 
         setTimeout(() => {
             onClose();
@@ -533,84 +466,50 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
         }
     };
 
-    // Render call waiting/ringing screen
-    const renderWaitingScreen = () => (
-        <div className="call-waiting-screen">
-            <div className="waiting-animation">
-                <div className="ringing-animation"></div>
-                <div className="caller-info">
-                    <div className="caller-avatar-large">
-                        {activeCall.profilePic}
-                    </div>
-                    <h2>{activeCall.name}</h2>
-                    <p>Calling...</p>
-                    <div className="waiting-status">
-                        <span className="status-text">Connecting to {activeCall.name}</span>
-                        <div className="waiting-dots">
-                            <span></span>
-                            <span></span>
-                            <span></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button className="cancel-call-btn" onClick={handleEndCall}>
-                Cancel Call
-            </button>
-        </div>
-    );
+    const getCallStatusDisplay = () => {
+        switch (callMetadata.status) {
+            case 'connecting':
+                return 'Connecting...';
+            case 'connected':
+                return 'Connected';
+            case 'ended':
+                return 'Call Ended';
+            case 'camera_error':
+                return 'Camera Error';
+            case 'no_camera':
+                return 'No Camera Access';
+            default:
+                return callMetadata.status;
+        }
+    };
 
-    // Render incoming call screen (for counsellor)
-    const renderIncomingCallScreen = () => (
-        <div className="incoming-call-screen">
-            <div className="incoming-animation">
-                <div className="incoming-ringing"></div>
-                <div className="caller-info">
-                    <div className="caller-avatar-large">
-                        {activeCall.profilePic}
-                    </div>
-                    <h2>{activeCall.name}</h2>
-                    <p>Incoming Video Call</p>
-                </div>
-            </div>
-            <div className="incoming-call-actions">
-                <button className="accept-call-btn" onClick={acceptCall}>
-                    Accept
-                </button>
-                <button className="reject-call-btn" onClick={rejectCall}>
-                    Reject
-                </button>
-            </div>
-        </div>
-    );
+    const getProfileDisplay = () => {
+        if (callerInfo.profilePic && (callerInfo.profilePic.startsWith('http') || callerInfo.profilePic.startsWith('/'))) {
+            return null;
+        }
+        return callerInfo.profilePic || callerInfo.name.charAt(0);
+    };
+
+    const isImageProfilePic = () => {
+        return callerInfo.profilePic && (callerInfo.profilePic.startsWith('http') || callerInfo.profilePic.startsWith('/') || callerInfo.profilePic.includes('base64'));
+    };
 
     if (!isOpen) return null;
 
-    // Show waiting/incoming screens based on call status
-    if (callStatus === 'initiating' || callStatus === 'ringing') {
-        // Check if this is incoming call (counsellor view)
-        const isIncoming = activeCall.role === 'counsellor';
-        return (
-            <div className="video-modal-overlay" onClick={handleEndCall}>
-                <div className="video-modal-container" onClick={(e) => e.stopPropagation()}>
-                    {isIncoming ? renderIncomingCallScreen() : renderWaitingScreen()}
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className={`video-modal-overlay ${isFullScreen ? 'fullscreen' : ''}`} onClick={onClose}>
+        <div className={`video-modal-overlay ${isFullScreen ? 'fullscreen' : ''}`}>
             <div
                 className={`video-modal-container ${isFullScreen ? 'fullscreen' : ''}`}
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Modal Header */}
                 <div className="video-modal-header">
                     <div className="header-left">
                         <span className="header-icon">📹</span>
                         <div className="call-info">
-                            <h3>Video Call with {activeCall.name}</h3>
+                            <h3>Video Call with {callerInfo.name}</h3>
+                            {callerInfo.specialization && (
+                                <p className="caller-specialization">{callerInfo.specialization}</p>
+                            )}
                             <div className={`connection-quality ${getQualityClass()}`}>
                                 <span className="quality-icon">{getQualityIcon()}</span>
                                 <span className="quality-text">{connectionQuality}</span>
@@ -627,11 +526,8 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                     </div>
                 </div>
 
-                {/* Modal Content */}
                 <div className="video-modal-content">
-                    {/* Main Video Area */}
                     <div className="video-main-area">
-                        {/* Remote Video (Large) */}
                         <div className="remote-video-container">
                             {isVideoEnabled ? (
                                 <>
@@ -641,24 +537,39 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                                         autoPlay
                                         playsInline
                                         poster="/api/placeholder/1280/720"
-                                    >
-                                        <source src="/api/placeholder/video" type="video/mp4" />
-                                    </video>
+                                    />
                                     <div className="remote-video-overlay">
                                         <div className="remote-video-placeholder">
-                                            <span className="remote-avatar">{activeCall.profilePic}</span>
+                                            {isImageProfilePic() ? (
+                                                <img 
+                                                    src={callerInfo.profilePic} 
+                                                    alt={callerInfo.name}
+                                                    className="remote-avatar-image"
+                                                    onError={(e) => {
+                                                        e.target.style.display = 'none';
+                                                        e.target.parentElement.innerHTML = `<span class="remote-avatar">${getProfileDisplay()}</span>`;
+                                                    }}
+                                                />
+                                            ) : (
+                                                <span className="remote-avatar">{getProfileDisplay()}</span>
+                                            )}
                                             <div className="remote-info">
-                                                <h2>{activeCall.name}</h2>
+                                                <h2>{callerInfo.name}</h2>
+                                                {callerInfo.specialization && (
+                                                    <p className="specialization">{callerInfo.specialization}</p>
+                                                )}
+                                                {callMetadata.roomId && (
+                                                    <p className="room-id">Room: {callMetadata.roomId.substring(0, 8)}...</p>
+                                                )}
                                                 <p className="call-status">
-                                                    {isCallActive ? (
-                                                        <span className="status-connected">
-                                                            <span className="pulse-dot"></span>
-                                                            Connected
-                                                        </span>
-                                                    ) : (
-                                                        <span className="status-ended">Call Ended</span>
-                                                    )}
+                                                    <span className={`status-${callMetadata.status}`}>
+                                                        {callMetadata.status === 'connected' && <span className="pulse-dot"></span>}
+                                                        {getCallStatusDisplay()}
+                                                    </span>
                                                 </p>
+                                                {callMetadata.isFallback && (
+                                                    <p className="fallback-warning">⚠️ Using fallback connection</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -666,17 +577,17 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                             ) : (
                                 <div className="video-disabled">
                                     <span className="video-off-icon">🚫📹</span>
-                                    <p>Remote camera is off</p>
+                                    <p>Camera is off</p>
                                 </div>
                             )}
 
-                            {/* Call Duration Badge */}
-                            <div className="call-duration-badge">
-                                <span className="duration-icon">⏱️</span>
-                                <span className="duration-text">{formatTime(callDuration)}</span>
-                            </div>
+                            {isCallActive && callMetadata.status === 'connected' && (
+                                <div className="call-duration-badge">
+                                    <span className="duration-icon">⏱️</span>
+                                    <span className="duration-text">{formatTime(callDuration)}</span>
+                                </div>
+                            )}
 
-                            {/* Recording Indicator */}
                             {isRecording && (
                                 <div className="recording-indicator">
                                     <span className="recording-dot"></span>
@@ -684,7 +595,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                                 </div>
                             )}
 
-                            {/* Screen Sharing Indicator */}
                             {isScreenSharing && (
                                 <div className="screen-share-indicator">
                                     <span className="share-icon">🖥️</span>
@@ -692,7 +602,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                                 </div>
                             )}
 
-                            {/* Camera Indicator */}
                             <div className="camera-indicator">
                                 <span className="camera-icon">📷</span>
                                 <span className="camera-text">
@@ -701,7 +610,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                             </div>
                         </div>
 
-                        {/* Local Video (Picture in Picture) */}
                         <div className={`local-video-container ${!isVideoEnabled ? 'video-off' : ''}`}>
                             <video
                                 ref={localVideoRef}
@@ -721,14 +629,14 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                                 </div>
                             )}
                             <div className="local-video-label">
-                                <span>You ({isCameraSwitched ? 'Back' : 'Front'})</span>
+                                <span>{userInfo.name || 'You'} ({isCameraSwitched ? 'Back' : 'Front'})</span>
                             </div>
                         </div>
 
-                        {/* Settings Panel */}
                         {showSettings && (
                             <div className="settings-panel">
                                 <h4>Call Settings</h4>
+                                
                                 <div className="setting-item">
                                     <label>Volume</label>
                                     <input
@@ -740,35 +648,59 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                                     />
                                     <span>{volumeLevel}%</span>
                                 </div>
+                                
+                                {availableCameras.length > 0 && (
+                                    <>
+                                        <div className="setting-item">
+                                            <label>Select Camera</label>
+                                            <select 
+                                                value={currentCamera} 
+                                                onChange={(e) => selectCamera(e.target.value)}
+                                            >
+                                                {availableCameras.map(camera => (
+                                                    <option key={camera.deviceId} value={camera.deviceId}>
+                                                        {camera.label || 
+                                                         (camera.isFrontCamera ? 'Front Camera' : 
+                                                          camera.isBackCamera ? 'Back Camera' : 
+                                                          `Camera ${camera.deviceId.slice(0, 5)}...`)}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="setting-item">
+                                            <label>Current Camera</label>
+                                            <p className="current-camera-info">
+                                                {isCameraSwitched ? '📷 Back Camera' : '🤳 Front Camera'}
+                                            </p>
+                                        </div>
+                                    </>
+                                )}
+                                
                                 <div className="setting-item">
-                                    <label>Select Camera</label>
-                                    <select 
-                                        value={currentCamera} 
-                                        onChange={(e) => selectCamera(e.target.value)}
-                                    >
-                                        {availableCameras.map(camera => (
-                                            <option key={camera.deviceId} value={camera.deviceId}>
-                                                {camera.label || 
-                                                 (camera.isFrontCamera ? 'Front Camera' : 
-                                                  camera.isBackCamera ? 'Back Camera' : 
-                                                  `Camera ${camera.deviceId.slice(0, 5)}...`)}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <label>Call Information</label>
+                                    <div className="caller-info-display">
+                                        <p><strong>Counselor:</strong> {callerInfo.name}</p>
+                                        {callerInfo.specialization && <p><strong>Specialization:</strong> {callerInfo.specialization}</p>}
+                                        {callerInfo.email && <p><strong>Email:</strong> {callerInfo.email}</p>}
+                                        {callerInfo.phone && <p><strong>Phone:</strong> {callerInfo.phone}</p>}
+                                        
+                                        <p><strong>User:</strong> {userInfo.name}</p>
+                                        {userInfo.email && <p><strong>User Email:</strong> {userInfo.email}</p>}
+                                        
+                                        <p><strong>Call Type:</strong> {callMetadata.type === 'video' ? '📹 Video Call' : '📞 Voice Call'}</p>
+                                        <p><strong>Duration:</strong> {formatTime(callDuration)}</p>
+                                        {callMetadata.roomId && <p><strong>Room ID:</strong> {callMetadata.roomId.substring(0, 8)}...</p>}
+                                        {callMetadata.callId && <p><strong>Call ID:</strong> {callMetadata.callId.substring(0, 8)}...</p>}
+                                        {callMetadata.chatId && <p><strong>Chat ID:</strong> {callMetadata.chatId.substring(0, 8)}...</p>}
+                                    </div>
                                 </div>
-                                <div className="setting-item">
-                                    <label>Current Camera</label>
-                                    <p className="current-camera-info">
-                                        {isCameraSwitched ? '📷 Back Camera' : '🤳 Front Camera'}
-                                    </p>
-                                </div>
+                                
                                 <button className="close-settings" onClick={() => setShowSettings(false)}>
                                     Close
                                 </button>
                             </div>
                         )}
 
-                        {/* Call Controls */}
                         <div className="video-call-controls">
                             <button
                                 className={`control-btn ${isMuted ? 'active' : ''}`}
@@ -797,17 +729,19 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                                 <span className="btn-label">{isSpeakerOn ? 'Speaker off' : 'Speaker on'}</span>
                             </button>
 
-                            <button
-                                className="control-btn"
-                                onClick={switchCamera}
-                                title={isCameraSwitched ? 'Switch to front camera' : 'Switch to back camera'}
-                                disabled={availableCameras.length < 2}
-                            >
-                                <span className="btn-icon">🔄</span>
-                                <span className="btn-label">
-                                    {isCameraSwitched ? 'Front' : 'Back'}
-                                </span>
-                            </button>
+                            {availableCameras.length >= 1 && (
+                                <button
+                                    className="control-btn"
+                                    onClick={switchCamera}
+                                    title={isCameraSwitched ? 'Switch to front camera' : 'Switch to back camera'}
+                                    disabled={availableCameras.length < 2}
+                                >
+                                    <span className="btn-icon">🔄</span>
+                                    <span className="btn-label">
+                                        {isCameraSwitched ? 'Front' : 'Back'}
+                                    </span>
+                                </button>
+                            )}
 
                             <button
                                 className="control-btn"
@@ -816,6 +750,33 @@ const VideoCallModal = ({ isOpen, onClose, callData, onCallEnd }) => {
                             >
                                 <span className="btn-icon">{isScreenSharing ? '⏹️' : '🖥️'}</span>
                                 <span className="btn-label">{isScreenSharing ? 'Stop share' : 'Share'}</span>
+                            </button>
+
+                            <button
+                                className="control-btn"
+                                onClick={takeScreenshot}
+                                title="Take screenshot"
+                            >
+                                <span className="btn-icon">📸</span>
+                                <span className="btn-label">Screenshot</span>
+                            </button>
+
+                            <button
+                                className="control-btn"
+                                onClick={togglePiPMode}
+                                title="Picture in Picture"
+                            >
+                                <span className="btn-icon">🖼️</span>
+                                <span className="btn-label">PiP</span>
+                            </button>
+
+                            <button
+                                className="control-btn"
+                                onClick={() => setShowSettings(!showSettings)}
+                                title="Settings"
+                            >
+                                <span className="btn-icon">⚙️</span>
+                                <span className="btn-label">Settings</span>
                             </button>
 
                             <button

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./Dashboardcou.css";
 
 /**
@@ -6,6 +6,17 @@ import "./Dashboardcou.css";
  * Koi side menu nahi, sirf dashboard statistics aur cards
  */
 const Dashboard = () => {
+    const [loading, setLoading] = useState(true);
+
+    // Simulate loading data
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, []);
+
     // Dashboard statistics data
     const dashboardStats = [
         { title: "Total Patients", value: "156", icon: "👥", change: "+12%", color: "#4285F4" },
@@ -47,8 +58,18 @@ const Dashboard = () => {
         { day: "Sat", sessions: 3, patients: 4 },
     ];
 
+    if (loading) {
+        return (
+            <div className="Coun-dashboard-content" style={{ padding: "15px" }}>
+                <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="Coun-dashboard-content" style={{padding:"15px"}}>
+        <div className="Coun-dashboard-content" style={{ padding: "15px" }}>
             {/* Header Section */}
             <div className="dashboard-header">
                 <div>

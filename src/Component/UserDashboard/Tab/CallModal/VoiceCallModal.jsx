@@ -1,468 +1,495 @@
-// VoiceCallModal.jsx
+// VoiceCallModal.jsx - Updated to handle complete user and counselor data
+
 import React, { useState, useEffect, useRef } from 'react';
 import './VoiceCallModal.css';
 
-const VoiceCallModal = ({ isOpen, onClose, callData }) => {
-  const [isMuted, setIsMuted] = useState(false);
-  const [isSpeakerOn, setIsSpeakerOn] = useState(false);
-  const [isKeypadOpen, setIsKeypadOpen] = useState(false);
-  const [callDuration, setCallDuration] = useState(0);
-  const [isCallActive, setIsCallActive] = useState(true);
-  const [isOnHold, setIsOnHold] = useState(false);
-  const [volumeLevel, setVolumeLevel] = useState(70);
-  const [showVolumeControl, setShowVolumeControl] = useState(false);
-  const [isAudioInitialized, setIsAudioInitialized] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [callQuality, setCallQuality] = useState('good');
-  const [showDialpad, setShowDialpad] = useState(false);
-  const [dialedNumber, setDialedNumber] = useState('');
-  const [isBluetoothEnabled, setIsBluetoothEnabled] = useState(false);
-  const [showMoreOptions, setShowMoreOptions] = useState(false);
-  const [backgroundNoise, setBackgroundNoise] = useState(false);
-  const [isVoicemail, setIsVoicemail] = useState(false);
+const VoiceCallModal = ({ isOpen, onClose, callData, currentUser }) => {
+    const [isMuted, setIsMuted] = useState(false);
+    const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+    const [callDuration, setCallDuration] = useState(0);
+    const [isCallActive, setIsCallActive] = useState(true);
+    const [isRecording, setIsRecording] = useState(false);
+    const [connectionQuality, setConnectionQuality] = useState('good');
+    const [showSettings, setShowSettings] = useState(false);
+    const [volumeLevel, setVolumeLevel] = useState(70);
+    const [audioLevel, setAudioLevel] = useState(0);
+    const [isConnecting, setIsConnecting] = useState(true);
+    
+    // Complete call data states
+    const [callerInfo, setCallerInfo] = useState({
+        name: '',
+        id: '',
+        email: '',
+        phone: '',
+        specialization: '',
+        profilePic: ''
+    });
+    
+    const [userInfo, setUserInfo] = useState({
+        name: '',
+        id: '',
+        email: '',
+        phone: '',
+        role: ''
+    });
+    
+    const [callMetadata, setCallMetadata] = useState({
+        callId: '',
+        roomId: '',
+        type: 'voice',
+        status: 'connecting',
+        startTime: null,
+        chatId: '',
+        apiCallData: null,
+        isFallback: false
+    });
 
-  const localAudioRef = useRef(null);
-  const remoteAudioRef = useRef(null);
-  const mediaStreamRef = useRef(null);
-  const audioContextRef = useRef(null);
+    const audioContextRef = useRef(null);
+    const mediaStreamRef = useRef(null);
+    const sourceNodeRef = useRef(null);
+    const animationFrameRef = useRef(null);
 
-  const defaultCallData = {
-    id: 1,
-    name: "Dr. Rajesh Kumar",
-    profilePic: "👨‍⚕️",
-    phoneNumber: "+91 98765 43210",
-    type: "voice",
-    location: "Mumbai, India",
-    company: "City Hospital"
-  };
-
-  const activeCall = callData || defaultCallData;
-
-  useEffect(() => {
-    if (isOpen && !isAudioInitialized) {
-      initializeAudio();
-    }
-
-    return () => {
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach(track => track.stop());
-        mediaStreamRef.current = null;
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-      }
-    };
-  }, [isOpen]);
-
-  useEffect(() => {
-    let timer;
-    if (isOpen && isCallActive && !isOnHold) {
-      timer = setInterval(() => {
-        setCallDuration(prev => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (timer) clearInterval(timer);
-    };
-  }, [isOpen, isCallActive, isOnHold]);
-
-  useEffect(() => {
-    if (isOpen && isCallActive) {
-      const qualityInterval = setInterval(() => {
-        const qualities = ['good', 'medium', 'poor'];
-        const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
-        setCallQuality(randomQuality);
-      }, 15000);
-
-      return () => clearInterval(qualityInterval);
-    }
-  }, [isOpen, isCallActive]);
-
-  useEffect(() => {
-    if (mediaStreamRef.current) {
-      const audioTracks = mediaStreamRef.current.getAudioTracks();
-      audioTracks.forEach(track => {
-        track.enabled = !isMuted;
-      });
-    }
-  }, [isMuted]);
-
-  useEffect(() => {
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.setSinkId?.(isSpeakerOn ? 'speaker' : 'default');
-    }
-  }, [isSpeakerOn]);
-
-  useEffect(() => {
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.volume = volumeLevel / 100;
-    }
-  }, [volumeLevel]);
-
-  useEffect(() => {
-    if (!isOpen) {
-      setIsMuted(false);
-      setIsSpeakerOn(false);
-      setIsKeypadOpen(false);
-      setCallDuration(0);
-      setIsCallActive(true);
-      setIsOnHold(false);
-      setShowVolumeControl(false);
-      setIsAudioInitialized(false);
-      setIsRecording(false);
-      setShowDialpad(false);
-      setDialedNumber('');
-      setIsBluetoothEnabled(false);
-      setShowMoreOptions(false);
-      setBackgroundNoise(false);
-      setIsVoicemail(false);
-
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach(track => track.stop());
-        mediaStreamRef.current = null;
-      }
-    }
-  }, [isOpen]);
-
-  const initializeAudio = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
+    // Process callData when modal opens
+    useEffect(() => {
+        if (isOpen && callData) {
+            console.log('Voice Call Modal - Received callData:', callData);
+            
+            // Set caller (counselor) information
+            setCallerInfo({
+                name: callData.counselorName || callData.name || 'Counselor',
+                id: callData.counselorId || callData.id,
+                email: callData.counselorEmail || callData.email,
+                phone: callData.counselorPhone || callData.phoneNumber,
+                specialization: callData.counselorSpecialization || 'Mental Health Professional',
+                profilePic: callData.profilePic || callData.avatar
+            });
+            
+            // Set user information
+            if (currentUser) {
+                setUserInfo({
+                    name: currentUser.name || currentUser.fullName || 'User',
+                    id: currentUser.id || currentUser._id,
+                    email: currentUser.email,
+                    phone: currentUser.phoneNumber || currentUser.phone,
+                    role: currentUser.role || 'user'
+                });
+            } else if (callData.userName) {
+                setUserInfo({
+                    name: callData.userName,
+                    id: callData.userId,
+                    email: callData.userEmail,
+                    phone: callData.userPhone,
+                    role: 'user'
+                });
+            }
+            
+            // Set call metadata
+            setCallMetadata({
+                callId: callData.callId || `call_${Date.now()}`,
+                roomId: callData.roomId || `room_${Date.now()}`,
+                type: callData.type || 'voice',
+                status: callData.status || 'connecting',
+                startTime: callData.startTime || new Date().toISOString(),
+                chatId: callData.chatId,
+                apiCallData: callData.apiCallData || null,
+                isFallback: callData.isFallback || false
+            });
+            
+            setCallDuration(0);
+            setIsConnecting(true);
+            
+            // Simulate connection after 2 seconds
+            setTimeout(() => {
+                setIsConnecting(false);
+                setCallMetadata(prev => ({ ...prev, status: 'connected' }));
+            }, 2000);
+            
+            // Log complete call data for debugging
+            console.log('Voice Call Modal - Processed Data:', {
+                caller: callerInfo,
+                user: userInfo,
+                metadata: callMetadata
+            });
         }
-      });
+    }, [isOpen, callData, currentUser]);
 
-      mediaStreamRef.current = stream;
+    useEffect(() => {
+        if (isOpen && !isConnecting) {
+            initializeAudio();
+        }
 
-      if (localAudioRef.current) {
-        localAudioRef.current.srcObject = stream;
-      }
+        return () => {
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+            }
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+        };
+    }, [isOpen, isConnecting]);
 
-      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+    // Call duration timer
+    useEffect(() => {
+        let timer;
+        if (isOpen && isCallActive && callMetadata.startTime && callMetadata.status === 'connected') {
+            timer = setInterval(() => {
+                setCallDuration(prev => prev + 1);
+            }, 1000);
+        }
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, [isOpen, isCallActive, callMetadata.status]);
 
-      setIsAudioInitialized(true);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
-      alert('Unable to access microphone. Please check permissions.');
-    }
-  };
+    // Simulate connection quality changes
+    useEffect(() => {
+        if (isOpen && isCallActive) {
+            const qualityInterval = setInterval(() => {
+                const qualities = ['good', 'medium', 'poor'];
+                const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
+                setConnectionQuality(randomQuality);
+            }, 10000);
+            return () => clearInterval(qualityInterval);
+        }
+    }, [isOpen, isCallActive]);
 
-  const handleEndCall = () => {
-    setIsCallActive(false);
+    // Handle audio mute/unmute
+    useEffect(() => {
+        if (mediaStreamRef.current) {
+            const audioTracks = mediaStreamRef.current.getAudioTracks();
+            audioTracks.forEach(track => {
+                track.enabled = !isMuted;
+            });
+        }
+    }, [isMuted]);
 
-    if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach(track => track.stop());
-    }
+    // Reset state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setIsMuted(false);
+            setIsSpeakerOn(false);
+            setCallDuration(0);
+            setIsCallActive(true);
+            setIsRecording(false);
+            setShowSettings(false);
+            setIsConnecting(true);
+            setCallMetadata(prev => ({ ...prev, status: 'ended' }));
 
-    setTimeout(() => {
-      onClose();
-    }, 800);
-  };
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+                mediaStreamRef.current = null;
+            }
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+                audioContextRef.current = null;
+            }
+            if (animationFrameRef.current) {
+                cancelAnimationFrame(animationFrameRef.current);
+            }
+        }
+    }, [isOpen]);
 
-  const formatTime = (seconds) => {
-    const hrs = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
+    const initializeAudio = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaStreamRef.current = stream;
 
-    if (hrs > 0) {
-      return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    }
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
+            if (!isMuted) {
+                const audioTracks = stream.getAudioTracks();
+                audioTracks.forEach(track => {
+                    track.enabled = true;
+                });
+            }
 
-  const toggleHold = () => {
-    setIsOnHold(!isOnHold);
-    if (mediaStreamRef.current) {
-      const audioTracks = mediaStreamRef.current.getAudioTracks();
-      audioTracks.forEach(track => {
-        track.enabled = isOnHold;
-      });
-    }
-  };
+            // Initialize audio context for visualizer
+            audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+            sourceNodeRef.current = audioContextRef.current.createMediaStreamSource(stream);
+            const analyser = audioContextRef.current.createAnalyser();
+            analyser.fftSize = 256;
+            sourceNodeRef.current.connect(analyser);
+            
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            
+            const updateAudioLevel = () => {
+                analyser.getByteFrequencyData(dataArray);
+                const average = dataArray.reduce((a, b) => a + b, 0) / dataArray.length;
+                const level = Math.min(100, (average / 255) * 100);
+                setAudioLevel(level);
+                animationFrameRef.current = requestAnimationFrame(updateAudioLevel);
+            };
+            
+            updateAudioLevel();
+            
+        } catch (error) {
+            console.error('Error accessing microphone:', error);
+            setCallMetadata(prev => ({ ...prev, status: 'microphone_error' }));
+        }
+    };
 
-  const handleKeypadPress = (key) => {
-    setDialedNumber(prev => prev + key);
-    playDTMFTone(key);
-  };
+    const handleEndCall = () => {
+        setIsCallActive(false);
+        setCallMetadata(prev => ({ ...prev, status: 'ended' }));
 
-  const playDTMFTone = (digit) => {
-    if (audioContextRef.current) {
-      const oscillator = audioContextRef.current.createOscillator();
-      const gainNode = audioContextRef.current.createGain();
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        }
 
-      oscillator.connect(gainNode);
-      gainNode.connect(audioContextRef.current.destination);
+        // Log call end data for analytics
+        const callEndData = {
+            callId: callMetadata.callId,
+            roomId: callMetadata.roomId,
+            duration: callDuration,
+            endedAt: new Date().toISOString(),
+            caller: callerInfo,
+            user: userInfo,
+            type: callMetadata.type
+        };
+        console.log('Voice call ended:', callEndData);
 
-      const frequencies = {
-        '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
-        '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
-        '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
-        '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
-      };
+        setTimeout(() => {
+            onClose();
+        }, 1000);
+    };
 
-      const freq = frequencies[digit];
-      if (freq) {
-        oscillator.frequency.setValueAtTime(freq[0], audioContextRef.current.currentTime);
-        gainNode.gain.setValueAtTime(0.1, audioContextRef.current.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContextRef.current.currentTime + 0.1);
-        oscillator.start();
-        oscillator.stop(audioContextRef.current.currentTime + 0.1);
-      }
-    }
-  };
+    const toggleRecording = () => {
+        setIsRecording(!isRecording);
+        if (!isRecording) {
+            console.log('Started recording call');
+            setTimeout(() => {
+                setIsRecording(false);
+                console.log('Stopped recording call');
+            }, 30000);
+        }
+    };
 
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
-    if (!isRecording) {
-      console.log('Recording started');
-    } else {
-      console.log('Recording stopped');
-    }
-  };
+    const formatTime = (seconds) => {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
 
-  const toggleBluetooth = () => {
-    setIsBluetoothEnabled(!isBluetoothEnabled);
-  };
+        if (hrs > 0) {
+            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
 
-  const transferCall = () => {
-    alert('Transferring call...');
-  };
+    const getQualityIcon = () => {
+        switch (connectionQuality) {
+            case 'good': return '📶';
+            case 'medium': return '📶';
+            case 'poor': return '📶';
+            default: return '📶';
+        }
+    };
 
-  const mergeCalls = () => {
-    alert('Merging calls...');
-  };
+    const getQualityClass = () => {
+        switch (connectionQuality) {
+            case 'good': return 'quality-good';
+            case 'medium': return 'quality-medium';
+            case 'poor': return 'quality-poor';
+            default: return 'quality-good';
+        }
+    };
 
-  const startConference = () => {
-    alert('Starting conference...');
-  };
+    const getCallStatusDisplay = () => {
+        if (isConnecting) return 'Connecting...';
+        switch (callMetadata.status) {
+            case 'connected':
+                return 'Connected';
+            case 'ended':
+                return 'Call Ended';
+            case 'microphone_error':
+                return 'Microphone Error';
+            default:
+                return callMetadata.status;
+        }
+    };
 
-  const getQualityIcon = () => {
-    switch (callQuality) {
-      case 'good': return '📶';
-      case 'medium': return '📶';
-      case 'poor': return '📶';
-      default: return '📶';
-    }
-  };
+    if (!isOpen) return null;
 
-  const getQualityClass = () => {
-    switch (callQuality) {
-      case 'good': return 'quality-good';
-      case 'medium': return 'quality-medium';
-      case 'poor': return 'quality-poor';
-      default: return 'quality-good';
-    }
-  };
+    return (
+        <div className="voice-modal-overlay">
+            <div className="voice-modal-container" onClick={(e) => e.stopPropagation()}>
+                <div className="voice-modal-header">
+                    <div className="header-left">
+                        <span className="header-icon">📞</span>
+                        <div className="call-info">
+                            <h3>Voice Call with {callerInfo.name}</h3>
+                            {callerInfo.specialization && (
+                                <p className="caller-specialization">{callerInfo.specialization}</p>
+                            )}
+                            <div className={`connection-quality ${getQualityClass()}`}>
+                                <span className="quality-icon">{getQualityIcon()}</span>
+                                <span className="quality-text">{connectionQuality}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="header-right">
+                        <button className="header-btn close-btn" onClick={onClose} title="Close">
+                            ✕
+                        </button>
+                    </div>
+                </div>
 
-  if (!isOpen) return null;
+                <div className="voice-modal-content">
+                    <div className="voice-call-container">
+                        <div className="caller-profile">
+                            {callerInfo.profilePic && (callerInfo.profilePic.startsWith('http') || callerInfo.profilePic.startsWith('/')) ? (
+                                <img 
+                                    src={callerInfo.profilePic} 
+                                    alt={callerInfo.name}
+                                    className="caller-avatar-image"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.parentElement.innerHTML = `<span class="caller-avatar">${callerInfo.name.charAt(0)}</span>`;
+                                    }}
+                                />
+                            ) : (
+                                <div className="caller-avatar">
+                                    {callerInfo.profilePic || callerInfo.name.charAt(0)}
+                                </div>
+                            )}
+                            <h2 className="caller-name">{callerInfo.name}</h2>
+                            {callerInfo.specialization && (
+                                <p className="caller-specialization-text">{callerInfo.specialization}</p>
+                            )}
+                            <p className="call-status">
+                                <span className={`status-${callMetadata.status}`}>
+                                    {callMetadata.status === 'connected' && <span className="pulse-dot"></span>}
+                                    {getCallStatusDisplay()}
+                                </span>
+                            </p>
+                            {isCallActive && callMetadata.status === 'connected' && (
+                                <div className="call-duration">
+                                    <span className="duration-icon">⏱️</span>
+                                    <span className="duration-text">{formatTime(callDuration)}</span>
+                                </div>
+                            )}
+                            {callMetadata.isFallback && (
+                                <p className="fallback-warning">⚠️ Using fallback connection</p>
+                            )}
+                        </div>
 
-  return (
-    <div className="voice-modal-overlay" onClick={onClose}>
-      <div
-        className="voice-modal-container"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <audio ref={localAudioRef} autoPlay muted />
-        <audio ref={remoteAudioRef} autoPlay />
+                        {!isConnecting && callMetadata.status === 'connected' && (
+                            <div className="audio-visualizer">
+                                <div className="visualizer-bars">
+                                    {[...Array(20)].map((_, i) => (
+                                        <div 
+                                            key={i} 
+                                            className="visualizer-bar"
+                                            style={{ 
+                                                height: `${Math.max(5, Math.min(50, audioLevel * (i + 1) / 20))}px`,
+                                                opacity: isMuted ? 0.3 : 1
+                                            }}
+                                        />
+                                    ))}
+                                </div>
+                                {isMuted && (
+                                    <div className="muted-badge">
+                                        <span>🔇 Microphone Muted</span>
+                                    </div>
+                                )}
+                                {isRecording && (
+                                    <div className="recording-badge">
+                                        <span className="recording-dot"></span>
+                                        <span>Recording</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
-        <div className="voice-modal-header">
-          <div className="header-left">
-            <span className="header-icon">📞</span>
-            <div className="call-info">
-              <h3>Voice Call</h3>
-              <div className={`call-quality ${getQualityClass()}`}>
-                <span className="quality-icon">{getQualityIcon()}</span>
-                <span className="quality-text">{callQuality}</span>
-              </div>
+                        {showSettings && (
+                            <div className="settings-panel">
+                                <h4>Call Settings</h4>
+                                <div className="setting-item">
+                                    <label>Volume</label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={volumeLevel}
+                                        onChange={(e) => setVolumeLevel(e.target.value)}
+                                    />
+                                    <span>{volumeLevel}%</span>
+                                </div>
+                                <div className="setting-item">
+                                    <label>Call Information</label>
+                                    <div className="caller-info-display">
+                                        <p><strong>Counselor:</strong> {callerInfo.name}</p>
+                                        {callerInfo.specialization && <p><strong>Specialization:</strong> {callerInfo.specialization}</p>}
+                                        {callerInfo.email && <p><strong>Email:</strong> {callerInfo.email}</p>}
+                                        {callerInfo.phone && <p><strong>Phone:</strong> {callerInfo.phone}</p>}
+                                        
+                                        <p><strong>User:</strong> {userInfo.name}</p>
+                                        {userInfo.email && <p><strong>User Email:</strong> {userInfo.email}</p>}
+                                        
+                                        <p><strong>Call Type:</strong> 📞 Voice Call</p>
+                                        <p><strong>Duration:</strong> {formatTime(callDuration)}</p>
+                                        {callMetadata.roomId && <p><strong>Room ID:</strong> {callMetadata.roomId.substring(0, 8)}...</p>}
+                                        {callMetadata.callId && <p><strong>Call ID:</strong> {callMetadata.callId.substring(0, 8)}...</p>}
+                                        {callMetadata.chatId && <p><strong>Chat ID:</strong> {callMetadata.chatId.substring(0, 8)}...</p>}
+                                    </div>
+                                </div>
+                                <button className="close-settings" onClick={() => setShowSettings(false)}>
+                                    Close
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="voice-call-controls">
+                            <button
+                                className={`control-btn ${isMuted ? 'active' : ''}`}
+                                onClick={() => setIsMuted(!isMuted)}
+                                title={isMuted ? 'Unmute' : 'Mute'}
+                            >
+                                <span className="btn-icon">{isMuted ? '🔇' : '🎤'}</span>
+                                <span className="btn-label">{isMuted ? 'Unmute' : 'Mute'}</span>
+                            </button>
+
+                            <button
+                                className={`control-btn ${isSpeakerOn ? 'active' : ''}`}
+                                onClick={() => setIsSpeakerOn(!isSpeakerOn)}
+                                title={isSpeakerOn ? 'Speaker off' : 'Speaker on'}
+                            >
+                                <span className="btn-icon">{isSpeakerOn ? '🔊' : '🔈'}</span>
+                                <span className="btn-label">{isSpeakerOn ? 'Speaker off' : 'Speaker on'}</span>
+                            </button>
+
+                            <button
+                                className={`control-btn ${isRecording ? 'active' : ''}`}
+                                onClick={toggleRecording}
+                                title={isRecording ? 'Stop recording' : 'Record call'}
+                            >
+                                <span className="btn-icon">{isRecording ? '⏹️' : '🔴'}</span>
+                                <span className="btn-label">{isRecording ? 'Stop' : 'Record'}</span>
+                            </button>
+
+                            <button
+                                className="control-btn"
+                                onClick={() => setShowSettings(!showSettings)}
+                                title="Settings"
+                            >
+                                <span className="btn-icon">⚙️</span>
+                                <span className="btn-label">Settings</span>
+                            </button>
+
+                            <button
+                                className="control-btn end-call"
+                                onClick={handleEndCall}
+                                title="End call"
+                            >
+                                <span className="btn-icon">📞</span>
+                                <span className="btn-label">End</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
-          <button className="close-btn" onClick={onClose}>✕</button>
         </div>
-
-        <div className="voice-modal-content">
-          <div className="caller-info-section">
-            <div className="caller-avatar-large">
-              {activeCall.profilePic}
-              <span className={`call-status-indicator ${isCallActive ? 'active' : 'ended'}`}>
-                {isCallActive ? (isOnHold ? '⏸️' : '●') : '○'}
-              </span>
-            </div>
-
-            <h2 className="caller-name">{activeCall.name}</h2>
-            {activeCall.phoneNumber && (
-              <p className="caller-phone">{activeCall.phoneNumber}</p>
-            )}
-
-            <div className="caller-details">
-              {activeCall.location && (
-                <span className="caller-location">
-                  <span className="detail-icon">📍</span>
-                  {activeCall.location}
-                </span>
-              )}
-              {activeCall.company && (
-                <span className="caller-company">
-                  <span className="detail-icon">🏥</span>
-                  {activeCall.company}
-                </span>
-              )}
-            </div>
-
-            <div className="call-timer-display">
-              <span className="timer-icon">⏱️</span>
-              <span className="timer-text">{formatTime(callDuration)}</span>
-              {isOnHold && <span className="hold-badge">On Hold</span>}
-            </div>
-          </div>
-
-          {showDialpad && (
-            <div className="dialpad-display">
-              <input
-                type="text"
-                value={dialedNumber}
-                readOnly
-                placeholder="Enter number"
-              />
-              <button className="clear-dialpad" onClick={() => setDialedNumber('')}>
-                ✕
-              </button>
-            </div>
-          )}
-
-          {isCallActive && !isOnHold && (
-            <div className="sound-wave-container">
-              <div className="sound-wave">
-                <span style={{ animationDelay: '0s' }}></span>
-                <span style={{ animationDelay: '0.1s' }}></span>
-                <span style={{ animationDelay: '0.2s' }}></span>
-                <span style={{ animationDelay: '0.3s' }}></span>
-                <span style={{ animationDelay: '0.4s' }}></span>
-                <span style={{ animationDelay: '0.5s' }}></span>
-              </div>
-            </div>
-          )}
-
-          {isKeypadOpen && (
-            <div className="keypad-container">
-              <div className="keypad-grid">
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, '*', 0, '#'].map((key) => (
-                  <button
-                    key={key}
-                    className="keypad-btn"
-                    onClick={() => handleKeypadPress(key)}
-                  >
-                    <span className="keypad-number">{key}</span>
-                    <span className="keypad-letters">
-                      {key === 1 ? '' :
-                        key === 2 ? 'ABC' :
-                          key === 3 ? 'DEF' :
-                            key === 4 ? 'GHI' :
-                              key === 5 ? 'JKL' :
-                                key === 6 ? 'MNO' :
-                                  key === 7 ? 'PQRS' :
-                                    key === 8 ? 'TUV' :
-                                      key === 9 ? 'WXYZ' :
-                                        key === 0 ? '+' : ''}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {showVolumeControl && (
-            <div className="volume-control">
-              <span className="volume-icon">🔊</span>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={volumeLevel}
-                onChange={(e) => setVolumeLevel(e.target.value)}
-                className="volume-slider"
-              />
-              <span className="volume-level">{volumeLevel}%</span>
-            </div>
-          )}
-
-          {showMoreOptions && (
-            <div className="more-options-panel">
-              <button className="option-btn" onClick={toggleRecording}>
-                <span className="option-icon">{isRecording ? '⏹️' : '⏺️'}</span>
-                <span className="option-label">{isRecording ? 'Stop' : 'Record'}</span>
-              </button>
-              <button className="option-btn" onClick={toggleBluetooth}>
-                <span className="option-icon">{isBluetoothEnabled ? '📱' : '📞'}</span>
-                <span className="option-label">{isBluetoothEnabled ? 'BT On' : 'BT Off'}</span>
-              </button>
-              <button className="option-btn" onClick={transferCall}>
-                <span className="option-icon">🔄</span>
-                <span className="option-label">Transfer</span>
-              </button>
-              <button className="option-btn" onClick={mergeCalls}>
-                <span className="option-icon">🔀</span>
-                <span className="option-label">Merge</span>
-              </button>
-              <button className="option-btn" onClick={startConference}>
-                <span className="option-icon">👥</span>
-                <span className="option-label">Conference</span>
-              </button>
-            </div>
-          )}
-
-          <div className="voice-call-controls">
-            <div className="controls-grid">
-              <button
-                className={`control-item ${isMuted ? 'active' : ''}`}
-                onClick={() => setIsMuted(!isMuted)}
-                title={isMuted ? 'Unmute' : 'Mute'}
-              >
-                <span className="control-icon">{isMuted ? '🔇' : '🎤'}</span>
-                <span className="control-label">{isMuted ? 'Unmute' : 'Mute'}</span>
-              </button>
-
-              <button
-                className={`control-item ${isSpeakerOn ? 'active' : ''}`}
-                onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                title={isSpeakerOn ? 'Speaker off' : 'Speaker on'}
-              >
-                <span className="control-icon">{isSpeakerOn ? '🔊' : '🔈'}</span>
-                <span className="control-label">{isSpeakerOn ? 'Spkr Off' : 'Spkr On'}</span>
-              </button>
-
-
-
-              <button
-                className={`control-item ${isOnHold ? 'active' : ''}`}
-                onClick={toggleHold}
-                title={isOnHold ? 'Resume call' : 'Hold call'}
-              >
-                <span className="control-icon">⏸️</span>
-                <span className="control-label">{isOnHold ? 'Resume' : 'Hold'}</span>
-              </button>
-
-
-
-
-
-
-
-
-
-            </div>
-
-            <button className="end-call-btn" onClick={handleEndCall}>
-              <span className="end-call-icon">📞</span>
-              <span className="end-call-label">End Call</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default VoiceCallModal;

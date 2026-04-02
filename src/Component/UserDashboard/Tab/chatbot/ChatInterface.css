@@ -11,15 +11,36 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Loading Spinner */
-.loading-spinner {
+/* Loading Container - Centered */
+.loading-container {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   justify-content: center;
-  height: 100vh;
-  font-size: 18px;
-  color: #667eea;
-  font-weight: 500;
+  align-items: center;
+  min-height: 400px;
+  width: 100%;
+  gap: 16px;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.loading-text {
+  font-size: 14px;
+  color: #64748b;
+  margin: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Sidebar Styles */
@@ -339,16 +360,21 @@
   font-weight: 500;
 }
 
-.counselorMessageCount {
-  font-size: 11px;
-  color: #10b981;
-  background: #f0fdf4;
-  padding: 2px 8px;
-  border-radius: 12px;
+.counselorStatusBadge {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
   font-weight: 500;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+}
+
+.counselorStatusBadge.accepted {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.counselorStatusBadge.expired {
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 /* Last Seen */
@@ -364,6 +390,31 @@
 .counselorLastSeen::before {
   content: "⏱️";
   font-size: 10px;
+}
+
+/* Error Message */
+.error-message {
+  text-align: center;
+  padding: 40px 20px;
+  color: #dc2626;
+}
+
+.retry-button {
+  margin-top: 12px;
+  padding: 8px 20px;
+  background: #667eea;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.retry-button:hover {
+  background: #5a6fd8;
+  transform: translateY(-1px);
 }
 
 /* No Chats Message */
@@ -756,6 +807,15 @@
   .delete-counselor-info {
     padding: 12px;
   }
+  
+  .loading-container {
+    min-height: 300px;
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 /* Small Mobile View */
@@ -883,11 +943,6 @@
     color: #818cf8;
   }
   
-  .counselorMessageCount {
-    background: #14532d;
-    color: #4ade80;
-  }
-  
   .counselorLastSeen {
     color: #64748b;
   }
@@ -937,5 +992,14 @@
   
   .btn-secondary:hover {
     background: #475569;
+  }
+  
+  .loading-spinner {
+    border-color: #334155;
+    border-top-color: #818cf8;
+  }
+  
+  .loading-text {
+    color: #94a3b8;
   }
 }
