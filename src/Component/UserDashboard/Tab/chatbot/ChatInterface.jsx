@@ -26,9 +26,6 @@ const ChatInterface = ({ setActiveTab }) => {
     const pressedItem = useRef(null);
     const touchMoved = useRef(false);
 
-    // API base URL
-    
-
     // Function to get profile photo URL
     const getProfilePhotoUrl = (counselor) => {
         if (counselor?.profilePhoto?.url) {
@@ -304,7 +301,7 @@ const ChatInterface = ({ setActiveTab }) => {
                 }
             });
 
-            if (response.ok) {
+            if (response.status === 200) {
                 // Update local state
                 setCounselors(prev => prev.map(c => 
                     c.id === chatId ? { ...c, unread: 0 } : c
@@ -575,17 +572,6 @@ const ChatInterface = ({ setActiveTab }) => {
         );
     };
 
-    if (loading && counselors.length === 0) {
-        return (
-            <div className="chatAppContainer">
-                <div className="loading-spinner">
-                    <div className="spinner"></div>
-                    <p>Loading your chats...</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="chatAppContainer">
             <div className="counselorSidebar">
@@ -604,16 +590,19 @@ const ChatInterface = ({ setActiveTab }) => {
                 </div>
 
                 <div className="counselorListContainer">
-                    {error && (
+                    {loading && counselors.length === 0 ? (
+                        <div className="loading-container">
+                            <div className="loading-spinner"></div>
+                            <p className="loading-text">Loading your chats...</p>
+                        </div>
+                    ) : error ? (
                         <div className="error-message">
                             <p>⚠️ {error}</p>
                             <button onClick={fetchChats} className="retry-button">
                                 Retry
                             </button>
                         </div>
-                    )}
-                    
-                    {!error && filteredCounselors.length > 0 ? (
+                    ) : filteredCounselors.length > 0 ? (
                         filteredCounselors.map(counselor => (
                             <div 
                                 key={counselor.id} 

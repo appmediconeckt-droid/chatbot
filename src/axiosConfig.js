@@ -79,6 +79,7 @@
 // export default axiosInstance;
 
 // frontend/src/api/axiosConfig.js
+// In your axios config file
 import axios from 'axios';
 
 export const API_BASE_URL = 'https://td6lmn5q-5000.inc1.devtunnels.ms';
@@ -87,10 +88,10 @@ const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: { 'Content-Type': 'application/json' },
-  withCredentials: true,   // ✅ CRITICAL – sends cookies automatically
+  withCredentials: true,
 });
 
-// Request interceptor – add access token to headers
+// Request interceptor - add access token to headers
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -102,7 +103,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor – handle token refresh
+// Response interceptor - handle token refresh
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -121,6 +122,7 @@ axiosInstance.interceptors.response.use(
 
     // Only handle 401 errors and avoid infinite loops
     if (error.response?.status === 401 && !originalRequest._retry) {
+      
       // If already refreshing, queue this request
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -137,31 +139,52 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // ✅ Call refresh endpoint – cookies are sent automatically
+        // Get refresh token from localStorage (set during login)
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        // Send refresh token in BODY (not cookie) - this works with Postman and browser
         const response = await axios.post(
           `${API_BASE_URL}/api/auth/refresh-token`,
-          {},   // empty body – backend reads refreshToken from cookie
-          { withCredentials: true }
+          { refreshToken },  // ← Send in body
+          { 
+            withCredentials: true,
+            headers: { 'Content-Type': 'application/json' }
+          }
         );
 
-        const { accessToken } = response.data;
-        if (!accessToken) throw new Error('No access token in refresh response');
+        const { accessToken, refreshToken: newRefreshToken } = response.data;
+        
+        if (!accessToken) {
+          throw new Error('No access token in refresh response');
+        }
 
-        // Store new access token
+        // Store new tokens
         localStorage.setItem('accessToken', accessToken);
+        if (newRefreshToken) {
+          localStorage.setItem('refreshToken', newRefreshToken);
+        }
 
-        // Update header for queued requests
-        processQueue(null, accessToken);
-
-        // Retry original request with new token
+        // Update authorization header
         originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        
+        // Process queued requests
+        processQueue(null, accessToken);
+        
+        // Retry original request
         return axiosInstance(originalRequest);
+        
       } catch (refreshError) {
-        // Refresh failed – clear everything and redirect to login
+        // Refresh failed - clear everything and redirect to login
         processQueue(refreshError, null);
         localStorage.removeItem('accessToken');
-        // Optionally clear cookies by calling logout endpoint
-        await axios.post(`${API_BASE_URL}/api/auth/logout`, {}, { withCredentials: true });
+        localStorage.removeItem('refreshToken');
+        localStorage.removeItem('user');
+        
+        // Redirect to login page
         window.location.href = '/user-signup';
         return Promise.reject(refreshError);
       } finally {

@@ -24,6 +24,8 @@ const SMSInput = () => {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
+  const [isInitiatingCall, setIsInitiatingCall] = useState(false);
+  const [callError, setCallError] = useState(null);
   
   // Message states
   const [messages, setMessages] = useState([]);
@@ -32,25 +34,36 @@ const SMSInput = () => {
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
   
-  // User data from localStorage (counselor)
-  const [currentUser, setCurrentUser] = useState(null);
-  
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
 
-  // Get current user from localStorage
-  useEffect(() => {
-    try {
-      const userData = localStorage.getItem('user');
-      if (userData) {
-        const parsedUser = JSON.parse(userData);
-        setCurrentUser(parsedUser);
+  // Get current user from localStorage (counselor)
+  const getCurrentUser = () => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        const user = JSON.parse(userData);
+        console.log('Current counselor data:', user);
+        return {
+          id: user.id || user._id,
+          name: user.name || user.fullName || user.username,
+          email: user.email,
+          phoneNumber: user.phoneNumber || user.phone,
+          role: user.role || 'counselor',
+          specialization: user.specialization || 'Mental Health Professional',
+          profilePhoto: user.profilePhoto || user.avatar,
+          ...user
+        };
+      } catch (e) {
+        console.error('Error parsing user data:', e);
+        return null;
       }
-    } catch (error) {
-      console.error('Error getting user data:', error);
     }
-  }, []);
+    return null;
+  };
+
+  const currentCounselor = getCurrentUser();
 
   // Get the chat ID for API calls
   const getChatIdForAPI = () => {
@@ -71,9 +84,7 @@ const SMSInput = () => {
     
     try {
       const apiChatId = getChatIdForAPI();
-      
       const token = localStorage.getItem('token');
-      
       
       setIsLoadingMessages(true);
       setError(null);
@@ -98,7 +109,7 @@ const SMSInput = () => {
           id: msg.id || index,
           messageId: msg.messageId,
           text: msg.content,
-          sender: msg.senderRole === 'user' ? 'user' : 'me',
+          sender: msg.senderRole === 'user' ? 'received' : 'me',
           senderRole: msg.senderRole,
           time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           fullTime: msg.createdAt,
@@ -179,14 +190,11 @@ const SMSInput = () => {
   const sendMessageToAPI = async (messageContent) => {
     try {
       const apiChatId = getChatIdForAPI();
-    
       const token = localStorage.getItem('token');
       
       const requestBody = {
         content: messageContent
       };
-      
-      
       
       const response = await axios.post(`${API_BASE_URL}/api/chat/chat/${apiChatId}/message`, requestBody, {
         headers: { 
@@ -223,7 +231,7 @@ const SMSInput = () => {
       id: `temp_${Date.now()}`,
       text: messageText,
       sender: "me",
-      senderRole: "user",
+      senderRole: "counsellor",
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       createdAt: new Date().toISOString(),
       status: "sending",
@@ -292,68 +300,304 @@ const SMSInput = () => {
     return () => clearInterval(interval);
   }, [selectedUser]);
 
-  // Handle video call - Updated with API integration
-  const handleVideoCall = () => {
-    if (!currentUser) {
-      alert('Please login to make a call');
+  // Initialize video call with API - PROPER DATA HANDLING
+  const initiateVideoCall = async () => {
+    if (!currentCounselor) {
+      setCallError('Counselor not logged in. Please login to make calls.');
       return;
     }
 
-    // Determine if current user is counselor or user
-    const isCounselor = currentUser.role === 'counselor' || currentUser.userType === 'counselor';
+    if (!selectedUser) {
+      setCallError('No user selected for the call.');
+      return;
+    }
+
+    setIsInitiatingCall(true);
+    setCallError(null);
     
-    const callData = {
-      id: selectedUser.id || Date.now(),
-      name: selectedUser.name,
-      type: "video",
-      profilePic: "👤",
-      phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
-      status: "outgoing",
-      date: "Today",
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      // API specific data
-      userId: isCounselor ? selectedUser.id : currentUser.id,
-      userName: isCounselor ? selectedUser.name : (currentUser.name || currentUser.userName),
-      counsellorId: isCounselor ? currentUser.id : selectedUser.id,
-      counsellorName: isCounselor ? currentUser.name : selectedUser.name,
-      role: isCounselor ? 'counselor' : 'user'
-    };
-    
-    setSelectedCall(callData);
-    setIsVideoModalOpen(true);
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Properly structure the request body with complete counselor and user data
+      const requestBody = {
+        // Counselor data (current user)
+        userId: currentCounselor.id || currentCounselor._id,
+        userName: currentCounselor.name || currentCounselor.fullName || currentCounselor.username,
+        userEmail: currentCounselor.email,
+        userPhoneNumber: currentCounselor.phoneNumber || currentCounselor.phone,
+        userRole: currentCounselor.role || 'counselor',
+        userSpecialization: currentCounselor.specialization,
+        
+        // Client/User data (selected user)
+        counsellorId: selectedUser.id?.toString() || selectedUser.userId?.toString(),
+        counsellorName: selectedUser.name,
+        counsellorEmail: selectedUser.email,
+        counsellorPhoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+        counsellorSpecialization: selectedUser.specialization || 'Client',
+        
+        // Call data
+        callType: "video",
+        chatId: getChatIdForAPI(),
+        
+        // Additional metadata
+        metadata: {
+          startedAt: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          isCounselorInitiated: true
+        }
+      };
+      
+      console.log('Initiating video call with complete data:', requestBody);
+      
+      const response = await axios.post(`${API_BASE_URL}/api/video/initiate`, requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Video call API response:', response.data);
+      
+      if (response.data && response.data.success) {
+        const callData = {
+          // Call identification
+          id: response.data.callData?.id || Date.now(),
+          callId: response.data.callId,
+          roomId: response.data.roomId,
+          
+          // Counselor data (caller)
+          counselorId: currentCounselor.id,
+          counselorName: currentCounselor.name,
+          counselorEmail: currentCounselor.email,
+          counselorPhone: currentCounselor.phoneNumber,
+          counselorSpecialization: currentCounselor.specialization,
+          
+          // Client data (receiver)
+          userId: selectedUser.id,
+          userName: selectedUser.name,
+          userEmail: selectedUser.email,
+          userPhone: selectedUser.phone || selectedUser.phoneNumber,
+          userSpecialization: selectedUser.specialization,
+          
+          // Profile and display
+          name: selectedUser.name, // For display in modal
+          profilePic: getAvatarIcon(selectedUser.gender), // Use gender-based avatar
+          phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+          
+          // Call metadata
+          type: 'video',
+          status: 'connecting',
+          date: new Date().toLocaleDateString(),
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          startTime: new Date().toISOString(),
+          
+          // API data
+          apiCallData: response.data.callData,
+          chatId: getChatIdForAPI()
+        };
+        
+        console.log('Setting video call data for modal:', callData);
+        setSelectedCall(callData);
+        setIsVideoModalOpen(true);
+      } else {
+        throw new Error(response.data.message || 'Failed to initiate video call');
+      }
+    } catch (error) {
+      console.error('Error initiating video call:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to initiate video call';
+      setCallError(errorMsg);
+      
+      // Fallback: Open modal with available data
+      const fallbackCallData = {
+        id: selectedUser.id || Date.now(),
+        callId: `call_${Date.now()}`,
+        roomId: `room_${Date.now()}`,
+        
+        counselorId: currentCounselor?.id,
+        counselorName: currentCounselor?.name,
+        counselorEmail: currentCounselor?.email,
+        counselorPhone: currentCounselor?.phoneNumber,
+        
+        userId: selectedUser.id,
+        userName: selectedUser.name,
+        userEmail: selectedUser.email,
+        userPhone: selectedUser.phone || selectedUser.phoneNumber,
+        
+        name: selectedUser.name,
+        profilePic: getAvatarIcon(selectedUser.gender),
+        phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+        
+        type: 'video',
+        status: 'connecting',
+        date: 'Today',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        startTime: new Date().toISOString(),
+        chatId: getChatIdForAPI(),
+        isFallback: true
+      };
+      setSelectedCall(fallbackCallData);
+      setIsVideoModalOpen(true);
+      
+      console.warn('Using fallback call data due to API error:', errorMsg);
+    } finally {
+      setIsInitiatingCall(false);
+    }
   };
 
-  // Handle voice call - Updated with API integration
-  const handleVoiceCall = () => {
-    if (!currentUser) {
-      alert('Please login to make a call');
+  // Initialize voice call with API - PROPER DATA HANDLING
+  const initiateVoiceCall = async () => {
+    if (!currentCounselor) {
+      setCallError('Counselor not logged in. Please login to make calls.');
       return;
     }
 
-    // Determine if current user is counselor or user
-    const isCounselor = currentUser.role === 'counselor' || currentUser.userType === 'counselor';
+    if (!selectedUser) {
+      setCallError('No user selected for the call.');
+      return;
+    }
+
+    setIsInitiatingCall(true);
+    setCallError(null);
     
-    const callData = {
-      id: selectedUser.id || Date.now(),
-      name: selectedUser.name,
-      type: "voice",
-      profilePic: "👤",
-      phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
-      status: "outgoing",
-      date: "Today",
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      location: selectedUser.location || "Unknown",
-      company: selectedUser.company || "Counseling Center",
-      // API specific data
-      userId: isCounselor ? selectedUser.id : currentUser.id,
-      userName: isCounselor ? selectedUser.name : (currentUser.name || currentUser.userName),
-      counsellorId: isCounselor ? currentUser.id : selectedUser.id,
-      counsellorName: isCounselor ? currentUser.name : selectedUser.name,
-      role: isCounselor ? 'counselor' : 'user'
-    };
-    
-    setSelectedCall(callData);
-    setIsVoiceModalOpen(true);
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Properly structure the request body with complete counselor and user data
+      const requestBody = {
+        // Counselor data (current user)
+        userId: currentCounselor.id || currentCounselor._id,
+        userName: currentCounselor.name || currentCounselor.fullName || currentCounselor.username,
+        userEmail: currentCounselor.email,
+        userPhoneNumber: currentCounselor.phoneNumber || currentCounselor.phone,
+        userRole: currentCounselor.role || 'counselor',
+        userSpecialization: currentCounselor.specialization,
+        
+        // Client/User data (selected user)
+        counsellorId: selectedUser.id?.toString() || selectedUser.userId?.toString(),
+        counsellorName: selectedUser.name,
+        counsellorEmail: selectedUser.email,
+        counsellorPhoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+        counsellorSpecialization: selectedUser.specialization || 'Client',
+        
+        // Call data
+        callType: "voice",
+        chatId: getChatIdForAPI(),
+        
+        // Additional metadata
+        metadata: {
+          startedAt: new Date().toISOString(),
+          userAgent: navigator.userAgent,
+          platform: navigator.platform,
+          isCounselorInitiated: true
+        }
+      };
+      
+      console.log('Initiating voice call with complete data:', requestBody);
+      
+      const response = await axios.post(`${API_BASE_URL}/api/video/initiate`, requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Voice call API response:', response.data);
+      
+      if (response.data && response.data.success) {
+        const callData = {
+          // Call identification
+          id: response.data.callData?.id || Date.now(),
+          callId: response.data.callId,
+          roomId: response.data.roomId,
+          
+          // Counselor data (caller)
+          counselorId: currentCounselor.id,
+          counselorName: currentCounselor.name,
+          counselorEmail: currentCounselor.email,
+          counselorPhone: currentCounselor.phoneNumber,
+          counselorSpecialization: currentCounselor.specialization,
+          
+          // Client data (receiver)
+          userId: selectedUser.id,
+          userName: selectedUser.name,
+          userEmail: selectedUser.email,
+          userPhone: selectedUser.phone || selectedUser.phoneNumber,
+          userSpecialization: selectedUser.specialization,
+          
+          // Profile and display
+          name: selectedUser.name, // For display in modal
+          profilePic: getAvatarIcon(selectedUser.gender), // Use gender-based avatar
+          phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+          
+          // Call metadata
+          type: 'voice',
+          status: 'connecting',
+          date: new Date().toLocaleDateString(),
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          startTime: new Date().toISOString(),
+          
+          // API data
+          apiCallData: response.data.callData,
+          chatId: getChatIdForAPI()
+        };
+        
+        console.log('Setting voice call data for modal:', callData);
+        setSelectedCall(callData);
+        setIsVoiceModalOpen(true);
+      } else {
+        throw new Error(response.data.message || 'Failed to initiate voice call');
+      }
+    } catch (error) {
+      console.error('Error initiating voice call:', error);
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to initiate voice call';
+      setCallError(errorMsg);
+      
+      // Fallback: Open modal with available data
+      const fallbackCallData = {
+        id: selectedUser.id || Date.now(),
+        callId: `call_${Date.now()}`,
+        roomId: `room_${Date.now()}`,
+        
+        counselorId: currentCounselor?.id,
+        counselorName: currentCounselor?.name,
+        counselorEmail: currentCounselor?.email,
+        counselorPhone: currentCounselor?.phoneNumber,
+        
+        userId: selectedUser.id,
+        userName: selectedUser.name,
+        userEmail: selectedUser.email,
+        userPhone: selectedUser.phone || selectedUser.phoneNumber,
+        
+        name: selectedUser.name,
+        profilePic: getAvatarIcon(selectedUser.gender),
+        phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+        
+        type: 'voice',
+        status: 'connecting',
+        date: 'Today',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        startTime: new Date().toISOString(),
+        chatId: getChatIdForAPI(),
+        isFallback: true
+      };
+      setSelectedCall(fallbackCallData);
+      setIsVoiceModalOpen(true);
+      
+      console.warn('Using fallback call data due to API error:', errorMsg);
+    } finally {
+      setIsInitiatingCall(false);
+    }
+  };
+
+  // Handle video call
+  const handleVideoCall = () => {
+    initiateVideoCall();
+  };
+
+  // Handle voice call
+  const handleVoiceCall = () => {
+    initiateVoiceCall();
   };
 
   // Handle close modal
@@ -361,12 +605,7 @@ const SMSInput = () => {
     setIsVideoModalOpen(false);
     setIsVoiceModalOpen(false);
     setSelectedCall(null);
-  };
-
-  // Handle call end
-  const handleCallEnd = () => {
-    console.log('Call ended');
-    // You can add additional logic here like logging call duration, etc.
+    setCallError(null);
   };
 
   const handleBack = () => {
@@ -404,11 +643,11 @@ const SMSInput = () => {
         return null;
     }
     
-    // return (
-    //   <div className={`sms-chat-status-banner ${statusClass}`}>
-    //     {statusText}
-    //   </div>
-    // );
+    return (
+      <div className={`sms-chat-status-banner ${statusClass}`}>
+        {statusText}
+      </div>
+    );
   };
 
   // Render message status indicator
@@ -471,21 +710,32 @@ const SMSInput = () => {
         {/* Call buttons */}
         <div className="smsinput-call-buttons">
           <button
-            className="call-btn voice"
+            className={`call-btn voice ${isInitiatingCall ? 'disabled' : ''}`}
             onClick={handleVoiceCall}
+            disabled={isInitiatingCall}
             title="Voice call"
           >
-            <span className="call-icon">📞</span>
+            <span className="call-icon">{isInitiatingCall ? '⏳' : '📞'}</span>
           </button>
           <button
-            className="call-btn video"
+            className={`call-btn video ${isInitiatingCall ? 'disabled' : ''}`}
             onClick={handleVideoCall}
+            disabled={isInitiatingCall}
             title="Video call"
           >
-            <span className="call-icon">📹</span>
+            <span className="call-icon">{isInitiatingCall ? '⏳' : '📹'}</span>
           </button>
         </div>
       </div>
+
+      {/* Call Error Banner */}
+      {callError && (
+        <div className="sms-call-error-banner">
+          <span className="error-icon">⚠️</span>
+          <span className="error-text">{callError}</span>
+          <button className="error-close" onClick={() => setCallError(null)}>✕</button>
+        </div>
+      )}
 
       {/* Chat Status Banner */}
       {renderChatStatusBanner()}
@@ -558,19 +808,19 @@ const SMSInput = () => {
         </div>
       </form>
 
-      {/* Call Modals */}
+      {/* Call Modals - Pass currentCounselor as well */}
       <VideoCallModal
         isOpen={isVideoModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
-        onCallEnd={handleCallEnd}
+        currentUser={currentCounselor}
       />
 
       <VoiceCallModal
         isOpen={isVoiceModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
-        onCallEnd={handleCallEnd}
+        currentUser={currentCounselor}
       />
     </div>
   );

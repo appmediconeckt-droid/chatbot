@@ -314,7 +314,16 @@ const UserSignup = () => {
         localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("token", token);
         localStorage.setItem("accessToken", token);
+      console.log("All localStorage:", localStorage);
 
+// Check specific tokens
+console.log("Access Token:", localStorage.getItem('accessToken'));
+console.log("Refresh Token:", localStorage.getItem('refreshToken'));
+console.log("User:", localStorage.getItem('user'));
+
+// Check if tokens exist
+console.log("Has accessToken?", !!localStorage.getItem('accessToken'));
+console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
         if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
         if (response.data.user) {

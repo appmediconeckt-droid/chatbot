@@ -24,7 +24,13 @@ import {
   FaPaperPlane,
   FaCommentMedical,
   FaUser,
-  FaCalendarAlt
+  FaCalendarAlt,
+  FaMicrophone,
+  FaPhoneAlt,
+  FaPhoneSlash,
+  FaVideo as FaVideoIcon,
+  FaStop,
+  FaSpinner
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
@@ -36,6 +42,157 @@ import BookAppointment from '../Tab/Appointment/BookAppointment';
 import LiveChatSupport from '../Tab/Appointment/BookAppointment';
 import axios, { Axios } from 'axios';
 import CounselorTable from '../Tab/Counselor/CounselorDirectory';
+
+// Voice/Video Call Modal Component
+const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, onAccept, onEnd }) => {
+  const [callStatus, setCallStatus] = useState('incoming'); // incoming, connecting, connected, ended
+  const [callDuration, setCallDuration] = useState(0);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && callStatus === 'connected') {
+      timerRef.current = setInterval(() => {
+        setCallDuration(prev => prev + 1);
+      }, 1000);
+    } else if (!isOpen || callStatus === 'ended') {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, [isOpen, callStatus]);
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleAccept = () => {
+    setCallStatus('connecting');
+    // Simulate connection delay
+    setTimeout(() => {
+      setCallStatus('connected');
+      onAccept();
+    }, 2000);
+  };
+
+  const handleEnd = () => {
+    setCallStatus('ended');
+    setTimeout(() => {
+      onEnd();
+      onClose();
+    }, 1500);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="call-modal-overlay">
+      <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`}>
+        {/* Background effect for video call */}
+        {callType === 'video' && callStatus === 'connected' && (
+          <div className="video-background">
+            <div className="remote-video-placeholder">
+              <img src={callerImage || '/default-avatar.png'} alt={callerName} />
+              <div className="video-loading">
+                <FaSpinner className="spinning" />
+                <span>Connecting video stream...</span>
+              </div>
+            </div>
+            <div className="local-video-preview">
+              <div className="local-video-placeholder">
+                <FaUserCircle />
+                <span>You</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="call-modal-content">
+          {/* Caller Info */}
+          <div className="caller-info">
+            <div className="caller-avatar">
+              {callerImage ? (
+                <img src={callerImage} alt={callerName} />
+              ) : (
+                <FaUserCircle />
+              )}
+            </div>
+            <h3 className="caller-name">{callerName || "Counselor"}</h3>
+            <p className="call-status-text">
+              {callStatus === 'incoming' && `${callType === 'video' ? 'Video' : 'Voice'} call incoming...`}
+              {callStatus === 'connecting' && 'Connecting...'}
+              {callStatus === 'connected' && `Call in progress • ${formatDuration(callDuration)}`}
+              {callStatus === 'ended' && 'Call ended'}
+            </p>
+          </div>
+
+          {/* Call Controls */}
+          <div className="call-controls">
+            {callStatus === 'incoming' && (
+              <>
+                <button className="call-btn accept-btn" onClick={handleAccept}>
+                  <FaPhoneAlt />
+                  <span>Accept</span>
+                </button>
+                <button className="call-btn reject-btn" onClick={handleEnd}>
+                  <FaPhoneSlash />
+                  <span>Decline</span>
+                </button>
+              </>
+            )}
+
+            {callStatus === 'connecting' && (
+              <div className="connecting-animation">
+                <div className="connecting-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <p>Establishing secure connection...</p>
+              </div>
+            )}
+
+            {callStatus === 'connected' && (
+              <>
+                {callType === 'video' && (
+                  <>
+                    <button className="call-btn icon-btn" onClick={() => {}}>
+                      <FaMicrophone />
+                      <span>Mute</span>
+                    </button>
+                    <button className="call-btn icon-btn" onClick={() => {}}>
+                      <FaVideoIcon />
+                      <span>Camera</span>
+                    </button>
+                  </>
+                )}
+                <button className="call-btn end-call-btn" onClick={handleEnd}>
+                  <FaPhoneSlash />
+                  <span>End Call</span>
+                </button>
+              </>
+            )}
+
+            {callStatus === 'ended' && (
+              <button className="call-btn close-btn" onClick={onClose}>
+                <FaTimes />
+                <span>Close</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // ChatPopup Component
 const ChatPopup = ({
@@ -138,6 +295,15 @@ export default function UserDashboard() {
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  
+  // Call Modal States
+  const [showCallModal, setShowCallModal] = useState(false);
+  const [callType, setCallType] = useState('voice'); // 'voice' or 'video'
+  const [callerInfo, setCallerInfo] = useState({
+    name: 'Dr. Sarah Johnson',
+    image: null
+  });
+
   const userId = localStorage.getItem("userId");
 
   const chatBodyRef = useRef(null);
@@ -298,6 +464,42 @@ export default function UserDashboard() {
     }
   };
 
+  // Handle Voice Call
+  const handleVoiceCall = () => {
+    vibrate(40);
+    setCallType('voice');
+    setCallerInfo({
+      name: 'Dr. Sarah Johnson',
+      image: null
+    });
+    setShowCallModal(true);
+    // TODO: Call API when modal opens
+    // fetchCallDetails();
+  };
+
+  // Handle Video Call
+  const handleVideoCall = () => {
+    vibrate(40);
+    setCallType('video');
+    setCallerInfo({
+      name: 'Dr. Sarah Johnson',
+      image: null
+    });
+    setShowCallModal(true);
+    // TODO: Call API when modal opens
+    // fetchCallDetails();
+  };
+
+  const handleAcceptCall = () => {
+    console.log('Call accepted');
+    // TODO: API call for accepting call
+  };
+
+  const handleEndCall = () => {
+    console.log('Call ended');
+    // TODO: API call for ending call
+  };
+
   // FIXED: Correct logout function with proper API call
   const handleLogout = async () => {
     try {
@@ -378,7 +580,6 @@ export default function UserDashboard() {
     { id: "Live Chat", icon: <FaUserMd />, label: "Counselor" },
     { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
     { id: "Video", icon: <FaVideo />, label: "Video Call" },
-    // { id: "profile", icon: <FaUser />, label: "Profile" },
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
     { id: "privacy", icon: <FaLock />, label: "Privacy" }
   ];
@@ -387,6 +588,17 @@ export default function UserDashboard() {
 
   return (
     <div className="user-dashboard">
+      {/* Voice/Video Call Modal */}
+      <CallModal
+        isOpen={showCallModal}
+        onClose={() => setShowCallModal(false)}
+        callType={callType}
+        callerName={callerInfo.name}
+        callerImage={callerInfo.image}
+        onAccept={handleAcceptCall}
+        onEnd={handleEndCall}
+      />
+
       {/* Mobile Header */}
       {isMobile && (
         <div className="mobile-header">
