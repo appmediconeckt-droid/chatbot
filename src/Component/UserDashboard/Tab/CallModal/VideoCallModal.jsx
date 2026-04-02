@@ -1,9 +1,9 @@
-// VideoCallModal.jsx - Updated to handle complete user and counselor data
+// VideoCallModal.jsx - Updated to handle API call data
 
 import React, { useState, useEffect, useRef } from 'react';
 import './VideoCallModal.css';
 
-const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
+const VideoCallModal = ({ isOpen, onClose, callData }) => {
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeakerOn, setIsSpeakerOn] = useState(false);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -20,97 +20,61 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
     const [showSettings, setShowSettings] = useState(false);
     const [volumeLevel, setVolumeLevel] = useState(70);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
-    
-    // Complete call data states
-    const [callerInfo, setCallerInfo] = useState({
-        name: '',
-        id: '',
-        email: '',
-        phone: '',
-        specialization: '',
-        profilePic: ''
-    });
-    
-    const [userInfo, setUserInfo] = useState({
-        name: '',
-        id: '',
-        email: '',
-        phone: '',
-        role: ''
-    });
-    
-    const [callMetadata, setCallMetadata] = useState({
-        callId: '',
-        roomId: '',
-        type: 'video',
-        status: 'connecting',
-        startTime: null,
-        chatId: '',
-        apiCallData: null,
-        isFallback: false
-    });
+    const [callerName, setCallerName] = useState('');
+    const [callerProfilePic, setCallerProfilePic] = useState('');
+    const [callerPhoneNumber, setCallerPhoneNumber] = useState('');
+    const [callType, setCallType] = useState('video');
+    const [callStatus, setCallStatus] = useState('connecting');
+    const [callStartTime, setCallStartTime] = useState(null);
+    const [roomId, setRoomId] = useState('');
+    const [callId, setCallId] = useState('');
+    const [apiCallData, setApiCallData] = useState(null);
 
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const mediaStreamRef = useRef(null);
     const pipWindowRef = useRef(null);
 
+    const defaultCallData = {
+        id: 1,
+        name: "Dr. Priya Sharma",
+        profilePic: "👩‍⚕️",
+        type: "video",
+        status: "connected",
+        phoneNumber: "+91 98765 43210"
+    };
+
     // Process callData when modal opens
     useEffect(() => {
         if (isOpen && callData) {
-            console.log('Video Call Modal - Received callData:', callData);
-            
-            // Set caller (counselor) information
-            setCallerInfo({
-                name: callData.counselorName || callData.name || 'Counselor',
-                id: callData.counselorId || callData.id,
-                email: callData.counselorEmail || callData.email,
-                phone: callData.counselorPhone || callData.phoneNumber,
-                specialization: callData.counselorSpecialization || 'Mental Health Professional',
-                profilePic: callData.profilePic || callData.avatar
-            });
-            
-            // Set user information
-            if (currentUser) {
-                setUserInfo({
-                    name: currentUser.name || currentUser.fullName || 'User',
-                    id: currentUser.id || currentUser._id,
-                    email: currentUser.email,
-                    phone: currentUser.phoneNumber || currentUser.phone,
-                    role: currentUser.role || 'user'
-                });
-            } else if (callData.userName) {
-                setUserInfo({
-                    name: callData.userName,
-                    id: callData.userId,
-                    email: callData.userEmail,
-                    phone: callData.userPhone,
-                    role: 'user'
-                });
-            }
-            
-            // Set call metadata
-            setCallMetadata({
-                callId: callData.callId || `call_${Date.now()}`,
-                roomId: callData.roomId || `room_${Date.now()}`,
-                type: callData.type || 'video',
-                status: callData.status || 'connecting',
-                startTime: callData.startTime || new Date().toISOString(),
-                chatId: callData.chatId,
-                apiCallData: callData.apiCallData || null,
-                isFallback: callData.isFallback || false
-            });
-            
+            setCallerName(callData.name || defaultCallData.name);
+            setCallerProfilePic(callData.profilePic || defaultCallData.profilePic);
+            setCallerPhoneNumber(callData.phoneNumber || defaultCallData.phoneNumber);
+            setCallType(callData.type || 'video');
+            setCallStatus(callData.status || 'connecting');
+            setRoomId(callData.roomId || '');
+            setCallId(callData.callId || callData.id || '');
+            setApiCallData(callData.apiCallData || null);
+            setCallStartTime(new Date());
             setCallDuration(0);
             
-            // Log complete call data for debugging
-            console.log('Video Call Modal - Processed Data:', {
-                caller: callerInfo,
-                user: userInfo,
-                metadata: callMetadata
+            // Log the call data for debugging
+            console.log('Video Call Modal Opened with Data:', {
+                roomId: callData.roomId,
+                callId: callData.callId,
+                callerName: callData.name,
+                apiData: callData.apiCallData
             });
+        } else if (isOpen && !callData) {
+            setCallerName(defaultCallData.name);
+            setCallerProfilePic(defaultCallData.profilePic);
+            setCallerPhoneNumber(defaultCallData.phoneNumber);
+            setCallType(defaultCallData.type);
+            setCallStatus(defaultCallData.status);
+            setCallStartTime(new Date());
+            setCallDuration(0);
         }
-    }, [isOpen, callData, currentUser]);
+    }, [isOpen, callData]);
 
     useEffect(() => {
         if (isOpen && !isCameraInitialized) {
@@ -129,7 +93,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
     // Call duration timer
     useEffect(() => {
         let timer;
-        if (isOpen && isCallActive && callMetadata.startTime && callMetadata.status === 'connected') {
+        if (isOpen && isCallActive && callStartTime && callStatus === 'connected') {
             timer = setInterval(() => {
                 setCallDuration(prev => prev + 1);
             }, 1000);
@@ -137,7 +101,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
         return () => {
             if (timer) clearInterval(timer);
         };
-    }, [isOpen, isCallActive, callMetadata.status]);
+    }, [isOpen, isCallActive, callStartTime, callStatus]);
 
     // Simulate connection quality changes
     useEffect(() => {
@@ -186,7 +150,10 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
             setIsPiPMode(false);
             setIsScreenSharing(false);
             setShowSettings(false);
-            setCallMetadata(prev => ({ ...prev, status: 'ended' }));
+            setCallStatus('ended');
+            setRoomId('');
+            setCallId('');
+            setApiCallData(null);
 
             if (mediaStreamRef.current) {
                 mediaStreamRef.current.getTracks().forEach(track => track.stop());
@@ -227,7 +194,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
             }
 
             setIsCameraInitialized(true);
-            setCallMetadata(prev => ({ ...prev, status: 'connected' }));
+            setCallStatus('connected');
             
             const videoTrack = stream.getVideoTracks()[0];
             const settings = videoTrack.getSettings();
@@ -237,7 +204,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
             
         } catch (error) {
             console.error('Error accessing camera:', error);
-            setCallMetadata(prev => ({ ...prev, status: 'camera_error' }));
+            setCallStatus('camera_error');
             
             try {
                 console.log('Trying fallback camera access...');
@@ -253,11 +220,11 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                 }
                 
                 setIsCameraInitialized(true);
-                setCallMetadata(prev => ({ ...prev, status: 'connected' }));
+                setCallStatus('connected');
                 
             } catch (fallbackError) {
                 console.error('Fallback camera access also failed:', fallbackError);
-                setCallMetadata(prev => ({ ...prev, status: 'no_camera' }));
+                setCallStatus('no_camera');
             }
         }
     };
@@ -387,23 +354,11 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
 
     const handleEndCall = () => {
         setIsCallActive(false);
-        setCallMetadata(prev => ({ ...prev, status: 'ended' }));
+        setCallStatus('ended');
 
         if (mediaStreamRef.current) {
             mediaStreamRef.current.getTracks().forEach(track => track.stop());
         }
-
-        // Log call end data for analytics
-        const callEndData = {
-            callId: callMetadata.callId,
-            roomId: callMetadata.roomId,
-            duration: callDuration,
-            endedAt: new Date().toISOString(),
-            caller: callerInfo,
-            user: userInfo,
-            type: callMetadata.type
-        };
-        console.log('Call ended:', callEndData);
 
         setTimeout(() => {
             onClose();
@@ -467,7 +422,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
     };
 
     const getCallStatusDisplay = () => {
-        switch (callMetadata.status) {
+        switch (callStatus) {
             case 'connecting':
                 return 'Connecting...';
             case 'connected':
@@ -479,19 +434,19 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
             case 'no_camera':
                 return 'No Camera Access';
             default:
-                return callMetadata.status;
+                return callStatus;
         }
     };
 
     const getProfileDisplay = () => {
-        if (callerInfo.profilePic && (callerInfo.profilePic.startsWith('http') || callerInfo.profilePic.startsWith('/'))) {
+        if (callerProfilePic && (callerProfilePic.startsWith('http') || callerProfilePic.startsWith('/'))) {
             return null;
         }
-        return callerInfo.profilePic || callerInfo.name.charAt(0);
+        return callerProfilePic || callerName.charAt(0);
     };
 
     const isImageProfilePic = () => {
-        return callerInfo.profilePic && (callerInfo.profilePic.startsWith('http') || callerInfo.profilePic.startsWith('/') || callerInfo.profilePic.includes('base64'));
+        return callerProfilePic && (callerProfilePic.startsWith('http') || callerProfilePic.startsWith('/') || callerProfilePic.includes('base64'));
     };
 
     if (!isOpen) return null;
@@ -506,10 +461,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                     <div className="header-left">
                         <span className="header-icon">📹</span>
                         <div className="call-info">
-                            <h3>Video Call with {callerInfo.name}</h3>
-                            {callerInfo.specialization && (
-                                <p className="caller-specialization">{callerInfo.specialization}</p>
-                            )}
+                            <h3>Video Call with {callerName}</h3>
                             <div className={`connection-quality ${getQualityClass()}`}>
                                 <span className="quality-icon">{getQualityIcon()}</span>
                                 <span className="quality-text">{connectionQuality}</span>
@@ -542,8 +494,8 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                                         <div className="remote-video-placeholder">
                                             {isImageProfilePic() ? (
                                                 <img 
-                                                    src={callerInfo.profilePic} 
-                                                    alt={callerInfo.name}
+                                                    src={callerProfilePic} 
+                                                    alt={callerName}
                                                     className="remote-avatar-image"
                                                     onError={(e) => {
                                                         e.target.style.display = 'none';
@@ -554,22 +506,16 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                                                 <span className="remote-avatar">{getProfileDisplay()}</span>
                                             )}
                                             <div className="remote-info">
-                                                <h2>{callerInfo.name}</h2>
-                                                {callerInfo.specialization && (
-                                                    <p className="specialization">{callerInfo.specialization}</p>
-                                                )}
-                                                {callMetadata.roomId && (
-                                                    <p className="room-id">Room: {callMetadata.roomId.substring(0, 8)}...</p>
+                                                <h2>{callerName}</h2>
+                                                {roomId && (
+                                                    <p className="room-id">Room: {roomId.substring(0, 8)}...</p>
                                                 )}
                                                 <p className="call-status">
-                                                    <span className={`status-${callMetadata.status}`}>
-                                                        {callMetadata.status === 'connected' && <span className="pulse-dot"></span>}
+                                                    <span className={`status-${callStatus}`}>
+                                                        {callStatus === 'connected' && <span className="pulse-dot"></span>}
                                                         {getCallStatusDisplay()}
                                                     </span>
                                                 </p>
-                                                {callMetadata.isFallback && (
-                                                    <p className="fallback-warning">⚠️ Using fallback connection</p>
-                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -581,7 +527,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                                 </div>
                             )}
 
-                            {isCallActive && callMetadata.status === 'connected' && (
+                            {isCallActive && callStatus === 'connected' && (
                                 <div className="call-duration-badge">
                                     <span className="duration-icon">⏱️</span>
                                     <span className="duration-text">{formatTime(callDuration)}</span>
@@ -629,14 +575,13 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                                 </div>
                             )}
                             <div className="local-video-label">
-                                <span>{userInfo.name || 'You'} ({isCameraSwitched ? 'Back' : 'Front'})</span>
+                                <span>You ({isCameraSwitched ? 'Back' : 'Front'})</span>
                             </div>
                         </div>
 
                         {showSettings && (
                             <div className="settings-panel">
                                 <h4>Call Settings</h4>
-                                
                                 <div className="setting-item">
                                     <label>Volume</label>
                                     <input
@@ -648,7 +593,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                                     />
                                     <span>{volumeLevel}%</span>
                                 </div>
-                                
                                 {availableCameras.length > 0 && (
                                     <>
                                         <div className="setting-item">
@@ -675,26 +619,17 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                                         </div>
                                     </>
                                 )}
-                                
                                 <div className="setting-item">
                                     <label>Call Information</label>
                                     <div className="caller-info-display">
-                                        <p><strong>Counselor:</strong> {callerInfo.name}</p>
-                                        {callerInfo.specialization && <p><strong>Specialization:</strong> {callerInfo.specialization}</p>}
-                                        {callerInfo.email && <p><strong>Email:</strong> {callerInfo.email}</p>}
-                                        {callerInfo.phone && <p><strong>Phone:</strong> {callerInfo.phone}</p>}
-                                        
-                                        <p><strong>User:</strong> {userInfo.name}</p>
-                                        {userInfo.email && <p><strong>User Email:</strong> {userInfo.email}</p>}
-                                        
-                                        <p><strong>Call Type:</strong> {callMetadata.type === 'video' ? '📹 Video Call' : '📞 Voice Call'}</p>
+                                        <p><strong>Name:</strong> {callerName}</p>
+                                        {callerPhoneNumber && <p><strong>Phone:</strong> {callerPhoneNumber}</p>}
+                                        <p><strong>Call Type:</strong> Video Call</p>
                                         <p><strong>Duration:</strong> {formatTime(callDuration)}</p>
-                                        {callMetadata.roomId && <p><strong>Room ID:</strong> {callMetadata.roomId.substring(0, 8)}...</p>}
-                                        {callMetadata.callId && <p><strong>Call ID:</strong> {callMetadata.callId.substring(0, 8)}...</p>}
-                                        {callMetadata.chatId && <p><strong>Chat ID:</strong> {callMetadata.chatId.substring(0, 8)}...</p>}
+                                        {roomId && <p><strong>Room ID:</strong> {roomId.substring(0, 8)}...</p>}
+                                        {callId && <p><strong>Call ID:</strong> {callId.substring(0, 8)}...</p>}
                                     </div>
                                 </div>
-                                
                                 <button className="close-settings" onClick={() => setShowSettings(false)}>
                                     Close
                                 </button>
@@ -750,24 +685,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                             >
                                 <span className="btn-icon">{isScreenSharing ? '⏹️' : '🖥️'}</span>
                                 <span className="btn-label">{isScreenSharing ? 'Stop share' : 'Share'}</span>
-                            </button>
-
-                            <button
-                                className="control-btn"
-                                onClick={takeScreenshot}
-                                title="Take screenshot"
-                            >
-                                <span className="btn-icon">📸</span>
-                                <span className="btn-label">Screenshot</span>
-                            </button>
-
-                            <button
-                                className="control-btn"
-                                onClick={togglePiPMode}
-                                title="Picture in Picture"
-                            >
-                                <span className="btn-icon">🖼️</span>
-                                <span className="btn-label">PiP</span>
                             </button>
 
                             <button
