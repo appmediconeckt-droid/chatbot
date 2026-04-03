@@ -434,7 +434,7 @@ export default function CounselorDashboard() {
         return;
       }
       
-      const response = await axios.get(`${API_BASE_URL}/api/video/calls/waiting/${counsellorId}`, {
+      const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${counsellorId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -442,26 +442,31 @@ export default function CounselorDashboard() {
       
       console.log('Waiting calls response:', response.data);
       
-      if (response.data && response.data.success && response.data.calls && response.data.calls.length > 0) {
-        setWaitingCalls(response.data.calls);
+      const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
+      
+      if (response.data && response.data.success && callsList && callsList.length > 0) {
+        setWaitingCalls(callsList);
         
-        const waitingCall = response.data.calls.find(call => call.status === 'waiting' || call.status === 'ringing');
+        const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
         
         if (waitingCall && !showCallModal) {
           const callTypeValue = waitingCall.callType || 'video';
           setCallType(callTypeValue);
           
-          const initiatorAvatar = waitingCall.initiator?.gender === 'female' ? '👩' : 
-                                  waitingCall.initiator?.gender === 'male' ? '👨' : '👤';
+          const fromData = waitingCall.from || waitingCall.initiator || {};
+          
+          const initiatorAvatar = waitingCall.fromProfilePhoto || fromData.profilePhoto || 
+                                  (fromData.gender === 'female' ? '👩' : 
+                                  fromData.gender === 'male' ? '👨' : '👤');
           
           setCallerInfo({
-            name: waitingCall.initiator?.name || 'User',
+            name: waitingCall.fromName || fromData.name || 'User',
             image: initiatorAvatar,
-            userId: waitingCall.initiator?.id,
-            userName: waitingCall.initiator?.name,
-            callId: waitingCall.callId || waitingCall.id,
+            userId: waitingCall.fromId || fromData.id || fromData._id,
+            userName: waitingCall.fromName || fromData.name,
+            callId: waitingCall.callId || waitingCall.id || waitingCall._id,
             roomId: waitingCall.roomId,
-            waitingDuration: waitingCall.waitingDuration || 0,
+            waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
             onEndCall: endCall
           });
           
