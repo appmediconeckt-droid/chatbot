@@ -44,9 +44,11 @@ import axios, { Axios } from 'axios';
 import CounselorTable from '../Tab/Counselor/CounselorDirectory';
 
 // Voice/Video Call Modal Component
-const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, onAccept, onEnd }) => {
+const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onEnd, onAcceptCall, onRejectCall }) => {
   const [callStatus, setCallStatus] = useState('incoming'); // incoming, connecting, connected, ended
   const [callDuration, setCallDuration] = useState(0);
+  const [isAccepting, setIsAccepting] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -74,19 +76,54 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, onAccep
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleAccept = () => {
+  const handleAccept = async () => {
+    setIsAccepting(true);
     setCallStatus('connecting');
-    // Simulate connection delay
+    
+    // Call the accept API
+    if (onAcceptCall && callData) {
+      try {
+        await onAcceptCall(callData.callId);
+        setCallStatus('connected');
+        if (onAccept) onAccept();
+      } catch (error) {
+        console.error('Error accepting call:', error);
+        setCallStatus('incoming');
+      }
+    } else {
+      // Simulate connection delay
+      setTimeout(() => {
+        setCallStatus('connected');
+        if (onAccept) onAccept();
+      }, 2000);
+    }
+    setIsAccepting(false);
+  };
+
+  const handleReject = async () => {
+    setIsRejecting(true);
+    setCallStatus('ended');
+    
+    // Call the reject API
+    if (onRejectCall && callData) {
+      try {
+        await onRejectCall(callData.callId);
+      } catch (error) {
+        console.error('Error rejecting call:', error);
+      }
+    }
+    
     setTimeout(() => {
-      setCallStatus('connected');
-      onAccept();
-    }, 2000);
+      if (onEnd) onEnd();
+      onClose();
+    }, 1500);
+    setIsRejecting(false);
   };
 
   const handleEnd = () => {
     setCallStatus('ended');
     setTimeout(() => {
-      onEnd();
+      if (onEnd) onEnd();
       onClose();
     }, 1500);
   };
@@ -126,6 +163,9 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, onAccep
               )}
             </div>
             <h3 className="caller-name">{callerName || "Counselor"}</h3>
+            {callData && (
+              <p className="caller-user-id">User ID: {callData.userId || callData.userName}</p>
+            )}
             <p className="call-status-text">
               {callStatus === 'incoming' && `${callType === 'video' ? 'Video' : 'Voice'} call incoming...`}
               {callStatus === 'connecting' && 'Connecting...'}
@@ -138,13 +178,21 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, onAccep
           <div className="call-controls">
             {callStatus === 'incoming' && (
               <>
-                <button className="call-btn accept-btn" onClick={handleAccept}>
-                  <FaPhoneAlt />
-                  <span>Accept</span>
+                <button 
+                  className="call-btn accept-btn" 
+                  onClick={handleAccept}
+                  disabled={isAccepting}
+                >
+                  {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
+                  <span>{isAccepting ? 'Accepting...' : 'Accept'}</span>
                 </button>
-                <button className="call-btn reject-btn" onClick={handleEnd}>
-                  <FaPhoneSlash />
-                  <span>Decline</span>
+                <button 
+                  className="call-btn reject-btn" 
+                  onClick={handleReject}
+                  disabled={isRejecting}
+                >
+                  {isRejecting ? <FaSpinner className="spinning" /> : <FaPhoneSlash />}
+                  <span>{isRejecting ? 'Rejecting...' : 'Decline'}</span>
                 </button>
               </>
             )}
@@ -298,13 +346,23 @@ export default function UserDashboard() {
   
   // Call Modal States
   const [showCallModal, setShowCallModal] = useState(false);
-  const [callType, setCallType] = useState('voice'); // 'voice' or 'video'
+  const [callType, setCallType] = useState('video'); // 'voice' or 'video'
   const [callerInfo, setCallerInfo] = useState({
-    name: 'Dr. Sarah Johnson',
-    image: null
+    name: '',
+    image: null,
+    userId: '',
+    userName: '',
+    callId: '',
+    waitingDuration: 0
   });
+  
+  // Waiting calls polling
+  const [waitingCalls, setWaitingCalls] = useState([]);
+  const [pollingInterval, setPollingInterval] = useState(null);
+  const [isPolling, setIsPolling] = useState(true);
 
   const userId = localStorage.getItem("userId");
+  
 
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
@@ -320,17 +378,40 @@ export default function UserDashboard() {
   // Helper function to get profile photo URL from API response
   const getProfilePhotoUrl = (userData) => {
     if (userData.profilePhoto) {
-      // Check if profilePhoto is an object with url property
       if (typeof userData.profilePhoto === 'object' && userData.profilePhoto.url) {
         return userData.profilePhoto.url;
       }
-      // If it's a string, return as is
       if (typeof userData.profilePhoto === 'string') {
         return userData.profilePhoto;
       }
     }
     return '';
   };
+
+  // Fetch waiting calls from API
+ 
+
+  // Accept call API
+ 
+
+  // Reject call API
+ 
+
+  // Start polling for waiting calls
+ 
+
+  // Stop polling when call modal is open
+  useEffect(() => {
+    if (showCallModal) {
+      setIsPolling(false);
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
+    } else {
+      setIsPolling(true);
+    }
+  }, [showCallModal]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -355,7 +436,6 @@ export default function UserDashboard() {
         if (response.data.success) {
           const user = response.data.user;
           
-          // Get profile photo URL
           const profilePhotoUrl = getProfilePhotoUrl(user);
 
           setUserData({
@@ -464,40 +544,32 @@ export default function UserDashboard() {
     }
   };
 
-  // Handle Voice Call
-  const handleVoiceCall = () => {
-    vibrate(40);
-    setCallType('voice');
-    setCallerInfo({
-      name: 'Dr. Sarah Johnson',
-      image: null
-    });
-    setShowCallModal(true);
-    // TODO: Call API when modal opens
-    // fetchCallDetails();
+  // Handle Accept Call
+  const handleAcceptCall = async (callId) => {
+    try {
+      await acceptCall(callId);
+      console.log('Call accepted successfully');
+    } catch (error) {
+      console.error('Error in accept call:', error);
+    }
   };
 
-  // Handle Video Call
-  const handleVideoCall = () => {
-    vibrate(40);
-    setCallType('video');
-    setCallerInfo({
-      name: 'Dr. Sarah Johnson',
-      image: null
-    });
-    setShowCallModal(true);
-    // TODO: Call API when modal opens
-    // fetchCallDetails();
+  // Handle Reject Call
+  const handleRejectCall = async (callId) => {
+    try {
+      await rejectCall(callId);
+      console.log('Call rejected successfully');
+    } catch (error) {
+      console.error('Error in reject call:', error);
+    }
   };
 
-  const handleAcceptCall = () => {
+  const handleAcceptCallModal = () => {
     console.log('Call accepted');
-    // TODO: API call for accepting call
   };
 
   const handleEndCall = () => {
     console.log('Call ended');
-    // TODO: API call for ending call
   };
 
   // FIXED: Correct logout function with proper API call
@@ -506,10 +578,9 @@ export default function UserDashboard() {
       const accessToken = localStorage.getItem("accessToken");
       const refreshToken = localStorage.getItem("refreshToken");
 
-      // Option 1: If your API expects refreshToken in the body
       const response = await axiosInstance.post(
         `${API_BASE_URL}/api/auth/logout`,
-        { refreshToken: refreshToken }, // Send as object with refreshToken property
+        { refreshToken: refreshToken },
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -520,16 +591,12 @@ export default function UserDashboard() {
 
       console.log("Logout success:", response.data);
 
-      // Clear local storage after successful logout
       localStorage.clear();
-
-      // Redirect to role selector
       navigate("/role-selector");
 
     } catch (error) {
       console.error("Logout error:", error?.response?.data || error.message);
 
-      // Even if API fails, clear local storage and redirect
       localStorage.clear();
       navigate("/role-selector");
     }
@@ -591,12 +658,25 @@ export default function UserDashboard() {
       {/* Voice/Video Call Modal */}
       <CallModal
         isOpen={showCallModal}
-        onClose={() => setShowCallModal(false)}
+        onClose={() => {
+          setShowCallModal(false);
+          setCallerInfo({
+            name: '',
+            image: null,
+            userId: '',
+            userName: '',
+            callId: '',
+            waitingDuration: 0
+          });
+        }}
         callType={callType}
-        callerName={callerInfo.name}
+        callerName={callerInfo.userName || callerInfo.name}
         callerImage={callerInfo.image}
-        onAccept={handleAcceptCall}
+        callData={callerInfo}
+        onAccept={handleAcceptCallModal}
         onEnd={handleEndCall}
+        onAcceptCall={handleAcceptCall}
+        onRejectCall={handleRejectCall}
       />
 
       {/* Mobile Header */}

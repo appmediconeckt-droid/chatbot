@@ -14,15 +14,22 @@ const ChatBox = () => {
     // State for current chat
     const [currentChat, setCurrentChat] = useState(null);
     const [messages, setMessages] = useState([]);
-    const [currentCounselor, setCurrentCounselor] = useState(initialCounselor || {
-        id: parseInt(counselorId),
-        name: 'Dr. Suresh Reddy',
-        specialization: 'Clinical Psychologist',
-        online: true,
-        avatar: null,
-        avatarType: 'text',
-        profilePhoto: null,
-        phoneNumber: '+91 98765 43215'
+    
+    // Fixed: Initialize currentCounselor with safe default values
+    const [currentCounselor, setCurrentCounselor] = useState(() => {
+        if (initialCounselor) {
+            return initialCounselor;
+        }
+        return {
+            id: counselorId || '69c679b6e0e8f0800ff08fd1',
+            name: 'Dr. Suresh Reddy',
+            specialization: 'Clinical Psychologist',
+            online: true,
+            avatar: null,
+            avatarType: 'text',
+            profilePhoto: null,
+            phoneNumber: '+91 98765 43215'
+        };
     });
 
     // Call modal states
@@ -55,6 +62,12 @@ const ChatBox = () => {
 
     const currentUser = getCurrentUser();
 
+    // Fixed user data for API
+    const defaultInitiatorId = '69c7767218a4fa39b1ee9db9';
+    const defaultInitiatorName = 'Arun';
+    const defaultReceiverId = counselorId || '69c679b6e0e8f0800ff08fd1';
+    const defaultReceiverName = currentCounselor?.name || 'Counselor';
+
     // Refs for scrolling and container
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
@@ -64,6 +77,7 @@ const ChatBox = () => {
 
     // Function to get profile photo URL
     const getProfilePhotoUrl = (counselor) => {
+        if (!counselor) return null;
         if (counselor?.profilePhoto?.url) {
             return counselor.profilePhoto.url;
         }
@@ -75,6 +89,7 @@ const ChatBox = () => {
 
     // Function to get initials
     const getInitials = (name) => {
+        if (!name) return '?';
         return name
             .split(' ')
             .map(word => word[0])
@@ -83,12 +98,10 @@ const ChatBox = () => {
             .slice(0, 2);
     };
 
-    // Scroll to bottom function
+    // Scroll to bottom function - FIXED: Added null check
     const scrollToBottom = useCallback(() => {
         if (messagesEndRef.current) {
-            setTimeout(() => {
-                messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-            }, 100);
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
         }
     }, []);
 
@@ -253,75 +266,116 @@ const ChatBox = () => {
 
     // Initialize video call with API
     const initiateVideoCall = async () => {
+        console.log('initiateVideoCall called');
+        
+        if (!currentCounselor) {
+            console.error('Current counselor is undefined');
+            setCallError('Counselor information not available');
+            return;
+        }
+        
         setIsInitiatingCall(true);
         setCallError(null);
         
         try {
             const token = localStorage.getItem('token');
-            const userId = currentUser?.id || currentUser?._id || 'user_123';
-            const userName = currentUser?.name || currentUser?.fullName || 'User';
-            const counsellorId = currentCounselor.id.toString();
-            const counsellorName = currentCounselor.name;
+            
+            // Get user details - Use the exact IDs from your API
+            const initiatorId = currentUser?.id || currentUser?._id || defaultInitiatorId;
+            const initiatorName = currentUser?.name || currentUser?.fullName || defaultInitiatorName;
+            const initiatorType = 'user';
+            
+            // Get receiver (counselor) details
+            const receiverId = currentCounselor.id?.toString() || defaultReceiverId;
+            const receiverName = currentCounselor.name || defaultReceiverName;
+            const receiverType = 'counsellor';
+            
+            console.log('Call details:', {
+                initiatorId,
+                initiatorName,
+                initiatorType,
+                receiverId,
+                receiverName,
+                receiverType
+            });
             
             const requestBody = {
-                userId: userId,
-                userName: userName,
-                counsellorId: counsellorId,
-                counsellorName: counsellorName,
+                initiatorId: initiatorId,
+                initiatorType: initiatorType,
+                receiverId: receiverId,
+                receiverType: receiverType,
                 callType: "video"
             };
             
-            console.log('Initiating video call with:', requestBody);
+           
             
-            const response = await axios.post(`${API_BASE_URL}/api/video/initiate`, requestBody, {
+            const response = await axios.post(`${API_BASE_URL}/api/video/calls/initiate`, requestBody, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': token ? `Bearer ${token}` : ''
                 }
             });
             
             console.log('Video call API response:', response.data);
             
             if (response.data && response.data.success) {
+                // Get profile photo from API response or use default
+                const receiverProfilePhoto = response.data.callData?.receiver?.profilePhoto || 
+                                            getProfilePhotoUrl(currentCounselor) || 
+                                            currentCounselor?.avatar || 
+                                            currentCounselor?.name?.charAt(0) || '👤';
+                
                 const callData = {
-                    id: response.data.callData.id,
+                    id: response.data.callData?.id,
                     callId: response.data.callId,
                     roomId: response.data.roomId,
-                    name: counsellorName,
+                    name: response.data.callData?.receiver?.name || receiverName,
                     type: 'video',
-                    profilePic: getProfilePhotoUrl(currentCounselor) || currentCounselor.avatar || currentCounselor.name.charAt(0),
-                    phoneNumber: currentCounselor.phoneNumber,
-                    status: 'connecting',
+                    profilePic: receiverProfilePhoto,
+                    phoneNumber: currentCounselor?.phoneNumber,
+                    status: response.data.status || 'ringing',
                     date: 'Today',
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    apiCallData: response.data.callData
+                    apiCallData: response.data.callData,
+                    initiator: response.data.callData?.initiator,
+                    receiver: response.data.callData?.receiver
                 };
                 
+                console.log('Opening video modal with:', callData);
                 setSelectedCall(callData);
                 setIsVideoModalOpen(true);
             } else {
-                throw new Error(response.data.message || 'Failed to initiate video call');
+                throw new Error(response.data?.message || 'Failed to initiate video call');
             }
         } catch (error) {
             console.error('Error initiating video call:', error);
-            setCallError(error.response?.data?.message || error.message || 'Failed to initiate video call');
+            console.error('Error details:', error.response?.data || error.message);
             
-            // Fallback: Open modal with default data
+            let errorMessage = 'Failed to initiate video call. ';
+            if (error.response?.data?.message) {
+                errorMessage += error.response.data.message;
+            } else if (error.message) {
+                errorMessage += error.message;
+            } else {
+                errorMessage += 'Please check your connection and try again.';
+            }
+            
+            setCallError(errorMessage);
+            
+            // Still open modal with fallback data for demo
+            console.log('Opening fallback video modal');
             const fallbackCallData = {
-                id: currentCounselor.id,
-                name: currentCounselor.name,
+                id: Date.now(),
+                name: currentCounselor?.name || 'Counselor',
                 type: 'video',
-                profilePic: getProfilePhotoUrl(currentCounselor) || currentCounselor.avatar || currentCounselor.name.charAt(0),
-                phoneNumber: currentCounselor.phoneNumber,
-                status: 'connecting',
+                profilePic: getProfilePhotoUrl(currentCounselor) || currentCounselor?.avatar || currentCounselor?.name?.charAt(0) || '👤',
+                phoneNumber: currentCounselor?.phoneNumber,
+                status: 'ringing',
                 date: 'Today',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             setSelectedCall(fallbackCallData);
             setIsVideoModalOpen(true);
-            
-            // Show error toast/notification
-            alert('Unable to connect to call server. Please check your connection.');
         } finally {
             setIsInitiatingCall(false);
         }
@@ -329,74 +383,103 @@ const ChatBox = () => {
 
     // Initialize voice call with API
     const initiateVoiceCall = async () => {
+        console.log('initiateVoiceCall called');
+        
+        if (!currentCounselor) {
+            console.error('Current counselor is undefined');
+            setCallError('Counselor information not available');
+            return;
+        }
+        
         setIsInitiatingCall(true);
         setCallError(null);
         
         try {
             const token = localStorage.getItem('token');
-            const userId = currentUser?.id || currentUser?._id || 'user_123';
-            const userName = currentUser?.name || currentUser?.fullName || 'User';
-            const counsellorId = currentCounselor.id.toString();
-            const counsellorName = currentCounselor.name;
+            
+            // Get user details
+            const initiatorId = currentUser?.id || currentUser?._id || defaultInitiatorId;
+            const initiatorName = currentUser?.name || currentUser?.fullName || defaultInitiatorName;
+            const initiatorType = 'user';
+            
+            // Get receiver (counselor) details
+            const receiverId = currentCounselor.id?.toString() || defaultReceiverId;
+            const receiverName = currentCounselor.name || defaultReceiverName;
+            const receiverType = 'counsellor';
             
             const requestBody = {
-                userId: userId,
-                userName: userName,
-                counsellorId: counsellorId,
-                counsellorName: counsellorName,
+                initiatorId: initiatorId,
+                initiatorType: initiatorType,
+                receiverId: receiverId,
+                receiverType: receiverType,
                 callType: "voice"
             };
             
-            console.log('Initiating voice call with:', requestBody);
+            console.log('Sending voice call request:', requestBody);
             
-            const response = await axios.post(`${API_BASE_URL}/api/video/initiate`, requestBody, {
+            const response = await axios.post(`${API_BASE_URL}/api/video/calls/initiate`, requestBody, {
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': token ? `Bearer ${token}` : ''
                 }
             });
             
             console.log('Voice call API response:', response.data);
             
             if (response.data && response.data.success) {
+                const receiverProfilePhoto = response.data.callData?.receiver?.profilePhoto || 
+                                            getProfilePhotoUrl(currentCounselor) || 
+                                            currentCounselor?.avatar || 
+                                            currentCounselor?.name?.charAt(0) || '👤';
+                
                 const callData = {
-                    id: response.data.callData.id,
+                    id: response.data.callData?.id,
                     callId: response.data.callId,
                     roomId: response.data.roomId,
-                    name: counsellorName,
+                    name: response.data.callData?.receiver?.name || receiverName,
                     type: 'voice',
-                    profilePic: getProfilePhotoUrl(currentCounselor) || currentCounselor.avatar || currentCounselor.name.charAt(0),
-                    phoneNumber: currentCounselor.phoneNumber,
-                    status: 'connecting',
+                    profilePic: receiverProfilePhoto,
+                    phoneNumber: currentCounselor?.phoneNumber,
+                    status: response.data.status || 'ringing',
                     date: 'Today',
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                    apiCallData: response.data.callData
+                    apiCallData: response.data.callData,
+                    initiator: response.data.callData?.initiator,
+                    receiver: response.data.callData?.receiver
                 };
                 
                 setSelectedCall(callData);
                 setIsVoiceModalOpen(true);
             } else {
-                throw new Error(response.data.message || 'Failed to initiate voice call');
+                throw new Error(response.data?.message || 'Failed to initiate voice call');
             }
         } catch (error) {
             console.error('Error initiating voice call:', error);
-            setCallError(error.response?.data?.message || error.message || 'Failed to initiate voice call');
             
-            // Fallback: Open modal with default data
+            let errorMessage = 'Failed to initiate voice call. ';
+            if (error.response?.data?.message) {
+                errorMessage += error.response.data.message;
+            } else if (error.message) {
+                errorMessage += error.message;
+            } else {
+                errorMessage += 'Please check your connection and try again.';
+            }
+            
+            setCallError(errorMessage);
+            
+            // Fallback modal
             const fallbackCallData = {
-                id: currentCounselor.id,
-                name: currentCounselor.name,
+                id: Date.now(),
+                name: currentCounselor?.name || 'Counselor',
                 type: 'voice',
-                profilePic: getProfilePhotoUrl(currentCounselor) || currentCounselor.avatar || currentCounselor.name.charAt(0),
-                phoneNumber: currentCounselor.phoneNumber,
-                status: 'connecting',
+                profilePic: getProfilePhotoUrl(currentCounselor) || currentCounselor?.avatar || currentCounselor?.name?.charAt(0) || '👤',
+                phoneNumber: currentCounselor?.phoneNumber,
+                status: 'ringing',
                 date: 'Today',
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             };
             setSelectedCall(fallbackCallData);
             setIsVoiceModalOpen(true);
-            
-            alert('Unable to connect to call server. Please check your connection.');
         } finally {
             setIsInitiatingCall(false);
         }
@@ -404,16 +487,19 @@ const ChatBox = () => {
 
     // Handle video call
     const handleVideoCall = () => {
+        console.log('Video call button clicked');
         initiateVideoCall();
     };
 
     // Handle voice call
     const handleVoiceCall = () => {
+        console.log('Voice call button clicked');
         initiateVoiceCall();
     };
 
     // Handle close modal
     const handleCloseModal = () => {
+        console.log('Closing call modal');
         setIsVideoModalOpen(false);
         setIsVoiceModalOpen(false);
         setSelectedCall(null);
@@ -427,11 +513,13 @@ const ChatBox = () => {
                 const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
                 
                 let chat = savedChats.find(c => c.id === chatId) || 
-                          savedChats.find(c => c.counselorId === parseInt(counselorId));
+                          savedChats.find(c => c.counselorId === counselorId);
                 
                 if (chat) {
                     setCurrentChat(chat);
-                    setCurrentCounselor(chat.counselor);
+                    if (chat.counselor) {
+                        setCurrentCounselor(chat.counselor);
+                    }
                     
                     if (chat.unread) {
                         const updatedChats = savedChats.map(c => {
@@ -446,7 +534,7 @@ const ChatBox = () => {
                     const newChat = {
                         id: Date.now(),
                         chatId: chatId || `chat_${Date.now()}`,
-                        counselorId: parseInt(counselorId),
+                        counselorId: counselorId,
                         counselor: initialCounselor,
                         user: initialUser || { name: 'User', email: 'user@example.com' },
                         messages: [],
@@ -494,9 +582,11 @@ const ChatBox = () => {
         }
     }, [messages, currentChat, chatStatus]);
 
-    // Scroll to bottom
+    // Scroll to bottom - FIXED: Added conditional check
     useEffect(() => {
-        scrollToBottom();
+        if (messagesEndRef.current) {
+            scrollToBottom();
+        }
     }, [messages, scrollToBottom]);
 
     // Handle click outside
@@ -594,19 +684,23 @@ const ChatBox = () => {
 
     // Render profile avatar
     const renderProfileAvatar = (counselor, size = 'md') => {
+        if (!counselor) {
+            return <div className={`chat-profile-initials-${size}`}>?</div>;
+        }
+        
         const profilePhotoUrl = getProfilePhotoUrl(counselor);
         
         if (profilePhotoUrl) {
             return (
                 <img 
                     src={profilePhotoUrl} 
-                    alt={counselor.name}
+                    alt={counselor.name || 'Counselor'}
                     className={`chat-profile-image-${size}`}
                     onError={(e) => {
                         e.target.style.display = 'none';
                         e.target.parentElement.innerHTML = `
                             <div class="chat-profile-initials-${size}">
-                                ${getInitials(counselor.name)}
+                                ${getInitials(counselor.name || 'Counselor')}
                             </div>
                         `;
                     }}
@@ -616,7 +710,7 @@ const ChatBox = () => {
         
         return (
             <div className={`chat-profile-initials-${size}`}>
-                {getInitials(counselor.name)}
+                {getInitials(counselor.name || 'Counselor')}
             </div>
         );
     };
@@ -668,6 +762,10 @@ const ChatBox = () => {
         );
     };
 
+    // Safe check for counselor name
+    const counselorName = currentCounselor?.name || 'Counselor';
+    const counselorOnline = currentCounselor?.online || false;
+
     return (
         <div className="chatContainerFull">
             <div className="chatBoxMain">
@@ -680,16 +778,16 @@ const ChatBox = () => {
                         <div className="chatUserDetails">
                             <div className="chatProfilePic" aria-label="Counselor profile picture">
                                 {renderProfileAvatar(currentCounselor, 'md')}
-                                <span className={`chatActiveDot ${currentCounselor.online ? 'chatActiveOnline' : 'chatActiveOffline'}`} />
+                                <span className={`chatActiveDot ${counselorOnline ? 'chatActiveOnline' : 'chatActiveOffline'}`} />
                             </div>
                             <div className="chatProfileInfo">
-                                <h2 className="chatProfileName">{currentCounselor.name}</h2>
+                                <h2 className="chatProfileName">{counselorName}</h2>
                                 <p className="chatProfileStatus">
                                     {isTyping ? (
                                         <span className="chatTypingText" role="status">Typing...</span>
                                     ) : (
                                         <span className="chatStatusText">
-                                            {currentCounselor.online ? 'Online' : 'Offline'}
+                                            {counselorOnline ? 'Online' : 'Offline'}
                                         </span>
                                     )}
                                 </p>
@@ -788,7 +886,7 @@ const ChatBox = () => {
                                     </div>
                                     <div className="chatWelcomeMsg">
                                         <h3 className="chatWelcomeTitle">
-                                            Welcome to your session with {currentCounselor.name}
+                                            Welcome to your session with {counselorName}
                                         </h3>
                                         <p className="chatWelcomeDesc">
                                             This is a safe space to share your thoughts and feelings.
@@ -867,7 +965,7 @@ const ChatBox = () => {
                                 value={newMessage}
                                 onChange={handleInputChange}
                                 onKeyPress={handleKeyPress}
-                                placeholder={`Message ${currentCounselor.name}...`}
+                                placeholder={`Message ${counselorName}...`}
                                 className="chatTextInput"
                                 autoComplete="off"
                                 disabled={isSending}
