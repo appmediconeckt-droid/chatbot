@@ -1,4 +1,4 @@
-// VoiceCallModal.jsx - Updated to handle complete user and counselor data
+// VoiceCallModal.jsx - Complete with Proper CSS Structure
 
 import React, { useState, useEffect, useRef } from 'react';
 import './VoiceCallModal.css';
@@ -103,13 +103,6 @@ const VoiceCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                 setIsConnecting(false);
                 setCallMetadata(prev => ({ ...prev, status: 'connected' }));
             }, 2000);
-            
-            // Log complete call data for debugging
-            console.log('Voice Call Modal - Processed Data:', {
-                caller: callerInfo,
-                user: userInfo,
-                metadata: callMetadata
-            });
         }
     }, [isOpen, callData, currentUser]);
 
@@ -236,18 +229,6 @@ const VoiceCallModal = ({ isOpen, onClose, callData, currentUser }) => {
         if (mediaStreamRef.current) {
             mediaStreamRef.current.getTracks().forEach(track => track.stop());
         }
-
-        // Log call end data for analytics
-        const callEndData = {
-            callId: callMetadata.callId,
-            roomId: callMetadata.roomId,
-            duration: callDuration,
-            endedAt: new Date().toISOString(),
-            caller: callerInfo,
-            user: userInfo,
-            type: callMetadata.type
-        };
-        console.log('Voice call ended:', callEndData);
 
         setTimeout(() => {
             onClose();
@@ -452,10 +433,10 @@ const VoiceCallModal = ({ isOpen, onClose, callData, currentUser }) => {
                             <button
                                 className={`control-btn ${isSpeakerOn ? 'active' : ''}`}
                                 onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                                title={isSpeakerOn ? 'Speaker off' : 'Speaker on'}
+                                title={isSpeakerOn ? ' off' : ' on'}
                             >
                                 <span className="btn-icon">{isSpeakerOn ? '🔊' : '🔈'}</span>
-                                <span className="btn-label">{isSpeakerOn ? 'Speaker off' : 'Speaker on'}</span>
+                                <span className="btn-label">{isSpeakerOn ? 'off' : ' on'}</span>
                             </button>
 
                             <button

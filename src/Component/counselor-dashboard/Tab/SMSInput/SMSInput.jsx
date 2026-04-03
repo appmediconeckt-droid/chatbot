@@ -38,12 +38,12 @@ const SMSInput = () => {
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
 
-  // Get current counselor from localStorage
-  const getCurrentCounselor = () => {
-    const counselorData = localStorage.getItem('counselor');
-    if (counselorData) {
+  // Get current user from localStorage
+  const getCurrentUser = () => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
       try {
-        return JSON.parse(counselorData);
+        return JSON.parse(userData);
       } catch (e) {
         return null;
       }
@@ -51,14 +51,18 @@ const SMSInput = () => {
     return null;
   };
 
-  const currentCounselor = getCurrentCounselor();
+  const currentUser = getCurrentUser();
 
   // Get the chat ID for API calls
   const getChatIdForAPI = () => {
+    // Use chatId from location state if available
     if (chatId) return chatId;
+    
+    // Create a new chat ID if none exists (based on user ID or name)
     if (selectedUser) {
-      return `chat_${selectedUser.id || selectedUser.name.replace(/\s/g, '_')}_${currentCounselor?.id || 'counselor'}_${Date.now()}`;
+      return `chat_${selectedUser.id || selectedUser.name.replace(/\s/g, '_')}_${Date.now()}`;
     }
+    
     return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
@@ -68,6 +72,7 @@ const SMSInput = () => {
     
     try {
       const apiChatId = getChatIdForAPI();
+      
       const token = localStorage.getItem('token');
       
       setIsLoadingMessages(true);
@@ -83,15 +88,17 @@ const SMSInput = () => {
       console.log('GET API Response:', response.data);
       
       if (response.data && response.data.messages) {
+        // Update chat status
         if (response.data.chatStatus) {
           setChatStatus(response.data.chatStatus);
         }
         
+        // Transform API messages to UI format
         const transformedMessages = response.data.messages.map((msg, index) => ({
           id: msg.id || index,
           messageId: msg.messageId,
           text: msg.content,
-          sender: msg.senderRole === 'counselor' ? 'me' : 'user',
+          sender: msg.senderRole === 'user' ? 'user' : 'me',
           senderRole: msg.senderRole,
           time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           fullTime: msg.createdAt,
@@ -101,12 +108,21 @@ const SMSInput = () => {
         }));
         
         setMessages(transformedMessages);
+        
+        // Save to localStorage as backup
         saveMessagesToLocalStorage(transformedMessages);
+        
         return transformedMessages;
+      } else if (response.data && response.data.messages === undefined && messages.length === 0) {
+        // If no messages, set empty array
+        setMessages([]);
       }
     } catch (error) {
       console.error('Error fetching messages from API:', error);
+      console.error('Error details:', error.response?.data || error.message);
       setError('Failed to load messages. Please try again.');
+      
+      // Load from localStorage as fallback
       loadMessagesFromLocalStorage();
     } finally {
       setIsLoadingMessages(false);
@@ -116,7 +132,7 @@ const SMSInput = () => {
   // Save messages to localStorage
   const saveMessagesToLocalStorage = (messagesToSave) => {
     try {
-      const savedChats = JSON.parse(localStorage.getItem('counselorSmsChats') || '[]');
+      const savedChats = JSON.parse(localStorage.getItem('smsChats') || '[]');
       const chatIdToSave = getChatIdForAPI();
       const existingChatIndex = savedChats.findIndex(chat => chat.chatId === chatIdToSave);
       
@@ -124,8 +140,6 @@ const SMSInput = () => {
         chatId: chatIdToSave,
         userId: selectedUser?.id,
         userName: selectedUser?.name,
-        counselorId: currentCounselor?.id,
-        counselorName: currentCounselor?.name,
         messages: messagesToSave,
         chatStatus: chatStatus,
         lastUpdated: new Date().toISOString()
@@ -137,7 +151,7 @@ const SMSInput = () => {
         savedChats.push(chatData);
       }
       
-      localStorage.setItem('counselorSmsChats', JSON.stringify(savedChats));
+      localStorage.setItem('smsChats', JSON.stringify(savedChats));
     } catch (error) {
       console.error('Error saving messages to localStorage:', error);
     }
@@ -146,7 +160,7 @@ const SMSInput = () => {
   // Load messages from localStorage
   const loadMessagesFromLocalStorage = () => {
     try {
-      const savedChats = JSON.parse(localStorage.getItem('counselorSmsChats') || '[]');
+      const savedChats = JSON.parse(localStorage.getItem('smsChats') || '[]');
       const chatIdToLoad = getChatIdForAPI();
       const savedChat = savedChats.find(chat => chat.chatId === chatIdToLoad);
       
@@ -165,6 +179,7 @@ const SMSInput = () => {
   const sendMessageToAPI = async (messageContent) => {
     try {
       const apiChatId = getChatIdForAPI();
+    
       const token = localStorage.getItem('token');
       
       const requestBody = {
@@ -181,6 +196,7 @@ const SMSInput = () => {
       console.log('POST API Response:', response.data);
       
       if (response.data && response.data.success) {
+        // After successful POST, fetch all messages again to get updated list
         await fetchMessagesFromAPI();
         return response.data.message;
       } else {
@@ -188,6 +204,7 @@ const SMSInput = () => {
       }
     } catch (error) {
       console.error('Error sending message to API:', error);
+      console.error('Error details:', error.response?.data || error.message);
       throw error;
     }
   };
@@ -199,34 +216,44 @@ const SMSInput = () => {
 
     const messageText = message.trim();
     
+    // Create temporary message for optimistic UI update
     const tempMessage = {
       id: `temp_${Date.now()}`,
       text: messageText,
       sender: "me",
-      senderRole: "counselor",
+      senderRole: "user",
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       createdAt: new Date().toISOString(),
       status: "sending",
       isTemporary: true
     };
     
+    // Add temporary message to UI
     setMessages(prev => [...prev, tempMessage]);
     setMessage("");
     setIsSending(true);
     setError(null);
     
     try {
+      // Send message to API
       await sendMessageToAPI(messageText);
+      
+      // Remove temporary message (actual messages will be loaded by fetchMessagesFromAPI)
       setMessages(prev => prev.filter(msg => !msg.isTemporary));
+      
     } catch (err) {
       console.error('Error sending message:', err);
+      
+      // Update temporary message to show error
       setMessages(prev => prev.map(msg => 
         msg.id === tempMessage.id 
           ? { ...msg, status: "error", error: "Failed to send" }
           : msg
       ));
+      
       setError("Failed to send message. Please try again.");
       
+      // Remove error message after 3 seconds
       setTimeout(() => {
         setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
       }, 3000);
@@ -244,24 +271,20 @@ const SMSInput = () => {
     
     try {
       const token = localStorage.getItem('token');
-      
-      // Get counselor info from localStorage
-      const counselorId = currentCounselor?.id || currentCounselor?._id || 'counselor_123';
-      const counselorName = currentCounselor?.name || currentCounselor?.fullName || 'Counselor';
-      
-      // Get user info from selectedUser
-      const userId = selectedUser.id || selectedUser.userId || selectedUser._id || 'user_123';
-      const userName = selectedUser.name || selectedUser.fullName || 'User';
+      const userId = currentUser?.id || currentUser?._id || 'user_123';
+      const userName = currentUser?.name || currentUser?.fullName || currentUser?.username || 'User';
+      const counsellorId = selectedUser.id ? selectedUser.id.toString() : selectedUser.userId?.toString() || 'counsellor_1';
+      const counsellorName = selectedUser.name;
       
       const requestBody = {
-        counsellorId: counselorId,
-        counsellorName: counselorName,
         userId: userId,
         userName: userName,
+        counsellorId: counsellorId,
+        counsellorName: counsellorName,
         callType: "video"
       };
       
-      console.log('Initiating video call from counselor to user:', requestBody);
+      console.log('Initiating video call with:', requestBody);
       
       const response = await axios.post(`${API_BASE_URL}/api/video/initiate`, requestBody, {
         headers: {
@@ -273,6 +296,7 @@ const SMSInput = () => {
       console.log('Video call API response:', response.data);
       
       if (response.data && response.data.success) {
+        // Get profile display (emoji based on gender)
         const profileDisplay = selectedUser.gender === 'male' ? '👨' : 
                               selectedUser.gender === 'female' ? '👩' : '👤';
         
@@ -280,16 +304,16 @@ const SMSInput = () => {
           id: response.data.callData.id,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name: userName,
+          name: counsellorName,
           type: 'video',
           profilePic: profileDisplay,
-          phoneNumber: selectedUser.phone || selectedUser.phoneNumber || selectedUser.mobile,
+          phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
           status: 'connecting',
           date: 'Today',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           apiCallData: response.data.callData,
-          location: selectedUser.location || selectedUser.city,
-          company: selectedUser.company || selectedUser.occupation
+          location: selectedUser.location,
+          company: selectedUser.company
         };
         
         setSelectedCall(callData);
@@ -301,6 +325,7 @@ const SMSInput = () => {
       console.error('Error initiating video call:', error);
       setCallError(error.response?.data?.message || error.message || 'Failed to initiate video call');
       
+      // Fallback: Open modal with default data
       const profileDisplay = selectedUser.gender === 'male' ? '👨' : 
                             selectedUser.gender === 'female' ? '👩' : '👤';
       
@@ -319,6 +344,7 @@ const SMSInput = () => {
       setSelectedCall(fallbackCallData);
       setIsVideoModalOpen(true);
       
+      // Show error toast/notification
       alert('Unable to connect to call server. Starting local call mode.');
     } finally {
       setIsInitiatingCall(false);
@@ -334,21 +360,20 @@ const SMSInput = () => {
     
     try {
       const token = localStorage.getItem('token');
-      
-      const counselorId = currentCounselor?.id || currentCounselor?._id || 'counselor_123';
-      const counselorName = currentCounselor?.name || currentCounselor?.fullName || 'Counselor';
-      const userId = selectedUser.id || selectedUser.userId || selectedUser._id || 'user_123';
-      const userName = selectedUser.name || selectedUser.fullName || 'User';
+      const userId = currentUser?.id || currentUser?._id || 'user_123';
+      const userName = currentUser?.name || currentUser?.fullName || currentUser?.username || 'User';
+      const counsellorId = selectedUser.id ? selectedUser.id.toString() : selectedUser.userId?.toString() || 'counsellor_1';
+      const counsellorName = selectedUser.name;
       
       const requestBody = {
-        counsellorId: counselorId,
-        counsellorName: counselorName,
         userId: userId,
         userName: userName,
+        counsellorId: counsellorId,
+        counsellorName: counsellorName,
         callType: "voice"
       };
       
-      console.log('Initiating voice call from counselor to user:', requestBody);
+      console.log('Initiating voice call with:', requestBody);
       
       const response = await axios.post(`${API_BASE_URL}/api/video/initiate`, requestBody, {
         headers: {
@@ -360,6 +385,7 @@ const SMSInput = () => {
       console.log('Voice call API response:', response.data);
       
       if (response.data && response.data.success) {
+        // Get profile display (emoji based on gender)
         const profileDisplay = selectedUser.gender === 'male' ? '👨' : 
                               selectedUser.gender === 'female' ? '👩' : '👤';
         
@@ -367,7 +393,7 @@ const SMSInput = () => {
           id: response.data.callData.id,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name: userName,
+          name: counsellorName,
           type: 'voice',
           profilePic: profileDisplay,
           phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
@@ -375,8 +401,8 @@ const SMSInput = () => {
           date: 'Today',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           apiCallData: response.data.callData,
-          location: selectedUser.location || "Unknown",
-          company: selectedUser.company || "User"
+          location: selectedUser.location || "Counseling Center",
+          company: selectedUser.company || "Mental Health Support"
         };
         
         setSelectedCall(callData);
@@ -388,6 +414,7 @@ const SMSInput = () => {
       console.error('Error initiating voice call:', error);
       setCallError(error.response?.data?.message || error.message || 'Failed to initiate voice call');
       
+      // Fallback: Open modal with default data
       const profileDisplay = selectedUser.gender === 'male' ? '👨' : 
                             selectedUser.gender === 'female' ? '👩' : '👤';
       
@@ -400,12 +427,13 @@ const SMSInput = () => {
         status: 'connecting',
         date: 'Today',
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        location: selectedUser.location || "Unknown",
-        company: selectedUser.company || "User"
+        location: selectedUser.location || "Counseling Center",
+        company: selectedUser.company || "Mental Health Support"
       };
       setSelectedCall(fallbackCallData);
       setIsVoiceModalOpen(true);
       
+      // Show error toast/notification
       alert('Unable to connect to call server. Starting local call mode.');
     } finally {
       setIsInitiatingCall(false);
@@ -479,12 +507,6 @@ const SMSInput = () => {
     }
   }, [callError]);
 
-  // Log current counselor info for debugging
-  useEffect(() => {
-    console.log('Current Counselor:', currentCounselor);
-    console.log('Selected User:', selectedUser);
-  }, [currentCounselor, selectedUser]);
-
   // Render chat status banner
   const renderChatStatusBanner = () => {
     if (!chatStatus) return null;
@@ -540,7 +562,7 @@ const SMSInput = () => {
           <h3>No user selected</h3>
           <p>Please select a user from the list to start messaging</p>
           <button className="back-to-list-btn" onClick={handleBack}>
-            ← Back to Messages List
+            ← Back to SMS List
           </button>
         </div>
       </div>
@@ -552,7 +574,7 @@ const SMSInput = () => {
       {/* Header with Back Button and User Info */}
       <div className="smsinput-header">
         <div className="header-left">
-          <button className="back-button" onClick={handleBack} title="Back to Messages List">
+          <button className="back-button" onClick={handleBack} title="Back to SMS List">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
             </svg>
@@ -567,7 +589,7 @@ const SMSInput = () => {
             </div>
             <div className="smsinput-user-details">
               <h3>{selectedUser.name}</h3>
-              <p className="smsinput-user-phone">{selectedUser.phone || selectedUser.mobile}</p>
+              <p className="smsinput-user-phone">{selectedUser.phone}</p>
               <p className="smsinput-user-email">{selectedUser.email}</p>
             </div>
           </div>
@@ -584,7 +606,6 @@ const SMSInput = () => {
             <span className="call-icon">
               {isInitiatingCall ? '⏳' : '📞'}
             </span>
-            <span className="call-label">Voice</span>
           </button>
           <button
             className={`call-btn video ${isInitiatingCall ? 'loading' : ''}`}
@@ -595,7 +616,6 @@ const SMSInput = () => {
             <span className="call-icon">
               {isInitiatingCall ? '⏳' : '📹'}
             </span>
-            <span className="call-label">Video</span>
           </button>
         </div>
       </div>
@@ -649,6 +669,7 @@ const SMSInput = () => {
             </div>
           ))
         )}
+        {/* Empty div for scrolling reference */}
         <div ref={messagesEndRef} />
       </div>
 
@@ -664,7 +685,7 @@ const SMSInput = () => {
           <input
             type="text"
             className="smsinput-input"
-            placeholder={isSending ? "Sending..." : `Message ${selectedUser.name}...`}
+            placeholder={isSending ? "Sending..." : "Type your message..."}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             disabled={isSending}
