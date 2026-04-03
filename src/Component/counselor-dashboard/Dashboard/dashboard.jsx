@@ -316,7 +316,7 @@ const fetchWaitingCalls = async () => {
   try {
     const token = localStorage.getItem('token');
     const userId = localStorage.getItem('userId');
-    const userType = localStorage.getItem('userType');
+    
     
     if (!userId || !token) {
       console.log('No userId or token found');
@@ -324,7 +324,7 @@ const fetchWaitingCalls = async () => {
     }
     
     // CORRECTED URL - removed /video/ from the path
-    const response = await axios.get(`${API_BASE_URL}api/video/calls/waiting/${userId}/${userType}`, {
+    const response = await axios.get(`${API_BASE_URL}api/video/calls/waiting/${userId}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'

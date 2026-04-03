@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import Leanding from './authtication/Leanding'
-
+import '../setupAxios'; // 🔥 THIS LINE MAGIC
 import UserDashboard from './Component/UserDashboard/Dashboard/UserDashboard'
 import ChatBox from './Component/UserDashboard/Tab/ChatBox/ChatBox'
 import Login from './authtication/Login'

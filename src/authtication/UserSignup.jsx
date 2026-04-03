@@ -297,7 +297,7 @@ const UserSignup = () => {
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
         email: formData.email,
         password: formData.password
-      });
+      },{ withCredentials: true });
 
       const token = response.data?.token || response.data?.accessToken || response.data?.data?.token || response.data?.data?.accessToken;
       const refreshToken = response.data?.refreshToken || response.data?.data?.refreshToken;
@@ -311,10 +311,20 @@ const UserSignup = () => {
       if (token) {
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userType", "user");
+         localStorage.setItem('refreshToken', response?.data?.refreshToken); // ← CRITICAL
         localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("token", token);
         localStorage.setItem("accessToken", token);
+      console.log("All localStorage:", localStorage);
 
+// Check specific tokens
+console.log("Access Token:", localStorage.getItem('accessToken'));
+console.log("Refresh Token:", localStorage.getItem('refreshToken'));
+console.log("User:", localStorage.getItem('user'));
+
+// Check if tokens exist
+console.log("Has accessToken?", !!localStorage.getItem('accessToken'));
+console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
         if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
         if (response.data.user) {

@@ -38,9 +38,8 @@ import WalletDashboard from "../Tab/Wallet/WalletDashboard";
 import CallHistory from "../Tab/Callls/CallHistory";
 import useVibration from '../../../hooks/useVibration';
 import PatientProfile from '../../PatientProfile/PatientProfile';
-import LiveChatSupport from '../Tab/Appointment/BookAppointment';
 import axios from 'axios';
-import CounselorTable from '../Tab/Counselor/CounselorDirectory';
+import CounselorRequestChat from '../Tab/Appointment/BookAppointment';
 
 // ==================== Call Modal Component ====================
 const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onEnd, onAcceptCall, onRejectCall, onJoinCall }) => {
@@ -711,7 +710,7 @@ export default function UserDashboard() {
       <div className={`dashboard-content ${isMobile ? 'mobile' : ''}`}>
         <div className="content-scrollable">
           {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
-          {active === "Live Chat" && <CounselorTable />}
+          {active === "Live Chat" && <CounselorRequestChat />}
           {active === "Wallet" && <WalletDashboard />}
           {active === "Video" && <CallHistory />}
           {active === "profile" && <PatientProfile />}
