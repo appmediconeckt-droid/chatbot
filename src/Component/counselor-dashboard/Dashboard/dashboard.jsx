@@ -36,7 +36,7 @@ import { API_BASE_URL } from '../../../axiosConfig';
 import CounselorProfile from '../Tab/Profile-Con/CounselorProfile';
 
 // Voice/Video Call Modal Component for Counselor
-const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onEnd, onAcceptCall, onRejectCall, onJoinCall }) => {
+const CallModal = ({ isOpen, onClose, callType, callerName, callerAvatar, callData, onAccept, onEnd, onAcceptCall, onRejectCall, onJoinCall }) => {
   const [callStatus, setCallStatus] = useState('incoming');
   const [callDuration, setCallDuration] = useState(0);
   const [isAccepting, setIsAccepting] = useState(false);
@@ -142,25 +142,19 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
   if (!isOpen) return null;
 
   return (
-    <div className="couns-call-modal-overlay">
-      <div className={`couns-call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`}>
+    <div className="call-modal-overlay" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
+      <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`} style={{ backgroundColor: 'rgba(245, 245, 245, 0.85)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '16px' }}>
         {callType === 'video' && callStatus === 'connected' && (
-          <div className="couns-video-background">
-            <div className="couns-remote-video-placeholder">
-              {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
-                <div className="couns-avatar-emoji-large">{callerImage}</div>
-              ) : callerImage ? (
-                <img src={callerImage} alt={callerName} />
-              ) : (
-                <FaUserCircle />
-              )}
-              <div className="couns-video-loading">
+          <div className="video-background">
+            <div className="remote-video-placeholder">
+              <div className="avatar-emoji-large">{callerAvatar || '👤'}</div>
+              <div className="video-loading">
                 <FaSpinner className="spinning" />
                 <span>Connecting video stream...</span>
               </div>
             </div>
-            <div className="couns-local-video-preview">
-              <div className="couns-local-video-placeholder">
+            <div className="local-video-preview">
+              <div className="local-video-placeholder">
                 <FaUserCircle />
                 <span>You</span>
               </div>
@@ -168,25 +162,19 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
           </div>
         )}
 
-        <div className="couns-call-modal-content">
-          <div className="couns-caller-info">
-            <div className="couns-caller-avatar">
-              {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
-                <div className="couns-avatar-emoji">{callerImage}</div>
-              ) : callerImage ? (
-                <img src={callerImage} alt={callerName} />
-              ) : (
-                <FaUserCircle />
-              )}
+        <div className="call-modal-content">
+          <div className="caller-info">
+            <div className="caller-avatar">
+              <div className="avatar-emoji">{callerAvatar || '👤'}</div>
             </div>
-            <h3 className="couns-caller-name">{callerName || "User"}</h3>
+            <h3 className="caller-name" style={{color:"black"}}>{callerName || "Anonymous User"}</h3>
             {callData && (
               <>
-                <p className="couns-caller-user-id">Call ID: {callData.callId?.substring(0, 8)}...</p>
-                <p className="couns-caller-user-id">Room ID: {callData.roomId?.substring(0, 8)}...</p>
+                <p className="caller-user-id">Call ID: {callData.callId?.substring(0, 8)}...</p>
+                <p className="caller-user-id">Room ID: {callData.roomId?.substring(0, 8)}...</p>
               </>
             )}
-            <p className="couns-call-status-text">
+            <p className="call-status-text">
               {callStatus === 'incoming' && `${callType === 'video' ? 'Video' : 'Voice'} call incoming...`}
               {callStatus === 'connecting' && 'Connecting...'}
               {callStatus === 'connected' && `Call in progress • ${formatDuration(callDuration)}`}
@@ -194,11 +182,11 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
             </p>
           </div>
 
-          <div className="couns-call-controls">
+          <div className="call-controls">
             {callStatus === 'incoming' && (
               <>
                 <button 
-                  className="couns-call-btn couns-accept-btn" 
+                  className="call-btn accept-btn" 
                   onClick={handleAccept}
                   disabled={isAccepting}
                 >
@@ -206,7 +194,7 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
                   <span>{isAccepting ? 'Accepting...' : 'Accept'}</span>
                 </button>
                 <button 
-                  className="couns-call-btn couns-join-btn" 
+                  className="call-btn join-btn" 
                   onClick={handleJoin}
                   disabled={isJoining}
                 >
@@ -214,7 +202,7 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
                   <span>{isJoining ? 'Joining...' : 'Join Call'}</span>
                 </button>
                 <button 
-                  className="couns-call-btn couns-reject-btn" 
+                  className="call-btn reject-btn" 
                   onClick={handleReject}
                   disabled={isRejecting}
                 >
@@ -225,8 +213,8 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
             )}
 
             {callStatus === 'connecting' && (
-              <div className="couns-connecting-animation">
-                <div className="couns-connecting-dots">
+              <div className="connecting-animation">
+                <div className="connecting-dots">
                   <span></span>
                   <span></span>
                   <span></span>
@@ -239,17 +227,17 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
               <>
                 {callType === 'video' && (
                   <>
-                    <button className="couns-call-btn couns-icon-btn" onClick={() => {}}>
+                    <button className="call-btn icon-btn" onClick={() => {}}>
                       <FaMicrophone />
                       <span>Mute</span>
                     </button>
-                    <button className="couns-call-btn couns-icon-btn" onClick={() => {}}>
+                    <button className="call-btn icon-btn" onClick={() => {}}>
                       <FaVideoIcon />
                       <span>Camera</span>
                     </button>
                   </>
                 )}
-                <button className="couns-call-btn couns-end-call-btn" onClick={handleEnd}>
+                <button className="call-btn end-call-btn" onClick={handleEnd}>
                   <FaPhoneSlash />
                   <span>End Call</span>
                 </button>
@@ -257,7 +245,7 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
             )}
 
             {callStatus === 'ended' && (
-              <button className="couns-call-btn couns-close-btn" onClick={onClose}>
+              <button className="call-btn close-btn" onClick={onClose}>
                 <FaTimes />
                 <span>Close</span>
               </button>
@@ -285,9 +273,8 @@ export default function CounselorDashboard() {
   const [callType, setCallType] = useState('video');
   const [callerInfo, setCallerInfo] = useState({
     name: '',
-    image: null,
+    avatar: '👤',
     userId: '',
-    userName: '',
     callId: '',
     roomId: '',
     waitingDuration: 0,
@@ -321,7 +308,7 @@ export default function CounselorDashboard() {
       
       console.log('Accepting call with body:', requestBody);
       
-      const response = await axios.put(`${API_BASE_URL}/calls/${callId}/accept`, requestBody, {
+      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -409,7 +396,7 @@ export default function CounselorDashboard() {
     try {
       const token = localStorage.getItem('token');
       
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/reject/${callId}`, {}, {
+      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -421,6 +408,20 @@ export default function CounselorDashboard() {
       console.error('Error rejecting call:', error);
       return false;
     }
+  };
+
+  // Function to get avatar emoji based on gender or name
+  const getAvatarEmoji = (gender, name) => {
+    if (gender === 'female') return '👩';
+    if (gender === 'male') return '👨';
+    // Default avatar based on first letter of name
+    if (name && name.length > 0) {
+      const firstChar = name.charAt(0).toUpperCase();
+      if (firstChar >= 'A' && firstChar <= 'Z') {
+        return firstChar;
+      }
+    }
+    return '👤';
   };
 
   // Fetch waiting calls from API
@@ -442,28 +443,49 @@ export default function CounselorDashboard() {
       
       console.log('Waiting calls response:', response.data);
       
+      // Extract pending requests from response
       const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
       
       if (response.data && response.data.success && callsList && callsList.length > 0) {
         setWaitingCalls(callsList);
         
+        // Find the waiting call (not accepted/rejected yet)
         const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
         
         if (waitingCall && !showCallModal) {
           const callTypeValue = waitingCall.callType || 'video';
           setCallType(callTypeValue);
           
+          // Extract from data - IMPORTANT: Use anonymous name from 'from' object
           const fromData = waitingCall.from || waitingCall.initiator || {};
           
-          const initiatorAvatar = waitingCall.fromProfilePhoto || fromData.profilePhoto || 
-                                  (fromData.gender === 'female' ? '👩' : 
-                                  fromData.gender === 'male' ? '👨' : '👤');
+          // Get the display name - prioritize anonymous name
+          let displayName = 'Anonymous User';
+          if (fromData.anonymous) {
+            displayName = fromData.anonymous;
+          } else if (fromData.name) {
+            displayName = fromData.name;
+          } else if (waitingCall.anonymousName) {
+            displayName = waitingCall.anonymousName;
+          } else if (waitingCall.userName) {
+            displayName = waitingCall.userName;
+          }
+          
+          // Get avatar emoji - NO PROFILE PHOTO, only emoji avatar
+          let avatarEmoji = '👤';
+          if (fromData.gender === 'female') {
+            avatarEmoji = '👩';
+          } else if (fromData.gender === 'male') {
+            avatarEmoji = '👨';
+          } else {
+            // Generate avatar from name's first letter if available
+            avatarEmoji = getAvatarEmoji(null, displayName);
+          }
           
           setCallerInfo({
-            name: waitingCall.fromName || fromData.name || 'User',
-            image: initiatorAvatar,
+            name: displayName,
+            avatar: avatarEmoji,
             userId: waitingCall.fromId || fromData.id || fromData._id,
-            userName: waitingCall.fromName || fromData.name,
             callId: waitingCall.callId || waitingCall.id || waitingCall._id,
             roomId: waitingCall.roomId,
             waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
@@ -987,9 +1009,8 @@ export default function CounselorDashboard() {
           setShowCallModal(false);
           setCallerInfo({
             name: '',
-            image: null,
+            avatar: '👤',
             userId: '',
-            userName: '',
             callId: '',
             roomId: '',
             waitingDuration: 0,
@@ -997,8 +1018,8 @@ export default function CounselorDashboard() {
           });
         }}
         callType={callType}
-        callerName={callerInfo.userName || callerInfo.name}
-        callerImage={callerInfo.image}
+        callerName={callerInfo.name}
+        callerAvatar={callerInfo.avatar}
         callData={callerInfo}
         onAccept={handleAcceptCallModal}
         onEnd={handleEndCall}
