@@ -151,8 +151,8 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
   if (!isOpen) return null;
 
   return (
-    <div className="call-modal-overlay" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
-      <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`} style={{ backgroundColor: 'rgba(245, 245, 245, 0.85)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '16px' }}>
+    <div className="call-modal-overlay">
+      <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`}>
         {callType === 'video' && callStatus === 'connected' && (
           <div className="video-background">
             <div className="remote-video-placeholder">
