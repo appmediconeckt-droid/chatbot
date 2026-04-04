@@ -80,7 +80,7 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
   const handleAccept = async () => {
     setIsAccepting(true);
     setCallStatus('connecting');
-
+    
     if (onAcceptCall && callData) {
       try {
         await onAcceptCall(callData.callId);
@@ -102,7 +102,7 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
   const handleReject = async () => {
     setIsRejecting(true);
     setCallStatus('ended');
-
+    
     if (onRejectCall && callData) {
       try {
         await onRejectCall(callData.callId);
@@ -110,7 +110,7 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
         console.error('Error rejecting call:', error);
       }
     }
-
+    
     setTimeout(() => {
       if (onEnd) onEnd();
       onClose();
@@ -120,7 +120,7 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
 
   const handleJoin = async () => {
     setIsJoining(true);
-
+    
     if (onJoinCall && callData) {
       try {
         const result = await onJoinCall(callData.callId);
@@ -136,12 +136,12 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
 
   const handleEnd = async () => {
     setCallStatus('ended');
-
+    
     // Call end API if available
     if (callData && callData.onEndCall) {
       await callData.onEndCall(callData.callId);
     }
-
+    
     setTimeout(() => {
       if (onEnd) onEnd();
       onClose();
@@ -206,24 +206,24 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
           <div className="call-controls">
             {callStatus === 'incoming' && (
               <>
-                <button
-                  className="call-btn accept-btn"
+                <button 
+                  className="call-btn accept-btn" 
                   onClick={handleAccept}
                   disabled={isAccepting}
                 >
                   {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
                   <span>{isAccepting ? 'Accepting...' : 'Accept'}</span>
                 </button>
-                <button
-                  className="call-btn join-btn"
+                <button 
+                  className="call-btn join-btn" 
                   onClick={handleJoin}
                   disabled={isJoining}
                 >
                   {isJoining ? <FaSpinner className="spinning" /> : <FaVideoIcon />}
                   <span>{isJoining ? 'Joining...' : 'Join Call'}</span>
                 </button>
-                <button
-                  className="call-btn reject-btn"
+                <button 
+                  className="call-btn reject-btn" 
                   onClick={handleReject}
                   disabled={isRejecting}
                 >
@@ -248,11 +248,11 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
               <>
                 {callType === 'video' && (
                   <>
-                    <button className="call-btn icon-btn" onClick={() => { }}>
+                    <button className="call-btn icon-btn" onClick={() => {}}>
                       <FaMicrophone />
                       <span>Mute</span>
                     </button>
-                    <button className="call-btn icon-btn" onClick={() => { }}>
+                    <button className="call-btn icon-btn" onClick={() => {}}>
                       <FaVideoIcon />
                       <span>Camera</span>
                     </button>
@@ -379,7 +379,7 @@ export default function UserDashboard() {
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-
+  
   // Call Modal States
   const [showCallModal, setShowCallModal] = useState(false);
   const [callType, setCallType] = useState('video');
@@ -393,13 +393,13 @@ export default function UserDashboard() {
     waitingDuration: 0,
     onEndCall: null
   });
-
+  
   const [waitingCalls, setWaitingCalls] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [isPolling, setIsPolling] = useState(true);
 
   const userId = localStorage.getItem("userId");
-
+  
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
   const vibrate = useVibration();
@@ -428,23 +428,23 @@ export default function UserDashboard() {
     try {
       const token = localStorage.getItem('token');
       const acceptorId = localStorage.getItem('userId');
-
+      
       const requestBody = {
         acceptorId: acceptorId,
         acceptorType: 'user'
       };
-
+      
       console.log('Accepting call with body:', requestBody);
-
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, requestBody, {
+      
+      const response = await axios.put(`${API_BASE_URL}/calls/${callId}/accept`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
+      
       console.log('Accept call response:', response.data);
-
+      
       if (response.data && response.data.success) {
         return response.data;
       }
@@ -460,23 +460,23 @@ export default function UserDashboard() {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-
+      
       const requestBody = {
         userId: userId,
         userType: 'user'
       };
-
+      
       console.log('Joining call with body:', requestBody);
-
+      
       const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
+      
       console.log('Join call response:', response.data);
-
+      
       if (response.data && response.data.success) {
         return true;
       }
@@ -492,23 +492,23 @@ export default function UserDashboard() {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-
+      
       const requestBody = {
         userId: userId,
         endedBy: 'user'
       };
-
+      
       console.log('Ending call with body:', requestBody);
-
+      
       const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
+      
       console.log('End call response:', response.data);
-
+      
       if (response.data && response.data.success) {
         return response.data;
       }
@@ -523,13 +523,13 @@ export default function UserDashboard() {
   const rejectCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
-
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
+      
+      const response = await axios.post(`${API_BASE_URL}/api/video/calls/reject/${callId}`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
+      
       console.log('Reject call response:', response.data);
       return response.data?.success || false;
     } catch (error) {
@@ -543,49 +543,43 @@ export default function UserDashboard() {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-
+      
       if (!userId || !token) {
         console.log('No userId or token found');
         return;
       }
-
-      const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${userId}`, {
+      
+      const response = await axios.get(`${API_BASE_URL}/api/video/calls/waiting/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
+      
       console.log('Waiting calls response:', response.data);
-
-      const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
-
-      if (response.data && response.data.success && callsList && callsList.length > 0) {
-        setWaitingCalls(callsList);
-
-        // Use the first call if status property is not strictly defined, or find one that is waiting/ringing
-        const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
-
+      
+      if (response.data && response.data.success && response.data.calls && response.data.calls.length > 0) {
+        setWaitingCalls(response.data.calls);
+        
+        const waitingCall = response.data.calls.find(call => call.status === 'waiting' || call.status === 'ringing');
+        
         if (waitingCall && !showCallModal) {
           const callTypeValue = waitingCall.callType || 'video';
           setCallType(callTypeValue);
-
-          const fromData = waitingCall.from || waitingCall.initiator || {};
-
-          const initiatorAvatar = waitingCall.fromProfilePhoto || fromData.profilePhoto ||
-            (fromData.gender === 'female' ? '👩' :
-              fromData.gender === 'male' ? '👨' : '👤');
-
+          
+          const initiatorAvatar = waitingCall.initiator?.gender === 'female' ? '👩' : 
+                                  waitingCall.initiator?.gender === 'male' ? '👨' : '👤';
+          
           setCallerInfo({
-            name: waitingCall.fromName || fromData.name || 'User',
+            name: waitingCall.initiator?.name || 'Counselor',
             image: initiatorAvatar,
-            userId: waitingCall.fromId || fromData.id || fromData._id,
-            userName: waitingCall.fromName || fromData.name,
-            callId: waitingCall.callId || waitingCall.id || waitingCall._id,
+            userId: waitingCall.initiator?.id,
+            userName: waitingCall.initiator?.name,
+            callId: waitingCall.callId || waitingCall.id,
             roomId: waitingCall.roomId,
-            waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
+            waitingDuration: waitingCall.waitingDuration || 0,
             onEndCall: endCall
           });
-
+          
           setShowCallModal(true);
           vibrate([200, 100, 200]);
         }
@@ -600,13 +594,13 @@ export default function UserDashboard() {
   useEffect(() => {
     if (isPolling && !showCallModal) {
       fetchWaitingCalls();
-
+      
       const interval = setInterval(() => {
         fetchWaitingCalls();
       }, 5000);
-
+      
       setPollingInterval(interval);
-
+      
       return () => {
         if (interval) {
           clearInterval(interval);
@@ -908,14 +902,14 @@ export default function UserDashboard() {
             <h2 className="mobile-logo">MChat</h2>
           </div>
           <div className="mobile-header-right">
-            <button
+            <button 
               className="mobile-profile-btn"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
               {userData.profilePhoto ? (
-                <img
-                  src={userData.profilePhoto}
-                  alt={userData.name}
+                <img 
+                  src={userData.profilePhoto} 
+                  alt={userData.name} 
                   className="mobile-user-avatar"
                   onError={(e) => {
                     e.target.onerror = null;
@@ -927,14 +921,14 @@ export default function UserDashboard() {
                 <FaUserCircle className="mobile-user-icon" />
               )}
             </button>
-
+            
             {showProfileMenu && (
               <div className="profile-dropdown-menu">
                 <div className="profile-dropdown-header">
                   {userData.profilePhoto ? (
-                    <img
-                      src={userData.profilePhoto}
-                      alt={userData.name}
+                    <img 
+                      src={userData.profilePhoto} 
+                      alt={userData.name} 
                       className="dropdown-avatar"
                     />
                   ) : (
@@ -969,8 +963,8 @@ export default function UserDashboard() {
                 <div className="profile-section">
                   <div className="profile-image">
                     {userData.profilePhoto ? (
-                      <img
-                        src={userData.profilePhoto}
+                      <img 
+                        src={userData.profilePhoto} 
                         alt={userData.name}
                         onError={(e) => {
                           e.target.onerror = null;

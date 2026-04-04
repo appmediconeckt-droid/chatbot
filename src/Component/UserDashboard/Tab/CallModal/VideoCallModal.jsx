@@ -20,6 +20,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     const [showSettings, setShowSettings] = useState(false);
     const [volumeLevel, setVolumeLevel] = useState(70);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [isAnonymous, setIsAnonymous] = useState(false);
     const [callerName, setCallerName] = useState('');
     const [callerProfilePic, setCallerProfilePic] = useState('');
     const [callerPhoneNumber, setCallerPhoneNumber] = useState('');
@@ -47,9 +48,11 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     // Process callData when modal opens
     useEffect(() => {
         if (isOpen && callData) {
-            setCallerName(callData.name || defaultCallData.name);
-            setCallerProfilePic(callData.profilePic || defaultCallData.profilePic);
-            setCallerPhoneNumber(callData.phoneNumber || defaultCallData.phoneNumber);
+            const anonymous = callData.isAnonymous === true;
+            setIsAnonymous(anonymous);
+            setCallerName(anonymous ? 'Anonymous User' : (callData.name || defaultCallData.name));
+            setCallerProfilePic(anonymous ? '👤' : (callData.profilePic || defaultCallData.profilePic));
+            setCallerPhoneNumber(anonymous ? 'Hidden' : (callData.phoneNumber || defaultCallData.phoneNumber));
             setCallType(callData.type || 'video');
             setCallStatus(callData.status || 'connecting');
             setRoomId(callData.roomId || '');
@@ -62,10 +65,12 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
             console.log('Video Call Modal Opened with Data:', {
                 roomId: callData.roomId,
                 callId: callData.callId,
-                callerName: callData.name,
+                callerName: anonymous ? 'Anonymous User' : callData.name,
+                isAnonymous: anonymous,
                 apiData: callData.apiCallData
             });
         } else if (isOpen && !callData) {
+            setIsAnonymous(false);
             setCallerName(defaultCallData.name);
             setCallerProfilePic(defaultCallData.profilePic);
             setCallerPhoneNumber(defaultCallData.phoneNumber);
@@ -506,7 +511,21 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                                 <span className="remote-avatar">{getProfileDisplay()}</span>
                                             )}
                                             <div className="remote-info">
-                                                <h2>{callerName}</h2>
+                                                <h2>
+                                                    {callerName}
+                                                    {isAnonymous && (
+                                                        <span className="anonymous-badge" style={{
+                                                            fontSize: '0.6em',
+                                                            backgroundColor: '#6c757d',
+                                                            color: 'white',
+                                                            padding: '2px 8px',
+                                                            borderRadius: '12px',
+                                                            marginLeft: '10px',
+                                                            verticalAlign: 'middle',
+                                                            fontWeight: 'normal'
+                                                        }}>Anonymous User</span>
+                                                    )}
+                                                </h2>
                                                 {roomId && (
                                                     <p className="room-id">Room: {roomId.substring(0, 8)}...</p>
                                                 )}
