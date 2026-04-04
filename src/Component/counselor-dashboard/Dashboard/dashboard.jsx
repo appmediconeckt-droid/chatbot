@@ -36,7 +36,8 @@ import { API_BASE_URL } from '../../../axiosConfig';
 import CounselorProfile from '../Tab/Profile-Con/CounselorProfile';
 
 // Voice/Video Call Modal Component for Counselor
-const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onEnd, onAcceptCall, onRejectCall, onJoinCall }) => {
+// Voice/Video Call Modal Component for Counselor (FIXED)
+const CallModal = ({ isOpen, onClose, callType, callerName, callerAvatar, callData, onAccept, onEnd, onAcceptCall, onRejectCall, onJoinCall }) => {
   const [callStatus, setCallStatus] = useState('incoming');
   const [callDuration, setCallDuration] = useState(0);
   const [isAccepting, setIsAccepting] = useState(false);
@@ -141,19 +142,16 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
 
   if (!isOpen) return null;
 
+  // Get the display name - prioritize callerName which already contains the proper anonymous name
+  const displayName = callerName || 'Anonymous User';
+
   return (
     <div className="call-modal-overlay">
       <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`}>
         {callType === 'video' && callStatus === 'connected' && (
           <div className="video-background">
             <div className="remote-video-placeholder">
-              {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
-                <div className="avatar-emoji-large">{callerImage}</div>
-              ) : callerImage ? (
-                <img src={callerImage} alt={callerName} />
-              ) : (
-                <FaUserCircle />
-              )}
+              <div className="avatar-emoji-large">{callerAvatar || '👤'}</div>
               <div className="video-loading">
                 <FaSpinner className="spinning" />
                 <span>Connecting video stream...</span>
@@ -171,15 +169,9 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
         <div className="call-modal-content">
           <div className="caller-info">
             <div className="caller-avatar">
-              {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
-                <div className="avatar-emoji">{callerImage}</div>
-              ) : callerImage ? (
-                <img src={callerImage} alt={callerName} />
-              ) : (
-                <FaUserCircle />
-              )}
+              <div className="avatar-emoji">{callerAvatar || '👤'}</div>
             </div>
-            <h3 className="caller-name">{callerName || "User"}</h3>
+            <h3 className="caller-name" style={{color:"black"}}>{displayName}</h3>
             {callData && (
               <>
                 <p className="caller-user-id">Call ID: {callData.callId?.substring(0, 8)}...</p>
@@ -268,7 +260,6 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
     </div>
   );
 };
-
 export default function CounselorDashboard() {
   const [activeTab, setActiveTab] = useState('messages');
   const [isMobile, setIsMobile] = useState(false);
@@ -285,9 +276,8 @@ export default function CounselorDashboard() {
   const [callType, setCallType] = useState('video');
   const [callerInfo, setCallerInfo] = useState({
     name: '',
-    image: null,
+    avatar: '👤',
     userId: '',
-    userName: '',
     callId: '',
     roomId: '',
     waitingDuration: 0,
@@ -423,63 +413,112 @@ export default function CounselorDashboard() {
     }
   };
 
-  // Fetch waiting calls from API
-  const fetchWaitingCalls = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const counsellorId = localStorage.getItem('counsellorId');
-      
-      if (!counsellorId || !token) {
-        console.log('No counsellorId or token found');
-        return;
+  // Function to get avatar emoji based on gender or name
+  const getAvatarEmoji = (gender, name) => {
+    if (gender === 'female') return '👩';
+    if (gender === 'male') return '👨';
+    // Default avatar based on first letter of name
+    if (name && name.length > 0) {
+      const firstChar = name.charAt(0).toUpperCase();
+      if (firstChar >= 'A' && firstChar <= 'Z') {
+        return firstChar;
       }
-      
-      const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${counsellorId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      console.log('Waiting calls response:', response.data);
-      
-      const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
-      
-      if (response.data && response.data.success && callsList && callsList.length > 0) {
-        setWaitingCalls(callsList);
-        
-        const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
-        
-        if (waitingCall && !showCallModal) {
-          const callTypeValue = waitingCall.callType || 'video';
-          setCallType(callTypeValue);
-          
-          const fromData = waitingCall.from || waitingCall.initiator || {};
-          
-          let initiatorAvatar = '👤';
-          if (fromData.gender === 'female') initiatorAvatar = '👩';
-          else if (fromData.gender === 'male') initiatorAvatar = '👨';
-          
-          setCallerInfo({
-            name: 'Anonymous',
-            image: initiatorAvatar,
-            userId: waitingCall.fromId || fromData.id || fromData._id,
-            userName: 'Anonymous',
-            callId: waitingCall.callId || waitingCall.id || waitingCall._id,
-            roomId: waitingCall.roomId,
-            waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
-            onEndCall: endCall
-          });
-          
-          setShowCallModal(true);
-          vibrate([200, 100, 200]);
-        }
-      } else {
-        setWaitingCalls([]);
-      }
-    } catch (error) {
-      console.error('Error fetching waiting calls:', error);
     }
+    return '👤';
   };
+
+  // Fetch waiting calls from API
+  // Fetch waiting calls from API
+const fetchWaitingCalls = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const counsellorId = localStorage.getItem('counsellorId');
+    
+    if (!counsellorId || !token) {
+      console.log('No counsellorId or token found');
+      return;
+    }
+    
+    const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${counsellorId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    console.log('Waiting calls response:', response.data);
+    
+    // Extract pending requests from response
+    const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
+    
+    if (response.data && response.data.success && callsList && callsList.length > 0) {
+      setWaitingCalls(callsList);
+      
+      // Find the waiting call (not accepted/rejected yet)
+      const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
+      
+      if (waitingCall && !showCallModal) {
+        const callTypeValue = waitingCall.callType || 'video';
+        setCallType(callTypeValue);
+        
+        // Extract from data - IMPORTANT: Use the 'from' object from backend
+        const fromData = waitingCall.from || waitingCall.initiator || {};
+        
+        // FIXED: Properly handle the display name from backend
+        // The backend now sends the proper display name in the 'name' field
+        let displayName = 'Anonymous User';
+        
+        // Check if the backend sent a display name (which already handles anonymous logic)
+        if (fromData.name) {
+          displayName = fromData.name;
+        } 
+        // Fallback to checking anonymous flag
+        else if (fromData.anonymous) {
+          displayName = 'Anonymous User';
+        } 
+        // Use any other available name field
+        else if (waitingCall.anonymousName) {
+          displayName = waitingCall.anonymousName;
+        } 
+        else if (waitingCall.userName) {
+          displayName = waitingCall.userName;
+        }
+        
+        // Get avatar emoji - NO PROFILE PHOTO, only emoji avatar
+        let avatarEmoji = '👤';
+        
+        // Generate avatar from display name's first letter
+        if (displayName && displayName !== 'Anonymous User') {
+          const firstChar = displayName.charAt(0).toUpperCase();
+          if (firstChar >= 'A' && firstChar <= 'Z') {
+            avatarEmoji = firstChar;
+          }
+        }
+        
+        // If still default, use 👤 for anonymous
+        if (displayName === 'Anonymous User') {
+          avatarEmoji = '👤';
+        }
+        
+        setCallerInfo({
+          name: displayName,  // This will be the proper display name from backend
+          avatar: avatarEmoji,
+          userId: waitingCall.fromId || fromData.id || fromData._id,
+          callId: waitingCall.callId || waitingCall.id || waitingCall._id,
+          roomId: waitingCall.roomId,
+          waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
+          onEndCall: endCall
+        });
+        
+        setShowCallModal(true);
+        vibrate([200, 100, 200]);
+      }
+    } else {
+      setWaitingCalls([]);
+    }
+  } catch (error) {
+    console.error('Error fetching waiting calls:', error);
+  }
+};
 
   // Start polling for waiting calls
   useEffect(() => {
@@ -987,9 +1026,8 @@ export default function CounselorDashboard() {
           setShowCallModal(false);
           setCallerInfo({
             name: '',
-            image: null,
+            avatar: '👤',
             userId: '',
-            userName: '',
             callId: '',
             roomId: '',
             waitingDuration: 0,
@@ -997,8 +1035,8 @@ export default function CounselorDashboard() {
           });
         }}
         callType={callType}
-        callerName={callerInfo.userName || callerInfo.name}
-        callerImage={callerInfo.image}
+        callerName={callerInfo.name}
+        callerAvatar={callerInfo.avatar}
         callData={callerInfo}
         onAccept={handleAcceptCallModal}
         onEnd={handleEndCall}
