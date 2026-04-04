@@ -129,7 +129,7 @@ const ChatInterface = ({ setActiveTab }) => {
     };
 
     // Fetch chats from API
-    const fetchChats = async () => {
+    const fetchChats = useCallback(async () => {
         try {
             setLoading(true);
             setError(null);
@@ -137,8 +137,9 @@ const ChatInterface = ({ setActiveTab }) => {
             // Get token from localStorage
             const token = localStorage.getItem('token');
             if (!token) {
-                console.log('No token found, redirecting to login');
-                navigate('/user-signup');
+                console.log('No token found');
+                setCounselors([]);
+                setLoading(false);
                 return;
             }
 
@@ -152,10 +153,11 @@ const ChatInterface = ({ setActiveTab }) => {
 
             if (!response.ok) {
                 if (response.status === 401) {
-                    // Token expired or invalid
+                    // Token expired or invalid - just clear token and show empty state
                     localStorage.removeItem('token');
-                    navigate('/user-signup');
-                    throw new Error('Session expired. Please login again.');
+                    setCounselors([]);
+                    setLoading(false);
+                    return;
                 }
                 throw new Error(`Failed to fetch chats: ${response.status}`);
             }
@@ -230,7 +232,7 @@ const ChatInterface = ({ setActiveTab }) => {
                 const savedChats = localStorage.getItem('activeChats');
                 if (savedChats) {
                     const chats = JSON.parse(savedChats);
-                    if (Array.isArray(chats)) {
+                    if (Array.isArray(chats) && chats.length > 0) {
                         const counselorList = chats.map(chat => {
                             const otherParty = chat.otherParty || {};
                             const lastMessage = chat.lastMessage?.content || 'No messages yet';
@@ -284,10 +286,10 @@ const ChatInterface = ({ setActiveTab }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [navigate]);
 
     // Mark chat as read
-    const markChatAsRead = async (chatId) => {
+    const markChatAsRead = useCallback(async (chatId) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) return;
@@ -310,13 +312,13 @@ const ChatInterface = ({ setActiveTab }) => {
         } catch (error) {
             console.error('Error marking chat as read:', error);
         }
-    };
+    }, []);
 
     // Delete chat
-    const deleteChat = async (chatId) => {
+    const deleteChat = useCallback(async (chatId) => {
         try {
             const token = localStorage.getItem('token');
-            if (!token) return;
+            if (!token) return false;
 
             const response = await fetch(`${API_BASE_URL}/chat/chats/${chatId}`, {
                 method: 'DELETE',
@@ -346,7 +348,7 @@ const ChatInterface = ({ setActiveTab }) => {
             console.error('Error deleting chat:', error);
             return false;
         }
-    };
+    }, []);
 
     // Load active chats from API
     useEffect(() => {
@@ -370,10 +372,10 @@ const ChatInterface = ({ setActiveTab }) => {
             clearInterval(intervalId);
             window.removeEventListener('storage', handleStorageChange);
         };
-    }, []);
+    }, [fetchChats]);
 
     // Handle counselor selection
-    const handleCounselorSelect = async (counselor) => {
+    const handleCounselorSelect = useCallback(async (counselor) => {
         if (contextMenu.visible) return;
         
         // Mark messages as read
@@ -396,19 +398,19 @@ const ChatInterface = ({ setActiveTab }) => {
                 user: counselor.user
             } 
         });
-    };
+    }, [contextMenu.visible, markChatAsRead, navigate]);
 
     // Handle start new chat
-    const handleStartNewChat = () => {
+    const handleStartNewChat = useCallback(() => {
         if (setActiveTab) {
             setActiveTab("Live Chat");
         } else {
             navigate('/counselor-directory');
         }
-    };
+    }, [setActiveTab, navigate]);
 
     // Handle right click (desktop context menu)
-    const handleContextMenu = (e, counselor) => {
+    const handleContextMenu = useCallback((e, counselor) => {
         e.preventDefault();
         e.stopPropagation();
         setContextMenu({
@@ -417,10 +419,10 @@ const ChatInterface = ({ setActiveTab }) => {
             y: e.pageY,
             counselor: counselor
         });
-    };
+    }, []);
 
     // Handle long press start (mobile)
-    const handleTouchStart = (e, counselor) => {
+    const handleTouchStart = useCallback((e, counselor) => {
         touchMoved.current = false;
         pressedItem.current = counselor;
         
@@ -439,10 +441,10 @@ const ChatInterface = ({ setActiveTab }) => {
                 });
             }
         }, 500);
-    };
+    }, []);
 
     // Handle touch end
-    const handleTouchEnd = (e) => {
+    const handleTouchEnd = useCallback((e) => {
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
@@ -454,10 +456,10 @@ const ChatInterface = ({ setActiveTab }) => {
         
         pressedItem.current = null;
         touchMoved.current = false;
-    };
+    }, [contextMenu.visible]);
 
     // Handle touch move
-    const handleTouchMove = (e) => {
+    const handleTouchMove = useCallback((e) => {
         touchMoved.current = true;
         
         if (longPressTimer.current) {
@@ -465,25 +467,25 @@ const ChatInterface = ({ setActiveTab }) => {
             longPressTimer.current = null;
         }
         pressedItem.current = null;
-    };
+    }, []);
 
     // Handle touch cancel
-    const handleTouchCancel = () => {
+    const handleTouchCancel = useCallback(() => {
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
         }
         pressedItem.current = null;
         touchMoved.current = false;
-    };
+    }, []);
 
     // Handle click for mobile
-    const handleItemClick = (e, counselor) => {
+    const handleItemClick = useCallback((e, counselor) => {
         if (contextMenu.visible || touchMoved.current) {
             return;
         }
         handleCounselorSelect(counselor);
-    };
+    }, [contextMenu.visible, handleCounselorSelect]);
 
     // Close context menu
     const closeContextMenu = useCallback(() => {
@@ -491,14 +493,14 @@ const ChatInterface = ({ setActiveTab }) => {
     }, []);
 
     // Handle delete chat
-    const handleDeleteChat = (counselor) => {
+    const handleDeleteChat = useCallback((counselor) => {
         setCounselorToDelete(counselor);
         setShowDeleteConfirm(true);
         closeContextMenu();
-    };
+    }, [closeContextMenu]);
 
     // Confirm delete chat
-    const confirmDeleteChat = async () => {
+    const confirmDeleteChat = useCallback(async () => {
         if (counselorToDelete) {
             const success = await deleteChat(counselorToDelete.id);
             
@@ -509,7 +511,7 @@ const ChatInterface = ({ setActiveTab }) => {
             setShowDeleteConfirm(false);
             setCounselorToDelete(null);
         }
-    };
+    }, [counselorToDelete, deleteChat]);
 
     // Handle click outside context menu
     useEffect(() => {
@@ -542,7 +544,7 @@ const ChatInterface = ({ setActiveTab }) => {
     );
 
     // Render avatar with profile photo support
-    const renderAvatar = (counselor, size = 'md') => {
+    const renderAvatar = useCallback((counselor, size = 'md') => {
         const profilePhotoUrl = getProfilePhotoUrl(counselor);
         
         if (profilePhotoUrl) {
@@ -553,10 +555,13 @@ const ChatInterface = ({ setActiveTab }) => {
                     className={`counselor-avatar-img-${size}`}
                     onError={(e) => {
                         e.target.style.display = 'none';
-                        e.target.parentElement.classList.add('avatar-fallback');
-                        e.target.parentElement.setAttribute('data-initials', getInitials(counselor.name));
-                        e.target.parentElement.style.backgroundColor = getAvatarColor(counselor.name);
-                        e.target.parentElement.innerHTML = getInitials(counselor.name);
+                        const parent = e.target.parentElement;
+                        if (parent) {
+                            parent.classList.add('avatar-fallback');
+                            parent.setAttribute('data-initials', getInitials(counselor.name));
+                            parent.style.backgroundColor = getAvatarColor(counselor.name);
+                            parent.innerHTML = getInitials(counselor.name);
+                        }
                     }}
                 />
             );
@@ -570,7 +575,7 @@ const ChatInterface = ({ setActiveTab }) => {
                 {getInitials(counselor.name)}
             </div>
         );
-    };
+    }, []);
 
     return (
         <div className="chatAppContainer">
