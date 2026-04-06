@@ -240,23 +240,6 @@ export default function UserDashboard() {
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-<<<<<<< HEAD
-  
-  // Call Modal States
-  const [showCallModal, setShowCallModal] = useState(false);
-  const [callType, setCallType] = useState('video');
-  const [callerInfo, setCallerInfo] = useState({
-    name: '',
-    image: null,
-    userId: '',
-    userName: '',
-    callId: '',
-    roomId: '',
-    waitingDuration: 0,
-    onEndCall: null
-  });
-  
-=======
 
   // Modal States
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
@@ -264,7 +247,6 @@ export default function UserDashboard() {
   const [selectedCall, setSelectedCall] = useState(null);
   const [incomingCallData, setIncomingCallData] = useState(null);
 
->>>>>>> af556022d319d7fe000beb2bf1228d7606a53815
   const [waitingCalls, setWaitingCalls] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [isPolling, setIsPolling] = useState(true);
