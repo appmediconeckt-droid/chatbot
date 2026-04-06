@@ -34,113 +34,15 @@ import PatientRequests from '../Tab/PatientRequests/PatientRequests';
 import axios from 'axios';
 import { API_BASE_URL } from '../../../axiosConfig';
 import CounselorProfile from '../Tab/Profile-Con/CounselorProfile';
+import VideoCallModal from '../../UserDashboard/Tab/CallModal/VideoCallModal';
 
-// Voice/Video Call Modal Component for Counselor
-const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onEnd, onAcceptCall, onRejectCall, onJoinCall }) => {
-  const [callStatus, setCallStatus] = useState('incoming');
-  const [callDuration, setCallDuration] = useState(0);
+// Incoming Call Modal Component (First Modal - Accept/Reject)
+const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onReject }) => {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
-  const [isJoining, setIsJoining] = useState(false);
-  const timerRef = useRef(null);
-
-  useEffect(() => {
-    if (isOpen && callStatus === 'connected') {
-      timerRef.current = setInterval(() => {
-        setCallDuration(prev => prev + 1);
-      }, 1000);
-    } else if (!isOpen || callStatus === 'ended') {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    }
-
-    // Reset call duration when modal opens
-    if (isOpen) {
-      setCallDuration(0);
-    }
-
-    return () => {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-      }
-    };
-  }, [isOpen, callStatus]);
-
-  // Reset state when modal closes
-  useEffect(() => {
-    if (!isOpen) {
-      setCallStatus('incoming');
-      setCallDuration(0);
-      setIsAccepting(false);
-      setIsRejecting(false);
-      setIsJoining(false);
-    }
-  }, [isOpen]);
-
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  const handleAccept = async () => {
-    setIsAccepting(true);
-    setCallStatus('connecting');
-
-    if (onAcceptCall && callData) {
-      try {
-        await onAcceptCall(callData.callId);
-        setCallStatus('connected');
-        if (onAccept) onAccept();
-      } catch (error) {
-        console.error('Error accepting call:', error);
-        setCallStatus('incoming');
-      }
-    } else {
-      setTimeout(() => {
-        setCallStatus('connected');
-        if (onAccept) onAccept();
-      }, 2000);
-    }
-    setIsAccepting(false);
-  };
-
-  const handleReject = async () => {
-    setIsRejecting(true);
-    
-    if (onRejectCall && callData) {
-      try {
-        await onRejectCall(callData.callId);
-      } catch (error) {
-        console.error('Error rejecting call:', error);
-      }
-    }
-    
-    // Close modal immediately
-    onClose();
-    setIsRejecting(false);
-  };
-
-  const handleEnd = async () => {
-    setCallStatus('ended');
-
-    if (callData && callData.onEndCall) {
-      await callData.onEndCall(callData.callId);
-    }
-
-    if (onEnd) onEnd();
-    
-    // Close after a short delay to show "Call ended" state
-    setTimeout(() => {
-      onClose();
-    }, 1000);
-  };
 
   if (!isOpen) return null;
 
-  // Get the display name - check for isAnonymous first
   const getDisplayName = () => {
     if (callData?.from?.isAnonymous) {
       return callData.from.isAnonymous;
@@ -151,121 +53,61 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
     return "User";
   };
 
+  const handleAccept = async () => {
+    setIsAccepting(true);
+    if (onAccept) {
+      await onAccept(callData);
+    }
+    setIsAccepting(false);
+    onClose();
+  };
+
+  const handleReject = async () => {
+    setIsRejecting(true);
+    if (onReject) {
+      await onReject(callData?.callId);
+    }
+    setIsRejecting(false);
+    onClose();
+  };
+
   return (
-    <div className="call-modal-overlay" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
-      <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`} style={{ backgroundColor: 'rgba(245, 245, 245, 0.85)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '16px' }}>
-        {callType === 'video' && callStatus === 'connected' && (
-          <div className="video-background">
-            <div className="remote-video-placeholder">
-              {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
-                <div className="avatar-emoji-large">{callerImage}</div>
-              ) : callerImage ? (
-                <img src={callerImage} alt={getDisplayName()} />
-              ) : (
-                <FaUserCircle />
-              )}
-              <div className="video-loading">
-                <FaSpinner className="spinning" />
-                <span>Connecting video stream...</span>
-              </div>
-            </div>
-            <div className="local-video-preview">
-              <div className="local-video-placeholder">
-                <FaUserCircle />
-                <span>You</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="call-modal-content">
-          <div className="caller-info">
-            <div className="caller-avatar">
-              {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
-                <div className="avatar-emoji">{callerImage}</div>
-              ) : callerImage ? (
-                <img src={callerImage} alt={getDisplayName()} />
-              ) : (
-                <FaUserCircle />
-              )}
-            </div>
-            <h3 className="caller-name">{getDisplayName()}</h3>
-            {callData && callStatus !== 'ended' && (
-              <>
-                <p className="caller-user-id">Call ID: {callData.callId?.substring(0, 8)}...</p>
-                <p className="caller-user-id">Room ID: {callData.roomId?.substring(0, 8)}...</p>
-              </>
-            )}
-            <p className="call-status-text">
-              {callStatus === 'incoming' && `${callType === 'video' ? 'Video' : 'Voice'} call incoming...`}
-              {callStatus === 'connecting' && 'Connecting...'}
-              {callStatus === 'connected' && `Call in progress • ${formatDuration(callDuration)}`}
-              {callStatus === 'ended' && 'Call ended'}
-            </p>
-          </div>
-
-          <div className="call-controls">
-            {callStatus === 'incoming' && (
-              <>
-                <button
-                  className="call-btn accept-btn"
-                  onClick={handleAccept}
-                  disabled={isAccepting}
-                >
-                  {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
-                  <span>{isAccepting ? 'Accepting...' : 'Accept'}</span>
-                </button>
-
-                <button
-                  className="call-btn reject-btn"
-                  onClick={handleReject}
-                  disabled={isRejecting}
-                >
-                  {isRejecting ? <FaSpinner className="spinning" /> : <FaPhoneSlash />}
-                  <span>{isRejecting ? 'Rejecting...' : 'Decline'}</span>
-                </button>
-              </>
-            )}
-
-            {callStatus === 'connecting' && (
-              <div className="connecting-animation">
-                <div className="connecting-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-                <p>Establishing secure connection...</p>
-              </div>
-            )}
-
-            {callStatus === 'connected' && (
-              <>
-                {callType === 'video' && (
-                  <>
-                    <button className="call-btn icon-btn" onClick={() => {}}>
-                      <FaMicrophone />
-                      <span>Mute</span>
-                    </button>
-                    <button className="call-btn icon-btn" onClick={() => {}}>
-                      <FaVideoIcon />
-                      <span>Camera</span>
-                    </button>
-                  </>
-                )}
-                <button className="call-btn end-call-btn" onClick={handleEnd}>
-                  <FaPhoneSlash />
-                  <span>End Call</span>
-                </button>
-              </>
-            )}
-
-            {callStatus === 'ended' && (
-              <button className="call-btn close-btn" onClick={onClose}>
-                <FaTimes />
-                <span>Close</span>
-              </button>
+    <div className="incoming-call-modal-overlay">
+      <div className="incoming-call-modal">
+        <div className="incoming-call-header">
+          <div className="incoming-call-avatar">
+            {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
+              <div className="avatar-emoji-large">{callerImage}</div>
+            ) : callerImage ? (
+              <img src={callerImage} alt={getDisplayName()} />
+            ) : (
+              <FaUserCircle size={60} />
             )}
           </div>
+          <h3 className="incoming-caller-name">{getDisplayName()}</h3>
+          <p className="incoming-call-type">
+            {callType === 'video' ? '📹 Video Call' : '📞 Voice Call'}
+          </p>
+          <p className="incoming-call-status">Incoming call...</p>
+        </div>
+
+        <div className="incoming-call-actions">
+          <button 
+            className="incoming-call-btn reject-btn"
+            onClick={handleReject}
+            disabled={isRejecting}
+          >
+            {isRejecting ? <FaSpinner className="spinning" /> : <FaPhoneSlash />}
+            <span>Decline</span>
+          </button>
+          <button 
+            className="incoming-call-btn accept-btn"
+            onClick={handleAccept}
+            disabled={isAccepting}
+          >
+            {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
+            <span>Accept</span>
+          </button>
         </div>
       </div>
     </div>
@@ -283,19 +125,11 @@ export default function CounselorDashboard() {
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const [latestRequest, setLatestRequest] = useState(null);
 
-  // Call Modal States
-  const [showCallModal, setShowCallModal] = useState(false);
-  const [callType, setCallType] = useState('video');
-  const [callerInfo, setCallerInfo] = useState({
-    name: '',
-    image: null,
-    userId: '',
-    userName: '',
-    callId: '',
-    roomId: '',
-    waitingDuration: 0,
-    onEndCall: null
-  });
+  // Modal States
+  const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [selectedCall, setSelectedCall] = useState(null);
+  const [incomingCallData, setIncomingCallData] = useState(null);
 
   // Waiting calls polling
   const [waitingCalls, setWaitingCalls] = useState([]);
@@ -311,20 +145,26 @@ export default function CounselorDashboard() {
   const navigate = useNavigate();
   const vibrate = useVibration();
 
-  // Accept Call API (PUT) for Counselor
+  // Accept Call API (POST) for Counselor
   const acceptCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
-      const counsellorId = localStorage.getItem('counsellorId');
+      const userId = localStorage.getItem('counsellorId');
+
+      if (!userId) {
+        console.error('No counsellorId found in localStorage');
+        return { success: false, error: 'No counsellor ID found' };
+      }
 
       const requestBody = {
-        acceptorId: counsellorId,
-        acceptorType: 'counsellor'
+        userId: userId,
+        userType: "counsellor"
       };
 
       console.log('Accepting call with body:', requestBody);
+      console.log('API URL:', `${API_BASE_URL}/api/video/calls/${callId}/join`);
 
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, requestBody, {
+      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -334,17 +174,50 @@ export default function CounselorDashboard() {
       console.log('Accept call response:', response.data);
 
       if (response.data && response.data.success) {
-        return response.data;
+        return { success: true, data: response.data };
       }
-      return null;
+      return { success: false, data: response.data };
     } catch (error) {
       console.error('Error accepting call:', error);
-      return null;
+      if (error.response) {
+        console.error('Error response:', error.response.data);
+        console.error('Error status:', error.response.status);
+      }
+      return { success: false, error: error.message };
     }
   };
 
   // Join Call API (POST) for Counselor
+  const joinCall = async (callId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const counsellorId = localStorage.getItem('counsellorId');
 
+      const requestBody = {
+        userId: counsellorId,
+        userType: 'counsellor'
+      };
+
+      console.log('Joining call with body:', requestBody);
+
+      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, requestBody, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('Join call response:', response.data);
+
+      if (response.data && response.data.success) {
+        return { success: true, data: response.data };
+      }
+      return { success: false, data: response.data };
+    } catch (error) {
+      console.error('Error joining call:', error);
+      return { success: false, error: error.message };
+    }
+  };
 
   // End Call API (PUT) for Counselor
   const endCall = async (callId) => {
@@ -397,6 +270,42 @@ export default function CounselorDashboard() {
     }
   };
 
+  // Handle Accept from Incoming Modal
+  const handleAcceptIncomingCall = async (callData) => {
+    console.log('Accepting call:', callData);
+    
+    // First, accept the call via API
+    const result = await acceptCall(callData.callId);
+    
+    if (result && result.success) {
+      console.log('Call accepted successfully');
+      
+      // Prepare data for video call modal
+      const videoCallData = {
+        callId: callData.callId,
+        roomId: callData.roomId,
+        name: callData.name,
+        isIncoming: true,
+        status: 'connected',
+        callType: callData.callType || 'video',
+        from: callData.from,
+        initiator: callData.initiator
+      };
+      
+      setSelectedCall(videoCallData);
+      setIsVideoModalOpen(true);
+    } else {
+      console.error('Failed to accept call');
+      alert('Failed to accept call. Please try again.');
+    }
+  };
+
+  // Handle Reject from Incoming Modal
+  const handleRejectIncomingCall = async (callId) => {
+    console.log('Rejecting call:', callId);
+    await rejectCall(callId);
+  };
+
   // Fetch waiting calls from API
   const fetchWaitingCalls = async () => {
     try {
@@ -423,13 +332,11 @@ export default function CounselorDashboard() {
 
         const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
 
-        if (waitingCall && !showCallModal) {
-          const callTypeValue = waitingCall.callType || 'video';
-          setCallType(callTypeValue);
-
+        // Show incoming call modal if not already showing
+        if (waitingCall && !showIncomingCallModal && !isVideoModalOpen) {
           const fromData = waitingCall.from || waitingCall.initiator || {};
-
-          // Determine the display name - prioritize isAnonymous
+          
+          // Determine the display name
           let displayName = 'Anonymous';
           if (fromData.isAnonymous) {
             displayName = fromData.isAnonymous;
@@ -441,25 +348,22 @@ export default function CounselorDashboard() {
             displayName = fromData.name;
           }
 
-          // Determine avatar based on gender only (emoji)
+          // Determine avatar based on gender
           let initiatorAvatar = '👤';
           if (fromData.gender === 'female') initiatorAvatar = '👩';
           else if (fromData.gender === 'male') initiatorAvatar = '👨';
 
-          setCallerInfo({
-            name: displayName,
-            image: initiatorAvatar,
-            userId: waitingCall.fromId || fromData.id || fromData._id,
-            userName: displayName,
+          setIncomingCallData({
             callId: waitingCall.callId || waitingCall.id || waitingCall._id,
             roomId: waitingCall.roomId,
-            waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
-            onEndCall: endCall,
-            // Pass the entire call data for reference
-            callData: waitingCall
+            name: displayName,
+            image: initiatorAvatar,
+            callType: waitingCall.callType || 'video',
+            from: fromData,
+            initiator: waitingCall.initiator
           });
-
-          setShowCallModal(true);
+          
+          setShowIncomingCallModal(true);
           vibrate([200, 100, 200]);
         }
       } else {
@@ -472,7 +376,7 @@ export default function CounselorDashboard() {
 
   // Start polling for waiting calls
   useEffect(() => {
-    if (isPolling && !showCallModal) {
+    if (isPolling && !showIncomingCallModal && !isVideoModalOpen) {
       fetchWaitingCalls();
 
       const interval = setInterval(() => {
@@ -490,11 +394,11 @@ export default function CounselorDashboard() {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-  }, [isPolling, showCallModal]);
+  }, [isPolling, showIncomingCallModal, isVideoModalOpen]);
 
-  // Stop polling when call modal is open
+  // Stop polling when modals are open
   useEffect(() => {
-    if (showCallModal) {
+    if (showIncomingCallModal || isVideoModalOpen) {
       setIsPolling(false);
       if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -503,7 +407,7 @@ export default function CounselorDashboard() {
     } else {
       setIsPolling(true);
     }
-  }, [showCallModal]);
+  }, [showIncomingCallModal, isVideoModalOpen]);
 
   // Function to fetch pending requests using Axios
   const fetchPendingRequests = async () => {
@@ -660,57 +564,6 @@ export default function CounselorDashboard() {
     }
   };
 
-  // Function to handle accept from session notes with automatic page reload
-  const handleAcceptFromSessionNotes = async (request) => {
-    if (!request) return;
-
-    vibrate([50, 30, 50]);
-    setLoadingRequests(true);
-
-    try {
-      const token = localStorage.getItem('token');
-      const chatId = request.chatId;
-
-      if (!chatId) {
-        console.error('No chatId found in request');
-        showToastMessage('Unable to accept request: missing chat ID', 'error');
-        return;
-      }
-
-      const response = await axios.patch(
-        `${API_BASE_URL}/api/chat/accept/${chatId}`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      console.log('Request accepted successfully:', response.data);
-
-      setShowNotesModal(false);
-
-      showToastMessage('Request accepted successfully!', 'success');
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-
-    } catch (error) {
-      console.error('Error accepting request:', error);
-      if (axios.isAxiosError(error)) {
-        const errorMessage = error.response?.data?.message || error.message;
-        showToastMessage(`Failed to accept request: ${errorMessage}`, 'error');
-      } else {
-        showToastMessage('Failed to accept request', 'error');
-      }
-    } finally {
-      setLoadingRequests(false);
-    }
-  };
-
   // Function to handle reject request
   const handleRejectRequest = async () => {
     if (!currentRequest) return;
@@ -762,39 +615,48 @@ export default function CounselorDashboard() {
     }
   };
 
-  // Handle Accept Call
-  const handleAcceptCall = async (callId) => {
+  // Handle Join Call (for VideoCallModal)
+  const handleJoinCall = async (callId) => {
     try {
-      const result = await acceptCall(callId);
-      if (result) {
-        console.log('Call accepted successfully', result);
-        return result;
+      const result = await joinCall(callId);
+      if (result && result.success) {
+        console.log('Call joined successfully', result);
+        return { success: true, data: result.data };
       }
-      return null;
+      return { success: false, error: 'Join failed' };
     } catch (error) {
-      console.error('Error in accept call:', error);
-      return null;
+      console.error('Error in join call:', error);
+      return { success: false, error: error.message };
     }
   };
 
-  // Handle Join Call
-
-
-  // Handle Reject Call
-  const handleRejectCall = async (callId) => {
+  // Handle End Call (for VideoCallModal)
+  const handleEndCall = async (callId) => {
     try {
-      await rejectCall(callId);
-      console.log('Call rejected successfully');
+      await endCall(callId);
+      console.log('Call ended successfully');
+      return { success: true };
     } catch (error) {
-      console.error('Error in reject call:', error);
+      console.error('Error in end call:', error);
+      return { success: false, error: error.message };
     }
   };
 
-  const handleAcceptCallModal = () => {
-    console.log('Call accepted');
+  // Handle close video modal
+  const handleCloseVideoModal = () => {
+    setIsVideoModalOpen(false);
+    setSelectedCall(null);
+    // Resume polling after modal closes
+    setIsPolling(true);
   };
 
-  
+  // Handle close incoming call modal
+  const handleCloseIncomingModal = () => {
+    setShowIncomingCallModal(false);
+    setIncomingCallData(null);
+    // Resume polling after modal closes
+    setIsPolling(true);
+  };
 
   // Toast notification helper
   const showToastMessage = (message, type = 'info') => {
@@ -958,31 +820,26 @@ export default function CounselorDashboard() {
 
   return (
     <div className="couns-dashboard">
-      {/* Voice/Video Call Modal */}
-      <CallModal
-        isOpen={showCallModal}
-        onClose={() => {
-          setShowCallModal(false);
-          setCallerInfo({
-            name: '',
-            image: null,
-            userId: '',
-            userName: '',
-            callId: '',
-            roomId: '',
-            waitingDuration: 0,
-            onEndCall: null
-          });
-        }}
-        callType={callType}
-        callerName={callerInfo.userName || callerInfo.name}
-        callerImage={callerInfo.image}
-        callData={callerInfo}
-        onAccept={handleAcceptCallModal}
-        
-        onAcceptCall={handleAcceptCall}
-        onRejectCall={handleRejectCall}
+      {/* Incoming Call Modal (First Modal - Accept/Reject) */}
+      <IncomingCallModal
+        isOpen={showIncomingCallModal}
+        onClose={handleCloseIncomingModal}
+        callType={incomingCallData?.callType || 'video'}
+        callerName={incomingCallData?.name}
+        callerImage={incomingCallData?.image}
+        callData={incomingCallData}
+        onAccept={handleAcceptIncomingCall}
+        onReject={handleRejectIncomingCall}
+      />
 
+      {/* Video Call Modal (Second Modal - After Accept) */}
+      <VideoCallModal
+        isOpen={isVideoModalOpen}
+        onClose={handleCloseVideoModal}
+        callData={selectedCall}
+        userRole="counsellor"
+        onJoinCall={handleJoinCall}
+        onEndCall={handleEndCall}
       />
 
       {/* Desktop Sidebar */}
