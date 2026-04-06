@@ -2,43 +2,46 @@ import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./SMSInput.css";
-import { 
-  FaVideo as FaVideoIcon, 
-  FaPhoneAlt, 
-  FaPhoneSlash, 
-  FaSpinner, 
-  FaMicrophone, 
-  FaTimes, 
-  FaUserCircle 
+import {
+  FaVideo as FaVideoIcon,
+  FaPhoneAlt,
+  FaPhoneSlash,
+  FaSpinner,
+  FaMicrophone,
+  FaTimes,
+  FaUserCircle
 } from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
 import VoiceCallModal from "../../../UserDashboard/Tab/CallModal/VoiceCallModal";
 
 // Professional Call Modal Component for Counselor Receiving Calls
-const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerAvatar, callData, onAcceptCall, onRejectCall }) => {
-  const [isAccepting, setIsAccepting] = useState(false);
+const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerAvatar, callData, onJoinCall, onRejectCall }) => {
+  const [isJoining, setIsJoining] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
-  const handleAccept = async () => {
-    if (isAccepting) return;
+  const handleJoin = async () => {
+    if (isJoining) return;
     
-    setIsAccepting(true);
+    setIsJoining(true);
     
-    if (onAcceptCall && callData) {
+    if (onJoinCall && callData) {
       try {
-        const result = await onAcceptCall(callData.callId);
+        const result = await onJoinCall(callData.callId);
         if (result && result.success) {
+          // Call join successful - modal will be closed and video modal will open
           onClose();
+        } else {
+          console.error('Failed to join call');
         }
       } catch (error) {
-        console.error('Error accepting call:', error);
+        console.error('Error joining call:', error);
       } finally {
-        setIsAccepting(false);
+        setIsJoining(false);
       }
     } else {
       onClose();
-      setIsAccepting(false);
+      setIsJoining(false);
     }
   };
 
@@ -102,11 +105,11 @@ const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerAvatar
             
             <button 
               className="incoming-call-btn accept-btn" 
-              onClick={handleAccept} 
-              disabled={isAccepting}
+              onClick={handleJoin} 
+              disabled={isJoining}
             >
-              {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
-              <span>{isAccepting ? 'Accepting...' : 'Accept'}</span>
+              {isJoining ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
+              <span>{isJoining ? 'Accepting...' : 'Accept'}</span>
             </button>
           </div>
         </div>
@@ -138,14 +141,14 @@ const SMSInput = () => {
     roomId: '',
     callType: 'video'
   });
-  
+
   // Message states
   const [messages, setMessages] = useState([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
-  
+
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
@@ -172,14 +175,13 @@ const SMSInput = () => {
   };
 
   const currentCounselor = getCurrentCounselor();
-  
-  // Get counselor ID and name
+
+  // Get IDs from selectedUser or localStorage
   const COUNSELOR_ID = currentCounselor?.id || localStorage.getItem('counselorId') || 'counselor_001';
-  const COUNSELOR_NAME = currentCounselor?.name || currentCounselor?.fullName || 'Counselor';
+  const COUNSELOR_NAME = currentCounselor?.name || localStorage.getItem('counselorName') || 'Counselor';
   
-  // Get user ID and name
   const USER_ID = selectedUser?.id || selectedUser?._id || 'user_001';
-  const USER_NAME = selectedUser?.name || selectedUser?.fullName || 'User';
+  const USER_NAME = selectedUser?.name || 'User';
 
   // Function to get avatar based on gender (emoji only)
   const getAvatarByGender = (gender) => {
@@ -200,28 +202,28 @@ const SMSInput = () => {
   // Fetch messages from API
   const fetchMessagesFromAPI = async () => {
     if (!selectedUser) return;
-    
+
     try {
       const apiChatId = getChatIdForAPI();
       const token = localStorage.getItem('token');
-      
+
       setIsLoadingMessages(true);
       setError(null);
-      
+
       const response = await axios.get(`${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`, {
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
         }
       });
-      
+
       console.log('GET API Response:', response.data);
-      
+
       if (response.data && response.data.messages) {
         if (response.data.chatStatus) {
           setChatStatus(response.data.chatStatus);
         }
-        
+
         const transformedMessages = response.data.messages.map((msg, index) => ({
           id: msg.id || index,
           messageId: msg.messageId,
@@ -234,10 +236,10 @@ const SMSInput = () => {
           isRead: msg.isRead,
           status: 'sent'
         }));
-        
+
         setMessages(transformedMessages);
         saveMessagesToLocalStorage(transformedMessages);
-        
+
         return transformedMessages;
       }
     } catch (error) {
@@ -254,7 +256,7 @@ const SMSInput = () => {
       const savedChats = JSON.parse(localStorage.getItem('smsChats') || '[]');
       const chatIdToSave = getChatIdForAPI();
       const existingChatIndex = savedChats.findIndex(chat => chat.chatId === chatIdToSave);
-      
+
       const chatData = {
         chatId: chatIdToSave,
         userId: selectedUser?.id,
@@ -263,13 +265,13 @@ const SMSInput = () => {
         chatStatus: chatStatus,
         lastUpdated: new Date().toISOString()
       };
-      
+
       if (existingChatIndex >= 0) {
         savedChats[existingChatIndex] = chatData;
       } else {
         savedChats.push(chatData);
       }
-      
+
       localStorage.setItem('smsChats', JSON.stringify(savedChats));
     } catch (error) {
       console.error('Error saving messages to localStorage:', error);
@@ -282,7 +284,7 @@ const SMSInput = () => {
       const savedChats = JSON.parse(localStorage.getItem('smsChats') || '[]');
       const chatIdToLoad = getChatIdForAPI();
       const savedChat = savedChats.find(chat => chat.chatId === chatIdToLoad);
-      
+
       if (savedChat && savedChat.messages) {
         setMessages(savedChat.messages);
         if (savedChat.chatStatus) {
@@ -299,22 +301,20 @@ const SMSInput = () => {
     try {
       const apiChatId = getChatIdForAPI();
       const token = localStorage.getItem('token');
-      
+
       const requestBody = {
-        content: messageContent,
-        senderRole: 'counsellor',
-        receiverRole: 'user'
+        content: messageContent
       };
-      
+
       const response = await axios.post(`${API_BASE_URL}/api/chat/chat/${apiChatId}/message`, requestBody, {
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
         }
       });
-      
+
       console.log('POST API Response:', response.data);
-      
+
       if (response.data && response.data.success) {
         await fetchMessagesFromAPI();
         return response.data.message;
@@ -333,7 +333,7 @@ const SMSInput = () => {
     if (!message.trim() || !selectedUser || isSending) return;
 
     const messageText = message.trim();
-    
+
     const tempMessage = {
       id: `temp_${Date.now()}`,
       text: messageText,
@@ -344,26 +344,26 @@ const SMSInput = () => {
       status: "sending",
       isTemporary: true
     };
-    
+
     setMessages(prev => [...prev, tempMessage]);
     setMessage("");
     setIsSending(true);
     setError(null);
-    
+
     try {
       await sendMessageToAPI(messageText);
       setMessages(prev => prev.filter(msg => !msg.isTemporary));
     } catch (err) {
       console.error('Error sending message:', err);
-      
-      setMessages(prev => prev.map(msg => 
-        msg.id === tempMessage.id 
+
+      setMessages(prev => prev.map(msg =>
+        msg.id === tempMessage.id
           ? { ...msg, status: "error", error: "Failed to send" }
           : msg
       ));
-      
+
       setError("Failed to send message. Please try again.");
-      
+
       setTimeout(() => {
         setMessages(prev => prev.filter(msg => msg.id !== tempMessage.id));
       }, 3000);
@@ -375,46 +375,61 @@ const SMSInput = () => {
   // Initialize video call with API (Counselor as initiator)
   const initiateVideoCall = async () => {
     console.log('Counselor: initiateVideoCall called');
-    
+
     if (!selectedUser) {
       console.error('No user selected');
       setCallError('No user selected for call');
       return;
     }
-    
+
     setIsInitiatingCall(true);
     setCallError(null);
-    
+
     try {
       const token = localStorage.getItem('token');
-      
+
+      const initiatorId = COUNSELOR_ID;
+      const initiatorName = COUNSELOR_NAME;
+      const initiatorType = 'counsellor';
+
+      const receiverId = USER_ID;
+      const receiverName = USER_NAME;
+      const receiverType = 'user';
+
+      console.log('Call details:', {
+        initiatorId,
+        initiatorName,
+        initiatorType,
+        receiverId,
+        receiverName,
+        receiverType
+      });
+
       const requestBody = {
-        initiatorId: COUNSELOR_ID,
-        initiatorType: 'counsellor',
-        receiverId: USER_ID,
-        receiverType: 'user',
+        initiatorId: initiatorId,
+        initiatorType: initiatorType,
+        receiverId: receiverId,
+        receiverType: receiverType,
         callType: "video"
       };
-      
-      console.log('Sending video call request:', requestBody);
-      
+
       const response = await axios.post(`${API_BASE_URL}/api/video/calls/initiate`, requestBody, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
         }
       });
-      
+
       console.log('Video call API response:', response.data);
-      
+
       if (response.data && response.data.success) {
         const receiverAvatar = getAvatarByGender(selectedUser.gender);
-        
+
         const callData = {
           id: response.data.callData?.id,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name: response.data.callData?.receiver?.name || USER_NAME,
+          name: response.data.callData?.receiver?.name || receiverName,
           type: 'video',
           profilePic: receiverAvatar,
           phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
@@ -427,7 +442,7 @@ const SMSInput = () => {
           location: selectedUser.location,
           company: selectedUser.company
         };
-        
+
         console.log('Opening video modal with avatar:', callData.profilePic);
         setSelectedCall(callData);
         setIsVideoModalOpen(true);
@@ -436,7 +451,8 @@ const SMSInput = () => {
       }
     } catch (error) {
       console.error('Error initiating video call:', error);
-      
+      console.error('Error details:', error.response?.data || error.message);
+
       let errorMessage = 'Failed to initiate video call. ';
       if (error.response?.data?.message) {
         errorMessage += error.response.data.message;
@@ -445,17 +461,14 @@ const SMSInput = () => {
       } else {
         errorMessage += 'Please check your connection and try again.';
       }
-      
+
       setCallError(errorMessage);
-      
-      // Fallback to local call data if API fails
+
       const receiverAvatar = getAvatarByGender(selectedUser.gender);
-      
+
       const fallbackCallData = {
         id: Date.now(),
-        callId: `call_${Date.now()}`,
-        roomId: `room_${Date.now()}`,
-        name: USER_NAME,
+        name: selectedUser.name,
         type: 'video',
         profilePic: receiverAvatar,
         phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
@@ -475,46 +488,54 @@ const SMSInput = () => {
   // Initialize voice call with API (Counselor as initiator)
   const initiateVoiceCall = async () => {
     console.log('Counselor: initiateVoiceCall called');
-    
+
     if (!selectedUser) {
       console.error('No user selected');
       setCallError('No user selected for call');
       return;
     }
-    
+
     setIsInitiatingCall(true);
     setCallError(null);
-    
+
     try {
       const token = localStorage.getItem('token');
-      
+
+      const initiatorId = COUNSELOR_ID;
+      const initiatorName = COUNSELOR_NAME;
+      const initiatorType = 'counsellor';
+
+      const receiverId = USER_ID;
+      const receiverName = USER_NAME;
+      const receiverType = 'user';
+
       const requestBody = {
-        initiatorId: COUNSELOR_ID,
-        initiatorType: 'counsellor',
-        receiverId: USER_ID,
-        receiverType: 'user',
+        initiatorId: initiatorId,
+        initiatorType: initiatorType,
+        receiverId: receiverId,
+        receiverType: receiverType,
         callType: "voice"
       };
-      
+
       console.log('Sending voice call request:', requestBody);
-      
+
       const response = await axios.post(`${API_BASE_URL}/api/video/calls/initiate`, requestBody, {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : ''
         }
       });
-      
+
       console.log('Voice call API response:', response.data);
-      
+
       if (response.data && response.data.success) {
         const receiverAvatar = getAvatarByGender(selectedUser.gender);
-        
+
         const callData = {
           id: response.data.callData?.id,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name: response.data.callData?.receiver?.name || USER_NAME,
+          name: response.data.callData?.receiver?.name || receiverName,
           type: 'voice',
           profilePic: receiverAvatar,
           phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
@@ -527,7 +548,7 @@ const SMSInput = () => {
           location: selectedUser.location || "Counseling Center",
           company: selectedUser.company || "Mental Health Support"
         };
-        
+
         setSelectedCall(callData);
         setIsVoiceModalOpen(true);
       } else {
@@ -535,7 +556,7 @@ const SMSInput = () => {
       }
     } catch (error) {
       console.error('Error initiating voice call:', error);
-      
+
       let errorMessage = 'Failed to initiate voice call. ';
       if (error.response?.data?.message) {
         errorMessage += error.response.data.message;
@@ -544,17 +565,14 @@ const SMSInput = () => {
       } else {
         errorMessage += 'Please check your connection and try again.';
       }
-      
+
       setCallError(errorMessage);
-      
-      // Fallback to local call data if API fails
+
       const receiverAvatar = getAvatarByGender(selectedUser.gender);
-      
+
       const fallbackCallData = {
         id: Date.now(),
-        callId: `call_${Date.now()}`,
-        roomId: `room_${Date.now()}`,
-        name: USER_NAME,
+        name: selectedUser.name,
         type: 'voice',
         profilePic: receiverAvatar,
         phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
@@ -584,13 +602,14 @@ const SMSInput = () => {
   };
 
   // Shared Call API actions for Receiving
-  const handleAcceptIncomingCall = async (callId) => {
+  const handleJoinIncomingCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
+      const counsellorId = localStorage.getItem('counsellorId') || COUNSELOR_ID;
       
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, {
-        acceptorId: COUNSELOR_ID,
-        acceptorType: 'counsellor'
+      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, {
+        userId: counsellorId,
+        userType: 'counsellor'
       }, {
         headers: { 
           'Authorization': `Bearer ${token}`,
@@ -598,40 +617,39 @@ const SMSInput = () => {
         }
       });
       
-      console.log('Call accepted response:', response.data);
+      console.log('Join call response:', response.data);
       
       if (response.data && response.data.success) {
-        // Open the appropriate call modal with the call data
-        const callDetails = response.data.callData || incomingCallData;
-        
-        const callDataToOpen = {
-          id: callDetails.id || callId,
+        // Prepare call data for video modal
+        const callDataForModal = {
+          id: response.data.callData?.id || callId,
           callId: callId,
-          roomId: callDetails.roomId,
+          roomId: response.data.callData?.roomId || incomingCallData.roomId,
           name: incomingCallData.name,
           type: incomingCallData.callType,
           profilePic: incomingCallData.avatar,
           status: 'connected',
           date: 'Today',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          apiCallData: response.data.callData,
           isIncoming: true
         };
         
-        setSelectedCall(callDataToOpen);
-        
         // Open the appropriate modal based on call type
         if (incomingCallData.callType === 'video') {
+          setSelectedCall(callDataForModal);
           setIsVideoModalOpen(true);
         } else {
+          setSelectedCall(callDataForModal);
           setIsVoiceModalOpen(true);
         }
         
-        return { success: true, callData: callDetails };
+        return { success: true, data: response.data };
+      } else {
+        throw new Error(response.data?.message || 'Failed to join call');
       }
-      
-      return { success: false };
     } catch (error) {
-      console.error('Error accepting call:', error);
+      console.error('Error joining call:', error);
       throw error;
     }
   };
@@ -639,59 +657,61 @@ const SMSInput = () => {
   const handleRejectIncomingCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
+      await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      return response.data;
+      return true;
     } catch (error) {
       console.error('Error rejecting call:', error);
-      return { success: false };
+      return false;
     }
   };
 
   const handleEndIncomingCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, {
-        userId: COUNSELOR_ID,
+      const counsellorId = localStorage.getItem('counsellorId') || COUNSELOR_ID;
+
+      await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, {
+        userId: counsellorId,
         endedBy: 'counsellor'
       }, {
-        headers: { 
+        headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      return response.data;
+      return true;
     } catch (error) {
       console.error('Error ending call:', error);
-      return { success: false };
+      return false;
     }
   };
 
   // Poll for waiting calls
   useEffect(() => {
-    let pollingInterval;
-    
+    let isMounted = true;
+    let intervalId = null;
+
     const fetchIncomingCalls = async () => {
       try {
         const token = localStorage.getItem('token');
-        
-        if (!COUNSELOR_ID || !token || showIncomingModal || isVideoModalOpen || isVoiceModalOpen) {
-          return;
-        }
-        
-        const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${COUNSELOR_ID}`, {
+        const counsellorId = localStorage.getItem('counsellorId') || COUNSELOR_ID;
+
+        if (!counsellorId || !token || showIncomingModal) return;
+
+        const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${counsellorId}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
-        
-        console.log('Pending calls response:', response.data);
-        
+
+        if (!isMounted) return;
+
         const callsList = response.data.pendingRequests || [];
-        
+
         if (response.data.success && callsList.length > 0) {
           const waitingCall = callsList[0];
           const fromData = waitingCall.from || {};
-          
+
           // Determine display name - prioritize isAnonymous
           let displayName = 'Anonymous User';
           if (fromData.isAnonymous) {
@@ -703,12 +723,12 @@ const SMSInput = () => {
           } else if (fromData.name) {
             displayName = fromData.name;
           }
-          
+
           // Determine avatar based on gender (emoji only)
           let avatar = '👤';
           if (fromData.gender === 'female') avatar = '👩';
           else if (fromData.gender === 'male') avatar = '👨';
-          
+
           setIncomingCallData({
             callId: waitingCall.callId,
             roomId: waitingCall.roomId,
@@ -716,6 +736,7 @@ const SMSInput = () => {
             avatar: avatar,
             callType: waitingCall.callType || 'video',
             requestMessage: waitingCall.requestMessage || `Incoming ${waitingCall.callType || 'video'} call...`,
+            onEndCall: handleEndIncomingCall
           });
           setShowIncomingModal(true);
         }
@@ -723,19 +744,13 @@ const SMSInput = () => {
         console.error('Error polling for calls:', error);
       }
     };
-    
-    // Start polling only if no modals are open
-    if (!showIncomingModal && !isVideoModalOpen && !isVoiceModalOpen) {
-      fetchIncomingCalls(); // Immediate fetch
-      pollingInterval = setInterval(fetchIncomingCalls, 5000);
-    }
-    
+
+    intervalId = setInterval(fetchIncomingCalls, 5000);
     return () => {
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-      }
+      isMounted = false;
+      if (intervalId) clearInterval(intervalId);
     };
-  }, [showIncomingModal, isVideoModalOpen, isVoiceModalOpen, COUNSELOR_ID]);
+  }, [showIncomingModal, COUNSELOR_ID]);
 
   // Handle close modal
   const handleCloseModal = () => {
@@ -777,11 +792,11 @@ const SMSInput = () => {
   // Auto-refresh messages every 30 seconds
   useEffect(() => {
     if (!selectedUser) return;
-    
+
     const interval = setInterval(() => {
       fetchMessagesFromAPI();
     }, 30000);
-    
+
     return () => clearInterval(interval);
   }, [selectedUser]);
 
@@ -798,27 +813,10 @@ const SMSInput = () => {
   // Render chat status banner
   const renderChatStatusBanner = () => {
     if (!chatStatus) return null;
-    
+
     let statusClass = '';
     let statusText = '';
-    
-    switch (chatStatus) {
-      case 'accepted':
-        statusClass = 'status-accepted';
-        statusText = '✓ Chat session active';
-        break;
-      case 'pending':
-        statusClass = 'status-pending';
-        statusText = '⏳ Waiting for response...';
-        break;
-      case 'ended':
-        statusClass = 'status-ended';
-        statusText = '🔒 Chat session ended';
-        break;
-      default:
-        return null;
-    }
-    
+
     return (
       <div className={`sms-chat-status-banner ${statusClass}`}>
         {statusText}
@@ -829,7 +827,7 @@ const SMSInput = () => {
   // Render message status indicator
   const renderMessageStatus = (message) => {
     if (message.sender !== 'me') return null;
-    
+
     switch (message.status) {
       case 'sending':
         return <span className="sms-message-status sending">⌛</span>;
@@ -864,10 +862,10 @@ const SMSInput = () => {
         <div className="header-left">
           <button className="back-button" onClick={handleBack} title="Back to SMS List">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor"/>
+              <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor" />
             </svg>
           </button>
-          
+
           <div className="smsinput-user-info">
             <div className="smsinput-user-avatar">
               <span className="avatar-icon">
@@ -992,14 +990,12 @@ const SMSInput = () => {
         isOpen={isVideoModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
-        userRole="counsellor"
       />
 
       <VoiceCallModal
         isOpen={isVoiceModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
-        userRole="counsellor"
       />
 
       {/* Professional Incoming Call Modal */}
@@ -1010,7 +1006,7 @@ const SMSInput = () => {
         callerName={incomingCallData.name}
         callerAvatar={incomingCallData.avatar}
         callData={incomingCallData}
-        onAcceptCall={handleAcceptIncomingCall}
+        onJoinCall={handleJoinIncomingCall}
         onRejectCall={handleRejectIncomingCall}
       />
     </div>
