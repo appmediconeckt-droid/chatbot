@@ -184,14 +184,16 @@ const ChatBox = () => {
     // Get current user from localStorage
     const getCurrentUser = () => {
         const userData = localStorage.getItem('user');
+        const isAnonymous = localStorage.getItem('isAnonymous') === 'true';
         if (userData) {
             try {
-                return JSON.parse(userData);
+                const user = JSON.parse(userData);
+                return { ...user, isAnonymous: user.isAnonymous || isAnonymous };
             } catch (e) {
-                return null;
+                return { isAnonymous };
             }
         }
-        return null;
+        return { isAnonymous };
     };
 
     const currentUser = getCurrentUser();
@@ -514,7 +516,8 @@ useEffect(() => {
             
             // Get user details - Use the exact IDs from your API
             const initiatorId = currentUser?.id || currentUser?._id || defaultInitiatorId;
-            const initiatorName = currentUser?.name || currentUser?.fullName || defaultInitiatorName;
+            const isAnonymousUser = currentUser?.isAnonymous === true;
+            const initiatorName = isAnonymousUser ? "Anonymous User" : (currentUser?.name || currentUser?.fullName || defaultInitiatorName);
             const initiatorType = 'user';
             
             // Get receiver (counselor) details
@@ -533,10 +536,13 @@ useEffect(() => {
             
             const requestBody = {
                 initiatorId: initiatorId,
+                initiatorName: initiatorName,
                 initiatorType: initiatorType,
                 receiverId: receiverId,
+                receiverName: receiverName,
                 receiverType: receiverType,
-                callType: "video"
+                callType: "video",
+                isAnonymous: isAnonymousUser
             };
             
            
@@ -565,6 +571,7 @@ useEffect(() => {
                     type: 'video',
                     profilePic: receiverProfilePhoto,
                     phoneNumber: currentCounselor?.phoneNumber,
+                    isAnonymous: false,
                     status: response.data.status || 'ringing',
                     date: 'Today',
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -630,8 +637,8 @@ useEffect(() => {
             const token = localStorage.getItem('token');
             
             // Get user details
-            const initiatorId = currentUser?.id || currentUser?._id || defaultInitiatorId;
-            const initiatorName = currentUser?.name || currentUser?.fullName || defaultInitiatorName;
+            const isAnonymousUser = currentUser?.isAnonymous === true;
+            const initiatorName = isAnonymousUser ? "Anonymous User" : (currentUser?.name || currentUser?.fullName || defaultInitiatorName);
             const initiatorType = 'user';
             
             // Get receiver (counselor) details
@@ -641,10 +648,13 @@ useEffect(() => {
             
             const requestBody = {
                 initiatorId: initiatorId,
+                initiatorName: initiatorName,
                 initiatorType: initiatorType,
                 receiverId: receiverId,
+                receiverName: receiverName,
                 receiverType: receiverType,
-                callType: "voice"
+                callType: "voice",
+                isAnonymous: isAnonymousUser
             };
             
             console.log('Sending voice call request:', requestBody);
@@ -672,6 +682,7 @@ useEffect(() => {
                     type: 'voice',
                     profilePic: receiverProfilePhoto,
                     phoneNumber: currentCounselor?.phoneNumber,
+                    isAnonymous: false,
                     status: response.data.status || 'ringing',
                     date: 'Today',
                     time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),

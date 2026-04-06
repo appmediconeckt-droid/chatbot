@@ -240,19 +240,27 @@ export default function UserDashboard() {
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-
-  // Modal States
-  const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
-  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [selectedCall, setSelectedCall] = useState(null);
-  const [incomingCallData, setIncomingCallData] = useState(null);
-
+  
+  // Call Modal States
+  const [showCallModal, setShowCallModal] = useState(false);
+  const [callType, setCallType] = useState('video');
+  const [callerInfo, setCallerInfo] = useState({
+    name: '',
+    image: null,
+    userId: '',
+    userName: '',
+    callId: '',
+    roomId: '',
+    waitingDuration: 0,
+    onEndCall: null
+  });
+  
   const [waitingCalls, setWaitingCalls] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [isPolling, setIsPolling] = useState(true);
 
   const userId = localStorage.getItem("userId");
-
+  
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
   const vibrate = useVibration();
@@ -281,23 +289,23 @@ export default function UserDashboard() {
     try {
       const token = localStorage.getItem('token');
       const acceptorId = localStorage.getItem('userId');
-
+      
       const requestBody = {
         acceptorId: acceptorId,
         acceptorType: 'user'
       };
-
+      
       console.log('Accepting call with body:', requestBody);
-
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, requestBody, {
+      
+      const response = await axios.put(`${API_BASE_URL}/calls/${callId}/accept`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
+      
       console.log('Accept call response:', response.data);
-
+      
       if (response.data && response.data.success) {
         return { success: true, data: response.data };
       }
@@ -345,23 +353,23 @@ export default function UserDashboard() {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-
+      
       const requestBody = {
         userId: userId,
         endedBy: 'user'
       };
-
+      
       console.log('Ending call with body:', requestBody);
-
+      
       const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-
+      
       console.log('End call response:', response.data);
-
+      
       if (response.data && response.data.success) {
         return { success: true, data: response.data };
       }
@@ -376,13 +384,13 @@ export default function UserDashboard() {
   const rejectCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
-
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
+      
+      const response = await axios.post(`${API_BASE_URL}/api/video/calls/reject/${callId}`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-
+      
       console.log('Reject call response:', response.data);
       return { success: response.data?.success || false };
     } catch (error) {
@@ -497,13 +505,13 @@ export default function UserDashboard() {
   useEffect(() => {
     if (isPolling && !showIncomingCallModal && !isVideoModalOpen) {
       fetchWaitingCalls();
-
+      
       const interval = setInterval(() => {
         fetchWaitingCalls();
       }, 5000);
-
+      
       setPollingInterval(interval);
-
+      
       return () => {
         if (interval) {
           clearInterval(interval);
@@ -803,14 +811,14 @@ export default function UserDashboard() {
             <h2 className="mobile-logo">MChat</h2>
           </div>
           <div className="mobile-header-right">
-            <button
+            <button 
               className="mobile-profile-btn"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
               {userData.profilePhoto ? (
-                <img
-                  src={userData.profilePhoto}
-                  alt={userData.name}
+                <img 
+                  src={userData.profilePhoto} 
+                  alt={userData.name} 
                   className="mobile-user-avatar"
                   onError={(e) => {
                     e.target.onerror = null;
@@ -822,14 +830,14 @@ export default function UserDashboard() {
                 <FaUserCircle className="mobile-user-icon" />
               )}
             </button>
-
+            
             {showProfileMenu && (
               <div className="profile-dropdown-menu">
                 <div className="profile-dropdown-header">
                   {userData.profilePhoto ? (
-                    <img
-                      src={userData.profilePhoto}
-                      alt={userData.name}
+                    <img 
+                      src={userData.profilePhoto} 
+                      alt={userData.name} 
                       className="dropdown-avatar"
                     />
                   ) : (
@@ -864,8 +872,8 @@ export default function UserDashboard() {
                 <div className="profile-section">
                   <div className="profile-image">
                     {userData.profilePhoto ? (
-                      <img
-                        src={userData.profilePhoto}
+                      <img 
+                        src={userData.profilePhoto} 
                         alt={userData.name}
                         onError={(e) => {
                           e.target.onerror = null;
