@@ -258,6 +258,13 @@ export default function UserDashboard() {
   const [waitingCalls, setWaitingCalls] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [isPolling, setIsPolling] = useState(true);
+  
+  // Missing call states
+  const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
+  const [incomingCallData, setIncomingCallData] = useState(null);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [selectedCall, setSelectedCall] = useState(null);
+
 
   const userId = localStorage.getItem("userId");
   
