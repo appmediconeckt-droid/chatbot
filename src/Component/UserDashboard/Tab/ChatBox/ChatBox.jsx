@@ -16,24 +16,29 @@ import {
 import { API_BASE_URL } from '../../../../axiosConfig';
 
 // Professional Call Modal Component for Receiving Calls
-// (This is the same one used in the Dashboard for standardized UI)
-// Professional Call Modal Component for Receiving Calls
 const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAcceptCall, onRejectCall }) => {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [acceptError, setAcceptError] = useState(null);
 
   const handleAccept = async () => {
     if (isAccepting) return;
     
     setIsAccepting(true);
+    setAcceptError(null);
     
     if (onAcceptCall && callData) {
       try {
-        await onAcceptCall(callData.callId);
-        // Close modal immediately after accepting
-        onClose();
+        const result = await onAcceptCall(callData.callId);
+        if (result && result.success) {
+          onClose();
+        } else {
+          console.error('Failed to accept call');
+          setAcceptError(result?.message || 'Failed to accept call');
+        }
       } catch (error) {
         console.error('Error accepting call:', error);
+        setAcceptError(error.message || 'Error accepting call');
       } finally {
         setIsAccepting(false);
       }
@@ -51,7 +56,6 @@ const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage,
     if (onRejectCall && callData) {
       try {
         await onRejectCall(callData.callId);
-        // Close modal immediately after rejecting
         onClose();
       } catch (error) {
         console.error('Error rejecting call:', error);
@@ -66,11 +70,9 @@ const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage,
 
   if (!isOpen) return null;
 
-  // Get the full name from the call data - prioritizing fullName
   const displayName = callData?.from?.fullName || callData?.from?.displayName || callerName || "Counselor";
   const profilePhoto = callData?.from?.profilePhoto || callerImage;
   
-  // Format the time
   const formatRequestTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
@@ -103,6 +105,11 @@ const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage,
             <p className="incoming-call-message">
               {callData?.requestMessage || `Incoming ${callType} call...`}
             </p>
+            {acceptError && (
+              <p className="incoming-call-error" style={{ color: 'red', fontSize: '12px', marginTop: '8px' }}>
+                {acceptError}
+              </p>
+            )}
           </div>
 
           <div className="incoming-call-controls">
@@ -227,12 +234,12 @@ const ChatBox = () => {
         return name
             .split(' ')
             .map(word => word[0])
-           
+            .join('')
             .toUpperCase()
             .slice(0, 2);
     };
 
-    // Scroll to bottom function - FIXED: Added null check
+    // Scroll to bottom function
     const scrollToBottom = useCallback(() => {
         if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -246,23 +253,72 @@ const ChatBox = () => {
         return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     };
 
-    // Shared Call API actions
+    // FIXED: Join API with POST method
     const handleAcceptCall = async (callId) => {
         try {
             const token = localStorage.getItem('token');
             const userId = currentUser?.id || currentUser?._id || defaultInitiatorId;
 
-            const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, {
-                acceptorId: userId,
-                acceptorType: 'user'
-            }, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            console.log('Accepting call with ID:', callId);
+            console.log('User ID:', userId);
 
-            return response.data;
+            // POST request to join API with the required body
+            const response = await axios.post(
+                `${API_BASE_URL}/api/video/calls/${callId}/join`,
+                {
+                    userId: userId,
+                    userType: 'user'
+                },
+                {
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            console.log('Join call API response:', response.data);
+
+            if (response.data && response.data.success) {
+                // Prepare call data for the modal
+                const callDataForModal = {
+                    id: response.data.callData?.id || callId,
+                    callId: callId,
+                    roomId: response.data.callData?.roomId || incomingCallData.roomId,
+                    name: incomingCallData.name,
+                    type: incomingCallData.callType,
+                    profilePic: incomingCallData.image,
+                    status: 'connected',
+                    date: 'Today',
+                    time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                    apiCallData: response.data.callData,
+                    isIncoming: true
+                };
+
+                // Open the appropriate call modal based on call type
+                if (incomingCallData.callType === 'video') {
+                    setSelectedCall(callDataForModal);
+                    setIsVideoModalOpen(true);
+                } else {
+                    setSelectedCall(callDataForModal);
+                    setIsVoiceModalOpen(true);
+                }
+
+                return { success: true, data: response.data };
+            } else {
+                throw new Error(response.data?.message || 'Failed to join call');
+            }
         } catch (error) {
             console.error('Error accepting call:', error);
-            throw error;
+            let errorMessage = 'Failed to accept call. ';
+            if (error.response?.data?.message) {
+                errorMessage += error.response.data.message;
+            } else if (error.response?.data?.error) {
+                errorMessage += error.response.data.error;
+            } else if (error.message) {
+                errorMessage += error.message;
+            }
+            throw new Error(errorMessage);
         }
     };
 
@@ -278,8 +334,6 @@ const ChatBox = () => {
             return false;
         }
     };
-
-    
 
     const handleEndCall = async (callId) => {
         try {
@@ -300,50 +354,64 @@ const ChatBox = () => {
     };
 
     // Poll for waiting calls
-   // Poll for waiting calls
-useEffect(() => {
-  const fetchIncomingCalls = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const userId = currentUser?.id || currentUser?._id || defaultInitiatorId;
+    useEffect(() => {
+        let isMounted = true;
+        let intervalId = null;
 
-      if (!userId || !token || showIncomingModal) return;
+        const fetchIncomingCalls = async () => {
+            try {
+                const token = localStorage.getItem('token');
+                const userId = currentUser?.id || currentUser?._id || defaultInitiatorId;
 
-      const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${userId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+                if (!userId || !token || showIncomingModal) {
+                    console.log('Skipping poll - missing data:', { userId, hasToken: !!token, showIncomingModal });
+                    return;
+                }
 
-      const callsList = response.data.pendingRequests || [];
+                console.log('Polling for calls with user ID:', userId);
 
-      if (response.data.success && callsList.length > 0) {
-        const waitingCall = callsList[0];
-        const fromData = waitingCall.from || {};
+                const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${userId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!isMounted) return;
+
+                const callsList = response.data.pendingRequests || [];
+
+                if (response.data.success && callsList.length > 0) {
+                    const waitingCall = callsList[0];
+                    const fromData = waitingCall.from || {};
+                    
+                    // Extract full name properly
+                    const callerFullName = fromData.fullName || fromData.displayName || 'Counselor';
+                    
+                    setIncomingCallData({
+                        callId: waitingCall.callId,
+                        roomId: waitingCall.roomId,
+                        name: callerFullName,
+                        image: fromData.profilePhoto || null,
+                        callType: waitingCall.callType || 'video',
+                        from: fromData,
+                        requestMessage: waitingCall.requestMessage,
+                        requestedAt: waitingCall.requestedAt,
+                        expiresAt: waitingCall.expiresAt,
+                        remainingSeconds: waitingCall.remainingSeconds
+                    });
+                    setShowIncomingModal(true);
+                }
+            } catch (error) {
+                console.error('Error polling for calls:', error);
+            }
+        };
+
+        intervalId = setInterval(fetchIncomingCalls, 5000);
         
-        // Extract full name properly - priority: fullName > displayName
-        const callerFullName = fromData.fullName || fromData.displayName || 'Counselor';
-        
-        setIncomingCallData({
-          callId: waitingCall.callId,
-          roomId: waitingCall.roomId,
-          name: callerFullName,
-          image: fromData.profilePhoto || null,
-          callType: waitingCall.callType || 'video',
-          from: fromData, // Store the full from object
-          requestMessage: waitingCall.requestMessage,
-          requestedAt: waitingCall.requestedAt,
-          expiresAt: waitingCall.expiresAt,
-          remainingSeconds: waitingCall.remainingSeconds
-        });
-        setShowIncomingModal(true);
-      }
-    } catch (error) {
-      console.error('Error polling for calls:', error);
-    }
-  };
+        return () => {
+            isMounted = false;
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [showIncomingModal, currentUser]);
 
-  const interval = setInterval(fetchIncomingCalls, 5000);
-  return () => clearInterval(interval);
-}, [showIncomingModal, currentUser]);
     // GET messages from API
     const fetchMessagesFromAPI = async () => {
         try {
@@ -512,7 +580,7 @@ useEffect(() => {
         try {
             const token = localStorage.getItem('token');
             
-            // Get user details - Use the exact IDs from your API
+            // Get user details
             const initiatorId = currentUser?.id || currentUser?._id || defaultInitiatorId;
             const initiatorName = currentUser?.name || currentUser?.fullName || defaultInitiatorName;
             const initiatorType = 'user';
@@ -539,8 +607,6 @@ useEffect(() => {
                 callType: "video"
             };
             
-           
-            
             const response = await axios.post(`${API_BASE_URL}/api/video/calls/initiate`, requestBody, {
                 headers: {
                     'Content-Type': 'application/json',
@@ -551,7 +617,6 @@ useEffect(() => {
             console.log('Video call API response:', response.data);
             
             if (response.data && response.data.success) {
-                // Get profile photo from API response or use default
                 const receiverProfilePhoto = response.data.callData?.receiver?.profilePhoto || 
                                             getProfilePhotoUrl(currentCounselor) || 
                                             currentCounselor?.avatar || 
@@ -581,7 +646,6 @@ useEffect(() => {
             }
         } catch (error) {
             console.error('Error initiating video call:', error);
-            console.error('Error details:', error.response?.data || error.message);
             
             let errorMessage = 'Failed to initiate video call. ';
             if (error.response?.data?.message) {
@@ -814,7 +878,7 @@ useEffect(() => {
         }
     }, [messages, currentChat, chatStatus]);
 
-    // Scroll to bottom - FIXED: Added conditional check
+    // Scroll to bottom
     useEffect(() => {
         if (messagesEndRef.current) {
             scrollToBottom();
@@ -1251,7 +1315,6 @@ useEffect(() => {
                 callData={incomingCallData}
                 onAcceptCall={handleAcceptCall}
                 onRejectCall={handleRejectCall}
-               
                 onEnd={handleEndCall}
             />
         </div>

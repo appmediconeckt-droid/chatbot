@@ -1,41 +1,65 @@
-// VideoCallModal.jsx - Updated to handle API call data
+// VideoCallModal.jsx - Complete WebRTC Integration (FIXED)
 
 import React, { useState, useEffect, useRef } from 'react';
+import io from 'socket.io-client';
 import './VideoCallModal.css';
 
-const VideoCallModal = ({ isOpen, onClose, callData }) => {
+const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localhost:5000' }) => {
+    // WebRTC States
+    const [socket, setSocket] = useState(null);
+    const [localStream, setLocalStream] = useState(null);
+    const [remoteStream, setRemoteStream] = useState(null);
+    const [peerConnection, setPeerConnection] = useState(null);
+    const [isConnecting, setIsConnecting] = useState(true);
+    
+    // UI States
     const [isMuted, setIsMuted] = useState(false);
-    const [isSpeakerOn, setIsSpeakerOn] = useState(false);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
     const [isCameraSwitched, setIsCameraSwitched] = useState(false);
     const [callDuration, setCallDuration] = useState(0);
     const [isCallActive, setIsCallActive] = useState(true);
     const [isFullScreen, setIsFullScreen] = useState(false);
-    const [isRecording, setIsRecording] = useState(false);
-    const [isCameraInitialized, setIsCameraInitialized] = useState(false);
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [connectionQuality, setConnectionQuality] = useState('good');
     const [availableCameras, setAvailableCameras] = useState([]);
     const [currentCamera, setCurrentCamera] = useState('');
-    const [isPiPMode, setIsPiPMode] = useState(false);
-    const [connectionQuality, setConnectionQuality] = useState('good');
+    const [isSpeakerOn, setIsSpeakerOn] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
     const [volumeLevel, setVolumeLevel] = useState(70);
-    const [isScreenSharing, setIsScreenSharing] = useState(false);
-    const [isAnonymous, setIsAnonymous] = useState(false);
+    const [isRecording, setIsRecording] = useState(false);
+    const [isPiPMode, setIsPiPMode] = useState(false);
+    
+    // Call Info States
     const [callerName, setCallerName] = useState('');
     const [callerProfilePic, setCallerProfilePic] = useState('');
     const [callerPhoneNumber, setCallerPhoneNumber] = useState('');
-    const [callType, setCallType] = useState('video');
-    const [callStatus, setCallStatus] = useState('connecting');
-    const [callStartTime, setCallStartTime] = useState(null);
     const [roomId, setRoomId] = useState('');
     const [callId, setCallId] = useState('');
+    const [isAnonymous, setIsAnonymous] = useState(false);
+    const [callStatus, setCallStatus] = useState('connecting');
+    const [callStartTime, setCallStartTime] = useState(null);
     const [apiCallData, setApiCallData] = useState(null);
-
+    
+    // Refs
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const mediaStreamRef = useRef(null);
+    const screenStreamRef = useRef(null);
     const pipWindowRef = useRef(null);
+    
+    // WebRTC Configuration
+    const configuration = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' }
+        ],
+        iceCandidatePoolSize: 10
+    };
 
+    // Default call data
     const defaultCallData = {
         id: 1,
         name: "Dr. Priya Sharma",
@@ -53,47 +77,277 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
             setCallerName(anonymous ? 'Anonymous User' : (callData.name || defaultCallData.name));
             setCallerProfilePic(anonymous ? '👤' : (callData.profilePic || defaultCallData.profilePic));
             setCallerPhoneNumber(anonymous ? 'Hidden' : (callData.phoneNumber || defaultCallData.phoneNumber));
-            setCallType(callData.type || 'video');
-            setCallStatus(callData.status || 'connecting');
-            setRoomId(callData.roomId || '');
-            setCallId(callData.callId || callData.id || '');
-            setApiCallData(callData.apiCallData || null);
+            setRoomId(callData.roomId || callData.callId || `room_${Date.now()}`);
+            setCallId(callData.callId || callData.id || `call_${Date.now()}`);
             setCallStartTime(new Date());
             setCallDuration(0);
+            setApiCallData(callData.apiCallData || null);
             
-            // Log the call data for debugging
-            console.log('Video Call Modal Opened with Data:', {
-                roomId: callData.roomId,
-                callId: callData.callId,
-                callerName: anonymous ? 'Anonymous User' : callData.name,
-                isAnonymous: anonymous,
-                apiData: callData.apiCallData
-            });
+            console.log('Video Call Modal Opened:', { roomId: callData.roomId, callId: callData.callId, callData });
         } else if (isOpen && !callData) {
             setIsAnonymous(false);
             setCallerName(defaultCallData.name);
             setCallerProfilePic(defaultCallData.profilePic);
             setCallerPhoneNumber(defaultCallData.phoneNumber);
-            setCallType(defaultCallData.type);
-            setCallStatus(defaultCallData.status);
             setCallStartTime(new Date());
             setCallDuration(0);
         }
     }, [isOpen, callData]);
 
+    // Initialize Socket and WebRTC
     useEffect(() => {
-        if (isOpen && !isCameraInitialized) {
-            initializeCamera(false);
-            getAvailableCameras();
+        if (!isOpen) return;
+
+        // Get user ID from localStorage
+        const userId = localStorage.getItem('userId');
+        const token = localStorage.getItem('token');
+
+        if (!userId) {
+            console.error('No user ID found');
+            setCallStatus('error');
+            return;
         }
 
-        return () => {
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-                mediaStreamRef.current = null;
+        // Initialize Socket.IO connection
+        const newSocket = io(apiBaseUrl, {
+            transports: ['websocket', 'polling'],
+            withCredentials: true,
+            extraHeaders: {
+                Authorization: `Bearer ${token}`
             }
+        });
+
+        setSocket(newSocket);
+
+        // Join the call room
+        newSocket.on('connect', () => {
+            console.log('Socket connected:', newSocket.id);
+            newSocket.emit('join-call', { 
+                callId: roomId, 
+                userId: userId,
+                userType: 'user'
+            });
+        });
+
+        // Handle socket errors
+        newSocket.on('connect_error', (error) => {
+            console.error('Socket connection error:', error);
+            setCallStatus('connection_error');
+        });
+
+        // Initialize media devices
+        initializeMediaDevices();
+
+        return () => {
+            if (newSocket) {
+                newSocket.emit('leave-call', { callId: roomId, userId });
+                newSocket.disconnect();
+            }
+            cleanupMedia();
         };
-    }, [isOpen]);
+    }, [isOpen, roomId, apiBaseUrl]);
+
+    // Initialize Media Devices and WebRTC
+    const initializeMediaDevices = async () => {
+        try {
+            // Get available cameras
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            setAvailableCameras(videoDevices);
+
+            // Get user media
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 },
+                    facingMode: 'user'
+                },
+                audio: true
+            });
+
+            setLocalStream(stream);
+            mediaStreamRef.current = stream;
+            
+            if (localVideoRef.current) {
+                localVideoRef.current.srcObject = stream;
+            }
+
+            // Initialize Peer Connection
+            const pc = new RTCPeerConnection(configuration);
+            setPeerConnection(pc);
+
+            // Add local tracks
+            stream.getTracks().forEach(track => {
+                pc.addTrack(track, stream);
+            });
+
+            // Handle remote stream
+            pc.ontrack = (event) => {
+                console.log('Remote stream received');
+                setRemoteStream(event.streams[0]);
+                if (remoteVideoRef.current) {
+                    remoteVideoRef.current.srcObject = event.streams[0];
+                }
+                setIsConnecting(false);
+                setCallStatus('connected');
+            };
+
+            // Handle ICE candidates
+            pc.onicecandidate = (event) => {
+                if (event.candidate && socket) {
+                    socket.emit('ice-candidate', {
+                        callId: roomId,
+                        candidate: event.candidate,
+                        userId: localStorage.getItem('userId')
+                    });
+                }
+            };
+
+            // Handle connection state
+            pc.onconnectionstatechange = () => {
+                console.log('Connection state:', pc.connectionState);
+                if (pc.connectionState === 'connected') {
+                    setIsConnecting(false);
+                    setCallStatus('connected');
+                } else if (pc.connectionState === 'disconnected') {
+                    setIsConnecting(true);
+                    setCallStatus('reconnecting');
+                } else if (pc.connectionState === 'failed') {
+                    setCallStatus('failed');
+                }
+            };
+
+            // Handle ICE connection state
+            pc.oniceconnectionstatechange = () => {
+                console.log('ICE connection state:', pc.iceConnectionState);
+                if (pc.iceConnectionState === 'connected') {
+                    setIsConnecting(false);
+                    setCallStatus('connected');
+                }
+            };
+
+            // Setup WebRTC signaling
+            setupSignaling(pc);
+
+        } catch (error) {
+            console.error('Error accessing media devices:', error);
+            setCallStatus('media_error');
+            
+            // Try without video if camera fails
+            try {
+                const audioOnlyStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                setLocalStream(audioOnlyStream);
+                mediaStreamRef.current = audioOnlyStream;
+                setIsVideoEnabled(false);
+                setCallStatus('audio_only');
+            } catch (audioError) {
+                console.error('Audio only also failed:', audioError);
+            }
+        }
+    };
+
+    // Setup WebRTC Signaling
+    const setupSignaling = (pc) => {
+        if (!socket) return;
+
+        const userId = localStorage.getItem('userId');
+
+        // Handle user joined
+        socket.on('user-joined', async ({ userId: joinedUserId }) => {
+            console.log('User joined:', joinedUserId);
+            if (joinedUserId !== userId && pc.signalingState !== 'have-local-offer') {
+                try {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    socket.emit('offer', {
+                        callId: roomId,
+                        offer: offer,
+                        userId: userId
+                    });
+                } catch (error) {
+                    console.error('Error creating offer:', error);
+                }
+            }
+        });
+
+        // Handle offer
+        socket.on('offer', async ({ offer, userId: fromUserId }) => {
+            console.log('Received offer from:', fromUserId);
+            if (fromUserId !== userId && pc.signalingState !== 'stable') {
+                try {
+                    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    socket.emit('answer', {
+                        callId: roomId,
+                        answer: answer,
+                        userId: userId
+                    });
+                } catch (error) {
+                    console.error('Error handling offer:', error);
+                }
+            }
+        });
+
+        // Handle answer
+        socket.on('answer', async ({ answer, userId: fromUserId }) => {
+            console.log('Received answer from:', fromUserId);
+            if (fromUserId !== userId && pc.signalingState === 'have-local-offer') {
+                try {
+                    await pc.setRemoteDescription(new RTCSessionDescription(answer));
+                } catch (error) {
+                    console.error('Error handling answer:', error);
+                }
+            }
+        });
+
+        // Handle ICE candidates
+        socket.on('ice-candidate', async ({ candidate, userId: fromUserId }) => {
+            if (fromUserId !== userId && candidate) {
+                try {
+                    await pc.addIceCandidate(new RTCSessionDescription(candidate));
+                } catch (error) {
+                    console.error('Error adding ICE candidate:', error);
+                }
+            }
+        });
+
+        // Handle user left
+        socket.on('user-left', ({ userId: leftUserId }) => {
+            if (leftUserId !== userId) {
+                console.log('User left:', leftUserId);
+                setRemoteStream(null);
+                if (remoteVideoRef.current) {
+                    remoteVideoRef.current.srcObject = null;
+                }
+                setCallStatus('ended');
+            }
+        });
+
+        // Handle media toggle events
+        socket.on('video-toggled', ({ enabled }) => {
+            // Handle remote video toggle if needed
+            console.log('Remote video toggled:', enabled);
+        });
+
+        socket.on('audio-toggled', ({ enabled }) => {
+            // Handle remote audio toggle if needed
+            console.log('Remote audio toggled:', enabled);
+        });
+    };
+
+    // Cleanup media resources
+    const cleanupMedia = () => {
+        if (peerConnection) {
+            peerConnection.close();
+        }
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        if (screenStreamRef.current) {
+            screenStreamRef.current.getTracks().forEach(track => track.stop());
+        }
+    };
 
     // Call duration timer
     useEffect(() => {
@@ -108,6 +362,44 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         };
     }, [isOpen, isCallActive, callStartTime, callStatus]);
 
+    // Handle audio mute/unmute
+    useEffect(() => {
+        if (localStream) {
+            const audioTracks = localStream.getAudioTracks();
+            audioTracks.forEach(track => {
+                track.enabled = !isMuted;
+            });
+            
+            // Notify others via socket
+            if (socket && roomId) {
+                socket.emit('audio-toggled', {
+                    callId: roomId,
+                    userId: localStorage.getItem('userId'),
+                    enabled: !isMuted
+                });
+            }
+        }
+    }, [isMuted, localStream, socket, roomId]);
+
+    // Handle video enable/disable
+    useEffect(() => {
+        if (localStream) {
+            const videoTracks = localStream.getVideoTracks();
+            videoTracks.forEach(track => {
+                track.enabled = isVideoEnabled;
+            });
+            
+            // Notify others via socket
+            if (socket && roomId) {
+                socket.emit('video-toggled', {
+                    callId: roomId,
+                    userId: localStorage.getItem('userId'),
+                    enabled: isVideoEnabled
+                });
+            }
+        }
+    }, [isVideoEnabled, localStream, socket, roomId]);
+
     // Simulate connection quality changes
     useEffect(() => {
         if (isOpen && isCallActive) {
@@ -120,26 +412,6 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         }
     }, [isOpen, isCallActive]);
 
-    // Handle video track enable/disable
-    useEffect(() => {
-        if (mediaStreamRef.current) {
-            const videoTracks = mediaStreamRef.current.getVideoTracks();
-            videoTracks.forEach(track => {
-                track.enabled = isVideoEnabled;
-            });
-        }
-    }, [isVideoEnabled]);
-
-    // Handle audio track mute/unmute
-    useEffect(() => {
-        if (mediaStreamRef.current) {
-            const audioTracks = mediaStreamRef.current.getAudioTracks();
-            audioTracks.forEach(track => {
-                track.enabled = !isMuted;
-            });
-        }
-    }, [isMuted]);
-
     // Reset state when modal closes
     useEffect(() => {
         if (!isOpen) {
@@ -151,7 +423,6 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
             setIsCallActive(true);
             setIsFullScreen(false);
             setIsRecording(false);
-            setIsCameraInitialized(false);
             setIsPiPMode(false);
             setIsScreenSharing(false);
             setShowSettings(false);
@@ -172,171 +443,125 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         }
     }, [isOpen]);
 
-    const initializeCamera = async (useBackCamera = false) => {
+    // Switch camera
+    const switchCamera = async () => {
+        if (!localStream) return;
+        
+        const newFacingMode = isCameraSwitched ? 'user' : 'environment';
+        setIsCameraSwitched(!isCameraSwitched);
+        
         try {
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-            }
-
-            const facingMode = useBackCamera ? 'environment' : 'user';
-            
-            const constraints = {
+            const newStream = await navigator.mediaDevices.getUserMedia({
                 video: {
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
-                    facingMode: facingMode,
+                    facingMode: newFacingMode,
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
                 },
                 audio: true
-            };
-
-            console.log(`Initializing camera with facingMode: ${facingMode}`);
-
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            mediaStreamRef.current = stream;
-
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
-            }
-
-            setIsCameraInitialized(true);
-            setCallStatus('connected');
-            
-            const videoTrack = stream.getVideoTracks()[0];
-            const settings = videoTrack.getSettings();
-            if (settings.deviceId) {
-                setCurrentCamera(settings.deviceId);
-            }
-            
-        } catch (error) {
-            console.error('Error accessing camera:', error);
-            setCallStatus('camera_error');
-            
-            try {
-                console.log('Trying fallback camera access...');
-                const fallbackStream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: true
-                });
-                
-                mediaStreamRef.current = fallbackStream;
-                
-                if (localVideoRef.current) {
-                    localVideoRef.current.srcObject = fallbackStream;
-                }
-                
-                setIsCameraInitialized(true);
-                setCallStatus('connected');
-                
-            } catch (fallbackError) {
-                console.error('Fallback camera access also failed:', fallbackError);
-                setCallStatus('no_camera');
-            }
-        }
-    };
-
-    const getAvailableCameras = async () => {
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            
-            const enhancedCameras = videoDevices.map(device => {
-                const label = device.label.toLowerCase();
-                return {
-                    ...device,
-                    isFrontCamera: label.includes('front') || label.includes('user') || label.includes('face'),
-                    isBackCamera: label.includes('back') || label.includes('environment') || label.includes('rear'),
-                };
             });
             
-            setAvailableCameras(enhancedCameras);
-            
-            const frontCamera = enhancedCameras.find(cam => cam.isFrontCamera);
-            if (frontCamera) {
-                setCurrentCamera(frontCamera.deviceId);
-            } else if (enhancedCameras.length > 0) {
-                setCurrentCamera(enhancedCameras[0].deviceId);
+            // Replace tracks in peer connection
+            if (peerConnection) {
+                const senders = peerConnection.getSenders();
+                const videoSender = senders.find(sender => sender.track?.kind === 'video');
+                const newVideoTrack = newStream.getVideoTracks()[0];
+                
+                if (videoSender && newVideoTrack) {
+                    await videoSender.replaceTrack(newVideoTrack);
+                }
             }
             
-        } catch (error) {
-            console.error('Error getting cameras:', error);
-        }
-    };
-
-    const switchCamera = async () => {
-        const newCameraState = !isCameraSwitched;
-        setIsCameraSwitched(newCameraState);
-        console.log(`Switching camera to: ${newCameraState ? 'back' : 'front'} camera`);
-        await initializeCamera(newCameraState);
-    };
-
-    const selectCamera = async (deviceId) => {
-        try {
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            // Update local stream
+            const oldAudioTrack = localStream.getAudioTracks()[0];
+            if (oldAudioTrack && newStream.getAudioTracks()[0]) {
+                // Keep audio track
+                newStream.addTrack(oldAudioTrack);
             }
-
-            const constraints = {
-                video: {
-                    deviceId: { exact: deviceId },
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
-                },
-                audio: true
-            };
-
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            mediaStreamRef.current = stream;
-
+            
+            setLocalStream(newStream);
+            mediaStreamRef.current = newStream;
+            
             if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
+                localVideoRef.current.srcObject = newStream;
             }
-
-            setCurrentCamera(deviceId);
             
-            const selectedCamera = availableCameras.find(cam => cam.deviceId === deviceId);
-            if (selectedCamera) {
-                setIsCameraSwitched(selectedCamera.isBackCamera || false);
-            }
+            // Stop old tracks
+            localStream.getTracks().forEach(track => {
+                if (track.kind === 'video') track.stop();
+            });
             
         } catch (error) {
-            console.error('Error selecting camera:', error);
+            console.error('Error switching camera:', error);
         }
     };
 
+    // Toggle screen sharing
     const toggleScreenShare = async () => {
         if (!isScreenSharing) {
             try {
                 const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true
+                    video: true,
+                    audio: true
                 });
-
-                if (mediaStreamRef.current) {
-                    const videoTrack = screenStream.getVideoTracks()[0];
-                    const audioTracks = mediaStreamRef.current.getAudioTracks();
-
-                    const newStream = new MediaStream([videoTrack, ...audioTracks]);
-                    mediaStreamRef.current = newStream;
-
-                    if (localVideoRef.current) {
-                        localVideoRef.current.srcObject = newStream;
+                
+                screenStreamRef.current = screenStream;
+                
+                // Replace video track in peer connection
+                if (peerConnection) {
+                    const senders = peerConnection.getSenders();
+                    const videoSender = senders.find(sender => sender.track?.kind === 'video');
+                    const screenVideoTrack = screenStream.getVideoTracks()[0];
+                    
+                    if (videoSender && screenVideoTrack) {
+                        await videoSender.replaceTrack(screenVideoTrack);
                     }
                 }
-
+                
+                // Update local video display
+                if (localVideoRef.current) {
+                    localVideoRef.current.srcObject = screenStream;
+                }
+                
                 setIsScreenSharing(true);
-
+                
+                // Handle screen sharing stop
                 screenStream.getVideoTracks()[0].onended = () => {
-                    setIsScreenSharing(false);
-                    initializeCamera(isCameraSwitched);
+                    stopScreenSharing();
                 };
+                
             } catch (error) {
                 console.error('Error sharing screen:', error);
             }
         } else {
-            setIsScreenSharing(false);
-            initializeCamera(isCameraSwitched);
+            stopScreenSharing();
         }
     };
+    
+    const stopScreenSharing = async () => {
+        if (screenStreamRef.current) {
+            screenStreamRef.current.getTracks().forEach(track => track.stop());
+            screenStreamRef.current = null;
+        }
+        
+        // Restore camera stream
+        if (localStream && peerConnection) {
+            const senders = peerConnection.getSenders();
+            const videoSender = senders.find(sender => sender.track?.kind === 'video');
+            const cameraVideoTrack = localStream.getVideoTracks()[0];
+            
+            if (videoSender && cameraVideoTrack) {
+                await videoSender.replaceTrack(cameraVideoTrack);
+            }
+            
+            if (localVideoRef.current) {
+                localVideoRef.current.srcObject = localStream;
+            }
+        }
+        
+        setIsScreenSharing(false);
+    };
 
+    // Toggle PiP mode
     const togglePiPMode = async () => {
         if (!isPiPMode) {
             try {
@@ -357,43 +582,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         }
     };
 
-    const handleEndCall = () => {
-        setIsCallActive(false);
-        setCallStatus('ended');
-
-        if (mediaStreamRef.current) {
-            mediaStreamRef.current.getTracks().forEach(track => track.stop());
-        }
-
-        setTimeout(() => {
-            onClose();
-        }, 1000);
-    };
-
-    const formatTime = (seconds) => {
-        const hrs = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-
-        if (hrs > 0) {
-            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    const toggleFullScreen = () => {
-        if (!isFullScreen) {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
-        setIsFullScreen(!isFullScreen);
-    };
-
+    // Take screenshot
     const takeScreenshot = () => {
         if (remoteVideoRef.current) {
             const canvas = document.createElement('canvas');
@@ -408,6 +597,72 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         }
     };
 
+    // End call
+    const handleEndCall = async () => {
+        setIsCallActive(false);
+        setCallStatus('ended');
+        
+        const userId = localStorage.getItem('userId');
+        
+        // Notify others
+        if (socket && roomId) {
+            socket.emit('leave-call', { callId: roomId, userId });
+            
+            // Call end API
+            try {
+                const token = localStorage.getItem('token');
+                await fetch(`${apiBaseUrl}/api/video/calls/${callId}/end`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        endedBy: 'user'
+                    })
+                });
+            } catch (error) {
+                console.error('Error ending call via API:', error);
+            }
+        }
+        
+        // Cleanup
+        cleanupMedia();
+        
+        setTimeout(() => {
+            onClose();
+        }, 1000);
+    };
+
+    // Toggle full screen
+    const toggleFullScreen = () => {
+        const element = document.querySelector('.video-modal-container');
+        if (!isFullScreen) {
+            if (element?.requestFullscreen) {
+                element.requestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+        setIsFullScreen(!isFullScreen);
+    };
+
+    // Format time
+    const formatTime = (seconds) => {
+        const hrs = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        const secs = seconds % 60;
+
+        if (hrs > 0) {
+            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
+
+    // Get quality icon
     const getQualityIcon = () => {
         switch (connectionQuality) {
             case 'good': return '📶';
@@ -417,6 +672,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         }
     };
 
+    // Get quality class
     const getQualityClass = () => {
         switch (connectionQuality) {
             case 'good': return 'quality-good';
@@ -426,23 +682,22 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         }
     };
 
+    // Get call status display
     const getCallStatusDisplay = () => {
         switch (callStatus) {
-            case 'connecting':
-                return 'Connecting...';
-            case 'connected':
-                return 'Connected';
-            case 'ended':
-                return 'Call Ended';
-            case 'camera_error':
-                return 'Camera Error';
-            case 'no_camera':
-                return 'No Camera Access';
-            default:
-                return callStatus;
+            case 'connecting': return 'Connecting...';
+            case 'connected': return 'Connected';
+            case 'reconnecting': return 'Reconnecting...';
+            case 'ended': return 'Call Ended';
+            case 'media_error': return 'Camera/Mic Error';
+            case 'audio_only': return 'Audio Only Mode';
+            case 'connection_error': return 'Connection Error';
+            case 'failed': return 'Call Failed';
+            default: return callStatus;
         }
     };
 
+    // Get profile display
     const getProfileDisplay = () => {
         if (callerProfilePic && (callerProfilePic.startsWith('http') || callerProfilePic.startsWith('/'))) {
             return null;
@@ -458,10 +713,8 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
 
     return (
         <div className={`video-modal-overlay ${isFullScreen ? 'fullscreen' : ''}`}>
-            <div
-                className={`video-modal-container ${isFullScreen ? 'fullscreen' : ''}`}
-                onClick={(e) => e.stopPropagation()}
-            >
+            <div className={`video-modal-container ${isFullScreen ? 'fullscreen' : ''}`}>
+                {/* Header */}
                 <div className="video-modal-header">
                     <div className="header-left">
                         <span className="header-icon">📹</span>
@@ -475,7 +728,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                     </div>
                     <div className="header-right">
                         <button className="header-btn" onClick={toggleFullScreen} title="Full screen">
-                            {isFullScreen ? '🗗️' : '🗖'}
+                            {isFullScreen ? '🗗' : '🗖'}
                         </button>
                         <button className="header-btn close-btn" onClick={onClose} title="Close">
                             ✕
@@ -483,69 +736,54 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                     </div>
                 </div>
 
+                {/* Main Video Area */}
                 <div className="video-modal-content">
                     <div className="video-main-area">
+                        {/* Remote Video */}
                         <div className="remote-video-container">
-                            {isVideoEnabled ? (
-                                <>
-                                    <video
-                                        ref={remoteVideoRef}
-                                        className="remote-video"
-                                        autoPlay
-                                        playsInline
-                                        poster="/api/placeholder/1280/720"
-                                    />
-                                    <div className="remote-video-overlay">
-                                        <div className="remote-video-placeholder">
-                                            {isImageProfilePic() ? (
-                                                <img 
-                                                    src={callerProfilePic} 
-                                                    alt={callerName}
-                                                    className="remote-avatar-image"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        e.target.parentElement.innerHTML = `<span class="remote-avatar">${getProfileDisplay()}</span>`;
-                                                    }}
-                                                />
-                                            ) : (
-                                                <span className="remote-avatar">{getProfileDisplay()}</span>
-                                            )}
-                                            <div className="remote-info">
-                                                <h2>
-                                                    {callerName}
-                                                    {isAnonymous && (
-                                                        <span className="anonymous-badge" style={{
-                                                            fontSize: '0.6em',
-                                                            backgroundColor: '#6c757d',
-                                                            color: 'white',
-                                                            padding: '2px 8px',
-                                                            borderRadius: '12px',
-                                                            marginLeft: '10px',
-                                                            verticalAlign: 'middle',
-                                                            fontWeight: 'normal'
-                                                        }}>Anonymous User</span>
-                                                    )}
-                                                </h2>
-                                                {roomId && (
-                                                    <p className="room-id">Room: {roomId.substring(0, 8)}...</p>
-                                                )}
-                                                <p className="call-status">
-                                                    <span className={`status-${callStatus}`}>
-                                                        {callStatus === 'connected' && <span className="pulse-dot"></span>}
-                                                        {getCallStatusDisplay()}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </>
+                            {remoteStream ? (
+                                <video
+                                    ref={remoteVideoRef}
+                                    className="remote-video"
+                                    autoPlay
+                                    playsInline
+                                />
                             ) : (
-                                <div className="video-disabled">
-                                    <span className="video-off-icon">🚫📹</span>
-                                    <p>Camera is off</p>
+                                <div className="remote-video-placeholder">
+                                    {isImageProfilePic() ? (
+                                        <img 
+                                            src={callerProfilePic} 
+                                            alt={callerName}
+                                            className="remote-avatar-image"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.parentElement.innerHTML = `<span class="remote-avatar">${getProfileDisplay()}</span>`;
+                                            }}
+                                        />
+                                    ) : (
+                                        <span className="remote-avatar">{getProfileDisplay()}</span>
+                                    )}
+                                    <div className="remote-info">
+                                        <h2>
+                                            {callerName}
+                                            {isAnonymous && (
+                                                <span className="anonymous-badge">Anonymous User</span>
+                                            )}
+                                        </h2>
+                                        {roomId && (
+                                            <p className="room-id">Room: {roomId.substring(0, 8)}...</p>
+                                        )}
+                                        <p className="call-status">
+                                            <span className={`status-${callStatus}`}>
+                                                {callStatus === 'connected' && <span className="pulse-dot"></span>}
+                                                {getCallStatusDisplay()}
+                                            </span>
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 
+                            {/* Call Duration */}
                             {isCallActive && callStatus === 'connected' && (
                                 <div className="call-duration-badge">
                                     <span className="duration-icon">⏱️</span>
@@ -553,6 +791,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 </div>
                             )}
 
+                            {/* Recording Indicator */}
                             {isRecording && (
                                 <div className="recording-indicator">
                                     <span className="recording-dot"></span>
@@ -560,6 +799,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 </div>
                             )}
 
+                            {/* Screen Share Indicator */}
                             {isScreenSharing && (
                                 <div className="screen-share-indicator">
                                     <span className="share-icon">🖥️</span>
@@ -567,6 +807,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 </div>
                             )}
 
+                            {/* Camera Indicator */}
                             <div className="camera-indicator">
                                 <span className="camera-icon">📷</span>
                                 <span className="camera-text">
@@ -575,6 +816,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                             </div>
                         </div>
 
+                        {/* Local Video (Picture-in-Picture) */}
                         <div className={`local-video-container ${!isVideoEnabled ? 'video-off' : ''}`}>
                             <video
                                 ref={localVideoRef}
@@ -598,6 +840,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                             </div>
                         </div>
 
+                        {/* Settings Panel */}
                         {showSettings && (
                             <div className="settings-panel">
                                 <h4>Call Settings</h4>
@@ -618,14 +861,14 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                             <label>Select Camera</label>
                                             <select 
                                                 value={currentCamera} 
-                                                onChange={(e) => selectCamera(e.target.value)}
+                                                onChange={(e) => {
+                                                    setCurrentCamera(e.target.value);
+                                                    // Implement camera selection if needed
+                                                }}
                                             >
                                                 {availableCameras.map(camera => (
                                                     <option key={camera.deviceId} value={camera.deviceId}>
-                                                        {camera.label || 
-                                                         (camera.isFrontCamera ? 'Front Camera' : 
-                                                          camera.isBackCamera ? 'Back Camera' : 
-                                                          `Camera ${camera.deviceId.slice(0, 5)}...`)}
+                                                        {camera.label || `Camera ${camera.deviceId.slice(0, 5)}...`}
                                                     </option>
                                                 ))}
                                             </select>
@@ -655,6 +898,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                             </div>
                         )}
 
+                        {/* Call Controls */}
                         <div className="video-call-controls">
                             <button
                                 className={`control-btn ${isMuted ? 'active' : ''}`}
@@ -713,6 +957,15 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                             >
                                 <span className="btn-icon">⚙️</span>
                                 <span className="btn-label">Settings</span>
+                            </button>
+
+                            <button
+                                className="control-btn"
+                                onClick={takeScreenshot}
+                                title="Take Screenshot"
+                            >
+                                <span className="btn-icon">📸</span>
+                                <span className="btn-label">Screenshot</span>
                             </button>
 
                             <button
