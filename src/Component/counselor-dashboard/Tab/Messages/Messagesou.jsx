@@ -52,12 +52,17 @@ const SMSList = () => {
         
         // Transform API data to match component structure
         const transformedUsers = data.chats.map(chat => {
-          const otherParty = chat.otherParty;
+          const otherParty = chat.otherParty || {};
           const displayName = otherParty.anonymous || otherParty.name || "Anonymous User";
           const gender = otherParty.gender || 'neutral';
 
+          const actualUserId = otherParty.id || otherParty._id || otherParty.userId || otherParty.user_id;
+
           return {
-            id: chat.id,
+            id: chat.chatId,
+            _id: actualUserId,
+            receiverId: actualUserId,
+            user: otherParty,
             chatId: chat.chatId,
             name: displayName,
             lastMessage: chat.lastMessage?.content || "No messages yet",

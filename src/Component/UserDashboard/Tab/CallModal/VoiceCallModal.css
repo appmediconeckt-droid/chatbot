@@ -427,7 +427,7 @@
 .setting-item input[type="range"] {
     width: 100%;
     height: 5px;
-    -webkit-appearance: none;
+    /* -webkit-appearance: none; */
     background: rgba(255, 255, 255, 0.2);
     border-radius: 10px;
     margin-bottom: 8px;
