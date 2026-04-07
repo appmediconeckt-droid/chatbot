@@ -1,7 +1,8 @@
-// VoiceCallModal.jsx - Complete with Proper CSS Structure
+// VoiceCallModal.jsx - Fixed and Complete Implementation
 
 import React, { useState, useEffect, useRef } from 'react';
 import './VoiceCallModal.css';
+import { API_BASE_URL } from '../../../../axiosConfig';
 
 const VoiceCallModal = ({ isOpen, onClose, callData, currentUser }) => {
     const [isMuted, setIsMuted] = useState(false);
@@ -222,9 +223,31 @@ const VoiceCallModal = ({ isOpen, onClose, callData, currentUser }) => {
         }
     };
 
-    const handleEndCall = () => {
+    const handleEndCall = async () => {
         setIsCallActive(false);
         setCallMetadata(prev => ({ ...prev, status: 'ended' }));
+
+        try {
+            const token = localStorage.getItem('token');
+            const userId = currentUser?.id || currentUser?._id;
+            
+            // Try to end call via API
+            if (callMetadata.callId && API_BASE_URL) {
+                await fetch(`${API_BASE_URL}/api/video/calls/${callMetadata.callId}/end`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        userId: userId,
+                        endedBy: 'user'
+                    })
+                }).catch(err => console.error('API end call error:', err));
+            }
+        } catch (error) {
+            console.error('Error in handleEndCall:', error);
+        }
 
         if (mediaStreamRef.current) {
             mediaStreamRef.current.getTracks().forEach(track => track.stop());
@@ -232,7 +255,7 @@ const VoiceCallModal = ({ isOpen, onClose, callData, currentUser }) => {
 
         setTimeout(() => {
             onClose();
-        }, 1000);
+        }, 500);
     };
 
     const toggleRecording = () => {

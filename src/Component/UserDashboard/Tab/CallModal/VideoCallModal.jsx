@@ -1,261 +1,103 @@
-// VideoCallModal.jsx - Fixed user ID retrieval
-
 import React, { useState, useEffect, useRef } from 'react';
 import io from 'socket.io-client';
 import './VideoCallModal.css';
+import { API_BASE_URL } from '../../../../axiosConfig';
 
-const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localhost:5000' }) => {
+const VideoCallModal = ({ isOpen, onClose, callData, currentUser }) => {
     // WebRTC States
     const [socket, setSocket] = useState(null);
     const [localStream, setLocalStream] = useState(null);
     const [remoteStream, setRemoteStream] = useState(null);
     const [peerConnection, setPeerConnection] = useState(null);
-    const [isConnecting, setIsConnecting] = useState(true);
     
     // Permission States
-    const [permissionState, setPermissionState] = useState({
-        camera: 'prompt',
-        microphone: 'prompt'
-    });
-    const [showPermissionModal, setShowPermissionModal] = useState(false);
     const [permissionError, setPermissionError] = useState(null);
+    const [showPermissionModal, setShowPermissionModal] = useState(false);
     
     // UI States
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-    const [isCameraSwitched, setIsCameraSwitched] = useState(false);
     const [callDuration, setCallDuration] = useState(0);
     const [isCallActive, setIsCallActive] = useState(true);
     const [isFullScreen, setIsFullScreen] = useState(false);
-    const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [connectionQuality, setConnectionQuality] = useState('good');
-    const [availableCameras, setAvailableCameras] = useState([]);
-    const [availableMicrophones, setAvailableMicrophones] = useState([]);
-    const [currentCamera, setCurrentCamera] = useState('');
-    const [currentMicrophone, setCurrentMicrophone] = useState('');
-    const [isSpeakerOn, setIsSpeakerOn] = useState(false);
-    const [showSettings, setShowSettings] = useState(false);
-    const [volumeLevel, setVolumeLevel] = useState(70);
-    const [isRecording, setIsRecording] = useState(false);
-    const [isPiPMode, setIsPiPMode] = useState(false);
     const [networkLatency, setNetworkLatency] = useState(0);
-    const [mediaRecorder, setMediaRecorder] = useState(null);
-    const [recordedChunks, setRecordedChunks] = useState([]);
     
     // Call Info States
     const [callerName, setCallerName] = useState('');
     const [callerProfilePic, setCallerProfilePic] = useState('');
-    const [callerPhoneNumber, setCallerPhoneNumber] = useState('');
     const [roomId, setRoomId] = useState('');
     const [callId, setCallId] = useState('');
-    const [isAnonymous, setIsAnonymous] = useState(false);
     const [callStatus, setCallStatus] = useState('connecting');
     const [callStartTime, setCallStartTime] = useState(null);
-    const [apiCallData, setApiCallData] = useState(null);
-    const [currentUserId, setCurrentUserId] = useState(null);
     
     // Refs
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const mediaStreamRef = useRef(null);
-    const screenStreamRef = useRef(null);
-    const pipWindowRef = useRef(null);
-    const audioContextRef = useRef(null);
     
-    // WebRTC Configuration
+    // WebRTC Configuration with proper STUN servers
     const configuration = {
         iceServers: [
-            { urls: 'stun:stun.l.google.com:19302' },
-            { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' },
-            { urls: 'stun:stun3.l.google.com:19302' },
-            { urls: 'stun:stun4.l.google.com:19302' }
+            { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+            { urls: ['stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302'] },
+            { urls: ['stun:stun4.l.google.com:19302'] }
         ],
         iceCandidatePoolSize: 10
     };
 
-    // Default call data
-    const defaultCallData = {
-        id: 1,
-        name: "Dr. Priya Sharma",
-        profilePic: "👩‍⚕️",
-        type: "video",
-        status: "connected",
-        phoneNumber: "+91 98765 43210"
-    };
-
-    // Get user ID from multiple sources
+    // Get user ID from localStorage
     const getUserId = () => {
-        // Try multiple sources
-        const userId = localStorage.getItem('userId') || 
-                      localStorage.getItem('user_id') ||
-                      localStorage.getItem('id') ||
-                      localStorage.getItem('counselorId') ||
-                      sessionStorage.getItem('userId') ||
-                      sessionStorage.getItem('user_id');
+        // First check if currentUser prop is passed
+        if (currentUser?.id) return currentUser.id;
+        if (currentUser?._id) return currentUser._id;
         
-        console.log('Retrieved user ID:', userId);
-        
-        if (!userId) {
-            // Try to get from user object
-            const userStr = localStorage.getItem('user');
-            if (userStr) {
-                try {
-                    const user = JSON.parse(userStr);
-                    const extractedId = user._id || user.id || user.userId;
-                    if (extractedId) {
-                        console.log('Extracted user ID from user object:', extractedId);
-                        return extractedId;
-                    }
-                } catch (e) {
-                    console.error('Error parsing user object:', e);
-                }
-            }
-            
-            // Try from counselor object
-            const counselorStr = localStorage.getItem('counselor');
-            if (counselorStr) {
-                try {
-                    const counselor = JSON.parse(counselorStr);
-                    const extractedId = counselor._id || counselor.id || counselor.counselorId;
-                    if (extractedId) {
-                        console.log('Extracted counselor ID:', extractedId);
-                        return extractedId;
-                    }
-                } catch (e) {
-                    console.error('Error parsing counselor object:', e);
-                }
-            }
-        }
-        
-        return userId;
-    };
-
-    // Get user type (user or counsellor)
-    const getUserType = () => {
+        // Then check localStorage
         const userStr = localStorage.getItem('user');
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
-                if (user.role === 'counselor' || user.role === 'counsellor' || user.userType === 'counselor') {
-                    return 'counsellor';
-                }
-            } catch (e) {}
+                return user._id || user.id || user.userId;
+            } catch (_) {
+                console.error('Error parsing user');
+            }
         }
         
-        const counselorStr = localStorage.getItem('counselor');
-        if (counselorStr) {
+        return localStorage.getItem('userId') || localStorage.getItem('user_id');
+    };
+
+    // Get user type
+    const getUserType = () => {
+        if (currentUser?.role === 'counselor' || currentUser?.role === 'counsellor') {
             return 'counsellor';
+        }
+        
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user.role === 'counselor' || user.role === 'counsellor') {
+                    return 'counsellor';
+                }
+            } catch (_) {}
         }
         
         return 'user';
     };
 
-    // Take Screenshot function
-    const takeScreenshot = () => {
-        if (remoteVideoRef.current && remoteVideoRef.current.videoWidth > 0) {
-            try {
-                const canvas = document.createElement('canvas');
-                canvas.width = remoteVideoRef.current.videoWidth;
-                canvas.height = remoteVideoRef.current.videoHeight;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(remoteVideoRef.current, 0, 0, canvas.width, canvas.height);
-                
-                ctx.font = '12px Arial';
-                ctx.fillStyle = 'white';
-                ctx.shadowColor = 'black';
-                ctx.shadowBlur = 2;
-                ctx.fillText(new Date().toLocaleString(), 10, 20);
-                
-                const link = document.createElement('a');
-                link.download = `screenshot-${Date.now()}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                console.log('Screenshot saved');
-            } catch (error) {
-                console.error('Error taking screenshot:', error);
-            }
-        } else {
-            console.warn('No remote video stream available for screenshot');
-        }
-    };
-
-    // Start Recording function
-    const startRecording = () => {
-        if (remoteStream && !mediaRecorder) {
-            try {
-                const chunks = [];
-                const recorder = new MediaRecorder(remoteStream);
-                
-                recorder.ondataavailable = (e) => {
-                    if (e.data.size > 0) {
-                        chunks.push(e.data);
-                    }
-                };
-                
-                recorder.onstop = () => {
-                    const blob = new Blob(chunks, { type: 'video/webm' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `call-recording-${Date.now()}.webm`;
-                    a.click();
-                    URL.revokeObjectURL(url);
-                    setRecordedChunks([]);
-                    setMediaRecorder(null);
-                };
-                
-                recorder.start(1000);
-                setMediaRecorder(recorder);
-                setIsRecording(true);
-                console.log('Recording started');
-            } catch (error) {
-                console.error('Error starting recording:', error);
-            }
-        }
-    };
-
-    // Stop Recording function
-    const stopRecording = () => {
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-            setIsRecording(false);
-            console.log('Recording stopped');
-        }
-    };
-
-    // Toggle Recording function
-    const toggleRecording = () => {
-        if (isRecording) {
-            stopRecording();
-        } else {
-            startRecording();
-        }
-    };
-
     // Process callData when modal opens
     useEffect(() => {
         if (isOpen && callData) {
-            const anonymous = callData.isAnonymous === true;
-            setIsAnonymous(anonymous);
-            setCallerName(anonymous ? 'Anonymous User' : (callData.name || defaultCallData.name));
-            setCallerProfilePic(anonymous ? '👤' : (callData.profilePic || defaultCallData.profilePic));
-            setCallerPhoneNumber(anonymous ? 'Hidden' : (callData.phoneNumber || defaultCallData.phoneNumber));
+            setCallerName(callData.name || 'Counselor');
+            setCallerProfilePic(callData.profilePic || '👤');
             setRoomId(callData.roomId || callData.callId || `room_${Date.now()}`);
             setCallId(callData.callId || callData.id || `call_${Date.now()}`);
             setCallStartTime(new Date());
             setCallDuration(0);
-            setApiCallData(callData.apiCallData || null);
+            setCallStatus('connecting');
+            setPermissionError(null);
             
-            console.log('Video Call Modal Opened:', { roomId, callId });
-        } else if (isOpen && !callData) {
-            setIsAnonymous(false);
-            setCallerName(defaultCallData.name);
-            setCallerProfilePic(defaultCallData.profilePic);
-            setCallerPhoneNumber(defaultCallData.phoneNumber);
-            setCallStartTime(new Date());
-            setCallDuration(0);
+            console.log('Video Call Modal Opened:', { roomId: callData.roomId, callId: callData.callId });
         }
     }, [isOpen, callData]);
 
@@ -264,28 +106,39 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
         if (!isOpen) return;
 
         const initializeCall = async () => {
-            const userId = getUserId();
-            setCurrentUserId(userId);
+            let userId = getUserId();
+            
+            // Try to get from callData if available
+            if (!userId && callData?.initiator?.id) {
+                userId = callData.initiator.id;
+            }
+            if (!userId && callData?.userId) {
+                userId = callData.userId;
+            }
             
             if (!userId) {
-                console.error('No user ID found in localStorage');
+                console.error('No user ID found');
                 setCallStatus('error');
                 setPermissionError('User not authenticated. Please login again.');
                 setShowPermissionModal(true);
                 return;
             }
             
-            console.log('Initializing call for user:', userId);
+            console.log('Initializing video call for user:', userId);
             
-            await getAvailableDevices();
-            const stream = await requestMediaPermissions();
-            
-            if (!stream) {
-                setCallStatus('permission_denied');
-                return;
+            try {
+                const stream = await requestMediaPermissions();
+                
+                if (!stream) {
+                    setCallStatus('permission_denied');
+                    return;
+                }
+                
+                await initializeWebRTC(stream, userId);
+            } catch (error) {
+                console.error('Initialization error:', error);
+                setCallStatus('error');
             }
-            
-            await initializeWebRTC(stream, userId);
         };
         
         initializeCall();
@@ -293,7 +146,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
         return () => {
             cleanupMedia();
         };
-    }, [isOpen, roomId, apiBaseUrl]);
+    }, [isOpen]);
 
     // Request media permissions
     const requestMediaPermissions = async () => {
@@ -313,118 +166,77 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                 }
             });
             
-            setPermissionState({ camera: 'granted', microphone: 'granted' });
             setShowPermissionModal(false);
             return stream;
             
         } catch (error) {
-            console.error('Error getting media permissions:', error);
+            console.error('Permission error:', error);
+            
+            let errorMsg = 'Unable to access camera and microphone. ';
             
             if (error.name === 'NotAllowedError') {
-                setPermissionError('Camera and microphone access denied. Please allow access to continue.');
-                setPermissionState({ camera: 'denied', microphone: 'denied' });
-                setShowPermissionModal(true);
-                
-                try {
-                    const audioOnlyStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    setPermissionState(prev => ({ ...prev, microphone: 'granted' }));
-                    setPermissionError('Camera access denied. Audio only mode activated.');
-                    return audioOnlyStream;
-                } catch (audioError) {
-                    console.error('Audio only also failed:', audioError);
-                    return null;
-                }
-                
+                errorMsg = 'Camera and microphone access denied. Please allow access in your browser settings.';
             } else if (error.name === 'NotFoundError') {
-                setPermissionError('No camera or microphone found on your device.');
-                setShowPermissionModal(true);
-                return null;
-                
+                errorMsg = 'No camera or microphone found on your device.';
             } else if (error.name === 'NotReadableError') {
-                setPermissionError('Camera or microphone is already in use by another application.');
-                setShowPermissionModal(true);
-                return null;
-                
+                errorMsg = 'Camera or microphone is already in use by another application.';
             } else {
-                setPermissionError(`Unable to access media devices: ${error.message}`);
-                setShowPermissionModal(true);
-                return null;
+                errorMsg += error.message;
             }
+            
+            setPermissionError(errorMsg);
+            setShowPermissionModal(true);
+            return null;
         }
     };
 
-    // Get available devices
-    const getAvailableDevices = async () => {
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            const audioDevices = devices.filter(device => device.kind === 'audioinput');
-            
-            setAvailableCameras(videoDevices);
-            setAvailableMicrophones(audioDevices);
-            
-            if (videoDevices.length > 0 && !currentCamera) {
-                setCurrentCamera(videoDevices[0].deviceId);
-            }
-            if (audioDevices.length > 0 && !currentMicrophone) {
-                setCurrentMicrophone(audioDevices[0].deviceId);
-            }
-            
-            return { videoDevices, audioDevices };
-        } catch (error) {
-            console.error('Error getting devices:', error);
-            return { videoDevices: [], audioDevices: [] };
-        }
-    };
-
-    // Initialize WebRTC
+    // Initialize WebRTC with proper signaling
     const initializeWebRTC = async (stream, userId) => {
         try {
             const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-
-            if (!userId) {
-                console.error('No user ID found');
-                setCallStatus('error');
-                return;
-            }
-
             const userType = getUserType();
-            console.log('User type:', userType);
+            
+            console.log('Initializing WebRTC for:', { userId, userType, roomId });
 
-            const newSocket = io(apiBaseUrl, {
+            // Create Socket connection
+            const newSocket = io(API_BASE_URL, {
                 transports: ['websocket', 'polling'],
-                withCredentials: true,
-                extraHeaders: token ? {
-                    Authorization: `Bearer ${token}`
-                } : {}
+                reconnection: true,
+                reconnectionDelay: 1000,
+                reconnectionDelayMax: 5000,
+                reconnectionAttempts: 5,
+                extraHeaders: token ? { Authorization: `Bearer ${token}` } : {}
             });
 
             setSocket(newSocket);
             setLocalStream(stream);
             mediaStreamRef.current = stream;
             
+            // Set local video stream
             if (localVideoRef.current) {
                 localVideoRef.current.srcObject = stream;
             }
 
+            // Create Peer Connection
             const pc = new RTCPeerConnection(configuration);
             setPeerConnection(pc);
 
+            // Add all tracks to peer connection
             stream.getTracks().forEach(track => {
                 pc.addTrack(track, stream);
             });
 
+            // Handle remote stream
             pc.ontrack = (event) => {
                 console.log('Remote stream received');
                 setRemoteStream(event.streams[0]);
-                if (remoteVideoRef.current) {
+                if (remoteVideoRef.current && event.streams[0]) {
                     remoteVideoRef.current.srcObject = event.streams[0];
                 }
-                setIsConnecting(false);
                 setCallStatus('connected');
             };
 
+            // Handle ICE candidates
             pc.onicecandidate = (event) => {
                 if (event.candidate && newSocket) {
                     newSocket.emit('ice-candidate', {
@@ -435,46 +247,49 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                 }
             };
 
+            // Handle connection state changes
             pc.onconnectionstatechange = () => {
                 console.log('Connection state:', pc.connectionState);
-                if (pc.connectionState === 'connected') {
-                    setIsConnecting(false);
+                if (pc.connectionState === 'connected' || pc.connectionState === 'completed') {
                     setCallStatus('connected');
                 } else if (pc.connectionState === 'disconnected') {
-                    setIsConnecting(true);
                     setCallStatus('reconnecting');
                 } else if (pc.connectionState === 'failed') {
                     setCallStatus('failed');
+                    console.error('Connection failed');
                 }
             };
 
             pc.oniceconnectionstatechange = () => {
                 console.log('ICE connection state:', pc.iceConnectionState);
-                if (pc.iceConnectionState === 'connected') {
-                    setIsConnecting(false);
+                if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
                     setCallStatus('connected');
                 }
             };
 
+            // Handle socket events
             newSocket.on('connect', () => {
                 console.log('Socket connected:', newSocket.id);
                 newSocket.emit('join-call', { 
                     callId: roomId, 
                     userId: userId,
-                    userType: userType
+                    userType: userType,
+                    userName: currentUser?.name || currentUser?.fullName || 'User'
                 });
             });
 
             newSocket.on('connect_error', (error) => {
-                console.error('Socket connection error:', error);
+                console.error('Socket error:', error);
                 setCallStatus('connection_error');
             });
 
+            // Setup signaling
             setupSignaling(pc, newSocket, userId);
 
         } catch (error) {
-            console.error('Error initializing WebRTC:', error);
+            console.error('WebRTC initialization error:', error);
             setCallStatus('error');
+            setPermissionError('Failed to initialize video call. Please try again.');
         }
     };
 
@@ -482,9 +297,12 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
     const setupSignaling = (pc, socket, userId) => {
         socket.on('user-joined', async ({ userId: joinedUserId }) => {
             console.log('User joined:', joinedUserId);
-            if (joinedUserId !== userId && pc.signalingState !== 'have-local-offer') {
+            if (joinedUserId !== userId && pc.signalingState === 'stable') {
                 try {
-                    const offer = await pc.createOffer();
+                    const offer = await pc.createOffer({
+                        offerToReceiveAudio: true,
+                        offerToReceiveVideo: true
+                    });
                     await pc.setLocalDescription(offer);
                     socket.emit('offer', {
                         callId: roomId,
@@ -499,40 +317,43 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
 
         socket.on('offer', async ({ offer, userId: fromUserId }) => {
             console.log('Received offer from:', fromUserId);
-            if (fromUserId !== userId && pc.signalingState !== 'stable') {
-                try {
-                    await pc.setRemoteDescription(new RTCSessionDescription(offer));
-                    const answer = await pc.createAnswer();
-                    await pc.setLocalDescription(answer);
-                    socket.emit('answer', {
-                        callId: roomId,
-                        answer: answer,
-                        userId: userId
-                    });
-                } catch (error) {
-                    console.error('Error handling offer:', error);
+            try {
+                if (pc.signalingState !== 'stable') {
+                    console.log('Skipping offer, signaling state not stable');
+                    return;
                 }
+                
+                await pc.setRemoteDescription(new RTCSessionDescription(offer));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                socket.emit('answer', {
+                    callId: roomId,
+                    answer: answer,
+                    userId: userId
+                });
+            } catch (error) {
+                console.error('Error handling offer:', error);
             }
         });
 
         socket.on('answer', async ({ answer, userId: fromUserId }) => {
             console.log('Received answer from:', fromUserId);
-            if (fromUserId !== userId && pc.signalingState === 'have-local-offer') {
-                try {
+            try {
+                if (pc.signalingState === 'have-local-offer') {
                     await pc.setRemoteDescription(new RTCSessionDescription(answer));
-                } catch (error) {
-                    console.error('Error handling answer:', error);
                 }
+            } catch (error) {
+                console.error('Error handling answer:', error);
             }
         });
 
         socket.on('ice-candidate', async ({ candidate, userId: fromUserId }) => {
-            if (fromUserId !== userId && candidate) {
-                try {
-                    await pc.addIceCandidate(new RTCSessionDescription(candidate));
-                } catch (error) {
-                    console.error('Error adding ICE candidate:', error);
+            try {
+                if (candidate && fromUserId !== userId) {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidate));
                 }
+            } catch (error) {
+                console.error('Error adding ICE candidate:', error);
             }
         });
 
@@ -550,25 +371,19 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
 
     // Cleanup media resources
     const cleanupMedia = () => {
-        if (peerConnection) {
-            peerConnection.close();
-        }
-        if (localStream) {
-            localStream.getTracks().forEach(track => track.stop());
-        }
-        if (screenStreamRef.current) {
-            screenStreamRef.current.getTracks().forEach(track => track.stop());
-        }
-        if (socket) {
-            const userId = getUserId();
-            socket.emit('leave-call', { callId: roomId, userId });
-            socket.disconnect();
-        }
-        if (audioContextRef.current) {
-            audioContextRef.current.close();
-        }
-        if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
+        try {
+            if (peerConnection) {
+                peerConnection.close();
+            }
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+            }
+            if (socket) {
+                socket.emit('leave-call', { callId: roomId, userId: getUserId() });
+                socket.disconnect();
+            }
+        } catch (error) {
+            console.error('Cleanup error:', error);
         }
     };
 
@@ -592,17 +407,8 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
             audioTracks.forEach(track => {
                 track.enabled = !isMuted;
             });
-            
-            if (socket && roomId) {
-                const userId = getUserId();
-                socket.emit('audio-toggled', {
-                    callId: roomId,
-                    userId: userId,
-                    enabled: !isMuted
-                });
-            }
         }
-    }, [isMuted, localStream, socket, roomId]);
+    }, [isMuted, localStream]);
 
     // Handle video enable/disable
     useEffect(() => {
@@ -611,27 +417,17 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
             videoTracks.forEach(track => {
                 track.enabled = isVideoEnabled;
             });
-            
-            if (socket && roomId) {
-                const userId = getUserId();
-                socket.emit('video-toggled', {
-                    callId: roomId,
-                    userId: userId,
-                    enabled: isVideoEnabled
-                });
-            }
         }
-    }, [isVideoEnabled, localStream, socket, roomId]);
+    }, [isVideoEnabled, localStream]);
 
     // Monitor connection quality
     useEffect(() => {
-        if (isOpen && isCallActive && peerConnection) {
+        if (isOpen && isCallActive && peerConnection && callStatus === 'connected') {
             const qualityInterval = setInterval(() => {
                 peerConnection.getStats().then(stats => {
-                    let rtt = 0;
                     stats.forEach(report => {
-                        if (report.type === 'candidate-pair' && report.selected) {
-                            rtt = report.currentRoundTripTime * 1000;
+                        if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                            const rtt = report.currentRoundTripTime * 1000;
                             setNetworkLatency(Math.round(rtt));
                             
                             if (rtt < 100) {
@@ -643,190 +439,24 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                             }
                         }
                     });
-                }).catch(err => console.error('Error getting stats:', err));
+                }).catch(err => console.error('Stats error:', err));
             }, 5000);
             
             return () => clearInterval(qualityInterval);
         }
-    }, [isOpen, isCallActive, peerConnection]);
+    }, [isOpen, isCallActive, peerConnection, callStatus]);
 
-    // Switch camera
-    const switchCamera = async () => {
-        if (!localStream) return;
-        
-        const newFacingMode = isCameraSwitched ? 'user' : 'environment';
-        setIsCameraSwitched(!isCameraSwitched);
-        
-        try {
-            const newStream = await navigator.mediaDevices.getUserMedia({
-                video: {
-                    facingMode: newFacingMode,
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
-                },
-                audio: true
-            });
-            
-            if (peerConnection) {
-                const senders = peerConnection.getSenders();
-                const videoSender = senders.find(sender => sender.track?.kind === 'video');
-                const newVideoTrack = newStream.getVideoTracks()[0];
-                
-                if (videoSender && newVideoTrack) {
-                    await videoSender.replaceTrack(newVideoTrack);
-                }
-            }
-            
-            const oldAudioTrack = localStream.getAudioTracks()[0];
-            if (oldAudioTrack && newStream.getAudioTracks()[0]) {
-                newStream.addTrack(oldAudioTrack);
-            }
-            
-            setLocalStream(newStream);
-            mediaStreamRef.current = newStream;
-            
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = newStream;
-            }
-            
-            localStream.getTracks().forEach(track => {
-                if (track.kind === 'video') track.stop();
-            });
-            
-        } catch (error) {
-            console.error('Error switching camera:', error);
-        }
-    };
-
-    // Switch microphone
-    const switchMicrophone = async (deviceId) => {
-        if (!deviceId) return;
-        
-        try {
-            const newStream = await navigator.mediaDevices.getUserMedia({
-                video: false,
-                audio: { deviceId: { exact: deviceId } }
-            });
-            
-            const newAudioTrack = newStream.getAudioTracks()[0];
-            const oldAudioTrack = localStream.getAudioTracks()[0];
-            
-            if (peerConnection) {
-                const senders = peerConnection.getSenders();
-                const audioSender = senders.find(sender => sender.track?.kind === 'audio');
-                
-                if (audioSender && newAudioTrack) {
-                    await audioSender.replaceTrack(newAudioTrack);
-                }
-            }
-            
-            localStream.removeTrack(oldAudioTrack);
-            localStream.addTrack(newAudioTrack);
-            
-            oldAudioTrack.stop();
-            setCurrentMicrophone(deviceId);
-            
-        } catch (error) {
-            console.error('Error switching microphone:', error);
-        }
-    };
-
-    // Toggle screen sharing
-    const toggleScreenShare = async () => {
-        if (!isScreenSharing) {
-            try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true,
-                    audio: true
-                });
-                
-                screenStreamRef.current = screenStream;
-                
-                if (peerConnection) {
-                    const senders = peerConnection.getSenders();
-                    const videoSender = senders.find(sender => sender.track?.kind === 'video');
-                    const screenVideoTrack = screenStream.getVideoTracks()[0];
-                    
-                    if (videoSender && screenVideoTrack) {
-                        await videoSender.replaceTrack(screenVideoTrack);
-                    }
-                }
-                
-                if (localVideoRef.current) {
-                    localVideoRef.current.srcObject = screenStream;
-                }
-                
-                setIsScreenSharing(true);
-                
-                screenStream.getVideoTracks()[0].onended = () => {
-                    stopScreenSharing();
-                };
-                
-            } catch (error) {
-                console.error('Error sharing screen:', error);
-            }
-        } else {
-            stopScreenSharing();
-        }
-    };
-    
-    const stopScreenSharing = async () => {
-        if (screenStreamRef.current) {
-            screenStreamRef.current.getTracks().forEach(track => track.stop());
-            screenStreamRef.current = null;
-        }
-        
-        if (localStream && peerConnection) {
-            const senders = peerConnection.getSenders();
-            const videoSender = senders.find(sender => sender.track?.kind === 'video');
-            const cameraVideoTrack = localStream.getVideoTracks()[0];
-            
-            if (videoSender && cameraVideoTrack) {
-                await videoSender.replaceTrack(cameraVideoTrack);
-            }
-            
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = localStream;
-            }
-        }
-        
-        setIsScreenSharing(false);
-    };
-
-    // Toggle PiP mode
-    const togglePiPMode = async () => {
-        if (!isPiPMode) {
-            try {
-                if (document.pictureInPictureEnabled && remoteVideoRef.current) {
-                    await remoteVideoRef.current.requestPictureInPicture();
-                    setIsPiPMode(true);
-                }
-            } catch (error) {
-                console.error('PiP mode error:', error);
-            }
-        } else {
-            try {
-                await document.exitPictureInPicture();
-                setIsPiPMode(false);
-            } catch (error) {
-                console.error('Exit PiP error:', error);
-            }
-        }
-    };
-
-    // End call
+    // End call handler
     const handleEndCall = async () => {
         setIsCallActive(false);
         setCallStatus('ended');
         
-        const userId = getUserId();
-        
-        if (socket && roomId) {
-            socket.emit('leave-call', { callId: roomId, userId });
+        try {
+            const token = localStorage.getItem('token');
+            const userId = getUserId();
             
-            try {
-                const token = localStorage.getItem('token');
-                await fetch(`${apiBaseUrl}/api/video/calls/${callId}/end`, {
+            if (callId && API_BASE_URL) {
+                await fetch(`${API_BASE_URL}/api/video/calls/${callId}/end`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -836,17 +466,29 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                         userId: userId,
                         endedBy: getUserType()
                     })
-                });
-            } catch (error) {
-                console.error('Error ending call via API:', error);
+                }).catch(err => console.error('End call API error:', err));
             }
+        } catch (error) {
+            console.error('Error ending call:', error);
         }
         
         cleanupMedia();
         
         setTimeout(() => {
             onClose();
-        }, 1000);
+        }, 500);
+    };
+
+    // Retry permission
+    const retryPermission = async () => {
+        setShowPermissionModal(false);
+        setPermissionError(null);
+        
+        const stream = await requestMediaPermissions();
+        if (stream) {
+            const userId = getUserId();
+            initializeWebRTC(stream, userId);
+        }
     };
 
     // Toggle full screen
@@ -903,42 +545,10 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
             case 'connected': return 'Connected';
             case 'reconnecting': return 'Reconnecting...';
             case 'ended': return 'Call Ended';
-            case 'media_error': return 'Camera/Mic Error';
-            case 'audio_only': return 'Audio Only Mode';
             case 'connection_error': return 'Connection Error';
             case 'failed': return 'Call Failed';
             case 'permission_denied': return 'Permission Denied';
             default: return callStatus;
-        }
-    };
-
-    // Get profile display
-    const getProfileDisplay = () => {
-        if (callerProfilePic && (callerProfilePic.startsWith('http') || callerProfilePic.startsWith('/'))) {
-            return null;
-        }
-        return callerProfilePic || callerName.charAt(0);
-    };
-
-    const isImageProfilePic = () => {
-        return callerProfilePic && (callerProfilePic.startsWith('http') || callerProfilePic.startsWith('/') || callerProfilePic.includes('base64'));
-    };
-
-    // Retry permission request
-    const retryPermissionRequest = async () => {
-        setShowPermissionModal(false);
-        setPermissionError(null);
-        
-        const userId = getUserId();
-        if (!userId) {
-            setPermissionError('User not authenticated. Please login again.');
-            setShowPermissionModal(true);
-            return;
-        }
-        
-        const stream = await requestMediaPermissions();
-        if (stream) {
-            await initializeWebRTC(stream, userId);
         }
     };
 
@@ -952,22 +562,14 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                     <div className="permission-modal-content">
                         <div className="permission-icon">🎥</div>
                         <h3>Camera & Microphone Access Required</h3>
-                        <p>{permissionError || 'This app needs access to your camera and microphone to make video calls.'}</p>
+                        <p>{permissionError || 'This app needs access to your camera and microphone.'}</p>
                         <div className="permission-actions">
-                            <button className="permission-retry-btn" onClick={retryPermissionRequest}>
+                            <button className="permission-retry-btn" onClick={retryPermission}>
                                 Try Again
                             </button>
                             <button className="permission-close-btn" onClick={onClose}>
                                 Close
                             </button>
-                        </div>
-                        <div className="permission-help">
-                            <p>How to enable permissions:</p>
-                            <ul>
-                                <li>Click the camera icon in your browser's address bar</li>
-                                <li>Select "Allow" for camera and microphone</li>
-                                <li>Refresh the page and try again</li>
-                            </ul>
                         </div>
                     </div>
                 </div>
@@ -1017,31 +619,9 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                                 />
                             ) : (
                                 <div className="remote-video-placeholder">
-                                    {isImageProfilePic() ? (
-                                        <img 
-                                            src={callerProfilePic} 
-                                            alt={callerName}
-                                            className="remote-avatar-image"
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                                if (e.target.parentElement) {
-                                                    e.target.parentElement.innerHTML = `<span class="remote-avatar">${getProfileDisplay()}</span>`;
-                                                }
-                                            }}
-                                        />
-                                    ) : (
-                                        <span className="remote-avatar">{getProfileDisplay()}</span>
-                                    )}
+                                    <span className="remote-avatar">{callerProfilePic}</span>
                                     <div className="remote-info">
-                                        <h2>
-                                            {callerName}
-                                            {isAnonymous && (
-                                                <span className="anonymous-badge">Anonymous User</span>
-                                            )}
-                                        </h2>
-                                        {roomId && (
-                                            <p className="room-id">Room: {roomId.substring(0, 8)}...</p>
-                                        )}
+                                        <h2>{callerName}</h2>
                                         <p className="call-status">
                                             <span className={`status-${callStatus}`}>
                                                 {callStatus === 'connected' && <span className="pulse-dot"></span>}
@@ -1059,30 +639,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                                     <span className="duration-text">{formatTime(callDuration)}</span>
                                 </div>
                             )}
-
-                            {/* Recording Indicator */}
-                            {isRecording && (
-                                <div className="recording-indicator">
-                                    <span className="recording-dot"></span>
-                                    <span className="recording-text">REC</span>
-                                </div>
-                            )}
-
-                            {/* Screen Share Indicator */}
-                            {isScreenSharing && (
-                                <div className="screen-share-indicator">
-                                    <span className="share-icon">🖥️</span>
-                                    <span className="share-text">Sharing screen</span>
-                                </div>
-                            )}
-
-                            {/* Camera Indicator */}
-                            <div className="camera-indicator">
-                                <span className="camera-icon">📷</span>
-                                <span className="camera-text">
-                                    {isCameraSwitched ? 'Back Camera' : 'Front Camera'}
-                                </span>
-                            </div>
                         </div>
 
                         {/* Local Video */}
@@ -1105,72 +661,9 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                                 </div>
                             )}
                             <div className="local-video-label">
-                                <span>You ({isCameraSwitched ? 'Back' : 'Front'})</span>
+                                <span>You</span>
                             </div>
                         </div>
-
-                        {/* Settings Panel */}
-                        {showSettings && (
-                            <div className="settings-panel">
-                                <h4>Call Settings</h4>
-                                <div className="setting-item">
-                                    <label>Volume</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        value={volumeLevel}
-                                        onChange={(e) => setVolumeLevel(e.target.value)}
-                                    />
-                                    <span>{volumeLevel}%</span>
-                                </div>
-                                {availableCameras.length > 0 && (
-                                    <div className="setting-item">
-                                        <label>Select Camera</label>
-                                        <select 
-                                            value={currentCamera} 
-                                            onChange={(e) => setCurrentCamera(e.target.value)}
-                                        >
-                                            {availableCameras.map(camera => (
-                                                <option key={camera.deviceId} value={camera.deviceId}>
-                                                    {camera.label || `Camera ${camera.deviceId.slice(0, 5)}...`}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                                {availableMicrophones.length > 0 && (
-                                    <div className="setting-item">
-                                        <label>Select Microphone</label>
-                                        <select 
-                                            value={currentMicrophone} 
-                                            onChange={(e) => switchMicrophone(e.target.value)}
-                                        >
-                                            {availableMicrophones.map(mic => (
-                                                <option key={mic.deviceId} value={mic.deviceId}>
-                                                    {mic.label || `Microphone ${mic.deviceId.slice(0, 5)}...`}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                )}
-                                <div className="setting-item">
-                                    <label>Call Information</label>
-                                    <div className="caller-info-display">
-                                        <p><strong>Name:</strong> {callerName}</p>
-                                        {callerPhoneNumber && <p><strong>Phone:</strong> {callerPhoneNumber}</p>}
-                                        <p><strong>Call Type:</strong> Video Call</p>
-                                        <p><strong>Duration:</strong> {formatTime(callDuration)}</p>
-                                        <p><strong>Network Latency:</strong> {networkLatency}ms</p>
-                                        {roomId && <p><strong>Room ID:</strong> {roomId.substring(0, 8)}...</p>}
-                                        {callId && <p><strong>Call ID:</strong> {callId.substring(0, 8)}...</p>}
-                                    </div>
-                                </div>
-                                <button className="close-settings" onClick={() => setShowSettings(false)}>
-                                    Close
-                                </button>
-                            </div>
-                        )}
 
                         {/* Call Controls */}
                         <div className="video-call-controls">
@@ -1189,66 +682,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                                 title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
                             >
                                 <span className="btn-icon">{isVideoEnabled ? '📹' : '🚫'}</span>
-                                <span className="btn-label">{isVideoEnabled ? 'Camera off' : 'Camera on'}</span>
-                            </button>
-
-                            <button
-                                className={`control-btn ${isSpeakerOn ? 'active' : ''}`}
-                                onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                                title={isSpeakerOn ? 'Speaker off' : 'Speaker on'}
-                            >
-                                <span className="btn-icon">{isSpeakerOn ? '🔊' : '🔈'}</span>
-                                <span className="btn-label">{isSpeakerOn ? 'Speaker off' : 'Speaker on'}</span>
-                            </button>
-
-                            {availableCameras.length >= 1 && (
-                                <button
-                                    className="control-btn"
-                                    onClick={switchCamera}
-                                    title={isCameraSwitched ? 'Switch to front camera' : 'Switch to back camera'}
-                                    disabled={availableCameras.length < 2}
-                                >
-                                    <span className="btn-icon">🔄</span>
-                                    <span className="btn-label">
-                                        {isCameraSwitched ? 'Front' : 'Back'}
-                                    </span>
-                                </button>
-                            )}
-
-                            <button
-                                className="control-btn"
-                                onClick={toggleScreenShare}
-                                title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
-                            >
-                                <span className="btn-icon">{isScreenSharing ? '⏹️' : '🖥️'}</span>
-                                <span className="btn-label">{isScreenSharing ? 'Stop share' : 'Share'}</span>
-                            </button>
-
-                            <button
-                                className="control-btn"
-                                onClick={() => setShowSettings(!showSettings)}
-                                title="Settings"
-                            >
-                                <span className="btn-icon">⚙️</span>
-                                <span className="btn-label">Settings</span>
-                            </button>
-
-                            <button
-                                className="control-btn"
-                                onClick={takeScreenshot}
-                                title="Take Screenshot"
-                            >
-                                <span className="btn-icon">📸</span>
-                                <span className="btn-label">Screenshot</span>
-                            </button>
-
-                            <button
-                                className="control-btn"
-                                onClick={toggleRecording}
-                                title={isRecording ? 'Stop Recording' : 'Start Recording'}
-                            >
-                                <span className="btn-icon">{isRecording ? '⏹️' : '⏺️'}</span>
-                                <span className="btn-label">{isRecording ? 'Stop' : 'Record'}</span>
+                                <span className="btn-label">{isVideoEnabled ? 'Camera On' : 'Camera Off'}</span>
                             </button>
 
                             <button
@@ -1257,7 +691,7 @@ const VideoCallModal = ({ isOpen, onClose, callData, apiBaseUrl = 'http://localh
                                 title="End call"
                             >
                                 <span className="btn-icon">📞</span>
-                                <span className="btn-label">End</span>
+                                <span className="btn-label">End Call</span>
                             </button>
                         </div>
                     </div>
