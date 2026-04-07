@@ -314,15 +314,19 @@ const UserSignup = () => {
   };
 
   const handleLogin = async () => {
-    try {
-      const response = await axios.post(
+    const doLogin = async (forceLogin = false) =>
+      axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
+          forceLogin,
         },
         { withCredentials: true },
       );
+
+    try {
+      const response = await doLogin(false);
 
       const token =
         response.data?.token ||
@@ -385,6 +389,58 @@ const UserSignup = () => {
       showNotification("Login failed", "error");
     } catch (error) {
       console.error("Login error:", error);
+
+      const isAlreadyLoggedIn =
+        error.response?.status === 409 && error.response?.data?.canForceLogin;
+
+      if (isAlreadyLoggedIn) {
+        try {
+          const response = await doLogin(true);
+
+          const token =
+            response.data?.token ||
+            response.data?.accessToken ||
+            response.data?.data?.token ||
+            response.data?.data?.accessToken;
+          const refreshToken =
+            response.data?.refreshToken || response.data?.data?.refreshToken;
+
+          if (token) {
+            localStorage.setItem("isAuthenticated", "true");
+            localStorage.setItem("userType", "user");
+            localStorage.setItem("userEmail", formData.email);
+            localStorage.setItem("token", token);
+            localStorage.setItem("accessToken", token);
+            if (refreshToken)
+              localStorage.setItem("refreshToken", refreshToken);
+
+            if (response.data.user) {
+              localStorage.setItem(
+                "userData",
+                JSON.stringify(response.data.user),
+              );
+            }
+
+            if (response.data.user?._id) {
+              localStorage.setItem("userId", response.data.user._id);
+            }
+
+            showNotification(
+              "Logged in and previous device session was ended.",
+              "success",
+            );
+            setTimeout(() => navigate("/user-dashboard"), 1500);
+            return;
+          }
+        } catch (forceError) {
+          const msg =
+            forceError.response?.data?.message || "Unable to force login";
+          setApiError(msg);
+          showNotification(msg, "error");
+          return;
+        }
+      }
+
       let errorMessage = "Something went wrong";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

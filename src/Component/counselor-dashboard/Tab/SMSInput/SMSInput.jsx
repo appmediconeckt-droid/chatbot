@@ -777,9 +777,9 @@ const SMSInput = () => {
         throw new Error('Counselor ID not found');
       }
 
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, {
-        userId: COUNSELOR_ID,
-        userType: 'counsellor'
+      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, {
+        acceptorId: COUNSELOR_ID,
+        acceptorType: 'counsellor'
       }, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -797,7 +797,7 @@ const SMSInput = () => {
           name: incomingCallData.name,
           type: incomingCallData.callType,
           profilePic: incomingCallData.avatar,
-          status: 'connected',
+          status: response.data.status || 'active',
           date: 'Today',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           apiCallData: response.data.callData,
@@ -825,7 +825,10 @@ const SMSInput = () => {
   const handleRejectIncomingCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
+      await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {
+        userId: COUNSELOR_ID,
+        reason: 'declined'
+      }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       return true;
@@ -1173,6 +1176,7 @@ const SMSInput = () => {
         isOpen={isVoiceModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        onEndCall={handleEndIncomingCall}
       />
 
       {/* Professional Incoming Call Modal */}

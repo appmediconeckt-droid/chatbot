@@ -1,14 +1,12 @@
 import axios from "axios";
-
-// ✅ In Vite, use import.meta.env instead of process.env
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+import { API_BASE_URL } from "./src/axiosConfig";
 
 // ✅ REQUEST INTERCEPTOR
 axios.interceptors.request.use(
   (config) => {
     // You can also set baseURL here globally if you want
     config.baseURL = API_BASE_URL;
-    
+
     const token = localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -34,13 +32,27 @@ axios.interceptors.response.use(
   (res) => res,
   async (error) => {
     const originalRequest = error.config;
+    const requestUrl = originalRequest?.url || "";
 
-    // Avoid infinite loop if the refresh token call itself fails (401)
-    if (originalRequest.url.includes("/refresh-token")) {
-        return Promise.reject(error);
+    // Do not run refresh flow for login/refresh endpoints.
+    if (
+      requestUrl.includes("/api/auth/login") ||
+      requestUrl.includes("/api/auth/refresh-token") ||
+      requestUrl.includes("/refresh-token")
+    ) {
+      return Promise.reject(error);
     }
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
+      const storedRefreshToken = localStorage.getItem("refreshToken");
+      if (!storedRefreshToken) {
+        return Promise.reject(error);
+      }
+
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -58,8 +70,8 @@ axios.interceptors.response.use(
       try {
         const response = await axios.post(
           `${API_BASE_URL}/api/auth/refresh-token`,
-          {},
-          { withCredentials: true }
+          { refreshToken: storedRefreshToken },
+          { withCredentials: true },
         );
 
         const newToken = response.data.accessToken;

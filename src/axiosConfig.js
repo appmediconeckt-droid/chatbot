@@ -60,7 +60,7 @@
 
 //           // Update authorization header
 //           originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
-          
+
 //           // Retry the original request
 //           return axiosInstance(originalRequest);
 //         }
@@ -81,7 +81,61 @@
 // frontend/src/api/axiosConfig.js
 import axios from "axios";
 
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const normalizeBaseUrl = (url) => url?.trim().replace(/\/$/, "");
+const viteEnv =
+  typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
+
+const isLocalhostHost = (hostname) =>
+  hostname === "localhost" || hostname === "127.0.0.1";
+
+const isPrivateIPv4Host = (hostname) =>
+  /^192\.168\.\d+\.\d+$/i.test(hostname) ||
+  /^10\.\d+\.\d+\.\d+$/i.test(hostname) ||
+  /^172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+$/i.test(hostname);
+
+const isLanLikeHost = (hostname) =>
+  isPrivateIPv4Host(hostname) || /\.local$/i.test(hostname);
+
+const inferApiBaseUrl = () => {
+  const envBase = normalizeBaseUrl(viteEnv.VITE_API_BASE_URL);
+
+  if (typeof window === "undefined") return "http://localhost:5000";
+
+  const { protocol, hostname } = window.location;
+
+  if (envBase) {
+    try {
+      const envUrl = new URL(envBase);
+      const envHostIsLocal = isLocalhostHost(envUrl.hostname);
+      const clientIsLocal = isLocalhostHost(hostname);
+
+      // If env points to localhost but app runs on another device, ignore env override.
+      if (!(envHostIsLocal && !clientIsLocal)) {
+        return envBase;
+      }
+    } catch {
+      // Ignore malformed env URL and continue with inference.
+    }
+  }
+
+  if (isLocalhostHost(hostname)) {
+    return "http://localhost:5000";
+  }
+
+  const tunnelMatch = hostname.match(/^(.*)-\d+(\.inc\d+\.devtunnels\.ms)$/i);
+  if (tunnelMatch) {
+    return `${protocol}//${tunnelMatch[1]}-5000${tunnelMatch[2]}`;
+  }
+
+  if (isLanLikeHost(hostname)) {
+    return `${protocol}//${hostname}:5000`;
+  }
+
+  // Fallback for deployed setups that reverse-proxy /api on same origin.
+  return window.location.origin;
+};
+
+export const API_BASE_URL = inferApiBaseUrl();
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -103,10 +157,29 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const requestUrl = originalRequest?.url || "";
+
+    // Login failures should surface directly; do not trigger refresh flow.
+    if (
+      requestUrl.includes("/api/auth/login") ||
+      requestUrl.includes("/api/auth/refresh-token") ||
+      requestUrl.includes("/refresh-token")
+    ) {
+      return Promise.reject(error);
+    }
 
     // ✅ ONLY handle 401
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
       console.log("🔥 Interceptor triggered");
+
+      const storedRefreshToken = localStorage.getItem("refreshToken");
+      if (!storedRefreshToken) {
+        return Promise.reject(error);
+      }
 
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -127,8 +200,8 @@ axiosInstance.interceptors.response.use(
 
         const response = await axios.post(
           `${API_BASE_URL}/api/auth/refresh-token`,
-          {},
-          { withCredentials: true }
+          { refreshToken: storedRefreshToken },
+          { withCredentials: true },
         );
 
         const { accessToken } = response.data;
@@ -153,7 +226,6 @@ axiosInstance.interceptors.response.use(
         localStorage.removeItem("accessToken");
 
         // logout redirect
-       
 
         return Promise.reject(refreshError);
       } finally {
@@ -162,7 +234,7 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;

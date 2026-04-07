@@ -35,6 +35,7 @@ import axios from 'axios';
 import { API_BASE_URL } from '../../../axiosConfig';
 import CounselorProfile from '../Tab/Profile-Con/CounselorProfile';
 import VideoCallModal from '../../UserDashboard/Tab/CallModal/VideoCallModal';
+import VoiceCallModal from '../../UserDashboard/Tab/CallModal/VoiceCallModal';
 
 // Incoming Call Modal Component (First Modal - Accept/Reject)
 const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onReject }) => {
@@ -128,6 +129,7 @@ export default function CounselorDashboard() {
   // Modal States
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
   const [incomingCallData, setIncomingCallData] = useState(null);
 
@@ -157,14 +159,14 @@ export default function CounselorDashboard() {
       }
 
       const requestBody = {
-        userId: userId,
-        userType: "counsellor"
+        acceptorId: userId,
+        acceptorType: "counsellor"
       };
 
       console.log('Accepting call with body:', requestBody);
-      console.log('API URL:', `${API_BASE_URL}/api/video/calls/${callId}/join`);
+      console.log('API URL:', `${API_BASE_URL}/api/video/calls/${callId}/accept`);
 
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, requestBody, {
+      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -255,8 +257,12 @@ export default function CounselorDashboard() {
   const rejectCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
+      const counsellorId = localStorage.getItem('counsellorId');
 
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
+      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {
+        userId: counsellorId,
+        reason: 'declined'
+      }, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -280,20 +286,25 @@ export default function CounselorDashboard() {
     if (result && result.success) {
       console.log('Call accepted successfully');
       
-      // Prepare data for video call modal
-      const videoCallData = {
+      const acceptedCallData = {
         callId: callData.callId,
         roomId: callData.roomId,
         name: callData.name,
         isIncoming: true,
-        status: 'connected',
+        status: result.data?.status || 'active',
+        type: callData.callType || 'video',
         callType: callData.callType || 'video',
         from: callData.from,
         initiator: callData.initiator
       };
-      
-      setSelectedCall(videoCallData);
-      setIsVideoModalOpen(true);
+
+      setSelectedCall(acceptedCallData);
+
+      if (callData.callType === 'video') {
+        setIsVideoModalOpen(true);
+      } else {
+        setIsVoiceModalOpen(true);
+      }
     } else {
       console.error('Failed to accept call');
       alert('Failed to accept call. Please try again.');
@@ -333,7 +344,7 @@ export default function CounselorDashboard() {
         const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
 
         // Show incoming call modal if not already showing
-        if (waitingCall && !showIncomingCallModal && !isVideoModalOpen) {
+        if (waitingCall && !showIncomingCallModal && !isVideoModalOpen && !isVoiceModalOpen) {
           const fromData = waitingCall.from || waitingCall.initiator || {};
           
           // Determine the display name
@@ -376,7 +387,7 @@ export default function CounselorDashboard() {
 
   // Start polling for waiting calls
   useEffect(() => {
-    if (isPolling && !showIncomingCallModal && !isVideoModalOpen) {
+    if (isPolling && !showIncomingCallModal && !isVideoModalOpen && !isVoiceModalOpen) {
       fetchWaitingCalls();
 
       const interval = setInterval(() => {
@@ -394,11 +405,11 @@ export default function CounselorDashboard() {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-  }, [isPolling, showIncomingCallModal, isVideoModalOpen]);
+  }, [isPolling, showIncomingCallModal, isVideoModalOpen, isVoiceModalOpen]);
 
   // Stop polling when modals are open
   useEffect(() => {
-    if (showIncomingCallModal || isVideoModalOpen) {
+    if (showIncomingCallModal || isVideoModalOpen || isVoiceModalOpen) {
       setIsPolling(false);
       if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -407,7 +418,7 @@ export default function CounselorDashboard() {
     } else {
       setIsPolling(true);
     }
-  }, [showIncomingCallModal, isVideoModalOpen]);
+  }, [showIncomingCallModal, isVideoModalOpen, isVoiceModalOpen]);
 
   // Function to fetch pending requests using Axios
   const fetchPendingRequests = async () => {
@@ -645,6 +656,7 @@ export default function CounselorDashboard() {
   // Handle close video modal
   const handleCloseVideoModal = () => {
     setIsVideoModalOpen(false);
+    setIsVoiceModalOpen(false);
     setSelectedCall(null);
     // Resume polling after modal closes
     setIsPolling(true);
@@ -839,6 +851,13 @@ export default function CounselorDashboard() {
         callData={selectedCall}
         userRole="counsellor"
         onJoinCall={handleJoinCall}
+        onEndCall={handleEndCall}
+      />
+
+      <VoiceCallModal
+        isOpen={isVoiceModalOpen}
+        onClose={handleCloseVideoModal}
+        callData={selectedCall}
         onEndCall={handleEndCall}
       />
 

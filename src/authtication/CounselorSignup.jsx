@@ -393,15 +393,19 @@ const CounselorSignup = () => {
   };
 
   const handleLogin = async () => {
-    try {
-      const response = await axios.post(
+    const doLogin = async (forceLogin = false) =>
+      axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
+          forceLogin,
         },
         { withCredentials: true },
       );
+
+    try {
+      const response = await doLogin(false);
 
       const token = response.data?.token || response.data?.accessToken;
 
@@ -428,6 +432,45 @@ const CounselorSignup = () => {
       }
     } catch (error) {
       console.error("Login error:", error);
+      const isAlreadyLoggedIn =
+        error.response?.status === 409 && error.response?.data?.canForceLogin;
+
+      if (isAlreadyLoggedIn) {
+        try {
+          const response = await doLogin(true);
+          const token = response.data?.token || response.data?.accessToken;
+
+          if (token) {
+            localStorage.setItem("accessToken", token);
+            localStorage.setItem("token", token);
+            if (response.data.refreshToken)
+              localStorage.setItem("refreshToken", response.data.refreshToken);
+            if (response.data.user) {
+              localStorage.setItem(
+                "userData",
+                JSON.stringify(response.data.user),
+              );
+              localStorage.setItem("userRole", response.data.user.role);
+              localStorage.setItem("counsellorId", response.data.user._id);
+            }
+            localStorage.setItem("userEmail", formData.email);
+            localStorage.setItem("isAuthenticated", "true");
+
+            showNotification(
+              "Logged in and previous device session was ended.",
+              "success",
+            );
+            setTimeout(() => navigate("/counselor-dashboard"), 1500);
+            return;
+          }
+        } catch (forceError) {
+          const errorMessage =
+            forceError.response?.data?.message || "Unable to force login";
+          showNotification(errorMessage, "error");
+          return;
+        }
+      }
+
       const errorMessage =
         error.response?.data?.message || "Something went wrong";
       showNotification(errorMessage, "error");

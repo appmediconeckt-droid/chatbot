@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import "./UserDashboard.css";
 import { useNavigate } from "react-router-dom";
-import axiosInstance, { API_BASE_URL } from '../../../axiosConfig';
+import axiosInstance, { API_BASE_URL } from "../../../axiosConfig";
 import {
   FaCommentDots,
   FaUserMd,
@@ -30,36 +30,45 @@ import {
   FaPhoneSlash,
   FaVideo as FaVideoIcon,
   FaStop,
-  FaSpinner
+  FaSpinner,
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
 import WalletDashboard from "../Tab/Wallet/WalletDashboard";
 import CallHistory from "../Tab/Callls/CallHistory";
-import useVibration from '../../../hooks/useVibration';
-import PatientProfile from '../../PatientProfile/PatientProfile';
-import BookAppointment from '../Tab/Appointment/BookAppointment';
-import LiveChatSupport from '../Tab/Appointment/BookAppointment';
-import axios from 'axios';
-import CounselorTable from '../Tab/Counselor/CounselorDirectory';
+import useVibration from "../../../hooks/useVibration";
+import PatientProfile from "../../PatientProfile/PatientProfile";
+import BookAppointment from "../Tab/Appointment/BookAppointment";
+import LiveChatSupport from "../Tab/Appointment/BookAppointment";
+import axios from "axios";
+import CounselorTable from "../Tab/Counselor/CounselorDirectory";
 
 // Voice/Video Call Modal Component
-const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAcceptCall, onRejectCall }) => {
+const CallModal = ({
+  isOpen,
+  onClose,
+  callType,
+  callerName,
+  callerImage,
+  callData,
+  onAcceptCall,
+  onRejectCall,
+}) => {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
   const handleAccept = async () => {
     if (isAccepting) return;
-    
+
     setIsAccepting(true);
-    
+
     if (onAcceptCall && callData) {
       try {
         await onAcceptCall(callData.callId);
         // Close modal immediately after accepting
         onClose();
       } catch (error) {
-        console.error('Error accepting call:', error);
+        console.error("Error accepting call:", error);
       } finally {
         setIsAccepting(false);
       }
@@ -71,16 +80,16 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
 
   const handleReject = async () => {
     if (isRejecting) return;
-    
+
     setIsRejecting(true);
-    
+
     if (onRejectCall && callData) {
       try {
         await onRejectCall(callData.callId);
         // Close modal immediately after rejecting
         onClose();
       } catch (error) {
-        console.error('Error rejecting call:', error);
+        console.error("Error rejecting call:", error);
       } finally {
         setIsRejecting(false);
       }
@@ -93,21 +102,29 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
   if (!isOpen) return null;
 
   // Get the full name from the call data - prioritizing fullName
-  const displayName = callData?.from?.fullName || callData?.from?.displayName || callerName || "Counselor";
+  const displayName =
+    callData?.from?.fullName ||
+    callData?.from?.displayName ||
+    callerName ||
+    "Counselor";
   const profilePhoto = callData?.from?.profilePhoto || callerImage;
-  
+
   // Format the time
   const formatRequestTime = (dateString) => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const requestedTime = callData?.requestedAt ? formatRequestTime(callData.requestedAt) : '';
+  const requestedTime = callData?.requestedAt
+    ? formatRequestTime(callData.requestedAt)
+    : "";
 
   return (
     <div className="call-modal-overlay">
-      <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`}>
+      <div
+        className={`call-modal ${callType === "video" ? "video-call-modal" : "voice-call-modal"}`}
+      >
         <div className="call-modal-content">
           <div className="caller-info">
             <div className="caller-avatar">
@@ -119,12 +136,10 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
             </div>
             <h3 className="caller-name">{displayName}</h3>
             <p className="call-type">
-              {callType === 'video' ? '📹 Video Call' : '📞 Voice Call'}
+              {callType === "video" ? "📹 Video Call" : "📞 Voice Call"}
             </p>
             {requestedTime && (
-              <p className="call-time">
-                Received at {requestedTime}
-              </p>
+              <p className="call-time">Received at {requestedTime}</p>
             )}
             <p className="call-message">
               {callData?.requestMessage || `Incoming ${callType} call...`}
@@ -132,22 +147,30 @@ const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callDat
           </div>
 
           <div className="call-controls">
-            <button 
-              className="call-btn reject-btn" 
-              onClick={handleReject} 
+            <button
+              className="call-btn reject-btn"
+              onClick={handleReject}
               disabled={isRejecting}
             >
-              {isRejecting ? <FaSpinner className="spinning" /> : <FaPhoneSlash />}
-              <span>{isRejecting ? 'Rejecting...' : 'Decline'}</span>
+              {isRejecting ? (
+                <FaSpinner className="spinning" />
+              ) : (
+                <FaPhoneSlash />
+              )}
+              <span>{isRejecting ? "Rejecting..." : "Decline"}</span>
             </button>
-            
-            <button 
-              className="call-btn accept-btn" 
-              onClick={handleAccept} 
+
+            <button
+              className="call-btn accept-btn"
+              onClick={handleAccept}
               disabled={isAccepting}
             >
-              {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
-              <span>{isAccepting ? 'Accepting...' : 'Accept'}</span>
+              {isAccepting ? (
+                <FaSpinner className="spinning" />
+              ) : (
+                <FaPhoneAlt />
+              )}
+              <span>{isAccepting ? "Accepting..." : "Accept"}</span>
             </button>
           </div>
         </div>
@@ -165,7 +188,7 @@ const ChatPopup = ({
   handleKeyPress,
   isLoading,
   onClose,
-  chatBodyRef
+  chatBodyRef,
 }) => (
   <div className="chat-popup-overlay">
     <div className="chat-popup">
@@ -185,15 +208,18 @@ const ChatPopup = ({
       </div>
 
       <div className="chat-popup-body" ref={chatBodyRef}>
-        {messages.map(message => (
-          <div key={message.id} className={`chat-message-wrapper ${message.sender}`}>
-            {message.sender === 'ai' && (
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`chat-message-wrapper ${message.sender}`}
+          >
+            {message.sender === "ai" && (
               <div className="chat-avatar small">
                 <FaRobot />
               </div>
             )}
             <div className="chat-bubble">{message.text}</div>
-            {message.sender === 'user' && (
+            {message.sender === "user" && (
               <div className="chat-avatar small">
                 <FaUserCircle />
               </div>
@@ -248,7 +274,7 @@ const ChatButton = ({ onClick, unreadCount }) => (
 export default function UserDashboard() {
   const [active, setActive] = useState("Chat");
   const [chatOpen, setChatOpen] = useState(false);
-  const [newMessage, setNewMessage] = useState('');
+  const [newMessage, setNewMessage] = useState("");
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
@@ -260,28 +286,27 @@ export default function UserDashboard() {
 
   // Call Modal States
   const [showCallModal, setShowCallModal] = useState(false);
-  const [callType, setCallType] = useState('video');
+  const [callType, setCallType] = useState("video");
   const [callerInfo, setCallerInfo] = useState({
-    name: '',
+    name: "",
     image: null,
-    userId: '',
-    userName: '',
-    callId: '',
-    roomId: '',
+    userId: "",
+    userName: "",
+    callId: "",
+    roomId: "",
     waitingDuration: 0,
-    onEndCall: null
+    onEndCall: null,
   });
 
   const [waitingCalls, setWaitingCalls] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [isPolling, setIsPolling] = useState(true);
-  
+
   // Missing call states
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const [incomingCallData, setIncomingCallData] = useState(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
-
 
   const userId = localStorage.getItem("userId");
 
@@ -293,84 +318,94 @@ export default function UserDashboard() {
     name: "",
     email: "",
     phone: "",
-    profilePhoto: ""
+    profilePhoto: "",
   });
 
   const getProfilePhotoUrl = (userData) => {
     if (userData.profilePhoto) {
-      if (typeof userData.profilePhoto === 'object' && userData.profilePhoto.url) {
+      if (
+        typeof userData.profilePhoto === "object" &&
+        userData.profilePhoto.url
+      ) {
         return userData.profilePhoto.url;
       }
-      if (typeof userData.profilePhoto === 'string') {
+      if (typeof userData.profilePhoto === "string") {
         return userData.profilePhoto;
       }
     }
-    return '';
+    return "";
   };
 
   // Accept Call API (PUT)
   const acceptCall = async (callId) => {
     try {
-      const token = localStorage.getItem('token');
-      const acceptorId = localStorage.getItem('userId');
+      const token = localStorage.getItem("token");
+      const acceptorId = localStorage.getItem("userId");
 
       const requestBody = {
         acceptorId: acceptorId,
-        acceptorType: 'user'
+        acceptorType: "user",
       };
 
-      console.log('Accepting call with body:', requestBody);
+      console.log("Accepting call with body:", requestBody);
 
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, requestBody, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/accept`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      console.log('Accept call response:', response.data);
+      console.log("Accept call response:", response.data);
 
       if (response.data && response.data.success) {
         return response.data;
       }
       return null;
     } catch (error) {
-      console.error('Error accepting call:', error);
+      console.error("Error accepting call:", error);
       return null;
     }
   };
 
   // Join Call API (POST)
- 
 
   // End Call API (PUT)
   const endCall = async (callId) => {
     try {
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
 
       const requestBody = {
         userId: userId,
-        endedBy: 'user'
+        endedBy: "user",
       };
 
-      console.log('Ending call with body:', requestBody);
+      console.log("Ending call with body:", requestBody);
 
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, requestBody, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/end`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      console.log('End call response:', response.data);
+      console.log("End call response:", response.data);
 
       if (response.data && response.data.success) {
         return response.data;
       }
       return null;
     } catch (error) {
-      console.error('Error ending call:', error);
+      console.error("Error ending call:", error);
       return null;
     }
   };
@@ -378,100 +413,134 @@ export default function UserDashboard() {
   // Reject Call API
   const rejectCall = async (callId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
 
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/reject`,
+        {
+          userId,
+          reason: "declined",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
-      console.log('Reject call response:', response.data);
+      console.log("Reject call response:", response.data);
       return response.data?.success || false;
     } catch (error) {
-      console.error('Error rejecting call:', error);
+      console.error("Error rejecting call:", error);
       return false;
     }
   };
 
   // Fetch waiting calls from API
   const fetchWaitingCalls = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const userId = localStorage.getItem('userId');
+    try {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
 
-    if (!userId || !token) {
-      console.log('No userId or token found');
-      return;
-    }
-
-    const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${userId}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+      if (!userId || !token) {
+        console.log("No userId or token found");
+        return;
       }
-    });
 
-    console.log('Waiting calls response:', response.data);
+      const response = await axios.get(
+        `${API_BASE_URL}/api/video/calls/pending/${userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
-    const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
+      console.log("Waiting calls response:", response.data);
 
-    if (response.data && response.data.success && callsList && callsList.length > 0) {
-      setWaitingCalls(callsList);
+      const callsList =
+        response.data.pendingRequests ||
+        response.data.waitingCalls ||
+        response.data.calls;
 
-      // Use the first call if status property is not strictly defined, or find one that is waiting/ringing
-      const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
+      if (
+        response.data &&
+        response.data.success &&
+        callsList &&
+        callsList.length > 0
+      ) {
+        setWaitingCalls(callsList);
 
-      if (waitingCall && !showCallModal) {
-        const callTypeValue = waitingCall.callType || 'video';
-        setCallType(callTypeValue);
+        // Use the first call if status property is not strictly defined, or find one that is waiting/ringing
+        const waitingCall =
+          callsList.find(
+            (call) =>
+              !call.status ||
+              call.status === "waiting" ||
+              call.status === "ringing",
+          ) || callsList[0];
 
-        const fromData = waitingCall.from || waitingCall.initiator || {};
-        
-        // Extract full name properly - prioritize fullName, then displayName, then name
-        const callerFullName = fromData.fullName || fromData.displayName || fromData.name || waitingCall.fromName || 'Counselor';
-        
-        // Get profile photo
-        const profilePhoto = fromData.profilePhoto || waitingCall.fromProfilePhoto || null;
-        
-        // Get call ID and room ID
-        const callId = waitingCall.callId || waitingCall.id || waitingCall._id;
-        const roomId = waitingCall.roomId;
-        
-        // Get request message
-        const requestMessage = waitingCall.requestMessage || `Incoming ${callTypeValue} call...`;
-        
-        // Get requested time
-        const requestedAt = waitingCall.requestedAt || waitingCall.createdAt;
+        if (waitingCall && !showCallModal) {
+          const callTypeValue = waitingCall.callType || "video";
+          setCallType(callTypeValue);
 
-        setCallerInfo({
-          name: callerFullName,
-          image: profilePhoto,
-          userId: fromData.id || fromData._id || waitingCall.fromId,
-          userName: callerFullName,
-          callId: callId,
-          roomId: roomId,
-          waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
-          onEndCall: endCall,
-          from: fromData, // Store the full from object
-          requestMessage: requestMessage,
-          requestedAt: requestedAt,
-          callType: callTypeValue
-        });
+          const fromData = waitingCall.from || waitingCall.initiator || {};
 
-        setShowCallModal(true);
-        
-        // Vibrate for incoming call (if supported)
-        if (window.navigator && window.navigator.vibrate) {
-          window.navigator.vibrate([200, 100, 200]);
+          // Extract full name properly - prioritize fullName, then displayName, then name
+          const callerFullName =
+            fromData.fullName ||
+            fromData.displayName ||
+            fromData.name ||
+            waitingCall.fromName ||
+            "Counselor";
+
+          // Get profile photo
+          const profilePhoto =
+            fromData.profilePhoto || waitingCall.fromProfilePhoto || null;
+
+          // Get call ID and room ID
+          const callId =
+            waitingCall.callId || waitingCall.id || waitingCall._id;
+          const roomId = waitingCall.roomId;
+
+          // Get request message
+          const requestMessage =
+            waitingCall.requestMessage || `Incoming ${callTypeValue} call...`;
+
+          // Get requested time
+          const requestedAt = waitingCall.requestedAt || waitingCall.createdAt;
+
+          setCallerInfo({
+            name: callerFullName,
+            image: profilePhoto,
+            userId: fromData.id || fromData._id || waitingCall.fromId,
+            userName: callerFullName,
+            callId: callId,
+            roomId: roomId,
+            waitingDuration:
+              waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
+            onEndCall: endCall,
+            from: fromData, // Store the full from object
+            requestMessage: requestMessage,
+            requestedAt: requestedAt,
+            callType: callTypeValue,
+          });
+
+          setShowCallModal(true);
+
+          // Vibrate for incoming call (if supported)
+          if (window.navigator && window.navigator.vibrate) {
+            window.navigator.vibrate([200, 100, 200]);
+          }
         }
+      } else {
+        setWaitingCalls([]);
       }
-    } else {
-      setWaitingCalls([]);
+    } catch (error) {
+      console.error("Error fetching waiting calls:", error);
     }
-  } catch (error) {
-    console.error('Error fetching waiting calls:', error);
-  }
-};
+  };
 
   useEffect(() => {
     if (isPolling && !showCallModal) {
@@ -510,7 +579,7 @@ export default function UserDashboard() {
     const fetchUserData = async () => {
       try {
         const userId = localStorage.getItem("userId");
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
 
         if (!userId) {
           console.error("No user ID found");
@@ -521,9 +590,9 @@ export default function UserDashboard() {
           `${API_BASE_URL}/api/auth/getUser/${userId}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
+              Authorization: `Bearer ${token}`,
+            },
+          },
         );
 
         if (response.data.success) {
@@ -534,7 +603,7 @@ export default function UserDashboard() {
             name: user.fullName || "",
             email: user.email || "",
             phone: user.phoneNumber || "",
-            profilePhoto: profilePhotoUrl
+            profilePhoto: profilePhotoUrl,
           });
         }
       } catch (error) {
@@ -546,8 +615,12 @@ export default function UserDashboard() {
   }, []);
 
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, text: "Hello! I'm your AI assistant. How can I help you today?", sender: 'ai' },
-    { id: 2, text: "I'm feeling anxious today.", sender: 'user' }
+    {
+      id: 1,
+      text: "Hello! I'm your AI assistant. How can I help you today?",
+      sender: "ai",
+    },
+    { id: 2, text: "I'm feeling anxious today.", sender: "user" },
   ]);
 
   useEffect(() => {
@@ -578,10 +651,10 @@ export default function UserDashboard() {
       const userMessage = {
         id: Date.now(),
         text: newMessage,
-        sender: 'user'
+        sender: "user",
       };
-      setChatMessages(prev => [...prev, userMessage]);
-      setNewMessage('');
+      setChatMessages((prev) => [...prev, userMessage]);
+      setNewMessage("");
       setIsLoading(true);
 
       setTimeout(() => {
@@ -589,25 +662,25 @@ export default function UserDashboard() {
           "I understand. Would you like to try some breathing exercises?",
           "Thank you for sharing. How long have you been feeling this way?",
           "I'm here to listen. Would you like me to suggest some coping strategies?",
-          "Would you like me to connect you with a mental health professional?"
+          "Would you like me to connect you with a mental health professional?",
         ];
         const aiMessage = {
           id: Date.now() + 1,
           text: aiResponses[Math.floor(Math.random() * aiResponses.length)],
-          sender: 'ai'
+          sender: "ai",
         };
-        setChatMessages(prev => [...prev, aiMessage]);
+        setChatMessages((prev) => [...prev, aiMessage]);
         setIsLoading(false);
 
         if (!chatOpen) {
-          setUnreadCount(prev => prev + 1);
+          setUnreadCount((prev) => prev + 1);
         }
       }, 1000);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -634,33 +707,31 @@ export default function UserDashboard() {
     try {
       const result = await acceptCall(callId);
       if (result) {
-        console.log('Call accepted successfully', result);
+        console.log("Call accepted successfully", result);
         return result;
       }
       return null;
     } catch (error) {
-      console.error('Error in accept call:', error);
+      console.error("Error in accept call:", error);
       return null;
     }
   };
 
- 
-
   const handleRejectCall = async (callId) => {
     try {
       await rejectCall(callId);
-      console.log('Call rejected successfully');
+      console.log("Call rejected successfully");
     } catch (error) {
-      console.error('Error in reject call:', error);
+      console.error("Error in reject call:", error);
     }
   };
 
   const handleAcceptCallModal = () => {
-    console.log('Call accepted');
+    console.log("Call accepted");
   };
 
   const handleEndCall = () => {
-    console.log('Call ended');
+    console.log("Call ended");
   };
 
   const handleLogout = async () => {
@@ -674,15 +745,14 @@ export default function UserDashboard() {
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json'
-          }
-        }
+            "Content-Type": "application/json",
+          },
+        },
       );
 
       console.log("Logout success:", response.data);
       localStorage.clear();
       navigate("/role-selector");
-
     } catch (error) {
       console.error("Logout error:", error?.response?.data || error.message);
       localStorage.clear();
@@ -705,7 +775,7 @@ export default function UserDashboard() {
     setShowDeleteConfirm(false);
     setDeleteSuccess(true);
     setTimeout(() => {
-      navigate('/role-selector');
+      navigate("/role-selector");
     }, 2500);
   };
 
@@ -736,7 +806,7 @@ export default function UserDashboard() {
     { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
     { id: "Video", icon: <FaVideo />, label: "Video Call" },
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
-    { id: "privacy", icon: <FaLock />, label: "Privacy" }
+    { id: "privacy", icon: <FaLock />, label: "Privacy" },
   ];
 
   const bottomMenuItems = allMenuItems.slice(0, 4);
@@ -748,14 +818,14 @@ export default function UserDashboard() {
         onClose={() => {
           setShowCallModal(false);
           setCallerInfo({
-            name: '',
+            name: "",
             image: null,
-            userId: '',
-            userName: '',
-            callId: '',
-            roomId: '',
+            userId: "",
+            userName: "",
+            callId: "",
+            roomId: "",
             waitingDuration: 0,
-            onEndCall: null
+            onEndCall: null,
           });
         }}
         callType={callType}
@@ -766,7 +836,6 @@ export default function UserDashboard() {
         onEnd={handleEndCall}
         onAcceptCall={handleAcceptCall}
         onRejectCall={handleRejectCall}
-        
       />
 
       {isMobile && (
@@ -786,8 +855,9 @@ export default function UserDashboard() {
                   className="mobile-user-avatar"
                   onError={(e) => {
                     e.target.onerror = null;
-                    e.target.style.display = 'none';
-                    e.target.parentElement.innerHTML = '<FaUserCircle class="mobile-user-icon" />';
+                    e.target.style.display = "none";
+                    e.target.parentElement.innerHTML =
+                      '<FaUserCircle class="mobile-user-icon" />';
                   }}
                 />
               ) : (
@@ -813,11 +883,17 @@ export default function UserDashboard() {
                   </div>
                 </div>
                 <div className="profile-dropdown-items">
-                  <button className="dropdown-item" onClick={handleProfileClick}>
+                  <button
+                    className="dropdown-item"
+                    onClick={handleProfileClick}
+                  >
                     <FaUser className="dropdown-icon" />
                     <span>My Profile</span>
                   </button>
-                  <button className="dropdown-item logout-item" onClick={handleLogoutClick}>
+                  <button
+                    className="dropdown-item logout-item"
+                    onClick={handleLogoutClick}
+                  >
                     <FaSignOutAlt className="dropdown-icon" />
                     <span>Logout</span>
                   </button>
@@ -841,8 +917,9 @@ export default function UserDashboard() {
                         alt={userData.name}
                         onError={(e) => {
                           e.target.onerror = null;
-                          e.target.style.display = 'none';
-                          e.target.parentElement.innerHTML = '<FaUserCircle className="default-avatar" />';
+                          e.target.style.display = "none";
+                          e.target.parentElement.innerHTML =
+                            '<FaUserCircle className="default-avatar" />';
                         }}
                       />
                     ) : (
@@ -850,15 +927,21 @@ export default function UserDashboard() {
                     )}
                   </div>
                   <div className="profile-info">
-                    <h3 className="sidebar-title">Name: <span>{userData.name}</span></h3>
-                    <p className="sidebar-subtitle">Email: <span>{userData.email}</span></p>
-                    <p className="sidebar-subtitle">Phone: <span>{userData.phone}</span></p>
+                    <h3 className="sidebar-title">
+                      Name: <span>{userData.name}</span>
+                    </h3>
+                    <p className="sidebar-subtitle">
+                      Email: <span>{userData.email}</span>
+                    </p>
+                    <p className="sidebar-subtitle">
+                      Phone: <span>{userData.phone}</span>
+                    </p>
                   </div>
                 </div>
               </div>
 
               <div className="sidebar-menu">
-                {allMenuItems.map(item => (
+                {allMenuItems.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => handleMenuItemClick(item.id)}
@@ -873,8 +956,13 @@ export default function UserDashboard() {
               <hr className="sidebar-separator" />
 
               <div className="sidebar-actions">
-                <button className="sidebar-item logout" onClick={handleLogoutClick}>
-                  <span className="sidebar-icon"><FaSignOutAlt /></span>
+                <button
+                  className="sidebar-item logout"
+                  onClick={handleLogoutClick}
+                >
+                  <span className="sidebar-icon">
+                    <FaSignOutAlt />
+                  </span>
                   <span className="sidebar-text">Logout</span>
                 </button>
               </div>
@@ -882,7 +970,7 @@ export default function UserDashboard() {
           </aside>
         )}
 
-        <div className={`dashboard-content ${isMobile ? 'mobile' : ''}`}>
+        <div className={`dashboard-content ${isMobile ? "mobile" : ""}`}>
           <div className="content-scrollable">
             {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
             {active === "Counselor" && <CounselorTable />}
@@ -895,12 +983,18 @@ export default function UserDashboard() {
               <div className="content-section">
                 <h2 className="section-title">Help & Support</h2>
                 <div className="help-content">
-                  <div className="support-card" onClick={() => handleSupportClick('FAQ')}>
+                  <div
+                    className="support-card"
+                    onClick={() => handleSupportClick("FAQ")}
+                  >
                     <FaQuestionCircle className="support-icon" />
                     <h3>FAQ</h3>
                     <p>Find answers to frequently asked questions</p>
                   </div>
-                  <div className="support-card" onClick={() => handleSupportClick('Contact Support')}>
+                  <div
+                    className="support-card"
+                    onClick={() => handleSupportClick("Contact Support")}
+                  >
                     <FaEnvelope className="support-icon" />
                     <h3>Contact Support</h3>
                     <p>Email us at support@example.com</p>
@@ -916,14 +1010,20 @@ export default function UserDashboard() {
                   <div className="privacy-option">
                     <h3>Data Privacy</h3>
                     <p>Control how your data is used and shared</p>
-                    <button className="privacy-btn" onClick={() => handlePrivacyAction('Data Privacy')}>
+                    <button
+                      className="privacy-btn"
+                      onClick={() => handlePrivacyAction("Data Privacy")}
+                    >
                       Manage Settings
                     </button>
                   </div>
                   <div className="privacy-option">
                     <h3>Session Privacy</h3>
                     <p>Configure privacy settings for your sessions</p>
-                    <button className="privacy-btn" onClick={() => handlePrivacyAction('Session Privacy')}>
+                    <button
+                      className="privacy-btn"
+                      onClick={() => handlePrivacyAction("Session Privacy")}
+                    >
                       Configure
                     </button>
                   </div>
@@ -934,7 +1034,12 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {!chatOpen && <ChatButton onClick={() => setChatOpen(true)} unreadCount={unreadCount} />}
+      {!chatOpen && (
+        <ChatButton
+          onClick={() => setChatOpen(true)}
+          unreadCount={unreadCount}
+        />
+      )}
 
       {chatOpen && (
         <ChatPopup
@@ -951,18 +1056,23 @@ export default function UserDashboard() {
 
       {isMobile && (
         <nav className="mobile-bottom-nav">
-          {bottomMenuItems.map(item => (
+          {bottomMenuItems.map((item) => (
             <button
               key={item.id}
-              className={`mobile-nav-btn ${active === item.id ? 'active' : ''}`}
+              className={`mobile-nav-btn ${active === item.id ? "active" : ""}`}
               onClick={() => handleMenuItemClick(item.id)}
             >
               <span className="nav-icon">{item.icon}</span>
               <span className="nav-label">{item.label}</span>
             </button>
           ))}
-          <button className="mobile-nav-btn more-btn" onClick={handleMoreModalToggle}>
-            <span className="nav-icon"><FaEllipsisH /></span>
+          <button
+            className="mobile-nav-btn more-btn"
+            onClick={handleMoreModalToggle}
+          >
+            <span className="nav-icon">
+              <FaEllipsisH />
+            </span>
             <span className="nav-label">More</span>
           </button>
         </nav>
@@ -970,7 +1080,10 @@ export default function UserDashboard() {
 
       {showMoreModal && (
         <div className="modal-overlay" onClick={handleCloseModal}>
-          <div className="modal-container more-modal" onClick={e => e.stopPropagation()}>
+          <div
+            className="modal-container more-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="modal-header">
               <h3 className="modal-title">Menu Options</h3>
               <button className="close-modal-btn" onClick={handleCloseModal}>
@@ -979,23 +1092,28 @@ export default function UserDashboard() {
             </div>
             <div className="modal-body">
               <div className="more-options-list">
-                {allMenuItems.map(item => (
+                {allMenuItems.map((item) => (
                   <button
                     key={item.id}
-                    className={`more-option-item ${active === item.id ? 'active' : ''}`}
+                    className={`more-option-item ${active === item.id ? "active" : ""}`}
                     onClick={() => handleMenuItemClick(item.id)}
                   >
                     <span className="more-option-icon">{item.icon}</span>
                     <span className="more-option-text">{item.label}</span>
-                    <span className="more-option-arrow"><FaArrowRight /></span>
+                    <span className="more-option-arrow">
+                      <FaArrowRight />
+                    </span>
                   </button>
                 ))}
                 <div className="more-actions">
-                  <button className="more-action-btn logout-btn" onClick={() => {
-                    vibrate(30);
-                    setShowMoreModal(false);
-                    setShowLogoutConfirm(true);
-                  }}>
+                  <button
+                    className="more-action-btn logout-btn"
+                    onClick={() => {
+                      vibrate(30);
+                      setShowMoreModal(false);
+                      setShowLogoutConfirm(true);
+                    }}
+                  >
                     <FaSignOutAlt className="action-icon" />
                     <span>Logout</span>
                   </button>
@@ -1007,8 +1125,11 @@ export default function UserDashboard() {
       )}
 
       {showLogoutConfirm && (
-        <div className="modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
-          <div className="modal-container" onClick={e => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Confirm Logout</h3>
             </div>
@@ -1016,31 +1137,51 @@ export default function UserDashboard() {
               <p>Are you sure you want to logout?</p>
             </div>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => {
-                vibrate(20);
-                setShowLogoutConfirm(false);
-              }}>Cancel</button>
-              <button className="btn-danger" onClick={handleLogout}>Logout</button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  vibrate(20);
+                  setShowLogoutConfirm(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button className="btn-danger" onClick={handleLogout}>
+                Logout
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {showDeleteConfirm && (
-        <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
-          <div className="modal-container" onClick={e => e.stopPropagation()}>
+        <div
+          className="modal-overlay"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">Delete Account</h3>
             </div>
             <div className="modal-body">
-              <p>This action cannot be undone. All your data will be permanently deleted.</p>
+              <p>
+                This action cannot be undone. All your data will be permanently
+                deleted.
+              </p>
             </div>
             <div className="modal-footer">
-              <button className="btn-secondary" onClick={() => {
-                vibrate(20);
-                setShowDeleteConfirm(false);
-              }}>Cancel</button>
-              <button className="btn-danger" onClick={handleDeleteConfirm}>Delete Account</button>
+              <button
+                className="btn-secondary"
+                onClick={() => {
+                  vibrate(20);
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button className="btn-danger" onClick={handleDeleteConfirm}>
+                Delete Account
+              </button>
             </div>
           </div>
         </div>
