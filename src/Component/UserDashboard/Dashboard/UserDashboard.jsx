@@ -42,97 +42,114 @@ import BookAppointment from '../Tab/Appointment/BookAppointment';
 import LiveChatSupport from '../Tab/Appointment/BookAppointment';
 import axios from 'axios';
 import CounselorTable from '../Tab/Counselor/CounselorDirectory';
-import VideoCallModal from '../Tab/CallModal/VideoCallModal';
 
-
-// Incoming Call Modal Component (First Modal - Accept/Reject)
-const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onReject }) => {
+// Voice/Video Call Modal Component
+const CallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAcceptCall, onRejectCall }) => {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
-  if (!isOpen) return null;
-
-  const getDisplayName = () => {
-    if (callData?.from?.fullName) {
-      return callData.from.fullName;
+  const handleAccept = async () => {
+    if (isAccepting) return;
+    
+    setIsAccepting(true);
+    
+    if (onAcceptCall && callData) {
+      try {
+        await onAcceptCall(callData.callId);
+        // Close modal immediately after accepting
+        onClose();
+      } catch (error) {
+        console.error('Error accepting call:', error);
+      } finally {
+        setIsAccepting(false);
+      }
+    } else {
+      onClose();
+      setIsAccepting(false);
     }
-    if (callData?.from?.displayName) {
-      return callData.from.displayName;
-    }
-    if (callerName) {
-      return callerName;
-    }
-    return "Counselor";
   };
 
+  const handleReject = async () => {
+    if (isRejecting) return;
+    
+    setIsRejecting(true);
+    
+    if (onRejectCall && callData) {
+      try {
+        await onRejectCall(callData.callId);
+        // Close modal immediately after rejecting
+        onClose();
+      } catch (error) {
+        console.error('Error rejecting call:', error);
+      } finally {
+        setIsRejecting(false);
+      }
+    } else {
+      onClose();
+      setIsRejecting(false);
+    }
+  };
+
+  if (!isOpen) return null;
+
+  // Get the full name from the call data - prioritizing fullName
+  const displayName = callData?.from?.fullName || callData?.from?.displayName || callerName || "Counselor";
+  const profilePhoto = callData?.from?.profilePhoto || callerImage;
+  
+  // Format the time
   const formatRequestTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const handleAccept = async () => {
-    setIsAccepting(true);
-    if (onAccept) {
-      await onAccept(callData);
-    }
-    setIsAccepting(false);
-    onClose();
-  };
-
-  const handleReject = async () => {
-    setIsRejecting(true);
-    if (onReject) {
-      await onReject(callData?.callId);
-    }
-    setIsRejecting(false);
-    onClose();
-  };
-
   const requestedTime = callData?.requestedAt ? formatRequestTime(callData.requestedAt) : '';
-  const requestMessage = callData?.requestMessage || `Incoming ${callType === 'video' ? 'Video' : 'Voice'} call...`;
 
   return (
-    <div className="incoming-call-modal-overlay">
-      <div className="incoming-call-modal">
-        <div className="incoming-call-header">
-          <div className="incoming-call-avatar">
-            {callerImage ? (
-              <img src={callerImage} alt={getDisplayName()} />
-            ) : (
-              <FaUserCircle size={60} />
-            )}
-          </div>
-          <h3 className="incoming-caller-name">{getDisplayName()}</h3>
-          <p className="incoming-call-type">
-            {callType === 'video' ? '📹 Video Call' : '📞 Voice Call'}
-          </p>
-          {requestedTime && (
-            <p className="incoming-call-time">
-              Received at {requestedTime}
+    <div className="call-modal-overlay">
+      <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`}>
+        <div className="call-modal-content">
+          <div className="caller-info">
+            <div className="caller-avatar">
+              {profilePhoto ? (
+                <img src={profilePhoto} alt={displayName} />
+              ) : (
+                <FaUserCircle />
+              )}
+            </div>
+            <h3 className="caller-name">{displayName}</h3>
+            <p className="call-type">
+              {callType === 'video' ? '📹 Video Call' : '📞 Voice Call'}
             </p>
-          )}
-          <p className="incoming-call-message">{requestMessage}</p>
-          <p className="incoming-call-status">Incoming call...</p>
-        </div>
+            {requestedTime && (
+              <p className="call-time">
+                Received at {requestedTime}
+              </p>
+            )}
+            <p className="call-message">
+              {callData?.requestMessage || `Incoming ${callType} call...`}
+            </p>
+          </div>
 
-        <div className="incoming-call-actions">
-          <button 
-            className="incoming-call-btn reject-btn"
-            onClick={handleReject}
-            disabled={isRejecting}
-          >
-            {isRejecting ? <FaSpinner className="spinning" /> : <FaPhoneSlash />}
-            <span>Decline</span>
-          </button>
-          <button 
-            className="incoming-call-btn accept-btn"
-            onClick={handleAccept}
-            disabled={isAccepting}
-          >
-            {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
-            <span>Accept</span>
-          </button>
+          <div className="call-controls">
+            <button 
+              className="call-btn reject-btn" 
+              onClick={handleReject} 
+              disabled={isRejecting}
+            >
+              {isRejecting ? <FaSpinner className="spinning" /> : <FaPhoneSlash />}
+              <span>{isRejecting ? 'Rejecting...' : 'Decline'}</span>
+            </button>
+            
+            <button 
+              className="call-btn accept-btn" 
+              onClick={handleAccept} 
+              disabled={isAccepting}
+            >
+              {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
+              <span>{isAccepting ? 'Accepting...' : 'Accept'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -240,7 +257,7 @@ export default function UserDashboard() {
   const [showMoreModal, setShowMoreModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(1);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  
+
   // Call Modal States
   const [showCallModal, setShowCallModal] = useState(false);
   const [callType, setCallType] = useState('video');
@@ -254,13 +271,13 @@ export default function UserDashboard() {
     waitingDuration: 0,
     onEndCall: null
   });
-  
+
   const [waitingCalls, setWaitingCalls] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [isPolling, setIsPolling] = useState(true);
 
   const userId = localStorage.getItem("userId");
-  
+
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
   const vibrate = useVibration();
@@ -289,94 +306,65 @@ export default function UserDashboard() {
     try {
       const token = localStorage.getItem('token');
       const acceptorId = localStorage.getItem('userId');
-      
+
       const requestBody = {
         acceptorId: acceptorId,
         acceptorType: 'user'
       };
-      
+
       console.log('Accepting call with body:', requestBody);
-      
-      const response = await axios.put(`${API_BASE_URL}/calls/${callId}/accept`, requestBody, {
+
+      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       console.log('Accept call response:', response.data);
-      
+
       if (response.data && response.data.success) {
-        return { success: true, data: response.data };
+        return response.data;
       }
-      return { success: false, data: response.data };
+      return null;
     } catch (error) {
       console.error('Error accepting call:', error);
-      return { success: false, error: error.message };
+      return null;
     }
   };
 
   // Join Call API (POST)
-  const joinCall = async (callId) => {
-    try {
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
-
-      const requestBody = {
-        userId: userId,
-        userType: 'user'
-      };
-
-      console.log('Joining call with body:', requestBody);
-
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, requestBody, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log('Join call response:', response.data);
-
-      if (response.data && response.data.success) {
-        return { success: true, data: response.data };
-      }
-      return { success: false, data: response.data };
-    } catch (error) {
-      console.error('Error joining call:', error);
-      return { success: false, error: error.message };
-    }
-  };
+ 
 
   // End Call API (PUT)
   const endCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
       const userId = localStorage.getItem('userId');
-      
+
       const requestBody = {
         userId: userId,
         endedBy: 'user'
       };
-      
+
       console.log('Ending call with body:', requestBody);
-      
+
       const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, requestBody, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
-      
+
       console.log('End call response:', response.data);
-      
+
       if (response.data && response.data.success) {
-        return { success: true, data: response.data };
+        return response.data;
       }
-      return { success: false };
+      return null;
     } catch (error) {
       console.error('Error ending call:', error);
-      return { success: false, error: error.message };
+      return null;
     }
   };
 
@@ -384,134 +372,110 @@ export default function UserDashboard() {
   const rejectCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
-      
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/reject/${callId}`, {}, {
+
+      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       console.log('Reject call response:', response.data);
-      return { success: response.data?.success || false };
+      return response.data?.success || false;
     } catch (error) {
       console.error('Error rejecting call:', error);
-      return { success: false, error: error.message };
+      return false;
     }
-  };
-
-  // Handle Accept from Incoming Modal
-  const handleAcceptIncomingCall = async (callData) => {
-    console.log('Accepting call:', callData);
-    
-    // First, accept the call via API
-    const result = await acceptCall(callData.callId);
-    
-    if (result && result.success) {
-      console.log('Call accepted successfully');
-      
-      // Prepare data for video call modal
-      const videoCallData = {
-        callId: callData.callId,
-        roomId: callData.roomId,
-        name: callData.name,
-        isIncoming: true,
-        status: 'connected',
-        callType: callData.callType || 'video',
-        from: callData.from,
-        initiator: callData.initiator
-      };
-      
-      setSelectedCall(videoCallData);
-      setIsVideoModalOpen(true);
-    } else {
-      console.error('Failed to accept call');
-      alert('Failed to accept call. Please try again.');
-    }
-  };
-
-  // Handle Reject from Incoming Modal
-  const handleRejectIncomingCall = async (callId) => {
-    console.log('Rejecting call:', callId);
-    await rejectCall(callId);
   };
 
   // Fetch waiting calls from API
   const fetchWaitingCalls = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
+  try {
+    const token = localStorage.getItem('token');
+    const userId = localStorage.getItem('userId');
 
-      if (!userId || !token) {
-        console.log('No userId or token found');
-        return;
-      }
-
-      const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${userId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      console.log('Waiting calls response:', response.data);
-
-      const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
-
-      if (response.data && response.data.success && callsList && callsList.length > 0) {
-        setWaitingCalls(callsList);
-
-        const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
-
-        // Show incoming call modal if not already showing
-        if (waitingCall && !showIncomingCallModal && !isVideoModalOpen) {
-          const fromData = waitingCall.from || waitingCall.initiator || {};
-          
-          // Determine the display name
-          let displayName = 'Counselor';
-          if (fromData.fullName) {
-            displayName = fromData.fullName;
-          } else if (fromData.displayName) {
-            displayName = fromData.displayName;
-          } else if (fromData.name) {
-            displayName = fromData.name;
-          }
-
-          // Get profile photo
-          const profilePhoto = fromData.profilePhoto || waitingCall.fromProfilePhoto || null;
-
-          setIncomingCallData({
-            callId: waitingCall.callId || waitingCall.id || waitingCall._id,
-            roomId: waitingCall.roomId,
-            name: displayName,
-            image: profilePhoto,
-            callType: waitingCall.callType || 'video',
-            from: fromData,
-            initiator: waitingCall.initiator,
-            requestMessage: waitingCall.requestMessage || `Incoming ${waitingCall.callType || 'video'} call...`,
-            requestedAt: waitingCall.requestedAt || waitingCall.createdAt
-          });
-          
-          setShowIncomingCallModal(true);
-          vibrate([200, 100, 200]);
-        }
-      } else {
-        setWaitingCalls([]);
-      }
-    } catch (error) {
-      console.error('Error fetching waiting calls:', error);
+    if (!userId || !token) {
+      console.log('No userId or token found');
+      return;
     }
-  };
 
-  // Start polling for waiting calls
+    const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    console.log('Waiting calls response:', response.data);
+
+    const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
+
+    if (response.data && response.data.success && callsList && callsList.length > 0) {
+      setWaitingCalls(callsList);
+
+      // Use the first call if status property is not strictly defined, or find one that is waiting/ringing
+      const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
+
+      if (waitingCall && !showCallModal) {
+        const callTypeValue = waitingCall.callType || 'video';
+        setCallType(callTypeValue);
+
+        const fromData = waitingCall.from || waitingCall.initiator || {};
+        
+        // Extract full name properly - prioritize fullName, then displayName, then name
+        const callerFullName = fromData.fullName || fromData.displayName || fromData.name || waitingCall.fromName || 'Counselor';
+        
+        // Get profile photo
+        const profilePhoto = fromData.profilePhoto || waitingCall.fromProfilePhoto || null;
+        
+        // Get call ID and room ID
+        const callId = waitingCall.callId || waitingCall.id || waitingCall._id;
+        const roomId = waitingCall.roomId;
+        
+        // Get request message
+        const requestMessage = waitingCall.requestMessage || `Incoming ${callTypeValue} call...`;
+        
+        // Get requested time
+        const requestedAt = waitingCall.requestedAt || waitingCall.createdAt;
+
+        setCallerInfo({
+          name: callerFullName,
+          image: profilePhoto,
+          userId: fromData.id || fromData._id || waitingCall.fromId,
+          userName: callerFullName,
+          callId: callId,
+          roomId: roomId,
+          waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
+          onEndCall: endCall,
+          from: fromData, // Store the full from object
+          requestMessage: requestMessage,
+          requestedAt: requestedAt,
+          callType: callTypeValue
+        });
+
+        setShowCallModal(true);
+        
+        // Vibrate for incoming call (if supported)
+        if (window.navigator && window.navigator.vibrate) {
+          window.navigator.vibrate([200, 100, 200]);
+        }
+      }
+    } else {
+      setWaitingCalls([]);
+    }
+  } catch (error) {
+    console.error('Error fetching waiting calls:', error);
+  }
+};
+
   useEffect(() => {
-    if (isPolling && !showIncomingCallModal && !isVideoModalOpen) {
+    if (isPolling && !showCallModal) {
       fetchWaitingCalls();
-      
+
       const interval = setInterval(() => {
         fetchWaitingCalls();
       }, 5000);
-      
+
       setPollingInterval(interval);
-      
+
       return () => {
         if (interval) {
           clearInterval(interval);
@@ -521,11 +485,10 @@ export default function UserDashboard() {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-  }, [isPolling, showIncomingCallModal, isVideoModalOpen]);
+  }, [isPolling, showCallModal]);
 
-  // Stop polling when modals are open
   useEffect(() => {
-    if (showIncomingCallModal || isVideoModalOpen) {
+    if (showCallModal) {
       setIsPolling(false);
       if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -534,50 +497,7 @@ export default function UserDashboard() {
     } else {
       setIsPolling(true);
     }
-  }, [showIncomingCallModal, isVideoModalOpen]);
-
-  // Handle Join Call (for VideoCallModal)
-  const handleJoinCall = async (callId) => {
-    try {
-      const result = await joinCall(callId);
-      if (result && result.success) {
-        console.log('Call joined successfully', result);
-        return { success: true, data: result.data };
-      }
-      return { success: false, error: 'Join failed' };
-    } catch (error) {
-      console.error('Error in join call:', error);
-      return { success: false, error: error.message };
-    }
-  };
-
-  // Handle End Call (for VideoCallModal)
-  const handleEndCall = async (callId) => {
-    try {
-      const result = await endCall(callId);
-      console.log('Call ended successfully', result);
-      return result;
-    } catch (error) {
-      console.error('Error in end call:', error);
-      return { success: false, error: error.message };
-    }
-  };
-
-  // Handle close video modal
-  const handleCloseVideoModal = () => {
-    setIsVideoModalOpen(false);
-    setSelectedCall(null);
-    // Resume polling after modal closes
-    setIsPolling(true);
-  };
-
-  // Handle close incoming call modal
-  const handleCloseIncomingModal = () => {
-    setShowIncomingCallModal(false);
-    setIncomingCallData(null);
-    // Resume polling after modal closes
-    setIsPolling(true);
-  };
+  }, [showCallModal]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -703,6 +623,39 @@ export default function UserDashboard() {
     }
   };
 
+  const handleAcceptCall = async (callId) => {
+    try {
+      const result = await acceptCall(callId);
+      if (result) {
+        console.log('Call accepted successfully', result);
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error in accept call:', error);
+      return null;
+    }
+  };
+
+ 
+
+  const handleRejectCall = async (callId) => {
+    try {
+      await rejectCall(callId);
+      console.log('Call rejected successfully');
+    } catch (error) {
+      console.error('Error in reject call:', error);
+    }
+  };
+
+  const handleAcceptCallModal = () => {
+    console.log('Call accepted');
+  };
+
+  const handleEndCall = () => {
+    console.log('Call ended');
+  };
+
   const handleLogout = async () => {
     try {
       const accessToken = localStorage.getItem("accessToken");
@@ -783,26 +736,30 @@ export default function UserDashboard() {
 
   return (
     <div className="user-dashboard">
-      {/* Incoming Call Modal (First Modal - Accept/Reject) */}
-      <IncomingCallModal
-        isOpen={showIncomingCallModal}
-        onClose={handleCloseIncomingModal}
-        callType={incomingCallData?.callType || 'video'}
-        callerName={incomingCallData?.name}
-        callerImage={incomingCallData?.image}
-        callData={incomingCallData}
-        onAccept={handleAcceptIncomingCall}
-        onReject={handleRejectIncomingCall}
-      />
-
-      {/* Video Call Modal (Second Modal - After Accept) */}
-      <VideoCallModal
-        isOpen={isVideoModalOpen}
-        onClose={handleCloseVideoModal}
-        callData={selectedCall}
-        userRole="user"
-        onJoinCall={handleJoinCall}
-        onEndCall={handleEndCall}
+      <CallModal
+        isOpen={showCallModal}
+        onClose={() => {
+          setShowCallModal(false);
+          setCallerInfo({
+            name: '',
+            image: null,
+            userId: '',
+            userName: '',
+            callId: '',
+            roomId: '',
+            waitingDuration: 0,
+            onEndCall: null
+          });
+        }}
+        callType={callType}
+        callerName={callerInfo.userName || callerInfo.name}
+        callerImage={callerInfo.image}
+        callData={callerInfo}
+        onAccept={handleAcceptCallModal}
+        onEnd={handleEndCall}
+        onAcceptCall={handleAcceptCall}
+        onRejectCall={handleRejectCall}
+        
       />
 
       {isMobile && (
@@ -811,14 +768,14 @@ export default function UserDashboard() {
             <h2 className="mobile-logo">MChat</h2>
           </div>
           <div className="mobile-header-right">
-            <button 
+            <button
               className="mobile-profile-btn"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
             >
               {userData.profilePhoto ? (
-                <img 
-                  src={userData.profilePhoto} 
-                  alt={userData.name} 
+                <img
+                  src={userData.profilePhoto}
+                  alt={userData.name}
                   className="mobile-user-avatar"
                   onError={(e) => {
                     e.target.onerror = null;
@@ -830,14 +787,14 @@ export default function UserDashboard() {
                 <FaUserCircle className="mobile-user-icon" />
               )}
             </button>
-            
+
             {showProfileMenu && (
               <div className="profile-dropdown-menu">
                 <div className="profile-dropdown-header">
                   {userData.profilePhoto ? (
-                    <img 
-                      src={userData.profilePhoto} 
-                      alt={userData.name} 
+                    <img
+                      src={userData.profilePhoto}
+                      alt={userData.name}
                       className="dropdown-avatar"
                     />
                   ) : (
@@ -872,8 +829,8 @@ export default function UserDashboard() {
                 <div className="profile-section">
                   <div className="profile-image">
                     {userData.profilePhoto ? (
-                      <img 
-                        src={userData.profilePhoto} 
+                      <img
+                        src={userData.profilePhoto}
                         alt={userData.name}
                         onError={(e) => {
                           e.target.onerror = null;

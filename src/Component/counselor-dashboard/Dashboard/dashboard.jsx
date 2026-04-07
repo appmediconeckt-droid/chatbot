@@ -72,118 +72,16 @@ const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage,
   };
 
   return (
-    <div className="call-modal-overlay" style={{ backgroundColor: 'rgba(0, 0, 0, 0.4)', backdropFilter: 'blur(4px)' }}>
-      <div className={`call-modal ${callType === 'video' ? 'video-call-modal' : 'voice-call-modal'}`} style={{ backgroundColor: 'rgba(245, 245, 245, 0.85)', backdropFilter: 'blur(12px)', boxShadow: '0 8px 32px rgba(0,0,0,0.1)', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '16px' }}>
-        {callType === 'video' && callStatus === 'connected' && (
-          <div className="video-background">
-            <div className="remote-video-placeholder">
-              {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
-                <div className="avatar-emoji-large">{callerImage}</div>
-              ) : callerImage ? (
-                <img src={callerImage} alt={getDisplayName()} />
-              ) : (
-                <FaUserCircle />
-              )}
-              <div className="video-loading">
-                <FaSpinner className="spinning" />
-                <span>Connecting video stream...</span>
-              </div>
-            </div>
-            <div className="couns-local-video-preview">
-              <div className="couns-local-video-placeholder">
-                <FaUserCircle />
-                <span>You</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div className="call-modal-content">
-          <div className="caller-info">
-            <div className="caller-avatar">
-              {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
-                <div className="avatar-emoji">{callerImage}</div>
-              ) : callerImage ? (
-                <img src={callerImage} alt={getDisplayName()} />
-              ) : (
-                <FaUserCircle />
-              )}
-            </div>
-            <h3 className="caller-name">{getDisplayName()}</h3>
-            {callData && callStatus !== 'ended' && (
-              <>
-                <p className="couns-caller-user-id">Call ID: {callData.callId?.substring(0, 8)}...</p>
-                <p className="couns-caller-user-id">Room ID: {callData.roomId?.substring(0, 8)}...</p>
-              </>
-            )}
-            <p className="couns-call-status-text">
-              {callStatus === 'incoming' && `${callType === 'video' ? 'Video' : 'Voice'} call incoming...`}
-              {callStatus === 'connecting' && 'Connecting...'}
-              {callStatus === 'connected' && `Call in progress • ${formatDuration(callDuration)}`}
-              {callStatus === 'ended' && 'Call ended'}
-            </p>
-          </div>
-
-          <div className="couns-call-controls">
-            {callStatus === 'incoming' && (
-              <>
-                <button
-                  className="call-btn accept-btn"
-                  onClick={handleAccept}
-                  disabled={isAccepting}
-                >
-                  {isAccepting ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
-                  <span>{isAccepting ? 'Accepting...' : 'Accept'}</span>
-                </button>
-
-                <button
-                  className="call-btn reject-btn"
-                  onClick={handleReject}
-                  disabled={isRejecting}
-                >
-                  {isRejecting ? <FaSpinner className="spinning" /> : <FaPhoneSlash />}
-                  <span>{isRejecting ? 'Rejecting...' : 'Decline'}</span>
-                </button>
-              </>
-            )}
-
-            {callStatus === 'connecting' && (
-              <div className="couns-connecting-animation">
-                <div className="couns-connecting-dots">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-                <p>Establishing secure connection...</p>
-              </div>
-            )}
-
-            {callStatus === 'connected' && (
-              <>
-                {callType === 'video' && (
-                  <>
-                    <button className="couns-call-btn couns-icon-btn" onClick={() => {}}>
-                      <FaMicrophone />
-                      <span>Mute</span>
-                    </button>
-                    <button className="couns-call-btn couns-icon-btn" onClick={() => {}}>
-                      <FaVideoIcon />
-                      <span>Camera</span>
-                    </button>
-                  </>
-                )}
-                <button className="couns-call-btn couns-end-call-btn" onClick={handleEnd}>
-                  <FaPhoneSlash />
-                  <span>End Call</span>
-                </button>
-              </>
-            )}
-
-            {callStatus === 'ended' && (
-              <button className="couns-call-btn couns-close-btn" onClick={onClose}>
-                <FaTimes />
-                <span>Close</span>
-              </button>
+    <div className="incoming-call-modal-overlay">
+      <div className="incoming-call-modal">
+        <div className="incoming-call-header">
+          <div className="incoming-call-avatar">
+            {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
+              <div className="avatar-emoji-large">{callerImage}</div>
+            ) : callerImage ? (
+              <img src={callerImage} alt={getDisplayName()} />
+            ) : (
+              <FaUserCircle size={60} />
             )}
           </div>
           <h3 className="incoming-caller-name">{getDisplayName()}</h3>
