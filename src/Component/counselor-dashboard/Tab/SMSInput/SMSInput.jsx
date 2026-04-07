@@ -152,47 +152,36 @@ const SMSInput = () => {
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
 
-  // Get current counselor from localStorage - FIXED: Properly extract ID
-  // SMSInput.js - Replace the getCurrentCounselor function with this:
-
   const getCurrentCounselor = () => {
-    // Try multiple sources to get counselor data
     let counselorData = null;
 
-    // 1. Check localStorage
     const storedCounselor = localStorage.getItem('counselor');
     if (storedCounselor) {
       try {
         counselorData = JSON.parse(storedCounselor);
-        console.log('Counselor from localStorage:', counselorData);
       } catch (e) {
         console.error('Error parsing counselor from localStorage:', e);
       }
     }
 
-    // 2. Check sessionStorage if not found
     if (!counselorData) {
       const sessionCounselor = sessionStorage.getItem('counselor');
       if (sessionCounselor) {
         try {
           counselorData = JSON.parse(sessionCounselor);
-          console.log('Counselor from sessionStorage:', counselorData);
         } catch (e) {
           console.error('Error parsing counselor from sessionStorage:', e);
         }
       }
     }
 
-    // 3. Check if user is stored instead (some apps store under 'user')
     if (!counselorData) {
       const userData = localStorage.getItem('user');
       if (userData) {
         try {
           const user = JSON.parse(userData);
-          // Check if this user is actually a counselor
           if (user.role === 'counselor' || user.role === 'counsellor' || user.userType === 'counselor') {
             counselorData = user;
-            console.log('Counselor found in user data:', counselorData);
           }
         } catch (e) {
           console.error('Error parsing user data:', e);
@@ -203,24 +192,19 @@ const SMSInput = () => {
     return counselorData;
   };
 
-  // Replace getCounselorId function with this:
   const getCounselorId = () => {
-    // Priority 1: From currentCounselor object
     if (currentCounselor) {
       if (currentCounselor._id) return currentCounselor._id;
       if (currentCounselor.id) return currentCounselor.id;
       if (currentCounselor.counselorId) return currentCounselor.counselorId;
     }
 
-    // Priority 2: From localStorage directly
     const storedId = localStorage.getItem('counselorId');
     if (storedId) return storedId;
 
-    // Priority 3: From sessionStorage
     const sessionId = sessionStorage.getItem('counselorId');
     if (sessionId) return sessionId;
 
-    // Priority 4: From user object if counselor role
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
@@ -231,64 +215,13 @@ const SMSInput = () => {
       } catch (e) { }
     }
 
-    // Priority 5: Hardcoded for testing (remove in production)
-    console.warn('No counselor ID found, using default');
-    return '69c679b6e0e8f0800ff08fd1'; // Your test counselor ID
+    return null;
   };
 
   const currentCounselor = getCurrentCounselor();
-
-  // FIXED: Properly extract IDs with priority
-
-  const getCounselorName = () => {
-    if (currentCounselor) {
-      if (currentCounselor.name) return currentCounselor.name;
-      if (currentCounselor.fullName) return currentCounselor.fullName;
-    }
-    const storedName = localStorage.getItem('counselorName');
-    if (storedName) return storedName;
-    return 'Counselor';
-  };
-
   const COUNSELOR_ID = getCounselorId();
-  const COUNSELOR_NAME = getCounselorName();
+  const COUNSELOR_NAME = currentCounselor?.name || currentCounselor?.fullName || 'Counselor';
 
-  // const extractUserIds = (selectedUser, chatId) => {
-  //   const userIds = [];
-
-  //   // Check selectedUser object
-  //   if (selectedUser) {
-  //     if (selectedUser._id) userIds.push(selectedUser._id);
-  //     if (selectedUser.id) userIds.push(selectedUser.id);
-  //     if (selectedUser.userId) userIds.push(selectedUser.userId);
-  //     if (selectedUser.user_id) userIds.push(selectedUser.user_id);
-  //     if (selectedUser.user?._id) userIds.push(selectedUser.user._id);
-  //     if (selectedUser.user?.id) userIds.push(selectedUser.user.id);
-  //     if (selectedUser.user?.userId) userIds.push(selectedUser.user.userId);
-  //     if (selectedUser.user?.user_id) userIds.push(selectedUser.user.user_id);
-  //     if (selectedUser.otherParty?._id) userIds.push(selectedUser.otherParty._id);
-  //     if (selectedUser.otherParty?.id) userIds.push(selectedUser.otherParty.id);
-  //     if (selectedUser.otherParty?.userId) userIds.push(selectedUser.otherParty.userId);
-  //     if (selectedUser.otherParty?.user_id) userIds.push(selectedUser.otherParty.user_id);
-  //   }
-
-  //   // Check chatId
-  //   if (chatId && typeof chatId === 'string') {
-  //     const parts = chatId.split('_');
-  //     if (parts.length >= 2 && parts[1] && parts[1].length > 5) {
-  //       userIds.push(parts[1]);
-  //     }
-
-  //     const match = chatId.match(/^([a-f0-9]+)_/i);
-  //     if (match && match[1]) {
-  //       userIds.push(match[1]);
-  //     }
-  //   }
-
-  //   return [...new Set(userIds)];
-  // };
-
-  // FIXED: Properly extract user ID
   const getSelectedUserId = () => {
     if (!selectedUser) return null;
 
@@ -306,9 +239,6 @@ const SMSInput = () => {
       selectedUser.otherParty?.id ||
       selectedUser.otherParty?.userId ||
       selectedUser.otherParty?.user_id ||
-      extractUserIds(selectedUser, chatId)[0] ||
-      localStorage.getItem('currentUserId') ||
-      sessionStorage.getItem('currentUserId') ||
       null
     );
   };
@@ -328,16 +258,12 @@ const SMSInput = () => {
   const USER_ID = userDetails.id;
   const USER_NAME = userDetails.name;
 
-  console.log('SMSInput - IDs:', { COUNSELOR_ID, USER_ID, COUNSELOR_NAME, USER_NAME });
-
-  // Function to get avatar based on gender (emoji only)
   const getAvatarByGender = (gender) => {
     if (gender === 'male') return '👨';
     if (gender === 'female') return '👩';
     return '👤';
   };
 
-  // Get the chat ID for API calls
   const getChatIdForAPI = () => {
     if (chatId) return chatId;
     if (selectedUser && USER_ID) {
@@ -346,7 +272,6 @@ const SMSInput = () => {
     return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  // Fetch messages from API
   const fetchMessagesFromAPI = async () => {
     if (!selectedUser) return;
 
@@ -363,8 +288,6 @@ const SMSInput = () => {
           'Authorization': token ? `Bearer ${token}` : ''
         }
       });
-
-      console.log('GET API Response:', response.data);
 
       if (response.data && response.data.messages) {
         if (response.data.chatStatus) {
@@ -386,8 +309,6 @@ const SMSInput = () => {
 
         setMessages(transformedMessages);
         saveMessagesToLocalStorage(transformedMessages);
-
-        return transformedMessages;
       }
     } catch (error) {
       console.error('Error fetching messages from API:', error);
@@ -397,7 +318,6 @@ const SMSInput = () => {
     }
   };
 
-  // Save messages to localStorage
   const saveMessagesToLocalStorage = (messagesToSave) => {
     try {
       const savedChats = JSON.parse(localStorage.getItem('smsChats') || '[]');
@@ -425,7 +345,6 @@ const SMSInput = () => {
     }
   };
 
-  // Load messages from localStorage
   const loadMessagesFromLocalStorage = () => {
     try {
       const savedChats = JSON.parse(localStorage.getItem('smsChats') || '[]');
@@ -443,7 +362,6 @@ const SMSInput = () => {
     }
   };
 
-  // Send message to API (POST)
   const sendMessageToAPI = async (messageContent) => {
     try {
       const apiChatId = getChatIdForAPI();
@@ -460,8 +378,6 @@ const SMSInput = () => {
         }
       });
 
-      console.log('POST API Response:', response.data);
-
       if (response.data && response.data.success) {
         await fetchMessagesFromAPI();
         return response.data.message;
@@ -474,7 +390,6 @@ const SMSInput = () => {
     }
   };
 
-  // Handle sending a new message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!message.trim() || !selectedUser || isSending) return;
@@ -519,10 +434,7 @@ const SMSInput = () => {
     }
   };
 
-  // FIXED: Initialize video call with API (Counselor as initiator)
-  // SMSInput.js - Replace the initiateVideoCall and initiateVoiceCall functions
-
-  // FIXED: Initialize video call with proper user ID validation
+  // FIXED: Initialize video call with proper flow
   const initiateVideoCall = async () => {
     console.log('Counselor: initiateVideoCall called');
     console.log('Selected User:', selectedUser);
@@ -533,7 +445,6 @@ const SMSInput = () => {
       return;
     }
 
-    // Get counselor ID
     const counselorId = getCounselorId();
     if (!counselorId) {
       console.error('No counselor ID found');
@@ -542,9 +453,6 @@ const SMSInput = () => {
     }
 
     const userId = getSelectedUserId();
-
-    console.log('Extracted User ID:', userId);
-    console.log('Counselor ID:', counselorId);
 
     if (!userId) {
       console.error('No user ID found');
@@ -561,12 +469,12 @@ const SMSInput = () => {
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      console.log("SELECTED USER:", selectedUser);
+
       const requestBody = {
         initiatorId: counselorId,
-        initiatorType: 'counsellor',   // ✅ correct
+        initiatorType: 'counsellor',
         receiverId: userId,
-        receiverType: 'user',          // ✅ correct
+        receiverType: 'user',
         callType: "video"
       };
 
@@ -595,7 +503,8 @@ const SMSInput = () => {
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           apiCallData: response.data.callData,
           initiator: response.data.callData?.initiator,
-          receiver: response.data.callData?.receiver
+          receiver: response.data.callData?.receiver,
+          isInitiator: true
         };
 
         setSelectedCall(callData);
@@ -621,7 +530,7 @@ const SMSInput = () => {
     }
   };
 
-  // FIXED: Initialize voice call with proper user ID validation
+  // FIXED: Initialize voice call with proper flow
   const initiateVoiceCall = async () => {
     console.log('Counselor: initiateVoiceCall called');
 
@@ -640,8 +549,6 @@ const SMSInput = () => {
 
     const userId = getSelectedUserId();
 
-    console.log('Extracted User ID for voice call:', userId);
-
     if (!userId) {
       console.error('No user ID found');
       setCallError('User information not found');
@@ -657,7 +564,6 @@ const SMSInput = () => {
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      const counselorId = getCounselorId();
 
       const requestBody = {
         initiatorId: counselorId,
@@ -690,7 +596,8 @@ const SMSInput = () => {
           status: response.data.status || 'ringing',
           date: 'Today',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          apiCallData: response.data.callData
+          apiCallData: response.data.callData,
+          isInitiator: true
         };
 
         setSelectedCall(callData);
@@ -716,12 +623,9 @@ const SMSInput = () => {
     }
   };
 
-  // FIXED: Initialize voice call with API (Counselor as initiator)
-  // Add this function before the component
   const extractUserIds = (selectedUser, chatId) => {
     const userIds = [];
 
-    // Check selectedUser object
     if (selectedUser) {
       if (selectedUser._id) userIds.push(selectedUser._id);
       if (selectedUser.id) userIds.push(selectedUser.id);
@@ -737,38 +641,31 @@ const SMSInput = () => {
       if (selectedUser.otherParty?.user_id) userIds.push(selectedUser.otherParty.user_id);
     }
 
-    // Check chatId
     if (chatId && typeof chatId === 'string') {
-      // Try to extract from format: chat_USERID_COUNSELORID
       const parts = chatId.split('_');
       if (parts.length >= 2 && parts[1] && parts[1].length > 5) {
         userIds.push(parts[1]);
       }
 
-      // Try to extract from format: USERID_chat_COUNSELORID
       const match = chatId.match(/^([a-f0-9]+)_/i);
       if (match && match[1]) {
         userIds.push(match[1]);
       }
     }
 
-    // Remove duplicates
     return [...new Set(userIds)];
   };
 
-  // Handle video call
   const handleVideoCall = () => {
     console.log('Video call button clicked');
     initiateVideoCall();
   };
 
-  // Handle voice call
   const handleVoiceCall = () => {
     console.log('Voice call button clicked');
     initiateVoiceCall();
   };
 
-  // Shared Call API actions for Receiving
   const handleJoinIncomingCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
@@ -835,27 +732,7 @@ const SMSInput = () => {
     }
   };
 
-  const handleEndIncomingCall = async (callId) => {
-    try {
-      const token = localStorage.getItem('token');
-
-      await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, {
-        userId: COUNSELOR_ID,
-        endedBy: 'counsellor'
-      }, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      return true;
-    } catch (error) {
-      console.error('Error ending call:', error);
-      return false;
-    }
-  };
-
-  // Poll for waiting calls - FIXED: Use COUNSELOR_ID
+  // Poll for waiting calls
   useEffect(() => {
     let isMounted = true;
     let intervalId = null;
@@ -865,11 +742,8 @@ const SMSInput = () => {
         const token = localStorage.getItem('token');
 
         if (!COUNSELOR_ID || !token || showIncomingModal) {
-          console.log('Skipping poll - missing data:', { COUNSELOR_ID, hasToken: !!token, showIncomingModal });
           return;
         }
-
-        console.log('Polling for calls with counselor ID:', COUNSELOR_ID);
 
         const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${COUNSELOR_ID}`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -905,7 +779,6 @@ const SMSInput = () => {
             avatar: avatar,
             callType: waitingCall.callType || 'video',
             requestMessage: waitingCall.requestMessage || `Incoming ${waitingCall.callType || 'video'} call...`,
-            onEndCall: handleEndIncomingCall
           });
           setShowIncomingModal(true);
         }
@@ -921,7 +794,6 @@ const SMSInput = () => {
     };
   }, [showIncomingModal, COUNSELOR_ID]);
 
-  // Handle close modal
   const handleCloseModal = () => {
     console.log('Closing call modal');
     setIsVideoModalOpen(false);
@@ -934,50 +806,33 @@ const SMSInput = () => {
     navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
   };
 
-  // Get gender-based avatar icon
   const getAvatarIcon = (gender) => {
     if (gender === 'male') return '👨';
     if (gender === 'female') return '👩';
     return '👤';
   };
 
-  // Auto-scroll to bottom function
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  // Load messages when component mounts or selectedUser changes
   useEffect(() => {
     if (selectedUser && COUNSELOR_ID) {
       fetchMessagesFromAPI();
     }
   }, [selectedUser, chatId, COUNSELOR_ID]);
 
-  // Auto-refresh messages every 30 seconds
-  // Add this useEffect to debug user data
   useEffect(() => {
     if (selectedUser) {
       console.log('=== DEBUG: Selected User Data ===');
       console.log('Full selectedUser object:', selectedUser);
-      console.log('All keys in selectedUser:', Object.keys(selectedUser));
-      console.log('Possible ID fields:', {
-        _id: selectedUser._id,
-        id: selectedUser.id,
-        userId: selectedUser.userId,
-        user_id: selectedUser.user_id,
-        uid: selectedUser.uid
-      });
-      console.log('ChatId:', chatId);
-      console.log('===============================');
     }
   }, [selectedUser, chatId]);
 
-  // Clear call error after 5 seconds
   useEffect(() => {
     if (callError) {
       const timer = setTimeout(() => {
@@ -987,21 +842,11 @@ const SMSInput = () => {
     }
   }, [callError]);
 
-  // Render chat status banner
   const renderChatStatusBanner = () => {
     if (!chatStatus) return null;
-
-    let statusClass = '';
-    let statusText = '';
-
-    return (
-      <div className={`sms-chat-status-banner ${statusClass}`}>
-        {statusText}
-      </div>
-    );
+    return <div className={`sms-chat-status-banner`}></div>;
   };
 
-  // Render message status indicator
   const renderMessageStatus = (message) => {
     if (message.sender !== 'me') return null;
 
@@ -1034,7 +879,6 @@ const SMSInput = () => {
 
   return (
     <div className="smsinput-container">
-      {/* Header with Back Button and User Info */}
       <div className="smsinput-header">
         <div className="header-left">
           <button className="back-button" onClick={handleBack} title="Back to SMS List">
@@ -1058,7 +902,6 @@ const SMSInput = () => {
           </div>
         </div>
 
-        {/* Call buttons */}
         <div className="smsinput-call-buttons">
           <button
             className={`call-btn voice ${isInitiatingCall ? 'loading' : ''}`}
@@ -1083,7 +926,6 @@ const SMSInput = () => {
         </div>
       </div>
 
-      {/* Call Error Banner */}
       {callError && (
         <div className="sms-call-error-banner">
           <span className="error-icon">⚠️</span>
@@ -1092,10 +934,8 @@ const SMSInput = () => {
         </div>
       )}
 
-      {/* Chat Status Banner */}
       {renderChatStatusBanner()}
 
-      {/* Messages Display Area */}
       <div className="smsinput-messages" ref={messagesContainerRef}>
         {isLoadingMessages && messages.length === 0 ? (
           <div className="sms-loading-messages">
@@ -1135,7 +975,6 @@ const SMSInput = () => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input Form */}
       <form className="smsinput-form" onSubmit={handleSendMessage}>
         <div className="smsinput-input-wrapper">
           <button type="button" className="attach-btn" title="Attach file" disabled={isSending}>
@@ -1162,20 +1001,20 @@ const SMSInput = () => {
         </div>
       </form>
 
-      {/* Call Modals */}
       <VideoCallModal
         isOpen={isVideoModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        apiBaseUrl={API_BASE_URL}
       />
 
       <VoiceCallModal
         isOpen={isVoiceModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        apiBaseUrl={API_BASE_URL}
       />
 
-      {/* Professional Incoming Call Modal */}
       <IncomingCallModal
         isOpen={showIncomingModal}
         onClose={() => setShowIncomingModal(false)}
