@@ -195,7 +195,7 @@ const CounselorRequestChat = () => {
 const startChatAPI = async (counselorId, token) => {
   try {
     const response = await axios.post(
-      "https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/start",
+      `${API_BASE_URL}/api/chat/start`,
       {
         counselorId: counselorId,
       },
@@ -229,7 +229,7 @@ const sendChatRequest = async (e) => {
     }
 
     const res = await axios.post(
-      "https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/start",
+      `${API_BASE_URL}/api/chat/start`,
       {
         counselorId: counselorId,
       },

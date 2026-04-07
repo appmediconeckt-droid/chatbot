@@ -81,7 +81,7 @@
 // frontend/src/api/axiosConfig.js
 import axios from "axios";
 
-export const API_BASE_URL = "https://td6lmn5q-5000.inc1.devtunnels.ms";
+export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,

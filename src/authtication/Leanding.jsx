@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Leanding.css';
 import logo from '../image/Mediconect Logo-3.png';
+import { API_BASE_URL } from '../axiosConfig';
 
 const Leanding = () => {
   const [chatOpen, setChatOpen] = useState(false);
@@ -42,7 +43,7 @@ const Leanding = () => {
   const sendMessageToAPI = async (message) => {
     try {
       const response = await axios.post(
-        'https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat',
+        `${API_BASE_URL}/api/chat`,
         {
           message: message
         },
