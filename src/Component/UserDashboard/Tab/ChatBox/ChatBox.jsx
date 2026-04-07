@@ -1297,12 +1297,14 @@ const ChatBox = () => {
                 isOpen={isVideoModalOpen}
                 onClose={handleCloseModal}
                 callData={selectedCall}
+                currentUser={currentUser}
             />
 
             <VoiceCallModal
                 isOpen={isVoiceModalOpen}
                 onClose={handleCloseModal}
                 callData={selectedCall}
+                currentUser={currentUser}
             />
 
             {/* Professional Incoming Call Modal */}
