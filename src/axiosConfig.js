@@ -85,6 +85,13 @@ const normalizeBaseUrl = (url) => url?.trim().replace(/\/$/, "");
 const viteEnv =
   typeof import.meta !== "undefined" && import.meta.env ? import.meta.env : {};
 
+const getConfiguredEnvApiBaseUrl = () =>
+  normalizeBaseUrl(
+    viteEnv.VITE_API_BASE_URL ||
+      viteEnv.VITE_BACKEND_URL ||
+      viteEnv.VITE_API_URL,
+  );
+
 const isLocalhostHost = (hostname) =>
   hostname === "localhost" || hostname === "127.0.0.1";
 
@@ -97,9 +104,14 @@ const isLanLikeHost = (hostname) =>
   isPrivateIPv4Host(hostname) || /\.local$/i.test(hostname);
 
 const inferApiBaseUrl = () => {
-  const envBase = normalizeBaseUrl(viteEnv.VITE_API_BASE_URL);
+  const envBase = getConfiguredEnvApiBaseUrl();
 
-  if (typeof window === "undefined") return "http://localhost:5000";
+  if (typeof window === "undefined") {
+    return {
+      url: "http://localhost:5000",
+      source: "server-fallback",
+    };
+  }
 
   const { protocol, hostname } = window.location;
 
@@ -111,7 +123,10 @@ const inferApiBaseUrl = () => {
 
       // If env points to localhost but app runs on another device, ignore env override.
       if (!(envHostIsLocal && !clientIsLocal)) {
-        return envBase;
+        return {
+          url: envBase,
+          source: "env",
+        };
       }
     } catch {
       // Ignore malformed env URL and continue with inference.
@@ -119,23 +134,44 @@ const inferApiBaseUrl = () => {
   }
 
   if (isLocalhostHost(hostname)) {
-    return "http://localhost:5000";
+    return {
+      url: "http://localhost:5000",
+      source: "localhost-fallback",
+    };
   }
 
   const tunnelMatch = hostname.match(/^(.*)-\d+(\.inc\d+\.devtunnels\.ms)$/i);
   if (tunnelMatch) {
-    return `${protocol}//${tunnelMatch[1]}-5000${tunnelMatch[2]}`;
+    return {
+      url: `${protocol}//${tunnelMatch[1]}-5000${tunnelMatch[2]}`,
+      source: "devtunnel-fallback",
+    };
   }
 
   if (isLanLikeHost(hostname)) {
-    return `${protocol}//${hostname}:5000`;
+    return {
+      url: `${protocol}//${hostname}:5000`,
+      source: "lan-fallback",
+    };
   }
 
   // Fallback for deployed setups that reverse-proxy /api on same origin.
-  return window.location.origin;
+  return {
+    url: window.location.origin,
+    source: "origin-fallback",
+  };
 };
 
-export const API_BASE_URL = inferApiBaseUrl();
+const inferredApiBaseUrl = inferApiBaseUrl();
+
+export const API_BASE_URL = inferredApiBaseUrl.url;
+export const API_BASE_URL_SOURCE = inferredApiBaseUrl.source;
+
+if (viteEnv.DEV) {
+  console.info(
+    `[axiosConfig] API base URL (${API_BASE_URL_SOURCE}): ${API_BASE_URL}`,
+  );
+}
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
