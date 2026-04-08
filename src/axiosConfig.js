@@ -81,7 +81,7 @@
 // frontend/src/api/axiosConfig.js
 import axios from "axios";
 
-export const API_BASE_URL = "https://td6lmn5q-5000.inc1.devtunnels.ms";
+export const API_BASE_URL = "https://sq5gkv1z-5000.inc1.devtunnels.ms";
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
