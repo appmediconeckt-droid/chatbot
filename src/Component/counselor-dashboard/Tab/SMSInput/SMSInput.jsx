@@ -183,9 +183,9 @@ const SMSInput = () => {
       }
     }
 
-    // 3. Check if user is stored instead (some apps store under 'user')
+    // 3. Check if user is stored instead (some apps store under 'user' or 'userData')
     if (!counselorData) {
-      const userData = localStorage.getItem('user');
+      const userData = localStorage.getItem('user') || localStorage.getItem('userData');
       if (userData) {
         try {
           const user = JSON.parse(userData);
@@ -213,19 +213,19 @@ const SMSInput = () => {
     }
 
     // Priority 2: From localStorage directly
-    const storedId = localStorage.getItem('counselorId');
+    const storedId = localStorage.getItem('counselorId') || localStorage.getItem('counsellorId');
     if (storedId) return storedId;
 
     // Priority 3: From sessionStorage
-    const sessionId = sessionStorage.getItem('counselorId');
+    const sessionId = sessionStorage.getItem('counselorId') || sessionStorage.getItem('counsellorId');
     if (sessionId) return sessionId;
 
     // Priority 4: From user object if counselor role
-    const userData = localStorage.getItem('user');
+    const userData = localStorage.getItem('user') || localStorage.getItem('userData');
     if (userData) {
       try {
         const user = JSON.parse(userData);
-        if (user.role === 'counselor' || user.role === 'counsellor') {
+        if ((user.role === 'counselor' || user.role === 'counsellor') && (user._id || user.id)) {
           return user._id || user.id;
         }
       } catch (e) { }

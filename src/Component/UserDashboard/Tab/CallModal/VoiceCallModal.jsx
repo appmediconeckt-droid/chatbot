@@ -237,7 +237,8 @@ const VoiceCallModal = ({
   useEffect(() => {
     if (!isOpen || !callMetadata.callId) return;
 
-    const token = localStorage.getItem("token");
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
     const localUserId =
       currentUser?.id ||
       currentUser?._id ||
@@ -507,7 +508,10 @@ const VoiceCallModal = ({
     const localStream = await initializeAudio();
     if (!localStream) return;
 
-    const token = localStorage.getItem("token") || undefined;
+    const token =
+      localStorage.getItem("token") ||
+      localStorage.getItem("accessToken") ||
+      undefined;
 
     const socket = io(API_BASE_URL, {
       auth: token ? { token } : undefined,
@@ -523,6 +527,8 @@ const VoiceCallModal = ({
       peer.addTrack(track, localStream);
     });
 
+    let offerRetryTimer = null;
+
     const sendOffer = async () => {
       if (
         !peerConnectionRef.current ||
@@ -535,6 +541,12 @@ const VoiceCallModal = ({
         offerToReceiveAudio: true,
       });
       await peerConnectionRef.current.setLocalDescription(offer);
+
+      socket.emit("call-offer", {
+        callId,
+        offer,
+        to: remoteUserIdRef.current,
+      });
 
       socket.emit("offer", {
         callId,
@@ -549,6 +561,7 @@ const VoiceCallModal = ({
           callId,
           candidate: event.candidate,
           userId: localUserIdRef.current,
+          to: remoteUserIdRef.current,
         });
       }
     };
@@ -597,6 +610,20 @@ const VoiceCallModal = ({
 
       if (isLocalInitiator) {
         await sendOffer();
+
+        // Receiver may join after this point; retry offer briefly until connected.
+        offerRetryTimer = setInterval(async () => {
+          if (
+            !peerConnectionRef.current ||
+            peerConnectionRef.current.connectionState === "connected" ||
+            peerConnectionRef.current.currentRemoteDescription
+          ) {
+            clearInterval(offerRetryTimer);
+            offerRetryTimer = null;
+            return;
+          }
+          await sendOffer();
+        }, 2000);
       }
     });
 
@@ -606,7 +633,7 @@ const VoiceCallModal = ({
       await sendOffer();
     });
 
-    socket.on("offer", async ({ offer, userId, from }) => {
+    const onIncomingOffer = async ({ offer, userId, from }) => {
       const senderId = String(userId || from || "");
       if (!offer || senderId === String(localUserIdRef.current)) return;
       if (!peerConnectionRef.current) return;
@@ -625,6 +652,12 @@ const VoiceCallModal = ({
         const answer = await peerConnectionRef.current.createAnswer();
         await peerConnectionRef.current.setLocalDescription(answer);
 
+        socket.emit("call-answer", {
+          callId,
+          answer,
+          to: remoteUserIdRef.current,
+        });
+
         socket.emit("answer", {
           callId,
           answer,
@@ -634,9 +667,9 @@ const VoiceCallModal = ({
         console.error("Failed to handle offer:", error);
         setWebrtcError("Could not establish voice channel.");
       }
-    });
+    };
 
-    socket.on("answer", async ({ answer, userId, from }) => {
+    const onIncomingAnswer = async ({ answer, userId, from }) => {
       const senderId = String(userId || from || "");
       if (!answer || senderId === String(localUserIdRef.current)) return;
       if (!peerConnectionRef.current) return;
@@ -651,7 +684,12 @@ const VoiceCallModal = ({
         console.error("Failed to handle answer:", error);
         setWebrtcError("Voice answer sync failed.");
       }
-    });
+    };
+
+    socket.on("call-offer", onIncomingOffer);
+    socket.on("offer", onIncomingOffer);
+    socket.on("call-answer", onIncomingAnswer);
+    socket.on("answer", onIncomingAnswer);
 
     socket.on("ice-candidate", async ({ candidate, userId, from }) => {
       const senderId = String(userId || from || "");
@@ -673,9 +711,22 @@ const VoiceCallModal = ({
       setWebrtcError("Other participant left the call.");
     });
 
+    socket.on("user-left-call", ({ userId }) => {
+      if (String(userId) === String(localUserIdRef.current)) return;
+      setIsRemoteAudioReady(false);
+      setWebrtcError("Other participant left the call.");
+    });
+
     socket.on("connect_error", (error) => {
       console.error("Socket connect error:", error);
       setWebrtcError("Unable to connect realtime voice service.");
+    });
+
+    socket.on("disconnect", () => {
+      if (offerRetryTimer) {
+        clearInterval(offerRetryTimer);
+        offerRetryTimer = null;
+      }
     });
 
     hasStartedConnectionRef.current = true;
