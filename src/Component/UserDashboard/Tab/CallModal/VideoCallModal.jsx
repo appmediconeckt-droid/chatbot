@@ -77,6 +77,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
   const localUserIdRef = useRef("");
   const remoteUserIdRef = useRef("");
   const hasStartedConnectionRef = useRef(false);
+  const pendingIceCandidatesRef = useRef([]);
 
   const defaultCallData = {
     id: "",
@@ -136,6 +137,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     }
 
     setIsRemoteVideoReady(false);
+    pendingIceCandidatesRef.current = [];
     hasStartedConnectionRef.current = false;
   }, [callId]);
 
@@ -482,6 +484,28 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     const peer = new RTCPeerConnection(RTC_CONFIGURATION);
     peerConnectionRef.current = peer;
 
+    const flushPendingIceCandidates = async () => {
+      if (
+        !peerConnectionRef.current ||
+        !peerConnectionRef.current.remoteDescription
+      ) {
+        return;
+      }
+
+      const queuedCandidates = [...pendingIceCandidatesRef.current];
+      pendingIceCandidatesRef.current = [];
+
+      for (const candidate of queuedCandidates) {
+        try {
+          await peerConnectionRef.current.addIceCandidate(
+            new RTCIceCandidate(candidate),
+          );
+        } catch (error) {
+          console.warn("Failed to flush ICE candidate:", error);
+        }
+      }
+    };
+
     localStream.getTracks().forEach((track) => {
       peer.addTrack(track, localStream);
     });
@@ -503,13 +527,6 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         offer,
         to: remoteUserIdRef.current,
       });
-
-      // Backward compatibility with older event naming.
-      socket.emit("offer", {
-        callId,
-        offer,
-        userId: localUserIdRef.current,
-      });
     };
 
     peer.onicecandidate = (event) => {
@@ -517,27 +534,48 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       socket.emit("ice-candidate", {
         callId,
         candidate: event.candidate,
+        userId: localUserIdRef.current,
         to: remoteUserIdRef.current,
       });
     };
 
     peer.ontrack = (event) => {
-      if (!remoteStreamRef.current) {
-        remoteStreamRef.current = new MediaStream();
+      const [incomingStream] = event.streams;
+      if (incomingStream) {
+        remoteStreamRef.current = incomingStream;
+      } else {
+        if (!remoteStreamRef.current) {
+          remoteStreamRef.current = new MediaStream();
+        }
+
+        const existingTrackIds = new Set(
+          remoteStreamRef.current.getTracks().map((track) => track.id),
+        );
+
+        if (!existingTrackIds.has(event.track.id)) {
+          remoteStreamRef.current.addTrack(event.track);
+        }
       }
 
-      event.streams[0].getTracks().forEach((track) => {
-        remoteStreamRef.current.addTrack(track);
-      });
-
       if (remoteVideoRef.current) {
-        remoteVideoRef.current.srcObject = remoteStreamRef.current;
-        remoteVideoRef.current
+        const remoteVideoElement = remoteVideoRef.current;
+        remoteVideoElement.srcObject = remoteStreamRef.current;
+
+        // Allow video frames to start rendering even if autoplay with audio
+        // would otherwise be blocked by the browser.
+        remoteVideoElement.muted = true;
+
+        remoteVideoElement
           .play()
           .then(() => {
             setIsRemoteVideoReady(true);
             setIsConnecting(false);
             setWebrtcError("");
+            remoteVideoElement.muted = !isSpeakerOn;
+            remoteVideoElement.volume = Math.max(
+              0,
+              Math.min(1, Number(volumeLevel) / 100),
+            );
           })
           .catch((error) => {
             console.warn("Remote autoplay blocked:", error);
@@ -602,6 +640,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         await peerConnectionRef.current.setRemoteDescription(
           new RTCSessionDescription(offer),
         );
+        await flushPendingIceCandidates();
 
         const answer = await peerConnectionRef.current.createAnswer();
         await peerConnectionRef.current.setLocalDescription(answer);
@@ -610,12 +649,6 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
           callId,
           answer,
           to: remoteUserIdRef.current,
-        });
-
-        socket.emit("answer", {
-          callId,
-          answer,
-          userId: localUserIdRef.current,
         });
       } catch (error) {
         console.error("Failed to process offer:", error);
@@ -633,6 +666,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
           await peerConnectionRef.current.setRemoteDescription(
             new RTCSessionDescription(answer),
           );
+          await flushPendingIceCandidates();
         }
       } catch (error) {
         console.error("Failed to process answer:", error);
@@ -651,11 +685,17 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       if (!peerConnectionRef.current) return;
 
       try {
+        if (!peerConnectionRef.current.remoteDescription) {
+          pendingIceCandidatesRef.current.push(candidate);
+          return;
+        }
+
         await peerConnectionRef.current.addIceCandidate(
           new RTCIceCandidate(candidate),
         );
       } catch (error) {
-        console.warn("Failed to add ICE candidate:", error);
+        pendingIceCandidatesRef.current.push(candidate);
+        console.warn("Failed to add ICE candidate immediately:", error);
       }
     });
 

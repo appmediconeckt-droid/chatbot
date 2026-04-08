@@ -284,7 +284,8 @@ const ChatBox = () => {
   // Shared Call API actions
   const handleAcceptCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = resolveCurrentUserId();
 
       if (!userId) {
@@ -301,6 +302,74 @@ const ChatBox = () => {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+
+      if (!response.data?.success) {
+        throw new Error(response.data?.error || "Failed to accept call");
+      }
+
+      let detailedCall = null;
+      try {
+        const detailsResponse = await axios.get(
+          `${API_BASE_URL}/api/video/calls/${callId}/details`,
+          {
+            params: {
+              userId,
+              userType: "user",
+            },
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
+
+        detailedCall = detailsResponse.data?.call || null;
+      } catch (detailsError) {
+        console.warn("Could not fetch accepted call details:", detailsError);
+      }
+
+      const incomingType = String(
+        incomingCallData.callType || "video",
+      ).toLowerCase();
+      const modalType = incomingType === "audio" ? "voice" : incomingType;
+
+      const remoteParticipant = detailedCall
+        ? String(detailedCall.initiator?.id) === String(userId)
+          ? detailedCall.receiver
+          : detailedCall.initiator
+        : incomingCallData.from || null;
+
+      const acceptedCallData = {
+        id: detailedCall?.id || callId,
+        callId,
+        roomId:
+          response.data.roomId ||
+          detailedCall?.roomId ||
+          incomingCallData.roomId,
+        name:
+          remoteParticipant?.displayName ||
+          remoteParticipant?.fullName ||
+          incomingCallData.name ||
+          "Counselor",
+        type: modalType,
+        callType: modalType,
+        profilePic:
+          remoteParticipant?.profilePhoto || incomingCallData.image || null,
+        phoneNumber:
+          remoteParticipant?.phoneNumber || remoteParticipant?.phone || "",
+        status: response.data.status || detailedCall?.status || "active",
+        apiCallData: detailedCall,
+        initiator: detailedCall?.initiator,
+        receiver: detailedCall?.receiver,
+        currentUserId: userId,
+        currentUserType: "user",
+        isIncoming: true,
+      };
+
+      setSelectedCall(acceptedCallData);
+      if (modalType === "video") {
+        setIsVideoModalOpen(true);
+      } else {
+        setIsVoiceModalOpen(true);
+      }
+      setShowIncomingModal(false);
 
       return response.data;
     } catch (error) {
