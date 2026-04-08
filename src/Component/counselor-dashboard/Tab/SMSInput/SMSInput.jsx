@@ -152,14 +152,11 @@ const SMSInput = () => {
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
 
-  // Get current counselor from localStorage - FIXED: Properly extract ID
-  // SMSInput.js - Replace the getCurrentCounselor function with this:
-
+  // FIXED: Get current counselor with better validation
   const getCurrentCounselor = () => {
-    // Try multiple sources to get counselor data
     let counselorData = null;
 
-    // 1. Check localStorage
+    // Check localStorage
     const storedCounselor = localStorage.getItem('counselor');
     if (storedCounselor) {
       try {
@@ -170,7 +167,7 @@ const SMSInput = () => {
       }
     }
 
-    // 2. Check sessionStorage if not found
+    // Check sessionStorage
     if (!counselorData) {
       const sessionCounselor = sessionStorage.getItem('counselor');
       if (sessionCounselor) {
@@ -183,13 +180,12 @@ const SMSInput = () => {
       }
     }
 
-    // 3. Check if user is stored instead (some apps store under 'user')
+    // Check user data
     if (!counselorData) {
       const userData = localStorage.getItem('user');
       if (userData) {
         try {
           const user = JSON.parse(userData);
-          // Check if this user is actually a counselor
           if (user.role === 'counselor' || user.role === 'counsellor' || user.userType === 'counselor') {
             counselorData = user;
             console.log('Counselor found in user data:', counselorData);
@@ -203,47 +199,59 @@ const SMSInput = () => {
     return counselorData;
   };
 
-  // Replace getCounselorId function with this:
+  // FIXED: Get counselor ID from multiple sources with priority
   const getCounselorId = () => {
     // Priority 1: From currentCounselor object
-    if (currentCounselor) {
-      if (currentCounselor._id) return currentCounselor._id;
-      if (currentCounselor.id) return currentCounselor.id;
-      if (currentCounselor.counselorId) return currentCounselor.counselorId;
+    const counselor = getCurrentCounselor();
+    if (counselor) {
+      if (counselor._id) return counselor._id;
+      if (counselor.id) return counselor.id;
+      if (counselor.counselorId) return counselor.counselorId;
     }
 
     // Priority 2: From localStorage directly
     const storedId = localStorage.getItem('counselorId');
-    if (storedId) return storedId;
+    if (storedId && storedId !== 'undefined') return storedId;
 
     // Priority 3: From sessionStorage
     const sessionId = sessionStorage.getItem('counselorId');
-    if (sessionId) return sessionId;
+    if (sessionId && sessionId !== 'undefined') return sessionId;
 
-    // Priority 4: From user object if counselor role
+    // Priority 4: From user object
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
         const user = JSON.parse(userData);
         if (user.role === 'counselor' || user.role === 'counsellor') {
-          return user._id || user.id;
+          if (user._id) return user._id;
+          if (user.id) return user.id;
         }
       } catch (e) { }
     }
 
-    // Priority 5: Hardcoded for testing (remove in production)
-    console.warn('No counselor ID found, using default');
-    return '69c679b6e0e8f0800ff08fd1'; // Your test counselor ID
+    // Priority 5: From token (if needed)
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        // Try to decode JWT token to get user ID
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload && (payload._id || payload.id || payload.userId)) {
+          return payload._id || payload.id || payload.userId;
+        }
+      } catch (e) {
+        console.error('Error decoding token:', e);
+      }
+    }
+
+    console.error('No valid counselor ID found');
+    return null;
   };
 
-  const currentCounselor = getCurrentCounselor();
-
-  // FIXED: Properly extract IDs with priority
-
   const getCounselorName = () => {
-    if (currentCounselor) {
-      if (currentCounselor.name) return currentCounselor.name;
-      if (currentCounselor.fullName) return currentCounselor.fullName;
+    const counselor = getCurrentCounselor();
+    if (counselor) {
+      if (counselor.name) return counselor.name;
+      if (counselor.fullName) return counselor.fullName;
     }
     const storedName = localStorage.getItem('counselorName');
     if (storedName) return storedName;
@@ -253,64 +261,46 @@ const SMSInput = () => {
   const COUNSELOR_ID = getCounselorId();
   const COUNSELOR_NAME = getCounselorName();
 
-  // const extractUserIds = (selectedUser, chatId) => {
-  //   const userIds = [];
-
-  //   // Check selectedUser object
-  //   if (selectedUser) {
-  //     if (selectedUser._id) userIds.push(selectedUser._id);
-  //     if (selectedUser.id) userIds.push(selectedUser.id);
-  //     if (selectedUser.userId) userIds.push(selectedUser.userId);
-  //     if (selectedUser.user_id) userIds.push(selectedUser.user_id);
-  //     if (selectedUser.user?._id) userIds.push(selectedUser.user._id);
-  //     if (selectedUser.user?.id) userIds.push(selectedUser.user.id);
-  //     if (selectedUser.user?.userId) userIds.push(selectedUser.user.userId);
-  //     if (selectedUser.user?.user_id) userIds.push(selectedUser.user.user_id);
-  //     if (selectedUser.otherParty?._id) userIds.push(selectedUser.otherParty._id);
-  //     if (selectedUser.otherParty?.id) userIds.push(selectedUser.otherParty.id);
-  //     if (selectedUser.otherParty?.userId) userIds.push(selectedUser.otherParty.userId);
-  //     if (selectedUser.otherParty?.user_id) userIds.push(selectedUser.otherParty.user_id);
-  //   }
-
-  //   // Check chatId
-  //   if (chatId && typeof chatId === 'string') {
-  //     const parts = chatId.split('_');
-  //     if (parts.length >= 2 && parts[1] && parts[1].length > 5) {
-  //       userIds.push(parts[1]);
-  //     }
-
-  //     const match = chatId.match(/^([a-f0-9]+)_/i);
-  //     if (match && match[1]) {
-  //       userIds.push(match[1]);
-  //     }
-  //   }
-
-  //   return [...new Set(userIds)];
-  // };
-
-  // FIXED: Properly extract user ID
+  // FIXED: Extract user ID properly
   const getSelectedUserId = () => {
     if (!selectedUser) return null;
 
-    return (
-      selectedUser.receiverId ||
-      selectedUser._id ||
-      selectedUser.id ||
-      selectedUser.userId ||
-      selectedUser.user_id ||
-      selectedUser.user?._id ||
-      selectedUser.user?.id ||
-      selectedUser.user?.userId ||
-      selectedUser.user?.user_id ||
-      selectedUser.otherParty?._id ||
-      selectedUser.otherParty?.id ||
-      selectedUser.otherParty?.userId ||
-      selectedUser.otherParty?.user_id ||
-      extractUserIds(selectedUser, chatId)[0] ||
-      localStorage.getItem('currentUserId') ||
-      sessionStorage.getItem('currentUserId') ||
-      null
-    );
+    // Direct properties
+    const directIds = [
+      selectedUser.receiverId,
+      selectedUser._id,
+      selectedUser.id,
+      selectedUser.userId,
+      selectedUser.user_id,
+      selectedUser.uid,
+      selectedUser.user?._id,
+      selectedUser.user?.id,
+      selectedUser.user?.userId,
+      selectedUser.user?.user_id,
+      selectedUser.otherParty?._id,
+      selectedUser.otherParty?.id,
+      selectedUser.otherParty?.userId
+    ];
+
+    for (const id of directIds) {
+      if (id && id !== 'undefined') return id;
+    }
+
+    // Try to extract from chatId
+    if (chatId && typeof chatId === 'string') {
+      const parts = chatId.split('_');
+      if (parts.length >= 2 && parts[1] && parts[1].length > 5) {
+        return parts[1];
+      }
+      
+      const match = chatId.match(/^([a-f0-9]+)_/i);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+
+    console.error('No valid user ID found');
+    return null;
   };
 
   const getUserDetails = () => {
@@ -330,17 +320,17 @@ const SMSInput = () => {
 
   console.log('SMSInput - IDs:', { COUNSELOR_ID, USER_ID, COUNSELOR_NAME, USER_NAME });
 
-  // Function to get avatar based on gender (emoji only)
+  // Function to get avatar based on gender
   const getAvatarByGender = (gender) => {
     if (gender === 'male') return '👨';
     if (gender === 'female') return '👩';
     return '👤';
   };
 
-  // Get the chat ID for API calls
+  // Get chat ID for API calls
   const getChatIdForAPI = () => {
     if (chatId) return chatId;
-    if (selectedUser && USER_ID) {
+    if (selectedUser && USER_ID && COUNSELOR_ID) {
       return `chat_${USER_ID}_${COUNSELOR_ID}`;
     }
     return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -443,7 +433,7 @@ const SMSInput = () => {
     }
   };
 
-  // Send message to API (POST)
+  // Send message to API
   const sendMessageToAPI = async (messageContent) => {
     try {
       const apiChatId = getChatIdForAPI();
@@ -519,10 +509,25 @@ const SMSInput = () => {
     }
   };
 
-  // FIXED: Initialize video call with API (Counselor as initiator)
-  // SMSInput.js - Replace the initiateVideoCall and initiateVoiceCall functions
+  // FIXED: Validate counselor exists before initiating call
+  const validateCounselorBeforeCall = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await axios.get(`${API_BASE_URL}/api/counselors/${COUNSELOR_ID}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      console.log('Counselor validation response:', response.data);
+      return response.data && response.data.success;
+    } catch (error) {
+      console.error('Counselor validation failed:', error);
+      return false;
+    }
+  };
 
-  // FIXED: Initialize video call with proper user ID validation
+  // FIXED: Initialize video call with proper validation
   const initiateVideoCall = async () => {
     console.log('Counselor: initiateVideoCall called');
     console.log('Selected User:', selectedUser);
@@ -533,7 +538,7 @@ const SMSInput = () => {
       return;
     }
 
-    // Get counselor ID
+    // Get and validate counselor ID
     const counselorId = getCounselorId();
     if (!counselorId) {
       console.error('No counselor ID found');
@@ -541,8 +546,15 @@ const SMSInput = () => {
       return;
     }
 
-    const userId = getSelectedUserId();
+    // Validate counselor exists in backend
+    const isValidCounselor = await validateCounselorBeforeCall();
+    if (!isValidCounselor) {
+      console.error('Counselor not found or invalid');
+      setCallError('Counselor account not found. Please contact support.');
+      return;
+    }
 
+    const userId = getSelectedUserId();
     console.log('Extracted User ID:', userId);
     console.log('Counselor ID:', counselorId);
 
@@ -561,12 +573,12 @@ const SMSInput = () => {
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      console.log("SELECTED USER:", selectedUser);
+
       const requestBody = {
         initiatorId: counselorId,
-        initiatorType: 'counsellor',   // ✅ correct
+        initiatorType: 'counsellor',
         receiverId: userId,
-        receiverType: 'user',          // ✅ correct
+        receiverType: 'user',
         callType: "video"
       };
 
@@ -621,7 +633,7 @@ const SMSInput = () => {
     }
   };
 
-  // FIXED: Initialize voice call with proper user ID validation
+  // FIXED: Initialize voice call with proper validation
   const initiateVoiceCall = async () => {
     console.log('Counselor: initiateVoiceCall called');
 
@@ -635,6 +647,14 @@ const SMSInput = () => {
     if (!counselorId) {
       console.error('No counselor ID found');
       setCallError('Please login again to make calls');
+      return;
+    }
+
+    // Validate counselor exists in backend
+    const isValidCounselor = await validateCounselorBeforeCall();
+    if (!isValidCounselor) {
+      console.error('Counselor not found or invalid');
+      setCallError('Counselor account not found. Please contact support.');
       return;
     }
 
@@ -657,7 +677,6 @@ const SMSInput = () => {
       if (!token) {
         throw new Error('Authentication token not found');
       }
-      const counselorId = getCounselorId();
 
       const requestBody = {
         initiatorId: counselorId,
@@ -716,46 +735,6 @@ const SMSInput = () => {
     }
   };
 
-  // FIXED: Initialize voice call with API (Counselor as initiator)
-  // Add this function before the component
-  const extractUserIds = (selectedUser, chatId) => {
-    const userIds = [];
-
-    // Check selectedUser object
-    if (selectedUser) {
-      if (selectedUser._id) userIds.push(selectedUser._id);
-      if (selectedUser.id) userIds.push(selectedUser.id);
-      if (selectedUser.userId) userIds.push(selectedUser.userId);
-      if (selectedUser.user_id) userIds.push(selectedUser.user_id);
-      if (selectedUser.user?._id) userIds.push(selectedUser.user._id);
-      if (selectedUser.user?.id) userIds.push(selectedUser.user.id);
-      if (selectedUser.user?.userId) userIds.push(selectedUser.user.userId);
-      if (selectedUser.user?.user_id) userIds.push(selectedUser.user.user_id);
-      if (selectedUser.otherParty?._id) userIds.push(selectedUser.otherParty._id);
-      if (selectedUser.otherParty?.id) userIds.push(selectedUser.otherParty.id);
-      if (selectedUser.otherParty?.userId) userIds.push(selectedUser.otherParty.userId);
-      if (selectedUser.otherParty?.user_id) userIds.push(selectedUser.otherParty.user_id);
-    }
-
-    // Check chatId
-    if (chatId && typeof chatId === 'string') {
-      // Try to extract from format: chat_USERID_COUNSELORID
-      const parts = chatId.split('_');
-      if (parts.length >= 2 && parts[1] && parts[1].length > 5) {
-        userIds.push(parts[1]);
-      }
-
-      // Try to extract from format: USERID_chat_COUNSELORID
-      const match = chatId.match(/^([a-f0-9]+)_/i);
-      if (match && match[1]) {
-        userIds.push(match[1]);
-      }
-    }
-
-    // Remove duplicates
-    return [...new Set(userIds)];
-  };
-
   // Handle video call
   const handleVideoCall = () => {
     console.log('Video call button clicked');
@@ -777,9 +756,9 @@ const SMSInput = () => {
         throw new Error('Counselor ID not found');
       }
 
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, {
-        userId: COUNSELOR_ID,
-        userType: 'counsellor'
+      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, {
+        acceptorId: COUNSELOR_ID,
+        acceptorType: 'counsellor'
       }, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -797,7 +776,7 @@ const SMSInput = () => {
           name: incomingCallData.name,
           type: incomingCallData.callType,
           profilePic: incomingCallData.avatar,
-          status: 'connected',
+          status: response.data.status || 'active',
           date: 'Today',
           time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           apiCallData: response.data.callData,
@@ -825,7 +804,10 @@ const SMSInput = () => {
   const handleRejectIncomingCall = async (callId) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
+      await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {
+        userId: COUNSELOR_ID,
+        reason: 'declined'
+      }, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       return true;
@@ -855,7 +837,7 @@ const SMSInput = () => {
     }
   };
 
-  // Poll for waiting calls - FIXED: Use COUNSELOR_ID
+  // Poll for waiting calls
   useEffect(() => {
     let isMounted = true;
     let intervalId = null;
@@ -958,8 +940,7 @@ const SMSInput = () => {
     }
   }, [selectedUser, chatId, COUNSELOR_ID]);
 
-  // Auto-refresh messages every 30 seconds
-  // Add this useEffect to debug user data
+  // Debug user data
   useEffect(() => {
     if (selectedUser) {
       console.log('=== DEBUG: Selected User Data ===');
@@ -977,6 +958,15 @@ const SMSInput = () => {
     }
   }, [selectedUser, chatId]);
 
+  // Debug counselor data
+  useEffect(() => {
+    console.log('=== DEBUG: Counselor Data ===');
+    console.log('COUNSELOR_ID:', COUNSELOR_ID);
+    console.log('COUNSELOR_NAME:', COUNSELOR_NAME);
+    console.log('Current Counselor Object:', getCurrentCounselor());
+    console.log('===========================');
+  }, []);
+
   // Clear call error after 5 seconds
   useEffect(() => {
     if (callError) {
@@ -990,13 +980,9 @@ const SMSInput = () => {
   // Render chat status banner
   const renderChatStatusBanner = () => {
     if (!chatStatus) return null;
-
-    let statusClass = '';
-    let statusText = '';
-
     return (
-      <div className={`sms-chat-status-banner ${statusClass}`}>
-        {statusText}
+      <div className={`sms-chat-status-banner`}>
+        {/* Add status content here */}
       </div>
     );
   };
@@ -1173,6 +1159,7 @@ const SMSInput = () => {
         isOpen={isVoiceModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        onEndCall={handleEndIncomingCall}
       />
 
       {/* Professional Incoming Call Modal */}

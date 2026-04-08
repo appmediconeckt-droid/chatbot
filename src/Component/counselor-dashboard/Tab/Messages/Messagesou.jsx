@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Messagesou.css";
-
+import { API_BASE_URL } from "../../../../axiosConfig";
 /**
  * SMSList Component - Fetches and displays users/patients list from API
  * Displays anonymous name and gender-based avatar icons (no photos)
@@ -38,7 +38,7 @@ const SMSList = () => {
       }
       try {
         setLoading(true);
-        const response = await fetch('https://td6lmn5q-5000.inc1.devtunnels.ms/api/chat/chats', {
+        const response = await fetch(`${API_BASE_URL}/api/chat/chats`, {
           headers: {
             Authorization: `Bearer ${token}`
           }

@@ -1,23 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { FaEnvelope, FaLock, FaUser, FaPhone, FaCalendarAlt, FaVenusMars, FaCheckCircle, FaSpinner, FaTimes } from 'react-icons/fa';
-import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import './UserSignup.css';
-import logo from '../image/Mediconect Logo-3.png';
-import { API_BASE_URL } from '../axiosConfig';
+import React, { useState, useEffect } from "react";
+import {
+  FaEnvelope,
+  FaLock,
+  FaUser,
+  FaPhone,
+  FaCalendarAlt,
+  FaVenusMars,
+  FaCheckCircle,
+  FaSpinner,
+  FaTimes,
+} from "react-icons/fa";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import "./UserSignup.css";
+import logo from "../image/Mediconect Logo-3.png";
+import { API_BASE_URL } from "../axiosConfig";
 
 const UserSignup = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    fullName: '',
-    anonymous: '',
-    phoneNumber: '',
-    age: '',
-    gender: '',
-    confirmPassword: ''
+    email: "",
+    password: "",
+    fullName: "",
+    anonymous: "",
+    phoneNumber: "",
+    age: "",
+    gender: "",
+    confirmPassword: "",
   });
 
   // Verification states
@@ -25,14 +35,14 @@ const UserSignup = () => {
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [showEmailOtpModal, setShowEmailOtpModal] = useState(false);
   const [showPhoneOtpModal, setShowPhoneOtpModal] = useState(false);
-  const [emailOtp, setEmailOtp] = useState('');
-  const [phoneOtp, setPhoneOtp] = useState('');
+  const [emailOtp, setEmailOtp] = useState("");
+  const [phoneOtp, setPhoneOtp] = useState("");
   const [isSendingEmailOtp, setIsSendingEmailOtp] = useState(false);
   const [isSendingPhoneOtp, setIsSendingPhoneOtp] = useState(false);
   const [isVerifyingEmailOtp, setIsVerifyingEmailOtp] = useState(false);
   const [isVerifyingPhoneOtp, setIsVerifyingPhoneOtp] = useState(false);
-  const [emailOtpError, setEmailOtpError] = useState('');
-  const [phoneOtpError, setPhoneOtpError] = useState('');
+  const [emailOtpError, setEmailOtpError] = useState("");
+  const [phoneOtpError, setPhoneOtpError] = useState("");
   const [emailOtpSuccess, setEmailOtpSuccess] = useState(false);
   const [phoneOtpSuccess, setPhoneOtpSuccess] = useState(false);
   const [emailResendTimer, setEmailResendTimer] = useState(0);
@@ -42,17 +52,21 @@ const UserSignup = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError] = useState('');
+  const [apiError, setApiError] = useState("");
   const [showVerifyButton, setShowVerifyButton] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
-  const [notification, setNotification] = useState({ show: false, message: '', type: '' });
+  const [notification, setNotification] = useState({
+    show: false,
+    message: "",
+    type: "",
+  });
 
   useEffect(() => {
     let interval;
     if (emailResendTimer > 0) {
       interval = setInterval(() => {
-        setEmailResendTimer(prev => prev - 1);
+        setEmailResendTimer((prev) => prev - 1);
       }, 1000);
     }
     return () => clearInterval(interval);
@@ -62,23 +76,24 @@ const UserSignup = () => {
     let interval;
     if (phoneResendTimer > 0) {
       interval = setInterval(() => {
-        setPhoneResendTimer(prev => prev - 1);
+        setPhoneResendTimer((prev) => prev - 1);
       }, 1000);
     }
     return () => clearInterval(interval);
   }, [phoneResendTimer]);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+    const token =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
     if (token) {
       navigate("/user-dashboard");
     }
   }, [navigate]);
 
-  const showNotification = (message, type = 'success') => {
+  const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
     setTimeout(() => {
-      setNotification({ show: false, message: '', type: '' });
+      setNotification({ show: false, message: "", type: "" });
     }, 3000);
   };
 
@@ -87,25 +102,25 @@ const UserSignup = () => {
     setFormData({ ...formData, [name]: value });
 
     if (errors[name]) {
-      setErrors({ ...errors, [name]: '' });
+      setErrors({ ...errors, [name]: "" });
     }
     if (apiError) {
-      setApiError('');
+      setApiError("");
     }
 
-    if (name === 'email') setEmailVerified(false);
-    if (name === 'phoneNumber') setPhoneVerified(false);
+    if (name === "email") setEmailVerified(false);
+    if (name === "phoneNumber") setPhoneVerified(false);
   };
 
   const validateLogin = () => {
     const newErrors = {};
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     }
     return newErrors;
   };
@@ -113,43 +128,43 @@ const UserSignup = () => {
   const validateSignup = () => {
     const newErrors = {};
 
-    if (!formData.fullName) newErrors.fullName = 'Full name is required';
-    if (!formData.anonymous) newErrors.anonymous = 'Anonymous name is required';
+    if (!formData.fullName) newErrors.fullName = "Full name is required";
+    if (!formData.anonymous) newErrors.anonymous = "Anonymous name is required";
 
     if (!formData.email) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     } else if (!emailVerified) {
-      newErrors.email = 'Please verify your email first';
+      newErrors.email = "Please verify your email first";
     }
 
     if (!formData.phoneNumber) {
-      newErrors.phoneNumber = 'Phone number is required';
+      newErrors.phoneNumber = "Phone number is required";
     } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = 'Phone number must be 10 digits';
+      newErrors.phoneNumber = "Phone number must be 10 digits";
     } else if (!phoneVerified) {
-      newErrors.phoneNumber = 'Please verify your phone number first';
+      newErrors.phoneNumber = "Please verify your phone number first";
     }
 
     if (!formData.age) {
-      newErrors.age = 'Age is required';
+      newErrors.age = "Age is required";
     } else if (formData.age < 13 || formData.age > 120) {
-      newErrors.age = 'Age must be between 13 and 120';
+      newErrors.age = "Age must be between 13 and 120";
     }
 
-    if (!formData.gender) newErrors.gender = 'Gender is required';
+    if (!formData.gender) newErrors.gender = "Gender is required";
 
     if (!formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     } else if (formData.password.length < 3) {
-      newErrors.password = 'Password must be at least 3 characters';
+      newErrors.password = "Password must be at least 3 characters";
     }
 
     if (!formData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm password';
+      newErrors.confirmPassword = "Please confirm password";
     } else if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = "Passwords do not match";
     }
 
     return newErrors;
@@ -165,9 +180,12 @@ const UserSignup = () => {
       setIsSendingEmailOtp(true);
       setEmailOtpError("");
 
-      const response = await axios.post(`${API_BASE_URL}/api/auth/send-email-otp`, {
-        email: formData.email,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/send-email-otp`,
+        {
+          email: formData.email,
+        },
+      );
 
       if (response.data.success) {
         setEmailResendTimer(60);
@@ -176,9 +194,7 @@ const UserSignup = () => {
         setEmailOtpError(response.data.message || "Failed to send OTP");
       }
     } catch (error) {
-      setEmailOtpError(
-        error.response?.data?.message || "Something went wrong"
-      );
+      setEmailOtpError(error.response?.data?.message || "Something went wrong");
     } finally {
       setIsSendingEmailOtp(false);
     }
@@ -189,10 +205,13 @@ const UserSignup = () => {
       setIsVerifyingEmailOtp(true);
       setEmailOtpError("");
 
-      const response = await axios.post(`${API_BASE_URL}/api/auth/verify-email-otp`, {
-        email: formData.email,
-        otp: emailOtp,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/verify-email-otp`,
+        {
+          email: formData.email,
+          otp: emailOtp,
+        },
+      );
 
       if (response.data.success) {
         setEmailOtpSuccess(true);
@@ -206,9 +225,7 @@ const UserSignup = () => {
         setEmailOtpError(response.data.message || "Invalid OTP");
       }
     } catch (error) {
-      setEmailOtpError(
-        error.response?.data?.message || "Verification failed"
-      );
+      setEmailOtpError(error.response?.data?.message || "Verification failed");
     } finally {
       setIsVerifyingEmailOtp(false);
     }
@@ -231,9 +248,13 @@ const UserSignup = () => {
       setIsSendingPhoneOtp(true);
       setPhoneOtpError("");
 
-      const response = await axios.post(`${API_BASE_URL}/api/auth/send-phone-otp`, {
-        phoneNumber: `+${formData.phoneNumber}`,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/send-phone-otp`,
+        {
+          phoneNumber: `+${formData.phoneNumber}`,
+          email: formData.email,
+        },
+      );
 
       if (response.data.success) {
         showNotification("OTP sent successfully!", "success");
@@ -242,9 +263,7 @@ const UserSignup = () => {
         setPhoneOtpError(response.data.message || "Failed to send OTP");
       }
     } catch (error) {
-      setPhoneOtpError(
-        error.response?.data?.message || "Error sending OTP"
-      );
+      setPhoneOtpError(error.response?.data?.message || "Error sending OTP");
     } finally {
       setIsSendingPhoneOtp(false);
     }
@@ -260,10 +279,14 @@ const UserSignup = () => {
       setIsVerifyingPhoneOtp(true);
       setPhoneOtpError("");
 
-      const response = await axios.post(`${API_BASE_URL}/api/auth/verify-phone-otp`, {
-        phoneNumber: `+${formData.phoneNumber}`,
-        otp: phoneOtp,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/verify-phone-otp`,
+        {
+          phoneNumber: `+${formData.phoneNumber}`,
+          otp: phoneOtp,
+          email: formData.email,
+        },
+      );
 
       if (response.data.success) {
         setPhoneVerified(true);
@@ -277,30 +300,41 @@ const UserSignup = () => {
         setPhoneOtpError(response.data.message || "Invalid OTP");
       }
     } catch (error) {
-      setPhoneOtpError(
-        error.response?.data?.message || "Verification failed"
-      );
+      setPhoneOtpError(error.response?.data?.message || "Verification failed");
     } finally {
       setIsVerifyingPhoneOtp(false);
     }
   };
 
   const resetPhoneOtpState = () => {
-    setPhoneOtp('');
-    setPhoneOtpError('');
+    setPhoneOtp("");
+    setPhoneOtpError("");
     setPhoneOtpSuccess(false);
     setPhoneResendTimer(0);
   };
 
   const handleLogin = async () => {
-    try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-        email: formData.email,
-        password: formData.password
-      },{ withCredentials: true });
+    const doLogin = async (forceLogin = false) =>
+      axios.post(
+        `${API_BASE_URL}/api/auth/login`,
+        {
+          email: formData.email,
+          password: formData.password,
+          forceLogin,
+        },
+        { withCredentials: true },
+      );
 
-      const token = response.data?.token || response.data?.accessToken || response.data?.data?.token || response.data?.data?.accessToken;
-      const refreshToken = response.data?.refreshToken || response.data?.data?.refreshToken;
+    try {
+      const response = await doLogin(false);
+
+      const token =
+        response.data?.token ||
+        response.data?.accessToken ||
+        response.data?.data?.token ||
+        response.data?.data?.accessToken;
+      const refreshToken =
+        response.data?.refreshToken || response.data?.data?.refreshToken;
 
       if (response.data?.message === "User already logged in") {
         setApiError("User already logged in");
@@ -311,20 +345,23 @@ const UserSignup = () => {
       if (token) {
         localStorage.setItem("isAuthenticated", "true");
         localStorage.setItem("userType", "user");
-         localStorage.setItem('refreshToken', response?.data?.refreshToken); // ← CRITICAL
+        localStorage.setItem("refreshToken", response?.data?.refreshToken); // ← CRITICAL
         localStorage.setItem("userEmail", formData.email);
         localStorage.setItem("token", token);
         localStorage.setItem("accessToken", token);
-      console.log("All localStorage:", localStorage);
+        console.log("All localStorage:", localStorage);
 
-// Check specific tokens
-console.log("Access Token:", localStorage.getItem('accessToken'));
-console.log("Refresh Token:", localStorage.getItem('refreshToken'));
-console.log("User:", localStorage.getItem('user'));
+        // Check specific tokens
+        console.log("Access Token:", localStorage.getItem("accessToken"));
+        console.log("Refresh Token:", localStorage.getItem("refreshToken"));
+        console.log("User:", localStorage.getItem("user"));
 
-// Check if tokens exist
-console.log("Has accessToken?", !!localStorage.getItem('accessToken'));
-console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
+        // Check if tokens exist
+        console.log("Has accessToken?", !!localStorage.getItem("accessToken"));
+        console.log(
+          "Has refreshToken?",
+          !!localStorage.getItem("refreshToken"),
+        );
         if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
 
         if (response.data.user) {
@@ -333,10 +370,10 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
 
         // ✅ ADD THIS
         if (response.data.user?._id) {
-  localStorage.setItem("userId", response.data.user._id);
-}
+          localStorage.setItem("userId", response.data.user._id);
+        }
 
-        showNotification('Login successful!', 'success');
+        showNotification("Login successful!", "success");
         setTimeout(() => navigate("/user-dashboard"), 1500);
 
         return;
@@ -344,15 +381,66 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
 
       if (response.data?.message) {
         setApiError(response.data.message);
-        showNotification(response.data.message, 'error');
+        showNotification(response.data.message, "error");
         return;
       }
 
       setApiError("Login failed");
-      showNotification("Login failed", 'error');
-
+      showNotification("Login failed", "error");
     } catch (error) {
       console.error("Login error:", error);
+
+      const isAlreadyLoggedIn =
+        error.response?.status === 409 && error.response?.data?.canForceLogin;
+
+      if (isAlreadyLoggedIn) {
+        try {
+          const response = await doLogin(true);
+
+          const token =
+            response.data?.token ||
+            response.data?.accessToken ||
+            response.data?.data?.token ||
+            response.data?.data?.accessToken;
+          const refreshToken =
+            response.data?.refreshToken || response.data?.data?.refreshToken;
+
+          if (token) {
+            localStorage.setItem("isAuthenticated", "true");
+            localStorage.setItem("userType", "user");
+            localStorage.setItem("userEmail", formData.email);
+            localStorage.setItem("token", token);
+            localStorage.setItem("accessToken", token);
+            if (refreshToken)
+              localStorage.setItem("refreshToken", refreshToken);
+
+            if (response.data.user) {
+              localStorage.setItem(
+                "userData",
+                JSON.stringify(response.data.user),
+              );
+            }
+
+            if (response.data.user?._id) {
+              localStorage.setItem("userId", response.data.user._id);
+            }
+
+            showNotification(
+              "Logged in and previous device session was ended.",
+              "success",
+            );
+            setTimeout(() => navigate("/user-dashboard"), 1500);
+            return;
+          }
+        } catch (forceError) {
+          const msg =
+            forceError.response?.data?.message || "Unable to force login";
+          setApiError(msg);
+          showNotification(msg, "error");
+          return;
+        }
+      }
+
       let errorMessage = "Something went wrong";
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
@@ -362,19 +450,25 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
         errorMessage = "Network error. Please check your connection.";
       }
       setApiError(errorMessage);
-      showNotification(errorMessage, 'error');
+      showNotification(errorMessage, "error");
     }
   };
 
   const handleSignup = async () => {
     if (!emailVerified) {
-      setErrors(prev => ({ ...prev, email: 'Please verify your email first' }));
-      showNotification('Please verify your email first', 'error');
+      setErrors((prev) => ({
+        ...prev,
+        email: "Please verify your email first",
+      }));
+      showNotification("Please verify your email first", "error");
       return;
     }
     if (!phoneVerified) {
-      setErrors(prev => ({ ...prev, phoneNumber: 'Please verify your phone number first' }));
-      showNotification('Please verify your phone number first', 'error');
+      setErrors((prev) => ({
+        ...prev,
+        phoneNumber: "Please verify your phone number first",
+      }));
+      showNotification("Please verify your phone number first", "error");
       return;
     }
 
@@ -390,15 +484,20 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
         gender: formData.gender,
         role: "user",
         isEmailVerified: true,
-        isPhoneVerified: true
+        isPhoneVerified: true,
       };
 
       console.log("Sending signup data:", signupData);
 
-      const response = await axios.post(`${API_BASE_URL}/api/auth/complete-registration`, signupData);
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/complete-registration`,
+        signupData,
+      );
 
-      if (response.data && (response.data.message?.includes('success') || response.data.success)) {
-
+      if (
+        response.data &&
+        (response.data.message?.includes("success") || response.data.success)
+      ) {
         const token = response.data?.token || response.data?.accessToken;
 
         if (token) {
@@ -419,50 +518,58 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
           localStorage.setItem("userData", JSON.stringify(response.data.user));
         }
 
-        showNotification('Account created successfully!', 'success');
+        showNotification("Account created successfully!", "success");
 
         setTimeout(() => {
           navigate("/user-dashboard");
         }, 1500);
-
       } else {
-        showNotification('Account created successfully! Redirecting to dashboard...', 'success');
+        showNotification(
+          "Account created successfully! Redirecting to dashboard...",
+          "success",
+        );
         setTimeout(() => {
           navigate("/user-dashboard");
         }, 1500);
       }
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error("Signup error:", error);
 
       if (error.response) {
         if (error.response.status === 400) {
           if (error.response.data.errors) {
             const serverErrors = {};
-            Object.keys(error.response.data.errors).forEach(key => {
+            Object.keys(error.response.data.errors).forEach((key) => {
               serverErrors[key] = error.response.data.errors[key][0];
             });
             setErrors(serverErrors);
-            showNotification('Please check the form for errors', 'error');
+            showNotification("Please check the form for errors", "error");
           } else if (error.response.data.message) {
             setApiError(error.response.data.message);
-            showNotification(error.response.data.message, 'error');
+            showNotification(error.response.data.message, "error");
           } else {
-            setApiError('Registration failed. Please check your information.');
-            showNotification('Registration failed. Please check your information.', 'error');
+            setApiError("Registration failed. Please check your information.");
+            showNotification(
+              "Registration failed. Please check your information.",
+              "error",
+            );
           }
         } else if (error.response.status === 409) {
-          setApiError('User with this email already exists');
-          showNotification('User with this email already exists', 'error');
+          setApiError("User with this email already exists");
+          showNotification("User with this email already exists", "error");
         } else {
-          setApiError('Registration failed. Please try again.');
-          showNotification('Registration failed. Please try again.', 'error');
+          setApiError("Registration failed. Please try again.");
+          showNotification("Registration failed. Please try again.", "error");
         }
       } else if (error.request) {
-        setApiError('Network error. Please check your connection.');
-        showNotification('Network error. Please check your connection.', 'error');
+        setApiError("Network error. Please check your connection.");
+        showNotification(
+          "Network error. Please check your connection.",
+          "error",
+        );
       } else {
-        setApiError('An error occurred. Please try again.');
-        showNotification('An error occurred. Please try again.', 'error');
+        setApiError("An error occurred. Please try again.");
+        showNotification("An error occurred. Please try again.", "error");
       }
     }
   };
@@ -470,7 +577,7 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setApiError('');
+    setApiError("");
 
     if (isLogin) {
       const loginErrors = validateLogin();
@@ -478,7 +585,7 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
         await handleLogin();
       } else {
         setErrors(loginErrors);
-        showNotification('Please fill in all required fields', 'error');
+        showNotification("Please fill in all required fields", "error");
       }
     } else {
       const signupErrors = validateSignup();
@@ -486,7 +593,10 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
         await handleSignup();
       } else {
         setErrors(signupErrors);
-        showNotification('Please fill in all required fields correctly', 'error');
+        showNotification(
+          "Please fill in all required fields correctly",
+          "error",
+        );
       }
     }
 
@@ -497,17 +607,25 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
     try {
       setIsVerifying(true);
       setVerifySuccess(false);
-      const verifyResponse = await axios.post(`${API_BASE_URL}/api/auth/send-verification-email`, { email: formData.email });
+      const verifyResponse = await axios.post(
+        `${API_BASE_URL}/api/auth/send-verification-email`,
+        { email: formData.email },
+      );
       if (verifyResponse.data?.success || verifyResponse.data?.message) {
         setVerifySuccess(true);
-        showNotification('Verification email sent successfully! Check your inbox.', 'success');
+        showNotification(
+          "Verification email sent successfully! Check your inbox.",
+          "success",
+        );
         setTimeout(() => setVerifySuccess(false), 3000);
       }
     } catch (error) {
       console.error("Verification error:", error);
-      const errorMessage = error.response?.data?.message || 'Failed to send verification email. Please try again.';
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to send verification email. Please try again.";
       setApiError(errorMessage);
-      showNotification(errorMessage, 'error');
+      showNotification(errorMessage, "error");
     } finally {
       setIsVerifying(false);
     }
@@ -516,31 +634,34 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setErrors({});
-    setApiError('');
+    setApiError("");
     setShowVerifyButton(false);
     setVerifySuccess(false);
     setEmailVerified(false);
     setPhoneVerified(false);
     setFormData({
-      email: '',
-      password: '',
-      fullName: '',
-      anonymous: '',
-      phoneNumber: '',
-      age: '',
-      gender: '',
-      confirmPassword: ''
+      email: "",
+      password: "",
+      fullName: "",
+      anonymous: "",
+      phoneNumber: "",
+      age: "",
+      gender: "",
+      confirmPassword: "",
     });
-    setNotification({ show: false, message: '', type: '' });
+    setNotification({ show: false, message: "", type: "" });
   };
 
   const EmailOtpModal = () => (
-    <div className="us-otp-overlay" onClick={() => {
-      if (!emailOtpSuccess) {
-        setShowEmailOtpModal(false);
-        resetEmailOtpState();
-      }
-    }}>
+    <div
+      className="us-otp-overlay"
+      onClick={() => {
+        if (!emailOtpSuccess) {
+          setShowEmailOtpModal(false);
+          resetEmailOtpState();
+        }
+      }}
+    >
       <div className="us-otp-modal" onClick={(e) => e.stopPropagation()}>
         <div className="us-otp-header">
           <div className="us-otp-icon">
@@ -567,13 +688,17 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
               type="text"
               placeholder="000000"
               value={emailOtp}
-              onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className={`us-otp-input ${emailOtpSuccess ? 'us-otp-input-success' : ''}`}
+              onChange={(e) =>
+                setEmailOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              className={`us-otp-input ${emailOtpSuccess ? "us-otp-input-success" : ""}`}
               maxLength="6"
               disabled={isVerifyingEmailOtp || emailOtpSuccess}
               autoFocus
             />
-            {emailOtpSuccess && <FaCheckCircle className="us-otp-success-icon" />}
+            {emailOtpSuccess && (
+              <FaCheckCircle className="us-otp-success-icon" />
+            )}
           </div>
 
           {emailOtpError && <div className="us-otp-error">{emailOtpError}</div>}
@@ -584,19 +709,27 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
               className="us-otp-verify"
               disabled={isVerifyingEmailOtp || emailOtpSuccess || !emailOtp}
             >
-              {isVerifyingEmailOtp ? <FaSpinner className="us-spin" /> : 'Verify'}
+              {isVerifyingEmailOtp ? (
+                <FaSpinner className="us-spin" />
+              ) : (
+                "Verify"
+              )}
             </button>
             <button
               onClick={handleSendEmailOtp}
               className="us-otp-resend"
-              disabled={isSendingEmailOtp || emailResendTimer > 0 || emailOtpSuccess}
+              disabled={
+                isSendingEmailOtp || emailResendTimer > 0 || emailOtpSuccess
+              }
             >
               {isSendingEmailOtp ? (
-                <><FaSpinner className="us-spin" /> Sending</>
+                <>
+                  <FaSpinner className="us-spin" /> Sending
+                </>
               ) : emailResendTimer > 0 ? (
                 `Resend in ${emailResendTimer}s`
               ) : (
-                'Resend Code'
+                "Resend Code"
               )}
             </button>
           </div>
@@ -612,13 +745,19 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
   );
 
   const PhoneOtpModal = () => (
-    <div className="us-otp-overlay" onClick={() => {
-      if (!phoneOtpSuccess) {
-        setShowPhoneOtpModal(false);
-        resetPhoneOtpState();
-      }
-    }}>
-      <div className="us-otp-modal us-otp-modal-phone" onClick={(e) => e.stopPropagation()}>
+    <div
+      className="us-otp-overlay"
+      onClick={() => {
+        if (!phoneOtpSuccess) {
+          setShowPhoneOtpModal(false);
+          resetPhoneOtpState();
+        }
+      }}
+    >
+      <div
+        className="us-otp-modal us-otp-modal-phone"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="us-otp-header">
           <div className="us-otp-icon">
             <FaPhone />
@@ -644,13 +783,17 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
               type="text"
               placeholder="000000"
               value={phoneOtp}
-              onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className={`us-otp-input ${phoneOtpSuccess ? 'us-otp-input-success' : ''}`}
+              onChange={(e) =>
+                setPhoneOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+              }
+              className={`us-otp-input ${phoneOtpSuccess ? "us-otp-input-success" : ""}`}
               maxLength="6"
               disabled={isVerifyingPhoneOtp || phoneOtpSuccess}
               autoFocus
             />
-            {phoneOtpSuccess && <FaCheckCircle className="us-otp-success-icon" />}
+            {phoneOtpSuccess && (
+              <FaCheckCircle className="us-otp-success-icon" />
+            )}
           </div>
 
           {phoneOtpError && <div className="us-otp-error">{phoneOtpError}</div>}
@@ -661,19 +804,27 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
               className="us-otp-verify"
               disabled={isVerifyingPhoneOtp || phoneOtpSuccess || !phoneOtp}
             >
-              {isVerifyingPhoneOtp ? <FaSpinner className="us-spin" /> : 'Verify'}
+              {isVerifyingPhoneOtp ? (
+                <FaSpinner className="us-spin" />
+              ) : (
+                "Verify"
+              )}
             </button>
             <button
               onClick={handleSendPhoneOtp}
               className="us-otp-resend"
-              disabled={isSendingPhoneOtp || phoneResendTimer > 0 || phoneOtpSuccess}
+              disabled={
+                isSendingPhoneOtp || phoneResendTimer > 0 || phoneOtpSuccess
+              }
             >
               {isSendingPhoneOtp ? (
-                <><FaSpinner className="us-spin" /> Sending</>
+                <>
+                  <FaSpinner className="us-spin" /> Sending
+                </>
               ) : phoneResendTimer > 0 ? (
                 `Resend in ${phoneResendTimer}s`
               ) : (
-                'Resend Code'
+                "Resend Code"
               )}
             </button>
           </div>
@@ -694,11 +845,13 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
         <div className={`us-notification us-notification-${notification.type}`}>
           <div className="us-notification-content">
             <span className="us-notification-icon">
-              {notification.type === 'success' && '✓'}
-              {notification.type === 'error' && '⚠️'}
-              {notification.type === 'info' && 'ℹ️'}
+              {notification.type === "success" && "✓"}
+              {notification.type === "error" && "⚠️"}
+              {notification.type === "info" && "ℹ️"}
             </span>
-            <span className="us-notification-message">{notification.message}</span>
+            <span className="us-notification-message">
+              {notification.message}
+            </span>
           </div>
         </div>
       )}
@@ -714,16 +867,18 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
               <span className="us-logo-text">Mediconnect</span>
             </div>
             <h1 className="us-brand-title">
-              {isLogin ? 'Welcome Back!' : 'Begin Your Journey'}
+              {isLogin ? "Welcome Back!" : "Begin Your Journey"}
             </h1>
             <p className="us-brand-subtitle">
               {isLogin
-                ? 'Connect with professional counselors and start your healing journey.'
-                : 'Join thousands of people who have found peace and clarity.'}
+                ? "Connect with professional counselors and start your healing journey."
+                : "Join thousands of people who have found peace and clarity."}
             </p>
             <div className="us-features">
               <div className="us-feature">✓ 24/7 Confidential Support</div>
-              <div className="us-feature">✓ Expert Mental Health Professionals</div>
+              <div className="us-feature">
+                ✓ Expert Mental Health Professionals
+              </div>
               <div className="us-feature">✓ Safe & Anonymous Sessions</div>
             </div>
           </div>
@@ -731,11 +886,17 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
 
         <div className="us-form-section">
           <div className="us-form-header">
-            <h2>{isLogin ? 'Login to Account' : 'Create Account'}</h2>
+            <h2>{isLogin ? "Login to Account" : "Create Account"}</h2>
             <p>
-              {isLogin ? "Don't have an account? " : "Already have an account? "}
-              <button onClick={toggleMode} className="us-toggle" disabled={isLoading}>
-                {isLogin ? 'Sign Up' : 'Login'}
+              {isLogin
+                ? "Don't have an account? "
+                : "Already have an account? "}
+              <button
+                onClick={toggleMode}
+                className="us-toggle"
+                disabled={isLoading}
+              >
+                {isLogin ? "Sign Up" : "Login"}
               </button>
             </p>
           </div>
@@ -770,7 +931,7 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                         Sending...
                       </>
                     ) : (
-                      '📧 Verify Mail'
+                      "📧 Verify Mail"
                     )}
                   </button>
                 </>
@@ -791,11 +952,13 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className={`us-input ${errors.email ? 'us-input-error' : ''}`}
+                    className={`us-input ${errors.email ? "us-input-error" : ""}`}
                     placeholder="Enter your email"
                     disabled={isLoading}
                   />
-                  {errors.email && <span className="us-error">{errors.email}</span>}
+                  {errors.email && (
+                    <span className="us-error">{errors.email}</span>
+                  )}
                 </div>
 
                 <div className="us-field">
@@ -809,7 +972,7 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`us-input ${errors.password ? 'us-input-error' : ''}`}
+                      className={`us-input ${errors.password ? "us-input-error" : ""}`}
                       placeholder="Enter your password"
                       disabled={isLoading}
                     />
@@ -819,10 +982,12 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       className="us-password-toggle"
                       disabled={isLoading}
                     >
-                      {showPassword ? 'Hide' : 'Show'}
+                      {showPassword ? "Hide" : "Show"}
                     </button>
                   </div>
-                  {errors.password && <span className="us-error">{errors.password}</span>}
+                  {errors.password && (
+                    <span className="us-error">{errors.password}</span>
+                  )}
                 </div>
 
                 <div className="us-options">
@@ -849,11 +1014,13 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleChange}
-                      className={`us-input ${errors.fullName ? 'us-input-error' : ''}`}
+                      className={`us-input ${errors.fullName ? "us-input-error" : ""}`}
                       placeholder="Enter your full name"
                       disabled={isLoading}
                     />
-                    {errors.fullName && <span className="us-error">{errors.fullName}</span>}
+                    {errors.fullName && (
+                      <span className="us-error">{errors.fullName}</span>
+                    )}
                   </div>
 
                   <div className="us-field">
@@ -866,11 +1033,13 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       name="anonymous"
                       value={formData.anonymous}
                       onChange={handleChange}
-                      className={`us-input ${errors.anonymous ? 'us-input-error' : ''}`}
+                      className={`us-input ${errors.anonymous ? "us-input-error" : ""}`}
                       placeholder="Choose an anonymous name"
                       disabled={isLoading}
                     />
-                    {errors.anonymous && <span className="us-error">{errors.anonymous}</span>}
+                    {errors.anonymous && (
+                      <span className="us-error">{errors.anonymous}</span>
+                    )}
                   </div>
 
                   <div className="us-field">
@@ -884,31 +1053,35 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className={`us-input ${errors.email ? 'us-input-error' : ''} ${emailVerified ? 'us-verified-input' : ''}`}
+                        className={`us-input ${errors.email ? "us-input-error" : ""} ${emailVerified ? "us-verified-input" : ""}`}
                         placeholder="Enter your email"
                         disabled={isLoading || emailVerified}
                       />
-                      {!emailVerified && formData.email && /\S+@\S+\.\S+/.test(formData.email) && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            resetEmailOtpState();
-                            setShowEmailOtpModal(true);
-                            handleSendEmailOtp();
-                          }}
-                          className="us-verify-btn-sm"
-                          disabled={isLoading}
-                        >
-                          Verify
-                        </button>
-                      )}
+                      {!emailVerified &&
+                        formData.email &&
+                        /\S+@\S+\.\S+/.test(formData.email) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetEmailOtpState();
+                              setShowEmailOtpModal(true);
+                              handleSendEmailOtp();
+                            }}
+                            className="us-verify-btn-sm"
+                            disabled={isLoading}
+                          >
+                            Verify
+                          </button>
+                        )}
                       {emailVerified && (
                         <span className="us-verified-badge">
                           <FaCheckCircle /> Verified
                         </span>
                       )}
                     </div>
-                    {errors.email && <span className="us-error">{errors.email}</span>}
+                    {errors.email && (
+                      <span className="us-error">{errors.email}</span>
+                    )}
                   </div>
 
                   <div className="us-field">
@@ -922,32 +1095,36 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleChange}
-                        className={`us-input ${errors.phoneNumber ? 'us-input-error' : ''} ${phoneVerified ? 'us-verified-input' : ''}`}
+                        className={`us-input ${errors.phoneNumber ? "us-input-error" : ""} ${phoneVerified ? "us-verified-input" : ""}`}
                         placeholder="10 digit mobile number"
                         maxLength="10"
                         disabled={isLoading || phoneVerified}
                       />
-                      {!phoneVerified && formData.phoneNumber && /^\d{10}$/.test(formData.phoneNumber) && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            resetPhoneOtpState();
-                            setShowPhoneOtpModal(true);
-                            handleSendPhoneOtp();
-                          }}
-                          className="us-verify-btn-sm"
-                          disabled={isLoading}
-                        >
-                          Verify
-                        </button>
-                      )}
+                      {!phoneVerified &&
+                        formData.phoneNumber &&
+                        /^\d{10}$/.test(formData.phoneNumber) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetPhoneOtpState();
+                              setShowPhoneOtpModal(true);
+                              handleSendPhoneOtp();
+                            }}
+                            className="us-verify-btn-sm"
+                            disabled={isLoading}
+                          >
+                            Verify
+                          </button>
+                        )}
                       {phoneVerified && (
                         <span className="us-verified-badge">
                           <FaCheckCircle /> Verified
                         </span>
                       )}
                     </div>
-                    {errors.phoneNumber && <span className="us-error">{errors.phoneNumber}</span>}
+                    {errors.phoneNumber && (
+                      <span className="us-error">{errors.phoneNumber}</span>
+                    )}
                   </div>
 
                   <div className="us-field">
@@ -960,13 +1137,15 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       name="age"
                       value={formData.age}
                       onChange={handleChange}
-                      className={`us-input ${errors.age ? 'us-input-error' : ''}`}
+                      className={`us-input ${errors.age ? "us-input-error" : ""}`}
                       placeholder="Your age"
                       min="13"
                       max="120"
                       disabled={isLoading}
                     />
-                    {errors.age && <span className="us-error">{errors.age}</span>}
+                    {errors.age && (
+                      <span className="us-error">{errors.age}</span>
+                    )}
                   </div>
 
                   <div className="us-field">
@@ -978,16 +1157,20 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       name="gender"
                       value={formData.gender}
                       onChange={handleChange}
-                      className={`us-select ${errors.gender ? 'us-input-error' : ''}`}
+                      className={`us-select ${errors.gender ? "us-input-error" : ""}`}
                       disabled={isLoading}
                     >
                       <option value="">Select Gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                       <option value="other">Other</option>
-                      <option value="prefer-not-to-say">Prefer not to say</option>
+                      <option value="prefer-not-to-say">
+                        Prefer not to say
+                      </option>
                     </select>
-                    {errors.gender && <span className="us-error">{errors.gender}</span>}
+                    {errors.gender && (
+                      <span className="us-error">{errors.gender}</span>
+                    )}
                   </div>
                 </div>
 
@@ -1002,7 +1185,7 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       name="password"
                       value={formData.password}
                       onChange={handleChange}
-                      className={`us-input ${errors.password ? 'us-input-error' : ''}`}
+                      className={`us-input ${errors.password ? "us-input-error" : ""}`}
                       placeholder="Create a password"
                       disabled={isLoading}
                     />
@@ -1012,10 +1195,12 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       className="us-password-toggle"
                       disabled={isLoading}
                     >
-                      {showPassword ? 'Hide' : 'Show'}
+                      {showPassword ? "Hide" : "Show"}
                     </button>
                   </div>
-                  {errors.password && <span className="us-error">{errors.password}</span>}
+                  {errors.password && (
+                    <span className="us-error">{errors.password}</span>
+                  )}
                 </div>
 
                 <div className="us-field">
@@ -1029,44 +1214,55 @@ console.log("Has refreshToken?", !!localStorage.getItem('refreshToken'));
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className={`us-input ${errors.confirmPassword ? 'us-input-error' : ''}`}
+                      className={`us-input ${errors.confirmPassword ? "us-input-error" : ""}`}
                       placeholder="Confirm your password"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
                       className="us-password-toggle"
                       disabled={isLoading}
                     >
-                      {showConfirmPassword ? 'Hide' : 'Show'}
+                      {showConfirmPassword ? "Hide" : "Show"}
                     </button>
                   </div>
-                  {errors.confirmPassword && <span className="us-error">{errors.confirmPassword}</span>}
+                  {errors.confirmPassword && (
+                    <span className="us-error">{errors.confirmPassword}</span>
+                  )}
                 </div>
               </>
             )}
 
             <button
               type="submit"
-              className={`us-submit ${isLoading ? 'us-submit-loading' : ''}`}
+              className={`us-submit ${isLoading ? "us-submit-loading" : ""}`}
               disabled={isLoading}
             >
               {isLoading ? (
                 <>
                   <span className="us-spinner"></span>
-                  {isLogin ? 'Logging in...' : 'Creating Account...'}
+                  {isLogin ? "Logging in..." : "Creating Account..."}
                 </>
+              ) : isLogin ? (
+                "Login"
               ) : (
-                isLogin ? 'Login' : 'Create Account'
+                "Create Account"
               )}
             </button>
 
             {!isLogin && (
               <p className="us-terms">
-                By signing up, you agree to our{' '}
-                <a href="#" className={isLoading ? 'us-disabled' : ''}>Terms of Service</a> and{' '}
-                <a href="#" className={isLoading ? 'us-disabled' : ''}>Privacy Policy</a>
+                By signing up, you agree to our{" "}
+                <a href="#" className={isLoading ? "us-disabled" : ""}>
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className={isLoading ? "us-disabled" : ""}>
+                  Privacy Policy
+                </a>
               </p>
             )}
           </form>
