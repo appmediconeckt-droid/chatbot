@@ -14,12 +14,34 @@ const TERMINAL_STATUSES = new Set([
   "microphone_error",
 ]);
 
-const RTC_CONFIGURATION = {
-  iceServers: [
+const buildRtcConfiguration = () => {
+  const iceServers = [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-  ],
+    { urls: "stun:stun2.l.google.com:19302" },
+  ];
+
+  const turnUrl = import.meta.env.VITE_TURN_URL;
+  const turnUsername = import.meta.env.VITE_TURN_USERNAME;
+  const turnCredential = import.meta.env.VITE_TURN_CREDENTIAL;
+
+  if (turnUrl && turnUsername && turnCredential) {
+    const urls = turnUrl
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    iceServers.push({
+      urls: urls.length > 1 ? urls : urls[0],
+      username: turnUsername,
+      credential: turnCredential,
+    });
+  }
+
+  return { iceServers };
 };
+
+const RTC_CONFIGURATION = buildRtcConfiguration();
 
 const normalizeUserType = (userType) => {
   if (!userType) return "user";
@@ -582,6 +604,20 @@ const VoiceCallModal = ({
       });
     };
 
+    peer.onnegotiationneeded = async () => {
+      try {
+        if (
+          !peerConnectionRef.current ||
+          peerConnectionRef.current.signalingState !== "stable"
+        ) {
+          return;
+        }
+        await sendOffer();
+      } catch (error) {
+        console.warn("Voice negotiationneeded offer failed:", error);
+      }
+    };
+
     peer.onicecandidate = (event) => {
       if (event.candidate) {
         socket.emit("ice-candidate", {
@@ -597,6 +633,14 @@ const VoiceCallModal = ({
       const [incomingStream] = event.streams;
       if (incomingStream) {
         remoteStreamRef.current = incomingStream;
+
+        // Ensure the specific track is present on the stream (some browsers attach later).
+        const existingTrackIds = new Set(
+          remoteStreamRef.current.getTracks().map((track) => track.id),
+        );
+        if (event.track && !existingTrackIds.has(event.track.id)) {
+          remoteStreamRef.current.addTrack(event.track);
+        }
       } else {
         if (!remoteStreamRef.current) {
           remoteStreamRef.current = new MediaStream();
@@ -606,7 +650,7 @@ const VoiceCallModal = ({
           remoteStreamRef.current.getTracks().map((track) => track.id),
         );
 
-        if (!existingTrackIds.has(event.track.id)) {
+        if (event.track && !existingTrackIds.has(event.track.id)) {
           remoteStreamRef.current.addTrack(event.track);
         }
       }

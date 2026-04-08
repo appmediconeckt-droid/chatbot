@@ -243,6 +243,7 @@ const ChatBox = () => {
   const optionsRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const timeoutRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Function to get profile photo URL
   const getProfilePhotoUrl = (counselor) => {
@@ -517,6 +518,10 @@ const ChatBox = () => {
             }),
             fullTime: msg.createdAt,
             contentType: msg.contentType,
+            attachmentUrl: msg.attachmentUrl || null,
+            attachmentName: msg.attachmentName || null,
+            attachmentMimeType: msg.attachmentMimeType || null,
+            attachmentSize: msg.attachmentSize || null,
             isRead: msg.isRead,
             status: "sent",
           }),
@@ -560,25 +565,45 @@ const ChatBox = () => {
   };
 
   // Send message to API (POST)
-  const sendMessageToAPI = async (messageContent) => {
+  const sendMessageToAPI = async ({ messageContent = "", file = null }) => {
     try {
       const apiChatId = getChatIdForAPI();
       const token = localStorage.getItem("token");
 
-      const requestBody = {
-        content: messageContent,
-      };
+      let response;
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
-        requestBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+      if (file) {
+        const formData = new FormData();
+        if (messageContent.trim()) {
+          formData.append("content", messageContent.trim());
+        }
+        formData.append("attachment", file);
+
+        response = await axios.post(
+          `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
+          formData,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           },
-        },
-      );
+        );
+      } else {
+        const requestBody = {
+          content: messageContent,
+        };
+
+        response = await axios.post(
+          `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
+          requestBody,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+      }
 
       console.log("POST API Response:", response.data);
 
@@ -625,7 +650,7 @@ const ChatBox = () => {
     }
 
     try {
-      await sendMessageToAPI(messageText);
+      await sendMessageToAPI({ messageContent: messageText });
       setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
     } catch (err) {
       console.error("Error in message sending flow:", err);
@@ -1111,31 +1136,47 @@ const ChatBox = () => {
 
   // Handle file attachment
   const handleFileAttach = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.onchange = async (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const fileMessage = {
-          id: `temp_${Date.now()}`,
-          text: `📎 Attached file: ${file.name}`,
-          sender: "user",
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          isFile: true,
-          status: "sending",
-          isTemporary: true,
-        };
-        setMessages((prev) => [...prev, fileMessage]);
+    if (isSending) return;
+    fileInputRef.current?.click();
+  };
 
-        setTimeout(() => {
-          setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
-        }, 1000);
-      }
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || isSending) return;
+
+    const tempFileMessage = {
+      id: `temp_file_${Date.now()}`,
+      text: file.name,
+      sender: "user",
+      senderRole: "user",
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE",
+      status: "sending",
+      isTemporary: true,
     };
-    input.click();
+
+    setMessages((prev) => [...prev, tempFileMessage]);
+    setIsSending(true);
+
+    try {
+      await sendMessageToAPI({ file });
+      setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+    } catch (error) {
+      console.error("Error sending file:", error);
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempFileMessage.id
+            ? { ...msg, status: "error", error: "Failed to send file" }
+            : msg,
+        ),
+      );
+    } finally {
+      setIsSending(false);
+      e.target.value = "";
+    }
   };
 
   // Handle input change
@@ -1383,7 +1424,46 @@ const ChatBox = () => {
                   className={`chatMsgBubble ${message.sender === "user" ? "chatMsgRight" : "chatMsgLeft"} ${message.status === "error" ? "message-error" : ""}`}
                 >
                   <div className="chatMsgContent">
-                    <p className="chatMsgText">{message.text}</p>
+                    {message.contentType === "IMAGE" &&
+                    message.attachmentUrl ? (
+                      <>
+                        <img
+                          src={message.attachmentUrl}
+                          alt={message.attachmentName || "Shared image"}
+                          className="chatMsgImage"
+                        />
+                        <a
+                          href={message.attachmentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="chatMsgAttachmentLink"
+                        >
+                          {message.attachmentName || "Open image"}
+                        </a>
+                        {message.text && (
+                          <p className="chatMsgText">{message.text}</p>
+                        )}
+                      </>
+                    ) : message.contentType === "FILE" &&
+                      message.attachmentUrl ? (
+                      <>
+                        <a
+                          href={message.attachmentUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="chatMsgAttachmentLink"
+                        >
+                          {message.attachmentName ||
+                            message.text ||
+                            "Open attachment"}
+                        </a>
+                        {message.text && (
+                          <p className="chatMsgText">{message.text}</p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="chatMsgText">{message.text}</p>
+                    )}
                     <div className="chatMsgFooter">
                       <time className="chatMsgTimestamp">{message.time}</time>
                       {renderMessageStatus(message)}
@@ -1433,6 +1513,13 @@ const ChatBox = () => {
         {/* Message Input Area */}
         <footer className="chatInputArea">
           <div className="chatInputGroup">
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="chatHiddenFileInput"
+              onChange={handleFileSelected}
+              style={{ display: "none" }}
+            />
             <button
               className="chatAttachBtn"
               onClick={handleFileAttach}

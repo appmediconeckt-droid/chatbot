@@ -141,6 +141,7 @@ const SMSInput = () => {
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const fileInputRef = useRef(null);
 
   // Call modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -438,6 +439,10 @@ const SMSInput = () => {
             }),
             fullTime: msg.createdAt,
             contentType: msg.contentType,
+            attachmentUrl: msg.attachmentUrl || null,
+            attachmentName: msg.attachmentName || null,
+            attachmentMimeType: msg.attachmentMimeType || null,
+            attachmentSize: msg.attachmentSize || null,
             isRead: msg.isRead,
             status: "sent",
           }),
@@ -505,25 +510,45 @@ const SMSInput = () => {
   };
 
   // Send message to API (POST)
-  const sendMessageToAPI = async (messageContent) => {
+  const sendMessageToAPI = async ({ messageContent = "", file = null }) => {
     try {
       const apiChatId = getChatIdForAPI();
       const token = localStorage.getItem("token");
 
-      const requestBody = {
-        content: messageContent,
-      };
+      let response;
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
-        requestBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
+      if (file) {
+        const formData = new FormData();
+        if (messageContent.trim()) {
+          formData.append("content", messageContent.trim());
+        }
+        formData.append("attachment", file);
+
+        response = await axios.post(
+          `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
+          formData,
+          {
+            headers: {
+              Authorization: token ? `Bearer ${token}` : "",
+            },
           },
-        },
-      );
+        );
+      } else {
+        const requestBody = {
+          content: messageContent,
+        };
+
+        response = await axios.post(
+          `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
+          requestBody,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          },
+        );
+      }
 
       console.log("POST API Response:", response.data);
 
@@ -566,7 +591,7 @@ const SMSInput = () => {
     setError(null);
 
     try {
-      await sendMessageToAPI(messageText);
+      await sendMessageToAPI({ messageContent: messageText });
       setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
     } catch (err) {
       console.error("Error sending message:", err);
@@ -586,6 +611,54 @@ const SMSInput = () => {
       }, 3000);
     } finally {
       setIsSending(false);
+    }
+  };
+
+  const handleFileAttachClick = () => {
+    if (isSending) return;
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file || isSending || !selectedUser) return;
+
+    const tempFileMessage = {
+      id: `temp_file_${Date.now()}`,
+      text: file.name,
+      sender: "me",
+      senderRole: "counsellor",
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE",
+      status: "sending",
+      isTemporary: true,
+    };
+
+    setMessages((prev) => [...prev, tempFileMessage]);
+    setIsSending(true);
+    setError(null);
+
+    try {
+      await sendMessageToAPI({ file });
+      setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+    } catch (err) {
+      console.error("Error sending file:", err);
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempFileMessage.id
+            ? { ...msg, status: "error", error: "Failed to send file" }
+            : msg,
+        ),
+      );
+
+      setError("Failed to send file. Please try again.");
+    } finally {
+      setIsSending(false);
+      e.target.value = "";
     }
   };
 
@@ -1011,6 +1084,10 @@ const SMSInput = () => {
       );
       return true;
     } catch (error) {
+      if (error?.response?.status === 404) {
+        console.warn("Call already ended or unavailable on server:", callId);
+        return true;
+      }
       console.error("Error ending call:", error);
       return false;
     }
@@ -1308,7 +1385,38 @@ const SMSInput = () => {
               className={`smsinput-message ${msg.sender === "me" ? "sent" : "received"}`}
             >
               <div className="message-bubble">
-                <p className="message-text">{msg.text}</p>
+                {msg.contentType === "IMAGE" && msg.attachmentUrl ? (
+                  <>
+                    <img
+                      src={msg.attachmentUrl}
+                      alt={msg.attachmentName || "Shared image"}
+                      className="sms-attachment-image"
+                    />
+                    <a
+                      href={msg.attachmentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="sms-attachment-link"
+                    >
+                      {msg.attachmentName || "Open image"}
+                    </a>
+                    {msg.text && <p className="message-text">{msg.text}</p>}
+                  </>
+                ) : msg.contentType === "FILE" && msg.attachmentUrl ? (
+                  <>
+                    <a
+                      href={msg.attachmentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="sms-attachment-link"
+                    >
+                      {msg.attachmentName || msg.text || "Open attachment"}
+                    </a>
+                    {msg.text && <p className="message-text">{msg.text}</p>}
+                  </>
+                ) : (
+                  <p className="message-text">{msg.text}</p>
+                )}
                 <div className="message-footer">
                   <span className="message-time">{msg.time}</span>
                   {renderMessageStatus(msg)}
@@ -1323,11 +1431,18 @@ const SMSInput = () => {
       {/* Message Input Form */}
       <form className="smsinput-form" onSubmit={handleSendMessage}>
         <div className="smsinput-input-wrapper">
+          <input
+            ref={fileInputRef}
+            type="file"
+            style={{ display: "none" }}
+            onChange={handleFileSelected}
+          />
           <button
             type="button"
             className="attach-btn"
             title="Attach file"
             disabled={isSending}
+            onClick={handleFileAttachClick}
           >
             📎
           </button>

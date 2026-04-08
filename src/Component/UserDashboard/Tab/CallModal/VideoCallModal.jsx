@@ -4,6 +4,33 @@ import { io } from "socket.io-client";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import "./VideoCallModal.css";
 
+const buildRtcConfiguration = () => {
+  const iceServers = [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+  ];
+
+  const turnUrl = import.meta.env.VITE_TURN_URL;
+  const turnUsername = import.meta.env.VITE_TURN_USERNAME;
+  const turnCredential = import.meta.env.VITE_TURN_CREDENTIAL;
+
+  if (turnUrl && turnUsername && turnCredential) {
+    const urls = turnUrl
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+
+    iceServers.push({
+      urls: urls.length > 1 ? urls : urls[0],
+      username: turnUsername,
+      credential: turnCredential,
+    });
+  }
+
+  return { iceServers };
+};
+
 const ACTIVE_STATUSES = new Set(["active", "connected"]);
 const TERMINAL_STATUSES = new Set([
   "ended",
@@ -15,12 +42,7 @@ const TERMINAL_STATUSES = new Set([
   "no_camera",
 ]);
 
-const RTC_CONFIGURATION = {
-  iceServers: [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-  ],
-};
+const RTC_CONFIGURATION = buildRtcConfiguration();
 
 const normalizeUserType = (userType) => {
   if (!userType) return "user";
@@ -67,6 +89,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
   const [isConnecting, setIsConnecting] = useState(true);
   const [isRemoteVideoReady, setIsRemoteVideoReady] = useState(false);
   const [webrtcError, setWebrtcError] = useState("");
+  const [hasRemoteVideoTrack, setHasRemoteVideoTrack] = useState(false);
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -78,6 +101,8 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
   const remoteUserIdRef = useRef("");
   const hasStartedConnectionRef = useRef(false);
   const pendingIceCandidatesRef = useRef([]);
+  const remoteVideoCheckTimerRef = useRef(null);
+  const hasRequestedVideoRenegotiationRef = useRef(false);
 
   const defaultCallData = {
     id: "",
@@ -87,6 +112,98 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     status: "connecting",
     phoneNumber: "",
   };
+
+  const playVideoSafely = useCallback(async (videoElement, options = {}) => {
+    if (!videoElement) {
+      return { ok: false, aborted: false };
+    }
+
+    const { muted = videoElement.muted, volume = videoElement.volume } =
+      options;
+
+    videoElement.muted = muted;
+    if (typeof volume === "number") {
+      videoElement.volume = Math.max(0, Math.min(1, volume));
+    }
+
+    // Avoid calling play repeatedly while already playing.
+    if (
+      !videoElement.paused &&
+      !videoElement.ended &&
+      videoElement.readyState >= 2
+    ) {
+      return { ok: true, aborted: false };
+    }
+
+    try {
+      const playPromise = videoElement.play();
+      if (playPromise && typeof playPromise.then === "function") {
+        await playPromise;
+      }
+      return { ok: true, aborted: false };
+    } catch (error) {
+      // This happens when srcObject changes while play() is in flight.
+      if (error?.name === "AbortError") {
+        return { ok: false, aborted: true };
+      }
+      console.warn("Video playback start failed:", error);
+      return { ok: false, aborted: false };
+    }
+  }, []);
+
+  const hasLiveRemoteVideo = useCallback(() => {
+    if (!remoteStreamRef.current) return false;
+
+    const videoTracks = remoteStreamRef.current
+      .getVideoTracks()
+      .filter((track) => track.readyState !== "ended");
+
+    return videoTracks.length > 0;
+  }, []);
+
+  const syncRemotePlaybackState = useCallback(async () => {
+    const remoteVideoElement = remoteVideoRef.current;
+    if (!remoteVideoElement || !remoteStreamRef.current) return;
+
+    if (remoteVideoElement.srcObject !== remoteStreamRef.current) {
+      remoteVideoElement.srcObject = remoteStreamRef.current;
+    }
+
+    const hasVideo = hasLiveRemoteVideo();
+    if (!hasVideo) {
+      setHasRemoteVideoTrack(false);
+      setIsRemoteVideoReady(false);
+      return;
+    }
+
+    const playbackResult = await playVideoSafely(remoteVideoElement, {
+      muted: true,
+      volume: Number(volumeLevel) / 100,
+    });
+
+    setHasRemoteVideoTrack(true);
+
+    if (playbackResult.ok) {
+      setIsRemoteVideoReady(true);
+      setIsConnecting(false);
+      setWebrtcError("");
+      remoteVideoElement.muted = !isSpeakerOn;
+      remoteVideoElement.volume = Math.max(
+        0,
+        Math.min(1, Number(volumeLevel) / 100),
+      );
+      return;
+    }
+
+    if (playbackResult.aborted) {
+      // Ignore transient reload races; onPlaying/onLoadedMetadata will recover.
+      setIsRemoteVideoReady(false);
+      return;
+    }
+
+    setIsRemoteVideoReady(false);
+    setWebrtcError("Tap on remote video area once to allow playback.");
+  }, [hasLiveRemoteVideo, isSpeakerOn, playVideoSafely, volumeLevel]);
 
   const cleanupRealtimeConnection = useCallback(() => {
     if (peerConnectionRef.current) {
@@ -114,11 +231,10 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       }
 
       socketRef.current.off("connect");
-      socketRef.current.off("offer");
-      socketRef.current.off("answer");
       socketRef.current.off("call-offer");
       socketRef.current.off("call-answer");
       socketRef.current.off("ice-candidate");
+      socketRef.current.off("call-status-update");
       socketRef.current.off("user-joined");
       socketRef.current.off("user-left");
       socketRef.current.off("user-left-call");
@@ -132,12 +248,19 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       remoteStreamRef.current = null;
     }
 
+    if (remoteVideoCheckTimerRef.current) {
+      clearTimeout(remoteVideoCheckTimerRef.current);
+      remoteVideoCheckTimerRef.current = null;
+    }
+
     if (remoteVideoRef.current) {
       remoteVideoRef.current.srcObject = null;
     }
 
     setIsRemoteVideoReady(false);
+    setHasRemoteVideoTrack(false);
     pendingIceCandidatesRef.current = [];
+    hasRequestedVideoRenegotiationRef.current = false;
     hasStartedConnectionRef.current = false;
   }, [callId]);
 
@@ -158,11 +281,13 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       setApiCallData(callData.apiCallData || null);
       setCallStartTime(new Date());
       setCallDuration(0);
+      setHasRemoteVideoTrack(false);
       setIsConnecting(
         !isConnectedStatus(normalizedStatus) &&
           !isTerminalStatus(normalizedStatus),
       );
       setWebrtcError("");
+      hasRequestedVideoRenegotiationRef.current = false;
       hasStartedConnectionRef.current = false;
     } else if (isOpen) {
       const fallbackStatus = normalizeCallStatus(defaultCallData.status);
@@ -173,70 +298,88 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       setCallStatus(fallbackStatus);
       setCallStartTime(new Date());
       setCallDuration(0);
+      setHasRemoteVideoTrack(false);
       setIsConnecting(
         !isConnectedStatus(fallbackStatus) && !isTerminalStatus(fallbackStatus),
       );
     }
   }, [isOpen, callData]);
 
-  const initializeCamera = useCallback(async (useBackCamera = false) => {
-    try {
-      const facingMode = useBackCamera ? "environment" : "user";
+  const initializeCamera = useCallback(
+    async (useBackCamera = false) => {
+      try {
+        const facingMode = useBackCamera ? "environment" : "user";
 
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 1280 },
-          height: { ideal: 720 },
-          facingMode,
-        },
-        audio: true,
-      });
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            facingMode,
+          },
+          audio: true,
+        });
 
-      if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
-      }
+        if (mediaStreamRef.current) {
+          mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        }
 
-      mediaStreamRef.current = stream;
+        mediaStreamRef.current = stream;
 
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
+        if (stream.getVideoTracks().length === 0) {
+          setCallStatus("no_camera");
+          setWebrtcError("Camera not detected on this device.");
+        }
 
-      if (peerConnectionRef.current) {
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+          await playVideoSafely(localVideoRef.current, { muted: true });
+        }
+
+        if (peerConnectionRef.current) {
+          const videoTrack = stream.getVideoTracks()[0];
+          const audioTrack = stream.getAudioTracks()[0];
+
+          if (videoTrack) {
+            const sender = peerConnectionRef.current
+              .getSenders()
+              .find((item) => item.track && item.track.kind === "video");
+            if (sender) {
+              await sender.replaceTrack(videoTrack);
+            } else {
+              peerConnectionRef.current.addTrack(videoTrack, stream);
+            }
+          }
+
+          if (audioTrack) {
+            const sender = peerConnectionRef.current
+              .getSenders()
+              .find((item) => item.track && item.track.kind === "audio");
+            if (sender) {
+              await sender.replaceTrack(audioTrack);
+            } else {
+              peerConnectionRef.current.addTrack(audioTrack, stream);
+            }
+          }
+        }
+
         const videoTrack = stream.getVideoTracks()[0];
-        const audioTrack = stream.getAudioTracks()[0];
-
         if (videoTrack) {
-          const sender = peerConnectionRef.current
-            .getSenders()
-            .find((item) => item.track && item.track.kind === "video");
-          if (sender) {
-            await sender.replaceTrack(videoTrack);
-          }
+          videoTrack.enabled = isVideoEnabled;
         }
 
-        if (audioTrack) {
-          const sender = peerConnectionRef.current
-            .getSenders()
-            .find((item) => item.track && item.track.kind === "audio");
-          if (sender) {
-            await sender.replaceTrack(audioTrack);
-          }
+        const settings = videoTrack ? videoTrack.getSettings() : {};
+        if (settings.deviceId) {
+          setCurrentCamera(settings.deviceId);
         }
-      }
 
-      const videoTrack = stream.getVideoTracks()[0];
-      const settings = videoTrack ? videoTrack.getSettings() : {};
-      if (settings.deviceId) {
-        setCurrentCamera(settings.deviceId);
+        setIsCameraInitialized(true);
+      } catch (error) {
+        console.error("Error accessing camera:", error);
+        setCallStatus("camera_error");
       }
-
-      setIsCameraInitialized(true);
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      setCallStatus("camera_error");
-    }
-  }, []);
+    },
+    [isVideoEnabled, playVideoSafely],
+  );
 
   const getAvailableCameras = useCallback(async () => {
     try {
@@ -324,7 +467,18 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         track.enabled = isVideoEnabled;
       });
     }
-  }, [isVideoEnabled]);
+
+    // If user turns video on after local stream lost its video track,
+    // re-request camera so remote participant receives a fresh video sender.
+    if (
+      isOpen &&
+      isVideoEnabled &&
+      mediaStreamRef.current &&
+      mediaStreamRef.current.getVideoTracks().length === 0
+    ) {
+      void initializeCamera(isCameraSwitched);
+    }
+  }, [isVideoEnabled, initializeCamera, isCameraSwitched, isOpen]);
 
   useEffect(() => {
     if (remoteVideoRef.current) {
@@ -529,6 +683,52 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       });
     };
 
+    const requestVideoRenegotiation = async () => {
+      if (!peerConnectionRef.current) return;
+      if (peerConnectionRef.current.signalingState !== "stable") return;
+      if (hasRequestedVideoRenegotiationRef.current) return;
+
+      hasRequestedVideoRenegotiationRef.current = true;
+      try {
+        await sendOffer();
+      } catch (error) {
+        console.warn("Video renegotiation offer failed:", error);
+      }
+    };
+
+    const recoverAndRepublishLocalVideo = async () => {
+      try {
+        const localStream = mediaStreamRef.current;
+        const hasLiveVideoTrack =
+          localStream &&
+          localStream
+            .getVideoTracks()
+            .some((track) => track.readyState === "live" && track.enabled);
+
+        if (!hasLiveVideoTrack) {
+          await initializeCamera(isCameraSwitched);
+        }
+
+        await sendOffer();
+      } catch (error) {
+        console.warn("Local video republish failed:", error);
+      }
+    };
+
+    peer.onnegotiationneeded = async () => {
+      try {
+        if (
+          !peerConnectionRef.current ||
+          peerConnectionRef.current.signalingState !== "stable"
+        ) {
+          return;
+        }
+        await sendOffer();
+      } catch (error) {
+        console.warn("Negotiationneeded offer failed:", error);
+      }
+    };
+
     peer.onicecandidate = (event) => {
       if (!event.candidate) return;
       socket.emit("ice-candidate", {
@@ -543,6 +743,27 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       const [incomingStream] = event.streams;
       if (incomingStream) {
         remoteStreamRef.current = incomingStream;
+
+        incomingStream.onaddtrack = () => {
+          void syncRemotePlaybackState();
+        };
+
+        incomingStream.onremovetrack = () => {
+          if (!hasLiveRemoteVideo()) {
+            setHasRemoteVideoTrack(false);
+            setIsRemoteVideoReady(false);
+            setWebrtcError("Remote camera stopped sending video.");
+          }
+        };
+
+        // Some browsers can call ontrack before the track is attached to `event.streams[0]`.
+        // Ensure the track exists on our remote stream so UI detection works reliably.
+        const existingTrackIds = new Set(
+          remoteStreamRef.current.getTracks().map((track) => track.id),
+        );
+        if (event.track && !existingTrackIds.has(event.track.id)) {
+          remoteStreamRef.current.addTrack(event.track);
+        }
       } else {
         if (!remoteStreamRef.current) {
           remoteStreamRef.current = new MediaStream();
@@ -552,35 +773,31 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
           remoteStreamRef.current.getTracks().map((track) => track.id),
         );
 
-        if (!existingTrackIds.has(event.track.id)) {
+        if (event.track && !existingTrackIds.has(event.track.id)) {
           remoteStreamRef.current.addTrack(event.track);
         }
       }
 
-      if (remoteVideoRef.current) {
-        const remoteVideoElement = remoteVideoRef.current;
-        remoteVideoElement.srcObject = remoteStreamRef.current;
+      void syncRemotePlaybackState();
 
-        // Allow video frames to start rendering even if autoplay with audio
-        // would otherwise be blocked by the browser.
-        remoteVideoElement.muted = true;
+      if (event.track.kind === "video") {
+        if (remoteVideoCheckTimerRef.current) {
+          clearTimeout(remoteVideoCheckTimerRef.current);
+          remoteVideoCheckTimerRef.current = null;
+        }
 
-        remoteVideoElement
-          .play()
-          .then(() => {
-            setIsRemoteVideoReady(true);
-            setIsConnecting(false);
-            setWebrtcError("");
-            remoteVideoElement.muted = !isSpeakerOn;
-            remoteVideoElement.volume = Math.max(
-              0,
-              Math.min(1, Number(volumeLevel) / 100),
-            );
-          })
-          .catch((error) => {
-            console.warn("Remote autoplay blocked:", error);
-            setWebrtcError("Tap on remote video area once to allow playback.");
-          });
+        hasRequestedVideoRenegotiationRef.current = false;
+        setHasRemoteVideoTrack(true);
+
+        event.track.onunmute = async () => {
+          await syncRemotePlaybackState();
+        };
+
+        event.track.onended = () => {
+          setHasRemoteVideoTrack(false);
+          setIsRemoteVideoReady(false);
+          setWebrtcError("Remote camera stopped sending video.");
+        };
       }
     };
 
@@ -588,8 +805,38 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       const state = peer.connectionState;
       if (state === "connected") {
         setIsConnecting(false);
+
+        if (remoteVideoCheckTimerRef.current) {
+          clearTimeout(remoteVideoCheckTimerRef.current);
+          remoteVideoCheckTimerRef.current = null;
+        }
+
+        remoteVideoCheckTimerRef.current = setTimeout(() => {
+          if (hasLiveRemoteVideo()) {
+            void syncRemotePlaybackState();
+            return;
+          }
+
+          setHasRemoteVideoTrack(false);
+          setIsRemoteVideoReady(false);
+          setWebrtcError(
+            "Connected, but remote camera is not sending video. Trying to recover...",
+          );
+          // Recover locally as well; this helps if our own sender lost the video track.
+          void recoverAndRepublishLocalVideo();
+          void requestVideoRenegotiation();
+          socket.emit("call-status-update", {
+            callId,
+            status: "request_video_refresh",
+            to: remoteUserIdRef.current,
+          });
+        }, 3000);
       }
       if (state === "failed" || state === "disconnected") {
+        if (remoteVideoCheckTimerRef.current) {
+          clearTimeout(remoteVideoCheckTimerRef.current);
+          remoteVideoCheckTimerRef.current = null;
+        }
         setWebrtcError("Video connection interrupted.");
       }
     };
@@ -675,9 +922,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     };
 
     socket.on("call-offer", onIncomingOffer);
-    socket.on("offer", onIncomingOffer);
     socket.on("call-answer", onIncomingAnswer);
-    socket.on("answer", onIncomingAnswer);
 
     socket.on("ice-candidate", async ({ candidate, userId, from }) => {
       const senderId = String(userId || from || "");
@@ -716,10 +961,30 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       setWebrtcError("Unable to connect realtime video service.");
     });
 
+    socket.on("call-status-update", ({ status, from }) => {
+      if (String(from) === String(localUserIdRef.current)) return;
+
+      if (status === "camera_error" || status === "no_camera") {
+        setHasRemoteVideoTrack(false);
+        setIsRemoteVideoReady(false);
+        setWebrtcError("Remote camera is unavailable or blocked.");
+        return;
+      }
+
+      if (status === "request_video_refresh") {
+        void recoverAndRepublishLocalVideo();
+      }
+    });
+
     socket.on("disconnect", () => {
       if (offerRetryTimer) {
         clearInterval(offerRetryTimer);
         offerRetryTimer = null;
+      }
+
+      if (remoteVideoCheckTimerRef.current) {
+        clearTimeout(remoteVideoCheckTimerRef.current);
+        remoteVideoCheckTimerRef.current = null;
       }
     });
 
@@ -731,6 +996,12 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     callStatus,
     initializeCamera,
     isCameraSwitched,
+    hasRemoteVideoTrack,
+    isSpeakerOn,
+    hasLiveRemoteVideo,
+    playVideoSafely,
+    syncRemotePlaybackState,
+    volumeLevel,
   ]);
 
   useEffect(() => {
@@ -774,6 +1045,18 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
   }, [isOpen, cleanupRealtimeConnection]);
 
   useEffect(() => {
+    if (!socketRef.current || !callId || !remoteUserIdRef.current) return;
+
+    if (callStatus === "camera_error" || callStatus === "no_camera") {
+      socketRef.current.emit("call-status-update", {
+        callId,
+        status: callStatus,
+        to: remoteUserIdRef.current,
+      });
+    }
+  }, [callId, callStatus]);
+
+  useEffect(() => {
     return () => {
       cleanupRealtimeConnection();
       if (mediaStreamRef.current) {
@@ -807,15 +1090,30 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
       mediaStreamRef.current = stream;
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
+        await playVideoSafely(localVideoRef.current, { muted: true });
       }
 
       if (peerConnectionRef.current) {
         const newVideoTrack = stream.getVideoTracks()[0];
+        const newAudioTrack = stream.getAudioTracks()[0];
         const videoSender = peerConnectionRef.current
           .getSenders()
           .find((item) => item.track && item.track.kind === "video");
         if (videoSender && newVideoTrack) {
           await videoSender.replaceTrack(newVideoTrack);
+        } else if (newVideoTrack) {
+          peerConnectionRef.current.addTrack(newVideoTrack, stream);
+        }
+
+        if (newAudioTrack) {
+          const audioSender = peerConnectionRef.current
+            .getSenders()
+            .find((item) => item.track && item.track.kind === "audio");
+          if (audioSender) {
+            await audioSender.replaceTrack(newAudioTrack);
+          } else {
+            peerConnectionRef.current.addTrack(newAudioTrack, stream);
+          }
         }
       }
 
@@ -850,6 +1148,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
           mediaStreamRef.current = composed;
           if (localVideoRef.current) {
             localVideoRef.current.srcObject = composed;
+            await playVideoSafely(localVideoRef.current, { muted: true });
           }
         }
 
@@ -940,6 +1239,9 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         ? "Waiting for other participant to join..."
         : "Connecting...";
     }
+    if (isConnectedStatus(callStatus) && !hasRemoteVideoTrack) {
+      return "Connected. Remote camera is not sending video.";
+    }
     if (isConnectedStatus(callStatus) && !isRemoteVideoReady) {
       return "Connected. Waiting for remote video...";
     }
@@ -1025,6 +1327,20 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                 autoPlay
                 playsInline
                 poster="/api/placeholder/1280/720"
+                onLoadedMetadata={() => {
+                  if (hasLiveRemoteVideo()) {
+                    setIsRemoteVideoReady(true);
+                    setIsConnecting(false);
+                    setWebrtcError("");
+                  }
+                }}
+                onPlaying={() => {
+                  if (hasLiveRemoteVideo()) {
+                    setIsRemoteVideoReady(true);
+                    setIsConnecting(false);
+                    setWebrtcError("");
+                  }
+                }}
                 onClick={() => {
                   if (remoteVideoRef.current) {
                     remoteVideoRef.current.play().catch(() => {});

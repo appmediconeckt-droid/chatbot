@@ -547,8 +547,6 @@ export default function CounselorDashboard() {
         },
       );
 
-      console.log("Pending requests response:", response.data);
-
       const data = response.data;
       const requests = data.requests || [];
 
