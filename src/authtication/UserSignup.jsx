@@ -320,6 +320,7 @@ const UserSignup = () => {
         {
           email: formData.email,
           password: formData.password,
+          role: "user",
           forceLogin,
         },
         { withCredentials: true },
