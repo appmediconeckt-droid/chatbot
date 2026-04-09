@@ -1,644 +1,742 @@
-// VideoCallModal.jsx - Fully Responsive with Draggable Local Video, Auto-hide Controls
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import './VideoCallModal.css';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import axios from "axios";
+import { io } from "socket.io-client";
+import { API_BASE_URL } from "../../../../axiosConfig";
+import "./VideoCallModal.css";
 
-const VideoCallModal = ({ isOpen, onClose, callData }) => {
-    // State variables
-    const [isMuted, setIsMuted] = useState(false);
-    const [isSpeakerOn, setIsSpeakerOn] = useState(false);
-    const [isVideoEnabled, setIsVideoEnabled] = useState(true);
-    const [isCameraSwitched, setIsCameraSwitched] = useState(false);
-    const [callDuration, setCallDuration] = useState(0);
-    const [isCallActive, setIsCallActive] = useState(true);
-    const [isFullScreen, setIsFullScreen] = useState(false);
-    const [isRecording, setIsRecording] = useState(false);
-    const [isCameraInitialized, setIsCameraInitialized] = useState(false);
-    const [availableCameras, setAvailableCameras] = useState([]);
-    const [connectionQuality, setConnectionQuality] = useState('good');
-    const [isScreenSharing, setIsScreenSharing] = useState(false);
-    const [callerName, setCallerName] = useState('');
-    const [callerProfilePic, setCallerProfilePic] = useState('');
-    const [callStatus, setCallStatus] = useState('connecting');
-    const [callStartTime, setCallStartTime] = useState(null);
-    const [showControls, setShowControls] = useState(true);
-    const [localVideoPosition, setLocalVideoPosition] = useState({ x: null, y: null, bottom: 90, right: 18 });
-    const [isDragging, setIsDragging] = useState(false);
-    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+const ACTIVE = new Set(["active", "connected"]);
+const TERMINAL = new Set([
+  "ended",
+  "rejected",
+  "cancelled",
+  "missed",
+  "failed",
+  "camera_error",
+  "no_camera",
+]);
 
-    // Refs
-    const localVideoRef = useRef(null);
-    const remoteVideoRef = useRef(null);
-    const mediaStreamRef = useRef(null);
-    const containerRef = useRef(null);
-    const controlsTimeoutRef = useRef(null);
-    const localContainerRef = useRef(null);
-    const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
+const normalizeStatus = (status) => {
+  if (!status) return "connecting";
+  const normalized = String(status).toLowerCase();
+  return normalized === "accepted" ? "active" : normalized;
+};
 
-    const defaultCallData = {
-        id: 1,
-        name: "Dr. Priya Sharma",
-        profilePic: "👩‍⚕️",
-        type: "video",
-        status: "connected",
-        phoneNumber: "+91 98765 43210"
-    };
+const isConnectedStatus = (status) => ACTIVE.has(normalizeStatus(status));
+const isTerminalStatus = (status) => TERMINAL.has(normalizeStatus(status));
 
-    // Process callData when modal opens
-    useEffect(() => {
-        if (isOpen && callData) {
-            setCallerName(callData.name || defaultCallData.name);
-            setCallerProfilePic(callData.profilePic || defaultCallData.profilePic);
-            setCallStatus(callData.status || 'connecting');
-            setCallStartTime(new Date());
-            setCallDuration(0);
-        } else if (isOpen && !callData) {
-            setCallerName(defaultCallData.name);
-            setCallerProfilePic(defaultCallData.profilePic);
-            setCallStatus(defaultCallData.status);
-            setCallStartTime(new Date());
-            setCallDuration(0);
-        }
-    }, [isOpen, callData]);
+const normalizeUserType = (userType) => {
+  if (!userType) return "user";
+  return userType === "counsellor" ? "counselor" : userType;
+};
 
-    // Initialize camera
-    useEffect(() => {
-        if (isOpen && !isCameraInitialized) {
-            initializeCamera(false);
-            getAvailableCameras();
-        }
+const buildRtcConfig = () => {
+  const iceServers = [
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
+  ];
 
-        return () => {
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-                mediaStreamRef.current = null;
-            }
-        };
-    }, [isOpen]);
+  const turnUrl = import.meta.env.VITE_TURN_URL;
+  const turnUsername = import.meta.env.VITE_TURN_USERNAME;
+  const turnCredential = import.meta.env.VITE_TURN_CREDENTIAL;
 
-    // Call duration timer
-    useEffect(() => {
-        let timer;
-        if (isOpen && isCallActive && callStartTime && callStatus === 'connected') {
-            timer = setInterval(() => {
-                setCallDuration(prev => prev + 1);
-            }, 1000);
-        }
-        return () => {
-            if (timer) clearInterval(timer);
-        };
-    }, [isOpen, isCallActive, callStartTime, callStatus]);
+  if (turnUrl && turnUsername && turnCredential) {
+    const urls = turnUrl
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
 
-    // Auto-hide controls on inactivity
-    useEffect(() => {
-        if (isOpen && isCallActive) {
-            resetControlsTimeout();
-            window.addEventListener('mousemove', resetControlsTimeout);
-            window.addEventListener('touchstart', resetControlsTimeout);
-            return () => {
-                window.removeEventListener('mousemove', resetControlsTimeout);
-                window.removeEventListener('touchstart', resetControlsTimeout);
-                if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-            };
-        }
-    }, [isOpen, isCallActive]);
+    iceServers.push({
+      urls: urls.length > 1 ? urls : urls[0],
+      username: turnUsername,
+      credential: turnCredential,
+    });
+  }
 
-    // Simulate connection quality changes
-    useEffect(() => {
-        if (isOpen && isCallActive) {
-            const qualityInterval = setInterval(() => {
-                const qualities = ['good', 'medium', 'poor'];
-                const randomQuality = qualities[Math.floor(Math.random() * qualities.length)];
-                setConnectionQuality(randomQuality);
-            }, 10000);
-            return () => clearInterval(qualityInterval);
-        }
-    }, [isOpen, isCallActive]);
+  return { iceServers };
+};
 
-    // Handle video track enable/disable
-    useEffect(() => {
-        if (mediaStreamRef.current) {
-            const videoTracks = mediaStreamRef.current.getVideoTracks();
-            videoTracks.forEach(track => {
-                track.enabled = isVideoEnabled;
-            });
-        }
-    }, [isVideoEnabled]);
+const RTC_CONFIGURATION = buildRtcConfig();
 
-    // Handle audio track mute/unmute
-    useEffect(() => {
-        if (mediaStreamRef.current) {
-            const audioTracks = mediaStreamRef.current.getAudioTracks();
-            audioTracks.forEach(track => {
-                track.enabled = !isMuted;
-            });
-        }
-    }, [isMuted]);
+const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) => {
+  const [isMuted, setIsMuted] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+  const [isVideoEnabled, setIsVideoEnabled] = useState(true);
+  const [isCameraSwitched, setIsCameraSwitched] = useState(false);
+  const [isCallActive, setIsCallActive] = useState(true);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [volumeLevel, setVolumeLevel] = useState(70);
+  const [callDuration, setCallDuration] = useState(0);
+  const [availableCameras, setAvailableCameras] = useState([]);
+  const [currentCamera, setCurrentCamera] = useState("");
 
-    // Reset state when modal closes
-    useEffect(() => {
-        if (!isOpen) {
-            setIsMuted(false);
-            setIsSpeakerOn(false);
-            setIsVideoEnabled(true);
-            setIsCameraSwitched(false);
-            setCallDuration(0);
-            setIsCallActive(true);
-            setIsFullScreen(false);
-            setIsRecording(false);
-            setIsCameraInitialized(false);
-            setIsScreenSharing(false);
-            setCallStatus('ended');
-            setShowControls(true);
-            setLocalVideoPosition({ x: null, y: null, bottom: 90, right: 18 });
+  const [callerName, setCallerName] = useState("Counselor");
+  const [callerProfilePic, setCallerProfilePic] = useState("C");
+  const [callerPhoneNumber, setCallerPhoneNumber] = useState("");
+  const [callStatus, setCallStatus] = useState("connecting");
+  const [callId, setCallId] = useState("");
+  const [roomId, setRoomId] = useState("");
+  const [callStartTime, setCallStartTime] = useState(null);
+  const [apiCallData, setApiCallData] = useState(null);
+  const [isConnecting, setIsConnecting] = useState(true);
+  const [isRemoteVideoReady, setIsRemoteVideoReady] = useState(false);
+  const [webrtcError, setWebrtcError] = useState("");
 
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-                mediaStreamRef.current = null;
-            }
-        }
-    }, [isOpen]);
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+  const localStreamRef = useRef(null);
+  const remoteStreamRef = useRef(null);
+  const socketRef = useRef(null);
+  const peerRef = useRef(null);
+  const pendingIceRef = useRef([]);
+  const startedRef = useRef(false);
+  const localUserIdRef = useRef("");
+  const remoteUserIdRef = useRef("");
 
-    const resetControlsTimeout = () => {
-        setShowControls(true);
-        if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-        controlsTimeoutRef.current = setTimeout(() => {
-            setShowControls(false);
-        }, 3000);
-    };
+  const setLocalPreview = useCallback((stream) => {
+    if (!localVideoRef.current) return;
+    localVideoRef.current.srcObject = stream;
+    localVideoRef.current.play().catch(() => {});
+  }, []);
 
-    const initializeCamera = async (useBackCamera = false) => {
-        try {
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-            }
-
-            const facingMode = useBackCamera ? 'environment' : 'user';
-            
-            const constraints = {
-                video: {
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
-                    facingMode: facingMode,
-                },
-                audio: true
-            };
-
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            mediaStreamRef.current = stream;
-
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
-            }
-
-            // Create fake remote stream for demo (using canvas or just placeholder)
-            if (remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
-                // For demo, we can create a black stream or just keep placeholder
-                // Remote video will show overlay, so no need for actual stream
-            }
-
-            setIsCameraInitialized(true);
-            setCallStatus('connected');
-            
-        } catch (error) {
-            console.error('Error accessing camera:', error);
-            setCallStatus('camera_error');
-            
-            try {
-                const fallbackStream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: true
-                });
-                mediaStreamRef.current = fallbackStream;
-                if (localVideoRef.current) {
-                    localVideoRef.current.srcObject = fallbackStream;
-                }
-                setIsCameraInitialized(true);
-                setCallStatus('connected');
-            } catch (fallbackError) {
-                console.error('Fallback camera access also failed:', fallbackError);
-                setCallStatus('no_camera');
-            }
-        }
-    };
-
-    const getAvailableCameras = async () => {
-        try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter(device => device.kind === 'videoinput');
-            
-            const enhancedCameras = videoDevices.map(device => {
-                const label = device.label.toLowerCase();
-                return {
-                    ...device,
-                    isFrontCamera: label.includes('front') || label.includes('user') || label.includes('face'),
-                    isBackCamera: label.includes('back') || label.includes('environment') || label.includes('rear'),
-                };
-            });
-            
-            setAvailableCameras(enhancedCameras);
-        } catch (error) {
-            console.error('Error getting cameras:', error);
-        }
-    };
-
-    const switchCamera = async () => {
-        const newCameraState = !isCameraSwitched;
-        setIsCameraSwitched(newCameraState);
-        await initializeCamera(newCameraState);
-    };
-
-    const toggleScreenShare = async () => {
-        if (!isScreenSharing) {
-            try {
-                const screenStream = await navigator.mediaDevices.getDisplayMedia({
-                    video: true
-                });
-
-                if (mediaStreamRef.current) {
-                    const videoTrack = screenStream.getVideoTracks()[0];
-                    const audioTracks = mediaStreamRef.current.getAudioTracks();
-
-                    const newStream = new MediaStream([videoTrack, ...audioTracks]);
-                    mediaStreamRef.current = newStream;
-
-                    if (localVideoRef.current) {
-                        localVideoRef.current.srcObject = newStream;
-                    }
-                }
-
-                setIsScreenSharing(true);
-
-                screenStream.getVideoTracks()[0].onended = () => {
-                    setIsScreenSharing(false);
-                    initializeCamera(isCameraSwitched);
-                };
-            } catch (error) {
-                console.error('Error sharing screen:', error);
-            }
-        } else {
-            setIsScreenSharing(false);
-            initializeCamera(isCameraSwitched);
-        }
-    };
-
-    const handleEndCall = () => {
-        setIsCallActive(false);
-        setCallStatus('ended');
-
-        if (mediaStreamRef.current) {
-            mediaStreamRef.current.getTracks().forEach(track => track.stop());
-        }
-
-        setTimeout(() => {
-            onClose();
-        }, 500);
-    };
-
-    const formatTime = (seconds) => {
-        const hrs = Math.floor(seconds / 3600);
-        const mins = Math.floor((seconds % 3600) / 60);
-        const secs = seconds % 60;
-
-        if (hrs > 0) {
-            return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-        }
-        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-    };
-
-    const toggleFullScreen = () => {
-        if (!isFullScreen) {
-            if (containerRef.current?.requestFullscreen) {
-                containerRef.current.requestFullscreen();
-            }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
-        }
-        setIsFullScreen(!isFullScreen);
-    };
-
-    // Draggable local video handlers
-    const handleDragStart = useCallback((e) => {
-        if (!localContainerRef.current) return;
-        e.preventDefault();
-        
-        const rect = localContainerRef.current.getBoundingClientRect();
-        const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
-        const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
-        
-        dragStartRef.current = {
-            x: clientX - rect.left,
-            y: clientY - rect.top,
-            posX: rect.left,
-            posY: rect.top
-        };
-        
-        setIsDragging(true);
-    }, []);
-
-    const handleDragMove = useCallback((e) => {
-        if (!isDragging || !localContainerRef.current) return;
-        e.preventDefault();
-        
-        const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
-        const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
-        
-        let newX = clientX - dragStartRef.current.x;
-        let newY = clientY - dragStartRef.current.y;
-        
-        // Bound within viewport
-        const maxX = window.innerWidth - localContainerRef.current.offsetWidth - 10;
-        const maxY = window.innerHeight - localContainerRef.current.offsetHeight - 60;
-        
-        newX = Math.min(Math.max(10, newX), maxX);
-        newY = Math.min(Math.max(60, newY), maxY);
-        
-        setLocalVideoPosition({
-            x: newX,
-            y: newY,
-            bottom: null,
-            right: null
-        });
-    }, [isDragging]);
-
-    const handleDragEnd = useCallback(() => {
-        setIsDragging(false);
-    }, []);
-
-    // Add/remove drag event listeners
-    useEffect(() => {
-        if (isDragging) {
-            window.addEventListener('mousemove', handleDragMove);
-            window.addEventListener('mouseup', handleDragEnd);
-            window.addEventListener('touchmove', handleDragMove, { passive: false });
-            window.addEventListener('touchend', handleDragEnd);
-        }
-        
-        return () => {
-            window.removeEventListener('mousemove', handleDragMove);
-            window.removeEventListener('mouseup', handleDragEnd);
-            window.removeEventListener('touchmove', handleDragMove);
-            window.removeEventListener('touchend', handleDragEnd);
-        };
-    }, [isDragging, handleDragMove, handleDragEnd]);
-
-    const getQualityIcon = () => {
-        switch (connectionQuality) {
-            case 'good': return '📶';
-            case 'medium': return '📶';
-            case 'poor': return '📶';
-            default: return '📶';
-        }
-    };
-
-    const getQualityClass = () => {
-        switch (connectionQuality) {
-            case 'good': return 'quality-good';
-            case 'medium': return 'quality-medium';
-            case 'poor': return 'quality-poor';
-            default: return 'quality-good';
-        }
-    };
-
-    const getCallStatusDisplay = () => {
-        switch (callStatus) {
-            case 'connecting':
-                return 'Connecting...';
-            case 'connected':
-                return 'Connected';
-            case 'ended':
-                return 'Call Ended';
-            case 'camera_error':
-                return 'Camera Error';
-            case 'no_camera':
-                return 'No Camera Access';
-            default:
-                return callStatus;
-        }
-    };
-
-    const getProfileDisplay = () => {
-        if (callerProfilePic && (callerProfilePic.startsWith('http') || callerProfilePic.startsWith('/'))) {
-            return null;
-        }
-        return callerProfilePic || callerName.charAt(0);
-    };
-
-    const isImageProfilePic = () => {
-        return callerProfilePic && (callerProfilePic.startsWith('http') || callerProfilePic.startsWith('/') || callerProfilePic.includes('base64'));
-    };
-
-    // Get local video container style
-    const getLocalVideoStyle = () => {
-        if (localVideoPosition.x !== null && localVideoPosition.y !== null) {
-            return {
-                position: 'absolute',
-                left: `${localVideoPosition.x}px`,
-                top: `${localVideoPosition.y}px`,
-                right: 'auto',
-                bottom: 'auto'
-            };
-        }
-        return {
-            position: 'absolute',
-            bottom: `${localVideoPosition.bottom}px`,
-            right: `${localVideoPosition.right}px`,
-            left: 'auto',
-            top: 'auto'
-        };
-    };
-
-    if (!isOpen) return null;
-
-    return (
-        <div className={`video-modal-overlay ${isFullScreen ? 'fullscreen' : ''}`}>
-            <div
-                ref={containerRef}
-                className={`video-modal-container ${isFullScreen ? 'fullscreen' : ''}`}
-                onClick={(e) => e.stopPropagation()}
-                onMouseMove={resetControlsTimeout}
-                onTouchStart={resetControlsTimeout}
-            >
-                {/* Header */}
-                <div className="video-modal-header">
-                    <div className="header-left">
-                        <span className="header-icon">📹</span>
-                        <div className="call-info">
-                            <h3>{callerName}</h3>
-                            <div className={`connection-quality ${getQualityClass()}`}>
-                                <span className="quality-icon">{getQualityIcon()}</span>
-                                <span className="quality-text">{connectionQuality}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="header-right">
-                        <button className="header-btn" onClick={toggleFullScreen} title="Full screen">
-                            {isFullScreen ? '🗗' : '🗖'}
-                        </button>
-                        <button className="header-btn close-btn" onClick={handleEndCall} title="Close">
-                            ✕
-                        </button>
-                    </div>
-                </div>
-
-                <div className="video-modal-content">
-                    <div className="video-main-area">
-                        <div className="remote-video-container">
-                            <video
-                                ref={remoteVideoRef}
-                                className="remote-video"
-                                autoPlay
-                                playsInline
-                            />
-                            <div className="remote-video-overlay">
-                                <div className="remote-video-placeholder">
-                                    {isImageProfilePic() ? (
-                                        <img 
-                                            src={callerProfilePic} 
-                                            alt={callerName}
-                                            className="remote-avatar-image"
-                                            onError={(e) => {
-                                                e.target.style.display = 'none';
-                                                e.target.parentElement.innerHTML = `<span class="remote-avatar">${getProfileDisplay()}</span>`;
-                                            }}
-                                        />
-                                    ) : (
-                                        <span className="remote-avatar">{getProfileDisplay()}</span>
-                                    )}
-                                    <div className="remote-info">
-                                        <h2>{callerName}</h2>
-                                        <p className="call-status">
-                                            <span className={`status-${callStatus === 'connected' ? 'connected' : 'ended'}`}>
-                                                {callStatus === 'connected' && <span className="pulse-dot"></span>}
-                                                {getCallStatusDisplay()}
-                                            </span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {isCallActive && callStatus === 'connected' && (
-                                <div className="call-duration-badge">
-                                    <span className="duration-icon">⏱️</span>
-                                    <span className="duration-text">{formatTime(callDuration)}</span>
-                                </div>
-                            )}
-
-                            {isRecording && (
-                                <div className="recording-indicator">
-                                    <span className="recording-dot"></span>
-                                    <span>REC</span>
-                                </div>
-                            )}
-
-                            {isScreenSharing && (
-                                <div className="screen-share-indicator">
-                                    <span>🖥️</span>
-                                    <span>Sharing</span>
-                                </div>
-                            )}
-
-                            <div className="camera-indicator">
-                                <span className="camera-icon">📷</span>
-                                <span>{isCameraSwitched ? 'Back' : 'Front'}</span>
-                            </div>
-                        </div>
-
-                        {/* Draggable Local Video */}
-                        <div 
-                            ref={localContainerRef}
-                            className={`local-video-container ${!isVideoEnabled ? 'video-off' : ''} ${isDragging ? 'dragging' : ''}`}
-                            style={getLocalVideoStyle()}
-                            onMouseDown={handleDragStart}
-                            onTouchStart={handleDragStart}
-                        >
-                            <video
-                                ref={localVideoRef}
-                                className="local-video"
-                                autoPlay
-                                playsInline
-                                muted
-                            />
-                            {!isVideoEnabled && (
-                                <div className="local-video-off">
-                                    <span>🚫</span>
-                                </div>
-                            )}
-                            {isMuted && (
-                                <div className="muted-indicator">
-                                    <span>🔇</span>
-                                </div>
-                            )}
-                            <div className="drag-handle"></div>
-                        </div>
-
-                        {/* Controls - Auto hide */}
-                        <div className={`video-call-controls ${showControls ? 'visible' : 'hidden'}`}>
-                            <button
-                                className={`control-btn ${isMuted ? 'active' : ''}`}
-                                onClick={() => setIsMuted(!isMuted)}
-                                title={isMuted ? 'Unmute' : 'Mute'}
-                            >
-                                <span>{isMuted ? '🔇' : '🎤'}</span>
-                            </button>
-
-                            <button
-                                className={`control-btn ${!isVideoEnabled ? 'active' : ''}`}
-                                onClick={() => setIsVideoEnabled(!isVideoEnabled)}
-                                title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
-                            >
-                                <span>{isVideoEnabled ? '📹' : '🚫📹'}</span>
-                            </button>
-
-                            <button
-                                className={`control-btn ${isSpeakerOn ? 'active' : ''}`}
-                                onClick={() => setIsSpeakerOn(!isSpeakerOn)}
-                                title={isSpeakerOn ? 'Speaker off' : 'Speaker on'}
-                            >
-                                <span>{isSpeakerOn ? '🔊' : '🔈'}</span>
-                            </button>
-
-                            {availableCameras.length >= 1 && (
-                                <button
-                                    className="control-btn"
-                                    onClick={switchCamera}
-                                    title={isCameraSwitched ? 'Switch to front camera' : 'Switch to back camera'}
-                                    disabled={availableCameras.length < 2}
-                                >
-                                    <span>🔄</span>
-                                </button>
-                            )}
-
-                            <button
-                                className="control-btn"
-                                onClick={toggleScreenShare}
-                                title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
-                            >
-                                <span>{isScreenSharing ? '⏹️' : '🖥️'}</span>
-                            </button>
-
-                            <button
-                                className={`control-btn ${isRecording ? 'active' : ''}`}
-                                onClick={() => setIsRecording(!isRecording)}
-                                title={isRecording ? 'Stop recording' : 'Start recording'}
-                            >
-                                <span>⏺️</span>
-                            </button>
-
-                            <button
-                                className="control-btn end-call"
-                                onClick={handleEndCall}
-                                title="End call"
-                            >
-                                <span>📞</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+  const updateRemoteState = useCallback(() => {
+    const hasLiveVideo = Boolean(
+      remoteStreamRef.current?.getVideoTracks()?.some(
+        (track) => track.readyState === "live",
+      ),
     );
+
+    setIsRemoteVideoReady(hasLiveVideo);
+
+    if (hasLiveVideo) {
+      setIsConnecting(false);
+      setWebrtcError("");
+    } else if (peerRef.current?.connectionState === "connected") {
+      setWebrtcError("Connected. Remote camera is not sending video.");
+    }
+  }, []);
+
+  const cleanupRealtime = useCallback(() => {
+    if (peerRef.current) {
+      peerRef.current.onicecandidate = null;
+      peerRef.current.ontrack = null;
+      peerRef.current.onconnectionstatechange = null;
+      peerRef.current.onnegotiationneeded = null;
+      try {
+        peerRef.current.close();
+      } catch {}
+      peerRef.current = null;
+    }
+
+    if (socketRef.current) {
+      try {
+        if (callId && localUserIdRef.current) {
+          socketRef.current.emit("leave-call", {
+            callId,
+            userId: localUserIdRef.current,
+          });
+        }
+      } catch {}
+
+      [
+        "connect",
+        "offer",
+        "answer",
+        "call-offer",
+        "call-answer",
+        "ice-candidate",
+        "user-joined",
+        "user-left",
+        "user-left-call",
+        "connect_error",
+      ].forEach((eventName) => socketRef.current.off(eventName));
+
+      socketRef.current.disconnect();
+      socketRef.current = null;
+    }
+
+    if (remoteStreamRef.current) {
+      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
+      remoteStreamRef.current = null;
+    }
+
+    if (remoteVideoRef.current) {
+      remoteVideoRef.current.srcObject = null;
+    }
+
+    pendingIceRef.current = [];
+    startedRef.current = false;
+    setIsRemoteVideoReady(false);
+  }, [callId]);
+
+  const replaceOutgoingTracks = useCallback((stream) => {
+    if (!peerRef.current || !stream) return;
+
+    const tracksByKind = stream.getTracks().reduce((acc, track) => {
+      acc[track.kind] = track;
+      return acc;
+    }, {});
+
+    const handledKinds = new Set();
+    peerRef.current.getSenders().forEach((sender) => {
+      const kind = sender.track?.kind;
+      if (!kind) return;
+      handledKinds.add(kind);
+      sender.replaceTrack(tracksByKind[kind] || null).catch(() => {});
+    });
+
+    stream.getTracks().forEach((track) => {
+      if (!handledKinds.has(track.kind)) {
+        peerRef.current.addTrack(track, stream);
+      }
+    });
+  }, []);
+
+  const initializeCamera = useCallback(
+    async (useBackCamera = false, selectedDeviceId = "") => {
+      try {
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach((track) => track.stop());
+        }
+
+        const constraints = {
+          video: selectedDeviceId
+            ? {
+                deviceId: { exact: selectedDeviceId },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+              }
+            : {
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+                facingMode: useBackCamera ? "environment" : "user",
+              },
+          audio: true,
+        };
+
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        stream.getVideoTracks().forEach((track) => {
+          track.enabled = isVideoEnabled;
+        });
+        stream.getAudioTracks().forEach((track) => {
+          track.enabled = !isMuted;
+        });
+
+        localStreamRef.current = stream;
+        setLocalPreview(stream);
+        replaceOutgoingTracks(stream);
+
+        const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
+        if (settings.deviceId) setCurrentCamera(settings.deviceId);
+        return stream;
+      } catch (error) {
+        console.error("Camera access error:", error);
+        setCallStatus("camera_error");
+        setWebrtcError("Unable to access camera.");
+        return null;
+      }
+    },
+    [isMuted, isVideoEnabled, replaceOutgoingTracks, setLocalPreview],
+  );
+
+  const getAvailableCameras = useCallback(async () => {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cameras = devices.filter((device) => device.kind === "videoinput");
+      setAvailableCameras(cameras);
+      if (cameras[0]) setCurrentCamera(cameras[0].deviceId);
+    } catch (error) {
+      console.error("Error listing cameras:", error);
+    }
+  }, []);
+
+  const establishConnection = useCallback(async () => {
+    if (startedRef.current || !callId || !isConnectedStatus(callStatus)) return;
+
+    const localUserId =
+      currentUser?.id ||
+      currentUser?._id ||
+      callData?.currentUserId ||
+      localStorage.getItem("userId") ||
+      localStorage.getItem("counsellorId") ||
+      localStorage.getItem("counselorId");
+    if (!localUserId) return;
+
+    const serverCall = apiCallData || callData?.apiCallData || {};
+    const initiatorId =
+      serverCall?.initiator?.id || callData?.initiator?.id || callData?.initiatorId;
+    const receiverId =
+      serverCall?.receiver?.id || callData?.receiver?.id || callData?.receiverId;
+    if (!initiatorId || !receiverId) return;
+
+    localUserIdRef.current = String(localUserId);
+    remoteUserIdRef.current =
+      String(initiatorId) === String(localUserId)
+        ? String(receiverId)
+        : String(initiatorId);
+
+    const localStream = localStreamRef.current || (await initializeCamera(isCameraSwitched));
+    if (!localStream) return;
+
+    const token =
+      localStorage.getItem("token") ||
+      localStorage.getItem("accessToken") ||
+      undefined;
+
+    const socket = io(API_BASE_URL, {
+      auth: token ? { token } : undefined,
+      transports: ["websocket", "polling"],
+    });
+    socketRef.current = socket;
+
+    const peer = new RTCPeerConnection(RTC_CONFIGURATION);
+    peerRef.current = peer;
+    localStream.getTracks().forEach((track) => peer.addTrack(track, localStream));
+
+    const flushIceQueue = async () => {
+      if (!peerRef.current?.remoteDescription) return;
+      const queue = [...pendingIceRef.current];
+      pendingIceRef.current = [];
+      for (const candidate of queue) {
+        try {
+          await peerRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch {}
+      }
+    };
+
+    const sendOffer = async () => {
+      if (!peerRef.current || peerRef.current.signalingState !== "stable") return;
+      const offer = await peerRef.current.createOffer({
+        offerToReceiveAudio: true,
+        offerToReceiveVideo: true,
+      });
+      await peerRef.current.setLocalDescription(offer);
+      socket.emit("call-offer", { callId, offer, to: remoteUserIdRef.current });
+      socket.emit("offer", { callId, offer, userId: localUserIdRef.current });
+    };
+
+    peer.onicecandidate = (event) => {
+      if (!event.candidate) return;
+      socket.emit("ice-candidate", {
+        callId,
+        candidate: event.candidate,
+        userId: localUserIdRef.current,
+        to: remoteUserIdRef.current,
+      });
+    };
+
+    peer.ontrack = async (event) => {
+      const [incomingStream] = event.streams;
+      if (incomingStream) {
+        remoteStreamRef.current = incomingStream;
+      } else {
+        if (!remoteStreamRef.current) remoteStreamRef.current = new MediaStream();
+        remoteStreamRef.current.addTrack(event.track);
+      }
+
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = remoteStreamRef.current;
+        await remoteVideoRef.current.play().catch(() => {});
+      }
+
+      updateRemoteState();
+    };
+
+    peer.onconnectionstatechange = () => {
+      if (peer.connectionState === "connected") {
+        setIsConnecting(false);
+      }
+      if (peer.connectionState === "failed" || peer.connectionState === "disconnected") {
+        setWebrtcError("Video connection interrupted.");
+      }
+    };
+
+    socket.on("connect", () => {
+      socket.emit("join-call", { callId, userId: localUserIdRef.current });
+    });
+
+    socket.on("user-joined", async ({ userId }) => {
+      if (String(userId) === localUserIdRef.current) return;
+      await sendOffer();
+    });
+
+    const onOffer = async ({ offer, userId, from }) => {
+      const senderId = String(userId || from || "");
+      if (!offer || senderId === localUserIdRef.current || !peerRef.current) return;
+      try {
+        if (peerRef.current.signalingState !== "stable") {
+          await peerRef.current.setLocalDescription({ type: "rollback" });
+        }
+        await peerRef.current.setRemoteDescription(new RTCSessionDescription(offer));
+        await flushIceQueue();
+        const answer = await peerRef.current.createAnswer();
+        await peerRef.current.setLocalDescription(answer);
+        socket.emit("call-answer", { callId, answer, to: remoteUserIdRef.current });
+        socket.emit("answer", { callId, answer, userId: localUserIdRef.current });
+      } catch {
+        setWebrtcError("Failed to process call offer.");
+      }
+    };
+
+    const onAnswer = async ({ answer, userId, from }) => {
+      const senderId = String(userId || from || "");
+      if (!answer || senderId === localUserIdRef.current || !peerRef.current) return;
+      try {
+        if (!peerRef.current.currentRemoteDescription) {
+          await peerRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+          await flushIceQueue();
+        }
+      } catch {
+        setWebrtcError("Failed to process call answer.");
+      }
+    };
+
+    socket.on("call-offer", onOffer);
+    socket.on("offer", onOffer);
+    socket.on("call-answer", onAnswer);
+    socket.on("answer", onAnswer);
+
+    socket.on("ice-candidate", async ({ candidate, userId, from }) => {
+      const senderId = String(userId || from || "");
+      if (!candidate || senderId === localUserIdRef.current || !peerRef.current) return;
+      try {
+        if (!peerRef.current.remoteDescription) {
+          pendingIceRef.current.push(candidate);
+          return;
+        }
+        await peerRef.current.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch {
+        pendingIceRef.current.push(candidate);
+      }
+    });
+
+    socket.on("user-left", ({ userId }) => {
+      if (String(userId) !== localUserIdRef.current) {
+        setIsRemoteVideoReady(false);
+        setWebrtcError("Other participant left.");
+      }
+    });
+    socket.on("user-left-call", ({ userId }) => {
+      if (String(userId) !== localUserIdRef.current) {
+        setIsRemoteVideoReady(false);
+        setWebrtcError("Other participant left.");
+      }
+    });
+
+    socket.on("connect_error", () => setWebrtcError("Realtime connection failed."));
+
+    startedRef.current = true;
+  }, [apiCallData, callData, callId, callStatus, currentUser, initializeCamera, isCameraSwitched, updateRemoteState]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const status = normalizeStatus(callData?.status || "connecting");
+    setCallerName(callData?.name || "Counselor");
+    setCallerProfilePic(callData?.profilePic || "C");
+    setCallerPhoneNumber(callData?.phoneNumber || "");
+    setCallStatus(status);
+    setCallId(callData?.callId || callData?.id || "");
+    setRoomId(callData?.roomId || "");
+    setApiCallData(callData?.apiCallData || null);
+    setCallStartTime(callData?.startTime || new Date());
+    setCallDuration(0);
+    setIsConnecting(!isConnectedStatus(status) && !isTerminalStatus(status));
+    setIsRemoteVideoReady(false);
+    setWebrtcError("");
+    startedRef.current = false;
+  }, [isOpen, callData]);
+
+  useEffect(() => {
+    if (isOpen) {
+      initializeCamera(false);
+      getAvailableCameras();
+    }
+  }, [getAvailableCameras, initializeCamera, isOpen]);
+
+  useEffect(() => {
+    if (
+      isOpen &&
+      isCallActive &&
+      isConnectedStatus(callStatus) &&
+      !isTerminalStatus(callStatus)
+    ) {
+      establishConnection();
+    }
+  }, [isOpen, isCallActive, callStatus, establishConnection]);
+
+  useEffect(() => {
+    if (!isOpen || !callId) return;
+    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+    const userId =
+      currentUser?.id ||
+      currentUser?._id ||
+      callData?.currentUserId ||
+      localStorage.getItem("userId") ||
+      localStorage.getItem("counsellorId") ||
+      localStorage.getItem("counselorId");
+    const userType = normalizeUserType(
+      currentUser?.role || callData?.currentUserType || localStorage.getItem("userRole"),
+    );
+    if (!token || !userId) return;
+
+    let mounted = true;
+    const syncStatus = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/video/calls/${callId}/details`, {
+          params: { userId, userType },
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!mounted || !response.data?.success || !response.data?.call) return;
+        const call = response.data.call;
+        const status = normalizeStatus(call.status);
+        setCallStatus(status);
+        setCallId((prev) => call.id || prev);
+        setRoomId((prev) => call.roomId || prev);
+        setApiCallData(call);
+        setIsConnecting(!isConnectedStatus(status) && !isTerminalStatus(status));
+      } catch {}
+    };
+
+    syncStatus();
+    const intervalId = setInterval(syncStatus, 3000);
+    return () => {
+      mounted = false;
+      clearInterval(intervalId);
+    };
+  }, [isOpen, callId, currentUser, callData]);
+
+  useEffect(() => {
+    if (!isOpen || !isCallActive || !callStartTime || !isConnectedStatus(callStatus)) return;
+    const timer = setInterval(() => setCallDuration((prev) => prev + 1), 1000);
+    return () => clearInterval(timer);
+  }, [isOpen, isCallActive, callStartTime, callStatus]);
+
+  useEffect(() => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getVideoTracks().forEach((track) => {
+        track.enabled = isVideoEnabled;
+      });
+    }
+  }, [isVideoEnabled]);
+
+  useEffect(() => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = !isMuted;
+      });
+    }
+  }, [isMuted]);
+
+  useEffect(() => {
+    if (!remoteVideoRef.current) return;
+    remoteVideoRef.current.muted = !isSpeakerOn;
+    remoteVideoRef.current.volume = Math.max(0, Math.min(1, Number(volumeLevel) / 100));
+  }, [isSpeakerOn, volumeLevel]);
+
+  useEffect(() => {
+    if (isOpen) return;
+    cleanupRealtime();
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+    setIsMuted(false);
+    setIsSpeakerOn(false);
+    setIsVideoEnabled(true);
+    setIsCameraSwitched(false);
+    setIsRecording(false);
+    setIsCallActive(true);
+    setShowSettings(false);
+    setIsScreenSharing(false);
+    setCallStatus("ended");
+    setCallId("");
+    setRoomId("");
+    setApiCallData(null);
+  }, [cleanupRealtime, isOpen]);
+
+  useEffect(() => () => cleanupRealtime(), [cleanupRealtime]);
+
+  const handleEndCall = async () => {
+    setIsCallActive(false);
+    setCallStatus("ended");
+    cleanupRealtime();
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => track.stop());
+      localStreamRef.current = null;
+    }
+
+    const endHandler = onEndCall || callData?.onEndCall;
+    if (typeof endHandler === "function" && callId) {
+      try {
+        await endHandler(callId);
+      } catch {}
+    }
+
+    setTimeout(() => onClose(), 500);
+  };
+
+  const switchCamera = async () => {
+    const next = !isCameraSwitched;
+    setIsCameraSwitched(next);
+    await initializeCamera(next);
+  };
+
+  const selectCamera = async (deviceId) => {
+    setCurrentCamera(deviceId);
+    await initializeCamera(isCameraSwitched, deviceId);
+  };
+
+  const toggleScreenShare = async () => {
+    if (!isScreenSharing) {
+      try {
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const screenTrack = screenStream.getVideoTracks()[0];
+        const audioTracks = localStreamRef.current ? localStreamRef.current.getAudioTracks() : [];
+        const merged = new MediaStream([screenTrack, ...audioTracks]);
+        localStreamRef.current = merged;
+        setLocalPreview(merged);
+        replaceOutgoingTracks(merged);
+        setIsScreenSharing(true);
+
+        screenTrack.onended = () => {
+          setIsScreenSharing(false);
+          initializeCamera(isCameraSwitched).catch(() => {});
+        };
+      } catch {}
+      return;
+    }
+
+    setIsScreenSharing(false);
+    await initializeCamera(isCameraSwitched);
+  };
+
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    if (h > 0) return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  };
+
+  const getStatusText = () => {
+    if (webrtcError) return webrtcError;
+    if (isConnecting) return "Connecting...";
+    if (isConnectedStatus(callStatus) && !isRemoteVideoReady) return "Connected. Remote camera is not sending video.";
+    if (isConnectedStatus(callStatus)) return "Connected";
+    if (callStatus === "ringing" || callStatus === "pending") return "Waiting for participant...";
+    if (callStatus === "ended") return "Call Ended";
+    return callStatus;
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className={`video-modal-overlay ${isFullScreen ? "fullscreen" : ""}`}>
+      <div className={`video-modal-container ${isFullScreen ? "fullscreen" : ""}`}>
+        <div className="video-modal-header">
+          <div className="header-left">
+            <span className="header-icon">Video</span>
+            <div className="call-info">
+              <h3>Video Call with {callerName}</h3>
+            </div>
+          </div>
+          <div className="header-right">
+            <button className="header-btn" onClick={() => setIsFullScreen((prev) => !prev)}>
+              {isFullScreen ? "Exit" : "Full"}
+            </button>
+            <button className="header-btn close-btn" onClick={onClose}>X</button>
+          </div>
+        </div>
+
+        <div className="video-modal-content">
+          <div className="video-main-area">
+            <div className="remote-video-container">
+              <video ref={remoteVideoRef} className={`remote-video ${isRemoteVideoReady ? "ready" : ""}`} autoPlay playsInline />
+              {!isRemoteVideoReady && (
+                <div className="remote-video-overlay">
+                  <div className="remote-video-placeholder">
+                    <span className="remote-avatar">
+                      {callerProfilePic?.charAt?.(0) || callerName?.charAt?.(0) || "C"}
+                    </span>
+                    <div className="remote-info">
+                      <h2>{callerName}</h2>
+                      {roomId && <p className="room-id">Room: {String(roomId).substring(0, 8)}...</p>}
+                      <p className="call-status">{getStatusText()}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className={`local-video-container ${!isVideoEnabled ? "video-off" : ""}`}>
+              <video ref={localVideoRef} className="local-video" autoPlay playsInline muted />
+              <div className="local-video-label">You ({isCameraSwitched ? "Back" : "Front"})</div>
+            </div>
+
+            <div className="call-duration-badge">{formatTime(callDuration)}</div>
+
+            {showSettings && (
+              <div className="settings-panel">
+                <h4>Call Settings</h4>
+                <div className="setting-item">
+                  <label>Volume</label>
+                  <input type="range" min="0" max="100" value={volumeLevel} onChange={(e) => setVolumeLevel(Number(e.target.value))} />
+                  <span>{volumeLevel}%</span>
+                </div>
+                {availableCameras.length > 0 && (
+                  <div className="setting-item">
+                    <label>Select Camera</label>
+                    <select value={currentCamera} onChange={(e) => selectCamera(e.target.value)}>
+                      {availableCameras.map((camera) => (
+                        <option key={camera.deviceId} value={camera.deviceId}>
+                          {camera.label || `Camera ${camera.deviceId.slice(0, 6)}...`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {callerPhoneNumber && <div className="setting-item"><label>Phone</label><p>{callerPhoneNumber}</p></div>}
+                <button className="close-settings" onClick={() => setShowSettings(false)}>Close</button>
+              </div>
+            )}
+
+            <div className="video-call-controls">
+              <button className={`control-btn ${isMuted ? "active" : ""}`} onClick={() => setIsMuted((prev) => !prev)}>
+                <span className="btn-label">{isMuted ? "Unmute" : "Mute"}</span>
+              </button>
+              <button className={`control-btn ${!isVideoEnabled ? "active" : ""}`} onClick={() => setIsVideoEnabled((prev) => !prev)}>
+                <span className="btn-label">{isVideoEnabled ? "Camera Off" : "Camera On"}</span>
+              </button>
+              <button className={`control-btn ${isSpeakerOn ? "active" : ""}`} onClick={() => setIsSpeakerOn((prev) => !prev)}>
+                <span className="btn-label">{isSpeakerOn ? "Speaker Off" : "Speaker On"}</span>
+              </button>
+              {availableCameras.length >= 1 && (
+                <button className="control-btn" onClick={switchCamera} disabled={availableCameras.length < 2}>
+                  <span className="btn-label">{isCameraSwitched ? "Front" : "Back"}</span>
+                </button>
+              )}
+              <button className="control-btn" onClick={toggleScreenShare}>
+                <span className="btn-label">{isScreenSharing ? "Stop Share" : "Share"}</span>
+              </button>
+              <button className={`control-btn ${isRecording ? "recording" : ""}`} onClick={() => setIsRecording((prev) => !prev)}>
+                <span className="btn-label">{isRecording ? "Stop Rec" : "Record"}</span>
+              </button>
+              <button className="control-btn" onClick={() => setShowSettings((prev) => !prev)}>
+                <span className="btn-label">Settings</span>
+              </button>
+              <button className="control-btn end-call" onClick={handleEndCall}>
+                <span className="btn-label">End</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default VideoCallModal;

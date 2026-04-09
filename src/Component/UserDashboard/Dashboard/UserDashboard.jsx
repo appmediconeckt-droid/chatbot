@@ -856,7 +856,8 @@ export default function UserDashboard() {
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
         callData={selectedCall}
-        
+        currentUser={{ id: userId, role: "user" }}
+        onEndCall={handleEndCall}
       />
 
       <VoiceCallModal

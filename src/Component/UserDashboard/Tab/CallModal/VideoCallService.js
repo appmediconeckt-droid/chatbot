@@ -1,7 +1,9 @@
 // services/VideoCallService.js
+import { API_BASE_URL } from "../../../../axiosConfig";
+
 class VideoCallService {
   constructor() {
-    this.baseURL = 'http://localhost:5000/api/video';
+    this.baseURL = `${API_BASE_URL}/api/video`;
     this.currentCallId = null;
     this.currentRoomId = null;
     this.pollingInterval = null;

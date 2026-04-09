@@ -1102,11 +1102,19 @@ const SMSInput = () => {
       try {
         const token = localStorage.getItem("token");
 
-        if (!COUNSELOR_ID || !token || showIncomingModal) {
+        if (
+          !COUNSELOR_ID ||
+          !token ||
+          showIncomingModal ||
+          isVideoModalOpen ||
+          isVoiceModalOpen
+        ) {
           console.log("Skipping poll - missing data:", {
             COUNSELOR_ID,
             hasToken: !!token,
             showIncomingModal,
+            isVideoModalOpen,
+            isVoiceModalOpen,
           });
           return;
         }
@@ -1166,7 +1174,7 @@ const SMSInput = () => {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [showIncomingModal, COUNSELOR_ID]);
+  }, [showIncomingModal, COUNSELOR_ID, isVideoModalOpen, isVoiceModalOpen]);
 
   // Handle close modal
   const handleCloseModal = () => {
@@ -1477,6 +1485,8 @@ const SMSInput = () => {
         isOpen={isVideoModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        currentUser={{ id: COUNSELOR_ID, role: "counsellor" }}
+        onEndCall={handleEndIncomingCall}
       />
 
       <VoiceCallModal

@@ -965,8 +965,7 @@ export default function CounselorDashboard() {
         isOpen={isVideoModalOpen}
         onClose={handleCloseVideoModal}
         callData={selectedCall}
-        userRole="counsellor"
-        onJoinCall={handleJoinCall}
+        currentUser={{ id: localStorage.getItem("counsellorId"), role: "counsellor" }}
         onEndCall={handleEndCall}
       />
 

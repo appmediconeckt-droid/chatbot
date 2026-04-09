@@ -864,8 +864,8 @@ const UserSignup = () => {
         <div className="us-brand">
           <div className="us-brand-content">
             <div className="us-logo">
-              <img src={logo} alt="Mediconnect Logo" className="us-logo-img" />
-              <span className="us-logo-text">Mediconnect</span>
+              <img src={logo} alt="Mediconeckt ChatBot Logo" className="us-logo-img" />
+              <span className="us-logo-text">Mediconeckt ChatBot</span>
             </div>
             <h1 className="us-brand-title">
               {isLogin ? "Welcome Back!" : "Begin Your Journey"}

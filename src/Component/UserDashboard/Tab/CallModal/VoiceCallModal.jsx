@@ -14,6 +14,9 @@ const TERMINAL_STATUSES = new Set([
   "microphone_error",
 ]);
 
+const MAX_RECONNECT_ATTEMPTS = 4;
+const RECONNECT_BASE_DELAY_MS = 1500;
+
 const buildRtcConfiguration = () => {
   const iceServers = [
     { urls: "stun:stun.l.google.com:19302" },
@@ -76,6 +79,7 @@ const VoiceCallModal = ({
   const [volumeLevel, setVolumeLevel] = useState(70);
   const [audioLevel, setAudioLevel] = useState(0);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const [isRemoteAudioReady, setIsRemoteAudioReady] = useState(false);
   const [webrtcError, setWebrtcError] = useState("");
 
@@ -119,7 +123,13 @@ const VoiceCallModal = ({
   const localUserIdRef = useRef("");
   const remoteUserIdRef = useRef("");
   const hasStartedConnectionRef = useRef(false);
+  const hasEverConnectedRef = useRef(false);
   const pendingIceCandidatesRef = useRef([]);
+  const reconnectTimeoutRef = useRef(null);
+  const reconnectAttemptsRef = useRef(0);
+  const isManualCloseRef = useRef(false);
+  const establishVoiceConnectionRef = useRef(null);
+  const isInitiatorRef = useRef(false);
 
   const stopVisualizer = useCallback(() => {
     if (animationFrameRef.current) {
@@ -142,96 +152,150 @@ const VoiceCallModal = ({
     }
   }, []);
 
-  const cleanupRealtimeConnection = useCallback(() => {
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.onicecandidate = null;
-      peerConnectionRef.current.ontrack = null;
-      peerConnectionRef.current.onconnectionstatechange = null;
-      try {
-        peerConnectionRef.current.close();
-      } catch (error) {
-        console.warn("Peer connection close failed:", error);
-      }
-      peerConnectionRef.current = null;
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  const resetReconnectState = useCallback(() => {
+    clearReconnectTimer();
+    reconnectAttemptsRef.current = 0;
+    setIsReconnecting(false);
+  }, [clearReconnectTimer]);
+
+  const updateRemoteAudioState = useCallback(() => {
+    const remoteAudioTracks = remoteStreamRef.current?.getAudioTracks?.() || [];
+    const hasLiveAudio = remoteAudioTracks.some(
+      (track) => track.readyState === "live"
+    );
+    
+    const shouldMarkReady = hasLiveAudio || Boolean(remoteStreamRef.current);
+    
+    setIsRemoteAudioReady(shouldMarkReady);
+
+    if (shouldMarkReady) {
+      hasEverConnectedRef.current = true;
+      setIsConnecting(false);
+      setIsReconnecting(false);
+      resetReconnectState();
+      setWebrtcError("");
+    }
+  }, [resetReconnectState]);
+
+  const attemptRemoteAudioPlayback = useCallback(() => {
+    if (!remoteAudioRef.current || !remoteAudioRef.current.srcObject) {
+      return;
     }
 
-    if (socketRef.current) {
-      try {
-        if (callMetadata.callId && localUserIdRef.current) {
-          socketRef.current.emit("leave-call", {
-            callId: callMetadata.callId,
-            userId: localUserIdRef.current,
-          });
+    remoteAudioRef.current
+      .play()
+      .then(() => {
+        updateRemoteAudioState();
+      })
+      .catch((error) => {
+        console.warn("Remote audio autoplay blocked:", error);
+      });
+  }, [updateRemoteAudioState]);
+
+  const cleanupRealtimeConnection = useCallback(
+    ({ emitLeave = true } = {}) => {
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.onicecandidate = null;
+        peerConnectionRef.current.ontrack = null;
+        peerConnectionRef.current.onconnectionstatechange = null;
+        peerConnectionRef.current.onnegotiationneeded = null;
+        try {
+          peerConnectionRef.current.close();
+        } catch (error) {
+          console.warn("Peer connection close failed:", error);
         }
-      } catch (error) {
-        console.warn("Socket leave-call failed:", error);
+        peerConnectionRef.current = null;
       }
 
-      socketRef.current.off("connect");
-      socketRef.current.off("offer");
-      socketRef.current.off("answer");
-      socketRef.current.off("call-offer");
-      socketRef.current.off("call-answer");
-      socketRef.current.off("ice-candidate");
-      socketRef.current.off("user-joined");
-      socketRef.current.off("user-left");
-      socketRef.current.off("user-left-call");
-      socketRef.current.off("connect_error");
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
+      if (socketRef.current) {
+        try {
+          if (emitLeave && callMetadata.callId && localUserIdRef.current) {
+            socketRef.current.emit("leave-call", {
+              callId: callMetadata.callId,
+              userId: localUserIdRef.current,
+            });
+          }
+        } catch (error) {
+          console.warn("Socket leave-call failed:", error);
+        }
 
-    if (remoteStreamRef.current) {
-      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
-      remoteStreamRef.current = null;
-    }
+        socketRef.current.removeAllListeners();
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
 
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = null;
-    }
+      if (remoteStreamRef.current) {
+        remoteStreamRef.current.getTracks().forEach((track) => track.stop());
+        remoteStreamRef.current = null;
+      }
 
-    setIsRemoteAudioReady(false);
-    pendingIceCandidatesRef.current = [];
-    hasStartedConnectionRef.current = false;
-  }, [callMetadata.callId]);
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = null;
+      }
+
+      setIsRemoteAudioReady(false);
+      pendingIceCandidatesRef.current = [];
+      hasStartedConnectionRef.current = false;
+    },
+    [callMetadata.callId]
+  );
 
   // Process callData when modal opens
   useEffect(() => {
     if (isOpen && callData) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // Determine caller and user info based on who is who
+      const currentUserId = currentUser?.id || currentUser?._id;
+      const isCurrentUserCounselor = currentUser?.role === "counselor" || 
+                                     currentUser?.role === "counsellor" ||
+                                     localStorage.getItem("userRole") === "counselor";
+      
+      let callerName = "";
+      let callerSpecialization = "";
+      let callerProfilePic = "";
+      
+      if (isCurrentUserCounselor) {
+        // Counselor is the current user, so caller is the user/client
+        callerName = callData.userName || callData.name || "Client";
+        callerSpecialization = "";
+        callerProfilePic = callData.userProfilePic || callData.profilePic;
+      } else {
+        // User is the current user, so caller is the counselor
+        callerName = callData.counselorName || callData.name || "Counselor";
+        callerSpecialization = callData.counselorSpecialization || "Mental Health Professional";
+        callerProfilePic = callData.counselorProfilePic || callData.profilePic;
+      }
+      
       setCallerInfo({
-        name: callData.counselorName || callData.name || "Counselor",
-        id: callData.counselorId || callData.id,
-        email: callData.counselorEmail || callData.email,
-        phone: callData.counselorPhone || callData.phoneNumber,
-        specialization:
-          callData.counselorSpecialization || "Mental Health Professional",
-        profilePic: callData.profilePic || callData.avatar,
+        name: callerName,
+        id: callData.counselorId || callData.userId || callData.id,
+        email: callData.counselorEmail || callData.userEmail,
+        phone: callData.counselorPhone || callData.userPhone,
+        specialization: callerSpecialization,
+        profilePic: callerProfilePic,
       });
 
       if (currentUser) {
         setUserInfo({
-          name: currentUser.name || currentUser.fullName || "User",
+          name: currentUser.name || currentUser.fullName || (isCurrentUserCounselor ? "Counselor" : "User"),
           id: currentUser.id || currentUser._id,
           email: currentUser.email,
           phone: currentUser.phoneNumber || currentUser.phone,
-          role: currentUser.role || "user",
-        });
-      } else if (callData.userName) {
-        setUserInfo({
-          name: callData.userName,
-          id: callData.userId,
-          email: callData.userEmail,
-          phone: callData.userPhone,
-          role: "user",
+          role: currentUser.role || (isCurrentUserCounselor ? "counselor" : "user"),
         });
       }
 
       const normalizedStatus = normalizeCallStatus(callData.status);
 
       setCallMetadata({
-        callId: callData.callId || `call_${Date.now()}`,
-        roomId: callData.roomId || `room_${Date.now()}`,
+        callId: callData.callId || callData.id || "",
+        roomId: callData.roomId || "",
         type: callData.type || "voice",
         status: normalizedStatus,
         startTime: callData.startTime || new Date().toISOString(),
@@ -243,21 +307,25 @@ const VoiceCallModal = ({
       setCallDuration(0);
       setIsConnecting(
         !isConnectedStatus(normalizedStatus) &&
-          !isTerminalStatus(normalizedStatus),
+          !isTerminalStatus(normalizedStatus)
       );
+      setIsReconnecting(false);
       setWebrtcError("");
+      isManualCloseRef.current = false;
+      reconnectAttemptsRef.current = 0;
+      clearReconnectTimer();
       hasStartedConnectionRef.current = false;
+      hasEverConnectedRef.current = false;
     }
-  }, [isOpen, callData, currentUser]);
+  }, [isOpen, callData, currentUser, clearReconnectTimer]);
 
   useEffect(() => {
     if (!isOpen) return;
 
     const normalizedStatus = normalizeCallStatus(callMetadata.status);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsConnecting(
       !isConnectedStatus(normalizedStatus) &&
-        !isTerminalStatus(normalizedStatus),
+        !isTerminalStatus(normalizedStatus)
     );
   }, [isOpen, callMetadata.status]);
 
@@ -280,7 +348,7 @@ const VoiceCallModal = ({
         (localStorage.getItem("counsellorId") ||
         localStorage.getItem("counselorId")
           ? "counselor"
-          : "user"),
+          : "user")
     );
 
     if (!token || !localUserId) return;
@@ -299,7 +367,7 @@ const VoiceCallModal = ({
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          },
+          }
         );
 
         if (!isMounted || !response.data?.success || !response.data?.call) {
@@ -308,11 +376,15 @@ const VoiceCallModal = ({
 
         const serverCall = response.data.call;
         const normalizedStatus = normalizeCallStatus(serverCall.status);
-        const isInitiator =
-          String(serverCall.initiator?.id) === String(localUserId);
+        
+        // Determine if current user is initiator
+        const isInitiator = String(serverCall.initiator?.id) === String(localUserId);
+        isInitiatorRef.current = isInitiator;
+        
         const otherParticipant = isInitiator
           ? serverCall.receiver
           : serverCall.initiator;
+          
         const specialization = Array.isArray(otherParticipant?.specialization)
           ? otherParticipant.specialization.join(", ")
           : otherParticipant?.specialization || "";
@@ -379,7 +451,7 @@ const VoiceCallModal = ({
 
   // Simulate connection quality changes
   useEffect(() => {
-    if (isOpen && isCallActive) {
+    if (isOpen && isCallActive && isConnectedStatus(callMetadata.status)) {
       const qualityInterval = setInterval(() => {
         const qualities = ["good", "medium", "poor"];
         const randomQuality =
@@ -389,7 +461,7 @@ const VoiceCallModal = ({
       return () => clearInterval(qualityInterval);
     }
     return undefined;
-  }, [isOpen, isCallActive]);
+  }, [isOpen, isCallActive, callMetadata.status]);
 
   // Handle audio mute/unmute
   useEffect(() => {
@@ -399,15 +471,7 @@ const VoiceCallModal = ({
         track.enabled = !isMuted;
       });
     }
-
-    if (socketRef.current && callMetadata.callId && localUserIdRef.current) {
-      socketRef.current.emit("toggle-audio", {
-        callId: callMetadata.callId,
-        userId: localUserIdRef.current,
-        enabled: !isMuted,
-      });
-    }
-  }, [isMuted, callMetadata.callId]);
+  }, [isMuted]);
 
   useEffect(() => {
     if (!remoteAudioRef.current) return;
@@ -418,8 +482,26 @@ const VoiceCallModal = ({
   }, [volumeLevel, isSpeakerOn]);
 
   useEffect(() => {
+    if (!isOpen || !remoteAudioRef.current) return;
+
+    const element = remoteAudioRef.current;
+    const markReady = () => updateRemoteAudioState();
+
+    element.addEventListener("loadedmetadata", markReady);
+    element.addEventListener("canplay", markReady);
+    element.addEventListener("playing", markReady);
+
+    return () => {
+      element.removeEventListener("loadedmetadata", markReady);
+      element.removeEventListener("canplay", markReady);
+      element.removeEventListener("playing", markReady);
+    };
+  }, [isOpen, updateRemoteAudioState]);
+
+  useEffect(() => {
     if (!isOpen) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      isManualCloseRef.current = true;
+      resetReconnectState();
       setIsMuted(false);
       setIsSpeakerOn(true);
       setCallDuration(0);
@@ -427,8 +509,10 @@ const VoiceCallModal = ({
       setIsRecording(false);
       setShowSettings(false);
       setIsConnecting(true);
+      setIsReconnecting(false);
       setCallMetadata((prev) => ({ ...prev, status: "ended" }));
       setWebrtcError("");
+      hasEverConnectedRef.current = false;
 
       cleanupRealtimeConnection();
 
@@ -440,15 +524,21 @@ const VoiceCallModal = ({
       stopVisualizer();
       setAudioLevel(0);
     }
-  }, [isOpen, cleanupRealtimeConnection, stopVisualizer]);
+  }, [isOpen, cleanupRealtimeConnection, stopVisualizer, resetReconnectState]);
 
   const initializeAudio = useCallback(async () => {
     try {
-      if (mediaStreamRef.current) {
+      if (mediaStreamRef.current && mediaStreamRef.current.active) {
         return mediaStreamRef.current;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
       mediaStreamRef.current = stream;
 
       const audioTracks = stream.getAudioTracks();
@@ -456,13 +546,13 @@ const VoiceCallModal = ({
         track.enabled = !isMuted;
       });
 
+      // Initialize audio visualizer
       stopVisualizer();
 
-      audioContextRef.current = new (
-        window.AudioContext || window.webkitAudioContext
-      )();
-      sourceNodeRef.current =
-        audioContextRef.current.createMediaStreamSource(stream);
+      audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+      await audioContextRef.current.resume();
+      
+      sourceNodeRef.current = audioContextRef.current.createMediaStreamSource(stream);
       const analyser = audioContextRef.current.createAnalyser();
       analyser.fftSize = 256;
       sourceNodeRef.current.connect(analyser);
@@ -482,21 +572,35 @@ const VoiceCallModal = ({
     } catch (error) {
       console.error("Error accessing microphone:", error);
       setCallMetadata((prev) => ({ ...prev, status: "microphone_error" }));
+      setWebrtcError("Unable to access microphone. Please check permissions.");
       return null;
     }
   }, [isMuted, stopVisualizer]);
 
   const establishVoiceConnection = useCallback(async () => {
-    if (hasStartedConnectionRef.current) return;
-
-    const callId = callMetadata.callId;
-    if (
-      !callId ||
-      !isConnectedStatus(callMetadata.status) ||
-      isTerminalStatus(callMetadata.status)
-    ) {
+    if (hasStartedConnectionRef.current) {
+      console.log("Connection already started, skipping");
       return;
     }
+
+    const callId = callMetadata.callId;
+    if (!callId) {
+      console.log("No callId, skipping connection");
+      return;
+    }
+    
+    if (!isConnectedStatus(callMetadata.status)) {
+      console.log("Call not active yet, status:", callMetadata.status);
+      return;
+    }
+    
+    if (isTerminalStatus(callMetadata.status)) {
+      console.log("Call in terminal state, skipping connection");
+      return;
+    }
+
+    console.log("Establishing voice connection for call:", callId);
+    setIsConnecting(true);
 
     const localUserId =
       currentUser?.id ||
@@ -523,22 +627,42 @@ const VoiceCallModal = ({
       callData?.receiverId;
 
     if (!initiatorId || !receiverId) {
+      console.log("Missing participant info, waiting for API data");
+      // Wait for API data to populate
+      setTimeout(() => {
+        if (!hasStartedConnectionRef.current && isConnectedStatus(callMetadata.status)) {
+          establishVoiceConnectionRef.current?.();
+        }
+      }, 1000);
       return;
     }
 
     const isLocalInitiator = String(initiatorId) === String(localUserId);
     const remoteUserId = isLocalInitiator ? receiverId : initiatorId;
 
+    console.log("Local user ID:", localUserId);
+    console.log("Remote user ID:", remoteUserId);
+    console.log("Is initiator:", isLocalInitiator);
+
     localUserIdRef.current = String(localUserId);
     remoteUserIdRef.current = String(remoteUserId);
 
     const localStream = await initializeAudio();
-    if (!localStream) return;
+    if (!localStream) {
+      setWebrtcError("Failed to initialize microphone.");
+      return;
+    }
 
     const token =
       localStorage.getItem("token") ||
       localStorage.getItem("accessToken") ||
       undefined;
+
+    // Clean up any existing socket
+    if (socketRef.current) {
+      socketRef.current.removeAllListeners();
+      socketRef.current.disconnect();
+    }
 
     const socket = io(API_BASE_URL, {
       auth: token ? { token } : undefined,
@@ -551,10 +675,7 @@ const VoiceCallModal = ({
     peerConnectionRef.current = peer;
 
     const flushPendingIceCandidates = async () => {
-      if (
-        !peerConnectionRef.current ||
-        !peerConnectionRef.current.remoteDescription
-      ) {
+      if (!peerConnectionRef.current || !peerConnectionRef.current.remoteDescription) {
         return;
       }
 
@@ -564,7 +685,7 @@ const VoiceCallModal = ({
       for (const candidate of queuedCandidates) {
         try {
           await peerConnectionRef.current.addIceCandidate(
-            new RTCIceCandidate(candidate),
+            new RTCIceCandidate(candidate)
           );
         } catch (error) {
           console.warn("Failed to flush ICE candidate:", error);
@@ -572,54 +693,46 @@ const VoiceCallModal = ({
       }
     };
 
+    // Add local tracks to peer connection
     localStream.getTracks().forEach((track) => {
       peer.addTrack(track, localStream);
     });
 
-    let offerRetryTimer = null;
-
     const sendOffer = async () => {
-      if (
-        !peerConnectionRef.current ||
-        peerConnectionRef.current.signalingState !== "stable"
-      ) {
+      if (!peerConnectionRef.current || peerConnectionRef.current.signalingState !== "stable") {
+        console.log("Cannot send offer, signaling state:", peerConnectionRef.current?.signalingState);
         return;
       }
 
-      const offer = await peerConnectionRef.current.createOffer({
-        offerToReceiveAudio: true,
-      });
-      await peerConnectionRef.current.setLocalDescription(offer);
-
-      socket.emit("call-offer", {
-        callId,
-        offer,
-        to: remoteUserIdRef.current,
-      });
-
-      socket.emit("offer", {
-        callId,
-        offer,
-        userId: localUserIdRef.current,
-      });
-    };
-
-    peer.onnegotiationneeded = async () => {
       try {
-        if (
-          !peerConnectionRef.current ||
-          peerConnectionRef.current.signalingState !== "stable"
-        ) {
-          return;
-        }
-        await sendOffer();
+        console.log("Creating offer...");
+        const offer = await peerConnectionRef.current.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: false,
+        });
+        console.log("Offer created, setting local description...");
+        await peerConnectionRef.current.setLocalDescription(offer);
+
+        console.log("Sending offer to:", remoteUserIdRef.current);
+        socket.emit("call-offer", {
+          callId,
+          offer,
+          to: remoteUserIdRef.current,
+        });
+
+        socket.emit("offer", {
+          callId,
+          offer,
+          userId: localUserIdRef.current,
+        });
       } catch (error) {
-        console.warn("Voice negotiationneeded offer failed:", error);
+        console.error("Error sending offer:", error);
       }
     };
 
     peer.onicecandidate = (event) => {
       if (event.candidate) {
+        console.log("Sending ICE candidate");
         socket.emit("ice-candidate", {
           callId,
           candidate: event.candidate,
@@ -630,109 +743,95 @@ const VoiceCallModal = ({
     };
 
     peer.ontrack = (event) => {
-      const [incomingStream] = event.streams;
-      if (incomingStream) {
-        remoteStreamRef.current = incomingStream;
-
-        // Ensure the specific track is present on the stream (some browsers attach later).
-        const existingTrackIds = new Set(
-          remoteStreamRef.current.getTracks().map((track) => track.id),
-        );
-        if (event.track && !existingTrackIds.has(event.track.id)) {
-          remoteStreamRef.current.addTrack(event.track);
-        }
-      } else {
+      console.log("Received remote track:", event.track?.kind);
+      if (event.streams && event.streams[0]) {
+        remoteStreamRef.current = event.streams[0];
+      } else if (event.track) {
         if (!remoteStreamRef.current) {
           remoteStreamRef.current = new MediaStream();
         }
-
-        const existingTrackIds = new Set(
-          remoteStreamRef.current.getTracks().map((track) => track.id),
-        );
-
-        if (event.track && !existingTrackIds.has(event.track.id)) {
-          remoteStreamRef.current.addTrack(event.track);
-        }
+        remoteStreamRef.current.addTrack(event.track);
       }
 
-      if (remoteAudioRef.current) {
+      if (remoteAudioRef.current && remoteStreamRef.current) {
         remoteAudioRef.current.srcObject = remoteStreamRef.current;
-        remoteAudioRef.current
-          .play()
-          .then(() => {
-            setIsRemoteAudioReady(true);
-            setIsConnecting(false);
-            setWebrtcError("");
-          })
-          .catch((error) => {
-            console.warn("Remote audio autoplay blocked:", error);
-            setWebrtcError("Tap speaker button once to enable audio playback.");
-          });
+        attemptRemoteAudioPlayback();
       }
+
+      updateRemoteAudioState();
     };
 
     peer.onconnectionstatechange = () => {
       const state = peer.connectionState;
+      console.log("Connection state:", state);
+      
       if (state === "connected") {
+        console.log("WebRTC connection established!");
+        hasEverConnectedRef.current = true;
         setIsConnecting(false);
+        setIsReconnecting(false);
+        resetReconnectState();
+        setWebrtcError("");
+        updateRemoteAudioState();
+        attemptRemoteAudioPlayback();
       }
 
-      if (state === "failed" || state === "disconnected") {
-        setWebrtcError("Voice connection interrupted.");
+      if (state === "failed") {
+        console.log("WebRTC connection failed");
+        setWebrtcError("Voice connection failed.");
       }
     };
 
-    socket.on("connect", async () => {
+    socket.on("connect", () => {
+      console.log("Socket connected, joining call:", callId);
+      resetReconnectState();
+
       socket.emit("join-call", {
         callId,
         userId: localUserIdRef.current,
       });
-
-      if (isLocalInitiator) {
-        await sendOffer();
-
-        // Receiver may join after this point; retry offer briefly until connected.
-        offerRetryTimer = setInterval(async () => {
-          if (
-            !peerConnectionRef.current ||
-            peerConnectionRef.current.connectionState === "connected" ||
-            peerConnectionRef.current.currentRemoteDescription
-          ) {
-            clearInterval(offerRetryTimer);
-            offerRetryTimer = null;
-            return;
-          }
-          await sendOffer();
-        }, 2000);
-      }
     });
 
     socket.on("user-joined", async ({ userId }) => {
-      if (!isLocalInitiator) return;
+      console.log("User joined:", userId);
       if (String(userId) === String(localUserIdRef.current)) return;
-      await sendOffer();
+      // Send offer when other user joins
+      setTimeout(() => sendOffer(), 500);
     });
 
     const onIncomingOffer = async ({ offer, userId, from }) => {
       const senderId = String(userId || from || "");
-      if (!offer || senderId === String(localUserIdRef.current)) return;
-      if (!peerConnectionRef.current) return;
+      if (!offer || senderId === String(localUserIdRef.current)) {
+        console.log("Ignoring own offer");
+        return;
+      }
+      if (!peerConnectionRef.current) {
+        console.log("No peer connection for incoming offer");
+        return;
+      }
+
+      console.log("Received offer from:", senderId);
 
       try {
         if (peerConnectionRef.current.signalingState !== "stable") {
+          console.log("Signaling state not stable, rolling back");
           await peerConnectionRef.current.setLocalDescription({
             type: "rollback",
           });
         }
 
+        console.log("Setting remote description from offer");
         await peerConnectionRef.current.setRemoteDescription(
-          new RTCSessionDescription(offer),
+          new RTCSessionDescription(offer)
         );
         await flushPendingIceCandidates();
 
+        console.log("Creating answer");
         const answer = await peerConnectionRef.current.createAnswer();
+        console.log("Setting local description with answer");
         await peerConnectionRef.current.setLocalDescription(answer);
 
+        console.log("Sending answer to:", remoteUserIdRef.current);
         socket.emit("call-answer", {
           callId,
           answer,
@@ -752,13 +851,22 @@ const VoiceCallModal = ({
 
     const onIncomingAnswer = async ({ answer, userId, from }) => {
       const senderId = String(userId || from || "");
-      if (!answer || senderId === String(localUserIdRef.current)) return;
-      if (!peerConnectionRef.current) return;
+      if (!answer || senderId === String(localUserIdRef.current)) {
+        console.log("Ignoring own answer");
+        return;
+      }
+      if (!peerConnectionRef.current) {
+        console.log("No peer connection for incoming answer");
+        return;
+      }
+
+      console.log("Received answer from:", senderId);
 
       try {
         if (!peerConnectionRef.current.currentRemoteDescription) {
+          console.log("Setting remote description from answer");
           await peerConnectionRef.current.setRemoteDescription(
-            new RTCSessionDescription(answer),
+            new RTCSessionDescription(answer)
           );
           await flushPendingIceCandidates();
         }
@@ -775,7 +883,9 @@ const VoiceCallModal = ({
 
     socket.on("ice-candidate", async ({ candidate, userId, from }) => {
       const senderId = String(userId || from || "");
-      if (!candidate || senderId === String(localUserIdRef.current)) return;
+      if (!candidate || senderId === String(localUserIdRef.current)) {
+        return;
+      }
       if (!peerConnectionRef.current) return;
 
       try {
@@ -785,7 +895,7 @@ const VoiceCallModal = ({
         }
 
         await peerConnectionRef.current.addIceCandidate(
-          new RTCIceCandidate(candidate),
+          new RTCIceCandidate(candidate)
         );
       } catch (error) {
         pendingIceCandidatesRef.current.push(candidate);
@@ -794,12 +904,14 @@ const VoiceCallModal = ({
     });
 
     socket.on("user-left", ({ userId }) => {
+      console.log("User left:", userId);
       if (String(userId) === String(localUserIdRef.current)) return;
       setIsRemoteAudioReady(false);
       setWebrtcError("Other participant left the call.");
     });
 
     socket.on("user-left-call", ({ userId }) => {
+      console.log("User left call:", userId);
       if (String(userId) === String(localUserIdRef.current)) return;
       setIsRemoteAudioReady(false);
       setWebrtcError("Other participant left the call.");
@@ -807,17 +919,24 @@ const VoiceCallModal = ({
 
     socket.on("connect_error", (error) => {
       console.error("Socket connect error:", error);
-      setWebrtcError("Unable to connect realtime voice service.");
     });
 
-    socket.on("disconnect", () => {
-      if (offerRetryTimer) {
-        clearInterval(offerRetryTimer);
-        offerRetryTimer = null;
-      }
+    socket.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
     });
 
     hasStartedConnectionRef.current = true;
+    
+    // If we're the initiator, send offer after a short delay
+    if (isLocalInitiator) {
+      console.log("We are the initiator, will send offer after socket connects");
+      // Wait for socket to connect and user to join
+      setTimeout(() => {
+        if (peerConnectionRef.current && peerConnectionRef.current.signalingState === "stable") {
+          sendOffer();
+        }
+      }, 2000);
+    }
   }, [
     callMetadata.callId,
     callMetadata.status,
@@ -826,28 +945,40 @@ const VoiceCallModal = ({
     currentUser,
     userInfo.id,
     initializeAudio,
+    resetReconnectState,
+    updateRemoteAudioState,
+    attemptRemoteAudioPlayback,
   ]);
+
+  useEffect(() => {
+    establishVoiceConnectionRef.current = establishVoiceConnection;
+  }, [establishVoiceConnection]);
 
   useEffect(() => {
     if (
       isOpen &&
       isCallActive &&
       isConnectedStatus(callMetadata.status) &&
-      !isTerminalStatus(callMetadata.status)
+      !isTerminalStatus(callMetadata.status) &&
+      !hasStartedConnectionRef.current
     ) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      establishVoiceConnection();
+      // Small delay to ensure everything is ready
+      setTimeout(() => {
+        establishVoiceConnectionRef.current?.();
+      }, 500);
     }
   }, [
     isOpen,
     isCallActive,
     callMetadata.status,
     callMetadata.callId,
-    establishVoiceConnection,
   ]);
 
   useEffect(() => {
     return () => {
+      isManualCloseRef.current = true;
+      clearReconnectTimer();
+      hasEverConnectedRef.current = false;
       cleanupRealtimeConnection();
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((track) => track.stop());
@@ -855,10 +986,14 @@ const VoiceCallModal = ({
       }
       stopVisualizer();
     };
-  }, [cleanupRealtimeConnection, stopVisualizer]);
+  }, [cleanupRealtimeConnection, stopVisualizer, clearReconnectTimer]);
 
   const handleEndCall = async () => {
+    isManualCloseRef.current = true;
+    resetReconnectState();
+    hasEverConnectedRef.current = false;
     setIsCallActive(false);
+    setIsReconnecting(false);
     setCallMetadata((prev) => ({ ...prev, status: "ended" }));
 
     cleanupRealtimeConnection();
@@ -938,15 +1073,18 @@ const VoiceCallModal = ({
       return webrtcError;
     }
 
-    if (isConnecting) {
-      return callMetadata.status === "pending" ||
-        callMetadata.status === "ringing"
-        ? "Waiting for counselor to accept..."
-        : "Connecting...";
+    if (isReconnecting) {
+      return "Reconnecting call...";
     }
 
     if (isConnectedStatus(callMetadata.status) && !isRemoteAudioReady) {
       return "Connected. Waiting for audio...";
+    }
+
+    if (isConnecting) {
+      return callMetadata.status === "pending" || callMetadata.status === "ringing"
+        ? "Waiting for participant to accept..."
+        : "Connecting...";
     }
 
     switch (callMetadata.status) {
@@ -955,7 +1093,7 @@ const VoiceCallModal = ({
         return "Connected";
       case "pending":
       case "ringing":
-        return "Waiting for counselor to accept...";
+        return "Waiting for participant to accept...";
       case "rejected":
         return "Call Declined";
       case "cancelled":
@@ -973,10 +1111,7 @@ const VoiceCallModal = ({
 
   return (
     <div className="voice-modal-overlay">
-      <div
-        className="voice-modal-container"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="voice-modal-container" onClick={(e) => e.stopPropagation()}>
         <audio ref={remoteAudioRef} autoPlay playsInline />
 
         <div className="voice-modal-header">
@@ -996,11 +1131,7 @@ const VoiceCallModal = ({
             </div>
           </div>
           <div className="header-right">
-            <button
-              className="header-btn close-btn"
-              onClick={onClose}
-              title="Close"
-            >
+            <button className="header-btn close-btn" onClick={onClose} title="Close">
               ✕
             </button>
           </div>
@@ -1103,8 +1234,7 @@ const VoiceCallModal = ({
                     </p>
                     {callerInfo.specialization && (
                       <p>
-                        <strong>Specialization:</strong>{" "}
-                        {callerInfo.specialization}
+                        <strong>Specialization:</strong> {callerInfo.specialization}
                       </p>
                     )}
                     {callerInfo.email && (
@@ -1135,28 +1265,22 @@ const VoiceCallModal = ({
                     </p>
                     {callMetadata.roomId && (
                       <p>
-                        <strong>Room ID:</strong>{" "}
-                        {callMetadata.roomId.substring(0, 8)}...
+                        <strong>Room ID:</strong> {callMetadata.roomId.substring(0, 8)}...
                       </p>
                     )}
                     {callMetadata.callId && (
                       <p>
-                        <strong>Call ID:</strong>{" "}
-                        {callMetadata.callId.substring(0, 8)}...
+                        <strong>Call ID:</strong> {callMetadata.callId.substring(0, 8)}...
                       </p>
                     )}
                     {callMetadata.chatId && (
                       <p>
-                        <strong>Chat ID:</strong>{" "}
-                        {callMetadata.chatId.substring(0, 8)}...
+                        <strong>Chat ID:</strong> {callMetadata.chatId.substring(0, 8)}...
                       </p>
                     )}
                   </div>
                 </div>
-                <button
-                  className="close-settings"
-                  onClick={() => setShowSettings(false)}
-                >
+                <button className="close-settings" onClick={() => setShowSettings(false)}>
                   Close
                 </button>
               </div>
@@ -1177,12 +1301,7 @@ const VoiceCallModal = ({
                 onClick={() => {
                   setIsSpeakerOn(!isSpeakerOn);
                   if (remoteAudioRef.current && !isSpeakerOn) {
-                    remoteAudioRef.current
-                      .play()
-                      .then(() => setWebrtcError(""))
-                      .catch(() => {
-                        setWebrtcError("Tap again to enable audio playback.");
-                      });
+                    attemptRemoteAudioPlayback();
                   }
                 }}
                 title={isSpeakerOn ? "Speaker off" : "Speaker on"}

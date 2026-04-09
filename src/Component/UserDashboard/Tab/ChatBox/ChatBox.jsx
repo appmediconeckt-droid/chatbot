@@ -439,7 +439,15 @@ const ChatBox = () => {
         const token = localStorage.getItem("token");
         const userId = resolveCurrentUserId();
 
-        if (!userId || !token || showIncomingModal) return;
+        if (
+          !userId ||
+          !token ||
+          showIncomingModal ||
+          isVideoModalOpen ||
+          isVoiceModalOpen
+        ) {
+          return;
+        }
 
         const response = await axios.get(
           `${API_BASE_URL}/api/video/calls/pending/${userId}`,
@@ -479,7 +487,7 @@ const ChatBox = () => {
 
     const interval = setInterval(fetchIncomingCalls, 5000);
     return () => clearInterval(interval);
-  }, [showIncomingModal, currentUser]);
+  }, [showIncomingModal, currentUser, isVideoModalOpen, isVoiceModalOpen]);
   // GET messages from API
   const fetchMessagesFromAPI = async () => {
     try {
@@ -1575,6 +1583,8 @@ const ChatBox = () => {
         isOpen={isVideoModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        currentUser={currentUser}
+        onEndCall={handleEndCall}
       />
 
       <VoiceCallModal
