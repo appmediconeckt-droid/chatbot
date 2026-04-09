@@ -174,10 +174,11 @@ const VoiceCallModal = ({
 
   const updateRemoteAudioState = useCallback(
     ({ forceReady = false } = {}) => {
-    const remoteAudioTracks = remoteStreamRef.current?.getAudioTracks?.() || [];
+      const remoteAudioTracks =
+        remoteStreamRef.current?.getAudioTracks?.() || [];
       const hasRemoteAudioTrack = remoteAudioTracks.length > 0;
       const hasLiveAudio = remoteAudioTracks.some(
-      (track) => track.readyState === "live",
+        (track) => track.readyState === "live",
       );
       const mediaElementReady = Boolean(
         remoteAudioRef.current && remoteAudioRef.current.readyState >= 1,
@@ -220,58 +221,58 @@ const VoiceCallModal = ({
     ({ emitLeave = true } = {}) => {
       clearOfferRetryTimer();
 
-    if (peerConnectionRef.current) {
-      peerConnectionRef.current.onicecandidate = null;
-      peerConnectionRef.current.ontrack = null;
-      peerConnectionRef.current.onconnectionstatechange = null;
-      peerConnectionRef.current.onnegotiationneeded = null;
-      try {
-        peerConnectionRef.current.close();
-      } catch (error) {
-        console.warn("Peer connection close failed:", error);
-      }
-      peerConnectionRef.current = null;
-    }
-
-    if (socketRef.current) {
-      try {
-        if (emitLeave && callMetadata.callId && localUserIdRef.current) {
-          socketRef.current.emit("leave-call", {
-            callId: callMetadata.callId,
-            userId: localUserIdRef.current,
-          });
+      if (peerConnectionRef.current) {
+        peerConnectionRef.current.onicecandidate = null;
+        peerConnectionRef.current.ontrack = null;
+        peerConnectionRef.current.onconnectionstatechange = null;
+        peerConnectionRef.current.onnegotiationneeded = null;
+        try {
+          peerConnectionRef.current.close();
+        } catch (error) {
+          console.warn("Peer connection close failed:", error);
         }
-      } catch (error) {
-        console.warn("Socket leave-call failed:", error);
+        peerConnectionRef.current = null;
       }
 
-      socketRef.current.off("connect");
-      socketRef.current.off("offer");
-      socketRef.current.off("answer");
-      socketRef.current.off("call-offer");
-      socketRef.current.off("call-answer");
-      socketRef.current.off("ice-candidate");
-      socketRef.current.off("user-joined");
-      socketRef.current.off("user-left");
-      socketRef.current.off("user-left-call");
-      socketRef.current.off("connect_error");
-      socketRef.current.off("disconnect");
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
+      if (socketRef.current) {
+        try {
+          if (emitLeave && callMetadata.callId && localUserIdRef.current) {
+            socketRef.current.emit("leave-call", {
+              callId: callMetadata.callId,
+              userId: localUserIdRef.current,
+            });
+          }
+        } catch (error) {
+          console.warn("Socket leave-call failed:", error);
+        }
 
-    if (remoteStreamRef.current) {
-      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
-      remoteStreamRef.current = null;
-    }
+        socketRef.current.off("connect");
+        socketRef.current.off("offer");
+        socketRef.current.off("answer");
+        socketRef.current.off("call-offer");
+        socketRef.current.off("call-answer");
+        socketRef.current.off("ice-candidate");
+        socketRef.current.off("user-joined");
+        socketRef.current.off("user-left");
+        socketRef.current.off("user-left-call");
+        socketRef.current.off("connect_error");
+        socketRef.current.off("disconnect");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
 
-    if (remoteAudioRef.current) {
-      remoteAudioRef.current.srcObject = null;
-    }
+      if (remoteStreamRef.current) {
+        remoteStreamRef.current.getTracks().forEach((track) => track.stop());
+        remoteStreamRef.current = null;
+      }
 
-    setIsRemoteAudioReady(false);
-    pendingIceCandidatesRef.current = [];
-    hasStartedConnectionRef.current = false;
+      if (remoteAudioRef.current) {
+        remoteAudioRef.current.srcObject = null;
+      }
+
+      setIsRemoteAudioReady(false);
+      pendingIceCandidatesRef.current = [];
+      hasStartedConnectionRef.current = false;
     },
     [callMetadata.callId, clearOfferRetryTimer],
   );
@@ -622,10 +623,7 @@ const VoiceCallModal = ({
         `${reason}. Reconnecting... (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
       );
 
-      const delay = Math.min(
-        RECONNECT_BASE_DELAY_MS * nextAttempt,
-        7000,
-      );
+      const delay = Math.min(RECONNECT_BASE_DELAY_MS * nextAttempt, 7000);
 
       reconnectTimeoutRef.current = setTimeout(() => {
         reconnectTimeoutRef.current = null;
