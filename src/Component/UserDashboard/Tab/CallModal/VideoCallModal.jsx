@@ -1,9 +1,9 @@
-// VideoCallModal.jsx - Updated to handle API call data
-
-import React, { useState, useEffect, useRef } from 'react';
+// VideoCallModal.jsx - Fully Responsive with Draggable Local Video, Auto-hide Controls
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import './VideoCallModal.css';
 
 const VideoCallModal = ({ isOpen, onClose, callData }) => {
+    // State variables
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeakerOn, setIsSpeakerOn] = useState(false);
     const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -14,26 +14,25 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     const [isRecording, setIsRecording] = useState(false);
     const [isCameraInitialized, setIsCameraInitialized] = useState(false);
     const [availableCameras, setAvailableCameras] = useState([]);
-    const [currentCamera, setCurrentCamera] = useState('');
-    const [isPiPMode, setIsPiPMode] = useState(false);
     const [connectionQuality, setConnectionQuality] = useState('good');
-    const [showSettings, setShowSettings] = useState(false);
-    const [volumeLevel, setVolumeLevel] = useState(70);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
     const [callerName, setCallerName] = useState('');
     const [callerProfilePic, setCallerProfilePic] = useState('');
-    const [callerPhoneNumber, setCallerPhoneNumber] = useState('');
-    const [callType, setCallType] = useState('video');
     const [callStatus, setCallStatus] = useState('connecting');
     const [callStartTime, setCallStartTime] = useState(null);
-    const [roomId, setRoomId] = useState('');
-    const [callId, setCallId] = useState('');
-    const [apiCallData, setApiCallData] = useState(null);
+    const [showControls, setShowControls] = useState(true);
+    const [localVideoPosition, setLocalVideoPosition] = useState({ x: null, y: null, bottom: 90, right: 18 });
+    const [isDragging, setIsDragging] = useState(false);
+    const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
+    // Refs
     const localVideoRef = useRef(null);
     const remoteVideoRef = useRef(null);
     const mediaStreamRef = useRef(null);
-    const pipWindowRef = useRef(null);
+    const containerRef = useRef(null);
+    const controlsTimeoutRef = useRef(null);
+    const localContainerRef = useRef(null);
+    const dragStartRef = useRef({ x: 0, y: 0, posX: 0, posY: 0 });
 
     const defaultCallData = {
         id: 1,
@@ -49,33 +48,19 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         if (isOpen && callData) {
             setCallerName(callData.name || defaultCallData.name);
             setCallerProfilePic(callData.profilePic || defaultCallData.profilePic);
-            setCallerPhoneNumber(callData.phoneNumber || defaultCallData.phoneNumber);
-            setCallType(callData.type || 'video');
             setCallStatus(callData.status || 'connecting');
-            setRoomId(callData.roomId || '');
-            setCallId(callData.callId || callData.id || '');
-            setApiCallData(callData.apiCallData || null);
             setCallStartTime(new Date());
             setCallDuration(0);
-            
-            // Log the call data for debugging
-            console.log('Video Call Modal Opened with Data:', {
-                roomId: callData.roomId,
-                callId: callData.callId,
-                callerName: callData.name,
-                apiData: callData.apiCallData
-            });
         } else if (isOpen && !callData) {
             setCallerName(defaultCallData.name);
             setCallerProfilePic(defaultCallData.profilePic);
-            setCallerPhoneNumber(defaultCallData.phoneNumber);
-            setCallType(defaultCallData.type);
             setCallStatus(defaultCallData.status);
             setCallStartTime(new Date());
             setCallDuration(0);
         }
     }, [isOpen, callData]);
 
+    // Initialize camera
     useEffect(() => {
         if (isOpen && !isCameraInitialized) {
             initializeCamera(false);
@@ -102,6 +87,20 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
             if (timer) clearInterval(timer);
         };
     }, [isOpen, isCallActive, callStartTime, callStatus]);
+
+    // Auto-hide controls on inactivity
+    useEffect(() => {
+        if (isOpen && isCallActive) {
+            resetControlsTimeout();
+            window.addEventListener('mousemove', resetControlsTimeout);
+            window.addEventListener('touchstart', resetControlsTimeout);
+            return () => {
+                window.removeEventListener('mousemove', resetControlsTimeout);
+                window.removeEventListener('touchstart', resetControlsTimeout);
+                if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+            };
+        }
+    }, [isOpen, isCallActive]);
 
     // Simulate connection quality changes
     useEffect(() => {
@@ -147,25 +146,25 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
             setIsFullScreen(false);
             setIsRecording(false);
             setIsCameraInitialized(false);
-            setIsPiPMode(false);
             setIsScreenSharing(false);
-            setShowSettings(false);
             setCallStatus('ended');
-            setRoomId('');
-            setCallId('');
-            setApiCallData(null);
+            setShowControls(true);
+            setLocalVideoPosition({ x: null, y: null, bottom: 90, right: 18 });
 
             if (mediaStreamRef.current) {
                 mediaStreamRef.current.getTracks().forEach(track => track.stop());
                 mediaStreamRef.current = null;
             }
-
-            if (pipWindowRef.current) {
-                pipWindowRef.current.close();
-                pipWindowRef.current = null;
-            }
         }
     }, [isOpen]);
+
+    const resetControlsTimeout = () => {
+        setShowControls(true);
+        if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+        controlsTimeoutRef.current = setTimeout(() => {
+            setShowControls(false);
+        }, 3000);
+    };
 
     const initializeCamera = async (useBackCamera = false) => {
         try {
@@ -184,8 +183,6 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                 audio: true
             };
 
-            console.log(`Initializing camera with facingMode: ${facingMode}`);
-
             const stream = await navigator.mediaDevices.getUserMedia(constraints);
             mediaStreamRef.current = stream;
 
@@ -193,35 +190,30 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                 localVideoRef.current.srcObject = stream;
             }
 
+            // Create fake remote stream for demo (using canvas or just placeholder)
+            if (remoteVideoRef.current && !remoteVideoRef.current.srcObject) {
+                // For demo, we can create a black stream or just keep placeholder
+                // Remote video will show overlay, so no need for actual stream
+            }
+
             setIsCameraInitialized(true);
             setCallStatus('connected');
-            
-            const videoTrack = stream.getVideoTracks()[0];
-            const settings = videoTrack.getSettings();
-            if (settings.deviceId) {
-                setCurrentCamera(settings.deviceId);
-            }
             
         } catch (error) {
             console.error('Error accessing camera:', error);
             setCallStatus('camera_error');
             
             try {
-                console.log('Trying fallback camera access...');
                 const fallbackStream = await navigator.mediaDevices.getUserMedia({
                     video: true,
                     audio: true
                 });
-                
                 mediaStreamRef.current = fallbackStream;
-                
                 if (localVideoRef.current) {
                     localVideoRef.current.srcObject = fallbackStream;
                 }
-                
                 setIsCameraInitialized(true);
                 setCallStatus('connected');
-                
             } catch (fallbackError) {
                 console.error('Fallback camera access also failed:', fallbackError);
                 setCallStatus('no_camera');
@@ -244,14 +236,6 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
             });
             
             setAvailableCameras(enhancedCameras);
-            
-            const frontCamera = enhancedCameras.find(cam => cam.isFrontCamera);
-            if (frontCamera) {
-                setCurrentCamera(frontCamera.deviceId);
-            } else if (enhancedCameras.length > 0) {
-                setCurrentCamera(enhancedCameras[0].deviceId);
-            }
-            
         } catch (error) {
             console.error('Error getting cameras:', error);
         }
@@ -260,42 +244,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
     const switchCamera = async () => {
         const newCameraState = !isCameraSwitched;
         setIsCameraSwitched(newCameraState);
-        console.log(`Switching camera to: ${newCameraState ? 'back' : 'front'} camera`);
         await initializeCamera(newCameraState);
-    };
-
-    const selectCamera = async (deviceId) => {
-        try {
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getTracks().forEach(track => track.stop());
-            }
-
-            const constraints = {
-                video: {
-                    deviceId: { exact: deviceId },
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 },
-                },
-                audio: true
-            };
-
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
-            mediaStreamRef.current = stream;
-
-            if (localVideoRef.current) {
-                localVideoRef.current.srcObject = stream;
-            }
-
-            setCurrentCamera(deviceId);
-            
-            const selectedCamera = availableCameras.find(cam => cam.deviceId === deviceId);
-            if (selectedCamera) {
-                setIsCameraSwitched(selectedCamera.isBackCamera || false);
-            }
-            
-        } catch (error) {
-            console.error('Error selecting camera:', error);
-        }
     };
 
     const toggleScreenShare = async () => {
@@ -332,26 +281,6 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         }
     };
 
-    const togglePiPMode = async () => {
-        if (!isPiPMode) {
-            try {
-                if (document.pictureInPictureEnabled && remoteVideoRef.current) {
-                    await remoteVideoRef.current.requestPictureInPicture();
-                    setIsPiPMode(true);
-                }
-            } catch (error) {
-                console.error('PiP mode error:', error);
-            }
-        } else {
-            try {
-                await document.exitPictureInPicture();
-                setIsPiPMode(false);
-            } catch (error) {
-                console.error('Exit PiP error:', error);
-            }
-        }
-    };
-
     const handleEndCall = () => {
         setIsCallActive(false);
         setCallStatus('ended');
@@ -362,7 +291,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
 
         setTimeout(() => {
             onClose();
-        }, 1000);
+        }, 500);
     };
 
     const formatTime = (seconds) => {
@@ -378,8 +307,8 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
 
     const toggleFullScreen = () => {
         if (!isFullScreen) {
-            if (document.documentElement.requestFullscreen) {
-                document.documentElement.requestFullscreen();
+            if (containerRef.current?.requestFullscreen) {
+                containerRef.current.requestFullscreen();
             }
         } else {
             if (document.exitFullscreen) {
@@ -389,19 +318,70 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         setIsFullScreen(!isFullScreen);
     };
 
-    const takeScreenshot = () => {
-        if (remoteVideoRef.current) {
-            const canvas = document.createElement('canvas');
-            canvas.width = remoteVideoRef.current.videoWidth;
-            canvas.height = remoteVideoRef.current.videoHeight;
-            canvas.getContext('2d').drawImage(remoteVideoRef.current, 0, 0);
+    // Draggable local video handlers
+    const handleDragStart = useCallback((e) => {
+        if (!localContainerRef.current) return;
+        e.preventDefault();
+        
+        const rect = localContainerRef.current.getBoundingClientRect();
+        const clientX = e.type === 'mousedown' ? e.clientX : e.touches[0].clientX;
+        const clientY = e.type === 'mousedown' ? e.clientY : e.touches[0].clientY;
+        
+        dragStartRef.current = {
+            x: clientX - rect.left,
+            y: clientY - rect.top,
+            posX: rect.left,
+            posY: rect.top
+        };
+        
+        setIsDragging(true);
+    }, []);
 
-            const link = document.createElement('a');
-            link.download = `screenshot-${Date.now()}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
+    const handleDragMove = useCallback((e) => {
+        if (!isDragging || !localContainerRef.current) return;
+        e.preventDefault();
+        
+        const clientX = e.type === 'mousemove' ? e.clientX : e.touches[0].clientX;
+        const clientY = e.type === 'mousemove' ? e.clientY : e.touches[0].clientY;
+        
+        let newX = clientX - dragStartRef.current.x;
+        let newY = clientY - dragStartRef.current.y;
+        
+        // Bound within viewport
+        const maxX = window.innerWidth - localContainerRef.current.offsetWidth - 10;
+        const maxY = window.innerHeight - localContainerRef.current.offsetHeight - 60;
+        
+        newX = Math.min(Math.max(10, newX), maxX);
+        newY = Math.min(Math.max(60, newY), maxY);
+        
+        setLocalVideoPosition({
+            x: newX,
+            y: newY,
+            bottom: null,
+            right: null
+        });
+    }, [isDragging]);
+
+    const handleDragEnd = useCallback(() => {
+        setIsDragging(false);
+    }, []);
+
+    // Add/remove drag event listeners
+    useEffect(() => {
+        if (isDragging) {
+            window.addEventListener('mousemove', handleDragMove);
+            window.addEventListener('mouseup', handleDragEnd);
+            window.addEventListener('touchmove', handleDragMove, { passive: false });
+            window.addEventListener('touchend', handleDragEnd);
         }
-    };
+        
+        return () => {
+            window.removeEventListener('mousemove', handleDragMove);
+            window.removeEventListener('mouseup', handleDragEnd);
+            window.removeEventListener('touchmove', handleDragMove);
+            window.removeEventListener('touchend', handleDragEnd);
+        };
+    }, [isDragging, handleDragMove, handleDragEnd]);
 
     const getQualityIcon = () => {
         switch (connectionQuality) {
@@ -449,19 +429,43 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
         return callerProfilePic && (callerProfilePic.startsWith('http') || callerProfilePic.startsWith('/') || callerProfilePic.includes('base64'));
     };
 
+    // Get local video container style
+    const getLocalVideoStyle = () => {
+        if (localVideoPosition.x !== null && localVideoPosition.y !== null) {
+            return {
+                position: 'absolute',
+                left: `${localVideoPosition.x}px`,
+                top: `${localVideoPosition.y}px`,
+                right: 'auto',
+                bottom: 'auto'
+            };
+        }
+        return {
+            position: 'absolute',
+            bottom: `${localVideoPosition.bottom}px`,
+            right: `${localVideoPosition.right}px`,
+            left: 'auto',
+            top: 'auto'
+        };
+    };
+
     if (!isOpen) return null;
 
     return (
         <div className={`video-modal-overlay ${isFullScreen ? 'fullscreen' : ''}`}>
             <div
+                ref={containerRef}
                 className={`video-modal-container ${isFullScreen ? 'fullscreen' : ''}`}
                 onClick={(e) => e.stopPropagation()}
+                onMouseMove={resetControlsTimeout}
+                onTouchStart={resetControlsTimeout}
             >
+                {/* Header */}
                 <div className="video-modal-header">
                     <div className="header-left">
                         <span className="header-icon">📹</span>
                         <div className="call-info">
-                            <h3>Video Call with {callerName}</h3>
+                            <h3>{callerName}</h3>
                             <div className={`connection-quality ${getQualityClass()}`}>
                                 <span className="quality-icon">{getQualityIcon()}</span>
                                 <span className="quality-text">{connectionQuality}</span>
@@ -470,9 +474,9 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                     </div>
                     <div className="header-right">
                         <button className="header-btn" onClick={toggleFullScreen} title="Full screen">
-                            {isFullScreen ? '🗗️' : '🗖'}
+                            {isFullScreen ? '🗗' : '🗖'}
                         </button>
-                        <button className="header-btn close-btn" onClick={onClose} title="Close">
+                        <button className="header-btn close-btn" onClick={handleEndCall} title="Close">
                             ✕
                         </button>
                     </div>
@@ -481,51 +485,38 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                 <div className="video-modal-content">
                     <div className="video-main-area">
                         <div className="remote-video-container">
-                            {isVideoEnabled ? (
-                                <>
-                                    <video
-                                        ref={remoteVideoRef}
-                                        className="remote-video"
-                                        autoPlay
-                                        playsInline
-                                        poster="/api/placeholder/1280/720"
-                                    />
-                                    <div className="remote-video-overlay">
-                                        <div className="remote-video-placeholder">
-                                            {isImageProfilePic() ? (
-                                                <img 
-                                                    src={callerProfilePic} 
-                                                    alt={callerName}
-                                                    className="remote-avatar-image"
-                                                    onError={(e) => {
-                                                        e.target.style.display = 'none';
-                                                        e.target.parentElement.innerHTML = `<span class="remote-avatar">${getProfileDisplay()}</span>`;
-                                                    }}
-                                                />
-                                            ) : (
-                                                <span className="remote-avatar">{getProfileDisplay()}</span>
-                                            )}
-                                            <div className="remote-info">
-                                                <h2>{callerName}</h2>
-                                                {roomId && (
-                                                    <p className="room-id">Room: {roomId.substring(0, 8)}...</p>
-                                                )}
-                                                <p className="call-status">
-                                                    <span className={`status-${callStatus}`}>
-                                                        {callStatus === 'connected' && <span className="pulse-dot"></span>}
-                                                        {getCallStatusDisplay()}
-                                                    </span>
-                                                </p>
-                                            </div>
-                                        </div>
+                            <video
+                                ref={remoteVideoRef}
+                                className="remote-video"
+                                autoPlay
+                                playsInline
+                            />
+                            <div className="remote-video-overlay">
+                                <div className="remote-video-placeholder">
+                                    {isImageProfilePic() ? (
+                                        <img 
+                                            src={callerProfilePic} 
+                                            alt={callerName}
+                                            className="remote-avatar-image"
+                                            onError={(e) => {
+                                                e.target.style.display = 'none';
+                                                e.target.parentElement.innerHTML = `<span class="remote-avatar">${getProfileDisplay()}</span>`;
+                                            }}
+                                        />
+                                    ) : (
+                                        <span className="remote-avatar">{getProfileDisplay()}</span>
+                                    )}
+                                    <div className="remote-info">
+                                        <h2>{callerName}</h2>
+                                        <p className="call-status">
+                                            <span className={`status-${callStatus === 'connected' ? 'connected' : 'ended'}`}>
+                                                {callStatus === 'connected' && <span className="pulse-dot"></span>}
+                                                {getCallStatusDisplay()}
+                                            </span>
+                                        </p>
                                     </div>
-                                </>
-                            ) : (
-                                <div className="video-disabled">
-                                    <span className="video-off-icon">🚫📹</span>
-                                    <p>Camera is off</p>
                                 </div>
-                            )}
+                            </div>
 
                             {isCallActive && callStatus === 'connected' && (
                                 <div className="call-duration-badge">
@@ -537,26 +528,31 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                             {isRecording && (
                                 <div className="recording-indicator">
                                     <span className="recording-dot"></span>
-                                    <span className="recording-text">REC</span>
+                                    <span>REC</span>
                                 </div>
                             )}
 
                             {isScreenSharing && (
                                 <div className="screen-share-indicator">
-                                    <span className="share-icon">🖥️</span>
-                                    <span className="share-text">Sharing screen</span>
+                                    <span>🖥️</span>
+                                    <span>Sharing</span>
                                 </div>
                             )}
 
                             <div className="camera-indicator">
                                 <span className="camera-icon">📷</span>
-                                <span className="camera-text">
-                                    {isCameraSwitched ? 'Back Camera' : 'Front Camera'}
-                                </span>
+                                <span>{isCameraSwitched ? 'Back' : 'Front'}</span>
                             </div>
                         </div>
 
-                        <div className={`local-video-container ${!isVideoEnabled ? 'video-off' : ''}`}>
+                        {/* Draggable Local Video */}
+                        <div 
+                            ref={localContainerRef}
+                            className={`local-video-container ${!isVideoEnabled ? 'video-off' : ''} ${isDragging ? 'dragging' : ''}`}
+                            style={getLocalVideoStyle()}
+                            onMouseDown={handleDragStart}
+                            onTouchStart={handleDragStart}
+                        >
                             <video
                                 ref={localVideoRef}
                                 className="local-video"
@@ -574,76 +570,17 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                     <span>🔇</span>
                                 </div>
                             )}
-                            <div className="local-video-label">
-                                <span>You ({isCameraSwitched ? 'Back' : 'Front'})</span>
-                            </div>
+                            <div className="drag-handle"></div>
                         </div>
 
-                        {showSettings && (
-                            <div className="settings-panel">
-                                <h4>Call Settings</h4>
-                                <div className="setting-item">
-                                    <label>Volume</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        value={volumeLevel}
-                                        onChange={(e) => setVolumeLevel(e.target.value)}
-                                    />
-                                    <span>{volumeLevel}%</span>
-                                </div>
-                                {availableCameras.length > 0 && (
-                                    <>
-                                        <div className="setting-item">
-                                            <label>Select Camera</label>
-                                            <select 
-                                                value={currentCamera} 
-                                                onChange={(e) => selectCamera(e.target.value)}
-                                            >
-                                                {availableCameras.map(camera => (
-                                                    <option key={camera.deviceId} value={camera.deviceId}>
-                                                        {camera.label || 
-                                                         (camera.isFrontCamera ? 'Front Camera' : 
-                                                          camera.isBackCamera ? 'Back Camera' : 
-                                                          `Camera ${camera.deviceId.slice(0, 5)}...`)}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="setting-item">
-                                            <label>Current Camera</label>
-                                            <p className="current-camera-info">
-                                                {isCameraSwitched ? '📷 Back Camera' : '🤳 Front Camera'}
-                                            </p>
-                                        </div>
-                                    </>
-                                )}
-                                <div className="setting-item">
-                                    <label>Call Information</label>
-                                    <div className="caller-info-display">
-                                        <p><strong>Name:</strong> {callerName}</p>
-                                        {callerPhoneNumber && <p><strong>Phone:</strong> {callerPhoneNumber}</p>}
-                                        <p><strong>Call Type:</strong> Video Call</p>
-                                        <p><strong>Duration:</strong> {formatTime(callDuration)}</p>
-                                        {roomId && <p><strong>Room ID:</strong> {roomId.substring(0, 8)}...</p>}
-                                        {callId && <p><strong>Call ID:</strong> {callId.substring(0, 8)}...</p>}
-                                    </div>
-                                </div>
-                                <button className="close-settings" onClick={() => setShowSettings(false)}>
-                                    Close
-                                </button>
-                            </div>
-                        )}
-
-                        <div className="video-call-controls">
+                        {/* Controls - Auto hide */}
+                        <div className={`video-call-controls ${showControls ? 'visible' : 'hidden'}`}>
                             <button
                                 className={`control-btn ${isMuted ? 'active' : ''}`}
                                 onClick={() => setIsMuted(!isMuted)}
                                 title={isMuted ? 'Unmute' : 'Mute'}
                             >
-                                <span className="btn-icon">{isMuted ? '🔇' : '🎤'}</span>
-                                <span className="btn-label">{isMuted ? 'Unmute' : 'Mute'}</span>
+                                <span>{isMuted ? '🔇' : '🎤'}</span>
                             </button>
 
                             <button
@@ -651,8 +588,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 onClick={() => setIsVideoEnabled(!isVideoEnabled)}
                                 title={isVideoEnabled ? 'Turn off camera' : 'Turn on camera'}
                             >
-                                <span className="btn-icon">{isVideoEnabled ? '📹' : '🚫'}</span>
-                                <span className="btn-label">{isVideoEnabled ? 'Camera off' : 'Camera on'}</span>
+                                <span>{isVideoEnabled ? '📹' : '🚫📹'}</span>
                             </button>
 
                             <button
@@ -660,8 +596,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 onClick={() => setIsSpeakerOn(!isSpeakerOn)}
                                 title={isSpeakerOn ? 'Speaker off' : 'Speaker on'}
                             >
-                                <span className="btn-icon">{isSpeakerOn ? '🔊' : '🔈'}</span>
-                                <span className="btn-label">{isSpeakerOn ? 'Speaker off' : 'Speaker on'}</span>
+                                <span>{isSpeakerOn ? '🔊' : '🔈'}</span>
                             </button>
 
                             {availableCameras.length >= 1 && (
@@ -671,10 +606,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                     title={isCameraSwitched ? 'Switch to front camera' : 'Switch to back camera'}
                                     disabled={availableCameras.length < 2}
                                 >
-                                    <span className="btn-icon">🔄</span>
-                                    <span className="btn-label">
-                                        {isCameraSwitched ? 'Front' : 'Back'}
-                                    </span>
+                                    <span>🔄</span>
                                 </button>
                             )}
 
@@ -683,17 +615,15 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 onClick={toggleScreenShare}
                                 title={isScreenSharing ? 'Stop sharing' : 'Share screen'}
                             >
-                                <span className="btn-icon">{isScreenSharing ? '⏹️' : '🖥️'}</span>
-                                <span className="btn-label">{isScreenSharing ? 'Stop share' : 'Share'}</span>
+                                <span>{isScreenSharing ? '⏹️' : '🖥️'}</span>
                             </button>
 
                             <button
-                                className="control-btn"
-                                onClick={() => setShowSettings(!showSettings)}
-                                title="Settings"
+                                className={`control-btn ${isRecording ? 'active' : ''}`}
+                                onClick={() => setIsRecording(!isRecording)}
+                                title={isRecording ? 'Stop recording' : 'Start recording'}
                             >
-                                <span className="btn-icon">⚙️</span>
-                                <span className="btn-label">Settings</span>
+                                <span>⏺️</span>
                             </button>
 
                             <button
@@ -701,8 +631,7 @@ const VideoCallModal = ({ isOpen, onClose, callData }) => {
                                 onClick={handleEndCall}
                                 title="End call"
                             >
-                                <span className="btn-icon">📞</span>
-                                <span className="btn-label">End</span>
+                                <span>📞</span>
                             </button>
                         </div>
                     </div>

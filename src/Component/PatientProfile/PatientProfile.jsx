@@ -3,6 +3,8 @@ import axios from 'axios';
 import './PatientProfile.css';
 import { API_BASE_URL } from '../../axiosConfig';
 
+
+
 const PatientProfile = () => {
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -10,7 +12,6 @@ const PatientProfile = () => {
   const [profileImageFile, setProfileImageFile] = useState(null);
   const [showNotification, setShowNotification] = useState({ show: false, message: '', type: '' });
 
-  // Essential patient data with complete insurance fields
   const [patientData, setPatientData] = useState({
     personalInfo: {
       id: "",
@@ -55,80 +56,35 @@ const PatientProfile = () => {
     }
   });
 
-  // List of insurance providers for dropdown
   const insuranceProviders = [
-    "Star Health Insurance",
-    "ICICI Lombard",
-    "HDFC ERGO",
-    "Bajaj Allianz",
-    "New India Assurance",
-    "National Insurance",
-    "Oriental Insurance",
-    "United India Insurance",
-    "Max Bupa Health Insurance",
-    "Care Health Insurance"
+    "Star Health Insurance", "ICICI Lombard", "HDFC ERGO", "Bajaj Allianz",
+    "New India Assurance", "National Insurance", "Oriental Insurance",
+    "United India Insurance", "Max Bupa Health Insurance", "Care Health Insurance"
   ];
 
-  // List of insurance types for dropdown
   const insuranceTypes = [
-    "Individual",
-    "Family Floater",
-    "Senior Citizen",
-    "Critical Illness",
-    "Group Health Insurance",
-    "Maternity Insurance"
+    "Individual", "Family Floater", "Senior Citizen", "Critical Illness",
+    "Group Health Insurance", "Maternity Insurance"
   ];
 
-  // Edit form state
   const [editFormData, setEditFormData] = useState({
-    name: "",
-    age: "",
-    gender: "",
-    dateOfBirth: "",
-    bloodGroup: "",
-    email: "",
-    phone: "",
-    address: {
-      line1: "",
-      line2: "",
-      city: "",
-      state: "",
-      pincode: "",
-      country: ""
-    },
-    emergencyContact: {
-      name: "",
-      relation: "",
-      phone: ""
-    },
-    height: "",
-    weight: "",
-    allergies: "",
-    chronicConditions: "",
-    currentMedications: "",
-    insuranceProvider: "",
-    policyNumber: "",
-    groupNumber: "",
-    coverageAmount: "",
-    validityDate: "",
-    nominee: "",
-    relationship: "",
-    insuranceType: ""
+    name: "", age: "", gender: "", dateOfBirth: "", bloodGroup: "", email: "", phone: "",
+    address: { line1: "", line2: "", city: "", state: "", pincode: "", country: "India" },
+    emergencyContact: { name: "", relation: "", phone: "" },
+    height: "", weight: "", allergies: "", chronicConditions: "", currentMedications: "",
+    insuranceProvider: "", policyNumber: "", groupNumber: "", coverageAmount: "",
+    validityDate: "", nominee: "", relationship: "", insuranceType: ""
   });
 
-  // Fetch profile data on component mount
   useEffect(() => {
     fetchPatientProfile();
   }, []);
 
-  // Helper function to get profile photo URL
   const getProfilePhotoUrl = (userData) => {
     if (userData.profilePhoto) {
-      // Check if profilePhoto is an object with url property
       if (typeof userData.profilePhoto === 'object' && userData.profilePhoto.url) {
         return userData.profilePhoto.url;
       }
-      // If it's a string, return as is
       if (typeof userData.profilePhoto === 'string') {
         return userData.profilePhoto;
       }
@@ -136,11 +92,9 @@ const PatientProfile = () => {
     return '';
   };
 
-  // GET API - Fetch patient profile
   const fetchPatientProfile = async () => {
     try {
       setLoading(true);
-      
       const userId = localStorage.getItem("userId");
       const token = localStorage.getItem('token');
       
@@ -150,25 +104,14 @@ const PatientProfile = () => {
         return;
       }
       
-      console.log('Fetching profile for User ID:', userId);
-      
-      // GET request to fetch user data
       const response = await axios.get(`${API_BASE_URL}/api/auth/getUser/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
 
-      console.log('GET API Response:', response.data);
-
-      // Check if response is successful
       if (response.data.success && response.data.user) {
         const userData = response.data.user;
-        
-        // Get profile photo URL
         const profilePhotoUrl = getProfilePhotoUrl(userData);
         
-        // Transform API data to match component structure
         const formattedData = {
           personalInfo: {
             id: userData._id,
@@ -180,19 +123,8 @@ const PatientProfile = () => {
             email: userData.email || '',
             phone: userData.phoneNumber || '',
             profilePhoto: profilePhotoUrl,
-            address: userData.address || {
-              line1: '',
-              line2: '',
-              city: '',
-              state: '',
-              pincode: '',
-              country: ''
-            },
-            emergencyContact: userData.emergencyContact || {
-              name: '',
-              relation: '',
-              phone: ''
-            }
+            address: userData.address || { line1: '', line2: '', city: '', state: '', pincode: '', country: '' },
+            emergencyContact: userData.emergencyContact || { name: '', relation: '', phone: '' }
           },
           medicalInfo: {
             height: userData.medicalInfo?.height || '',
@@ -214,46 +146,29 @@ const PatientProfile = () => {
         };
         
         setPatientData(formattedData);
-        
-        // Initialize edit form data
         initializeEditForm(formattedData);
       } else {
         showNotificationMessage(response.data.message || 'Failed to load profile data', 'error');
       }
     } catch (err) {
       console.error('Error fetching profile:', err);
-      if (err.response) {
-        showNotificationMessage(err.response.data?.message || `Error: ${err.response.status} - ${err.response.statusText}`, 'error');
-      } else if (err.request) {
-        showNotificationMessage('Network error. Please check your connection.', 'error');
-      } else {
-        showNotificationMessage('Failed to load profile data. Please try again.', 'error');
-      }
+      showNotificationMessage('Failed to load profile data. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // PATCH API - Update patient profile
   const updatePatientProfile = async (formData) => {
-    try {
-      const userId = localStorage.getItem("userId");
-      const token = localStorage.getItem('token');
-      
-      const response = await axios.patch(`${API_BASE_URL}/api/auth/update/${userId}`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      
-      return response;
-    } catch (error) {
-      throw error;
-    }
+    const userId = localStorage.getItem("userId");
+    const token = localStorage.getItem('token');
+    return await axios.patch(`${API_BASE_URL}/api/auth/update/${userId}`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
+      }
+    });
   };
 
-  // Initialize edit form data
   const initializeEditForm = (data) => {
     setEditFormData({
       name: data.personalInfo.name || "",
@@ -292,16 +207,13 @@ const PatientProfile = () => {
     });
   };
 
-  // Open edit modal
-  const initializeEditFormModal = () => {
+  const openEditModal = () => {
     initializeEditForm(patientData);
-    // Reset profile image state when opening modal
     setProfileImage(null);
     setProfileImageFile(null);
     setIsEditing(true);
   };
 
-  // Notification function
   const showNotificationMessage = (message, type) => {
     setShowNotification({ show: true, message, type });
     setTimeout(() => {
@@ -309,7 +221,6 @@ const PatientProfile = () => {
     }, 3000);
   };
 
-  // Handle Profile Image Upload in Edit Modal
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -321,8 +232,6 @@ const PatientProfile = () => {
         showNotificationMessage('Please upload an image file', 'error');
         return;
       }
-      
-      // Store both the base64 preview and the actual file
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfileImage(reader.result);
@@ -332,22 +241,17 @@ const PatientProfile = () => {
     }
   };
 
-  // Handle Remove Profile Image
   const handleRemoveImage = () => {
     setProfileImage(null);
     setProfileImageFile(null);
     showNotificationMessage('Profile picture will be removed on save', 'success');
   };
 
-  // Handle Save Profile
   const handleSaveProfile = async () => {
     try {
       setLoading(true);
-      
-      // Prepare form data for API
       const formData = new FormData();
       
-      // Add basic fields
       formData.append('fullName', editFormData.name);
       formData.append('email', editFormData.email);
       formData.append('phoneNumber', editFormData.phone);
@@ -356,26 +260,10 @@ const PatientProfile = () => {
       formData.append('bloodGroup', editFormData.bloodGroup);
       formData.append('dateOfBirth', editFormData.dateOfBirth);
       
-      // Add address
-      const addressObj = {
-        line1: editFormData.address.line1,
-        line2: editFormData.address.line2,
-        city: editFormData.address.city,
-        state: editFormData.address.state,
-        pincode: editFormData.address.pincode,
-        country: editFormData.address.country || "India"
-      };
+      const addressObj = { ...editFormData.address, country: editFormData.address.country || "India" };
       formData.append('address', JSON.stringify(addressObj));
+      formData.append('emergencyContact', JSON.stringify(editFormData.emergencyContact));
       
-      // Add emergency contact
-      const emergencyObj = {
-        name: editFormData.emergencyContact.name,
-        relation: editFormData.emergencyContact.relation,
-        phone: editFormData.emergencyContact.phone
-      };
-      formData.append('emergencyContact', JSON.stringify(emergencyObj));
-      
-      // Add medical info
       const medicalObj = {
         height: editFormData.height,
         weight: editFormData.weight,
@@ -385,7 +273,6 @@ const PatientProfile = () => {
       };
       formData.append('medicalInfo', JSON.stringify(medicalObj));
       
-      // Add insurance info
       const insuranceObj = {
         provider: editFormData.insuranceProvider,
         policyNumber: editFormData.policyNumber,
@@ -398,24 +285,16 @@ const PatientProfile = () => {
       };
       formData.append('insuranceInfo', JSON.stringify(insuranceObj));
       
-      // Handle profile photo
       if (profileImageFile) {
-        // If a new file was selected, upload it
         formData.append('profilePhoto', profileImageFile);
       } else if (profileImage === null && patientData.personalInfo.profilePhoto) {
-        // If image was removed (no preview and no file, but had existing photo)
         formData.append('removeProfilePhoto', 'true');
       }
-      // If profileImage is null and no existing photo, do nothing
-      // If profileImage is the existing photo (no change), don't send anything
       
-      // Call the update API
       const response = await updatePatientProfile(formData);
       
       if (response.data.success) {
         showNotificationMessage('Profile updated successfully!', 'success');
-        
-        // Fetch fresh data to update the state
         await fetchPatientProfile();
         setIsEditing(false);
         setProfileImage(null);
@@ -425,8 +304,7 @@ const PatientProfile = () => {
       }
     } catch (err) {
       console.error('Error updating profile:', err);
-      console.error('Error details:', err.response?.data);
-      showNotificationMessage(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile', 'error');
+      showNotificationMessage(err.response?.data?.message || 'Failed to update profile', 'error');
     } finally {
       setLoading(false);
     }
@@ -441,48 +319,27 @@ const PatientProfile = () => {
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
-    
-    // Handle nested objects
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
       setEditFormData(prev => ({
         ...prev,
-        [parent]: {
-          ...prev[parent],
-          [child]: value
-        }
+        [parent]: { ...prev[parent], [child]: value }
       }));
     } else {
-      setEditFormData(prev => ({
-        ...prev,
-        [name]: value
-      }));
+      setEditFormData(prev => ({ ...prev, [name]: value }));
     }
   };
 
-  // Format date for display
   const formatDate = (dateString) => {
     if (!dateString) return 'Not specified';
     return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+      year: 'numeric', month: 'long', day: 'numeric'
     });
   };
 
-  // Notification Component
-  const Notification = () => (
-    showNotification.show && (
-      <div className={`notification ${showNotification.type}`}>
-        {showNotification.message}
-      </div>
-    )
-  );
-
-  // Loading Spinner
   if (loading && !patientData.personalInfo.id) {
     return (
-      <div className="patient-profile">
+      <div className="profile-container">
         <div className="loading-spinner">
           <div className="spinner"></div>
           <p>Loading profile...</p>
@@ -491,458 +348,20 @@ const PatientProfile = () => {
     );
   }
 
-  // Render Edit Modal
-  const renderEditModal = () => (
-    <div className="modal-overlay">
-      <div className="modal-content">
-        <div className="modal-header">
-          <h3>Edit Profile</h3>
-          <button className="close-btn" onClick={handleCancelEdit}>×</button>
-        </div>
-        
-        <form onSubmit={(e) => { e.preventDefault(); handleSaveProfile(); }}>
-          <div className="modal-body">
-            {/* Profile Picture Section */}
-            <div className="form-section">
-              <h4>Profile Picture</h4>
-              <div className="profile-picture-edit">
-                <div className="profile-avatar-edit">
-                  {(profileImage || patientData.personalInfo.profilePhoto) ? (
-                    <img 
-                      src={profileImage || patientData.personalInfo.profilePhoto} 
-                      alt="Profile" 
-                      className="avatar-image-edit"
-                    />
-                  ) : (
-                    <div className="avatar-placeholder-edit">
-                      {editFormData.name.split(' ').map(n => n[0]).join('')}
-                    </div>
-                  )}
-                </div>
-                <div className="profile-picture-actions">
-                  <label htmlFor="imageUploadEdit" className="upload-btn-edit">
-                    <span className="upload-icon">📷</span> Change Photo
-                  </label>
-                  <input
-                    type="file"
-                    id="imageUploadEdit"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    style={{ display: 'none' }}
-                  />
-                  {(profileImage || patientData.personalInfo.profilePhoto) && (
-                    <button 
-                      type="button" 
-                      className="remove-btn-edit"
-                      onClick={handleRemoveImage}
-                    >
-                      <span className="remove-icon">🗑️</span> Remove Photo
-                    </button>
-                  )}
-                </div>
-                <p className="image-hint">Supported formats: JPG, PNG, GIF. Max size: 5MB</p>
-              </div>
-            </div>
-
-            {/* Personal Information Section */}
-            <div className="form-section">
-              <h4>Personal Information</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Full Name *</label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={editFormData.name || ''}
-                    onChange={handleEditFormChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Patient ID</label>
-                  <input
-                    type="text"
-                    value={patientData.personalInfo.id}
-                    readOnly
-                    className="readonly-field"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Date of Birth *</label>
-                  <input
-                    type="date"
-                    name="dateOfBirth"
-                    value={editFormData.dateOfBirth || ''}
-                    onChange={handleEditFormChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Age</label>
-                  <input
-                    type="number"
-                    name="age"
-                    value={editFormData.age || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Gender *</label>
-                  <select
-                    name="gender"
-                    value={editFormData.gender || ''}
-                    onChange={handleEditFormChange}
-                    required
-                  >
-                    <option value="">Select Gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Blood Group</label>
-                  <select
-                    name="bloodGroup"
-                    value={editFormData.bloodGroup || ''}
-                    onChange={handleEditFormChange}
-                  >
-                    <option value="">Select</option>
-                    <option value="A+">A+</option>
-                    <option value="A-">A-</option>
-                    <option value="B+">B+</option>
-                    <option value="B-">B-</option>
-                    <option value="O+">O+</option>
-                    <option value="O-">O-</option>
-                    <option value="AB+">AB+</option>
-                    <option value="AB-">AB-</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Contact Information */}
-            <div className="form-section">
-              <h4>Contact Information</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Email *</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={editFormData.email || ''}
-                    onChange={handleEditFormChange}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Phone *</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={editFormData.phone || ''}
-                    onChange={handleEditFormChange}
-                    required
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Address */}
-            <div className="form-section">
-              <h4>Address</h4>
-              <div className="form-group">
-                <label>Address Line 1</label>
-                <input
-                  type="text"
-                  name="address.line1"
-                  value={editFormData.address?.line1 || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-group">
-                <label>Address Line 2</label>
-                <input
-                  type="text"
-                  name="address.line2"
-                  value={editFormData.address?.line2 || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>City</label>
-                  <input
-                    type="text"
-                    name="address.city"
-                    value={editFormData.address?.city || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>State</label>
-                  <input
-                    type="text"
-                    name="address.state"
-                    value={editFormData.address?.state || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Pincode</label>
-                  <input
-                    type="text"
-                    name="address.pincode"
-                    value={editFormData.address?.pincode || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Country</label>
-                  <input
-                    type="text"
-                    name="address.country"
-                    value={editFormData.address?.country || 'India'}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Emergency Contact */}
-            <div className="form-section">
-              <h4>Emergency Contact</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Name</label>
-                  <input
-                    type="text"
-                    name="emergencyContact.name"
-                    value={editFormData.emergencyContact?.name || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Relation</label>
-                  <input
-                    type="text"
-                    name="emergencyContact.relation"
-                    value={editFormData.emergencyContact?.relation || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-              <div className="form-group">
-                <label>Phone</label>
-                <input
-                  type="tel"
-                  name="emergencyContact.phone"
-                  value={editFormData.emergencyContact?.phone || ''}
-                  onChange={handleEditFormChange}
-                />
-              </div>
-            </div>
-
-            {/* Medical Information */}
-            <div className="form-section">
-              <h4>Medical Information</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Height (cm)</label>
-                  <input
-                    type="text"
-                    name="height"
-                    value={editFormData.height || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Weight (kg)</label>
-                  <input
-                    type="text"
-                    name="weight"
-                    value={editFormData.weight || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-
-              <div className="form-group">
-                <label>Allergies (comma separated)</label>
-                <input
-                  type="text"
-                  name="allergies"
-                  value={editFormData.allergies || ''}
-                  onChange={handleEditFormChange}
-                  placeholder="e.g., Penicillin, Dust, Pollen"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Chronic Conditions (comma separated)</label>
-                <input
-                  type="text"
-                  name="chronicConditions"
-                  value={editFormData.chronicConditions || ''}
-                  onChange={handleEditFormChange}
-                  placeholder="e.g., Hypertension, Diabetes"
-                />
-              </div>
-
-              <div className="form-group">
-                <label>Current Medications (comma separated)</label>
-                <input
-                  type="text"
-                  name="currentMedications"
-                  value={editFormData.currentMedications || ''}
-                  onChange={handleEditFormChange}
-                  placeholder="e.g., Metformin 500mg, Lisinopril 10mg"
-                />
-              </div>
-            </div>
-
-            {/* Insurance Information */}
-            <div className="form-section">
-              <h4>Insurance Information</h4>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Insurance Provider</label>
-                  <select
-                    name="insuranceProvider"
-                    value={editFormData.insuranceProvider || ''}
-                    onChange={handleEditFormChange}
-                  >
-                    <option value="">Select Insurance Provider</option>
-                    {insuranceProviders.map(provider => (
-                      <option key={provider} value={provider}>{provider}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Insurance Type</label>
-                  <select
-                    name="insuranceType"
-                    value={editFormData.insuranceType || ''}
-                    onChange={handleEditFormChange}
-                  >
-                    <option value="">Select Insurance Type</option>
-                    {insuranceTypes.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Policy Number</label>
-                  <input
-                    type="text"
-                    name="policyNumber"
-                    value={editFormData.policyNumber || ''}
-                    onChange={handleEditFormChange}
-                    placeholder="e.g., SHI-12345-6789"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Group Number</label>
-                  <input
-                    type="text"
-                    name="groupNumber"
-                    value={editFormData.groupNumber || ''}
-                    onChange={handleEditFormChange}
-                    placeholder="e.g., GRP-2024-001"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Coverage Amount</label>
-                  <input
-                    type="text"
-                    name="coverageAmount"
-                    value={editFormData.coverageAmount || ''}
-                    onChange={handleEditFormChange}
-                    placeholder="e.g., ₹5,00,000"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Validity Date</label>
-                  <input
-                    type="date"
-                    name="validityDate"
-                    value={editFormData.validityDate || ''}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Nominee Name</label>
-                  <input
-                    type="text"
-                    name="nominee"
-                    value={editFormData.nominee || ''}
-                    onChange={handleEditFormChange}
-                    placeholder="e.g., Priya Sharma"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Relationship with Nominee</label>
-                  <input
-                    type="text"
-                    name="relationship"
-                    value={editFormData.relationship || ''}
-                    onChange={handleEditFormChange}
-                    placeholder="e.g., Spouse"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="modal-actions">
-            <button type="submit" className="btn-primary" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Changes'}
-            </button>
-            <button type="button" className="btn-secondary" onClick={handleCancelEdit} disabled={loading}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-
   return (
-    <div className="patient-profile">
-      <Notification />
-      
+    <div className="profile-container">
+      {showNotification.show && (
+        <div className={`notification ${showNotification.type}`}>
+          {showNotification.message}
+        </div>
+      )}
+
       {/* Header Section */}
       <div className="profile-header">
-        <div className="profile-avatar-section">
+        <div className="profile-avatar-wrapper">
           <div className="profile-avatar">
             {patientData.personalInfo.profilePhoto ? (
-              <img 
-                src={patientData.personalInfo.profilePhoto} 
-                alt={patientData.personalInfo.name} 
-                className="avatar-image"
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.style.display = 'none';
-                  e.target.parentElement.innerHTML = `<div class="avatar-placeholder">${patientData.personalInfo.name.split(' ').map(n => n[0]).join('')}</div>`;
-                }}
-              />
+              <img src={patientData.personalInfo.profilePhoto} alt={patientData.personalInfo.name} />
             ) : (
               <div className="avatar-placeholder">
                 {patientData.personalInfo.name.split(' ').map(n => n[0]).join('')}
@@ -951,182 +370,94 @@ const PatientProfile = () => {
           </div>
         </div>
         
-        <div className="profile-title">
+        <div className="profile-info">
           <h1>{patientData.personalInfo.name}</h1>
           <p className="patient-id">Patient ID: {patientData.personalInfo.id}</p>
-          <div className="patient-badges">
-            <span className="badge">{patientData.personalInfo.bloodGroup}</span>
-            <span className="badge">{patientData.personalInfo.age} years</span>
-            <span className="badge">{patientData.personalInfo.gender}</span>
+          <div className="badge-group">
+            <span className="badge">{patientData.personalInfo.bloodGroup || 'Blood Group'}</span>
+            <span className="badge">{patientData.personalInfo.age || '--'} years</span>
+            <span className="badge">{patientData.personalInfo.gender || 'Gender'}</span>
           </div>
         </div>
         
         <div className="header-actions">
-          <button className="btn-primary" onClick={initializeEditFormModal} disabled={loading}>
-            <span className="btn-icon">✏️</span> Edit Profile
+          <button className="btn-primary" onClick={openEditModal} disabled={loading}>
+            ✏️ Edit Profile
           </button>
         </div>
       </div>
 
-      {/* Main Content - Essential Information Display */}
+      {/* Main Content */}
       <div className="profile-content">
-        {/* Personal Information Section */}
-        <div className="info-section">
-          <div className="section-header">
+        {/* Personal Information */}
+        <div className="info-card-modern">
+          <div className="card-header">
             <h2>Personal Information</h2>
           </div>
-          
           <div className="info-grid">
-            <div className="info-card">
-              <div className="info-icon">👤</div>
-              <div className="info-content">
-                <label>Full Name</label>
-                <span>{patientData.personalInfo.name}</span>
-              </div>
-            </div>
-
-            <div className="info-card">
-              <div className="info-icon">📅</div>
-              <div className="info-content">
-                <label>Date of Birth</label>
-                <span>{formatDate(patientData.personalInfo.dateOfBirth)}</span>
-              </div>
-            </div>
-
-            <div className="info-card">
-              <div className="info-icon">⚥</div>
-              <div className="info-content">
-                <label>Gender</label>
-                <span>{patientData.personalInfo.gender ? patientData.personalInfo.gender.charAt(0).toUpperCase() + patientData.personalInfo.gender.slice(1) : 'Not specified'}</span>
-              </div>
-            </div>
-
-            <div className="info-card">
-              <div className="info-icon">💉</div>
-              <div className="info-content">
-                <label>Blood Group</label>
-                <span>{patientData.personalInfo.bloodGroup || 'Not specified'}</span>
-              </div>
-            </div>
-
-            <div className="info-card">
-              <div className="info-icon">📧</div>
-              <div className="info-content">
-                <label>Email</label>
-                <span>{patientData.personalInfo.email}</span>
-              </div>
-            </div>
-
-            <div className="info-card">
-              <div className="info-icon">📱</div>
-              <div className="info-content">
-                <label>Phone</label>
-                <span>{patientData.personalInfo.phone}</span>
-              </div>
-            </div>
+            <div className="info-item"><label>Full Name</label><span>{patientData.personalInfo.name}</span></div>
+            <div className="info-item"><label>Date of Birth</label><span>{formatDate(patientData.personalInfo.dateOfBirth)}</span></div>
+            <div className="info-item"><label>Gender</label><span>{patientData.personalInfo.gender || 'Not specified'}</span></div>
+            <div className="info-item"><label>Blood Group</label><span>{patientData.personalInfo.bloodGroup || 'Not specified'}</span></div>
+            <div className="info-item"><label>Email</label><span>{patientData.personalInfo.email}</span></div>
+            <div className="info-item"><label>Phone</label><span>{patientData.personalInfo.phone}</span></div>
           </div>
         </div>
 
-        {/* Address Section */}
-        <div className="info-section">
-          <div className="section-header">
+        {/* Address */}
+        <div className="info-card-modern">
+          <div className="card-header">
             <h2>Address</h2>
           </div>
-          
-          <div className="address-card">
-            <div className="address-icon">📍</div>
-            <div className="address-details">
-              {patientData.personalInfo.address?.line1 && <p>{patientData.personalInfo.address.line1}</p>}
-              {patientData.personalInfo.address?.line2 && <p>{patientData.personalInfo.address.line2}</p>}
-              <p>
-                {patientData.personalInfo.address?.city && `${patientData.personalInfo.address.city}, `}
-                {patientData.personalInfo.address?.state && `${patientData.personalInfo.address.state} `}
-                {patientData.personalInfo.address?.pincode && `- ${patientData.personalInfo.address.pincode}`}
-              </p>
-              {patientData.personalInfo.address?.country && <p>{patientData.personalInfo.address.country}</p>}
-              {!patientData.personalInfo.address?.line1 && !patientData.personalInfo.address?.city && (
-                <p>No address provided</p>
-              )}
-            </div>
+          <div className="address-display">
+            <p>{patientData.personalInfo.address?.line1 || 'No address provided'}</p>
+            {patientData.personalInfo.address?.line2 && <p>{patientData.personalInfo.address.line2}</p>}
+            <p>
+              {patientData.personalInfo.address?.city && `${patientData.personalInfo.address.city}, `}
+              {patientData.personalInfo.address?.state && `${patientData.personalInfo.address.state} `}
+              {patientData.personalInfo.address?.pincode && `- ${patientData.personalInfo.address.pincode}`}
+            </p>
+            {patientData.personalInfo.address?.country && <p>{patientData.personalInfo.address.country}</p>}
           </div>
         </div>
 
         {/* Emergency Contact */}
-        <div className="info-section">
-          <div className="section-header">
+        <div className="info-card-modern">
+          <div className="card-header">
             <h2>Emergency Contact</h2>
           </div>
-          
-          <div className="emergency-card">
+          <div className="emergency-display">
             <div className="emergency-icon">🆘</div>
             <div className="emergency-details">
               <h3>{patientData.personalInfo.emergencyContact?.name || 'Not specified'}</h3>
-              <p className="relation">{patientData.personalInfo.emergencyContact?.relation}</p>
+              <p>{patientData.personalInfo.emergencyContact?.relation}</p>
               <p className="phone">{patientData.personalInfo.emergencyContact?.phone}</p>
             </div>
           </div>
         </div>
 
         {/* Medical Information */}
-        <div className="info-section">
-          <div className="section-header">
+        <div className="info-card-modern">
+          <div className="card-header">
             <h2>Medical Information</h2>
           </div>
-          
           <div className="medical-grid">
-            <div className="vital-signs">
+            <div className="vital-stats">
               <h3>Vital Stats</h3>
-              <div className="vital-item">
-                <span className="vital-label">Height:</span>
-                <span className="vital-value">{patientData.medicalInfo?.height || 'Not specified'}</span>
-              </div>
-              <div className="vital-item">
-                <span className="vital-label">Weight:</span>
-                <span className="vital-value">{patientData.medicalInfo?.weight || 'Not specified'}</span>
-              </div>
-              <div className="vital-item">
-                <span className="vital-label">Blood Group:</span>
-                <span className="vital-value">{patientData.personalInfo.bloodGroup || 'Not specified'}</span>
-              </div>
+              <div className="vital-row"><span>Height:</span><strong>{patientData.medicalInfo?.height || '--'} cm</strong></div>
+              <div className="vital-row"><span>Weight:</span><strong>{patientData.medicalInfo?.weight || '--'} kg</strong></div>
             </div>
-
-            <div className="medical-details">
+            <div className="conditions-list">
               {patientData.medicalInfo?.allergies?.length > 0 && (
-                <div className="detail-item">
-                  <h4>Allergies</h4>
-                  <ul>
-                    {patientData.medicalInfo.allergies.map((allergy, index) => (
-                      <li key={index}>{allergy}</li>
-                    ))}
-                  </ul>
-                </div>
+                <div><h4>Allergies</h4><div className="tags">{patientData.medicalInfo.allergies.map((a, i) => <span key={i} className="tag">{a}</span>)}</div></div>
               )}
-
               {patientData.medicalInfo?.chronicConditions?.length > 0 && (
-                <div className="detail-item">
-                  <h4>Chronic Conditions</h4>
-                  <ul>
-                    {patientData.medicalInfo.chronicConditions.map((condition, index) => (
-                      <li key={index}>{condition}</li>
-                    ))}
-                  </ul>
-                </div>
+                <div><h4>Chronic Conditions</h4><div className="tags">{patientData.medicalInfo.chronicConditions.map((c, i) => <span key={i} className="tag">{c}</span>)}</div></div>
               )}
-
               {patientData.medicalInfo?.currentMedications?.length > 0 && (
-                <div className="detail-item">
-                  <h4>Current Medications</h4>
-                  <ul>
-                    {patientData.medicalInfo.currentMedications.map((med, index) => (
-                      <li key={index}>{med}</li>
-                    ))}
-                  </ul>
-                </div>
+                <div><h4>Current Medications</h4><div className="tags">{patientData.medicalInfo.currentMedications.map((m, i) => <span key={i} className="tag">{m}</span>)}</div></div>
               )}
-
-              {(!patientData.medicalInfo?.allergies?.length && 
-                !patientData.medicalInfo?.chronicConditions?.length && 
-                !patientData.medicalInfo?.currentMedications?.length) && (
+              {(!patientData.medicalInfo?.allergies?.length && !patientData.medicalInfo?.chronicConditions?.length && !patientData.medicalInfo?.currentMedications?.length) && (
                 <p className="no-data">No medical information provided</p>
               )}
             </div>
@@ -1134,50 +465,149 @@ const PatientProfile = () => {
         </div>
 
         {/* Insurance Information */}
-        <div className="info-section">
-          <div className="section-header">
+        <div className="info-card-modern">
+          <div className="card-header">
             <h2>Insurance Information</h2>
           </div>
-          
           {patientData.insuranceInfo?.provider ? (
-            <div className="insurance-card">
+            <div className="insurance-display">
               <div className="insurance-header">
                 <h3>{patientData.insuranceInfo.provider}</h3>
-                <span className="insurance-type">{patientData.insuranceInfo.insuranceType}</span>
+                <span className="insurance-badge">{patientData.insuranceInfo.insuranceType}</span>
               </div>
               <div className="insurance-details">
-                <div className="detail-row">
-                  <span className="label">Policy Number:</span>
-                  <span className="value">{patientData.insuranceInfo.policyNumber}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="label">Group Number:</span>
-                  <span className="value">{patientData.insuranceInfo.groupNumber}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="label">Coverage Amount:</span>
-                  <span className="value">{patientData.insuranceInfo.coverageAmount}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="label">Validity:</span>
-                  <span className="value">{formatDate(patientData.insuranceInfo.validityDate)}</span>
-                </div>
-                <div className="detail-row">
-                  <span className="label">Nominee:</span>
-                  <span className="value">{patientData.insuranceInfo.nominee} ({patientData.insuranceInfo.relationship})</span>
-                </div>
+                <div><span>Policy Number:</span> <strong>{patientData.insuranceInfo.policyNumber}</strong></div>
+                <div><span>Group Number:</span> <strong>{patientData.insuranceInfo.groupNumber}</strong></div>
+                <div><span>Coverage Amount:</span> <strong>{patientData.insuranceInfo.coverageAmount}</strong></div>
+                <div><span>Validity:</span> <strong>{formatDate(patientData.insuranceInfo.validityDate)}</strong></div>
+                <div><span>Nominee:</span> <strong>{patientData.insuranceInfo.nominee} ({patientData.insuranceInfo.relationship})</strong></div>
               </div>
             </div>
           ) : (
-            <div className="no-insurance">
-              <p>No insurance information added yet.</p>
-            </div>
+            <p className="no-data">No insurance information added yet.</p>
           )}
         </div>
       </div>
 
       {/* Edit Modal */}
-      {isEditing && renderEditModal()}
+      {isEditing && (
+        <div className="modal-overlay" onClick={handleCancelEdit}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Edit Profile</h3>
+              <button className="close-modal" onClick={handleCancelEdit}>×</button>
+            </div>
+            <div className="modal-body">
+              {/* Profile Picture */}
+              <div className="form-section">
+                <h4>Profile Picture</h4>
+                <div className="profile-picture-edit">
+                  <div className="avatar-preview">
+                    {(profileImage || patientData.personalInfo.profilePhoto) ? (
+                      <img src={profileImage || patientData.personalInfo.profilePhoto} alt="Profile" />
+                    ) : (
+                      <div className="avatar-placeholder-md">{editFormData.name.split(' ').map(n => n[0]).join('')}</div>
+                    )}
+                  </div>
+                  <div className="upload-actions">
+                    <label className="upload-btn">
+                      📷 Change Photo
+                      <input type="file" accept="image/*" onChange={handleImageUpload} hidden />
+                    </label>
+                    {(profileImage || patientData.personalInfo.profilePhoto) && (
+                      <button type="button" className="remove-btn" onClick={handleRemoveImage}>🗑️ Remove</button>
+                    )}
+                  </div>
+                  <small>JPG, PNG, GIF (max 5MB)</small>
+                </div>
+              </div>
+
+              {/* Personal Info */}
+              <div className="form-section">
+                <h4>Personal Information</h4>
+                <div className="form-row">
+                  <div className="form-group"><label>Full Name *</label><input type="text" name="name" value={editFormData.name} onChange={handleEditFormChange} required /></div>
+                  <div className="form-group"><label>Patient ID</label><input type="text" value={patientData.personalInfo.id} readOnly className="readonly" /></div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group"><label>Date of Birth *</label><input type="date" name="dateOfBirth" value={editFormData.dateOfBirth} onChange={handleEditFormChange} required /></div>
+                  <div className="form-group"><label>Age</label><input type="number" name="age" value={editFormData.age} onChange={handleEditFormChange} /></div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group"><label>Gender *</label><select name="gender" value={editFormData.gender} onChange={handleEditFormChange} required><option value="">Select</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
+                  <div className="form-group"><label>Blood Group</label><select name="bloodGroup" value={editFormData.bloodGroup} onChange={handleEditFormChange}><option value="">Select</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>O+</option><option>O-</option><option>AB+</option><option>AB-</option></select></div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group"><label>Email *</label><input type="email" name="email" value={editFormData.email} onChange={handleEditFormChange} required /></div>
+                  <div className="form-group"><label>Phone *</label><input type="tel" name="phone" value={editFormData.phone} onChange={handleEditFormChange} required /></div>
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="form-section">
+                <h4>Address</h4>
+                <div className="form-group"><label>Line 1</label><input type="text" name="address.line1" value={editFormData.address.line1} onChange={handleEditFormChange} /></div>
+                <div className="form-group"><label>Line 2</label><input type="text" name="address.line2" value={editFormData.address.line2} onChange={handleEditFormChange} /></div>
+                <div className="form-row">
+                  <div className="form-group"><label>City</label><input type="text" name="address.city" value={editFormData.address.city} onChange={handleEditFormChange} /></div>
+                  <div className="form-group"><label>State</label><input type="text" name="address.state" value={editFormData.address.state} onChange={handleEditFormChange} /></div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group"><label>Pincode</label><input type="text" name="address.pincode" value={editFormData.address.pincode} onChange={handleEditFormChange} /></div>
+                  <div className="form-group"><label>Country</label><input type="text" name="address.country" value={editFormData.address.country} onChange={handleEditFormChange} /></div>
+                </div>
+              </div>
+
+              {/* Emergency Contact */}
+              <div className="form-section">
+                <h4>Emergency Contact</h4>
+                <div className="form-row">
+                  <div className="form-group"><label>Name</label><input type="text" name="emergencyContact.name" value={editFormData.emergencyContact.name} onChange={handleEditFormChange} /></div>
+                  <div className="form-group"><label>Relation</label><input type="text" name="emergencyContact.relation" value={editFormData.emergencyContact.relation} onChange={handleEditFormChange} /></div>
+                </div>
+                <div className="form-group"><label>Phone</label><input type="tel" name="emergencyContact.phone" value={editFormData.emergencyContact.phone} onChange={handleEditFormChange} /></div>
+              </div>
+
+              {/* Medical */}
+              <div className="form-section">
+                <h4>Medical Information</h4>
+                <div className="form-row">
+                  <div className="form-group"><label>Height (cm)</label><input type="text" name="height" value={editFormData.height} onChange={handleEditFormChange} /></div>
+                  <div className="form-group"><label>Weight (kg)</label><input type="text" name="weight" value={editFormData.weight} onChange={handleEditFormChange} /></div>
+                </div>
+                <div className="form-group"><label>Allergies (comma separated)</label><input type="text" name="allergies" value={editFormData.allergies} onChange={handleEditFormChange} placeholder="e.g., Penicillin, Dust" /></div>
+                <div className="form-group"><label>Chronic Conditions</label><input type="text" name="chronicConditions" value={editFormData.chronicConditions} onChange={handleEditFormChange} placeholder="e.g., Diabetes, Hypertension" /></div>
+                <div className="form-group"><label>Current Medications</label><input type="text" name="currentMedications" value={editFormData.currentMedications} onChange={handleEditFormChange} placeholder="e.g., Metformin 500mg" /></div>
+              </div>
+
+              {/* Insurance */}
+              <div className="form-section">
+                <h4>Insurance Information</h4>
+                <div className="form-row">
+                  <div className="form-group"><label>Provider</label><select name="insuranceProvider" value={editFormData.insuranceProvider} onChange={handleEditFormChange}><option value="">Select</option>{insuranceProviders.map(p => <option key={p}>{p}</option>)}</select></div>
+                  <div className="form-group"><label>Insurance Type</label><select name="insuranceType" value={editFormData.insuranceType} onChange={handleEditFormChange}><option value="">Select</option>{insuranceTypes.map(t => <option key={t}>{t}</option>)}</select></div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group"><label>Policy Number</label><input type="text" name="policyNumber" value={editFormData.policyNumber} onChange={handleEditFormChange} /></div>
+                  <div className="form-group"><label>Group Number</label><input type="text" name="groupNumber" value={editFormData.groupNumber} onChange={handleEditFormChange} /></div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group"><label>Coverage Amount</label><input type="text" name="coverageAmount" value={editFormData.coverageAmount} onChange={handleEditFormChange} placeholder="₹5,00,000" /></div>
+                  <div className="form-group"><label>Validity Date</label><input type="date" name="validityDate" value={editFormData.validityDate} onChange={handleEditFormChange} /></div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group"><label>Nominee</label><input type="text" name="nominee" value={editFormData.nominee} onChange={handleEditFormChange} /></div>
+                  <div className="form-group"><label>Relationship</label><input type="text" name="relationship" value={editFormData.relationship} onChange={handleEditFormChange} /></div>
+                </div>
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-secondary" onClick={handleCancelEdit} disabled={loading}>Cancel</button>
+              <button className="btn-primary" onClick={handleSaveProfile} disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
