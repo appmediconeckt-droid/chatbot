@@ -399,7 +399,7 @@ const CounselorSignup = () => {
         {
           email: formData.email,
           password: formData.password,
-          role: "counselor",
+          role: "counsellor",
           forceLogin,
         },
         { withCredentials: true },
