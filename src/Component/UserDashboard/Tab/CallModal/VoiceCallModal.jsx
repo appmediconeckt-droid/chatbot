@@ -753,12 +753,6 @@ const VoiceCallModal = ({
         offer,
         to: remoteUserIdRef.current,
       });
-
-      socket.emit("offer", {
-        callId,
-        offer,
-        userId: localUserIdRef.current,
-      });
     };
 
     peer.onicecandidate = (event) => {
@@ -875,12 +869,6 @@ const VoiceCallModal = ({
           callId,
           answer,
           to: remoteUserIdRef.current,
-        });
-
-        socket.emit("answer", {
-          callId,
-          answer,
-          userId: localUserIdRef.current,
         });
       } catch (error) {
         console.error("Failed to handle offer:", error);
