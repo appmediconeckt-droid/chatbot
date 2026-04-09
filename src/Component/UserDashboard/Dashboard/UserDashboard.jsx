@@ -42,6 +42,8 @@ import BookAppointment from "../Tab/Appointment/BookAppointment";
 import LiveChatSupport from "../Tab/Appointment/BookAppointment";
 import axios from "axios";
 import CounselorTable from "../Tab/Counselor/CounselorDirectory";
+import VideoCallModal from "../Tab/CallModal/VideoCallModal";
+import VoiceCallModal from "../Tab/CallModal/VoiceCallModal";
 
 // Voice/Video Call Modal Component
 const CallModal = ({
@@ -306,6 +308,7 @@ export default function UserDashboard() {
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const [incomingCallData, setIncomingCallData] = useState(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
 
   const userId = localStorage.getItem("userId");
@@ -543,7 +546,7 @@ export default function UserDashboard() {
   };
 
   useEffect(() => {
-    if (isPolling && !showCallModal) {
+    if (isPolling && !showCallModal && !isVideoModalOpen && !isVoiceModalOpen) {
       fetchWaitingCalls();
 
       const interval = setInterval(() => {
@@ -561,10 +564,10 @@ export default function UserDashboard() {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-  }, [isPolling, showCallModal]);
+  }, [isPolling, showCallModal, isVideoModalOpen, isVoiceModalOpen]);
 
   useEffect(() => {
-    if (showCallModal) {
+    if (showCallModal || isVideoModalOpen || isVoiceModalOpen) {
       setIsPolling(false);
       if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -573,7 +576,7 @@ export default function UserDashboard() {
     } else {
       setIsPolling(true);
     }
-  }, [showCallModal]);
+  }, [showCallModal, isVideoModalOpen, isVoiceModalOpen]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -708,6 +711,17 @@ export default function UserDashboard() {
       const result = await acceptCall(callId);
       if (result) {
         console.log("Call accepted successfully", result);
+        console.log("callType:", callType);
+        setSelectedCall({
+          ...callerInfo,
+          ...result,
+          status: 'connected'
+        });
+        if (callType !== 'video') {
+          setIsVoiceModalOpen(true);
+        } else {
+          setIsVideoModalOpen(true);
+        }
         return result;
       }
       return null;
@@ -836,6 +850,21 @@ export default function UserDashboard() {
         onEnd={handleEndCall}
         onAcceptCall={handleAcceptCall}
         onRejectCall={handleRejectCall}
+      />
+
+      <VideoCallModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        callData={selectedCall}
+        
+      />
+
+      <VoiceCallModal
+        isOpen={isVoiceModalOpen}
+        onClose={() => setIsVoiceModalOpen(false)}
+        callData={selectedCall}
+        currentUser={{ id: userId }}
+        onEndCall={handleEndCall}
       />
 
       {isMobile && (

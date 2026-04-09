@@ -97,6 +97,7 @@ const VoiceCallModal = ({
   const localUserIdRef = useRef("");
   const remoteUserIdRef = useRef("");
   const hasStartedConnectionRef = useRef(false);
+  const pendingIceCandidatesRef = useRef([]);
 
   const stopVisualizer = useCallback(() => {
     if (animationFrameRef.current) {
@@ -147,9 +148,12 @@ const VoiceCallModal = ({
       socketRef.current.off("connect");
       socketRef.current.off("offer");
       socketRef.current.off("answer");
+      socketRef.current.off("call-offer");
+      socketRef.current.off("call-answer");
       socketRef.current.off("ice-candidate");
       socketRef.current.off("user-joined");
       socketRef.current.off("user-left");
+      socketRef.current.off("user-left-call");
       socketRef.current.off("connect_error");
       socketRef.current.disconnect();
       socketRef.current = null;
@@ -165,6 +169,7 @@ const VoiceCallModal = ({
     }
 
     setIsRemoteAudioReady(false);
+    pendingIceCandidatesRef.current = [];
     hasStartedConnectionRef.current = false;
   }, [callMetadata.callId]);
 
@@ -523,6 +528,28 @@ const VoiceCallModal = ({
     const peer = new RTCPeerConnection(RTC_CONFIGURATION);
     peerConnectionRef.current = peer;
 
+    const flushPendingIceCandidates = async () => {
+      if (
+        !peerConnectionRef.current ||
+        !peerConnectionRef.current.remoteDescription
+      ) {
+        return;
+      }
+
+      const queuedCandidates = [...pendingIceCandidatesRef.current];
+      pendingIceCandidatesRef.current = [];
+
+      for (const candidate of queuedCandidates) {
+        try {
+          await peerConnectionRef.current.addIceCandidate(
+            new RTCIceCandidate(candidate),
+          );
+        } catch (error) {
+          console.warn("Failed to flush ICE candidate:", error);
+        }
+      }
+    };
+
     localStream.getTracks().forEach((track) => {
       peer.addTrack(track, localStream);
     });
@@ -567,13 +594,22 @@ const VoiceCallModal = ({
     };
 
     peer.ontrack = (event) => {
-      if (!remoteStreamRef.current) {
-        remoteStreamRef.current = new MediaStream();
-      }
+      const [incomingStream] = event.streams;
+      if (incomingStream) {
+        remoteStreamRef.current = incomingStream;
+      } else {
+        if (!remoteStreamRef.current) {
+          remoteStreamRef.current = new MediaStream();
+        }
 
-      event.streams[0].getTracks().forEach((track) => {
-        remoteStreamRef.current.addTrack(track);
-      });
+        const existingTrackIds = new Set(
+          remoteStreamRef.current.getTracks().map((track) => track.id),
+        );
+
+        if (!existingTrackIds.has(event.track.id)) {
+          remoteStreamRef.current.addTrack(event.track);
+        }
+      }
 
       if (remoteAudioRef.current) {
         remoteAudioRef.current.srcObject = remoteStreamRef.current;
@@ -648,6 +684,7 @@ const VoiceCallModal = ({
         await peerConnectionRef.current.setRemoteDescription(
           new RTCSessionDescription(offer),
         );
+        await flushPendingIceCandidates();
 
         const answer = await peerConnectionRef.current.createAnswer();
         await peerConnectionRef.current.setLocalDescription(answer);
@@ -679,6 +716,7 @@ const VoiceCallModal = ({
           await peerConnectionRef.current.setRemoteDescription(
             new RTCSessionDescription(answer),
           );
+          await flushPendingIceCandidates();
         }
       } catch (error) {
         console.error("Failed to handle answer:", error);
@@ -697,11 +735,17 @@ const VoiceCallModal = ({
       if (!peerConnectionRef.current) return;
 
       try {
+        if (!peerConnectionRef.current.remoteDescription) {
+          pendingIceCandidatesRef.current.push(candidate);
+          return;
+        }
+
         await peerConnectionRef.current.addIceCandidate(
           new RTCIceCandidate(candidate),
         );
       } catch (error) {
-        console.warn("Failed to add ICE candidate:", error);
+        pendingIceCandidatesRef.current.push(candidate);
+        console.warn("Failed to add ICE candidate immediately:", error);
       }
     });
 
