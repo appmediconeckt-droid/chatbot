@@ -7,6 +7,7 @@ import "./VoiceCallModal.css";
 const ACTIVE_STATUSES = new Set(["active", "connected"]);
 const TERMINAL_STATUSES = new Set([
   "ended",
+  "completed",
   "rejected",
   "cancelled",
   "missed",
@@ -54,7 +55,9 @@ const normalizeUserType = (userType) => {
 const normalizeCallStatus = (status) => {
   if (!status) return "pending";
   const normalized = String(status).toLowerCase();
-  return normalized === "accepted" ? "active" : normalized;
+  if (normalized === "accepted") return "active";
+  if (normalized === "completed") return "ended";
+  return normalized;
 };
 
 const isConnectedStatus = (status) =>
@@ -255,6 +258,9 @@ const VoiceCallModal = ({
         socketRef.current.off("user-joined");
         socketRef.current.off("user-left");
         socketRef.current.off("user-left-call");
+        socketRef.current.off("call_ended");
+        socketRef.current.off("call-ended");
+        socketRef.current.off("call-status-update");
         socketRef.current.off("connect_error");
         socketRef.current.off("disconnect");
         socketRef.current.disconnect();
@@ -894,10 +900,46 @@ const VoiceCallModal = ({
       }
     };
 
+    const handleRemoteCallEnded = ({ callId: endedCallId, endedBy } = {}) => {
+      if (endedCallId && String(endedCallId) !== String(callId)) return;
+
+      isManualCloseRef.current = true;
+      resetReconnectState();
+      hasEverConnectedRef.current = false;
+      setIsCallActive(false);
+      setIsConnecting(false);
+      setIsReconnecting(false);
+      setCallMetadata((prev) => ({ ...prev, status: "ended" }));
+      setIsRemoteAudioReady(false);
+      setWebrtcError(
+        endedBy
+          ? `Call ended by ${endedBy}.`
+          : "Call ended by other participant.",
+      );
+
+      cleanupRealtimeConnection();
+
+      if (mediaStreamRef.current) {
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
+        mediaStreamRef.current = null;
+      }
+
+      stopVisualizer();
+      setTimeout(() => onClose(), 500);
+    };
+
     socket.on("call-offer", onIncomingOffer);
     socket.on("offer", onIncomingOffer);
     socket.on("call-answer", onIncomingAnswer);
     socket.on("answer", onIncomingAnswer);
+    socket.on("call_ended", handleRemoteCallEnded);
+    socket.on("call-ended", handleRemoteCallEnded);
+    socket.on("call-status-update", ({ callId: updatedCallId, status }) => {
+      if (String(updatedCallId) !== String(callId)) return;
+      if (normalizeCallStatus(status) === "ended") {
+        handleRemoteCallEnded({ callId: updatedCallId });
+      }
+    });
 
     socket.on("ice-candidate", async ({ candidate, userId, from }) => {
       const senderId = String(userId || from || "");
@@ -954,10 +996,13 @@ const VoiceCallModal = ({
     callMetadata.status,
     callMetadata.apiCallData,
     callData,
+    cleanupRealtimeConnection,
     currentUser,
     userInfo.id,
     initializeAudio,
+    onClose,
     resetReconnectState,
+    stopVisualizer,
     updateRemoteAudioState,
     attemptRemoteAudioPlayback,
   ]);

@@ -7,6 +7,7 @@ import "./VideoCallModal.css";
 const ACTIVE = new Set(["active", "connected"]);
 const TERMINAL = new Set([
   "ended",
+  "completed",
   "rejected",
   "cancelled",
   "missed",
@@ -18,7 +19,9 @@ const TERMINAL = new Set([
 const normalizeStatus = (status) => {
   if (!status) return "connecting";
   const normalized = String(status).toLowerCase();
-  return normalized === "accepted" ? "active" : normalized;
+  if (normalized === "accepted") return "active";
+  if (normalized === "completed") return "ended";
+  return normalized;
 };
 
 const isConnectedStatus = (status) => ACTIVE.has(normalizeStatus(status));
@@ -58,7 +61,13 @@ const buildRtcConfig = () => {
 
 const RTC_CONFIGURATION = buildRtcConfig();
 
-const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) => {
+const VideoCallModal = ({
+  isOpen,
+  onClose,
+  callData,
+  currentUser,
+  onEndCall,
+}) => {
   const [isMuted, setIsMuted] = useState(false);
   const [isSpeakerOn, setIsSpeakerOn] = useState(false);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
@@ -155,6 +164,9 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
         "user-joined",
         "user-left",
         "user-left-call",
+        "call_ended",
+        "call-ended",
+        "call-status-update",
         "connect_error",
       ].forEach((eventName) => socketRef.current.off(eventName));
 
@@ -271,9 +283,13 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
 
     const serverCall = apiCallData || callData?.apiCallData || {};
     const initiatorId =
-      serverCall?.initiator?.id || callData?.initiator?.id || callData?.initiatorId;
+      serverCall?.initiator?.id ||
+      callData?.initiator?.id ||
+      callData?.initiatorId;
     const receiverId =
-      serverCall?.receiver?.id || callData?.receiver?.id || callData?.receiverId;
+      serverCall?.receiver?.id ||
+      callData?.receiver?.id ||
+      callData?.receiverId;
     if (!initiatorId || !receiverId) return;
 
     localUserIdRef.current = String(localUserId);
@@ -282,7 +298,8 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
         ? String(receiverId)
         : String(initiatorId);
 
-    const localStream = localStreamRef.current || (await initializeCamera(isCameraSwitched));
+    const localStream =
+      localStreamRef.current || (await initializeCamera(isCameraSwitched));
     if (!localStream) return;
 
     const token =
@@ -298,7 +315,9 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
 
     const peer = new RTCPeerConnection(RTC_CONFIGURATION);
     peerRef.current = peer;
-    localStream.getTracks().forEach((track) => peer.addTrack(track, localStream));
+    localStream
+      .getTracks()
+      .forEach((track) => peer.addTrack(track, localStream));
 
     const flushIceQueue = async () => {
       if (!peerRef.current?.remoteDescription) return;
@@ -312,7 +331,8 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
     };
 
     const sendOffer = async () => {
-      if (!peerRef.current || peerRef.current.signalingState !== "stable") return;
+      if (!peerRef.current || peerRef.current.signalingState !== "stable")
+        return;
       const offer = await peerRef.current.createOffer({
         offerToReceiveAudio: true,
         offerToReceiveVideo: true,
@@ -336,7 +356,8 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
       if (incomingStream) {
         remoteStreamRef.current = incomingStream;
       } else {
-        if (!remoteStreamRef.current) remoteStreamRef.current = new MediaStream();
+        if (!remoteStreamRef.current)
+          remoteStreamRef.current = new MediaStream();
         remoteStreamRef.current.addTrack(event.track);
       }
 
@@ -378,16 +399,23 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
 
     const onOffer = async ({ offer, userId, from }) => {
       const senderId = String(userId || from || "");
-      if (!offer || senderId === localUserIdRef.current || !peerRef.current) return;
+      if (!offer || senderId === localUserIdRef.current || !peerRef.current)
+        return;
       try {
         if (peerRef.current.signalingState !== "stable") {
           await peerRef.current.setLocalDescription({ type: "rollback" });
         }
-        await peerRef.current.setRemoteDescription(new RTCSessionDescription(offer));
+        await peerRef.current.setRemoteDescription(
+          new RTCSessionDescription(offer),
+        );
         await flushIceQueue();
         const answer = await peerRef.current.createAnswer();
         await peerRef.current.setLocalDescription(answer);
-        socket.emit("call-answer", { callId, answer, to: remoteUserIdRef.current });
+        socket.emit("call-answer", {
+          callId,
+          answer,
+          to: remoteUserIdRef.current,
+        });
       } catch {
         setWebrtcError("Failed to process call offer.");
       }
@@ -395,10 +423,13 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
 
     const onAnswer = async ({ answer, userId, from }) => {
       const senderId = String(userId || from || "");
-      if (!answer || senderId === localUserIdRef.current || !peerRef.current) return;
+      if (!answer || senderId === localUserIdRef.current || !peerRef.current)
+        return;
       try {
         if (!peerRef.current.currentRemoteDescription) {
-          await peerRef.current.setRemoteDescription(new RTCSessionDescription(answer));
+          await peerRef.current.setRemoteDescription(
+            new RTCSessionDescription(answer),
+          );
           await flushIceQueue();
         }
       } catch {
@@ -406,14 +437,46 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
       }
     };
 
+    const handleRemoteCallEnded = ({ callId: endedCallId, endedBy } = {}) => {
+      if (endedCallId && String(endedCallId) !== String(callId)) return;
+
+      setIsCallActive(false);
+      setCallStatus("ended");
+      setIsConnecting(false);
+      setIsRemoteVideoReady(false);
+      setWebrtcError(
+        endedBy
+          ? `Call ended by ${endedBy}.`
+          : "Call ended by other participant.",
+      );
+
+      cleanupRealtime();
+
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
+        localStreamRef.current = null;
+      }
+
+      setTimeout(() => onClose(), 500);
+    };
+
     socket.on("call-offer", onOffer);
     socket.on("offer", onOffer);
     socket.on("call-answer", onAnswer);
     socket.on("answer", onAnswer);
+    socket.on("call_ended", handleRemoteCallEnded);
+    socket.on("call-ended", handleRemoteCallEnded);
+    socket.on("call-status-update", ({ callId: updatedCallId, status }) => {
+      if (String(updatedCallId) !== String(callId)) return;
+      if (normalizeStatus(status) === "ended") {
+        handleRemoteCallEnded({ callId: updatedCallId });
+      }
+    });
 
     socket.on("ice-candidate", async ({ candidate, userId, from }) => {
       const senderId = String(userId || from || "");
-      if (!candidate || senderId === localUserIdRef.current || !peerRef.current) return;
+      if (!candidate || senderId === localUserIdRef.current || !peerRef.current)
+        return;
       try {
         if (!peerRef.current.remoteDescription) {
           pendingIceRef.current.push(candidate);
@@ -438,10 +501,23 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
       }
     });
 
-    socket.on("connect_error", () => setWebrtcError("Realtime connection failed."));
+    socket.on("connect_error", () =>
+      setWebrtcError("Realtime connection failed."),
+    );
 
     startedRef.current = true;
-  }, [apiCallData, callData, callId, callStatus, currentUser, initializeCamera, isCameraSwitched, updateRemoteState]);
+  }, [
+    apiCallData,
+    callData,
+    callId,
+    callStatus,
+    cleanupRealtime,
+    currentUser,
+    initializeCamera,
+    isCameraSwitched,
+    onClose,
+    updateRemoteState,
+  ]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -482,7 +558,8 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
 
   useEffect(() => {
     if (!isOpen || !callId) return;
-    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
     const userId =
       currentUser?.id ||
       currentUser?._id ||
@@ -491,17 +568,22 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
       localStorage.getItem("counsellorId") ||
       localStorage.getItem("counselorId");
     const userType = normalizeUserType(
-      currentUser?.role || callData?.currentUserType || localStorage.getItem("userRole"),
+      currentUser?.role ||
+        callData?.currentUserType ||
+        localStorage.getItem("userRole"),
     );
     if (!token || !userId) return;
 
     let mounted = true;
     const syncStatus = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/video/calls/${callId}/details`, {
-          params: { userId, userType },
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const response = await axios.get(
+          `${API_BASE_URL}/api/video/calls/${callId}/details`,
+          {
+            params: { userId, userType },
+            headers: { Authorization: `Bearer ${token}` },
+          },
+        );
         if (!mounted || !response.data?.success || !response.data?.call) return;
         const call = response.data.call;
         const status = normalizeStatus(call.status);
@@ -509,7 +591,9 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
         setCallId((prev) => call.id || prev);
         setRoomId((prev) => call.roomId || prev);
         setApiCallData(call);
-        setIsConnecting(!isConnectedStatus(status) && !isTerminalStatus(status));
+        setIsConnecting(
+          !isConnectedStatus(status) && !isTerminalStatus(status),
+        );
       } catch {}
     };
 
@@ -522,7 +606,13 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
   }, [isOpen, callId, currentUser, callData]);
 
   useEffect(() => {
-    if (!isOpen || !isCallActive || !callStartTime || !isConnectedStatus(callStatus)) return;
+    if (
+      !isOpen ||
+      !isCallActive ||
+      !callStartTime ||
+      !isConnectedStatus(callStatus)
+    )
+      return;
     const timer = setInterval(() => setCallDuration((prev) => prev + 1), 1000);
     return () => clearInterval(timer);
   }, [isOpen, isCallActive, callStartTime, callStatus]);
@@ -546,7 +636,10 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
   useEffect(() => {
     if (!remoteVideoRef.current) return;
     remoteVideoRef.current.muted = !isSpeakerOn;
-    remoteVideoRef.current.volume = Math.max(0, Math.min(1, Number(volumeLevel) / 100));
+    remoteVideoRef.current.volume = Math.max(
+      0,
+      Math.min(1, Number(volumeLevel) / 100),
+    );
   }, [isSpeakerOn, volumeLevel]);
 
   useEffect(() => {
@@ -605,9 +698,13 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
   const toggleScreenShare = async () => {
     if (!isScreenSharing) {
       try {
-        const screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+        const screenStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+        });
         const screenTrack = screenStream.getVideoTracks()[0];
-        const audioTracks = localStreamRef.current ? localStreamRef.current.getAudioTracks() : [];
+        const audioTracks = localStreamRef.current
+          ? localStreamRef.current.getAudioTracks()
+          : [];
         const merged = new MediaStream([screenTrack, ...audioTracks]);
         localStreamRef.current = merged;
         setLocalPreview(merged);
@@ -630,16 +727,19 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
-    if (h > 0) return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+    if (h > 0)
+      return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
   const getStatusText = () => {
     if (webrtcError) return webrtcError;
     if (isConnecting) return "Connecting...";
-    if (isConnectedStatus(callStatus) && !isRemoteVideoReady) return "Connected. Remote camera is not sending video.";
+    if (isConnectedStatus(callStatus) && !isRemoteVideoReady)
+      return "Connected. Remote camera is not sending video.";
     if (isConnectedStatus(callStatus)) return "Connected";
-    if (callStatus === "ringing" || callStatus === "pending") return "Waiting for participant...";
+    if (callStatus === "ringing" || callStatus === "pending")
+      return "Waiting for participant...";
     if (callStatus === "ended") return "Call Ended";
     return callStatus;
   };
@@ -648,7 +748,9 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
 
   return (
     <div className={`video-modal-overlay ${isFullScreen ? "fullscreen" : ""}`}>
-      <div className={`video-modal-container ${isFullScreen ? "fullscreen" : ""}`}>
+      <div
+        className={`video-modal-container ${isFullScreen ? "fullscreen" : ""}`}
+      >
         <div className="video-modal-header">
           <div className="header-left">
             <span className="header-icon">Video</span>
@@ -657,26 +759,42 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
             </div>
           </div>
           <div className="header-right">
-            <button className="header-btn" onClick={() => setIsFullScreen((prev) => !prev)}>
+            <button
+              className="header-btn"
+              onClick={() => setIsFullScreen((prev) => !prev)}
+            >
               {isFullScreen ? "Exit" : "Full"}
             </button>
-            <button className="header-btn close-btn" onClick={onClose}>X</button>
+            <button className="header-btn close-btn" onClick={onClose}>
+              X
+            </button>
           </div>
         </div>
 
         <div className="video-modal-content">
           <div className="video-main-area">
             <div className="remote-video-container">
-              <video ref={remoteVideoRef} className={`remote-video ${isRemoteVideoReady ? "ready" : ""}`} autoPlay playsInline />
+              <video
+                ref={remoteVideoRef}
+                className={`remote-video ${isRemoteVideoReady ? "ready" : ""}`}
+                autoPlay
+                playsInline
+              />
               {!isRemoteVideoReady && (
                 <div className="remote-video-overlay">
                   <div className="remote-video-placeholder">
                     <span className="remote-avatar">
-                      {callerProfilePic?.charAt?.(0) || callerName?.charAt?.(0) || "C"}
+                      {callerProfilePic?.charAt?.(0) ||
+                        callerName?.charAt?.(0) ||
+                        "C"}
                     </span>
                     <div className="remote-info">
                       <h2>{callerName}</h2>
-                      {roomId && <p className="room-id">Room: {String(roomId).substring(0, 8)}...</p>}
+                      {roomId && (
+                        <p className="room-id">
+                          Room: {String(roomId).substring(0, 8)}...
+                        </p>
+                      )}
                       <p className="call-status">{getStatusText()}</p>
                     </div>
                   </div>
@@ -684,60 +802,121 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
               )}
             </div>
 
-            <div className={`local-video-container ${!isVideoEnabled ? "video-off" : ""}`}>
-              <video ref={localVideoRef} className="local-video" autoPlay playsInline muted />
-              <div className="local-video-label">You ({isCameraSwitched ? "Back" : "Front"})</div>
+            <div
+              className={`local-video-container ${!isVideoEnabled ? "video-off" : ""}`}
+            >
+              <video
+                ref={localVideoRef}
+                className="local-video"
+                autoPlay
+                playsInline
+                muted
+              />
+              <div className="local-video-label">
+                You ({isCameraSwitched ? "Back" : "Front"})
+              </div>
             </div>
 
-            <div className="call-duration-badge">{formatTime(callDuration)}</div>
+            <div className="call-duration-badge">
+              {formatTime(callDuration)}
+            </div>
 
             {showSettings && (
               <div className="settings-panel">
                 <h4>Call Settings</h4>
                 <div className="setting-item">
                   <label>Volume</label>
-                  <input type="range" min="0" max="100" value={volumeLevel} onChange={(e) => setVolumeLevel(Number(e.target.value))} />
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={volumeLevel}
+                    onChange={(e) => setVolumeLevel(Number(e.target.value))}
+                  />
                   <span>{volumeLevel}%</span>
                 </div>
                 {availableCameras.length > 0 && (
                   <div className="setting-item">
                     <label>Select Camera</label>
-                    <select value={currentCamera} onChange={(e) => selectCamera(e.target.value)}>
+                    <select
+                      value={currentCamera}
+                      onChange={(e) => selectCamera(e.target.value)}
+                    >
                       {availableCameras.map((camera) => (
                         <option key={camera.deviceId} value={camera.deviceId}>
-                          {camera.label || `Camera ${camera.deviceId.slice(0, 6)}...`}
+                          {camera.label ||
+                            `Camera ${camera.deviceId.slice(0, 6)}...`}
                         </option>
                       ))}
                     </select>
                   </div>
                 )}
-                {callerPhoneNumber && <div className="setting-item"><label>Phone</label><p>{callerPhoneNumber}</p></div>}
-                <button className="close-settings" onClick={() => setShowSettings(false)}>Close</button>
+                {callerPhoneNumber && (
+                  <div className="setting-item">
+                    <label>Phone</label>
+                    <p>{callerPhoneNumber}</p>
+                  </div>
+                )}
+                <button
+                  className="close-settings"
+                  onClick={() => setShowSettings(false)}
+                >
+                  Close
+                </button>
               </div>
             )}
 
             <div className="video-call-controls">
-              <button className={`control-btn ${isMuted ? "active" : ""}`} onClick={() => setIsMuted((prev) => !prev)}>
+              <button
+                className={`control-btn ${isMuted ? "active" : ""}`}
+                onClick={() => setIsMuted((prev) => !prev)}
+              >
                 <span className="btn-label">{isMuted ? "Unmute" : "Mute"}</span>
               </button>
-              <button className={`control-btn ${!isVideoEnabled ? "active" : ""}`} onClick={() => setIsVideoEnabled((prev) => !prev)}>
-                <span className="btn-label">{isVideoEnabled ? "Camera Off" : "Camera On"}</span>
+              <button
+                className={`control-btn ${!isVideoEnabled ? "active" : ""}`}
+                onClick={() => setIsVideoEnabled((prev) => !prev)}
+              >
+                <span className="btn-label">
+                  {isVideoEnabled ? "Camera Off" : "Camera On"}
+                </span>
               </button>
-              <button className={`control-btn ${isSpeakerOn ? "active" : ""}`} onClick={() => setIsSpeakerOn((prev) => !prev)}>
-                <span className="btn-label">{isSpeakerOn ? "Speaker Off" : "Speaker On"}</span>
+              <button
+                className={`control-btn ${isSpeakerOn ? "active" : ""}`}
+                onClick={() => setIsSpeakerOn((prev) => !prev)}
+              >
+                <span className="btn-label">
+                  {isSpeakerOn ? "Speaker Off" : "Speaker On"}
+                </span>
               </button>
               {availableCameras.length >= 1 && (
-                <button className="control-btn" onClick={switchCamera} disabled={availableCameras.length < 2}>
-                  <span className="btn-label">{isCameraSwitched ? "Front" : "Back"}</span>
+                <button
+                  className="control-btn"
+                  onClick={switchCamera}
+                  disabled={availableCameras.length < 2}
+                >
+                  <span className="btn-label">
+                    {isCameraSwitched ? "Front" : "Back"}
+                  </span>
                 </button>
               )}
               <button className="control-btn" onClick={toggleScreenShare}>
-                <span className="btn-label">{isScreenSharing ? "Stop Share" : "Share"}</span>
+                <span className="btn-label">
+                  {isScreenSharing ? "Stop Share" : "Share"}
+                </span>
               </button>
-              <button className={`control-btn ${isRecording ? "recording" : ""}`} onClick={() => setIsRecording((prev) => !prev)}>
-                <span className="btn-label">{isRecording ? "Stop Rec" : "Record"}</span>
+              <button
+                className={`control-btn ${isRecording ? "recording" : ""}`}
+                onClick={() => setIsRecording((prev) => !prev)}
+              >
+                <span className="btn-label">
+                  {isRecording ? "Stop Rec" : "Record"}
+                </span>
               </button>
-              <button className="control-btn" onClick={() => setShowSettings((prev) => !prev)}>
+              <button
+                className="control-btn"
+                onClick={() => setShowSettings((prev) => !prev)}
+              >
                 <span className="btn-label">Settings</span>
               </button>
               <button className="control-btn end-call" onClick={handleEndCall}>
