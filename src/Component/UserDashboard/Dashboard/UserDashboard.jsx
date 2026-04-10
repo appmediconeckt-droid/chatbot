@@ -715,9 +715,9 @@ export default function UserDashboard() {
         setSelectedCall({
           ...callerInfo,
           ...result,
-          status: 'connected'
+          status: "connected",
         });
-        if (callType !== 'video') {
+        if (callType !== "video") {
           setIsVoiceModalOpen(true);
         } else {
           setIsVideoModalOpen(true);
