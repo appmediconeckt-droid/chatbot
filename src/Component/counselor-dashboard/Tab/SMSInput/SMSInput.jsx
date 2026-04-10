@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { io } from "socket.io-client";
 import "./SMSInput.css";
 import {
   FaVideo as FaVideoIcon,
@@ -142,6 +143,9 @@ const SMSInput = () => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const chatSocketRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
+  const [remoteIsTyping, setRemoteIsTyping] = useState(false);
 
   // Call modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -553,7 +557,8 @@ const SMSInput = () => {
       console.log("POST API Response:", response.data);
 
       if (response.data && response.data.success) {
-        await fetchMessagesFromAPI();
+        // ✅ The socket `new-message` event delivers the confirmed message
+        // to all clients — no need to re-fetch all messages.
         return response.data.message;
       } else {
         throw new Error("Invalid API response");
@@ -591,8 +596,35 @@ const SMSInput = () => {
     setError(null);
 
     try {
-      await sendMessageToAPI({ messageContent: messageText });
-      setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+      const sentMsg = await sendMessageToAPI({ messageContent: messageText });
+      // Replace temp message with the confirmed server message.
+      // If the socket already delivered it, deduplicate by messageId.
+      setMessages((prev) => {
+        const withoutTemp = prev.filter((m) => !m.isTemporary);
+        if (!sentMsg) return withoutTemp;
+        const alreadyHas = withoutTemp.some(
+          (m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId,
+        );
+        if (alreadyHas) return withoutTemp;
+        return [
+          ...withoutTemp,
+          {
+            id: sentMsg.id || sentMsg._id,
+            messageId: sentMsg.messageId,
+            text: sentMsg.content,
+            sender: "me",
+            senderRole: "counsellor",
+            time: new Date(sentMsg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            fullTime: sentMsg.createdAt,
+            contentType: sentMsg.contentType,
+            isRead: sentMsg.isRead,
+            status: "sent",
+          },
+        ];
+      });
     } catch (err) {
       console.error("Error sending message:", err);
 
@@ -1212,6 +1244,124 @@ const SMSInput = () => {
       fetchMessagesFromAPI();
     }
   }, [selectedUser, chatId, COUNSELOR_ID]);
+
+  // ========== REAL-TIME SOCKET CONNECTION FOR CHAT ==========
+  useEffect(() => {
+    const apiChatId = chatId;
+    if (!apiChatId || !selectedUser) return;
+
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) return;
+
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+    });
+    chatSocketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("\ud83d\udcac Counselor chat socket connected");
+      socket.emit("join-chat", { chatId: apiChatId });
+    });
+
+    socket.on("new-message", (messageData) => {
+      console.log("\ud83d\udce9 New message received via socket:", messageData);
+
+      // Own message confirmed via socket: replace temp with real one
+      if (
+        messageData.senderRole === "counsellor" &&
+        String(messageData.senderId) === String(COUNSELOR_ID)
+      ) {
+        setMessages((prev) => {
+          const withoutTemp = prev.filter((msg) => !msg.isTemporary);
+          const alreadyHas = withoutTemp.some(
+            (msg) =>
+              msg.messageId &&
+              messageData.messageId &&
+              msg.messageId === messageData.messageId,
+          );
+          if (alreadyHas) return withoutTemp;
+          return [
+            ...withoutTemp,
+            {
+              id: messageData.id || messageData.messageId || "rt_" + Date.now(),
+              messageId: messageData.messageId,
+              text: messageData.content,
+              sender: "me",
+              senderRole: "counsellor",
+              time: new Date(messageData.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              fullTime: messageData.createdAt,
+              contentType: messageData.contentType,
+              isRead: messageData.isRead,
+              status: "sent",
+            },
+          ];
+        });
+        return;
+      }
+
+      const transformedMessage = {
+        id: messageData.id || messageData.messageId || "rt_" + Date.now(),
+        messageId: messageData.messageId,
+        text: messageData.content,
+        sender: messageData.senderRole === "counsellor" ? "me" : "user",
+        senderRole: messageData.senderRole,
+        time: new Date(messageData.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        fullTime: messageData.createdAt,
+        contentType: messageData.contentType,
+        isRead: messageData.isRead,
+        status: "sent",
+      };
+
+      setMessages((prev) => {
+        const isDuplicate = prev.some(
+          (msg) =>
+            msg.messageId &&
+            messageData.messageId &&
+            msg.messageId === messageData.messageId,
+        );
+        if (isDuplicate) return prev;
+        return [...prev, transformedMessage];
+      });
+    });
+
+    socket.on("user-typing", ({ userRole, isTyping: typing }) => {
+      if (userRole === "user") {
+        setRemoteIsTyping(typing);
+      }
+    });
+
+    socket.on("messages-read", () => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.sender === "me" ? { ...msg, isRead: true } : msg,
+        ),
+      );
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Chat socket connection error:", err.message);
+    });
+
+    return () => {
+      if (chatSocketRef.current) {
+        chatSocketRef.current.off("new-message");
+        chatSocketRef.current.off("user-typing");
+        chatSocketRef.current.off("messages-read");
+        chatSocketRef.current.off("connect");
+        chatSocketRef.current.off("connect_error");
+        chatSocketRef.current.disconnect();
+        chatSocketRef.current = null;
+      }
+    };
+  }, [chatId, selectedUser, COUNSELOR_ID]);
 
   // Auto-refresh messages every 30 seconds
   // Add this useEffect to debug user data

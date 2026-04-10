@@ -1,6 +1,19 @@
 // services/VideoCallService.js
 import { API_BASE_URL } from "../../../../axiosConfig";
 
+/**
+ * Helper to build the Authorization header from localStorage.
+ */
+const getAuthHeaders = () => {
+  const token =
+    localStorage.getItem("token") || localStorage.getItem("accessToken");
+  const headers = { "Content-Type": "application/json" };
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+  return headers;
+};
+
 class VideoCallService {
   constructor() {
     this.baseURL = `${API_BASE_URL}/api/video`;
@@ -13,17 +26,15 @@ class VideoCallService {
   async initiateCall(userId, userName, counsellorId, counsellorName) {
     try {
       const response = await fetch(`${this.baseURL}/initiate`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        method: "POST",
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           userId,
           userName,
           counsellorId,
           counsellorName,
-          callType: 'video'
-        })
+          callType: "video",
+        }),
       });
 
       if (!response.ok) {
@@ -31,16 +42,16 @@ class VideoCallService {
       }
 
       const data = await response.json();
-      
+
       if (data.success) {
         this.currentCallId = data.callId;
         this.currentRoomId = data.roomId;
         return data;
       } else {
-        throw new Error('Failed to initiate call');
+        throw new Error("Failed to initiate call");
       }
     } catch (error) {
-      console.error('Error initiating call:', error);
+      console.error("Error initiating call:", error);
       throw error;
     }
   }
@@ -48,8 +59,11 @@ class VideoCallService {
   // GET: Get waiting calls for counsellor
   async getWaitingCalls(counsellorId) {
     try {
-      const response = await fetch(`${this.baseURL}/waiting/${counsellorId}`);
-      
+      const response = await fetch(
+        `${this.baseURL}/waiting/${counsellorId}`,
+        { headers: getAuthHeaders() },
+      );
+
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -57,7 +71,7 @@ class VideoCallService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error fetching waiting calls:', error);
+      console.error("Error fetching waiting calls:", error);
       throw error;
     }
   }
@@ -66,10 +80,8 @@ class VideoCallService {
   async acceptCall(callId) {
     try {
       const response = await fetch(`${this.baseURL}/accept/${callId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        method: "POST",
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -79,7 +91,7 @@ class VideoCallService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error accepting call:', error);
+      console.error("Error accepting call:", error);
       throw error;
     }
   }
@@ -88,10 +100,8 @@ class VideoCallService {
   async rejectCall(callId) {
     try {
       const response = await fetch(`${this.baseURL}/reject/${callId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        method: "POST",
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -101,7 +111,7 @@ class VideoCallService {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('Error rejecting call:', error);
+      console.error("Error rejecting call:", error);
       throw error;
     }
   }
@@ -110,10 +120,8 @@ class VideoCallService {
   async endCall(callId) {
     try {
       const response = await fetch(`${this.baseURL}/end/${callId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        method: "POST",
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
@@ -121,15 +129,15 @@ class VideoCallService {
       }
 
       const data = await response.json();
-      
+
       if (this.currentCallId === callId) {
         this.currentCallId = null;
         this.currentRoomId = null;
       }
-      
+
       return data;
     } catch (error) {
-      console.error('Error ending call:', error);
+      console.error("Error ending call:", error);
       throw error;
     }
   }
@@ -137,7 +145,7 @@ class VideoCallService {
   // Start polling for waiting calls
   startPolling(counsellorId, onNewCall, interval = 3000) {
     this.stopPolling();
-    
+
     this.pollingInterval = setInterval(async () => {
       try {
         const data = await this.getWaitingCalls(counsellorId);
@@ -145,7 +153,7 @@ class VideoCallService {
           onNewCall(data.waitingCalls);
         }
       } catch (error) {
-        console.error('Polling error:', error);
+        console.error("Polling error:", error);
       }
     }, interval);
   }
