@@ -543,7 +543,8 @@ export default function CounselorDashboard() {
             "Content-Type": "application/json",
             Authorization: token ? `Bearer ${token}` : "",
           },
-          timeout: 10000,
+          // Increase timeout to 30 seconds to avoid premature timeout errors
+          timeout: 30000,
         },
       );
 
