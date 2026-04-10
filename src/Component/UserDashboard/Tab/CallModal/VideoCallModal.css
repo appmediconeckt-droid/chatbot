@@ -197,8 +197,13 @@
 .remote-video {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensures video covers area without distortion */
-    opacity: 0; /* Hidden since we're using placeholder for demo */
+    object-fit: cover;
+    opacity: 0; /* Hidden until remote video is ready */
+    transition: opacity 0.3s ease;
+}
+
+.remote-video.ready {
+    opacity: 1;
 }
 
 .remote-video-overlay {
@@ -609,6 +614,22 @@
 }
 
 .control-btn.end-call:hover {
+    background: #dc2626;
+}
+
+.control-btn.accept-call {
+    background: #10b981;
+}
+
+.control-btn.accept-call:hover {
+    background: #059669;
+}
+
+.control-btn.reject-call {
+    background: #ef4444;
+}
+
+.control-btn.reject-call:hover {
     background: #dc2626;
 }
 

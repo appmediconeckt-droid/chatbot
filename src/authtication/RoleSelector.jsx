@@ -23,7 +23,7 @@ const RoleSelector = () => {
       navigate("/user-signup");
     }
 
-    if (role === "counselor") {
+    if (role === "counsellor") {
       navigate("/counselor-signup");
     }
   };
@@ -58,21 +58,21 @@ const RoleSelector = () => {
           <span className="t5n6-footer-note">explore</span>
         </div>
 
-        {/* COUNSELOR CARD */}
+        {/* COUNSELLOR CARD */}
         <div
           className={`q5b3-role-tile d4m7-counselor-tile ${
-            selectedRole === 'counselor' ? 'l9p3-selected-state' : ''
+            selectedRole === 'counsellor' ? 'l9p3-selected-state' : ''
           }`}
-          onClick={() => handleRoleSelect('counselor')}
+          onClick={() => handleRoleSelect('counsellor')}
           role="button"
           tabIndex={0}
-          onKeyPress={(e) => e.key === 'Enter' && handleRoleSelect('counselor')}
-          aria-label="select counselor role"
+          onKeyPress={(e) => e.key === 'Enter' && handleRoleSelect('counsellor')}
+          aria-label="select counsellor role"
         >
           <div className="n4d2-icon-circle">
             <span className="j7h3-unicode-symbol">👩‍⚕️</span>
           </div>
-          <span className="c8v6-role-label">counselor</span>
+          <span className="c8v6-role-label">counsellor</span>
           <span className="e3w1-role-hint">professional toolkit</span>
           <div className="v9b2-micro-divider"></div>
           <span className="t5n6-footer-note">guide</span>

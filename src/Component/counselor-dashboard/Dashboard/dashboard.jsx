@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from "react";
 import "./CounselorDashboard.css";
 import { useNavigate } from "react-router-dom";
 import {
@@ -27,17 +27,27 @@ import {
   FaVideo as FaVideoIcon,
 } from "react-icons/fa";
 // Custom Hooks
-import useVibration from '../../../hooks/useVibration';
-import Dashboard from '../Tab/CounselorDashboard/Dashboardcou';
-import Messagesou from '../Tab/Messages/Messagesou';
-import PatientRequests from '../Tab/PatientRequests/PatientRequests';
-import axios from 'axios';
-import { API_BASE_URL } from '../../../axiosConfig';
-import CounselorProfile from '../Tab/Profile-Con/CounselorProfile';
-import VideoCallModal from '../../UserDashboard/Tab/CallModal/VideoCallModal';
+import useVibration from "../../../hooks/useVibration";
+import Dashboard from "../Tab/CounselorDashboard/Dashboardcou";
+import Messagesou from "../Tab/Messages/Messagesou";
+import PatientRequests from "../Tab/PatientRequests/PatientRequests";
+import axios from "axios";
+import { API_BASE_URL } from "../../../axiosConfig";
+import CounselorProfile from "../Tab/Profile-Con/CounselorProfile";
+import VideoCallModal from "../../UserDashboard/Tab/CallModal/VideoCallModal";
+import VoiceCallModal from "../../UserDashboard/Tab/CallModal/VoiceCallModal";
 
 // Incoming Call Modal Component (First Modal - Accept/Reject)
-const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage, callData, onAccept, onReject }) => {
+const IncomingCallModal = ({
+  isOpen,
+  onClose,
+  callType,
+  callerName,
+  callerImage,
+  callData,
+  onAccept,
+  onReject,
+}) => {
   const [isAccepting, setIsAccepting] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
 
@@ -76,7 +86,10 @@ const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage,
       <div className="incoming-call-modal">
         <div className="incoming-call-header">
           <div className="incoming-call-avatar">
-            {callerImage && (callerImage === '👨' || callerImage === '👩' || callerImage === '👤') ? (
+            {callerImage &&
+            (callerImage === "👨" ||
+              callerImage === "👩" ||
+              callerImage === "👤") ? (
               <div className="avatar-emoji-large">{callerImage}</div>
             ) : callerImage ? (
               <img src={callerImage} alt={getDisplayName()} />
@@ -86,21 +99,25 @@ const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage,
           </div>
           <h3 className="incoming-caller-name">{getDisplayName()}</h3>
           <p className="incoming-call-type">
-            {callType === 'video' ? '📹 Video Call' : '📞 Voice Call'}
+            {callType === "video" ? "📹 Video Call" : "📞 Voice Call"}
           </p>
           <p className="incoming-call-status">Incoming call...</p>
         </div>
 
         <div className="incoming-call-actions">
-          <button 
+          <button
             className="incoming-call-btn reject-btn"
             onClick={handleReject}
             disabled={isRejecting}
           >
-            {isRejecting ? <FaSpinner className="spinning" /> : <FaPhoneSlash />}
+            {isRejecting ? (
+              <FaSpinner className="spinning" />
+            ) : (
+              <FaPhoneSlash />
+            )}
             <span>Decline</span>
           </button>
-          <button 
+          <button
             className="incoming-call-btn accept-btn"
             onClick={handleAccept}
             disabled={isAccepting}
@@ -115,7 +132,7 @@ const IncomingCallModal = ({ isOpen, onClose, callType, callerName, callerImage,
 };
 
 export default function CounselorDashboard() {
-  const [activeTab, setActiveTab] = useState('messages');
+  const [activeTab, setActiveTab] = useState("messages");
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showNotesModal, setShowNotesModal] = useState(false);
@@ -128,6 +145,7 @@ export default function CounselorDashboard() {
   // Modal States
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
   const [incomingCallData, setIncomingCallData] = useState(null);
 
@@ -148,40 +166,47 @@ export default function CounselorDashboard() {
   // Accept Call API (POST) for Counselor
   const acceptCall = async (callId) => {
     try {
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('counsellorId');
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("counsellorId");
 
       if (!userId) {
-        console.error('No counsellorId found in localStorage');
-        return { success: false, error: 'No counsellor ID found' };
+        console.error("No counsellorId found in localStorage");
+        return { success: false, error: "No counsellor ID found" };
       }
 
       const requestBody = {
-        userId: userId,
-        userType: "counsellor"
+        acceptorId: userId,
+        acceptorType: "counsellor",
       };
 
-      console.log('Accepting call with body:', requestBody);
-      console.log('API URL:', `${API_BASE_URL}/api/video/calls/${callId}/join`);
+      console.log("Accepting call with body:", requestBody);
+      console.log(
+        "API URL:",
+        `${API_BASE_URL}/api/video/calls/${callId}/accept`,
+      );
 
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, requestBody, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/accept`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      console.log('Accept call response:', response.data);
+      console.log("Accept call response:", response.data);
 
       if (response.data && response.data.success) {
         return { success: true, data: response.data };
       }
       return { success: false, data: response.data };
     } catch (error) {
-      console.error('Error accepting call:', error);
+      console.error("Error accepting call:", error);
       if (error.response) {
-        console.error('Error response:', error.response.data);
-        console.error('Error status:', error.response.status);
+        console.error("Error response:", error.response.data);
+        console.error("Error status:", error.response.status);
       }
       return { success: false, error: error.message };
     }
@@ -190,31 +215,35 @@ export default function CounselorDashboard() {
   // Join Call API (POST) for Counselor
   const joinCall = async (callId) => {
     try {
-      const token = localStorage.getItem('token');
-      const counsellorId = localStorage.getItem('counsellorId');
+      const token = localStorage.getItem("token");
+      const counsellorId = localStorage.getItem("counsellorId");
 
       const requestBody = {
         userId: counsellorId,
-        userType: 'counsellor'
+        userType: "counsellor",
       };
 
-      console.log('Joining call with body:', requestBody);
+      console.log("Joining call with body:", requestBody);
 
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/${callId}/join`, requestBody, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/video/calls/${callId}/join`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      console.log('Join call response:', response.data);
+      console.log("Join call response:", response.data);
 
       if (response.data && response.data.success) {
         return { success: true, data: response.data };
       }
       return { success: false, data: response.data };
     } catch (error) {
-      console.error('Error joining call:', error);
+      console.error("Error joining call:", error);
       return { success: false, error: error.message };
     }
   };
@@ -222,31 +251,35 @@ export default function CounselorDashboard() {
   // End Call API (PUT) for Counselor
   const endCall = async (callId) => {
     try {
-      const token = localStorage.getItem('token');
-      const counsellorId = localStorage.getItem('counsellorId');
+      const token = localStorage.getItem("token");
+      const counsellorId = localStorage.getItem("counsellorId");
 
       const requestBody = {
         userId: counsellorId,
-        endedBy: 'counsellor'
+        endedBy: "counsellor",
       };
 
-      console.log('Ending call with body:', requestBody);
+      console.log("Ending call with body:", requestBody);
 
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, requestBody, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/end`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
 
-      console.log('End call response:', response.data);
+      console.log("End call response:", response.data);
 
       if (response.data && response.data.success) {
         return response.data;
       }
       return null;
     } catch (error) {
-      console.error('Error ending call:', error);
+      console.error("Error ending call:", error);
       return null;
     }
   };
@@ -254,90 +287,173 @@ export default function CounselorDashboard() {
   // Reject Call API
   const rejectCall = async (callId) => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
+      const counsellorId = localStorage.getItem("counsellorId");
 
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/reject`,
+        {
+          userId: counsellorId,
+          reason: "declined",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
-      console.log('Reject call response:', response.data);
+      console.log("Reject call response:", response.data);
       return response.data?.success || false;
     } catch (error) {
-      console.error('Error rejecting call:', error);
+      console.error("Error rejecting call:", error);
       return false;
     }
   };
 
   // Handle Accept from Incoming Modal
   const handleAcceptIncomingCall = async (callData) => {
-    console.log('Accepting call:', callData);
-    
+    console.log("Accepting call:", callData);
+
     // First, accept the call via API
     const result = await acceptCall(callData.callId);
-    
+
     if (result && result.success) {
-      console.log('Call accepted successfully');
-      
-      // Prepare data for video call modal
-      const videoCallData = {
+      console.log("Call accepted successfully");
+
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const counsellorId =
+        localStorage.getItem("counsellorId") ||
+        localStorage.getItem("counselorId");
+
+      let detailedCall = null;
+      try {
+        const detailsResponse = await axios.get(
+          `${API_BASE_URL}/api/video/calls/${callData.callId}/details`,
+          {
+            params: {
+              userId: counsellorId,
+              userType: "counsellor",
+            },
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        detailedCall = detailsResponse.data?.call || null;
+      } catch (detailsError) {
+        console.warn("Could not fetch accepted call details:", detailsError);
+      }
+
+      const incomingType = String(
+        callData.callType || detailedCall?.type || "video",
+      ).toLowerCase();
+      const modalType = incomingType === "audio" ? "voice" : incomingType;
+
+      const remoteParticipant = detailedCall
+        ? String(detailedCall.initiator?.id) === String(counsellorId)
+          ? detailedCall.receiver
+          : detailedCall.initiator
+        : callData?.from || null;
+
+      const acceptedCallData = {
+        id: detailedCall?.id || callData.callId,
         callId: callData.callId,
-        roomId: callData.roomId,
-        name: callData.name,
+        roomId: result.data?.roomId || detailedCall?.roomId || callData.roomId,
+        name:
+          remoteParticipant?.displayName ||
+          remoteParticipant?.fullName ||
+          callData.name,
         isIncoming: true,
-        status: 'connected',
-        callType: callData.callType || 'video',
+        status: result.data?.status || detailedCall?.status || "active",
+        type: modalType,
+        callType: modalType,
+        profilePic: remoteParticipant?.profilePhoto || callData.image || null,
+        phoneNumber:
+          remoteParticipant?.phoneNumber || remoteParticipant?.phone || "",
+        apiCallData: detailedCall,
+        receiver: detailedCall?.receiver,
+        currentUserId: counsellorId,
+        currentUserType: "counsellor",
         from: callData.from,
-        initiator: callData.initiator
+        initiator: detailedCall?.initiator || callData.initiator,
       };
-      
-      setSelectedCall(videoCallData);
-      setIsVideoModalOpen(true);
+
+      setSelectedCall(acceptedCallData);
+
+      if (modalType === "video") {
+        setIsVideoModalOpen(true);
+      } else {
+        setIsVoiceModalOpen(true);
+      }
     } else {
-      console.error('Failed to accept call');
-      alert('Failed to accept call. Please try again.');
+      console.error("Failed to accept call");
+      alert("Failed to accept call. Please try again.");
     }
   };
 
   // Handle Reject from Incoming Modal
   const handleRejectIncomingCall = async (callId) => {
-    console.log('Rejecting call:', callId);
+    console.log("Rejecting call:", callId);
     await rejectCall(callId);
   };
 
   // Fetch waiting calls from API
   const fetchWaitingCalls = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const counsellorId = localStorage.getItem('counsellorId');
+      const token = localStorage.getItem("token");
+      const counsellorId = localStorage.getItem("counsellorId");
 
       if (!counsellorId || !token) {
-        console.log('No counsellorId or token found');
+        console.log("No counsellorId or token found");
         return;
       }
 
-      const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${counsellorId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await axios.get(
+        `${API_BASE_URL}/api/video/calls/pending/${counsellorId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
 
-      console.log('Waiting calls response:', response.data);
+      console.log("Waiting calls response:", response.data);
 
-      const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
+      const callsList =
+        response.data.pendingRequests ||
+        response.data.waitingCalls ||
+        response.data.calls;
 
-      if (response.data && response.data.success && callsList && callsList.length > 0) {
+      if (
+        response.data &&
+        response.data.success &&
+        callsList &&
+        callsList.length > 0
+      ) {
         setWaitingCalls(callsList);
 
-        const waitingCall = callsList.find(call => !call.status || call.status === 'waiting' || call.status === 'ringing') || callsList[0];
+        const waitingCall =
+          callsList.find(
+            (call) =>
+              !call.status ||
+              call.status === "waiting" ||
+              call.status === "ringing",
+          ) || callsList[0];
 
         // Show incoming call modal if not already showing
-        if (waitingCall && !showIncomingCallModal && !isVideoModalOpen) {
+        if (
+          waitingCall &&
+          !showIncomingCallModal &&
+          !isVideoModalOpen &&
+          !isVoiceModalOpen
+        ) {
           const fromData = waitingCall.from || waitingCall.initiator || {};
-          
+
           // Determine the display name
-          let displayName = 'Anonymous';
+          let displayName = "Anonymous";
           if (fromData.isAnonymous) {
             displayName = fromData.isAnonymous;
           } else if (fromData.displayName) {
@@ -349,20 +465,20 @@ export default function CounselorDashboard() {
           }
 
           // Determine avatar based on gender
-          let initiatorAvatar = '👤';
-          if (fromData.gender === 'female') initiatorAvatar = '👩';
-          else if (fromData.gender === 'male') initiatorAvatar = '👨';
+          let initiatorAvatar = "👤";
+          if (fromData.gender === "female") initiatorAvatar = "👩";
+          else if (fromData.gender === "male") initiatorAvatar = "👨";
 
           setIncomingCallData({
             callId: waitingCall.callId || waitingCall.id || waitingCall._id,
             roomId: waitingCall.roomId,
             name: displayName,
             image: initiatorAvatar,
-            callType: waitingCall.callType || 'video',
+            callType: waitingCall.callType || "video",
             from: fromData,
-            initiator: waitingCall.initiator
+            initiator: waitingCall.initiator,
           });
-          
+
           setShowIncomingCallModal(true);
           vibrate([200, 100, 200]);
         }
@@ -370,13 +486,18 @@ export default function CounselorDashboard() {
         setWaitingCalls([]);
       }
     } catch (error) {
-      console.error('Error fetching waiting calls:', error);
+      console.error("Error fetching waiting calls:", error);
     }
   };
 
   // Start polling for waiting calls
   useEffect(() => {
-    if (isPolling && !showIncomingCallModal && !isVideoModalOpen) {
+    if (
+      isPolling &&
+      !showIncomingCallModal &&
+      !isVideoModalOpen &&
+      !isVoiceModalOpen
+    ) {
       fetchWaitingCalls();
 
       const interval = setInterval(() => {
@@ -394,11 +515,11 @@ export default function CounselorDashboard() {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-  }, [isPolling, showIncomingCallModal, isVideoModalOpen]);
+  }, [isPolling, showIncomingCallModal, isVideoModalOpen, isVoiceModalOpen]);
 
   // Stop polling when modals are open
   useEffect(() => {
-    if (showIncomingCallModal || isVideoModalOpen) {
+    if (showIncomingCallModal || isVideoModalOpen || isVoiceModalOpen) {
       setIsPolling(false);
       if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -407,23 +528,24 @@ export default function CounselorDashboard() {
     } else {
       setIsPolling(true);
     }
-  }, [showIncomingCallModal, isVideoModalOpen]);
+  }, [showIncomingCallModal, isVideoModalOpen, isVoiceModalOpen]);
 
   // Function to fetch pending requests using Axios
   const fetchPendingRequests = async () => {
     setLoadingRequests(true);
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
 
-      const response = await axios.get(`${API_BASE_URL}/api/chat/pending-requests`, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : '',
+      const response = await axios.get(
+        `${API_BASE_URL}/api/chat/pending-requests`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+          timeout: 10000,
         },
-        timeout: 10000,
-      });
-
-      console.log('Pending requests response:', response.data);
+      );
 
       const data = response.data;
       const requests = data.requests || [];
@@ -450,10 +572,10 @@ export default function CounselorDashboard() {
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        console.error('Axios error:', error.response?.data || error.message);
-        console.error('Status:', error.response?.status);
+        console.error("Axios error:", error.response?.data || error.message);
+        console.error("Status:", error.response?.status);
       } else {
-        console.error('Error fetching pending requests:', error);
+        console.error("Error fetching pending requests:", error);
       }
       return null;
     } finally {
@@ -518,12 +640,12 @@ export default function CounselorDashboard() {
     vibrate([50, 30, 50]);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const chatId = currentRequest.chatId;
 
       if (!chatId) {
-        console.error('No chatId found in request');
-        showToastMessage('Unable to accept request: missing chat ID', 'error');
+        console.error("No chatId found in request");
+        showToastMessage("Unable to accept request: missing chat ID", "error");
         return;
       }
 
@@ -533,12 +655,12 @@ export default function CounselorDashboard() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+            "Content-Type": "application/json",
+          },
+        },
       );
 
-      console.log('Request accepted successfully:', response.data);
+      console.log("Request accepted successfully:", response.data);
 
       if (modalTimer) {
         clearInterval(modalTimer);
@@ -547,19 +669,18 @@ export default function CounselorDashboard() {
       setShowRequestModal(false);
       setCurrentRequest(null);
 
-      showToastMessage('Request accepted successfully!', 'success');
+      showToastMessage("Request accepted successfully!", "success");
 
       setTimeout(() => {
         window.location.reload();
       }, 500);
-
     } catch (error) {
-      console.error('Error accepting request:', error);
+      console.error("Error accepting request:", error);
       if (axios.isAxiosError(error)) {
         const errorMessage = error.response?.data?.message || error.message;
-        showToastMessage(`Failed to accept request: ${errorMessage}`, 'error');
+        showToastMessage(`Failed to accept request: ${errorMessage}`, "error");
       } else {
-        showToastMessage('Failed to accept request', 'error');
+        showToastMessage("Failed to accept request", "error");
       }
     }
   };
@@ -571,12 +692,12 @@ export default function CounselorDashboard() {
     vibrate([50]);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem("token");
       const chatId = currentRequest.chatId;
 
       if (!chatId) {
-        console.error('No chatId found in request');
-        showToastMessage('Unable to reject request: missing chat ID', 'error');
+        console.error("No chatId found in request");
+        showToastMessage("Unable to reject request: missing chat ID", "error");
         return;
       }
 
@@ -586,12 +707,12 @@ export default function CounselorDashboard() {
         {
           headers: {
             Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+            "Content-Type": "application/json",
+          },
+        },
       );
 
-      console.log('Request rejected successfully:', response.data);
+      console.log("Request rejected successfully:", response.data);
 
       if (modalTimer) {
         clearInterval(modalTimer);
@@ -602,15 +723,14 @@ export default function CounselorDashboard() {
 
       await fetchPendingRequests();
 
-      showToastMessage('Request rejected successfully', 'info');
-
+      showToastMessage("Request rejected successfully", "info");
     } catch (error) {
-      console.error('Error rejecting request:', error);
+      console.error("Error rejecting request:", error);
       if (axios.isAxiosError(error)) {
         const errorMessage = error.response?.data?.message || error.message;
-        showToastMessage(`Failed to reject request: ${errorMessage}`, 'error');
+        showToastMessage(`Failed to reject request: ${errorMessage}`, "error");
       } else {
-        showToastMessage('Failed to reject request', 'error');
+        showToastMessage("Failed to reject request", "error");
       }
     }
   };
@@ -620,12 +740,12 @@ export default function CounselorDashboard() {
     try {
       const result = await joinCall(callId);
       if (result && result.success) {
-        console.log('Call joined successfully', result);
+        console.log("Call joined successfully", result);
         return { success: true, data: result.data };
       }
-      return { success: false, error: 'Join failed' };
+      return { success: false, error: "Join failed" };
     } catch (error) {
-      console.error('Error in join call:', error);
+      console.error("Error in join call:", error);
       return { success: false, error: error.message };
     }
   };
@@ -634,10 +754,10 @@ export default function CounselorDashboard() {
   const handleEndCall = async (callId) => {
     try {
       await endCall(callId);
-      console.log('Call ended successfully');
+      console.log("Call ended successfully");
       return { success: true };
     } catch (error) {
-      console.error('Error in end call:', error);
+      console.error("Error in end call:", error);
       return { success: false, error: error.message };
     }
   };
@@ -645,6 +765,7 @@ export default function CounselorDashboard() {
   // Handle close video modal
   const handleCloseVideoModal = () => {
     setIsVideoModalOpen(false);
+    setIsVoiceModalOpen(false);
     setSelectedCall(null);
     // Resume polling after modal closes
     setIsPolling(true);
@@ -659,11 +780,11 @@ export default function CounselorDashboard() {
   };
 
   // Toast notification helper
-  const showToastMessage = (message, type = 'info') => {
+  const showToastMessage = (message, type = "info") => {
     console.log(`${type.toUpperCase()}: ${message}`);
-    if (type === 'error') {
+    if (type === "error") {
       alert(`Error: ${message}`);
-    } else if (type === 'success') {
+    } else if (type === "success") {
       alert(`Success: ${message}`);
     } else {
       alert(message);
@@ -702,16 +823,15 @@ export default function CounselorDashboard() {
           {
             headers: {
               Authorization: `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            }
-          }
+              "Content-Type": "application/json",
+            },
+          },
         );
       }
 
       localStorage.clear();
       setShowLogoutConfirm(false);
       navigate("/role-selector");
-
     } catch (error) {
       console.error("Logout Error:", error);
       localStorage.clear();
@@ -725,8 +845,8 @@ export default function CounselorDashboard() {
       setIsMobile(window.innerWidth <= 768);
     };
     checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   const [counselorData, setCounselorData] = useState(null);
@@ -736,7 +856,7 @@ export default function CounselorDashboard() {
     const fetchCounsellor = async () => {
       try {
         const counsellorId = localStorage.getItem("counsellorId");
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem("token");
 
         if (!counsellorId) {
           console.error("No counsellor ID found");
@@ -748,16 +868,16 @@ export default function CounselorDashboard() {
           `${API_BASE_URL}/api/auth/counsellors/${counsellorId}`,
           {
             headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
+              Authorization: `Bearer ${token}`,
+            },
+          },
         );
 
         const data = res.data.counsellor;
 
         let profilePhotoUrl = null;
         if (data.profilePhoto) {
-          if (typeof data.profilePhoto === 'string') {
+          if (typeof data.profilePhoto === "string") {
             profilePhotoUrl = data.profilePhoto;
           } else if (data.profilePhoto.url) {
             profilePhotoUrl = data.profilePhoto.url;
@@ -768,7 +888,9 @@ export default function CounselorDashboard() {
 
         setCounselorData({
           name: data.fullName || data.name,
-          specialization: Array.isArray(data.specialization) ? data.specialization.join(", ") : data.specialization,
+          specialization: Array.isArray(data.specialization)
+            ? data.specialization.join(", ")
+            : data.specialization,
           experience: `${data.experience || 0} years`,
           patients: 0,
           rating: data.rating || 4.5,
@@ -783,9 +905,8 @@ export default function CounselorDashboard() {
           aboutMe: data.aboutMe,
           location: data.location,
           consultationMode: data.consultationMode,
-          profilePhoto: profilePhotoUrl
+          profilePhoto: profilePhotoUrl,
         });
-
       } catch (error) {
         console.error("Error fetching counsellor:", error);
       } finally {
@@ -797,19 +918,26 @@ export default function CounselorDashboard() {
   }, []);
 
   if (loading) {
-    return <div className="couns-loading">
-      <div className="couns-loading-spinner"></div>
-    </div>;
+    return (
+      <div className="couns-loading">
+        <div className="couns-loading-spinner"></div>
+      </div>
+    );
   }
 
   const navItems = [
-    { id: 'messages', icon: <FaComments />, label: 'Messages', badge: pendingRequests.length },
-    { id: 'appointments', icon: <FaCalendarAlt />, label: 'Appointments', },
-    { id: 'sessions', icon: <FaVideo />, label: 'Sessions', badge: 0 },
-    { id: 'patients', icon: <FaUsers />, label: 'Patients', badge: 0 },
-    { id: 'earnings', icon: <FaMoneyBillWave />, label: 'Earnings', badge: 0 },
-    { id: 'profile', icon: <FaChartPie />, label: 'Profile', badge: 0 },
-    { id: 'settings', icon: <FaCog />, label: 'Settings', badge: 0 }
+    {
+      id: "messages",
+      icon: <FaComments />,
+      label: "Messages",
+      badge: pendingRequests.length,
+    },
+    { id: "appointments", icon: <FaCalendarAlt />, label: "Appointments" },
+    { id: "sessions", icon: <FaVideo />, label: "Sessions", badge: 0 },
+    { id: "patients", icon: <FaUsers />, label: "Patients", badge: 0 },
+    { id: "earnings", icon: <FaMoneyBillWave />, label: "Earnings", badge: 0 },
+    { id: "profile", icon: <FaChartPie />, label: "Profile", badge: 0 },
+    { id: "settings", icon: <FaCog />, label: "Settings", badge: 0 },
   ];
 
   const handleTabChange = (tabId) => {
@@ -824,7 +952,7 @@ export default function CounselorDashboard() {
       <IncomingCallModal
         isOpen={showIncomingCallModal}
         onClose={handleCloseIncomingModal}
-        callType={incomingCallData?.callType || 'video'}
+        callType={incomingCallData?.callType || "video"}
         callerName={incomingCallData?.name}
         callerImage={incomingCallData?.image}
         callData={incomingCallData}
@@ -837,8 +965,17 @@ export default function CounselorDashboard() {
         isOpen={isVideoModalOpen}
         onClose={handleCloseVideoModal}
         callData={selectedCall}
-        userRole="counsellor"
-        onJoinCall={handleJoinCall}
+        currentUser={{
+          id: localStorage.getItem("counsellorId"),
+          role: "counsellor",
+        }}
+        onEndCall={handleEndCall}
+      />
+
+      <VoiceCallModal
+        isOpen={isVoiceModalOpen}
+        onClose={handleCloseVideoModal}
+        callData={selectedCall}
         onEndCall={handleEndCall}
       />
 
@@ -850,39 +987,56 @@ export default function CounselorDashboard() {
               {counselorData?.profilePhoto ? (
                 <img
                   src={counselorData.profilePhoto}
-                  alt={counselorData?.name || 'Profile'}
+                  alt={counselorData?.name || "Profile"}
                   className="couns-profile-avatar-img"
                   onError={(e) => {
-                    console.error('Image failed to load:', counselorData?.profilePhoto);
+                    console.error(
+                      "Image failed to load:",
+                      counselorData?.profilePhoto,
+                    );
                     e.target.onerror = null;
-                    e.target.style.display = 'none';
+                    e.target.style.display = "none";
                     const fallbackIcon = e.target.nextElementSibling;
-                    if (fallbackIcon) fallbackIcon.style.display = 'block';
+                    if (fallbackIcon) fallbackIcon.style.display = "block";
                   }}
                 />
               ) : null}
               {!counselorData?.profilePhoto && (
                 <FaUserCircle className="couns-profile-avatar" />
               )}
-              <FaUserCircle className="couns-profile-avatar-fallback" style={{ display: 'none' }} />
+              <FaUserCircle
+                className="couns-profile-avatar-fallback"
+                style={{ display: "none" }}
+              />
 
-              <h3>{counselorData?.name || 'Counselor'}</h3>
+              <h3>{counselorData?.name || "Counselor"}</h3>
 
               <div className="couns-extra-info">
-                <p><strong>Specialization:</strong> {counselorData?.specialization || 'Not specified'}</p>
-                <p><strong>Email:</strong> {counselorData?.email || 'Not specified'}</p>
-                <p><strong>Phone:</strong> {counselorData?.phoneNumber || 'Not specified'}</p>
-                <p><strong>Experience:</strong> {counselorData?.experience || '0 years'}</p>
+                <p>
+                  <strong>Specialization:</strong>{" "}
+                  {counselorData?.specialization || "Not specified"}
+                </p>
+                <p>
+                  <strong>Email:</strong>{" "}
+                  {counselorData?.email || "Not specified"}
+                </p>
+                <p>
+                  <strong>Phone:</strong>{" "}
+                  {counselorData?.phoneNumber || "Not specified"}
+                </p>
+                <p>
+                  <strong>Experience:</strong>{" "}
+                  {counselorData?.experience || "0 years"}
+                </p>
               </div>
-
             </div>
           </div>
 
           <nav className="couns-sidebar-nav">
-            {navItems.map(item => (
+            {navItems.map((item) => (
               <button
                 key={item.id}
-                className={`couns-nav-item ${activeTab === item.id ? 'active' : ''}`}
+                className={`couns-nav-item ${activeTab === item.id ? "active" : ""}`}
                 onClick={() => handleTabChange(item.id)}
               >
                 <span className="couns-nav-icon">{item.icon}</span>
@@ -897,7 +1051,9 @@ export default function CounselorDashboard() {
               className="couns-nav-item logout"
               onClick={() => setShowLogoutConfirm(true)}
             >
-              <span className="couns-nav-icon"><FaSignOutAlt /></span>
+              <span className="couns-nav-icon">
+                <FaSignOutAlt />
+              </span>
               <span className="couns-nav-label">Logout</span>
             </button>
           </nav>
@@ -915,16 +1071,23 @@ export default function CounselorDashboard() {
           </button>
           <div className="couns-mobile-title">
             <h2>Counselor Dashboard</h2>
-            <p>{new Date().toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric'
-            })}</p>
+            <p>
+              {new Date().toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </p>
           </div>
-          <div className="couns-mobile-notif" onClick={() => fetchPendingRequests()}>
+          <div
+            className="couns-mobile-notif"
+            onClick={() => fetchPendingRequests()}
+          >
             <FaBell />
             {pendingRequests.length > 0 && (
-              <span className="couns-notif-badge">{pendingRequests.length}</span>
+              <span className="couns-notif-badge">
+                {pendingRequests.length}
+              </span>
             )}
           </div>
         </div>
@@ -939,25 +1102,34 @@ export default function CounselorDashboard() {
                 {counselorData?.profilePhoto ? (
                   <img
                     src={counselorData.profilePhoto}
-                    alt={counselorData?.name || 'Profile'}
+                    alt={counselorData?.name || "Profile"}
                     className="couns-profile-avatar-img"
                     onError={(e) => {
-                      console.error('Image failed to load:', counselorData?.profilePhoto);
+                      console.error(
+                        "Image failed to load:",
+                        counselorData?.profilePhoto,
+                      );
                       e.target.onerror = null;
-                      e.target.style.display = 'none';
+                      e.target.style.display = "none";
                       const fallbackIcon = e.target.nextElementSibling;
-                      if (fallbackIcon) fallbackIcon.style.display = 'block';
+                      if (fallbackIcon) fallbackIcon.style.display = "block";
                     }}
                   />
                 ) : null}
                 {!counselorData?.profilePhoto && (
                   <FaUserCircle className="couns-profile-avatar" />
                 )}
-                <FaUserCircle className="couns-profile-avatar-fallback" style={{ display: 'none' }} />
+                <FaUserCircle
+                  className="couns-profile-avatar-fallback"
+                  style={{ display: "none" }}
+                />
 
-                <h3>{counselorData?.name || 'Counselor'}</h3>
+                <h3>{counselorData?.name || "Counselor"}</h3>
 
-                <p><strong>Specialization:</strong> {counselorData?.specialization || 'Not specified'}</p>
+                <p>
+                  <strong>Specialization:</strong>{" "}
+                  {counselorData?.specialization || "Not specified"}
+                </p>
 
                 <div className="couns-rating-badge">
                   <FaStar className="couns-star" />
@@ -965,19 +1137,27 @@ export default function CounselorDashboard() {
                 </div>
 
                 <div className="couns-extra-info">
-                  <p><strong>Email:</strong> {counselorData?.email || 'Not specified'}</p>
-                  <p><strong>Phone:</strong> {counselorData?.phoneNumber || 'Not specified'}</p>
-                  <p><strong>Experience:</strong> {counselorData?.experience || '0 years'}</p>
+                  <p>
+                    <strong>Email:</strong>{" "}
+                    {counselorData?.email || "Not specified"}
+                  </p>
+                  <p>
+                    <strong>Phone:</strong>{" "}
+                    {counselorData?.phoneNumber || "Not specified"}
+                  </p>
+                  <p>
+                    <strong>Experience:</strong>{" "}
+                    {counselorData?.experience || "0 years"}
+                  </p>
                 </div>
-
               </div>
             </div>
 
             <nav className="couns-mobile-nav">
-              {navItems.map(item => (
+              {navItems.map((item) => (
                 <button
                   key={item.id}
-                  className={`couns-mobile-nav-item ${activeTab === item.id ? 'active' : ''}`}
+                  className={`couns-mobile-nav-item ${activeTab === item.id ? "active" : ""}`}
                   onClick={() => handleTabChange(item.id)}
                 >
                   <span className="couns-mobile-nav-icon">{item.icon}</span>
@@ -996,7 +1176,9 @@ export default function CounselorDashboard() {
                   setShowLogoutConfirm(true);
                 }}
               >
-                <span className="couns-mobile-nav-icon"><FaSignOutAlt /></span>
+                <span className="couns-mobile-nav-icon">
+                  <FaSignOutAlt />
+                </span>
                 <span className="couns-mobile-nav-label">Logout</span>
                 <FaArrowRight className="couns-mobile-nav-arrow" />
               </button>
@@ -1008,10 +1190,10 @@ export default function CounselorDashboard() {
       {/* Mobile Bottom Navigation */}
       {isMobile && !showMobileMenu && (
         <nav className="couns-mobile-bottom-nav">
-          {navItems.slice(0, 5).map(item => (
+          {navItems.slice(0, 5).map((item) => (
             <button
               key={item.id}
-              className={`couns-bottom-nav-item ${activeTab === item.id ? 'active' : ''}`}
+              className={`couns-bottom-nav-item ${activeTab === item.id ? "active" : ""}`}
               onClick={() => handleTabChange(item.id)}
             >
               <span className="couns-bottom-nav-icon">{item.icon}</span>
@@ -1025,8 +1207,8 @@ export default function CounselorDashboard() {
       )}
 
       {/* Main Content */}
-      <div className={`couns-main-content ${isMobile ? 'mobile' : ''}`}>
-        {activeTab === 'dashboard' && (
+      <div className={`couns-main-content ${isMobile ? "mobile" : ""}`}>
+        {activeTab === "dashboard" && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <Dashboard />
@@ -1034,7 +1216,7 @@ export default function CounselorDashboard() {
           </div>
         )}
 
-        {activeTab === 'appointments' && (
+        {activeTab === "appointments" && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <h2>My Appointments</h2>
@@ -1061,7 +1243,7 @@ export default function CounselorDashboard() {
           </div>
         )}
 
-        {activeTab === 'sessions' && (
+        {activeTab === "sessions" && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <h2>Today's Sessions</h2>
@@ -1076,7 +1258,7 @@ export default function CounselorDashboard() {
           </div>
         )}
 
-        {activeTab === 'patients' && (
+        {activeTab === "patients" && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <PatientRequests />
@@ -1084,7 +1266,7 @@ export default function CounselorDashboard() {
           </div>
         )}
 
-        {activeTab === 'earnings' && (
+        {activeTab === "earnings" && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <h2>Earnings Overview</h2>
@@ -1110,18 +1292,24 @@ export default function CounselorDashboard() {
               <h3>Earnings Overview</h3>
               <div className="couns-chart-placeholder">
                 <div className="couns-chart-bars">
-                  {['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'].map((month, i) => (
-                    <div key={i} className="couns-chart-bar" style={{ height: '0px' }}>
-                      {month}
-                    </div>
-                  ))}
+                  {["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map(
+                    (month, i) => (
+                      <div
+                        key={i}
+                        className="couns-chart-bar"
+                        style={{ height: "0px" }}
+                      >
+                        {month}
+                      </div>
+                    ),
+                  )}
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {activeTab === 'messages' && (
+        {activeTab === "messages" && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <Messagesou />
@@ -1129,13 +1317,13 @@ export default function CounselorDashboard() {
           </div>
         )}
 
-        {activeTab === 'profile' && (
+        {activeTab === "profile" && (
           <div className="couns-tab-content">
             <CounselorProfile />
           </div>
         )}
 
-        {activeTab === 'settings' && (
+        {activeTab === "settings" && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
               <h2>Settings</h2>
@@ -1156,8 +1344,11 @@ export default function CounselorDashboard() {
 
       {/* Request Modal */}
       {showRequestModal && currentRequest && (
-        <div className="couns-request-modal-overlay" onClick={() => { }}>
-          <div className="couns-request-modal" onClick={e => e.stopPropagation()}>
+        <div className="couns-request-modal-overlay" onClick={() => {}}>
+          <div
+            className="couns-request-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="couns-request-modal-header">
               <div className="couns-request-header-left">
                 <div className="couns-request-icon">
@@ -1165,7 +1356,9 @@ export default function CounselorDashboard() {
                 </div>
                 <div>
                   <h3>New Chat Request</h3>
-                  <p className="couns-request-timer">Auto-closes in {modalCountdown}s</p>
+                  <p className="couns-request-timer">
+                    Auto-closes in {modalCountdown}s
+                  </p>
                 </div>
               </div>
             </div>
@@ -1173,22 +1366,31 @@ export default function CounselorDashboard() {
             <div className="couns-request-modal-body">
               <div className="couns-request-patient-info">
                 <div className="couns-request-patient-name">
-                  <h4>{currentRequest.user?.anonymous || currentRequest.patientName || 'Unknown User'}</h4>
+                  <h4>
+                    {currentRequest.user?.anonymous ||
+                      currentRequest.patientName ||
+                      "Unknown User"}
+                  </h4>
                 </div>
                 <div className="couns-request-type">
-                  <span className="couns-request-type-badge">
-                    Chat Request
-                  </span>
+                  <span className="couns-request-type-badge">Chat Request</span>
                 </div>
               </div>
 
               <div className="couns-request-message">
-                <p>{currentRequest.requestMessage || currentRequest.message || 'Would like to start a conversation with you.'}</p>
+                <p>
+                  {currentRequest.requestMessage ||
+                    currentRequest.message ||
+                    "Would like to start a conversation with you."}
+                </p>
               </div>
 
               <div className="couns-request-meta">
                 <span className="couns-request-time">
-                  Requested: {new Date(currentRequest.requestedAt || currentRequest.requestedAt).toLocaleTimeString()}
+                  Requested:{" "}
+                  {new Date(
+                    currentRequest.requestedAt || currentRequest.requestedAt,
+                  ).toLocaleTimeString()}
                 </span>
               </div>
             </div>
@@ -1224,8 +1426,14 @@ export default function CounselorDashboard() {
 
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
-        <div className="couns-modal-overlay" onClick={() => setShowLogoutConfirm(false)}>
-          <div className="couns-modal-content small" onClick={e => e.stopPropagation()}>
+        <div
+          className="couns-modal-overlay"
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div
+            className="couns-modal-content small"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="couns-logout-modal">
               <FaExclamationTriangle className="couns-warning-icon" />
               <h3>Confirm Logout</h3>
@@ -1237,10 +1445,7 @@ export default function CounselorDashboard() {
                 >
                   Cancel
                 </button>
-                <button
-                  className="couns-confirm-btn"
-                  onClick={handleLogout}
-                >
+                <button className="couns-confirm-btn" onClick={handleLogout}>
                   Logout
                 </button>
               </div>
