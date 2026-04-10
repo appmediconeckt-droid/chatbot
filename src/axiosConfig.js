@@ -60,7 +60,7 @@
 
 //           // Update authorization header
 //           originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
-          
+
 //           // Retry the original request
 //           return axiosInstance(originalRequest);
 //         }
@@ -81,7 +81,15 @@
 // frontend/src/api/axiosConfig.js
 import axios from "axios";
 
-export const API_BASE_URL = "https://sq5gkv1z-5000.inc1.devtunnels.ms";
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+if (!envApiBaseUrl) {
+  throw new Error(
+    "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",
+  );
+}
+
+export const API_BASE_URL = envApiBaseUrl.replace(/\/+$/, "");
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -128,7 +136,7 @@ axiosInstance.interceptors.response.use(
         const response = await axios.post(
           `${API_BASE_URL}/api/auth/refresh-token`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         const { accessToken } = response.data;
@@ -153,7 +161,6 @@ axiosInstance.interceptors.response.use(
         localStorage.removeItem("accessToken");
 
         // logout redirect
-       
 
         return Promise.reject(refreshError);
       } finally {
@@ -162,7 +169,7 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;
