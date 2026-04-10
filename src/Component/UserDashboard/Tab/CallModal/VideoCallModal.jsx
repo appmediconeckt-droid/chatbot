@@ -103,19 +103,23 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
   }, []);
 
   const updateRemoteState = useCallback(() => {
-    const hasLiveVideo = Boolean(
-      remoteStreamRef.current?.getVideoTracks()?.some(
-        (track) => track.readyState === "live",
-      ),
+    const videoTracks = remoteStreamRef.current?.getVideoTracks?.() || [];
+    const hasLiveVideo = videoTracks.some(
+      (track) => track.readyState === "live",
     );
+    const hasAnyTrack = videoTracks.length > 0;
 
-    setIsRemoteVideoReady(hasLiveVideo);
+    // Mark ready if we have any video track (even if not yet "live" on
+    // some browsers) OR if the peer connection itself is connected.
+    const shouldMarkReady =
+      hasLiveVideo ||
+      (hasAnyTrack && peerRef.current?.connectionState === "connected");
 
-    if (hasLiveVideo) {
+    setIsRemoteVideoReady(shouldMarkReady);
+
+    if (shouldMarkReady) {
       setIsConnecting(false);
       setWebrtcError("");
-    } else if (peerRef.current?.connectionState === "connected") {
-      setWebrtcError("Connected. Remote camera is not sending video.");
     }
   }, []);
 
@@ -315,7 +319,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
       });
       await peerRef.current.setLocalDescription(offer);
       socket.emit("call-offer", { callId, offer, to: remoteUserIdRef.current });
-      socket.emit("offer", { callId, offer, userId: localUserIdRef.current });
     };
 
     peer.onicecandidate = (event) => {
@@ -346,10 +349,20 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
     };
 
     peer.onconnectionstatechange = () => {
-      if (peer.connectionState === "connected") {
+      const state = peer.connectionState;
+      if (state === "connected") {
         setIsConnecting(false);
+        setWebrtcError("");
+        // Re-check remote tracks — they may have arrived before connection
+        // was fully established and weren't "live" yet.
+        updateRemoteState();
+        // Retry playback in case autoplay was blocked earlier.
+        if (remoteVideoRef.current && remoteStreamRef.current) {
+          remoteVideoRef.current.srcObject = remoteStreamRef.current;
+          remoteVideoRef.current.play().catch(() => {});
+        }
       }
-      if (peer.connectionState === "failed" || peer.connectionState === "disconnected") {
+      if (state === "failed" || state === "disconnected") {
         setWebrtcError("Video connection interrupted.");
       }
     };
@@ -375,7 +388,6 @@ const VideoCallModal = ({ isOpen, onClose, callData, currentUser, onEndCall }) =
         const answer = await peerRef.current.createAnswer();
         await peerRef.current.setLocalDescription(answer);
         socket.emit("call-answer", { callId, answer, to: remoteUserIdRef.current });
-        socket.emit("answer", { callId, answer, userId: localUserIdRef.current });
       } catch {
         setWebrtcError("Failed to process call offer.");
       }
