@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import { RTC_CONFIGURATION } from "../../../../rtcConfig";
 import "./VoiceCallModal.css";
 
 const ACTIVE_STATUSES = new Set(["active", "connected"]);
@@ -17,35 +18,6 @@ const TERMINAL_STATUSES = new Set([
 
 const MAX_RECONNECT_ATTEMPTS = 4;
 const RECONNECT_BASE_DELAY_MS = 1500;
-
-const buildRtcConfiguration = () => {
-  const iceServers = [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-  ];
-
-  const turnUrl = import.meta.env.VITE_TURN_URL;
-  const turnUsername = import.meta.env.VITE_TURN_USERNAME;
-  const turnCredential = import.meta.env.VITE_TURN_CREDENTIAL;
-
-  if (turnUrl && turnUsername && turnCredential) {
-    const urls = turnUrl
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    iceServers.push({
-      urls: urls.length > 1 ? urls : urls[0],
-      username: turnUsername,
-      credential: turnCredential,
-    });
-  }
-
-  return { iceServers };
-};
-
-const RTC_CONFIGURATION = buildRtcConfiguration();
 
 const normalizeUserType = (userType) => {
   if (!userType) return "user";
@@ -470,18 +442,56 @@ const VoiceCallModal = ({
     };
   }, [isOpen, isCallActive, callMetadata.startTime, callMetadata.status]);
 
-  // Simulate connection quality changes
+  // Measure real connection quality from WebRTC stats
   useEffect(() => {
-    if (isOpen && isCallActive) {
-      const qualityInterval = setInterval(() => {
-        const qualities = ["good", "medium", "poor"];
-        const randomQuality =
-          qualities[Math.floor(Math.random() * qualities.length)];
-        setConnectionQuality(randomQuality);
-      }, 10000);
-      return () => clearInterval(qualityInterval);
-    }
-    return undefined;
+    if (!isOpen || !isCallActive) return undefined;
+
+    const qualityInterval = setInterval(async () => {
+      if (
+        !peerConnectionRef.current ||
+        peerConnectionRef.current.connectionState !== "connected"
+      ) {
+        return;
+      }
+
+      try {
+        const stats = await peerConnectionRef.current.getStats();
+        let roundTripTime = null;
+        let packetsLost = 0;
+        let packetsReceived = 0;
+
+        stats.forEach((report) => {
+          if (
+            report.type === "candidate-pair" &&
+            report.state === "succeeded"
+          ) {
+            roundTripTime = report.currentRoundTripTime;
+          }
+          if (report.type === "inbound-rtp" && report.kind === "audio") {
+            packetsLost = report.packetsLost || 0;
+            packetsReceived = report.packetsReceived || 0;
+          }
+        });
+
+        const totalPackets = packetsReceived + packetsLost;
+        const lossRate = totalPackets > 0 ? packetsLost / totalPackets : 0;
+
+        if (roundTripTime !== null && roundTripTime > 0.3) {
+          setConnectionQuality("poor");
+        } else if (
+          lossRate > 0.05 ||
+          (roundTripTime !== null && roundTripTime > 0.15)
+        ) {
+          setConnectionQuality("medium");
+        } else {
+          setConnectionQuality("good");
+        }
+      } catch {
+        // Stats not available yet
+      }
+    }, 5000);
+
+    return () => clearInterval(qualityInterval);
   }, [isOpen, isCallActive]);
 
   // Handle audio mute/unmute
@@ -565,10 +575,8 @@ const VoiceCallModal = ({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       mediaStreamRef.current = stream;
 
-      const audioTracks = stream.getAudioTracks();
-      audioTracks.forEach((track) => {
-        track.enabled = !isMuted;
-      });
+      // Mute state is managed separately via the isMuted effect,
+      // so we don't reference isMuted here to avoid unstable deps.
 
       stopVisualizer();
 
@@ -598,7 +606,7 @@ const VoiceCallModal = ({
       setCallMetadata((prev) => ({ ...prev, status: "microphone_error" }));
       return null;
     }
-  }, [isMuted, stopVisualizer]);
+  }, [stopVisualizer]);
 
   const scheduleReconnect = useCallback(
     (reason = "Network issue") => {
@@ -827,6 +835,7 @@ const VoiceCallModal = ({
 
       if (state === "failed" || state === "disconnected") {
         setWebrtcError("Voice connection interrupted.");
+        scheduleReconnect("Voice connection interrupted");
       }
     };
 
@@ -848,6 +857,7 @@ const VoiceCallModal = ({
 
     socket.on("user-joined", async ({ userId }) => {
       if (String(userId) === String(localUserIdRef.current)) return;
+      if (peerConnectionRef.current?.connectionState === "connected") return;
       await sendOffer();
     });
 
@@ -977,16 +987,17 @@ const VoiceCallModal = ({
       console.error("Socket connect error:", error);
       if (hasEverConnectedRef.current) {
         scheduleReconnect("Realtime voice service unreachable");
+      } else {
+        setWebrtcError("Realtime voice service unreachable.");
       }
     });
 
     socket.on("disconnect", (reason) => {
-      if (!isManualCloseRef.current) {
-        if (hasEverConnectedRef.current) {
-          setWebrtcError(
-            `Socket disconnected (${reason || "unknown"}). Please reconnect.`,
-          );
-        }
+      if (!isManualCloseRef.current && hasEverConnectedRef.current) {
+        setWebrtcError(
+          `Socket disconnected (${reason || "unknown"}). Reconnecting...`,
+        );
+        scheduleReconnect("Socket disconnected");
       }
     });
 
@@ -1002,6 +1013,7 @@ const VoiceCallModal = ({
     initializeAudio,
     onClose,
     resetReconnectState,
+    scheduleReconnect,
     stopVisualizer,
     updateRemoteAudioState,
     attemptRemoteAudioPlayback,
@@ -1108,9 +1120,9 @@ const VoiceCallModal = ({
       case "good":
         return "📶";
       case "medium":
-        return "📶";
+        return "📉";
       case "poor":
-        return "📶";
+        return "⚠️";
       default:
         return "📶";
     }

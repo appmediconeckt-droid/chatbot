@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import { RTC_CONFIGURATION } from "../../../../rtcConfig";
 import "./VideoCallModal.css";
 
 const ACTIVE = new Set(["active", "connected"]);
@@ -15,6 +16,9 @@ const TERMINAL = new Set([
   "camera_error",
   "no_camera",
 ]);
+
+const MAX_RECONNECT_ATTEMPTS = 4;
+const RECONNECT_BASE_DELAY_MS = 1500;
 
 const normalizeStatus = (status) => {
   if (!status) return "connecting";
@@ -32,35 +36,6 @@ const normalizeUserType = (userType) => {
   return userType === "counsellor" ? "counselor" : userType;
 };
 
-const buildRtcConfig = () => {
-  const iceServers = [
-    { urls: "stun:stun.l.google.com:19302" },
-    { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
-  ];
-
-  const turnUrl = import.meta.env.VITE_TURN_URL;
-  const turnUsername = import.meta.env.VITE_TURN_USERNAME;
-  const turnCredential = import.meta.env.VITE_TURN_CREDENTIAL;
-
-  if (turnUrl && turnUsername && turnCredential) {
-    const urls = turnUrl
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean);
-
-    iceServers.push({
-      urls: urls.length > 1 ? urls : urls[0],
-      username: turnUsername,
-      credential: turnCredential,
-    });
-  }
-
-  return { iceServers };
-};
-
-const RTC_CONFIGURATION = buildRtcConfig();
-
 const VideoCallModal = ({
   isOpen,
   onClose,
@@ -69,7 +44,7 @@ const VideoCallModal = ({
   onEndCall,
 }) => {
   const [isMuted, setIsMuted] = useState(false);
-  const [isSpeakerOn, setIsSpeakerOn] = useState(false);
+  const [isSpeakerOn, setIsSpeakerOn] = useState(true);
   const [isVideoEnabled, setIsVideoEnabled] = useState(true);
   const [isCameraSwitched, setIsCameraSwitched] = useState(false);
   const [isCallActive, setIsCallActive] = useState(true);
@@ -91,6 +66,7 @@ const VideoCallModal = ({
   const [callStartTime, setCallStartTime] = useState(null);
   const [apiCallData, setApiCallData] = useState(null);
   const [isConnecting, setIsConnecting] = useState(true);
+  const [isReconnecting, setIsReconnecting] = useState(false);
   const [isRemoteVideoReady, setIsRemoteVideoReady] = useState(false);
   const [webrtcError, setWebrtcError] = useState("");
 
@@ -104,6 +80,24 @@ const VideoCallModal = ({
   const startedRef = useRef(false);
   const localUserIdRef = useRef("");
   const remoteUserIdRef = useRef("");
+  const hasEverConnectedRef = useRef(false);
+  const isManualCloseRef = useRef(false);
+  const reconnectTimeoutRef = useRef(null);
+  const reconnectAttemptsRef = useRef(0);
+  const establishConnectionRef = useRef(null);
+
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  const resetReconnectState = useCallback(() => {
+    clearReconnectTimer();
+    reconnectAttemptsRef.current = 0;
+    setIsReconnecting(false);
+  }, [clearReconnectTimer]);
 
   const setLocalPreview = useCallback((stream) => {
     if (!localVideoRef.current) return;
@@ -118,8 +112,6 @@ const VideoCallModal = ({
     );
     const hasAnyTrack = videoTracks.length > 0;
 
-    // Mark ready if we have any video track (even if not yet "live" on
-    // some browsers) OR if the peer connection itself is connected.
     const shouldMarkReady =
       hasLiveVideo ||
       (hasAnyTrack && peerRef.current?.connectionState === "connected");
@@ -127,66 +119,73 @@ const VideoCallModal = ({
     setIsRemoteVideoReady(shouldMarkReady);
 
     if (shouldMarkReady) {
+      hasEverConnectedRef.current = true;
       setIsConnecting(false);
+      setIsReconnecting(false);
+      resetReconnectState();
       setWebrtcError("");
     }
-  }, []);
+  }, [resetReconnectState]);
 
-  const cleanupRealtime = useCallback(() => {
-    if (peerRef.current) {
-      peerRef.current.onicecandidate = null;
-      peerRef.current.ontrack = null;
-      peerRef.current.onconnectionstatechange = null;
-      peerRef.current.onnegotiationneeded = null;
-      try {
-        peerRef.current.close();
-      } catch {}
-      peerRef.current = null;
-    }
+  const cleanupRealtime = useCallback(
+    ({ emitLeave = true } = {}) => {
+      if (peerRef.current) {
+        peerRef.current.onicecandidate = null;
+        peerRef.current.ontrack = null;
+        peerRef.current.onconnectionstatechange = null;
+        peerRef.current.onnegotiationneeded = null;
+        try {
+          peerRef.current.close();
+        } catch {}
+        peerRef.current = null;
+      }
 
-    if (socketRef.current) {
-      try {
-        if (callId && localUserIdRef.current) {
-          socketRef.current.emit("leave-call", {
-            callId,
-            userId: localUserIdRef.current,
-          });
-        }
-      } catch {}
+      if (socketRef.current) {
+        try {
+          if (emitLeave && callId && localUserIdRef.current) {
+            socketRef.current.emit("leave-call", {
+              callId,
+              userId: localUserIdRef.current,
+            });
+          }
+        } catch {}
 
-      [
-        "connect",
-        "offer",
-        "answer",
-        "call-offer",
-        "call-answer",
-        "ice-candidate",
-        "user-joined",
-        "user-left",
-        "user-left-call",
-        "call_ended",
-        "call-ended",
-        "call-status-update",
-        "connect_error",
-      ].forEach((eventName) => socketRef.current.off(eventName));
+        [
+          "connect",
+          "offer",
+          "answer",
+          "call-offer",
+          "call-answer",
+          "ice-candidate",
+          "user-joined",
+          "user-left",
+          "user-left-call",
+          "call_ended",
+          "call-ended",
+          "call-status-update",
+          "connect_error",
+          "disconnect",
+        ].forEach((eventName) => socketRef.current.off(eventName));
 
-      socketRef.current.disconnect();
-      socketRef.current = null;
-    }
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
 
-    if (remoteStreamRef.current) {
-      remoteStreamRef.current.getTracks().forEach((track) => track.stop());
-      remoteStreamRef.current = null;
-    }
+      if (remoteStreamRef.current) {
+        remoteStreamRef.current.getTracks().forEach((track) => track.stop());
+        remoteStreamRef.current = null;
+      }
 
-    if (remoteVideoRef.current) {
-      remoteVideoRef.current.srcObject = null;
-    }
+      if (remoteVideoRef.current) {
+        remoteVideoRef.current.srcObject = null;
+      }
 
-    pendingIceRef.current = [];
-    startedRef.current = false;
-    setIsRemoteVideoReady(false);
-  }, [callId]);
+      pendingIceRef.current = [];
+      startedRef.current = false;
+      setIsRemoteVideoReady(false);
+    },
+    [callId],
+  );
 
   const replaceOutgoingTracks = useCallback((stream) => {
     if (!peerRef.current || !stream) return;
@@ -211,6 +210,9 @@ const VideoCallModal = ({
     });
   }, []);
 
+  // initializeCamera — does NOT depend on isMuted or isVideoEnabled
+  // to prevent re-acquisition when the user toggles mute/video.
+  const initializeCameraRef = useRef(null);
   const initializeCamera = useCallback(
     async (useBackCamera = false, selectedDeviceId = "") => {
       try {
@@ -234,12 +236,6 @@ const VideoCallModal = ({
         };
 
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
-        stream.getVideoTracks().forEach((track) => {
-          track.enabled = isVideoEnabled;
-        });
-        stream.getAudioTracks().forEach((track) => {
-          track.enabled = !isMuted;
-        });
 
         localStreamRef.current = stream;
         setLocalPreview(stream);
@@ -255,8 +251,11 @@ const VideoCallModal = ({
         return null;
       }
     },
-    [isMuted, isVideoEnabled, replaceOutgoingTracks, setLocalPreview],
+    [replaceOutgoingTracks, setLocalPreview],
   );
+
+  // Keep ref in sync for reconnect
+  initializeCameraRef.current = initializeCamera;
 
   const getAvailableCameras = useCallback(async () => {
     try {
@@ -268,6 +267,48 @@ const VideoCallModal = ({
       console.error("Error listing cameras:", error);
     }
   }, []);
+
+  // Reconnect scheduler — mirrors VoiceCallModal logic
+  const scheduleReconnect = useCallback(
+    (reason = "Network issue") => {
+      if (isManualCloseRef.current || !isOpen || !isCallActive) return;
+      if (!hasEverConnectedRef.current) return;
+      if (
+        !callId ||
+        !isConnectedStatus(callStatus) ||
+        isTerminalStatus(callStatus)
+      )
+        return;
+      if (reconnectTimeoutRef.current) return;
+
+      const nextAttempt = reconnectAttemptsRef.current + 1;
+      if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
+        setIsReconnecting(false);
+        setWebrtcError("Video call connection lost. Please call again.");
+        return;
+      }
+
+      reconnectAttemptsRef.current = nextAttempt;
+      setIsReconnecting(true);
+      setIsConnecting(true);
+      setIsRemoteVideoReady(false);
+      setWebrtcError(
+        `${reason}. Reconnecting... (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
+      );
+
+      const delay = Math.min(RECONNECT_BASE_DELAY_MS * nextAttempt, 7000);
+
+      reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null;
+        cleanupRealtime({ emitLeave: false });
+        startedRef.current = false;
+        if (typeof establishConnectionRef.current === "function") {
+          establishConnectionRef.current();
+        }
+      }, delay);
+    },
+    [cleanupRealtime, isCallActive, isOpen, callId, callStatus],
+  );
 
   const establishConnection = useCallback(async () => {
     if (startedRef.current || !callId || !isConnectedStatus(callStatus)) return;
@@ -299,7 +340,8 @@ const VideoCallModal = ({
         : String(initiatorId);
 
     const localStream =
-      localStreamRef.current || (await initializeCamera(isCameraSwitched));
+      localStreamRef.current ||
+      (await initializeCameraRef.current(isCameraSwitched));
     if (!localStream) return;
 
     const token =
@@ -372,12 +414,12 @@ const VideoCallModal = ({
     peer.onconnectionstatechange = () => {
       const state = peer.connectionState;
       if (state === "connected") {
+        hasEverConnectedRef.current = true;
         setIsConnecting(false);
+        setIsReconnecting(false);
+        resetReconnectState();
         setWebrtcError("");
-        // Re-check remote tracks — they may have arrived before connection
-        // was fully established and weren't "live" yet.
         updateRemoteState();
-        // Retry playback in case autoplay was blocked earlier.
         if (remoteVideoRef.current && remoteStreamRef.current) {
           remoteVideoRef.current.srcObject = remoteStreamRef.current;
           remoteVideoRef.current.play().catch(() => {});
@@ -385,15 +427,21 @@ const VideoCallModal = ({
       }
       if (state === "failed" || state === "disconnected") {
         setWebrtcError("Video connection interrupted.");
+        scheduleReconnect("Video connection interrupted");
       }
     };
 
     socket.on("connect", () => {
+      resetReconnectState();
+      if (peerRef.current && peerRef.current.connectionState === "connected") {
+        setIsConnecting(false);
+      }
       socket.emit("join-call", { callId, userId: localUserIdRef.current });
     });
 
     socket.on("user-joined", async ({ userId }) => {
       if (String(userId) === localUserIdRef.current) return;
+      if (peerRef.current?.connectionState === "connected") return;
       await sendOffer();
     });
 
@@ -440,6 +488,9 @@ const VideoCallModal = ({
     const handleRemoteCallEnded = ({ callId: endedCallId, endedBy } = {}) => {
       if (endedCallId && String(endedCallId) !== String(callId)) return;
 
+      isManualCloseRef.current = true;
+      resetReconnectState();
+      hasEverConnectedRef.current = false;
       setIsCallActive(false);
       setCallStatus("ended");
       setIsConnecting(false);
@@ -501,9 +552,22 @@ const VideoCallModal = ({
       }
     });
 
-    socket.on("connect_error", () =>
-      setWebrtcError("Realtime connection failed."),
-    );
+    socket.on("connect_error", () => {
+      if (hasEverConnectedRef.current) {
+        scheduleReconnect("Realtime connection failed");
+      } else {
+        setWebrtcError("Realtime connection failed.");
+      }
+    });
+
+    socket.on("disconnect", (reason) => {
+      if (!isManualCloseRef.current && hasEverConnectedRef.current) {
+        setWebrtcError(
+          `Socket disconnected (${reason || "unknown"}). Reconnecting...`,
+        );
+        scheduleReconnect("Socket disconnected");
+      }
+    });
 
     startedRef.current = true;
   }, [
@@ -513,12 +577,19 @@ const VideoCallModal = ({
     callStatus,
     cleanupRealtime,
     currentUser,
-    initializeCamera,
     isCameraSwitched,
     onClose,
+    resetReconnectState,
+    scheduleReconnect,
     updateRemoteState,
   ]);
 
+  // Keep ref in sync for reconnect
+  useEffect(() => {
+    establishConnectionRef.current = establishConnection;
+  }, [establishConnection]);
+
+  // Process callData when modal opens
   useEffect(() => {
     if (!isOpen) return;
 
@@ -534,17 +605,29 @@ const VideoCallModal = ({
     setCallDuration(0);
     setIsConnecting(!isConnectedStatus(status) && !isTerminalStatus(status));
     setIsRemoteVideoReady(false);
+    setIsReconnecting(false);
     setWebrtcError("");
     startedRef.current = false;
-  }, [isOpen, callData]);
+    isManualCloseRef.current = false;
+    hasEverConnectedRef.current = false;
+    reconnectAttemptsRef.current = 0;
+    clearReconnectTimer();
+  }, [isOpen, callData, clearReconnectTimer]);
 
+  // Initialize camera when modal opens (once)
+  const cameraInitializedRef = useRef(false);
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !cameraInitializedRef.current) {
+      cameraInitializedRef.current = true;
       initializeCamera(false);
       getAvailableCameras();
     }
-  }, [getAvailableCameras, initializeCamera, isOpen]);
+    if (!isOpen) {
+      cameraInitializedRef.current = false;
+    }
+  }, [isOpen, getAvailableCameras, initializeCamera]);
 
+  // Establish WebRTC connection
   useEffect(() => {
     if (
       isOpen &&
@@ -556,6 +639,7 @@ const VideoCallModal = ({
     }
   }, [isOpen, isCallActive, callStatus, establishConnection]);
 
+  // Sync call status from server
   useEffect(() => {
     if (!isOpen || !callId) return;
     const token =
@@ -605,6 +689,7 @@ const VideoCallModal = ({
     };
   }, [isOpen, callId, currentUser, callData]);
 
+  // Call duration timer
   useEffect(() => {
     if (
       !isOpen ||
@@ -617,6 +702,7 @@ const VideoCallModal = ({
     return () => clearInterval(timer);
   }, [isOpen, isCallActive, callStartTime, callStatus]);
 
+  // Handle video enable/disable via track.enabled (no re-acquisition)
   useEffect(() => {
     if (localStreamRef.current) {
       localStreamRef.current.getVideoTracks().forEach((track) => {
@@ -625,6 +711,7 @@ const VideoCallModal = ({
     }
   }, [isVideoEnabled]);
 
+  // Handle audio mute/unmute via track.enabled (no re-acquisition)
   useEffect(() => {
     if (localStreamRef.current) {
       localStreamRef.current.getAudioTracks().forEach((track) => {
@@ -633,6 +720,7 @@ const VideoCallModal = ({
     }
   }, [isMuted]);
 
+  // Speaker / volume
   useEffect(() => {
     if (!remoteVideoRef.current) return;
     remoteVideoRef.current.muted = !isSpeakerOn;
@@ -642,15 +730,18 @@ const VideoCallModal = ({
     );
   }, [isSpeakerOn, volumeLevel]);
 
+  // Cleanup when modal closes
   useEffect(() => {
     if (isOpen) return;
+    isManualCloseRef.current = true;
+    resetReconnectState();
     cleanupRealtime();
     if (localStreamRef.current) {
       localStreamRef.current.getTracks().forEach((track) => track.stop());
       localStreamRef.current = null;
     }
     setIsMuted(false);
-    setIsSpeakerOn(false);
+    setIsSpeakerOn(true);
     setIsVideoEnabled(true);
     setIsCameraSwitched(false);
     setIsRecording(false);
@@ -661,11 +752,29 @@ const VideoCallModal = ({
     setCallId("");
     setRoomId("");
     setApiCallData(null);
-  }, [cleanupRealtime, isOpen]);
+    setIsReconnecting(false);
+    setWebrtcError("");
+    hasEverConnectedRef.current = false;
+  }, [cleanupRealtime, isOpen, resetReconnectState]);
 
-  useEffect(() => () => cleanupRealtime(), [cleanupRealtime]);
+  // Unmount cleanup
+  useEffect(
+    () => () => {
+      isManualCloseRef.current = true;
+      clearReconnectTimer();
+      cleanupRealtime();
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => track.stop());
+        localStreamRef.current = null;
+      }
+    },
+    [cleanupRealtime, clearReconnectTimer],
+  );
 
   const handleEndCall = async () => {
+    isManualCloseRef.current = true;
+    resetReconnectState();
+    hasEverConnectedRef.current = false;
     setIsCallActive(false);
     setCallStatus("ended");
     cleanupRealtime();
@@ -734,6 +843,7 @@ const VideoCallModal = ({
 
   const getStatusText = () => {
     if (webrtcError) return webrtcError;
+    if (isReconnecting) return "Reconnecting video call...";
     if (isConnecting) return "Connecting...";
     if (isConnectedStatus(callStatus) && !isRemoteVideoReady)
       return "Connected. Remote camera is not sending video.";
