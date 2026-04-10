@@ -33,7 +33,11 @@ const isTerminalStatus = (status) => TERMINAL.has(normalizeStatus(status));
 
 const normalizeUserType = (userType) => {
   if (!userType) return "user";
-  return userType === "counsellor" ? "counselor" : userType;
+  const normalized = String(userType).toLowerCase();
+  if (normalized === "counselor" || normalized === "counsellor") {
+    return "counsellor";
+  }
+  return normalized;
 };
 
 const VideoCallModal = ({
@@ -85,6 +89,20 @@ const VideoCallModal = ({
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttemptsRef = useRef(0);
   const establishConnectionRef = useRef(null);
+  const isCameraSwitchedRef = useRef(false); // ✅ add here
+  // Handle audio mute/unmute via track.enabled (no re-acquisition)
+  useEffect(() => {
+    if (localStreamRef.current) {
+      localStreamRef.current.getAudioTracks().forEach((track) => {
+        track.enabled = !isMuted;
+      });
+    }
+  }, [isMuted]);
+
+  // ✅ Keep ref in sync so establishConnection reads a stable value
+  useEffect(() => {
+    isCameraSwitchedRef.current = isCameraSwitched;
+  }, [isCameraSwitched]);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -205,7 +223,12 @@ const VideoCallModal = ({
 
     stream.getTracks().forEach((track) => {
       if (!handledKinds.has(track.kind)) {
-        peerRef.current.addTrack(track, stream);
+        // ✅ Only addTrack if peer is not yet connected — during an active
+        // call, replaceTrack on an existing sender is the safe path.
+        // addTrack mid-call fires onnegotiationneeded and can drop the call.
+        if (peerRef.current.connectionState !== "connected") {
+          peerRef.current.addTrack(track, stream);
+        }
       }
     });
   }, []);
@@ -215,35 +238,101 @@ const VideoCallModal = ({
   const initializeCameraRef = useRef(null);
   const initializeCamera = useCallback(
     async (useBackCamera = false, selectedDeviceId = "") => {
+      const previousStream = localStreamRef.current;
+      const previousVideoTracks = previousStream?.getVideoTracks?.() || [];
+      const previousAudioTracks =
+        previousStream
+          ?.getAudioTracks?.()
+          .filter((track) => track.readyState === "live") || [];
+      const shouldRequestAudio = previousAudioTracks.length === 0;
+
+      const preferredVideoConstraints = selectedDeviceId
+        ? {
+            deviceId: { exact: selectedDeviceId },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          }
+        : {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+            facingMode: useBackCamera ? "environment" : "user",
+          };
+
+      const requestCameraStream = async (videoConstraints) =>
+        navigator.mediaDevices.getUserMedia({
+          video: videoConstraints,
+          audio: shouldRequestAudio,
+        });
+
       try {
-        if (localStreamRef.current) {
-          localStreamRef.current.getTracks().forEach((track) => track.stop());
+        let captureStream;
+        let fellBackToFront = false;
+
+        try {
+          captureStream = await requestCameraStream(preferredVideoConstraints);
+        } catch (primaryError) {
+          if (!selectedDeviceId && useBackCamera) {
+            // Some devices/browsers don't expose back camera with facingMode.
+            captureStream = await requestCameraStream({
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+              facingMode: "user",
+            });
+            fellBackToFront = true;
+            setWebrtcError(
+              "Back camera unavailable. Switched to front camera.",
+            );
+          } else {
+            throw primaryError;
+          }
         }
 
-        const constraints = {
-          video: selectedDeviceId
-            ? {
-                deviceId: { exact: selectedDeviceId },
-                width: { ideal: 1920 },
-                height: { ideal: 1080 },
-              }
-            : {
-                width: { ideal: 1920 },
-                height: { ideal: 1080 },
-                facingMode: useBackCamera ? "environment" : "user",
-              },
-          audio: true,
-        };
+        const newVideoTrack = captureStream.getVideoTracks()[0];
+        if (!newVideoTrack) {
+          throw new Error("No camera track available.");
+        }
 
-        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        newVideoTrack.enabled = isVideoEnabled;
 
-        localStreamRef.current = stream;
-        setLocalPreview(stream);
-        replaceOutgoingTracks(stream);
+        const freshAudioTracks = captureStream.getAudioTracks();
+        freshAudioTracks.forEach((track) => {
+          track.enabled = !isMuted;
+        });
 
-        const settings = stream.getVideoTracks()[0]?.getSettings?.() || {};
+        const mergedAudioTracks = shouldRequestAudio
+          ? freshAudioTracks
+          : previousAudioTracks;
+
+        const nextStream = new MediaStream([
+          newVideoTrack,
+          ...mergedAudioTracks,
+        ]);
+
+        localStreamRef.current = nextStream;
+        setLocalPreview(nextStream);
+        replaceOutgoingTracks(nextStream);
+
+        // Stop only old video tracks after successful replacement.
+        previousVideoTracks.forEach((track) => {
+          if (track.id !== newVideoTrack.id) {
+            track.stop();
+          }
+        });
+
+        // If audio was reused from previous stream, stop any newly captured
+        // extra audio tracks to avoid duplicates.
+        if (!shouldRequestAudio) {
+          freshAudioTracks.forEach((track) => track.stop());
+        }
+
+        const settings = newVideoTrack.getSettings?.() || {};
         if (settings.deviceId) setCurrentCamera(settings.deviceId);
-        return stream;
+
+        if (!selectedDeviceId) {
+          setIsCameraSwitched(useBackCamera && !fellBackToFront);
+        }
+
+        return nextStream;
       } catch (error) {
         console.error("Camera access error:", error);
         setCallStatus("camera_error");
@@ -251,11 +340,13 @@ const VideoCallModal = ({
         return null;
       }
     },
-    [replaceOutgoingTracks, setLocalPreview],
+    [isMuted, isVideoEnabled, replaceOutgoingTracks, setLocalPreview],
   );
 
   // Keep ref in sync for reconnect
-  initializeCameraRef.current = initializeCamera;
+  useEffect(() => {
+    initializeCameraRef.current = initializeCamera;
+  }, [initializeCamera]);
 
   const getAvailableCameras = useCallback(async () => {
     try {
@@ -300,8 +391,8 @@ const VideoCallModal = ({
 
       reconnectTimeoutRef.current = setTimeout(() => {
         reconnectTimeoutRef.current = null;
-        cleanupRealtime({ emitLeave: false });
         startedRef.current = false;
+        cleanupRealtime({ emitLeave: false });
         if (typeof establishConnectionRef.current === "function") {
           establishConnectionRef.current();
         }
@@ -338,11 +429,15 @@ const VideoCallModal = ({
       String(initiatorId) === String(localUserId)
         ? String(receiverId)
         : String(initiatorId);
+    startedRef.current = true;
 
     const localStream =
       localStreamRef.current ||
       (await initializeCameraRef.current(isCameraSwitched));
-    if (!localStream) return;
+    if (!localStream) {
+      startedRef.current = false;
+      return;
+    }
 
     const token =
       localStorage.getItem("token") ||
@@ -352,6 +447,11 @@ const VideoCallModal = ({
     const socket = io(API_BASE_URL, {
       auth: token ? { token } : undefined,
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
+      reconnectionDelay: RECONNECT_BASE_DELAY_MS,
+      reconnectionDelayMax: 7000,
+      timeout: 10000,
     });
     socketRef.current = socket;
 
@@ -392,22 +492,34 @@ const VideoCallModal = ({
         to: remoteUserIdRef.current,
       });
     };
-
     peer.ontrack = async (event) => {
       const [incomingStream] = event.streams;
       if (incomingStream) {
         remoteStreamRef.current = incomingStream;
+
+        const existingIds = new Set(
+          remoteStreamRef.current.getTracks().map((track) => track.id),
+        );
+        if (event.track && !existingIds.has(event.track.id)) {
+          remoteStreamRef.current.addTrack(event.track);
+        }
       } else {
         if (!remoteStreamRef.current)
           remoteStreamRef.current = new MediaStream();
-        remoteStreamRef.current.addTrack(event.track);
+
+        // ✅ Guard against duplicate tracks (missing in video modal)
+        const existingIds = new Set(
+          remoteStreamRef.current.getTracks().map((t) => t.id),
+        );
+        if (!existingIds.has(event.track.id)) {
+          remoteStreamRef.current.addTrack(event.track);
+        }
       }
 
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStreamRef.current;
         await remoteVideoRef.current.play().catch(() => {});
       }
-
       updateRemoteState();
     };
 
@@ -433,6 +545,8 @@ const VideoCallModal = ({
 
     socket.on("connect", () => {
       resetReconnectState();
+      setWebrtcError("");
+      setIsConnecting(true);
       if (peerRef.current && peerRef.current.connectionState === "connected") {
         setIsConnecting(false);
       }
@@ -442,9 +556,15 @@ const VideoCallModal = ({
     socket.on("user-joined", async ({ userId }) => {
       if (String(userId) === localUserIdRef.current) return;
       if (peerRef.current?.connectionState === "connected") return;
-      await sendOffer();
-    });
 
+      // Only initiator sends offer to avoid glare (simultaneous offers).
+      const isLocalInitiator =
+        String(initiatorId) === String(localUserIdRef.current);
+
+      if (isLocalInitiator) {
+        await sendOffer();
+      }
+    });
     const onOffer = async ({ offer, userId, from }) => {
       const senderId = String(userId || from || "");
       if (!offer || senderId === localUserIdRef.current || !peerRef.current)
@@ -556,7 +676,9 @@ const VideoCallModal = ({
       if (hasEverConnectedRef.current) {
         scheduleReconnect("Realtime connection failed");
       } else {
-        setWebrtcError("Realtime connection failed.");
+        setIsConnecting(true);
+        setIsReconnecting(true);
+        setWebrtcError("Realtime connection failed. Retrying...");
       }
     });
 
@@ -568,8 +690,6 @@ const VideoCallModal = ({
         scheduleReconnect("Socket disconnected");
       }
     });
-
-    startedRef.current = true;
   }, [
     apiCallData,
     callData,
@@ -659,6 +779,7 @@ const VideoCallModal = ({
     if (!token || !userId) return;
 
     let mounted = true;
+
     const syncStatus = async () => {
       try {
         const response = await axios.get(
@@ -668,19 +789,28 @@ const VideoCallModal = ({
             headers: { Authorization: `Bearer ${token}` },
           },
         );
+
         if (!mounted || !response.data?.success || !response.data?.call) return;
+
         const call = response.data.call;
         const status = normalizeStatus(call.status);
-        setCallStatus(status);
+
+        // Don't let polling overwrite a healthy connected local state.
+        setCallStatus((prev) => {
+          const keepLocal =
+            isConnectedStatus(prev) && !isTerminalStatus(status);
+          const nextStatus = keepLocal ? prev : status;
+          setIsConnecting(
+            !isConnectedStatus(nextStatus) && !isTerminalStatus(nextStatus),
+          );
+          return nextStatus;
+        });
+
         setCallId((prev) => call.id || prev);
         setRoomId((prev) => call.roomId || prev);
         setApiCallData(call);
-        setIsConnecting(
-          !isConnectedStatus(status) && !isTerminalStatus(status),
-        );
       } catch {}
     };
-
     syncStatus();
     const intervalId = setInterval(syncStatus, 3000);
     return () => {
@@ -795,13 +925,14 @@ const VideoCallModal = ({
 
   const switchCamera = async () => {
     const next = !isCameraSwitched;
-    setIsCameraSwitched(next);
     await initializeCamera(next);
   };
 
   const selectCamera = async (deviceId) => {
-    setCurrentCamera(deviceId);
-    await initializeCamera(isCameraSwitched, deviceId);
+    const stream = await initializeCamera(isCameraSwitched, deviceId);
+    if (stream) {
+      setCurrentCamera(deviceId);
+    }
   };
 
   const toggleScreenShare = async () => {

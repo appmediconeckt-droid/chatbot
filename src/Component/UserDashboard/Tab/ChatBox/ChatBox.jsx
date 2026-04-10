@@ -620,7 +620,8 @@ const ChatBox = () => {
       console.log("POST API Response:", response.data);
 
       if (response.data && response.data.success) {
-        await fetchMessagesFromAPI();
+        // ✅ The socket `new-message` event delivers the confirmed message
+        // to all clients in real-time — no need to re-fetch all messages.
         return response.data.message;
       } else {
         throw new Error("Invalid API response");
@@ -662,8 +663,35 @@ const ChatBox = () => {
     }
 
     try {
-      await sendMessageToAPI({ messageContent: messageText });
-      setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+      const sentMsg = await sendMessageToAPI({ messageContent: messageText });
+      // Replace temp message with the confirmed server message.
+      // If the socket already delivered it, deduplicate by messageId.
+      setMessages((prev) => {
+        const withoutTemp = prev.filter((m) => !m.isTemporary);
+        if (!sentMsg) return withoutTemp;
+        const alreadyHas = withoutTemp.some(
+          (m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId,
+        );
+        if (alreadyHas) return withoutTemp;
+        return [
+          ...withoutTemp,
+          {
+            id: sentMsg.id || sentMsg._id,
+            messageId: sentMsg.messageId,
+            text: sentMsg.content,
+            sender: "user",
+            senderRole: "user",
+            time: new Date(sentMsg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            fullTime: sentMsg.createdAt,
+            contentType: sentMsg.contentType,
+            isRead: sentMsg.isRead,
+            status: "sent",
+          },
+        ];
+      });
     } catch (err) {
       console.error("Error in message sending flow:", err);
       setMessages((prev) =>
@@ -806,9 +834,10 @@ const ChatBox = () => {
 
       setCallError(errorMessage);
 
-      // Still open modal with fallback data for demo
-      console.log("Opening fallback video modal");
-      const fallbackCallData = {
+      // Do not open a fake call modal when the API failed.
+      setSelectedCall(null);
+      setIsVideoModalOpen(false);
+      /*
         id: Date.now(),
         name: currentCounselor?.name || "Counselor",
         type: "video",
@@ -827,6 +856,7 @@ const ChatBox = () => {
       };
       setSelectedCall(fallbackCallData);
       setIsVideoModalOpen(true);
+      */
     } finally {
       setIsInitiatingCall(false);
     }
@@ -936,8 +966,10 @@ const ChatBox = () => {
 
       setCallError(errorMessage);
 
-      // Fallback modal
-      const fallbackCallData = {
+      // Do not open a fake call modal when the API failed.
+      setSelectedCall(null);
+      setIsVoiceModalOpen(false);
+      /*
         id: Date.now(),
         name: currentCounselor?.name || "Counselor",
         type: "voice",
@@ -956,6 +988,7 @@ const ChatBox = () => {
       };
       setSelectedCall(fallbackCallData);
       setIsVoiceModalOpen(true);
+      */
     } finally {
       setIsInitiatingCall(false);
     }
@@ -1188,6 +1221,13 @@ const ChatBox = () => {
       );
     });
 
+    // Listen for chat-status-update (e.g. counselor accepted/rejected the chat)
+    socket.on("chat-status-update", ({ status, chatId: updatedChatId }) => {
+      console.log("✅ Chat status updated via socket:", status);
+      setChatStatus(status);
+      setCurrentChat((prev) => (prev ? { ...prev, status } : prev));
+    });
+
     socket.on("connect_error", (err) => {
       console.error("Chat socket connection error:", err.message);
     });
@@ -1197,6 +1237,7 @@ const ChatBox = () => {
         chatSocketRef.current.off("new-message");
         chatSocketRef.current.off("user-typing");
         chatSocketRef.current.off("messages-read");
+        chatSocketRef.current.off("chat-status-update");
         chatSocketRef.current.off("connect");
         chatSocketRef.current.off("connect_error");
         chatSocketRef.current.disconnect();

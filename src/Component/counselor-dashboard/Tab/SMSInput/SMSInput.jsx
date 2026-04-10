@@ -557,7 +557,8 @@ const SMSInput = () => {
       console.log("POST API Response:", response.data);
 
       if (response.data && response.data.success) {
-        await fetchMessagesFromAPI();
+        // ✅ The socket `new-message` event delivers the confirmed message
+        // to all clients — no need to re-fetch all messages.
         return response.data.message;
       } else {
         throw new Error("Invalid API response");
@@ -595,8 +596,35 @@ const SMSInput = () => {
     setError(null);
 
     try {
-      await sendMessageToAPI({ messageContent: messageText });
-      setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+      const sentMsg = await sendMessageToAPI({ messageContent: messageText });
+      // Replace temp message with the confirmed server message.
+      // If the socket already delivered it, deduplicate by messageId.
+      setMessages((prev) => {
+        const withoutTemp = prev.filter((m) => !m.isTemporary);
+        if (!sentMsg) return withoutTemp;
+        const alreadyHas = withoutTemp.some(
+          (m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId,
+        );
+        if (alreadyHas) return withoutTemp;
+        return [
+          ...withoutTemp,
+          {
+            id: sentMsg.id || sentMsg._id,
+            messageId: sentMsg.messageId,
+            text: sentMsg.content,
+            sender: "me",
+            senderRole: "counsellor",
+            time: new Date(sentMsg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            fullTime: sentMsg.createdAt,
+            contentType: sentMsg.contentType,
+            isRead: sentMsg.isRead,
+            status: "sent",
+          },
+        ];
+      });
     } catch (err) {
       console.error("Error sending message:", err);
 
@@ -1240,12 +1268,39 @@ const SMSInput = () => {
     socket.on("new-message", (messageData) => {
       console.log("\ud83d\udce9 New message received via socket:", messageData);
 
-      // Skip our own messages
+      // Own message confirmed via socket: replace temp with real one
       if (
         messageData.senderRole === "counsellor" &&
         String(messageData.senderId) === String(COUNSELOR_ID)
       ) {
-        setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+        setMessages((prev) => {
+          const withoutTemp = prev.filter((msg) => !msg.isTemporary);
+          const alreadyHas = withoutTemp.some(
+            (msg) =>
+              msg.messageId &&
+              messageData.messageId &&
+              msg.messageId === messageData.messageId,
+          );
+          if (alreadyHas) return withoutTemp;
+          return [
+            ...withoutTemp,
+            {
+              id: messageData.id || messageData.messageId || "rt_" + Date.now(),
+              messageId: messageData.messageId,
+              text: messageData.content,
+              sender: "me",
+              senderRole: "counsellor",
+              time: new Date(messageData.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              fullTime: messageData.createdAt,
+              contentType: messageData.contentType,
+              isRead: messageData.isRead,
+              status: "sent",
+            },
+          ];
+        });
         return;
       }
 

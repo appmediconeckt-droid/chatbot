@@ -21,7 +21,11 @@ const RECONNECT_BASE_DELAY_MS = 1500;
 
 const normalizeUserType = (userType) => {
   if (!userType) return "user";
-  return userType === "counsellor" ? "counselor" : userType;
+  const normalized = String(userType).toLowerCase();
+  if (normalized === "counselor" || normalized === "counsellor") {
+    return "counsellor";
+  }
+  return normalized;
 };
 
 const normalizeCallStatus = (status) => {
@@ -353,67 +357,71 @@ const VoiceCallModal = ({
     let isMounted = true;
 
     const syncCallState = async () => {
-      try {
-        const response = await axios.get(
-          `${API_BASE_URL}/api/video/calls/${callMetadata.callId}/details`,
-          {
-            params: {
-              userId: localUserId,
-              userType: localUserType,
-            },
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/api/video/calls/${callMetadata.callId}/details`,
+      {
+        params: { userId: localUserId, userType: localUserType },
+        headers: { Authorization: `Bearer ${token}` },
+      },
+    );
 
-        if (!isMounted || !response.data?.success || !response.data?.call) {
-          return;
-        }
+    if (!isMounted || !response.data?.success || !response.data?.call) {
+      return;
+    }
 
-        const serverCall = response.data.call;
-        const normalizedStatus = normalizeCallStatus(serverCall.status);
-        const isInitiator =
-          String(serverCall.initiator?.id) === String(localUserId);
-        const otherParticipant = isInitiator
-          ? serverCall.receiver
-          : serverCall.initiator;
-        const specialization = Array.isArray(otherParticipant?.specialization)
-          ? otherParticipant.specialization.join(", ")
-          : otherParticipant?.specialization || "";
+    const serverCall = response.data.call;
+    const normalizedStatus = normalizeCallStatus(serverCall.status);
+    const isInitiator =
+      String(serverCall.initiator?.id) === String(localUserId);
+    const otherParticipant = isInitiator
+      ? serverCall.receiver
+      : serverCall.initiator;
+    const specialization = Array.isArray(otherParticipant?.specialization)
+      ? otherParticipant.specialization.join(", ")
+      : otherParticipant?.specialization || "";
 
-        setCallMetadata((prev) => ({
-          ...prev,
-          callId: serverCall.id || prev.callId,
-          roomId: serverCall.roomId || prev.roomId,
-          type: serverCall.type || prev.type,
-          status: normalizedStatus,
-          startTime:
-            serverCall.startTime || serverCall.acceptedAt || prev.startTime,
-          apiCallData: serverCall,
-        }));
+    setCallMetadata((prev) => {
+      // ✅ Never let a stale poll downgrade an already-active local connection.
+      // The WebRTC peer connection is the source of truth once established;
+      // only honour a server status change if it's a terminal event (ended /
+      // rejected / cancelled) or if we aren't connected yet.
+      const keepLocalStatus =
+        isConnectedStatus(prev.status) && !isTerminalStatus(normalizedStatus);
 
-        if (otherParticipant) {
-          setCallerInfo((prev) => ({
-            ...prev,
-            name:
-              otherParticipant.displayName ||
-              otherParticipant.fullName ||
-              prev.name,
-            id: otherParticipant.id || prev.id,
-            email: otherParticipant.email || prev.email,
-            phone:
-              otherParticipant.phoneNumber ||
-              otherParticipant.phone ||
-              prev.phone,
-            specialization: specialization || prev.specialization,
-            profilePic: otherParticipant.profilePhoto || prev.profilePic,
-          }));
-        }
-      } catch (error) {
-        console.error("Error syncing voice call status:", error);
-      }
-    };
+      return {
+        ...prev,
+        callId: serverCall.id || prev.callId,
+        roomId: serverCall.roomId || prev.roomId,
+        type: serverCall.type || prev.type,
+        status: keepLocalStatus ? prev.status : normalizedStatus,
+        startTime:
+          serverCall.startTime || serverCall.acceptedAt || prev.startTime,
+        apiCallData: serverCall,
+      };
+    });
+
+    if (otherParticipant) {
+      setCallerInfo((prev) => ({
+        ...prev,
+        name:
+          otherParticipant.displayName ||
+          otherParticipant.fullName ||
+          prev.name,
+        id: otherParticipant.id || prev.id,
+        email: otherParticipant.email || prev.email,
+        phone:
+          otherParticipant.phoneNumber ||
+          otherParticipant.phone ||
+          prev.phone,
+        specialization: specialization || prev.specialization,
+        profilePic: otherParticipant.profilePhoto || prev.profilePic,
+      }));
+    }
+  } catch (error) {
+    console.error("Error syncing voice call status:", error);
+  }
+};
 
     syncCallState();
     const interval = setInterval(syncCallState, 3000);
@@ -607,56 +615,60 @@ const VoiceCallModal = ({
       return null;
     }
   }, [stopVisualizer]);
+const scheduleReconnect = useCallback(
+  (reason = "Network issue") => {
+    if (isManualCloseRef.current || !isOpen || !isCallActive) return;
+    if (!hasEverConnectedRef.current) return;
+    if (
+      !callMetadata.callId ||
+      !isConnectedStatus(callMetadata.status) ||
+      isTerminalStatus(callMetadata.status)
+    ) {
+      return;
+    }
 
-  const scheduleReconnect = useCallback(
-    (reason = "Network issue") => {
-      if (isManualCloseRef.current || !isOpen || !isCallActive) return;
-      if (!hasEverConnectedRef.current) return;
-      if (
-        !callMetadata.callId ||
-        !isConnectedStatus(callMetadata.status) ||
-        isTerminalStatus(callMetadata.status)
-      ) {
-        return;
+    if (reconnectTimeoutRef.current) return;
+
+    const nextAttempt = reconnectAttemptsRef.current + 1;
+    if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
+      setIsReconnecting(false);
+      setWebrtcError("Voice call connection lost. Please call again.");
+      return;
+    }
+
+    reconnectAttemptsRef.current = nextAttempt;
+    setIsReconnecting(true);
+    setIsConnecting(true);
+    setIsRemoteAudioReady(false);
+    setWebrtcError(
+      `${reason}. Reconnecting... (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
+    );
+
+    const delay = Math.min(RECONNECT_BASE_DELAY_MS * nextAttempt, 7000);
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      reconnectTimeoutRef.current = null;
+
+      // ✅ Clear the guard BEFORE cleanup so establishVoiceConnection
+      // can re-enter. If cleared after, a synchronous re-trigger inside
+      // cleanupRealtimeConnection could read the old true value and bail.
+      hasStartedConnectionRef.current = false;
+
+      cleanupRealtimeConnection({ emitLeave: false });
+
+      if (typeof establishVoiceConnectionRef.current === "function") {
+        establishVoiceConnectionRef.current();
       }
-
-      if (reconnectTimeoutRef.current) return;
-
-      const nextAttempt = reconnectAttemptsRef.current + 1;
-      if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
-        setIsReconnecting(false);
-        setWebrtcError("Voice call connection lost. Please call again.");
-        return;
-      }
-
-      reconnectAttemptsRef.current = nextAttempt;
-      setIsReconnecting(true);
-      setIsConnecting(true);
-      setIsRemoteAudioReady(false);
-      setWebrtcError(
-        `${reason}. Reconnecting... (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})`,
-      );
-
-      const delay = Math.min(RECONNECT_BASE_DELAY_MS * nextAttempt, 7000);
-
-      reconnectTimeoutRef.current = setTimeout(() => {
-        reconnectTimeoutRef.current = null;
-        cleanupRealtimeConnection({ emitLeave: false });
-        hasStartedConnectionRef.current = false;
-        if (typeof establishVoiceConnectionRef.current === "function") {
-          establishVoiceConnectionRef.current();
-        }
-      }, delay);
-    },
-    [
-      cleanupRealtimeConnection,
-      isCallActive,
-      isOpen,
-      callMetadata.callId,
-      callMetadata.status,
-    ],
-  );
-
+    }, delay);
+  },
+  [
+    cleanupRealtimeConnection,
+    isCallActive,
+    isOpen,
+    callMetadata.callId,
+    callMetadata.status,
+  ],
+);
   const establishVoiceConnection = useCallback(async () => {
     if (hasStartedConnectionRef.current) return;
 
@@ -704,9 +716,13 @@ const VoiceCallModal = ({
 
     localUserIdRef.current = String(localUserId);
     remoteUserIdRef.current = String(remoteUserId);
+    hasStartedConnectionRef.current = true;
 
     const localStream = await initializeAudio();
-    if (!localStream) return;
+    if (!localStream) {
+      hasStartedConnectionRef.current = false;
+      return;
+    }
 
     const token =
       localStorage.getItem("token") ||
@@ -716,6 +732,11 @@ const VoiceCallModal = ({
     const socket = io(API_BASE_URL, {
       auth: token ? { token } : undefined,
       transports: ["websocket", "polling"],
+      reconnection: true,
+      reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
+      reconnectionDelay: RECONNECT_BASE_DELAY_MS,
+      reconnectionDelayMax: 7000,
+      timeout: 10000,
     });
 
     socketRef.current = socket;
@@ -841,6 +862,8 @@ const VoiceCallModal = ({
 
     socket.on("connect", () => {
       resetReconnectState();
+      setWebrtcError("");
+      setIsConnecting(true);
 
       if (
         peerConnectionRef.current &&
@@ -854,12 +877,22 @@ const VoiceCallModal = ({
         userId: localUserIdRef.current,
       });
     });
+    // Replace this in your socket.on("user-joined") handler:
+socket.on("user-joined", async ({ userId }) => {
+  if (String(userId) === String(localUserIdRef.current)) return;
+  if (peerConnectionRef.current?.connectionState === "connected") return;
+  
+  // ✅ Only the initiator creates the offer
+  if (isLocalInitiator) {
+    await sendOffer();
+  }
+});
 
-    socket.on("user-joined", async ({ userId }) => {
-      if (String(userId) === String(localUserIdRef.current)) return;
-      if (peerConnectionRef.current?.connectionState === "connected") return;
-      await sendOffer();
-    });
+    // socket.on("user-joined", async ({ userId }) => {
+    //   if (String(userId) === String(localUserIdRef.current)) return;
+    //   if (peerConnectionRef.current?.connectionState === "connected") return;
+    //   await sendOffer();
+    // });
 
     const onIncomingOffer = async ({ offer, userId, from }) => {
       const senderId = String(userId || from || "");
@@ -988,7 +1021,9 @@ const VoiceCallModal = ({
       if (hasEverConnectedRef.current) {
         scheduleReconnect("Realtime voice service unreachable");
       } else {
-        setWebrtcError("Realtime voice service unreachable.");
+        setIsConnecting(true);
+        setIsReconnecting(true);
+        setWebrtcError("Realtime voice service unreachable. Retrying...");
       }
     });
 
@@ -1000,8 +1035,6 @@ const VoiceCallModal = ({
         scheduleReconnect("Socket disconnected");
       }
     });
-
-    hasStartedConnectionRef.current = true;
   }, [
     callMetadata.callId,
     callMetadata.status,
