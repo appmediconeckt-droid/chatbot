@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
+import { io } from "socket.io-client";
 import { Link, useParams, useLocation } from "react-router-dom";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
@@ -204,6 +205,7 @@ const ChatBox = () => {
   const [showOptions, setShowOptions] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
+  const [remoteIsTyping, setRemoteIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [chatStatus, setChatStatus] = useState(null);
@@ -244,6 +246,8 @@ const ChatBox = () => {
   const emojiPickerRef = useRef(null);
   const timeoutRef = useRef(null);
   const fileInputRef = useRef(null);
+  const chatSocketRef = useRef(null);
+  const typingTimeoutRef = useRef(null);
 
   // Function to get profile photo URL
   const getProfilePhotoUrl = (counselor) => {
@@ -616,7 +620,8 @@ const ChatBox = () => {
       console.log("POST API Response:", response.data);
 
       if (response.data && response.data.success) {
-        await fetchMessagesFromAPI();
+        // ✅ The socket `new-message` event delivers the confirmed message
+        // to all clients in real-time — no need to re-fetch all messages.
         return response.data.message;
       } else {
         throw new Error("Invalid API response");
@@ -658,8 +663,35 @@ const ChatBox = () => {
     }
 
     try {
-      await sendMessageToAPI({ messageContent: messageText });
-      setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+      const sentMsg = await sendMessageToAPI({ messageContent: messageText });
+      // Replace temp message with the confirmed server message.
+      // If the socket already delivered it, deduplicate by messageId.
+      setMessages((prev) => {
+        const withoutTemp = prev.filter((m) => !m.isTemporary);
+        if (!sentMsg) return withoutTemp;
+        const alreadyHas = withoutTemp.some(
+          (m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId,
+        );
+        if (alreadyHas) return withoutTemp;
+        return [
+          ...withoutTemp,
+          {
+            id: sentMsg.id || sentMsg._id,
+            messageId: sentMsg.messageId,
+            text: sentMsg.content,
+            sender: "user",
+            senderRole: "user",
+            time: new Date(sentMsg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            fullTime: sentMsg.createdAt,
+            contentType: sentMsg.contentType,
+            isRead: sentMsg.isRead,
+            status: "sent",
+          },
+        ];
+      });
     } catch (err) {
       console.error("Error in message sending flow:", err);
       setMessages((prev) =>
@@ -802,9 +834,10 @@ const ChatBox = () => {
 
       setCallError(errorMessage);
 
-      // Still open modal with fallback data for demo
-      console.log("Opening fallback video modal");
-      const fallbackCallData = {
+      // Do not open a fake call modal when the API failed.
+      setSelectedCall(null);
+      setIsVideoModalOpen(false);
+      /*
         id: Date.now(),
         name: currentCounselor?.name || "Counselor",
         type: "video",
@@ -823,6 +856,7 @@ const ChatBox = () => {
       };
       setSelectedCall(fallbackCallData);
       setIsVideoModalOpen(true);
+      */
     } finally {
       setIsInitiatingCall(false);
     }
@@ -932,8 +966,10 @@ const ChatBox = () => {
 
       setCallError(errorMessage);
 
-      // Fallback modal
-      const fallbackCallData = {
+      // Do not open a fake call modal when the API failed.
+      setSelectedCall(null);
+      setIsVoiceModalOpen(false);
+      /*
         id: Date.now(),
         name: currentCounselor?.name || "Counselor",
         type: "voice",
@@ -952,6 +988,7 @@ const ChatBox = () => {
       };
       setSelectedCall(fallbackCallData);
       setIsVoiceModalOpen(true);
+      */
     } finally {
       setIsInitiatingCall(false);
     }
@@ -1092,7 +1129,145 @@ const ChatBox = () => {
     };
   }, []);
 
-  // Auto-refresh messages
+  // ========== REAL-TIME SOCKET CONNECTION FOR CHAT ==========
+  useEffect(() => {
+    const apiChatId = chatId || currentChat?.chatId;
+    if (!apiChatId) return;
+
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) return;
+
+    // Connect to socket for real-time chat messages
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+    });
+    chatSocketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("💬 Chat socket connected");
+      // Join the chat room so we receive real-time messages
+      socket.emit("join-chat", { chatId: apiChatId });
+    });
+
+    // Listen for new messages in real time
+    socket.on("new-message", (messageData) => {
+      console.log("📩 New message received via socket:", messageData);
+
+      const userId = resolveCurrentUserId();
+      // Skip our own messages — we already show them optimistically
+      if (
+        messageData.senderRole === "user" &&
+        String(messageData.senderId) === String(userId)
+      ) {
+        // Remove the temp message and replace with the real one
+        setMessages((prev) => {
+          const withoutTemp = prev.filter((msg) => !msg.isTemporary);
+          const isDuplicate = withoutTemp.some(
+            (msg) =>
+              msg.messageId &&
+              messageData.messageId &&
+              msg.messageId === messageData.messageId,
+          );
+          if (isDuplicate) return withoutTemp;
+          return withoutTemp;
+        });
+        return;
+      }
+
+      const transformedMessage = {
+        id: messageData.id || messageData.messageId || `rt_${Date.now()}`,
+        messageId: messageData.messageId,
+        text: messageData.content,
+        sender: messageData.senderRole === "user" ? "user" : "counselor",
+        senderRole: messageData.senderRole,
+        time: new Date(messageData.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        fullTime: messageData.createdAt,
+        contentType: messageData.contentType,
+        isRead: messageData.isRead,
+        status: "sent",
+      };
+
+      setMessages((prev) => {
+        // Avoid duplicate messages
+        const isDuplicate = prev.some(
+          (msg) =>
+            msg.messageId &&
+            messageData.messageId &&
+            msg.messageId === messageData.messageId,
+        );
+        if (isDuplicate) return prev;
+        return [...prev, transformedMessage];
+      });
+    });
+
+    // Listen for typing indicators from the other participant
+    socket.on("user-typing", ({ userRole, isTyping: typing }) => {
+      if (userRole !== "user") {
+        setRemoteIsTyping(typing);
+      }
+    });
+
+    // Listen for messages being read
+    socket.on("messages-read", () => {
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.sender === "user" ? { ...msg, isRead: true } : msg,
+        ),
+      );
+    });
+
+    // Listen for chat-status-update (e.g. counselor accepted/rejected the chat)
+    socket.on("chat-status-update", ({ status, chatId: updatedChatId }) => {
+      console.log("✅ Chat status updated via socket:", status);
+      setChatStatus(status);
+      setCurrentChat((prev) => (prev ? { ...prev, status } : prev));
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Chat socket connection error:", err.message);
+    });
+
+    return () => {
+      if (chatSocketRef.current) {
+        chatSocketRef.current.off("new-message");
+        chatSocketRef.current.off("user-typing");
+        chatSocketRef.current.off("messages-read");
+        chatSocketRef.current.off("chat-status-update");
+        chatSocketRef.current.off("connect");
+        chatSocketRef.current.off("connect_error");
+        chatSocketRef.current.disconnect();
+        chatSocketRef.current = null;
+      }
+    };
+  }, [chatId, currentChat?.chatId]);
+
+  // Emit typing indicator when user types
+  const handleTypingIndicator = useCallback(() => {
+    const apiChatId = chatId || currentChat?.chatId;
+    if (!chatSocketRef.current || !apiChatId) return;
+
+    chatSocketRef.current.emit("typing", {
+      chatId: apiChatId,
+      isTyping: true,
+    });
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      if (chatSocketRef.current) {
+        chatSocketRef.current.emit("typing", {
+          chatId: apiChatId,
+          isTyping: false,
+        });
+      }
+    }, 2000);
+  }, [chatId, currentChat?.chatId]);
+
+  // Fallback polling (socket handles real-time; this catches anything missed)
   useEffect(() => {
     const interval = setInterval(() => {
       if (currentChat) {
@@ -1191,6 +1366,10 @@ const ChatBox = () => {
   const handleInputChange = (e) => {
     setNewMessage(e.target.value);
     setIsTyping(e.target.value.trim() !== "");
+    // Emit typing indicator to other participant via socket
+    if (e.target.value.trim() !== "") {
+      handleTypingIndicator();
+    }
   };
 
   // Render profile avatar

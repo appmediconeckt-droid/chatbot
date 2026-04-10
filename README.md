@@ -14,3 +14,21 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the ESLint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+
+## Environment Variables
+
+Create a `.env` file in the project root and set:
+
+```
+VITE_API_BASE_URL=https://your-backend-domain.com
+```
+
+Optional (for WebRTC TURN support):
+
+```
+VITE_TURN_URL=turn:your-turn-host:3478
+VITE_TURN_USERNAME=your-turn-username
+VITE_TURN_CREDENTIAL=your-turn-password
+```
+
+The frontend now reads backend API URL from `VITE_API_BASE_URL` only.

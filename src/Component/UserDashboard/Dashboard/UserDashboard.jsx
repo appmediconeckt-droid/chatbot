@@ -744,8 +744,17 @@ export default function UserDashboard() {
     console.log("Call accepted");
   };
 
-  const handleEndCall = () => {
-    console.log("Call ended");
+  const handleEndCall = async (callId) => {
+    try {
+      const result = await endCall(callId);
+      if (!result?.success) {
+        console.warn("End call API did not report success", result);
+      }
+      return !!result?.success;
+    } catch (error) {
+      console.error("Error in end call:", error);
+      return false;
+    }
   };
 
   const handleLogout = async () => {

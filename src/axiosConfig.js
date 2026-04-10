@@ -60,7 +60,7 @@
 
 //           // Update authorization header
 //           originalRequest.headers.Authorization = `Bearer ${response.data.accessToken}`;
-          
+
 //           // Retry the original request
 //           return axiosInstance(originalRequest);
 //         }
@@ -81,7 +81,19 @@
 // frontend/src/api/axiosConfig.js
 import axios from "axios";
 
+<<<<<<< HEAD
 export const API_BASE_URL = "https://vsps9v76-5173.inc1.devtunnels.ms/";
+=======
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
+
+if (!envApiBaseUrl) {
+  throw new Error(
+    "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",
+  );
+}
+
+export const API_BASE_URL = envApiBaseUrl.replace(/\/+$/, "");
+>>>>>>> 7011ca114957358af3ac3de6acc3f9fd4d9d8817
 
 const axiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -128,7 +140,7 @@ axiosInstance.interceptors.response.use(
         const response = await axios.post(
           `${API_BASE_URL}/api/auth/refresh-token`,
           {},
-          { withCredentials: true }
+          { withCredentials: true },
         );
 
         const { accessToken } = response.data;
@@ -153,7 +165,6 @@ axiosInstance.interceptors.response.use(
         localStorage.removeItem("accessToken");
 
         // logout redirect
-       
 
         return Promise.reject(refreshError);
       } finally {
@@ -162,7 +173,7 @@ axiosInstance.interceptors.response.use(
     }
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default axiosInstance;
