@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 
-import './CallHistory.css';
-import VideoCallModal from '../CallModal/VideoCallModal';
-import VoiceCallModal from '../CallModal/VoiceCallModal';
+import "./CallHistory.css";
+import VideoCallModal from "../CallModal/VideoCallModal";
 
 const CallHistory = () => {
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [activeCallMode, setActiveCallMode] = useState("video");
   const [selectedCall, setSelectedCall] = useState(null);
 
   // Call Data
@@ -23,7 +22,7 @@ const CallHistory = () => {
       duration: "25:30",
       profilePic: "👩‍⚕️",
       phoneNumber: "+91 98765 43210",
-      missed: false
+      missed: false,
     },
     {
       id: 2,
@@ -35,7 +34,7 @@ const CallHistory = () => {
       duration: "15:20",
       profilePic: "👨‍⚕️",
       phoneNumber: "+91 98765 43211",
-      missed: false
+      missed: false,
     },
     {
       id: 3,
@@ -47,7 +46,7 @@ const CallHistory = () => {
       duration: null,
       profilePic: "👩‍⚕️",
       phoneNumber: "+91 98765 43212",
-      missed: true
+      missed: true,
     },
     {
       id: 4,
@@ -59,7 +58,7 @@ const CallHistory = () => {
       duration: "12:15",
       profilePic: "👨‍⚕️",
       phoneNumber: "+91 98765 43213",
-      missed: false
+      missed: false,
     },
     {
       id: 5,
@@ -71,20 +70,22 @@ const CallHistory = () => {
       duration: "32:10",
       profilePic: "👩‍⚕️",
       phoneNumber: "+91 98765 43214",
-      missed: false
-    }
+      missed: false,
+    },
   ];
 
   // Filter calls
-  const filteredCalls = callsData.filter(call => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'missed') return call.missed;
-    if (activeFilter === 'video') return call.type === 'video';
-    if (activeFilter === 'voice') return call.type === 'voice';
-    return true;
-  }).filter(call => 
-    call.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCalls = callsData
+    .filter((call) => {
+      if (activeFilter === "all") return true;
+      if (activeFilter === "missed") return call.missed;
+      if (activeFilter === "video") return call.type === "video";
+      if (activeFilter === "voice") return call.type === "voice";
+      return true;
+    })
+    .filter((call) =>
+      call.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
 
   // Group calls by date
   const groupedCalls = filteredCalls.reduce((groups, call) => {
@@ -99,38 +100,41 @@ const CallHistory = () => {
   // Open appropriate modal based on call type
   const openCallModal = (call) => {
     setSelectedCall(call);
-    if (call.type === 'video') {
-      setIsVideoModalOpen(true);
-    } else {
-      setIsVoiceModalOpen(true);
-    }
+    setActiveCallMode(call.type === "voice" ? "voice" : "video");
+    setIsVideoModalOpen(true);
   };
 
   // Open video call modal with default data
   const openNewVideoCall = () => {
     setSelectedCall(null);
+    setActiveCallMode("video");
     setIsVideoModalOpen(true);
   };
 
   // Open voice call modal with default data
   const openNewVoiceCall = () => {
     setSelectedCall(null);
-    setIsVoiceModalOpen(true);
+    setActiveCallMode("voice");
+    setIsVideoModalOpen(true);
   };
 
   // Get icon for call type
   const getCallIcon = (type, status) => {
-    if (type === 'video') return '📹';
-    return '📞';
+    if (type === "video") return "📹";
+    return "📞";
   };
 
   // Get status icon
   const getStatusIcon = (status) => {
-    switch(status) {
-      case 'incoming': return '⬇️';
-      case 'outgoing': return '⬆️';
-      case 'missed': return '❌';
-      default: return '⬆️';
+    switch (status) {
+      case "incoming":
+        return "⬇️";
+      case "outgoing":
+        return "⬆️";
+      case "missed":
+        return "❌";
+      default:
+        return "⬆️";
     }
   };
 
@@ -141,15 +145,15 @@ const CallHistory = () => {
         <div className="call-header">
           <h2 className="call-title">Call History</h2>
           <div className="call-header-actions">
-            <button 
-              className="call-icon-btn" 
+            <button
+              className="call-icon-btn"
               onClick={openNewVoiceCall}
               title="New Voice Call"
             >
               📞
             </button>
-            <button 
-              className="call-icon-btn" 
+            <button
+              className="call-icon-btn"
               onClick={openNewVideoCall}
               title="New Video Call"
             >
@@ -169,7 +173,10 @@ const CallHistory = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           {searchTerm && (
-            <button className="call-clear-btn" onClick={() => setSearchTerm('')}>
+            <button
+              className="call-clear-btn"
+              onClick={() => setSearchTerm("")}
+            >
               ✕
             </button>
           )}
@@ -177,27 +184,27 @@ const CallHistory = () => {
 
         {/* Filter Tabs */}
         <div className="call-filters">
-          <button 
-            className={`call-filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('all')}
+          <button
+            className={`call-filter-btn ${activeFilter === "all" ? "active" : ""}`}
+            onClick={() => setActiveFilter("all")}
           >
             All
           </button>
-          <button 
-            className={`call-filter-btn ${activeFilter === 'missed' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('missed')}
+          <button
+            className={`call-filter-btn ${activeFilter === "missed" ? "active" : ""}`}
+            onClick={() => setActiveFilter("missed")}
           >
             Missed
           </button>
-          <button 
-            className={`call-filter-btn ${activeFilter === 'video' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('video')}
+          <button
+            className={`call-filter-btn ${activeFilter === "video" ? "active" : ""}`}
+            onClick={() => setActiveFilter("video")}
           >
             Video
           </button>
-          <button 
-            className={`call-filter-btn ${activeFilter === 'voice' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('voice')}
+          <button
+            className={`call-filter-btn ${activeFilter === "voice" ? "active" : ""}`}
+            onClick={() => setActiveFilter("voice")}
           >
             Voice
           </button>
@@ -206,16 +213,16 @@ const CallHistory = () => {
 
       {/* Scrollable Calls List */}
       <div className="calls-list">
-        {Object.keys(groupedCalls).map(date => (
+        {Object.keys(groupedCalls).map((date) => (
           <div key={date} className="call-date-group">
             <div className="call-date-header">
               <span className="call-date">{date}</span>
             </div>
-            
-            {groupedCalls[date].map(call => (
-              <div 
-                key={call.id} 
-                className={`call-item ${call.missed ? 'missed-call' : ''}`}
+
+            {groupedCalls[date].map((call) => (
+              <div
+                key={call.id}
+                className={`call-item ${call.missed ? "missed-call" : ""}`}
                 onClick={() => openCallModal(call)}
               >
                 {/* Profile Picture */}
@@ -229,7 +236,7 @@ const CallHistory = () => {
                     <span className="call-name">{call.name}</span>
                     <span className="call-time">{call.time}</span>
                   </div>
-                  
+
                   <div className="call-details">
                     <span className="call-status-icon">
                       {getStatusIcon(call.status)}
@@ -238,7 +245,7 @@ const CallHistory = () => {
                       {getCallIcon(call.type, call.status)}
                     </span>
                     <span className="call-type">
-                      {call.type === 'video' ? 'Video Call' : 'Voice Call'}
+                      {call.type === "video" ? "Video Call" : "Voice Call"}
                     </span>
                     {call.duration && (
                       <>
@@ -253,14 +260,14 @@ const CallHistory = () => {
                 </div>
 
                 {/* Call Action Button */}
-                <button 
+                <button
                   className="call-action-btn"
                   onClick={(e) => {
                     e.stopPropagation();
                     openCallModal(call);
                   }}
                 >
-                  {call.type === 'video' ? '📹' : '📞'}
+                  {call.type === "video" ? "📹" : "📞"}
                 </button>
               </div>
             ))}
@@ -282,12 +289,7 @@ const CallHistory = () => {
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
         callData={selectedCall}
-      />
-
-      <VoiceCallModal
-        isOpen={isVoiceModalOpen}
-        onClose={() => setIsVoiceModalOpen(false)}
-        callData={selectedCall}
+        callMode={activeCallMode}
       />
 
       {/* Example: Floating action buttons for new calls */}

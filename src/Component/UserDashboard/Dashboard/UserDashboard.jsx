@@ -43,7 +43,6 @@ import LiveChatSupport from "../Tab/Appointment/BookAppointment";
 import axios from "axios";
 import CounselorTable from "../Tab/Counselor/CounselorDirectory";
 import VideoCallModal from "../Tab/CallModal/VideoCallModal";
-import VoiceCallModal from "../Tab/CallModal/VoiceCallModal";
 
 // Voice/Video Call Modal Component
 const CallModal = ({
@@ -308,7 +307,6 @@ export default function UserDashboard() {
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const [incomingCallData, setIncomingCallData] = useState(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
 
   const userId = localStorage.getItem("userId");
@@ -342,7 +340,8 @@ export default function UserDashboard() {
   // Accept Call API (PUT)
   const acceptCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const acceptorId = localStorage.getItem("userId");
 
       const requestBody = {
@@ -380,7 +379,8 @@ export default function UserDashboard() {
   // End Call API (PUT)
   const endCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
 
       const requestBody = {
@@ -416,7 +416,8 @@ export default function UserDashboard() {
   // Reject Call API
   const rejectCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
 
       const response = await axios.put(
@@ -443,7 +444,8 @@ export default function UserDashboard() {
   // Fetch waiting calls from API
   const fetchWaitingCalls = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
 
       if (!userId || !token) {
@@ -546,7 +548,7 @@ export default function UserDashboard() {
   };
 
   useEffect(() => {
-    if (isPolling && !showCallModal && !isVideoModalOpen && !isVoiceModalOpen) {
+    if (isPolling && !showCallModal && !isVideoModalOpen) {
       fetchWaitingCalls();
 
       const interval = setInterval(() => {
@@ -564,10 +566,10 @@ export default function UserDashboard() {
       clearInterval(pollingInterval);
       setPollingInterval(null);
     }
-  }, [isPolling, showCallModal, isVideoModalOpen, isVoiceModalOpen]);
+  }, [isPolling, showCallModal, isVideoModalOpen]);
 
   useEffect(() => {
-    if (showCallModal || isVideoModalOpen || isVoiceModalOpen) {
+    if (showCallModal || isVideoModalOpen) {
       setIsPolling(false);
       if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -576,7 +578,7 @@ export default function UserDashboard() {
     } else {
       setIsPolling(true);
     }
-  }, [showCallModal, isVideoModalOpen, isVoiceModalOpen]);
+  }, [showCallModal, isVideoModalOpen]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -712,16 +714,16 @@ export default function UserDashboard() {
       if (result) {
         console.log("Call accepted successfully", result);
         console.log("callType:", callType);
+        const normalizedCallType =
+          callType === "audio" || callType === "voice" ? "voice" : "video";
         setSelectedCall({
           ...callerInfo,
           ...result,
           status: "connected",
+          callType: normalizedCallType,
+          type: normalizedCallType,
         });
-        if (callType !== "video") {
-          setIsVoiceModalOpen(true);
-        } else {
-          setIsVideoModalOpen(true);
-        }
+        setIsVideoModalOpen(true);
         return result;
       }
       return null;
@@ -865,15 +867,8 @@ export default function UserDashboard() {
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
         callData={selectedCall}
+        callMode={selectedCall?.callType || selectedCall?.type || callType}
         currentUser={{ id: userId, role: "user" }}
-        onEndCall={handleEndCall}
-      />
-
-      <VoiceCallModal
-        isOpen={isVoiceModalOpen}
-        onClose={() => setIsVoiceModalOpen(false)}
-        callData={selectedCall}
-        currentUser={{ id: userId }}
         onEndCall={handleEndCall}
       />
 
