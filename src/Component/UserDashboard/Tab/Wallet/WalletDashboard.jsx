@@ -126,7 +126,6 @@ const SimpleWallet = () => {
           <h2>My Wallet</h2>
           <p>Manage your money & payments securely</p>
         </div>
-        
       </div>
 
       {/* Balance Card with gradient */}
@@ -135,35 +134,19 @@ const SimpleWallet = () => {
           <span className="balance-label">Total Balance</span>
           <span className="balance-amount">{walletData.currency}{walletData.balance.toLocaleString()}</span>
         </div>
-        {/* <div className="balance-stats">
-          <div className="stat-item">
-            <span className="stat-icon">📥</span>
-            <div>
-              <span className="stat-label">Total Deposits</span>
-              <strong className="stat-value">{walletData.currency}{walletData.totalDeposit.toLocaleString()}</strong>
-            </div>
-          </div>
-          <div className="stat-item">
-            <span className="stat-icon">📤</span>
-            <div>
-              <span className="stat-label">Total Payments</span>
-              <strong className="stat-value">{walletData.currency}{walletData.totalPayment.toLocaleString()}</strong>
-            </div>
-          </div> */}
-        {/* </div> */}
       </div>
 
       {/* Action Buttons */}
-      <div className="wallet-actions ">
-        <button className=" deposit-btn" onClick={() => setShowDeposit(true)}>
+      <div className="wallet-actions">
+        <button className="deposit-btn" onClick={() => setShowDeposit(true)}>
           <span className="btn-icon">+</span>
           Add Money
         </button>
-        <button className=" withdraw-btn" onClick={() => setShowWithdraw(true)}>
+        <button className="withdraw-btn" onClick={() => setShowWithdraw(true)}>
           <span className="btn-icon">↓</span>
           Withdraw
         </button>
-        <button className=" transfer-btn">
+        <button className="transfer-btn">
           <span className="btn-icon">↗</span>
           Transfer
         </button>

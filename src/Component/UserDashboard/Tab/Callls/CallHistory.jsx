@@ -104,14 +104,13 @@ const CallHistory = () => {
     setIsVideoModalOpen(true);
   };
 
-  // Open video call modal with default data
+  // Open new call modals
   const openNewVideoCall = () => {
     setSelectedCall(null);
     setActiveCallMode("video");
     setIsVideoModalOpen(true);
   };
 
-  // Open voice call modal with default data
   const openNewVoiceCall = () => {
     setSelectedCall(null);
     setActiveCallMode("voice");
@@ -149,6 +148,7 @@ const CallHistory = () => {
               className="call-icon-btn"
               onClick={openNewVoiceCall}
               title="New Voice Call"
+              aria-label="New Voice Call"
             >
               📞
             </button>
@@ -156,6 +156,7 @@ const CallHistory = () => {
               className="call-icon-btn"
               onClick={openNewVideoCall}
               title="New Video Call"
+              aria-label="New Video Call"
             >
               📹
             </button>
@@ -171,6 +172,7 @@ const CallHistory = () => {
             placeholder="Search calls..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Search calls"
           />
           {searchTerm && (
             <button
@@ -224,6 +226,9 @@ const CallHistory = () => {
                 key={call.id}
                 className={`call-item ${call.missed ? "missed-call" : ""}`}
                 onClick={() => openCallModal(call)}
+                role="button"
+                tabIndex={0}
+                onKeyPress={(e) => e.key === 'Enter' && openCallModal(call)}
               >
                 {/* Profile Picture */}
                 <div className="call-avatar">
@@ -242,7 +247,7 @@ const CallHistory = () => {
                       {getStatusIcon(call.status)}
                     </span>
                     <span className="call-type-icon">
-                      {getCallIcon(call.type, call.status)}
+                      {getCallIcon(call.type)}
                     </span>
                     <span className="call-type">
                       {call.type === "video" ? "Video Call" : "Voice Call"}
@@ -250,7 +255,7 @@ const CallHistory = () => {
                     {call.duration && (
                       <>
                         <span className="call-dot">•</span>
-                        <span className="call-duration">{call.duration}</span>
+                        <span>{call.duration}</span>
                       </>
                     )}
                     {call.missed && (
@@ -266,6 +271,7 @@ const CallHistory = () => {
                     e.stopPropagation();
                     openCallModal(call);
                   }}
+                  aria-label={`Call ${call.name}`}
                 >
                   {call.type === "video" ? "📹" : "📞"}
                 </button>
@@ -291,24 +297,6 @@ const CallHistory = () => {
         callData={selectedCall}
         callMode={activeCallMode}
       />
-
-      {/* Example: Floating action buttons for new calls */}
-      {/* <div className="floating-call-buttons">
-        <button 
-          className="floating-btn voice-btn"
-          onClick={openNewVoiceCall}
-          title="New Voice Call"
-        >
-          📞
-        </button>
-        <button 
-          className="floating-btn video-btn"
-          onClick={openNewVideoCall}
-          title="New Video Call"
-        >
-          📹
-        </button>
-      </div> */}
     </div>
   );
 };

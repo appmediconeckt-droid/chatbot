@@ -1,7 +1,5 @@
 /* CounselorDashboard.css */
 
-
-
 :root {
   --couns-primary: #6B46C1;
   --couns-primary-light: #9F7AEA;
@@ -19,6 +17,7 @@
   --couns-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --couns-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --couns-transition: all 0.3s ease;
+  --couns-sidebar-width: 310px;
 }
 
 body {
@@ -26,6 +25,9 @@ body {
   background: var(--couns-bg-light);
   color: var(--couns-text-primary);
   line-height: 1.5;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
 }
 
 /* Dashboard Layout */
@@ -33,17 +35,20 @@ body {
   display: flex;
   min-height: 100vh;
   position: relative;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* Desktop Sidebar */
 .couns-sidebar {
-  
+  width: var(--couns-sidebar-width);
   background: white;
   height: 100vh;
   position: fixed;
   left: 0;
   top: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
   z-index: 999;
   transition: var(--couns-transition);
@@ -72,12 +77,14 @@ body {
   font-size: 1.2rem;
   font-weight: 600;
   margin-bottom: 0.25rem;
+  word-break: break-word;
 }
 
 .couns-counselor-profile p {
   color: var(--couns-text-secondary);
   font-size: 0.9rem;
   margin-bottom: 0.5rem;
+  word-break: break-word;
 }
 
 .couns-rating-badge {
@@ -106,6 +113,7 @@ body {
 .couns-extra-info p {
   margin: 4px 0;
   font-size: 0.8rem;
+  word-break: break-word;
 }
 
 /* Sidebar Navigation */
@@ -178,6 +186,37 @@ body {
 
 .couns-nav-item.logout:hover {
   background: #FEE2E2;
+}
+
+/* Main Content - FIXED: Proper margin to prevent overlap with sidebar */
+.couns-main-content {
+  flex: 1;
+  margin-left: var(--couns-sidebar-width);
+  background: var(--couns-bg-light);
+  min-height: 100vh;
+  transition: var(--couns-transition);
+  width: calc(100% - var(--couns-sidebar-width));
+  max-width: calc(100% - var(--couns-sidebar-width));
+  overflow-x: auto;
+  
+  box-sizing: border-box;
+}
+
+/* Ensure content doesn't overflow */
+.couns-tab-content {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.couns-main-content.mobile {
+  margin-left: 0;
+  padding-top: 75px;
+  padding-bottom: 80px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  width: 100%;
+  max-width: 100%;
 }
 
 /* Mobile Header */
@@ -424,27 +463,11 @@ body {
   padding: 0 3px;
 }
 
-/* Main Content */
-.couns-main-content {
-  flex: 1;
-  margin-left: 310px;
-  background: var(--couns-bg-light);
-  min-height: 100vh;
-  transition: var(--couns-transition);
- 
-}
-
-.couns-main-content.mobile {
-  margin-left: 0;
-  padding-top: 75px;
-  padding-bottom: 80px;
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
 /* Tab Content */
 .couns-tab-content {
   padding: 1rem 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .couns-tab-header {
@@ -1035,6 +1058,10 @@ body {
   .couns-appointments-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  
+  .couns-main-content {
+    padding: 1rem 1.5rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -1051,6 +1078,8 @@ body {
     padding: 1rem;
     padding-top: 75px;
     padding-bottom: 80px;
+    width: 100%;
+    max-width: 100%;
   }
 
   .couns-analytics-grid {
@@ -1137,7 +1166,7 @@ body {
 
 @media (max-width: 480px) {
   .couns-main-content {
-    padding: 1rem;
+    padding: 0.75rem;
     padding-top: 75px;
     padding-bottom: 80px;
   }
@@ -1648,6 +1677,7 @@ button:focus {
 .session-notes-body::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
 .toast-notification {
   position: fixed;
   bottom: 20px;
@@ -2036,7 +2066,6 @@ button:focus {
     font-size: 11px;
   }
 }
-
 
 /* Incoming Call Modal Styles */
 .incoming-call-modal-overlay {
