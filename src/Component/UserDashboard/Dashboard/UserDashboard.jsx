@@ -43,7 +43,6 @@ import LiveChatSupport from "../Tab/Appointment/BookAppointment";
 import axios from "axios";
 import CounselorTable from "../Tab/Counselor/CounselorDirectory";
 import VideoCallModal from "../Tab/CallModal/VideoCallModal";
-import VoiceCallModal from "../Tab/CallModal/VoiceCallModal";
 
 // Voice/Video Call Modal Component
 const CallModal = ({
@@ -209,7 +208,6 @@ export default function UserDashboard() {
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const [incomingCallData, setIncomingCallData] = useState(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
 
   const userId = localStorage.getItem("userId");
@@ -229,7 +227,8 @@ export default function UserDashboard() {
 
   const acceptCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const acceptorId = localStorage.getItem("userId");
       const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, { acceptorId, acceptorType: "user" }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
       if (response.data && response.data.success) return response.data;
@@ -239,7 +238,8 @@ export default function UserDashboard() {
 
   const endCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
       const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, { userId, endedBy: "user" }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
       if (response.data && response.data.success) return response.data;
@@ -249,7 +249,8 @@ export default function UserDashboard() {
 
   const rejectCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
       const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, { userId, reason: "declined" }, { headers: { Authorization: `Bearer ${token}` } });
       return response.data?.success || false;
@@ -258,7 +259,8 @@ export default function UserDashboard() {
 
   const fetchWaitingCalls = async () => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
       if (!userId || !token) return;
       const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
@@ -283,18 +285,33 @@ export default function UserDashboard() {
   };
 
   useEffect(() => {
-    if (isPolling && !showCallModal && !isVideoModalOpen && !isVoiceModalOpen) {
+    if (isPolling && !showCallModal && !isVideoModalOpen) {
       fetchWaitingCalls();
       const interval = setInterval(() => fetchWaitingCalls(), 5000);
       setPollingInterval(interval);
-      return () => { if (interval) clearInterval(interval); };
-    } else if (pollingInterval) { clearInterval(pollingInterval); setPollingInterval(null); }
-  }, [isPolling, showCallModal, isVideoModalOpen, isVoiceModalOpen]);
+
+      return () => {
+        if (interval) {
+          clearInterval(interval);
+        }
+      };
+    } else if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+  }, [isPolling, showCallModal, isVideoModalOpen]);
 
   useEffect(() => {
-    if (showCallModal || isVideoModalOpen || isVoiceModalOpen) { setIsPolling(false); if (pollingInterval) { clearInterval(pollingInterval); setPollingInterval(null); } }
-    else { setIsPolling(true); }
-  }, [showCallModal, isVideoModalOpen, isVoiceModalOpen]);
+    if (showCallModal || isVideoModalOpen) {
+      setIsPolling(false);
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+        setPollingInterval(null);
+      }
+    } else {
+      setIsPolling(true);
+    }
+  }, [showCallModal, isVideoModalOpen]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -346,21 +363,146 @@ export default function UserDashboard() {
     }
   };
 
-  const handleKeyPress = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } };
-  const handleMenuItemClick = (id) => { vibrate(30); setActive(id); if (isMobile) { setShowMoreModal(false); setShowProfileMenu(false); } };
-  const handleProfileClick = () => { vibrate(30); setActive("profile"); if (isMobile) setShowProfileMenu(false); };
-  const handleAcceptCall = async (callId) => { try { const result = await acceptCall(callId); if (result) { setSelectedCall({ ...callerInfo, ...result, status: "connected" }); if (callType !== "video") setIsVoiceModalOpen(true); else setIsVideoModalOpen(true); } return result; } catch (error) { console.error("Error in accept call:", error); return null; } };
-  const handleRejectCall = async (callId) => { try { await rejectCall(callId); } catch (error) { console.error("Error in reject call:", error); } };
-  const handleAcceptCallModal = () => console.log("Call accepted");
-  const handleEndCall = async (callId) => { try { const result = await endCall(callId); return !!result?.success; } catch (error) { console.error("Error in end call:", error); return false; } };
-  const handleLogout = async () => { try { const accessToken = localStorage.getItem("accessToken"); const refreshToken = localStorage.getItem("refreshToken"); await axiosInstance.post(`${API_BASE_URL}/api/auth/logout`, { refreshToken }, { headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" } }); localStorage.clear(); navigate("/role-selector"); } catch (error) { localStorage.clear(); navigate("/role-selector"); } };
-  const handleLogoutClick = () => { vibrate(30); setShowLogoutConfirm(true); };
-  const handleDeleteClick = () => { vibrate(40); setShowDeleteConfirm(true); };
-  const handleDeleteConfirm = () => { vibrate([100, 50, 100]); setShowDeleteConfirm(false); setDeleteSuccess(true); setTimeout(() => navigate("/role-selector"), 2500); };
-  const handleMoreModalToggle = () => { vibrate(30); setShowMoreModal(!showMoreModal); };
-  const handleCloseModal = () => { vibrate(20); setShowMoreModal(false); setShowProfileMenu(false); };
-  const handleSupportClick = (type) => { vibrate(40); alert(`Opening ${type} section`); };
-  const handlePrivacyAction = (action) => { vibrate(30); alert(`Opening ${action} settings`); };
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
+    }
+  };
+
+  const handleMenuItemClick = (id) => {
+    vibrate(30);
+    setActive(id);
+    if (isMobile) {
+      setShowMoreModal(false);
+      setShowProfileMenu(false);
+    }
+  };
+
+  const handleProfileClick = () => {
+    vibrate(30);
+    setActive("profile");
+    if (isMobile) {
+      setShowProfileMenu(false);
+    }
+  };
+
+  const handleAcceptCall = async (callId) => {
+    try {
+      const result = await acceptCall(callId);
+      if (result) {
+        console.log("Call accepted successfully", result);
+        console.log("callType:", callType);
+        const normalizedCallType =
+          callType === "audio" || callType === "voice" ? "voice" : "video";
+        setSelectedCall({
+          ...callerInfo,
+          ...result,
+          status: "connected",
+          callType: normalizedCallType,
+          type: normalizedCallType,
+        });
+        setIsVideoModalOpen(true);
+        return result;
+      }
+      return null;
+    } catch (error) {
+      console.error("Error in accept call:", error);
+      return null;
+    }
+  };
+
+  const handleRejectCall = async (callId) => {
+    try {
+      await rejectCall(callId);
+      console.log("Call rejected successfully");
+    } catch (error) {
+      console.error("Error in reject call:", error);
+    }
+  };
+
+  const handleAcceptCallModal = () => {
+    console.log("Call accepted");
+  };
+
+  const handleEndCall = async (callId) => {
+    try {
+      const result = await endCall(callId);
+      if (!result?.success) {
+        console.warn("End call API did not report success", result);
+      }
+      return !!result?.success;
+    } catch (error) {
+      console.error("Error in end call:", error);
+      return false;
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      const refreshToken = localStorage.getItem("refreshToken");
+
+      const response = await axiosInstance.post(
+        `${API_BASE_URL}/api/auth/logout`,
+        { refreshToken: refreshToken },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      console.log("Logout success:", response.data);
+      localStorage.clear();
+      navigate("/role-selector");
+    } catch (error) {
+      console.error("Logout error:", error?.response?.data || error.message);
+      localStorage.clear();
+      navigate("/role-selector");
+    }
+  };
+
+  const handleLogoutClick = () => {
+    vibrate(30);
+    setShowLogoutConfirm(true);
+  };
+
+  const handleDeleteClick = () => {
+    vibrate(40);
+    setShowDeleteConfirm(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    vibrate([100, 50, 100]);
+    setShowDeleteConfirm(false);
+    setDeleteSuccess(true);
+    setTimeout(() => {
+      navigate("/role-selector");
+    }, 2500);
+  };
+
+  const handleMoreModalToggle = () => {
+    vibrate(30);
+    setShowMoreModal(!showMoreModal);
+  };
+
+  const handleCloseModal = () => {
+    vibrate(20);
+    setShowMoreModal(false);
+    setShowProfileMenu(false);
+  };
+
+  const handleSupportClick = (type) => {
+    vibrate(40);
+    alert(`Opening ${type} section`);
+  };
+
+  const handlePrivacyAction = (action) => {
+    vibrate(30);
+    alert(`Opening ${action} settings`);
+  };
 
   const allMenuItems = [
     { id: "Chat", icon: <FaCommentDots />, label: "Chat" },
@@ -374,10 +516,40 @@ export default function UserDashboard() {
   const bottomMenuItems = allMenuItems.slice(0, 4);
 
   return (
-    <div className="ud-user-dashboard">
-      <CallModal isOpen={showCallModal} onClose={() => { setShowCallModal(false); setCallerInfo({ name: "", image: null, userId: "", userName: "", callId: "", roomId: "", waitingDuration: 0, onEndCall: null }); }} callType={callType} callerName={callerInfo.userName || callerInfo.name} callerImage={callerInfo.image} callData={callerInfo} onAccept={handleAcceptCallModal} onEnd={handleEndCall} onAcceptCall={handleAcceptCall} onRejectCall={handleRejectCall} />
-      <VideoCallModal isOpen={isVideoModalOpen} onClose={() => setIsVideoModalOpen(false)} callData={selectedCall} currentUser={{ id: userId, role: "user" }} onEndCall={handleEndCall} />
-      <VoiceCallModal isOpen={isVoiceModalOpen} onClose={() => setIsVoiceModalOpen(false)} callData={selectedCall} currentUser={{ id: userId }} onEndCall={handleEndCall} />
+    <div className="user-dashboard">
+      <CallModal
+        isOpen={showCallModal}
+        onClose={() => {
+          setShowCallModal(false);
+          setCallerInfo({
+            name: "",
+            image: null,
+            userId: "",
+            userName: "",
+            callId: "",
+            roomId: "",
+            waitingDuration: 0,
+            onEndCall: null,
+          });
+        }}
+        callType={callType}
+        callerName={callerInfo.userName || callerInfo.name}
+        callerImage={callerInfo.image}
+        callData={callerInfo}
+        onAccept={handleAcceptCallModal}
+        onEnd={handleEndCall}
+        onAcceptCall={handleAcceptCall}
+        onRejectCall={handleRejectCall}
+      />
+
+      <VideoCallModal
+        isOpen={isVideoModalOpen}
+        onClose={() => setIsVideoModalOpen(false)}
+        callData={selectedCall}
+        callMode={selectedCall?.callType || selectedCall?.type || callType}
+        currentUser={{ id: userId, role: "user" }}
+        onEndCall={handleEndCall}
+      />
 
       {isMobile && (
         <div className="ud-mobile-header">

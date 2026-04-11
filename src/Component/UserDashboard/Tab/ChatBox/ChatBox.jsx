@@ -4,7 +4,6 @@ import { io } from "socket.io-client";
 import { Link, useParams, useLocation } from "react-router-dom";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
-import VoiceCallModal from "../CallModal/VoiceCallModal";
 import {
   FaVideo as FaVideoIcon,
   FaPhoneAlt,
@@ -186,7 +185,6 @@ const ChatBox = () => {
 
   // Call modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
   const [isInitiatingCall, setIsInitiatingCall] = useState(false);
   const [callError, setCallError] = useState(null);
@@ -369,11 +367,7 @@ const ChatBox = () => {
       };
 
       setSelectedCall(acceptedCallData);
-      if (modalType === "video") {
-        setIsVideoModalOpen(true);
-      } else {
-        setIsVoiceModalOpen(true);
-      }
+      setIsVideoModalOpen(true);
       setShowIncomingModal(false);
 
       return response.data;
@@ -385,7 +379,8 @@ const ChatBox = () => {
 
   const handleRejectCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = resolveCurrentUserId();
 
       if (!userId) {
@@ -411,7 +406,8 @@ const ChatBox = () => {
 
   const handleEndCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = resolveCurrentUserId();
 
       if (!userId) {
@@ -440,16 +436,11 @@ const ChatBox = () => {
   useEffect(() => {
     const fetchIncomingCalls = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token =
+          localStorage.getItem("token") || localStorage.getItem("accessToken");
         const userId = resolveCurrentUserId();
 
-        if (
-          !userId ||
-          !token ||
-          showIncomingModal ||
-          isVideoModalOpen ||
-          isVoiceModalOpen
-        ) {
+        if (!userId || !token || showIncomingModal || isVideoModalOpen) {
           return;
         }
 
@@ -491,7 +482,7 @@ const ChatBox = () => {
 
     const interval = setInterval(fetchIncomingCalls, 5000);
     return () => clearInterval(interval);
-  }, [showIncomingModal, currentUser, isVideoModalOpen, isVoiceModalOpen]);
+  }, [showIncomingModal, currentUser, isVideoModalOpen]);
   // GET messages from API
   const fetchMessagesFromAPI = async () => {
     try {
@@ -670,7 +661,10 @@ const ChatBox = () => {
         const withoutTemp = prev.filter((m) => !m.isTemporary);
         if (!sentMsg) return withoutTemp;
         const alreadyHas = withoutTemp.some(
-          (m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId,
+          (m) =>
+            m.messageId &&
+            sentMsg.messageId &&
+            m.messageId === sentMsg.messageId,
         );
         if (alreadyHas) return withoutTemp;
         return [
@@ -720,9 +714,13 @@ const ChatBox = () => {
     }
   };
 
-  // Initialize video call with API
-  const initiateVideoCall = async () => {
-    console.log("initiateVideoCall called");
+  const initiateStreamCall = async (requestedCallType = "video") => {
+    const normalizedMode =
+      requestedCallType === "audio" || requestedCallType === "voice"
+        ? "voice"
+        : "video";
+
+    console.log(`initiateStreamCall called with mode: ${normalizedMode}`);
 
     if (!currentCounselor) {
       console.error("Current counselor is undefined");
@@ -735,14 +733,8 @@ const ChatBox = () => {
 
     try {
       const token = localStorage.getItem("token");
-
-      // Get user details - Use the exact IDs from your API
       const initiatorId = resolveCurrentUserId();
-      const initiatorName =
-        currentUser?.name || currentUser?.fullName || "User";
       const initiatorType = "user";
-
-      // Get receiver (counselor) details
       const receiverId = resolveCounselorId();
       const receiverName = currentCounselor.name || "Counselor";
       const receiverType = "counsellor";
@@ -751,21 +743,12 @@ const ChatBox = () => {
         throw new Error("Unable to start call. Missing user/counselor ID.");
       }
 
-      console.log("Call details:", {
+      const requestBody = {
         initiatorId,
-        initiatorName,
         initiatorType,
         receiverId,
-        receiverName,
         receiverType,
-      });
-
-      const requestBody = {
-        initiatorId: initiatorId,
-        initiatorType: initiatorType,
-        receiverId: receiverId,
-        receiverType: receiverType,
-        callType: "video",
+        callType: normalizedMode === "voice" ? "audio" : "video",
       };
 
       const response = await axios.post(
@@ -779,10 +762,9 @@ const ChatBox = () => {
         },
       );
 
-      console.log("Video call API response:", response.data);
+      console.log(`${normalizedMode} call API response:`, response.data);
 
       if (response.data && response.data.success) {
-        // Get profile photo from API response or use default
         const receiverProfilePhoto =
           response.data.callData?.receiver?.profilePhoto ||
           getProfilePhotoUrl(currentCounselor) ||
@@ -795,7 +777,8 @@ const ChatBox = () => {
           callId: response.data.callId,
           roomId: response.data.roomId,
           name: response.data.callData?.receiver?.name || receiverName,
-          type: "video",
+          type: normalizedMode,
+          callType: normalizedMode,
           profilePic: receiverProfilePhoto,
           phoneNumber: currentCounselor?.phoneNumber,
           status: response.data.status || "ringing",
@@ -809,19 +792,18 @@ const ChatBox = () => {
           receiver: response.data.callData?.receiver,
         };
 
-        console.log("Opening video modal with:", callData);
         setSelectedCall(callData);
         setIsVideoModalOpen(true);
       } else {
         throw new Error(
-          response.data?.message || "Failed to initiate video call",
+          response.data?.message || `Failed to initiate ${normalizedMode} call`,
         );
       }
     } catch (error) {
-      console.error("Error initiating video call:", error);
+      console.error(`Error initiating ${normalizedMode} call:`, error);
       console.error("Error details:", error.response?.data || error.message);
 
-      let errorMessage = "Failed to initiate video call. ";
+      let errorMessage = `Failed to initiate ${normalizedMode} call. `;
       const backendMessage =
         error.response?.data?.message || error.response?.data?.error;
       if (backendMessage) {
@@ -833,162 +815,8 @@ const ChatBox = () => {
       }
 
       setCallError(errorMessage);
-
-      // Do not open a fake call modal when the API failed.
       setSelectedCall(null);
       setIsVideoModalOpen(false);
-      /*
-        id: Date.now(),
-        name: currentCounselor?.name || "Counselor",
-        type: "video",
-        profilePic:
-          getProfilePhotoUrl(currentCounselor) ||
-          currentCounselor?.avatar ||
-          currentCounselor?.name?.charAt(0) ||
-          "👤",
-        phoneNumber: currentCounselor?.phoneNumber,
-        status: "ringing",
-        date: "Today",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setSelectedCall(fallbackCallData);
-      setIsVideoModalOpen(true);
-      */
-    } finally {
-      setIsInitiatingCall(false);
-    }
-  };
-
-  // Initialize voice call with API
-  const initiateVoiceCall = async () => {
-    console.log("initiateVoiceCall called");
-
-    if (!currentCounselor) {
-      console.error("Current counselor is undefined");
-      setCallError("Counselor information not available");
-      return;
-    }
-
-    setIsInitiatingCall(true);
-    setCallError(null);
-
-    try {
-      const token = localStorage.getItem("token");
-
-      // Get user details
-      const initiatorId = resolveCurrentUserId();
-      const initiatorName =
-        currentUser?.name || currentUser?.fullName || "User";
-      const initiatorType = "user";
-
-      // Get receiver (counselor) details
-      const receiverId = resolveCounselorId();
-      const receiverName = currentCounselor.name || "Counselor";
-      const receiverType = "counsellor";
-
-      if (!initiatorId || !receiverId) {
-        throw new Error("Unable to start call. Missing user/counselor ID.");
-      }
-
-      const requestBody = {
-        initiatorId: initiatorId,
-        initiatorType: initiatorType,
-        receiverId: receiverId,
-        receiverType: receiverType,
-        callType: "audio",
-      };
-
-      console.log("Sending voice call request:", requestBody);
-
-      const response = await axios.post(
-        `${API_BASE_URL}/api/video/calls/initiate`,
-        requestBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: token ? `Bearer ${token}` : "",
-          },
-        },
-      );
-
-      console.log("Voice call API response:", response.data);
-
-      if (response.data && response.data.success) {
-        const receiverProfilePhoto =
-          response.data.callData?.receiver?.profilePhoto ||
-          getProfilePhotoUrl(currentCounselor) ||
-          currentCounselor?.avatar ||
-          currentCounselor?.name?.charAt(0) ||
-          "👤";
-
-        const callData = {
-          id: response.data.callData?.id,
-          callId: response.data.callId,
-          roomId: response.data.roomId,
-          name: response.data.callData?.receiver?.name || receiverName,
-          type: "voice",
-          profilePic: receiverProfilePhoto,
-          phoneNumber: currentCounselor?.phoneNumber,
-          status: response.data.status || "ringing",
-          date: "Today",
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          apiCallData: response.data.callData,
-          initiator: response.data.callData?.initiator,
-          receiver: response.data.callData?.receiver,
-        };
-
-        setSelectedCall(callData);
-        setIsVoiceModalOpen(true);
-      } else {
-        throw new Error(
-          response.data?.message || "Failed to initiate voice call",
-        );
-      }
-    } catch (error) {
-      console.error("Error initiating voice call:", error);
-
-      let errorMessage = "Failed to initiate voice call. ";
-      const backendMessage =
-        error.response?.data?.message || error.response?.data?.error;
-      if (backendMessage) {
-        errorMessage += backendMessage;
-      } else if (error.message) {
-        errorMessage += error.message;
-      } else {
-        errorMessage += "Please check your connection and try again.";
-      }
-
-      setCallError(errorMessage);
-
-      // Do not open a fake call modal when the API failed.
-      setSelectedCall(null);
-      setIsVoiceModalOpen(false);
-      /*
-        id: Date.now(),
-        name: currentCounselor?.name || "Counselor",
-        type: "voice",
-        profilePic:
-          getProfilePhotoUrl(currentCounselor) ||
-          currentCounselor?.avatar ||
-          currentCounselor?.name?.charAt(0) ||
-          "👤",
-        phoneNumber: currentCounselor?.phoneNumber,
-        status: "ringing",
-        date: "Today",
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-      setSelectedCall(fallbackCallData);
-      setIsVoiceModalOpen(true);
-      */
     } finally {
       setIsInitiatingCall(false);
     }
@@ -997,20 +825,19 @@ const ChatBox = () => {
   // Handle video call
   const handleVideoCall = () => {
     console.log("Video call button clicked");
-    initiateVideoCall();
+    initiateStreamCall("video");
   };
 
   // Handle voice call
   const handleVoiceCall = () => {
     console.log("Voice call button clicked");
-    initiateVoiceCall();
+    initiateStreamCall("audio");
   };
 
   // Handle close modal
   const handleCloseModal = () => {
     console.log("Closing call modal");
     setIsVideoModalOpen(false);
-    setIsVoiceModalOpen(false);
     setSelectedCall(null);
     setCallError(null);
   };
@@ -1762,14 +1589,7 @@ const ChatBox = () => {
         isOpen={isVideoModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
-        currentUser={currentUser}
-        onEndCall={handleEndCall}
-      />
-
-      <VoiceCallModal
-        isOpen={isVoiceModalOpen}
-        onClose={handleCloseModal}
-        callData={selectedCall}
+        callMode={selectedCall?.callType || selectedCall?.type || "video"}
         currentUser={currentUser}
         onEndCall={handleEndCall}
       />

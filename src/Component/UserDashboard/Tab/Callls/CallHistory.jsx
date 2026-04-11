@@ -1,60 +1,13 @@
-import React, { useState } from 'react';
-import './CallHistory.css';
+import React, { useState } from "react";
 
-// Modal Components (simplified for demonstration)
-const VideoCallModal = ({ isOpen, onClose, callData }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Video Call {callData ? `with ${callData.name}` : '(New Call)'}</h3>
-          <button className="modal-close" onClick={onClose}>✕</button>
-        </div>
-        <div className="modal-body video-modal-body">
-          <div className="video-preview-placeholder">
-            <span className="video-icon">📹</span>
-            <p>Video call interface would appear here</p>
-            <small>{callData ? `Calling ${callData.name}...` : 'Starting new video call...'}</small>
-          </div>
-        </div>
-        <div className="modal-footer">
-          <button className="btn-end-call" onClick={onClose}>End Call</button>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const VoiceCallModal = ({ isOpen, onClose, callData }) => {
-  if (!isOpen) return null;
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h3>Voice Call {callData ? `with ${callData.name}` : '(New Call)'}</h3>
-          <button className="modal-close" onClick={onClose}>✕</button>
-        </div>
-        <div className="modal-body voice-modal-body">
-          <div className="voice-preview-placeholder">
-            <span className="voice-icon">🎤</span>
-            <p>Voice call interface would appear here</p>
-            <small>{callData ? `Calling ${callData.name}...` : 'Starting new voice call...'}</small>
-          </div>
-        </div>
-        <div className="modal-footer">
-          <button className="btn-end-call" onClick={onClose}>End Call</button>
-        </div>
-      </div>
-    </div>
-  );
-};
+import "./CallHistory.css";
+import VideoCallModal from "../CallModal/VideoCallModal";
 
 const CallHistory = () => {
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
+  const [activeFilter, setActiveFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [activeCallMode, setActiveCallMode] = useState("video");
   const [selectedCall, setSelectedCall] = useState(null);
 
   // Call Data
@@ -69,7 +22,7 @@ const CallHistory = () => {
       duration: "25:30",
       profilePic: "👩‍⚕️",
       phoneNumber: "+91 98765 43210",
-      missed: false
+      missed: false,
     },
     {
       id: 2,
@@ -81,7 +34,7 @@ const CallHistory = () => {
       duration: "15:20",
       profilePic: "👨‍⚕️",
       phoneNumber: "+91 98765 43211",
-      missed: false
+      missed: false,
     },
     {
       id: 3,
@@ -93,7 +46,7 @@ const CallHistory = () => {
       duration: null,
       profilePic: "👩‍⚕️",
       phoneNumber: "+91 98765 43212",
-      missed: true
+      missed: true,
     },
     {
       id: 4,
@@ -105,7 +58,7 @@ const CallHistory = () => {
       duration: "12:15",
       profilePic: "👨‍⚕️",
       phoneNumber: "+91 98765 43213",
-      missed: false
+      missed: false,
     },
     {
       id: 5,
@@ -117,44 +70,22 @@ const CallHistory = () => {
       duration: "32:10",
       profilePic: "👩‍⚕️",
       phoneNumber: "+91 98765 43214",
-      missed: false
+      missed: false,
     },
-    {
-      id: 6,
-      name: "Dr. Vikram Singh",
-      type: "voice",
-      status: "missed",
-      date: "18 Feb",
-      time: "02:15 PM",
-      duration: null,
-      profilePic: "👨‍⚕️",
-      phoneNumber: "+91 98765 43215",
-      missed: true
-    },
-    {
-      id: 7,
-      name: "Dr. Anjali Mehta",
-      type: "video",
-      status: "outgoing",
-      date: "17 Feb",
-      time: "11:45 AM",
-      duration: "18:45",
-      profilePic: "👩‍⚕️",
-      phoneNumber: "+91 98765 43216",
-      missed: false
-    }
   ];
 
   // Filter calls
-  const filteredCalls = callsData.filter(call => {
-    if (activeFilter === 'all') return true;
-    if (activeFilter === 'missed') return call.missed;
-    if (activeFilter === 'video') return call.type === 'video';
-    if (activeFilter === 'voice') return call.type === 'voice';
-    return true;
-  }).filter(call => 
-    call.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCalls = callsData
+    .filter((call) => {
+      if (activeFilter === "all") return true;
+      if (activeFilter === "missed") return call.missed;
+      if (activeFilter === "video") return call.type === "video";
+      if (activeFilter === "voice") return call.type === "voice";
+      return true;
+    })
+    .filter((call) =>
+      call.name.toLowerCase().includes(searchTerm.toLowerCase()),
+    );
 
   // Group calls by date
   const groupedCalls = filteredCalls.reduce((groups, call) => {
@@ -169,36 +100,40 @@ const CallHistory = () => {
   // Open appropriate modal based on call type
   const openCallModal = (call) => {
     setSelectedCall(call);
-    if (call.type === 'video') {
-      setIsVideoModalOpen(true);
-    } else {
-      setIsVoiceModalOpen(true);
-    }
+    setActiveCallMode(call.type === "voice" ? "voice" : "video");
+    setIsVideoModalOpen(true);
   };
 
   // Open new call modals
   const openNewVideoCall = () => {
     setSelectedCall(null);
+    setActiveCallMode("video");
     setIsVideoModalOpen(true);
   };
 
   const openNewVoiceCall = () => {
     setSelectedCall(null);
-    setIsVoiceModalOpen(true);
+    setActiveCallMode("voice");
+    setIsVideoModalOpen(true);
   };
 
   // Get icon for call type
-  const getCallIcon = (type) => {
-    return type === 'video' ? '📹' : '📞';
+  const getCallIcon = (type, status) => {
+    if (type === "video") return "📹";
+    return "📞";
   };
 
   // Get status icon
   const getStatusIcon = (status) => {
-    switch(status) {
-      case 'incoming': return '📥';
-      case 'outgoing': return '📤';
-      case 'missed': return '❌';
-      default: return '📤';
+    switch (status) {
+      case "incoming":
+        return "⬇️";
+      case "outgoing":
+        return "⬆️";
+      case "missed":
+        return "❌";
+      default:
+        return "⬆️";
     }
   };
 
@@ -209,16 +144,16 @@ const CallHistory = () => {
         <div className="call-header">
           <h2 className="call-title">Call History</h2>
           <div className="call-header-actions">
-            <button 
-              className="call-icon-btn" 
+            <button
+              className="call-icon-btn"
               onClick={openNewVoiceCall}
               title="New Voice Call"
               aria-label="New Voice Call"
             >
               📞
             </button>
-            <button 
-              className="call-icon-btn" 
+            <button
+              className="call-icon-btn"
               onClick={openNewVideoCall}
               title="New Video Call"
               aria-label="New Video Call"
@@ -240,7 +175,10 @@ const CallHistory = () => {
             aria-label="Search calls"
           />
           {searchTerm && (
-            <button className="call-clear-btn" onClick={() => setSearchTerm('')} aria-label="Clear search">
+            <button
+              className="call-clear-btn"
+              onClick={() => setSearchTerm("")}
+            >
               ✕
             </button>
           )}
@@ -248,27 +186,27 @@ const CallHistory = () => {
 
         {/* Filter Tabs */}
         <div className="call-filters">
-          <button 
-            className={`call-filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('all')}
+          <button
+            className={`call-filter-btn ${activeFilter === "all" ? "active" : ""}`}
+            onClick={() => setActiveFilter("all")}
           >
             All
           </button>
-          <button 
-            className={`call-filter-btn ${activeFilter === 'missed' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('missed')}
+          <button
+            className={`call-filter-btn ${activeFilter === "missed" ? "active" : ""}`}
+            onClick={() => setActiveFilter("missed")}
           >
             Missed
           </button>
-          <button 
-            className={`call-filter-btn ${activeFilter === 'video' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('video')}
+          <button
+            className={`call-filter-btn ${activeFilter === "video" ? "active" : ""}`}
+            onClick={() => setActiveFilter("video")}
           >
             Video
           </button>
-          <button 
-            className={`call-filter-btn ${activeFilter === 'voice' ? 'active' : ''}`}
-            onClick={() => setActiveFilter('voice')}
+          <button
+            className={`call-filter-btn ${activeFilter === "voice" ? "active" : ""}`}
+            onClick={() => setActiveFilter("voice")}
           >
             Voice
           </button>
@@ -277,16 +215,16 @@ const CallHistory = () => {
 
       {/* Scrollable Calls List */}
       <div className="calls-list">
-        {Object.keys(groupedCalls).map(date => (
+        {Object.keys(groupedCalls).map((date) => (
           <div key={date} className="call-date-group">
             <div className="call-date-header">
               <span className="call-date">{date}</span>
             </div>
-            
-            {groupedCalls[date].map(call => (
-              <div 
-                key={call.id} 
-                className={`call-item ${call.missed ? 'missed-call' : ''}`}
+
+            {groupedCalls[date].map((call) => (
+              <div
+                key={call.id}
+                className={`call-item ${call.missed ? "missed-call" : ""}`}
                 onClick={() => openCallModal(call)}
                 role="button"
                 tabIndex={0}
@@ -303,7 +241,7 @@ const CallHistory = () => {
                     <span className="call-name">{call.name}</span>
                     <span className="call-time">{call.time}</span>
                   </div>
-                  
+
                   <div className="call-details">
                     <span className="call-status-icon">
                       {getStatusIcon(call.status)}
@@ -312,7 +250,7 @@ const CallHistory = () => {
                       {getCallIcon(call.type)}
                     </span>
                     <span className="call-type">
-                      {call.type === 'video' ? 'Video Call' : 'Voice Call'}
+                      {call.type === "video" ? "Video Call" : "Voice Call"}
                     </span>
                     {call.duration && (
                       <>
@@ -327,7 +265,7 @@ const CallHistory = () => {
                 </div>
 
                 {/* Call Action Button */}
-                <button 
+                <button
                   className="call-action-btn"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -335,7 +273,7 @@ const CallHistory = () => {
                   }}
                   aria-label={`Call ${call.name}`}
                 >
-                  {getCallIcon(call.type)}
+                  {call.type === "video" ? "📹" : "📞"}
                 </button>
               </div>
             ))}
@@ -357,12 +295,7 @@ const CallHistory = () => {
         isOpen={isVideoModalOpen}
         onClose={() => setIsVideoModalOpen(false)}
         callData={selectedCall}
-      />
-
-      <VoiceCallModal
-        isOpen={isVoiceModalOpen}
-        onClose={() => setIsVoiceModalOpen(false)}
-        callData={selectedCall}
+        callMode={activeCallMode}
       />
     </div>
   );
