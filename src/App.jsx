@@ -1,20 +1,28 @@
-import { useState, useEffect } from 'react'
-import './App.css'
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
-import Leanding from './authtication/Leanding'
-import '../setupAxios'; // 🔥 THIS LINE MAGIC
-import UserDashboard from './Component/UserDashboard/Dashboard/UserDashboard'
-import ChatBox from './Component/UserDashboard/Tab/ChatBox/ChatBox'
-import Login from './authtication/Login'
-import RoleSelector from './authtication/RoleSelector'
-import CounselorSignup from './authtication/CounselorSignup'
-import UserSignup from './authtication/UserSignup'
-import CounselorDashboard from './Component/counselor-dashboard/Dashboard/dashboard'
-import CounselorTable from './Component/UserDashboard/Tab/Counselor/CounselorDirectory'
-import SMSInput from './Component/counselor-dashboard/Tab/SMSInput/SMSInput'
-import OTPVerification from './authtication/OTPVerification'
-import CounselorProfile from './Component/counselor-dashboard/Tab/Profile-Con/CounselorProfile'
-
+import { lazy, Suspense, useState, useEffect } from "react";
+import "./App.css";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import "../setupAxios"; // 🔥 THIS LINE MAGIC
+const Leanding = lazy(() => import("./authtication/Leanding"));
+const UserDashboard = lazy(
+  () => import("./Component/UserDashboard/Dashboard/UserDashboard"),
+);
+const ChatBox = lazy(
+  () => import("./Component/UserDashboard/Tab/ChatBox/ChatBox"),
+);
+const Login = lazy(() => import("./authtication/Login"));
+const RoleSelector = lazy(() => import("./authtication/RoleSelector"));
+const CounselorSignup = lazy(() => import("./authtication/CounselorSignup"));
+const UserSignup = lazy(() => import("./authtication/UserSignup"));
+const CounselorDashboard = lazy(
+  () => import("./Component/counselor-dashboard/Dashboard/dashboard"),
+);
+const CounselorTable = lazy(
+  () => import("./Component/UserDashboard/Tab/Counselor/CounselorDirectory"),
+);
+const SMSInput = lazy(
+  () => import("./Component/counselor-dashboard/Tab/SMSInput/SMSInput"),
+);
+const OTPVerification = lazy(() => import("./authtication/OTPVerification"));
 
 function App() {
   const navigate = useNavigate();
@@ -30,8 +38,8 @@ function App() {
       const currentPath = location.pathname;
 
       // Agar mobile hai to sirf login page dikhao, home page mat dikhao
-      if (mobile && currentPath === '/') {
-        navigate('/');
+      if (mobile && currentPath === "/") {
+        navigate("/");
       }
 
       // Agar mobile nahi hai (desktop) to kuch mat karo - user jo chahe wahan ja sakta hai
@@ -41,37 +49,33 @@ function App() {
     checkScreenSize();
 
     // Add resize listener
-    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
 
     // Cleanup
-    return () => window.removeEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, [navigate, location.pathname]);
 
   return (
     <>
-      <Routes>
-        <Route path="/" element={<Leanding />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/role-selector" element={<RoleSelector />} />
-        <Route path="/otp-verification" element={<OTPVerification />} />
-        
+      <Suspense fallback={<div className="app-loading">Loading...</div>}>
+        <Routes>
+          <Route path="/" element={<Leanding />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/role-selector" element={<RoleSelector />} />
+          <Route path="/otp-verification" element={<OTPVerification />} />
 
-        <Route path="/user-signup" element={<UserSignup />} />
-        <Route path="/user-dashboard" element={<UserDashboard />} />
-        <Route path="/chat/:id" element={<ChatBox />} />
+          <Route path="/user-signup" element={<UserSignup />} />
+          <Route path="/user-dashboard" element={<UserDashboard />} />
+          <Route path="/chat/:id" element={<ChatBox />} />
 
-
-        <Route path="/counselor-signup" element={<CounselorSignup />} />
-        <Route path="/counselor-directory" element={<CounselorTable />} />
-        <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
-        <Route path="/sms-input" element={<SMSInput />} />
-
-
-
-
-      </Routes>
+          <Route path="/counselor-signup" element={<CounselorSignup />} />
+          <Route path="/counselor-directory" element={<CounselorTable />} />
+          <Route path="/counselor-dashboard" element={<CounselorDashboard />} />
+          <Route path="/sms-input" element={<SMSInput />} />
+        </Routes>
+      </Suspense>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
