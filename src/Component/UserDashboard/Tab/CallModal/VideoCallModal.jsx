@@ -123,27 +123,75 @@ const VideoCallModal = ({
     localVideoRef.current.play().catch(() => {});
   }, []);
 
-  const updateRemoteState = useCallback(() => {
-    const videoTracks = remoteStreamRef.current?.getVideoTracks?.() || [];
-    const hasLiveVideo = videoTracks.some(
-      (track) => track.readyState === "live",
-    );
-    const hasAnyTrack = videoTracks.length > 0;
+  const updateRemoteState = useCallback(
+    ({ forceReady = false } = {}) => {
+      const videoTracks = remoteStreamRef.current?.getVideoTracks?.() || [];
+      const hasLiveVideo = videoTracks.some(
+        (track) => track.readyState === "live",
+      );
+      const hasAnyTrack = videoTracks.length > 0;
+      const mediaElementReady = Boolean(
+        remoteVideoRef.current &&
+        remoteVideoRef.current.srcObject &&
+        remoteVideoRef.current.readyState >= 2,
+      );
 
-    const shouldMarkReady =
-      hasLiveVideo ||
-      (hasAnyTrack && peerRef.current?.connectionState === "connected");
+      const shouldMarkReady =
+        forceReady ||
+        hasLiveVideo ||
+        (hasAnyTrack && peerRef.current?.connectionState === "connected") ||
+        mediaElementReady;
 
-    setIsRemoteVideoReady(shouldMarkReady);
+      setIsRemoteVideoReady(shouldMarkReady);
 
-    if (shouldMarkReady) {
-      hasEverConnectedRef.current = true;
-      setIsConnecting(false);
-      setIsReconnecting(false);
-      resetReconnectState();
-      setWebrtcError("");
-    }
-  }, [resetReconnectState]);
+      if (shouldMarkReady) {
+        hasEverConnectedRef.current = true;
+        setIsConnecting(false);
+        setIsReconnecting(false);
+        resetReconnectState();
+        setWebrtcError("");
+      }
+    },
+    [resetReconnectState],
+  );
+
+  const attemptRemoteVideoPlayback = useCallback(
+    async ({ preferMutedAutoplay = false } = {}) => {
+      if (!remoteVideoRef.current || !remoteVideoRef.current.srcObject) return;
+
+      const element = remoteVideoRef.current;
+      const desiredMuted = !isSpeakerOn;
+
+      if (preferMutedAutoplay && !desiredMuted) {
+        element.muted = true;
+      }
+
+      try {
+        await element.play();
+        element.muted = desiredMuted;
+        updateRemoteState({ forceReady: true });
+        return;
+      } catch (firstError) {
+        console.warn("Remote video autoplay blocked:", firstError);
+      }
+
+      if (!desiredMuted) {
+        try {
+          // Fallback: start muted first (usually autoplay-allowed), then unmute.
+          element.muted = true;
+          await element.play();
+          element.muted = false;
+          updateRemoteState({ forceReady: true });
+          return;
+        } catch (secondError) {
+          console.warn("Remote video muted fallback failed:", secondError);
+        }
+
+        setWebrtcError("Remote video autoplay blocked. Tap video area once.");
+      }
+    },
+    [isSpeakerOn, updateRemoteState],
+  );
 
   const cleanupRealtime = useCallback(
     ({ emitLeave = true } = {}) => {
@@ -518,8 +566,8 @@ const VideoCallModal = ({
 
       if (remoteVideoRef.current) {
         remoteVideoRef.current.srcObject = remoteStreamRef.current;
-        await remoteVideoRef.current.play().catch(() => {});
       }
+      await attemptRemoteVideoPlayback({ preferMutedAutoplay: true });
       updateRemoteState();
     };
 
@@ -534,8 +582,8 @@ const VideoCallModal = ({
         updateRemoteState();
         if (remoteVideoRef.current && remoteStreamRef.current) {
           remoteVideoRef.current.srcObject = remoteStreamRef.current;
-          remoteVideoRef.current.play().catch(() => {});
         }
+        attemptRemoteVideoPlayback({ preferMutedAutoplay: true });
       }
       if (state === "failed" || state === "disconnected") {
         setWebrtcError("Video connection interrupted.");
@@ -701,6 +749,7 @@ const VideoCallModal = ({
     onClose,
     resetReconnectState,
     scheduleReconnect,
+    attemptRemoteVideoPlayback,
     updateRemoteState,
   ]);
 
@@ -858,7 +907,31 @@ const VideoCallModal = ({
       0,
       Math.min(1, Number(volumeLevel) / 100),
     );
-  }, [isSpeakerOn, volumeLevel]);
+    if (isSpeakerOn) {
+      attemptRemoteVideoPlayback();
+    }
+  }, [attemptRemoteVideoPlayback, isSpeakerOn, volumeLevel]);
+
+  useEffect(() => {
+    if (!isOpen || !remoteVideoRef.current) return;
+
+    const element = remoteVideoRef.current;
+
+    const markReady = () => {
+      updateRemoteState({ forceReady: true });
+      attemptRemoteVideoPlayback({ preferMutedAutoplay: true });
+    };
+
+    element.addEventListener("loadedmetadata", markReady);
+    element.addEventListener("canplay", markReady);
+    element.addEventListener("playing", markReady);
+
+    return () => {
+      element.removeEventListener("loadedmetadata", markReady);
+      element.removeEventListener("canplay", markReady);
+      element.removeEventListener("playing", markReady);
+    };
+  }, [attemptRemoteVideoPlayback, isOpen, updateRemoteState]);
 
   // Cleanup when modal closes
   useEffect(() => {
@@ -1014,7 +1087,10 @@ const VideoCallModal = ({
 
         <div className="video-modal-content">
           <div className="video-main-area">
-            <div className="remote-video-container">
+            <div
+              className="remote-video-container"
+              onClick={() => attemptRemoteVideoPlayback()}
+            >
               <video
                 ref={remoteVideoRef}
                 className={`remote-video ${isRemoteVideoReady ? "ready" : ""}`}
