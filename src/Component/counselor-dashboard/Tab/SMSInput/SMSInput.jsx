@@ -142,6 +142,7 @@ const SMSInput = () => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const messageInputRef = useRef(null);
   const chatSocketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const [remoteIsTyping, setRemoteIsTyping] = useState(false);
@@ -168,6 +169,19 @@ const SMSInput = () => {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
+
+  const focusMessageInput = () => {
+    const input = messageInputRef.current;
+    if (!input) return;
+
+    requestAnimationFrame(() => {
+      input.focus({ preventScroll: true });
+    });
+
+    setTimeout(() => {
+      messageInputRef.current?.focus({ preventScroll: true });
+    }, 50);
+  };
 
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
@@ -590,6 +604,7 @@ const SMSInput = () => {
 
     setMessages((prev) => [...prev, tempMessage]);
     setMessage("");
+    focusMessageInput();
     setIsSending(true);
     setError(null);
 
@@ -644,8 +659,23 @@ const SMSInput = () => {
       }, 3000);
     } finally {
       setIsSending(false);
+      focusMessageInput();
     }
   };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !isSending) {
+      e.preventDefault();
+      handleSendMessage(e);
+      focusMessageInput();
+    }
+  };
+
+  useEffect(() => {
+    if (!isSending) {
+      focusMessageInput();
+    }
+  }, [isSending]);
 
   const handleFileAttachClick = () => {
     if (isSending) return;
@@ -979,6 +1009,24 @@ const SMSInput = () => {
       );
       return true;
     } catch (error) {
+      // Fallback for older backend deployments that expose reject under /api/call.
+      if (error?.response?.status === 404) {
+        try {
+          const token =
+            localStorage.getItem("token") ||
+            localStorage.getItem("accessToken");
+          await axios.post(
+            `${API_BASE_URL}/api/call/${callId}/reject`,
+            { reason: "declined" },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
+          return true;
+        } catch (fallbackError) {
+          console.error("Reject fallback failed:", fallbackError);
+        }
+      }
       console.error("Error rejecting call:", error);
       return false;
     }
@@ -1227,6 +1275,24 @@ const SMSInput = () => {
       );
     });
 
+    // Show caller-facing feedback when the other participant declines.
+    socket.on("call_rejected", (payload) => {
+      const declinedBy = payload?.by ? ` by ${payload.by}` : "";
+      setCallError(`Call was declined${declinedBy}.`);
+      setIsVideoModalOpen(false);
+      setSelectedCall(null);
+      setShowIncomingModal(false);
+    });
+
+    socket.on("call-status-update", ({ status }) => {
+      if (String(status).toLowerCase() === "rejected") {
+        setCallError("Call was declined by the other participant.");
+        setIsVideoModalOpen(false);
+        setSelectedCall(null);
+        setShowIncomingModal(false);
+      }
+    });
+
     socket.on("connect_error", (err) => {
       console.error("Chat socket connection error:", err.message);
     });
@@ -1236,6 +1302,8 @@ const SMSInput = () => {
         chatSocketRef.current.off("new-message");
         chatSocketRef.current.off("user-typing");
         chatSocketRef.current.off("messages-read");
+        chatSocketRef.current.off("call_rejected");
+        chatSocketRef.current.off("call-status-update");
         chatSocketRef.current.off("connect");
         chatSocketRef.current.off("connect_error");
         chatSocketRef.current.disconnect();
@@ -1495,16 +1563,19 @@ const SMSInput = () => {
           </button>
           <input
             type="text"
+            ref={messageInputRef}
             className="smsinput-input"
             placeholder={isSending ? "Sending..." : "Type your message..."}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleInputKeyDown}
             disabled={isSending}
           />
           <button
             type="submit"
             className={`send-btn ${message.trim() && !isSending ? "active" : ""}`}
             disabled={!message.trim() || isSending}
+            onMouseDown={(e) => e.preventDefault()}
           >
             {isSending ? "Sending..." : "Send"}
           </button>
