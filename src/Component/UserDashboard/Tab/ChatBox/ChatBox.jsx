@@ -244,6 +244,7 @@ const ChatBox = () => {
   const emojiPickerRef = useRef(null);
   const timeoutRef = useRef(null);
   const fileInputRef = useRef(null);
+  const messageInputRef = useRef(null);
   const chatSocketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -275,6 +276,19 @@ const ChatBox = () => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
+  }, []);
+
+  // Keep focus behavior reliable across desktop and mobile browsers.
+  const focusMessageInput = useCallback(() => {
+    const input = messageInputRef.current;
+    if (!input) return;
+
+    requestAnimationFrame(() => {
+      input.focus({ preventScroll: true });
+    });
+
+    // Mobile browsers may defer focus after async work; retry briefly.
+    setTimeout(() => input.focus({ preventScroll: true }), 50);
   }, []);
 
   // Get the chat ID for API calls
@@ -399,6 +413,24 @@ const ChatBox = () => {
       );
       return true;
     } catch (error) {
+      // Fallback for older backend deployments that expose reject under /api/call.
+      if (error?.response?.status === 404) {
+        try {
+          const token =
+            localStorage.getItem("token") ||
+            localStorage.getItem("accessToken");
+          await axios.post(
+            `${API_BASE_URL}/api/call/${callId}/reject`,
+            { reason: "declined" },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
+          return true;
+        } catch (fallbackError) {
+          console.error("Reject fallback failed:", fallbackError);
+        }
+      }
       console.error("Error rejecting call:", error);
       return false;
     }
@@ -645,6 +677,7 @@ const ChatBox = () => {
 
     setMessages((prev) => [...prev, tempUserMessage]);
     setNewMessage("");
+    focusMessageInput();
     setShowEmojiPicker(false);
     setIsSending(true);
 
@@ -711,6 +744,9 @@ const ChatBox = () => {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsSending(false);
+
+      // Return focus to message input after send so user can continue typing.
+      focusMessageInput();
     }
   };
 
@@ -1048,6 +1084,24 @@ const ChatBox = () => {
       );
     });
 
+    // Show caller-facing feedback when the other participant declines.
+    socket.on("call_rejected", (payload) => {
+      const declinedBy = payload?.by ? ` by ${payload.by}` : "";
+      setCallError(`Call was declined${declinedBy}.`);
+      setIsVideoModalOpen(false);
+      setSelectedCall(null);
+      setShowIncomingModal(false);
+    });
+
+    socket.on("call-status-update", ({ status }) => {
+      if (String(status).toLowerCase() === "rejected") {
+        setCallError("Call was declined by the other participant.");
+        setIsVideoModalOpen(false);
+        setSelectedCall(null);
+        setShowIncomingModal(false);
+      }
+    });
+
     // Listen for chat-status-update (e.g. counselor accepted/rejected the chat)
     socket.on("chat-status-update", ({ status, chatId: updatedChatId }) => {
       console.log("✅ Chat status updated via socket:", status);
@@ -1064,6 +1118,8 @@ const ChatBox = () => {
         chatSocketRef.current.off("new-message");
         chatSocketRef.current.off("user-typing");
         chatSocketRef.current.off("messages-read");
+        chatSocketRef.current.off("call_rejected");
+        chatSocketRef.current.off("call-status-update");
         chatSocketRef.current.off("chat-status-update");
         chatSocketRef.current.off("connect");
         chatSocketRef.current.off("connect_error");
@@ -1105,21 +1161,25 @@ const ChatBox = () => {
     return () => clearInterval(interval);
   }, [currentChat]);
 
-  // Handle key press
-  const handleKeyPress = (e) => {
+  // Handle enter-to-send across desktop and mobile keyboards.
+  const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey && !isSending) {
       e.preventDefault();
       handleSendMessage();
+      focusMessageInput();
     }
+  };
+
+  const handleSendButtonClick = (e) => {
+    e.preventDefault();
+    handleSendMessage();
+    focusMessageInput();
   };
 
   // Add emoji
   const addEmoji = (emoji) => {
     setNewMessage((prev) => prev + emoji);
-    const input = document.getElementById("messageInput");
-    if (input) {
-      input.focus();
-    }
+    focusMessageInput();
   };
 
   const emojis = [
@@ -1546,15 +1606,16 @@ const ChatBox = () => {
             </button>
             <div className="chatInputWrapper">
               <input
+                ref={messageInputRef}
                 id="messageInput"
                 type="text"
                 value={newMessage}
                 onChange={handleInputChange}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 placeholder={`Message ${counselorName}...`}
                 className="chatTextInput"
                 autoComplete="off"
-                disabled={isSending}
+                enterKeyHint="send"
                 aria-label="Message input"
               />
               <button
@@ -1571,7 +1632,8 @@ const ChatBox = () => {
             </div>
 
             <button
-              onClick={handleSendMessage}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={handleSendButtonClick}
               disabled={!newMessage.trim() || isSending}
               className="chatSendBtn"
               aria-label="Send message"

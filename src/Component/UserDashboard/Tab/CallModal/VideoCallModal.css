@@ -119,8 +119,7 @@
 }
 
 .stream-main-participant .str-video__video,
-.stream-main-participant video,
-.stream-main-participant .str-video__video-placeholder {
+.stream-main-participant video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
@@ -184,8 +183,7 @@
 }
 
 .stream-self-participant .str-video__video,
-.stream-self-participant video,
-.stream-self-participant .str-video__video-placeholder {
+.stream-self-participant video {
   width: 100% !important;
   height: 100% !important;
   object-fit: cover !important;
