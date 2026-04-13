@@ -9,7 +9,7 @@ import axios from "axios";
 import {
   CallControls,
   CallingState,
-  SpeakerLayout,
+  ParticipantView,
   StreamCall,
   StreamTheme,
   StreamVideo,
@@ -26,8 +26,6 @@ import {
   resolveStreamUserFromToken,
   validateStreamTokenPayload,
 } from "./streamCallClient";
-
-const activeVideoSessions = new Map();
 
 const PENDING_STATUSES = new Set([
   "pending",
@@ -91,18 +89,91 @@ const cleanupStreamSession = (session) => {
   if (!session) return Promise.resolve();
 
   if (!session.cleanupPromise) {
-    session.cleanupPromise = Promise.allSettled([
-      Promise.resolve(session.call?.leave?.()),
-      Promise.resolve(session.client?.disconnectUser?.()),
-    ]).then(() => undefined);
+    session.cleanupPromise = (async () => {
+      try {
+        await Promise.resolve(session.call?.leave?.());
+      } catch {
+        // Best effort: continue disconnecting client.
+      }
+
+      try {
+        await Promise.resolve(session.client?.disconnectUser?.());
+      } catch {
+        // Ignore disconnect errors during teardown.
+      }
+    })();
   }
 
   return session.cleanupPromise;
 };
 
-const StreamVideoBody = ({ onLeave, onControlLeave, isVoiceMode }) => {
-  const { useCallCallingState } = useCallStateHooks();
+const resolveParticipantName = (participant) =>
+  participant?.name ||
+  participant?.user?.name ||
+  participant?.userId ||
+  "Participant";
+
+const StreamVideoBody = ({ onLeave, onControlLeave, localUserId }) => {
+  const { useCallCallingState, useParticipants, useLocalParticipant } =
+    useCallStateHooks();
   const callingState = useCallCallingState();
+  const participants = useParticipants();
+  const localParticipantFromHook = useLocalParticipant();
+  const normalizedLocalUserId = String(localUserId || "").trim();
+
+  const localParticipant = useMemo(() => {
+    if (localParticipantFromHook) {
+      return localParticipantFromHook;
+    }
+
+    return (
+      participants.find((participant) => {
+        if (participant?.isLocalParticipant) {
+          return true;
+        }
+
+        if (!normalizedLocalUserId) {
+          return false;
+        }
+
+        return (
+          String(participant?.userId || "").trim() === normalizedLocalUserId
+        );
+      }) || null
+    );
+  }, [localParticipantFromHook, normalizedLocalUserId, participants]);
+
+  const remoteParticipants = useMemo(
+    () =>
+      participants.filter((participant) => {
+        if (!participant) {
+          return false;
+        }
+
+        if (participant?.isLocalParticipant) {
+          return false;
+        }
+
+        if (
+          localParticipant?.sessionId &&
+          participant?.sessionId === localParticipant.sessionId
+        ) {
+          return false;
+        }
+
+        if (
+          normalizedLocalUserId &&
+          String(participant?.userId || "").trim() === normalizedLocalUserId
+        ) {
+          return false;
+        }
+
+        return true;
+      }),
+    [localParticipant?.sessionId, normalizedLocalUserId, participants],
+  );
+
+  const mainParticipant = remoteParticipants[0] || null;
 
   useEffect(() => {
     if (callingState === CallingState.LEFT) {
@@ -111,12 +182,39 @@ const StreamVideoBody = ({ onLeave, onControlLeave, isVoiceMode }) => {
   }, [callingState, onLeave]);
 
   return (
-    <StreamTheme>
-      <div
-        className={`stream-call-shell ${isVoiceMode ? "stream-call-shell-voice" : "stream-call-shell-video"}`.trim()}
-      >
-        <SpeakerLayout />
-        <CallControls onLeave={onControlLeave} />
+    <StreamTheme className="stream-theme-root">
+      <div className="stream-layout-root">
+        <div className="stream-main-stage">
+          {mainParticipant ? (
+            <>
+              <ParticipantView
+                className="stream-main-participant"
+                participant={mainParticipant}
+              />
+              <div className="stream-main-name">
+                {resolveParticipantName(mainParticipant)}
+              </div>
+            </>
+          ) : (
+            <div className="stream-empty-state">
+              Waiting for others to join...
+            </div>
+          )}
+        </div>
+
+        {localParticipant && (
+          <div className="stream-self-pip">
+            <ParticipantView
+              className="stream-self-participant"
+              participant={localParticipant}
+              muteAudio={true}
+            />
+          </div>
+        )}
+
+        <div className="stream-controls-dock">
+          <CallControls onLeave={onControlLeave} />
+        </div>
       </div>
     </StreamTheme>
   );
@@ -155,9 +253,18 @@ const VideoCallModal = ({
   const [error, setError] = useState("");
   const [callStatus, setCallStatus] = useState("active");
   const callRef = useRef(null);
+  const clientRef = useRef(null);
   const closeRequestedRef = useRef(false);
   const joinRunRef = useRef(0);
   const modalContainerRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  const onEndCallRef = useRef(onEndCall);
+  const localUserRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
+  const reconnectAttemptRef = useRef(0);
+  const reconnectInFlightRef = useRef(false);
+  const callUnsubsRef = useRef([]);
+  const clientUnsubsRef = useRef([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const callId = useMemo(() => resolveCallId(callData), [callData]);
@@ -209,18 +316,111 @@ const VideoCallModal = ({
   const isTerminalCall = TERMINAL_STATUSES.has(callStatus);
   const canJoinCall = !isPendingCall && !isTerminalCall;
 
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    onEndCallRef.current = onEndCall;
+  }, [onEndCall]);
+
+  useEffect(() => {
+    localUserRef.current = localUser;
+  }, [localUser]);
+
+  const clearReconnectTimer = useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  }, []);
+
+  const detachCallListeners = useCallback(() => {
+    if (!callUnsubsRef.current.length) return;
+    for (const off of callUnsubsRef.current) {
+      try {
+        off?.();
+      } catch {
+        // Ignore listener cleanup issues.
+      }
+    }
+    callUnsubsRef.current = [];
+  }, []);
+
+  const detachClientListeners = useCallback(() => {
+    if (!clientUnsubsRef.current.length) return;
+    for (const off of clientUnsubsRef.current) {
+      try {
+        off?.();
+      } catch {
+        // Ignore listener cleanup issues.
+      }
+    }
+    clientUnsubsRef.current = [];
+  }, []);
+
   const closeModalOnce = useCallback(() => {
     if (closeRequestedRef.current) return;
     closeRequestedRef.current = true;
-    onClose();
-  }, [onClose]);
+    clearReconnectTimer();
+    onCloseRef.current?.();
+  }, [clearReconnectTimer]);
 
   const handleCallLeft = useCallback(() => {
     closeModalOnce();
   }, [closeModalOnce]);
 
+  const attemptRejoinCall = useCallback(async () => {
+    const activeCall = callRef.current;
+    if (
+      !activeCall ||
+      reconnectInFlightRef.current ||
+      !canJoinCall ||
+      !isOpen
+    ) {
+      return;
+    }
+
+    reconnectInFlightRef.current = true;
+    try {
+      setLoading(true);
+      setError("Connection interrupted. Reconnecting...");
+      await activeCall.join({ create: true });
+
+      if (isVoiceMode && activeCall.camera?.disable) {
+        await activeCall.camera.disable();
+      }
+
+      reconnectAttemptRef.current = 0;
+      setError("");
+      clearReconnectTimer();
+    } catch (err) {
+      setError(err?.message || "Reconnection failed. Retrying...");
+    } finally {
+      reconnectInFlightRef.current = false;
+      setLoading(false);
+    }
+  }, [canJoinCall, clearReconnectTimer, isOpen, isVoiceMode]);
+
+  const scheduleReconnect = useCallback(() => {
+    if (!isOpen || !canJoinCall) return;
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    if (reconnectTimeoutRef.current) return;
+
+    const attempt = reconnectAttemptRef.current + 1;
+    reconnectAttemptRef.current = attempt;
+    const delay = Math.min(10000, 1000 * 2 ** (attempt - 1));
+
+    reconnectTimeoutRef.current = setTimeout(() => {
+      reconnectTimeoutRef.current = null;
+      void attemptRejoinCall();
+    }, delay);
+  }, [attemptRejoinCall, canJoinCall, isOpen]);
+
   const handleEndForEveryone = useCallback(async () => {
     const activeCall = callRef.current;
+    const activeClient = clientRef.current;
+    clearReconnectTimer();
 
     if (activeCall?.endCall) {
       try {
@@ -233,16 +433,40 @@ const VideoCallModal = ({
       }
     }
 
-    if (callId && onEndCall) {
+    if (callId && onEndCallRef.current) {
       try {
-        await onEndCall(callId);
+        await onEndCallRef.current(callId);
       } catch {
         // Ignore API failures so local UI can still close.
       }
     }
 
+    detachCallListeners();
+    detachClientListeners();
+
+    if (activeCall || activeClient) {
+      await cleanupStreamSession({
+        call: activeCall,
+        client: activeClient,
+        cleanupPromise: null,
+      });
+    }
+
+    callRef.current = null;
+    clientRef.current = null;
+    setCall(null);
+    setClient(null);
+    reconnectAttemptRef.current = 0;
+
     closeModalOnce();
-  }, [callId, onEndCall, closeModalOnce, isVoiceMode]);
+  }, [
+    callId,
+    clearReconnectTimer,
+    closeModalOnce,
+    detachCallListeners,
+    detachClientListeners,
+    isVoiceMode,
+  ]);
 
   const handleToggleFullscreen = useCallback(async () => {
     const container = modalContainerRef.current;
@@ -270,8 +494,11 @@ const VideoCallModal = ({
       setCallStatus(initialCallStatus);
       setError("");
       setLoading(false);
+      reconnectAttemptRef.current = 0;
+      reconnectInFlightRef.current = false;
+      clearReconnectTimer();
     }
-  }, [isOpen, initialCallStatus]);
+  }, [clearReconnectTimer, initialCallStatus, isOpen]);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -297,6 +524,30 @@ const VideoCallModal = ({
       void document.exitFullscreen().catch(() => undefined);
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || typeof window === "undefined") return undefined;
+
+    const handleOffline = () => {
+      setError("Network offline. Waiting for reconnection...");
+      clearReconnectTimer();
+    };
+
+    const handleOnline = () => {
+      setError("Network restored. Reconnecting...");
+      reconnectAttemptRef.current = 0;
+      clearReconnectTimer();
+      scheduleReconnect();
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [clearReconnectTimer, isOpen, scheduleReconnect]);
 
   useEffect(() => {
     if (!isOpen || !callId || !isPendingCall) return undefined;
@@ -394,16 +645,20 @@ const VideoCallModal = ({
 
     const runId = ++joinRunRef.current;
     let disposed = false;
-    let currentClient = null;
-    let currentCall = null;
-    let currentSession = null;
-    let sessionKey = "";
-    let offCallEnded = null;
     const isAborted = () => disposed || joinRunRef.current !== runId;
 
     const initCall = async () => {
       if (!callId) {
         setError("Missing call ID.");
+        return;
+      }
+
+      const existingCall = callRef.current;
+      const existingClient = clientRef.current;
+      if (existingCall && existingClient && existingCall.id === callId) {
+        setClient(existingClient);
+        setCall(existingCall);
+        setError("");
         return;
       }
 
@@ -416,7 +671,10 @@ const VideoCallModal = ({
 
         validateStreamTokenPayload(tokenPayload);
 
-        const user = resolveStreamUserFromToken(localUser, tokenPayload);
+        const user = resolveStreamUserFromToken(
+          localUserRef.current || {},
+          tokenPayload,
+        );
 
         if (!user.id) {
           throw new Error("Missing current user ID");
@@ -433,78 +691,118 @@ const VideoCallModal = ({
           throw new Error("Missing Stream API key. Set VITE_STREAM_API_KEY");
         }
 
-        sessionKey = `${callId}:${user.id}`;
-        const existingSession = activeVideoSessions.get(sessionKey);
-
-        if (existingSession) {
-          await cleanupStreamSession(existingSession);
-          if (activeVideoSessions.get(sessionKey) === existingSession) {
-            activeVideoSessions.delete(sessionKey);
-          }
-        }
-
-        if (isAborted()) return;
-
-        currentClient = new StreamVideoClient({
-          apiKey,
-          token: streamToken,
-          user,
-        });
-
-        currentCall = currentClient.call("default", callId);
-        await currentCall.join({ create: true });
-
-        if (isAborted()) {
-          await cleanupStreamSession({
-            call: currentCall,
-            client: currentClient,
-            cleanupPromise: null,
-          });
-          return;
-        }
-
-        if (isVoiceMode && currentCall.camera?.disable) {
-          await currentCall.camera.disable();
-        }
-
-        if (isAborted()) {
-          await cleanupStreamSession({
-            call: currentCall,
-            client: currentClient,
-            cleanupPromise: null,
-          });
-          return;
-        }
-
-        currentSession = {
-          call: currentCall,
-          client: currentClient,
-          cleanupPromise: null,
+        const tokenProvider = async () => {
+          const refreshedPayload = await getStreamToken();
+          validateStreamTokenPayload(refreshedPayload);
+          return refreshedPayload.token;
         };
-        activeVideoSessions.set(sessionKey, currentSession);
 
-        offCallEnded = currentCall.on("call.ended", () => {
-          closeModalOnce();
-        });
+        let nextClient = clientRef.current;
+        const connectedUserId = String(
+          nextClient?.state?.connectedUser?.id || "",
+        ).trim();
+        const targetUserId = String(user.id || "").trim();
 
-        if (isAborted()) return;
+        if (!nextClient || connectedUserId !== targetUserId) {
+          if (nextClient) {
+            await cleanupStreamSession({
+              call: callRef.current,
+              client: nextClient,
+              cleanupPromise: null,
+            });
+          }
 
-        callRef.current = currentCall;
-        setClient(currentClient);
-        setCall(currentCall);
+          nextClient = StreamVideoClient.getOrCreateInstance({
+            apiKey,
+            user,
+            token: streamToken,
+            tokenProvider,
+          });
+        }
+
+        if (isAborted()) {
+          await cleanupStreamSession({
+            call: callRef.current,
+            client: nextClient,
+            cleanupPromise: null,
+          });
+          return;
+        }
+
+        const nextCall = nextClient.call("default", callId);
+
+        detachCallListeners();
+        callUnsubsRef.current = [
+          nextCall.on("call.ended", () => {
+            closeModalOnce();
+          }),
+          nextCall.on("call.session_ended", () => {
+            closeModalOnce();
+          }),
+        ];
+
+        detachClientListeners();
+        clientUnsubsRef.current = [
+          nextClient.on("connection.changed", (event) => {
+            if (event?.online === false) {
+              setError("Connection interrupted. Reconnecting...");
+              scheduleReconnect();
+              return;
+            }
+            setError("");
+          }),
+          nextClient.on("network.changed", (event) => {
+            if (event?.online === false) {
+              setError("Network offline. Waiting for reconnection...");
+              clearReconnectTimer();
+              return;
+            }
+            setError("Network restored. Reconnecting...");
+            scheduleReconnect();
+          }),
+          nextClient.on("connection.recovered", () => {
+            reconnectAttemptRef.current = 0;
+            clearReconnectTimer();
+            setError("");
+          }),
+        ];
+
+        await nextCall.join({ create: true });
+
+        if (isVoiceMode && nextCall.camera?.disable) {
+          await nextCall.camera.disable();
+        }
+
+        if (isAborted()) {
+          await cleanupStreamSession({
+            call: nextCall,
+            client: nextClient,
+            cleanupPromise: null,
+          });
+          return;
+        }
+
+        clientRef.current = nextClient;
+        callRef.current = nextCall;
+        setClient(nextClient);
+        setCall(nextCall);
+        reconnectAttemptRef.current = 0;
+        clearReconnectTimer();
+        setError("");
       } catch (err) {
         if (!isAborted()) {
           setError(
             err?.message ||
               `Unable to join ${isVoiceMode ? "voice" : "video"} call.`,
           );
+          scheduleReconnect();
         }
       } finally {
         if (!isAborted()) setLoading(false);
       }
     };
 
-    initCall();
+    void initCall();
 
     return () => {
       disposed = true;
@@ -512,22 +810,18 @@ const VideoCallModal = ({
         joinRunRef.current += 1;
       }
 
+      clearReconnectTimer();
+      detachCallListeners();
+      detachClientListeners();
+
+      const currentCall = callRef.current;
+      const currentClient = clientRef.current;
       setCall(null);
       setClient(null);
       callRef.current = null;
-
-      if (offCallEnded) {
-        offCallEnded();
-      }
-
-      if (currentSession) {
-        void cleanupStreamSession(currentSession).finally(() => {
-          if (activeVideoSessions.get(sessionKey) === currentSession) {
-            activeVideoSessions.delete(sessionKey);
-          }
-        });
-        return;
-      }
+      clientRef.current = null;
+      reconnectAttemptRef.current = 0;
+      reconnectInFlightRef.current = false;
 
       if (currentCall || currentClient) {
         void cleanupStreamSession({
@@ -537,7 +831,18 @@ const VideoCallModal = ({
         });
       }
     };
-  }, [isOpen, canJoinCall, callId, localUser, closeModalOnce, isVoiceMode]);
+  }, [
+    isOpen,
+    canJoinCall,
+    callId,
+    localUser?.id,
+    closeModalOnce,
+    isVoiceMode,
+    clearReconnectTimer,
+    detachCallListeners,
+    detachClientListeners,
+    scheduleReconnect,
+  ]);
 
   if (!isOpen) return null;
 
@@ -584,7 +889,7 @@ const VideoCallModal = ({
             <StreamVideo client={client}>
               <StreamCall call={call}>
                 <StreamVideoBody
-                  isVoiceMode={isVoiceMode}
+                  localUserId={localUser?.id}
                   onLeave={handleCallLeft}
                   onControlLeave={() => {
                     void handleEndForEveryone();
