@@ -1374,23 +1374,159 @@ button:focus {
     font-size: 40px;
   }
   
-  .ud-call-modal {
-    max-width: 340px;
-  }
-  
-  .ud-caller-avatar {
-    width: 70px;
-    height: 70px;
-  }
-  
-  .ud-caller-name {
-    font-size: 18px;
-  }
-  
   .ud-call-btn {
     padding: 8px 14px;
     font-size: 12px;
   }
+}
+
+/* --- Premium Call Modal Pulse Animations --- */
+.ud-call-modal-overlay {
+  background: rgba(16, 20, 30, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 10000;
+}
+
+.ud-call-modal {
+  background: #10141e;
+  border: 1px solid rgba(107, 161, 255, 0.15);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  overflow: visible;
+}
+
+.ud-caller-avatar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 50px;
+  padding: 40px;
+}
+
+.ud-pulse-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 2px solid rgba(107, 161, 255, 0.4);
+  background: radial-gradient(circle, rgba(107, 161, 255, 0.25) 0%, rgba(107, 161, 255, 0) 70%);
+  animation: ud-ring-pulse 2s infinite linear;
+}
+
+.ud-pulse-ring-1 {
+  width: 130px;
+  height: 130px;
+}
+
+.ud-pulse-ring-2 {
+  width: 180px;
+  height: 180px;
+  animation-delay: 0.6s;
+}
+
+.ud-pulse-ring-3 {
+  width: 240px;
+  height: 240px;
+  animation-delay: 1.2s;
+}
+
+.ud-caller-avatar {
+  position: relative;
+  z-index: 10;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 4px solid #10141e;
+  box-shadow: 0 0 20px rgba(107, 161, 255, 0.4);
+}
+
+.ud-caller-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ud-caller-avatar-icon {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #6ba1ff, #4275f4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 40px;
+}
+
+@keyframes ud-ring-pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+.ud-caller-name {
+  color: white;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.ud-call-type {
+  color: #8fb6ff;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.ud-call-controls {
+  margin-top: 30px;
+  gap: 40px;
+}
+
+.ud-call-btn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.ud-call-btn span {
+  position: absolute;
+  bottom: -30px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ud-accept-btn {
+  background: #22c55e;
+  color: white;
+  box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+}
+
+.ud-accept-btn:hover {
+  background: #16a34a;
+  transform: scale(1.1);
+}
+
+.ud-reject-btn {
+  background: #ef4444;
+  color: white;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+}
+
+.ud-reject-btn:hover {
+  background: #dc2626;
+  transform: scale(1.1);
 }
 
 /* Landscape Mode */

@@ -3,137 +3,10 @@ import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { io } from "socket.io-client";
 import "./SMSInput.css";
-import {
-  FaVideo as FaVideoIcon,
-  FaPhoneAlt,
-  FaPhoneSlash,
-  FaSpinner,
-  FaMicrophone,
-  FaTimes,
-  FaUserCircle,
-} from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
-
-// Professional Call Modal Component for Counselor Receiving Calls
-const IncomingCallModal = ({
-  isOpen,
-  onClose,
-  callType,
-  callerName,
-  callerAvatar,
-  callData,
-  onJoinCall,
-  onRejectCall,
-}) => {
-  const [isJoining, setIsJoining] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
-
-  const handleJoin = async () => {
-    if (isJoining) return;
-
-    setIsJoining(true);
-
-    if (onJoinCall && callData) {
-      try {
-        const result = await onJoinCall(callData.callId);
-        if (result && result.success) {
-          onClose();
-        } else {
-          console.error("Failed to join call");
-        }
-      } catch (error) {
-        console.error("Error joining call:", error);
-      } finally {
-        setIsJoining(false);
-      }
-    } else {
-      onClose();
-      setIsJoining(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (isRejecting) return;
-
-    setIsRejecting(true);
-
-    if (onRejectCall && callData) {
-      try {
-        await onRejectCall(callData.callId);
-        onClose();
-      } catch (error) {
-        console.error("Error rejecting call:", error);
-      } finally {
-        setIsRejecting(false);
-      }
-    } else {
-      onClose();
-      setIsRejecting(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  const displayName = callerName || "Anonymous User";
-  const profileImage = callerAvatar;
-
-  return (
-    <div className="incoming-call-modal-overlay">
-      <div
-        className={`incoming-call-modal ${callType === "video" ? "video-call-modal" : "voice-call-modal"}`}
-      >
-        <div className="incoming-call-content">
-          <div className="incoming-caller-info">
-            <div className="incoming-caller-avatar">
-              {profileImage &&
-              (profileImage === "👨" ||
-                profileImage === "👩" ||
-                profileImage === "👤") ? (
-                <div className="avatar-emoji-large">{profileImage}</div>
-              ) : profileImage ? (
-                <img src={profileImage} alt={displayName} />
-              ) : (
-                <FaUserCircle />
-              )}
-            </div>
-            <h3 className="incoming-caller-name">{displayName}</h3>
-            <p className="incoming-call-type">
-              {callType === "video" ? "📹 Video Call" : "📞 Voice Call"}
-            </p>
-            <p className="incoming-call-message">
-              {callData?.requestMessage || `Incoming ${callType} call...`}
-            </p>
-          </div>
-
-          <div className="incoming-call-controls">
-            <button
-              className="incoming-call-btn reject-btn"
-              onClick={handleReject}
-              disabled={isRejecting}
-            >
-              {isRejecting ? (
-                <FaSpinner className="spinning" />
-              ) : (
-                <FaPhoneSlash />
-              )}
-              <span>{isRejecting ? "Rejecting..." : "Decline"}</span>
-            </button>
-
-            <button
-              className="incoming-call-btn accept-btn"
-              onClick={handleJoin}
-              disabled={isJoining}
-            >
-              {isJoining ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
-              <span>{isJoining ? "Accepting..." : "Accept"}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import useRingtone from "../../../../hooks/useRingtone";
+import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 
 const SMSInput = () => {
   const location = useLocation();
@@ -162,6 +35,7 @@ const SMSInput = () => {
     roomId: "",
     callType: "video",
   });
+  const { startRinging, stopRinging } = useRingtone();
 
   // Message states
   const [messages, setMessages] = useState([]);
@@ -894,6 +768,16 @@ const SMSInput = () => {
   // Shared Call API actions for Receiving
   const handleJoinIncomingCall = async (callId) => {
     try {
+      const resolvedCallId =
+        callId ||
+        incomingCallData?.callId ||
+        incomingCallData?.id ||
+        incomingCallData?._id;
+
+      if (!resolvedCallId) {
+        throw new Error("Missing callId for incoming call");
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
 
@@ -902,7 +786,7 @@ const SMSInput = () => {
       }
 
       const response = await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/accept`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/accept`,
         {
           acceptorId: COUNSELOR_ID,
           acceptorType: "counsellor",
@@ -921,7 +805,7 @@ const SMSInput = () => {
         let detailedCall = null;
         try {
           const detailsResponse = await axios.get(
-            `${API_BASE_URL}/api/video/calls/${callId}/details`,
+            `${API_BASE_URL}/api/video/calls/${resolvedCallId}/details`,
             {
               params: {
                 userId: COUNSELOR_ID,
@@ -950,8 +834,8 @@ const SMSInput = () => {
           : null;
 
         const callDataForModal = {
-          id: detailedCall?.id || callId,
-          callId: callId,
+          id: detailedCall?.id || resolvedCallId,
+          callId: resolvedCallId,
           roomId:
             response.data.roomId ||
             detailedCall?.roomId ||
@@ -994,11 +878,21 @@ const SMSInput = () => {
   };
 
   const handleRejectIncomingCall = async (callId) => {
+    const resolvedCallId =
+      callId ||
+      incomingCallData?.callId ||
+      incomingCallData?.id ||
+      incomingCallData?._id;
+
     try {
+      if (!resolvedCallId) {
+        return false;
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/reject`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/reject`,
         {
           userId: COUNSELOR_ID,
           reason: "declined",
@@ -1016,7 +910,7 @@ const SMSInput = () => {
             localStorage.getItem("token") ||
             localStorage.getItem("accessToken");
           await axios.post(
-            `${API_BASE_URL}/api/call/${callId}/reject`,
+            `${API_BASE_URL}/api/call/${resolvedCallId}/reject`,
             { reason: "declined" },
             {
               headers: { Authorization: `Bearer ${token}` },
@@ -1034,11 +928,22 @@ const SMSInput = () => {
 
   const handleEndIncomingCall = async (callId) => {
     try {
+      const resolvedCallId =
+        callId ||
+        selectedCall?.callId ||
+        incomingCallData?.callId ||
+        selectedCall?.id ||
+        incomingCallData?.id;
+
+      if (!resolvedCallId) {
+        return false;
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
 
       await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/end`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/end`,
         {
           userId: COUNSELOR_ID,
           endedBy: "counsellor",
@@ -1071,7 +976,7 @@ const SMSInput = () => {
         const token =
           localStorage.getItem("token") || localStorage.getItem("accessToken");
 
-        if (!COUNSELOR_ID || !token || showIncomingModal || isVideoModalOpen) {
+        if (!COUNSELOR_ID || !token || isVideoModalOpen) {
           console.log("Skipping poll - missing data:", {
             COUNSELOR_ID,
             hasToken: !!token,
@@ -1092,10 +997,51 @@ const SMSInput = () => {
 
         if (!isMounted) return;
 
-        const callsList = response.data.pendingRequests || [];
+        const callsList =
+          response.data.pendingRequests ||
+          response.data.waitingCalls ||
+          response.data.calls ||
+          [];
+
+        const currentIncomingId =
+          incomingCallData?.callId ||
+          incomingCallData?.id ||
+          incomingCallData?._id;
+        const stillWaiting = currentIncomingId
+          ? callsList.some(
+              (c) => (c.callId || c.id || c._id) === currentIncomingId,
+            )
+          : false;
+
+        if (showIncomingModal && currentIncomingId && !stillWaiting) {
+          setShowIncomingModal(false);
+          setIncomingCallData({
+            name: "",
+            avatar: "👤",
+            callId: "",
+            roomId: "",
+            callType: "video",
+          });
+          return;
+        }
 
         if (response.data.success && callsList.length > 0) {
-          const waitingCall = callsList[0];
+          const waitingCall =
+            callsList.find((call) => {
+              const normalizedStatus = String(call.status || "").toLowerCase();
+              return (
+                !normalizedStatus ||
+                normalizedStatus === "waiting" ||
+                normalizedStatus === "ringing" ||
+                normalizedStatus === "pending" ||
+                normalizedStatus === "requested"
+              );
+            }) || callsList[0];
+
+          if (!waitingCall || showIncomingModal) {
+            return;
+          }
+
           const fromData = waitingCall.from || {};
 
           let displayName = "Anonymous User";
@@ -1114,8 +1060,10 @@ const SMSInput = () => {
           else if (fromData.gender === "male") avatar = "👨";
 
           setIncomingCallData({
-            callId: waitingCall.callId,
-            roomId: waitingCall.roomId,
+            callId: waitingCall.callId || waitingCall.id || waitingCall._id,
+            id: waitingCall.id || waitingCall.callId || waitingCall._id || "",
+            _id: waitingCall._id || waitingCall.callId || waitingCall.id || "",
+            roomId: waitingCall.roomId || waitingCall.callId || waitingCall.id,
             name: displayName,
             avatar: avatar,
             callType: waitingCall.callType || "video",
@@ -1125,6 +1073,15 @@ const SMSInput = () => {
             onEndCall: handleEndIncomingCall,
           });
           setShowIncomingModal(true);
+        } else if (showIncomingModal) {
+          setShowIncomingModal(false);
+          setIncomingCallData({
+            name: "",
+            avatar: "👤",
+            callId: "",
+            roomId: "",
+            callType: "video",
+          });
         }
       } catch (error) {
         console.error("Error polling for calls:", error);
@@ -1136,7 +1093,27 @@ const SMSInput = () => {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [showIncomingModal, COUNSELOR_ID, isVideoModalOpen]);
+  }, [
+    showIncomingModal,
+    COUNSELOR_ID,
+    isVideoModalOpen,
+    incomingCallData?.callId,
+  ]);
+
+  useEffect(() => {
+    if (showIncomingModal && !isVideoModalOpen) {
+      void startRinging();
+      return;
+    }
+
+    stopRinging();
+  }, [showIncomingModal, isVideoModalOpen, startRinging, stopRinging]);
+
+  useEffect(() => {
+    return () => {
+      stopRinging();
+    };
+  }, [stopRinging]);
 
   // Handle close modal
   const handleCloseModal = () => {
@@ -1285,8 +1262,23 @@ const SMSInput = () => {
     });
 
     socket.on("call-status-update", ({ status }) => {
-      if (String(status).toLowerCase() === "rejected") {
-        setCallError("Call was declined by the other participant.");
+      const normalizedStatus = String(status || "").toLowerCase();
+
+      if (normalizedStatus === "rejected") {
+        // setCallError("Call was declined by the other participant.");
+        setIsVideoModalOpen(false);
+        setSelectedCall(null);
+        setShowIncomingModal(false);
+        return;
+      }
+
+      if (
+        normalizedStatus === "ended" ||
+        normalizedStatus === "cancelled" ||
+        normalizedStatus === "canceled" ||
+        normalizedStatus === "expired"
+      ) {
+        // setCallError("Call was canceled before acceptance.");
         setIsVideoModalOpen(false);
         setSelectedCall(null);
         setShowIncomingModal(false);
@@ -1598,10 +1590,11 @@ const SMSInput = () => {
         onClose={() => setShowIncomingModal(false)}
         callType={incomingCallData.callType}
         callerName={incomingCallData.name}
-        callerAvatar={incomingCallData.avatar}
+        callerImage={incomingCallData.avatar}
         callData={incomingCallData}
-        onJoinCall={handleJoinIncomingCall}
-        onRejectCall={handleRejectIncomingCall}
+        onAccept={handleJoinIncomingCall}
+        onReject={handleRejectIncomingCall}
+        fallbackName="Anonymous User"
       />
     </div>
   );

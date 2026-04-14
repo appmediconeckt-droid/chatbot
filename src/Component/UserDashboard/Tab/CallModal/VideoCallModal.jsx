@@ -8,6 +8,7 @@ import React, {
 import axios from "axios";
 import {
   CallingState,
+  OwnCapability,
   ParticipantView,
   StreamCall,
   StreamTheme,
@@ -18,11 +19,13 @@ import {
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "./VideoCallModal.css";
 import {
+  FaDesktop,
   FaCompress,
   FaExpand,
   FaMicrophone,
   FaMicrophoneSlash,
   FaPhoneSlash,
+  FaRegSmile,
   FaVideo,
   FaVideoSlash,
 } from "react-icons/fa";
@@ -116,6 +119,34 @@ const formatDuration = (seconds) => {
   return `${mm}:${ss}`;
 };
 
+const QUICK_REACTIONS = [
+  { type: "reaction", emojiCode: ":like:", symbol: "👍", label: "Like" },
+  {
+    type: "raised-hand",
+    emojiCode: ":raise-hand:",
+    symbol: "✋",
+    label: "Raise Hand",
+  },
+  {
+    type: "reaction",
+    emojiCode: ":fireworks:",
+    symbol: "🎉",
+    label: "Celebrate",
+  },
+  {
+    type: "reaction",
+    emojiCode: ":heart:",
+    symbol: "❤️",
+    label: "Heart",
+  },
+  {
+    type: "reaction",
+    emojiCode: ":smile:",
+    symbol: "😄",
+    label: "Smile",
+  },
+];
+
 const resolveCurrentUserType = (currentUser, callData) => {
   const explicitType =
     currentUser?.role ||
@@ -170,7 +201,7 @@ const resolveParticipantName = (participant) =>
   participant?.userId ||
   "Participant";
 
-const StreamVideoBody = ({ onLeave, localUserId }) => {
+const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
   const { useCallCallingState, useParticipants, useLocalParticipant } =
     useCallStateHooks();
   const callingState = useCallCallingState();
@@ -230,13 +261,78 @@ const StreamVideoBody = ({ onLeave, localUserId }) => {
     [localParticipant?.sessionId, normalizedLocalUserId, participants],
   );
 
-  const mainParticipant = remoteParticipants[0] || null;
+  const presenter = useMemo(
+    () =>
+      participants.find(
+        (p) =>
+          p.publishedTracks?.includes("screenShareTrack") ||
+          p.screenShareStream,
+      ),
+    [participants],
+  );
+  const mainParticipant = presenter || remoteParticipants[0] || null;
+  const isPresentingMain =
+    presenter && mainParticipant?.sessionId === presenter.sessionId;
+  const mainParticipantName = mainParticipant
+    ? resolveParticipantName(mainParticipant)
+    : "";
+  const voiceParticipantName =
+    mainParticipantName || String(calleeName || "Participant").trim();
+  const voiceParticipantInitial = buildInitials(voiceParticipantName);
+  const localParticipantName = localParticipant
+    ? resolveParticipantName(localParticipant)
+    : "You";
 
   useEffect(() => {
     if (callingState === CallingState.LEFT) {
       onLeave();
     }
   }, [callingState, onLeave]);
+
+  if (isVoiceMode) {
+    return (
+      <StreamTheme className="stream-theme-root">
+        <div className="stream-layout-root stream-layout-root-voice">
+          {mainParticipant ? (
+            <div className="stream-voice-stage">
+              <div className="stream-voice-avatar-wrap">
+                <div className="stream-voice-avatar">
+                  {voiceParticipantInitial}
+                </div>
+              </div>
+              <div className="stream-voice-name">{voiceParticipantName}</div>
+              <div className="stream-voice-note">Voice call in progress</div>
+            </div>
+          ) : (
+            <div className="stream-empty-state">
+              Waiting for others to join...
+            </div>
+          )}
+
+          {localParticipant && (
+            <div className="stream-voice-local-pill">
+              You • {localParticipantName}
+            </div>
+          )}
+
+          {mainParticipant && (
+            <ParticipantView
+              className="stream-hidden-media-probe"
+              participant={mainParticipant}
+            />
+          )}
+
+          {localParticipant && (
+            <ParticipantView
+              className="stream-hidden-media-probe"
+              participant={localParticipant}
+              muteAudio={true}
+            />
+          )}
+        </div>
+      </StreamTheme>
+    );
+  }
 
   return (
     <StreamTheme className="stream-theme-root">
@@ -247,6 +343,7 @@ const StreamVideoBody = ({ onLeave, localUserId }) => {
               <ParticipantView
                 className="stream-main-participant"
                 participant={mainParticipant}
+                trackType={isPresentingMain ? "screenShareTrack" : "videoTrack"}
               />
               <div className="stream-main-name">
                 {resolveParticipantName(mainParticipant)}
@@ -324,8 +421,11 @@ const VideoCallModal = ({
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [connectedAt, setConnectedAt] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [isReactionMenuOpen, setIsReactionMenuOpen] = useState(false);
   const micMutedRef = useRef(false);
   const cameraOffRef = useRef(false);
+  const reactionsMenuRef = useRef(null);
 
   const callId = useMemo(() => resolveCallId(callData), [callData]);
   const resolvedCallMode = useMemo(
@@ -397,6 +497,32 @@ const VideoCallModal = ({
     (uiStatus === "connecting" || uiStatus === "ringing") && !error;
   const showTopActions = uiStatus === "connected";
   const showConnectedTimer = uiStatus === "connected" && !error;
+  const ownCapabilities = call?.state?.ownCapabilities || [];
+  const hasOwnCapabilities =
+    Array.isArray(ownCapabilities) && ownCapabilities.length > 0;
+  const canCreateReactions =
+    !hasOwnCapabilities ||
+    ownCapabilities.includes(OwnCapability.CREATE_REACTION);
+  const canShareScreenCapability =
+    !hasOwnCapabilities || ownCapabilities.includes(OwnCapability.SCREENSHARE);
+  const isScreenSharingAllowedBySettings =
+    call?.state?.settings?.screensharing?.enabled !== false;
+  const canShareScreen =
+    !isVoiceMode &&
+    canShareScreenCapability &&
+    isScreenSharingAllowedBySettings;
+  const screenShareDisabled =
+    !call ||
+    !canShareScreen ||
+    uiStatus !== "connected" ||
+    loading ||
+    Boolean(error);
+  const reactionsDisabled =
+    !call ||
+    !canCreateReactions ||
+    uiStatus !== "connected" ||
+    loading ||
+    Boolean(error);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -417,6 +543,32 @@ const VideoCallModal = ({
   useEffect(() => {
     cameraOffRef.current = isCameraOff;
   }, [isCameraOff]);
+
+  useEffect(() => {
+    if (!isOpen || !call) {
+      setIsScreenSharing(false);
+      return undefined;
+    }
+
+    const syncScreenShareState = () => {
+      setIsScreenSharing(Boolean(call.screenShare?.enabled));
+    };
+
+    syncScreenShareState();
+    const status$ = call?.screenShare?.state?.status$;
+
+    if (!status$?.subscribe) {
+      return undefined;
+    }
+
+    const subscription = status$.subscribe((nextStatus) => {
+      setIsScreenSharing(nextStatus === "enabled");
+    });
+
+    return () => {
+      subscription?.unsubscribe?.();
+    };
+  }, [call, isOpen]);
 
   useEffect(() => {
     if (!isOpen || uiStatus !== "connected") {
@@ -445,6 +597,12 @@ const VideoCallModal = ({
       clearInterval(intervalId);
     };
   }, [connectedAt, uiStatus]);
+
+  useEffect(() => {
+    if (uiStatus !== "connected") {
+      setIsReactionMenuOpen(false);
+    }
+  }, [uiStatus]);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -503,11 +661,17 @@ const VideoCallModal = ({
     try {
       setLoading(true);
       setError("Connection interrupted. Reconnecting...");
-      await activeCall.join({ create: true });
-
       if (isVoiceMode && activeCall.camera?.disable) {
         await activeCall.camera.disable();
+      } else if (!isVoiceMode && activeCall.camera && cameraOffRef.current) {
+        await activeCall.camera.disable?.();
       }
+
+      if (activeCall.microphone && micMutedRef.current) {
+        await activeCall.microphone.disable?.();
+      }
+
+      await activeCall.join({ create: true });
 
       reconnectAttemptRef.current = 0;
       setError("");
@@ -539,6 +703,8 @@ const VideoCallModal = ({
     const activeCall = callRef.current;
     const activeClient = clientRef.current;
     clearReconnectTimer();
+    setIsReactionMenuOpen(false);
+    setIsScreenSharing(false);
 
     if (activeCall?.endCall) {
       try {
@@ -628,6 +794,41 @@ const VideoCallModal = ({
     }
   }, [isVoiceMode]);
 
+  const handleToggleScreenShare = useCallback(async () => {
+    if (isVoiceMode) return;
+
+    const activeCall = callRef.current;
+    if (!activeCall?.screenShare?.toggle) return;
+
+    try {
+      await activeCall.screenShare.toggle();
+      setIsScreenSharing(Boolean(activeCall.screenShare.enabled));
+    } catch (err) {
+      console.error("Failed to toggle screen sharing:", err);
+    }
+  }, [isVoiceMode]);
+
+  const handleToggleReactionMenu = useCallback(() => {
+    if (!callRef.current) return;
+    setIsReactionMenuOpen((prev) => !prev);
+  }, []);
+
+  const handleSendReaction = useCallback(async (reaction) => {
+    const activeCall = callRef.current;
+    if (!activeCall?.sendReaction) return;
+
+    try {
+      await activeCall.sendReaction({
+        type: reaction.type,
+        emoji_code: reaction.emojiCode,
+      });
+    } catch (err) {
+      console.error("Failed to send reaction:", err);
+    } finally {
+      setIsReactionMenuOpen(false);
+    }
+  }, []);
+
   const handleToggleFullscreen = useCallback(async () => {
     const container = modalContainerRef.current;
     if (!container || typeof document === "undefined") return;
@@ -656,6 +857,8 @@ const VideoCallModal = ({
       setLoading(false);
       setIsMicMuted(false);
       setIsCameraOff(isVoiceMode);
+      setIsScreenSharing(false);
+      setIsReactionMenuOpen(false);
       micMutedRef.current = false;
       cameraOffRef.current = isVoiceMode;
       setConnectedAt(null);
@@ -681,6 +884,37 @@ const VideoCallModal = ({
       document.removeEventListener("fullscreenchange", syncFullscreenState);
     };
   }, []);
+
+  useEffect(() => {
+    if (!isReactionMenuOpen || typeof document === "undefined") {
+      return undefined;
+    }
+
+    const handlePointerDown = (event) => {
+      const menuNode = reactionsMenuRef.current;
+      if (!menuNode || menuNode.contains(event.target)) {
+        return;
+      }
+
+      setIsReactionMenuOpen(false);
+    };
+
+    const handleEscape = (event) => {
+      if (event.key === "Escape") {
+        setIsReactionMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("touchstart", handlePointerDown);
+    document.addEventListener("keydown", handleEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("touchstart", handlePointerDown);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isReactionMenuOpen]);
 
   useEffect(() => {
     if (isOpen || typeof document === "undefined") return;
@@ -720,13 +954,19 @@ const VideoCallModal = ({
 
     let stopped = false;
     const token = getAuthToken();
-    const userId = String(localUser?.id || "").trim();
+    const statusProbeUserId = String(
+      localUser?.id ||
+        currentUserId ||
+        currentUserDbId ||
+        callData?.currentUserId ||
+        "",
+    ).trim();
     const userType = resolvedUserType;
 
     const closeWithStatusMessage = (status) => {
       const normalizedStatus = normalizeCallStatus(status);
       if (normalizedStatus === "rejected") {
-        setError("Call was declined by the other participant.");
+        // setError("Call was declined by the other participant.");
       } else if (
         normalizedStatus === "cancelled" ||
         normalizedStatus === "canceled"
@@ -746,15 +986,19 @@ const VideoCallModal = ({
     };
 
     const syncCallStatus = async () => {
-      if (!userId) {
-        return;
-      }
-
       try {
+        const params = {};
+        if (statusProbeUserId) {
+          params.userId = statusProbeUserId;
+        }
+        if (userType) {
+          params.userType = userType;
+        }
+
         const response = await axios.get(
           `${API_BASE_URL}/api/video/calls/${callId}/details`,
           {
-            params: { userId, userType },
+            params,
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           },
         );
@@ -776,6 +1020,11 @@ const VideoCallModal = ({
         }
       } catch (err) {
         if (stopped) return;
+
+        if (err?.response?.status === 404) {
+          closeWithStatusMessage("expired");
+          return;
+        }
 
         const nextStatus = normalizeCallStatus(
           err?.response?.data?.call?.status,
@@ -802,6 +1051,9 @@ const VideoCallModal = ({
     callId,
     isPendingCall,
     localUser?.id,
+    currentUserId,
+    currentUserDbId,
+    callData?.currentUserId,
     resolvedUserType,
     closeModalOnce,
   ]);
@@ -933,26 +1185,24 @@ const VideoCallModal = ({
           }),
         ];
 
-        await nextCall.join({ create: true });
-
         if (isVoiceMode && nextCall.camera?.disable) {
           await nextCall.camera.disable();
+        } else if (!isVoiceMode && nextCall.camera && cameraOffRef.current) {
+          await nextCall.camera.disable?.();
         }
 
-        if (!isVoiceMode && nextCall.camera) {
-          if (cameraOffRef.current) {
-            await nextCall.camera.disable?.();
-          } else {
-            await nextCall.camera.enable?.();
-          }
+        if (nextCall.microphone && micMutedRef.current) {
+          await nextCall.microphone.disable?.();
         }
 
-        if (nextCall.microphone) {
-          if (micMutedRef.current) {
-            await nextCall.microphone.disable?.();
-          } else {
-            await nextCall.microphone.enable?.();
-          }
+        await nextCall.join({ create: true });
+
+        if (!isVoiceMode && nextCall.camera && !cameraOffRef.current) {
+          await nextCall.camera.enable?.();
+        }
+
+        if (nextCall.microphone && !micMutedRef.current) {
+          await nextCall.microphone.enable?.();
         }
 
         if (isAborted()) {
@@ -1077,16 +1327,15 @@ const VideoCallModal = ({
             <div className="stream-connecting-state" aria-live="polite">
               <div className="stream-connecting-center">
                 <div className="stream-avatar-rings" aria-hidden="true">
-                  <span className="stream-pulse-ring stream-pulse-ring-1" />
-                  <span className="stream-pulse-ring stream-pulse-ring-2" />
-                  <span className="stream-pulse-ring stream-pulse-ring-3" />
+                  <div className="stream-pulse-ring stream-pulse-ring-1" />
+                  <div className="stream-pulse-ring stream-pulse-ring-2" />
+                  <div className="stream-pulse-ring stream-pulse-ring-3" />
+                  <div className="stream-avatar-glow">{calleeInitials}</div>
                 </div>
-                <div className="stream-avatar-glow">{calleeInitials}</div>
-                <h4 className="stream-callee-name">{calleeName}</h4>
+                <h1 className="stream-callee-name">{calleeName}</h1>
                 <p className="stream-connecting-note">
                   {uiStatus === "ringing" ? "Ringing" : "Connecting call"}
                   <span className="stream-ellipsis" aria-hidden="true">
-                    <span>.</span>
                     <span>.</span>
                     <span>.</span>
                   </span>
@@ -1113,6 +1362,8 @@ const VideoCallModal = ({
             <StreamVideo client={client}>
               <StreamCall call={call}>
                 <StreamVideoBody
+                  calleeName={calleeName}
+                  isVoiceMode={isVoiceMode}
                   localUserId={localUser?.id}
                   onLeave={handleCallLeft}
                 />
@@ -1135,15 +1386,13 @@ const VideoCallModal = ({
                 aria-label={
                   isMicMuted ? "Unmute microphone" : "Mute microphone"
                 }
+                data-tooltip={isMicMuted ? "Unmute" : "Mute"}
               >
                 {isMicMuted ? (
                   <FaMicrophoneSlash aria-hidden="true" />
                 ) : (
                   <FaMicrophone aria-hidden="true" />
                 )}
-                <span className="stream-tooltip">
-                  {isMicMuted ? "Unmute" : "Mute"}
-                </span>
               </button>
 
               {!isVoiceMode && (
@@ -1156,16 +1405,72 @@ const VideoCallModal = ({
                   aria-label={
                     isCameraOff ? "Turn camera on" : "Turn camera off"
                   }
+                  data-tooltip={isCameraOff ? "Camera On" : "Camera Off"}
                 >
                   {isCameraOff ? (
                     <FaVideoSlash aria-hidden="true" />
                   ) : (
                     <FaVideo aria-hidden="true" />
                   )}
-                  <span className="stream-tooltip">
-                    {isCameraOff ? "Camera On" : "Camera Off"}
-                  </span>
                 </button>
+              )}
+
+              {!isVoiceMode && canShareScreen && (
+                <button
+                  type="button"
+                  className={`stream-icon-btn ${isScreenSharing ? "stream-icon-btn-active" : ""}`.trim()}
+                  onClick={() => {
+                    void handleToggleScreenShare();
+                  }}
+                  disabled={screenShareDisabled}
+                  aria-label={
+                    isScreenSharing
+                      ? "Stop screen sharing"
+                      : "Start screen sharing"
+                  }
+                  data-tooltip={isScreenSharing ? "Stop Share" : "Share Screen"}
+                >
+                  <FaDesktop aria-hidden="true" />
+                </button>
+              )}
+
+              {canCreateReactions && (
+                <div
+                  className="stream-reactions-control"
+                  ref={reactionsMenuRef}
+                >
+                  <button
+                    type="button"
+                    className={`stream-icon-btn ${isReactionMenuOpen ? "stream-icon-btn-active" : ""}`.trim()}
+                    onClick={handleToggleReactionMenu}
+                    disabled={reactionsDisabled}
+                    aria-label="Open reactions"
+                    aria-haspopup="menu"
+                    aria-expanded={isReactionMenuOpen}
+                    data-tooltip="Reactions"
+                  >
+                    <FaRegSmile aria-hidden="true" />
+                  </button>
+
+                  {isReactionMenuOpen && (
+                    <div className="stream-reactions-menu" role="menu">
+                      {QUICK_REACTIONS.map((reaction) => (
+                        <button
+                          key={reaction.emojiCode}
+                          type="button"
+                          className="stream-reaction-item"
+                          onClick={() => {
+                            void handleSendReaction(reaction);
+                          }}
+                          aria-label={reaction.label}
+                          title={reaction.label}
+                        >
+                          <span aria-hidden="true">{reaction.symbol}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               )}
 
               <button
@@ -1175,9 +1480,9 @@ const VideoCallModal = ({
                   void handleEndForEveryone();
                 }}
                 aria-label="End call"
+                data-tooltip="End Call"
               >
                 <FaPhoneSlash aria-hidden="true" />
-                <span className="stream-tooltip">End Call</span>
               </button>
             </div>
           </div>

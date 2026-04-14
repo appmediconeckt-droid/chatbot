@@ -4,154 +4,9 @@ import { io } from "socket.io-client";
 import { Link, useParams, useLocation } from "react-router-dom";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
-import {
-  FaVideo as FaVideoIcon,
-  FaPhoneAlt,
-  FaPhoneSlash,
-  FaSpinner,
-  FaMicrophone,
-  FaTimes,
-  FaUserCircle,
-} from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
-
-// Professional Call Modal Component for Receiving Calls
-// (This is the same one used in the Dashboard for standardized UI)
-// Professional Call Modal Component for Receiving Calls
-const IncomingCallModal = ({
-  isOpen,
-  onClose,
-  callType,
-  callerName,
-  callerImage,
-  callData,
-  onAcceptCall,
-  onRejectCall,
-}) => {
-  const [isAccepting, setIsAccepting] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
-
-  const handleAccept = async () => {
-    if (isAccepting) return;
-
-    setIsAccepting(true);
-
-    if (onAcceptCall && callData) {
-      try {
-        await onAcceptCall(callData.callId);
-        // Close modal immediately after accepting
-        onClose();
-      } catch (error) {
-        console.error("Error accepting call:", error);
-      } finally {
-        setIsAccepting(false);
-      }
-    } else {
-      onClose();
-      setIsAccepting(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (isRejecting) return;
-
-    setIsRejecting(true);
-
-    if (onRejectCall && callData) {
-      try {
-        await onRejectCall(callData.callId);
-        // Close modal immediately after rejecting
-        onClose();
-      } catch (error) {
-        console.error("Error rejecting call:", error);
-      } finally {
-        setIsRejecting(false);
-      }
-    } else {
-      onClose();
-      setIsRejecting(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  // Get the full name from the call data - prioritizing fullName
-  const displayName =
-    callData?.from?.fullName ||
-    callData?.from?.displayName ||
-    callerName ||
-    "Counselor";
-  const profilePhoto = callData?.from?.profilePhoto || callerImage;
-
-  // Format the time
-  const formatRequestTime = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
-  const requestedTime = callData?.requestedAt
-    ? formatRequestTime(callData.requestedAt)
-    : "";
-
-  return (
-    <div className="incoming-call-modal-overlay">
-      <div
-        className={`incoming-call-modal ${callType === "video" ? "video-call-modal" : "voice-call-modal"}`}
-      >
-        <div className="incoming-call-content">
-          <div className="incoming-caller-info">
-            <div className="incoming-caller-avatar">
-              {profilePhoto ? (
-                <img src={profilePhoto} alt={displayName} />
-              ) : (
-                <FaUserCircle />
-              )}
-            </div>
-            <h3 className="incoming-caller-name">{displayName}</h3>
-            <p className="incoming-call-type">
-              {callType === "video" ? "📹 Video Call" : "📞 Voice Call"}
-            </p>
-            {requestedTime && (
-              <p className="incoming-call-time">Received at {requestedTime}</p>
-            )}
-            <p className="incoming-call-message">
-              {callData?.requestMessage || `Incoming ${callType} call...`}
-            </p>
-          </div>
-
-          <div className="incoming-call-controls">
-            <button
-              className="incoming-call-btn reject-btn"
-              onClick={handleReject}
-              disabled={isRejecting}
-            >
-              {isRejecting ? (
-                <FaSpinner className="spinning" />
-              ) : (
-                <FaPhoneSlash />
-              )}
-              <span>{isRejecting ? "Rejecting..." : "Decline"}</span>
-            </button>
-
-            <button
-              className="incoming-call-btn accept-btn"
-              onClick={handleAccept}
-              disabled={isAccepting}
-            >
-              {isAccepting ? (
-                <FaSpinner className="spinning" />
-              ) : (
-                <FaPhoneAlt />
-              )}
-              <span>{isAccepting ? "Accepting..." : "Accept"}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import useRingtone from "../../../../hooks/useRingtone";
+import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 
 const ChatBox = () => {
   const { id: counselorId } = useParams();
@@ -198,6 +53,7 @@ const ChatBox = () => {
     roomId: "",
     callType: "video",
   });
+  const { startRinging, stopRinging } = useRingtone();
 
   const [newMessage, setNewMessage] = useState("");
   const [showOptions, setShowOptions] = useState(false);
@@ -301,6 +157,16 @@ const ChatBox = () => {
   // Shared Call API actions
   const handleAcceptCall = async (callId) => {
     try {
+      const resolvedCallId =
+        callId ||
+        incomingCallData?.callId ||
+        incomingCallData?.id ||
+        incomingCallData?._id;
+
+      if (!resolvedCallId) {
+        throw new Error("Missing callId for incoming call");
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = resolveCurrentUserId();
@@ -310,7 +176,7 @@ const ChatBox = () => {
       }
 
       const response = await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/accept`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/accept`,
         {
           acceptorId: userId,
           acceptorType: "user",
@@ -327,7 +193,7 @@ const ChatBox = () => {
       let detailedCall = null;
       try {
         const detailsResponse = await axios.get(
-          `${API_BASE_URL}/api/video/calls/${callId}/details`,
+          `${API_BASE_URL}/api/video/calls/${resolvedCallId}/details`,
           {
             params: {
               userId,
@@ -354,8 +220,8 @@ const ChatBox = () => {
         : incomingCallData.from || null;
 
       const acceptedCallData = {
-        id: detailedCall?.id || callId,
-        callId,
+        id: detailedCall?.id || resolvedCallId,
+        callId: resolvedCallId,
         roomId:
           response.data.roomId ||
           detailedCall?.roomId ||
@@ -392,7 +258,17 @@ const ChatBox = () => {
   };
 
   const handleRejectCall = async (callId) => {
+    const resolvedCallId =
+      callId ||
+      incomingCallData?.callId ||
+      incomingCallData?.id ||
+      incomingCallData?._id;
+
     try {
+      if (!resolvedCallId) {
+        return false;
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = resolveCurrentUserId();
@@ -402,7 +278,7 @@ const ChatBox = () => {
       }
 
       await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/reject`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/reject`,
         {
           userId,
           reason: "declined",
@@ -420,7 +296,7 @@ const ChatBox = () => {
             localStorage.getItem("token") ||
             localStorage.getItem("accessToken");
           await axios.post(
-            `${API_BASE_URL}/api/call/${callId}/reject`,
+            `${API_BASE_URL}/api/call/${resolvedCallId}/reject`,
             { reason: "declined" },
             {
               headers: { Authorization: `Bearer ${token}` },
@@ -438,6 +314,18 @@ const ChatBox = () => {
 
   const handleEndCall = async (callId) => {
     try {
+      const resolvedCallId =
+        callId ||
+        selectedCall?.callId ||
+        incomingCallData?.callId ||
+        selectedCall?.id ||
+        incomingCallData?.id ||
+        incomingCallData?._id;
+
+      if (!resolvedCallId) {
+        return false;
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = resolveCurrentUserId();
@@ -447,7 +335,7 @@ const ChatBox = () => {
       }
 
       await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/end`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/end`,
         {
           userId: userId,
           endedBy: "user",
@@ -472,7 +360,7 @@ const ChatBox = () => {
           localStorage.getItem("token") || localStorage.getItem("accessToken");
         const userId = resolveCurrentUserId();
 
-        if (!userId || !token || showIncomingModal || isVideoModalOpen) {
+        if (!userId || !token || isVideoModalOpen) {
           return;
         }
 
@@ -483,18 +371,64 @@ const ChatBox = () => {
           },
         );
 
-        const callsList = response.data.pendingRequests || [];
+        const callsList =
+          response.data.pendingRequests ||
+          response.data.waitingCalls ||
+          response.data.calls ||
+          [];
+
+        const currentIncomingId =
+          incomingCallData?.callId ||
+          incomingCallData?.id ||
+          incomingCallData?._id;
+        const stillWaiting = currentIncomingId
+          ? callsList.some(
+              (c) => (c.callId || c.id || c._id) === currentIncomingId,
+            )
+          : false;
+
+        if (showIncomingModal && currentIncomingId && !stillWaiting) {
+          setShowIncomingModal(false);
+          setIncomingCallData({
+            name: "",
+            image: null,
+            callId: "",
+            roomId: "",
+            callType: "video",
+          });
+          return;
+        }
 
         if (response.data.success && callsList.length > 0) {
-          const waitingCall = callsList[0];
+          const waitingCall =
+            callsList.find((call) => {
+              const normalizedStatus = String(call.status || "").toLowerCase();
+              return (
+                !normalizedStatus ||
+                normalizedStatus === "waiting" ||
+                normalizedStatus === "ringing" ||
+                normalizedStatus === "pending" ||
+                normalizedStatus === "requested"
+              );
+            }) || callsList[0];
+
+          if (!waitingCall || showIncomingModal) {
+            return;
+          }
+
           const fromData = waitingCall.from || {};
 
           // Extract full name properly - priority: fullName > displayName
           const callerFullName =
             fromData.fullName || fromData.displayName || "Counselor";
 
+          const resolvedIncomingCallId =
+            waitingCall.callId || waitingCall.id || waitingCall._id;
+
           setIncomingCallData({
-            callId: waitingCall.callId,
+            callId: resolvedIncomingCallId,
+            id: waitingCall.id || resolvedIncomingCallId,
+            _id: waitingCall._id || resolvedIncomingCallId,
             roomId: waitingCall.roomId,
             name: callerFullName,
             image: fromData.profilePhoto || null,
@@ -506,6 +440,15 @@ const ChatBox = () => {
             remainingSeconds: waitingCall.remainingSeconds,
           });
           setShowIncomingModal(true);
+        } else if (showIncomingModal) {
+          setShowIncomingModal(false);
+          setIncomingCallData({
+            name: "",
+            image: null,
+            callId: "",
+            roomId: "",
+            callType: "video",
+          });
         }
       } catch (error) {
         console.error("Error polling for calls:", error);
@@ -514,7 +457,27 @@ const ChatBox = () => {
 
     const interval = setInterval(fetchIncomingCalls, 5000);
     return () => clearInterval(interval);
-  }, [showIncomingModal, currentUser, isVideoModalOpen]);
+  }, [
+    showIncomingModal,
+    currentUser,
+    isVideoModalOpen,
+    incomingCallData?.callId,
+  ]);
+
+  useEffect(() => {
+    if (showIncomingModal && !isVideoModalOpen) {
+      void startRinging();
+      return;
+    }
+
+    stopRinging();
+  }, [showIncomingModal, isVideoModalOpen, startRinging, stopRinging]);
+
+  useEffect(() => {
+    return () => {
+      stopRinging();
+    };
+  }, [stopRinging]);
   // GET messages from API
   const fetchMessagesFromAPI = async () => {
     try {
@@ -1094,8 +1057,23 @@ const ChatBox = () => {
     });
 
     socket.on("call-status-update", ({ status }) => {
-      if (String(status).toLowerCase() === "rejected") {
-        setCallError("Call was declined by the other participant.");
+      const normalizedStatus = String(status || "").toLowerCase();
+
+      if (normalizedStatus === "rejected") {
+        // setCallError("Call was declined by the other participant.");[]
+        setIsVideoModalOpen(false);
+        setSelectedCall(null);
+        setShowIncomingModal(false);
+        return;
+      }
+
+      if (
+        normalizedStatus === "ended" ||
+        normalizedStatus === "cancelled" ||
+        normalizedStatus === "canceled" ||
+        normalizedStatus === "expired"
+      ) {
+        // setCallError("Call was canceled before acceptance.");-
         setIsVideoModalOpen(false);
         setSelectedCall(null);
         setShowIncomingModal(false);
@@ -1664,9 +1642,9 @@ const ChatBox = () => {
         callerName={incomingCallData.name}
         callerImage={incomingCallData.image}
         callData={incomingCallData}
-        onAcceptCall={handleAcceptCall}
-        onRejectCall={handleRejectCall}
-        onEnd={handleEndCall}
+        onAccept={handleAcceptCall}
+        onReject={handleRejectCall}
+        fallbackName="Counselor"
       />
     </div>
   );

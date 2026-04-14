@@ -39,7 +39,8 @@
 /* Main Container */
 .smsinput-container {
   width: 100%;
-  height: 100vh;
+  min-height: 100vh;
+  height: 100dvh;
   background: white;
   display: flex;
   flex-direction: column;
@@ -408,6 +409,9 @@
 /* Message Input Form */
 .smsinput-form {
   padding: clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px);
+  padding-bottom: calc(
+    clamp(12px, 3vw, 16px) + env(safe-area-inset-bottom, 0px)
+  );
   background: white;
   border-top: 1px solid var(--gray-200);
   box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.02);
@@ -949,54 +953,6 @@
   border-radius: 50%;
   animation: sms-spin 1s linear infinite;
 }
-/* Call button styles with labels */
-.call-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  border-radius: 12px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  color: white;
-}
-
-.call-btn .call-icon {
-  font-size: 20px;
-}
-
-.call-btn .call-label {
-  font-size: 10px;
-  font-weight: 500;
-}
-
-.call-btn.voice {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.call-btn.video {
-  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-}
-
-.call-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-}
-
-.call-btn.loading {
-  opacity: 0.7;
-  cursor: wait;
-  transform: none;
-}
-
-.call-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
 
 /* Error banner styles */
 .sms-call-error-banner {
@@ -1280,7 +1236,7 @@
   width: 100%;
 }
 
-.call-btn {
+.call-controls .call-btn {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1300,16 +1256,16 @@
   color: white;
 }
 
-.call-btn svg {
+.call-controls .call-btn svg {
   font-size: 22px;
 }
-.call-btn:hover {
+.call-controls .call-btn:hover {
   transform: translateY(-4px);
 }
-.call-btn:active {
+.call-controls .call-btn:active {
   transform: scale(0.95);
 }
-.call-btn:disabled {
+.call-controls .call-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   transform: none !important;
@@ -1482,7 +1438,7 @@
     width: 76px;
     height: 76px;
   }
-  .call-btn {
+  .call-controls .call-btn {
     min-width: 72px;
     padding: 12px 14px;
     font-size: 11px;

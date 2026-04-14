@@ -26,154 +26,100 @@ import {
   FaUser,
   FaCalendarAlt,
   FaMicrophone,
-  FaPhoneAlt,
-  FaPhoneSlash,
   FaVideo as FaVideoIcon,
   FaStop,
-  FaSpinner,
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
 import WalletDashboard from "../Tab/Wallet/WalletDashboard";
 import CallHistory from "../Tab/Callls/CallHistory";
 import useVibration from "../../../hooks/useVibration";
+import useRingtone from "../../../hooks/useRingtone";
 import PatientProfile from "../../PatientProfile/PatientProfile";
 import BookAppointment from "../Tab/Appointment/BookAppointment";
 import LiveChatSupport from "../Tab/Appointment/BookAppointment";
 import axios from "axios";
 import CounselorTable from "../Tab/Counselor/CounselorDirectory";
 import VideoCallModal from "../Tab/CallModal/VideoCallModal";
-
-// Voice/Video Call Modal Component
-const CallModal = ({
-  isOpen,
-  onClose,
-  callType,
-  callerName,
-  callerImage,
-  callData,
-  onAcceptCall,
-  onRejectCall,
-}) => {
-  const [isAccepting, setIsAccepting] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
-
-  const handleAccept = async () => {
-    if (isAccepting) return;
-    setIsAccepting(true);
-    if (onAcceptCall && callData) {
-      try {
-        await onAcceptCall(callData.callId);
-        onClose();
-      } catch (error) {
-        console.error("Error accepting call:", error);
-      } finally {
-        setIsAccepting(false);
-      }
-    } else {
-      onClose();
-      setIsAccepting(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (isRejecting) return;
-    setIsRejecting(true);
-    if (onRejectCall && callData) {
-      try {
-        await onRejectCall(callData.callId);
-        onClose();
-      } catch (error) {
-        console.error("Error rejecting call:", error);
-      } finally {
-        setIsRejecting(false);
-      }
-    } else {
-      onClose();
-      setIsRejecting(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  const displayName = callData?.from?.fullName || callData?.from?.displayName || callerName || "Counselor";
-  const profilePhoto = callData?.from?.profilePhoto || callerImage;
-
-  const formatRequestTime = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  };
-
-  const requestedTime = callData?.requestedAt ? formatRequestTime(callData.requestedAt) : "";
-
-  return (
-    <div className="ud-call-modal-overlay">
-      <div className={`ud-call-modal ${callType === "video" ? "ud-video-call-modal" : "ud-voice-call-modal"}`}>
-        <div className="ud-call-modal-content">
-          <div className="ud-caller-info">
-            <div className="ud-caller-avatar">
-              {profilePhoto ? (
-                <img src={profilePhoto} alt={displayName} />
-              ) : (
-                <FaUserCircle />
-              )}
-            </div>
-            <h3 className="ud-caller-name">{displayName}</h3>
-            <p className="ud-call-type">{callType === "video" ? "📹 Video Call" : "📞 Voice Call"}</p>
-            {requestedTime && <p className="ud-call-time">Received at {requestedTime}</p>}
-            <p className="ud-call-message">{callData?.requestMessage || `Incoming ${callType} call...`}</p>
-          </div>
-          <div className="ud-call-controls">
-            <button className="ud-call-btn ud-reject-btn" onClick={handleReject} disabled={isRejecting}>
-              {isRejecting ? <FaSpinner className="ud-spinning" /> : <FaPhoneSlash />}
-              <span>{isRejecting ? "Rejecting..." : "Decline"}</span>
-            </button>
-            <button className="ud-call-btn ud-accept-btn" onClick={handleAccept} disabled={isAccepting}>
-              {isAccepting ? <FaSpinner className="ud-spinning" /> : <FaPhoneAlt />}
-              <span>{isAccepting ? "Accepting..." : "Accept"}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
 
 // ChatPopup Component
-const ChatPopup = ({ messages, newMessage, setNewMessage, sendMessage, handleKeyPress, isLoading, onClose, chatBodyRef }) => (
+const ChatPopup = ({
+  messages,
+  newMessage,
+  setNewMessage,
+  sendMessage,
+  handleKeyPress,
+  isLoading,
+  onClose,
+  chatBodyRef,
+}) => (
   <div className="ud-chat-popup-overlay">
     <div className="ud-chat-popup">
       <div className="ud-chat-popup-header">
         <div className="ud-chat-header-info">
-          <div className="ud-chat-avatar"><FaRobot /></div>
+          <div className="ud-chat-avatar">
+            <FaRobot />
+          </div>
           <div>
             <h3>MediConeckt AI Assistant</h3>
             <p className="ud-chat-status">Online • 24/7 Support</p>
           </div>
         </div>
-        <button className="ud-chat-close-btn" onClick={onClose}>×</button>
+        <button className="ud-chat-close-btn" onClick={onClose}>
+          ×
+        </button>
       </div>
       <div className="ud-chat-popup-body" ref={chatBodyRef}>
         {messages.map((message) => (
-          <div key={message.id} className={`ud-chat-message-wrapper ${message.sender}`}>
-            {message.sender === "ai" && <div className="ud-chat-avatar ud-small"><FaRobot /></div>}
+          <div
+            key={message.id}
+            className={`ud-chat-message-wrapper ${message.sender}`}
+          >
+            {message.sender === "ai" && (
+              <div className="ud-chat-avatar ud-small">
+                <FaRobot />
+              </div>
+            )}
             <div className="ud-chat-bubble">{message.text}</div>
-            {message.sender === "user" && <div className="ud-chat-avatar ud-small"><FaUserCircle /></div>}
+            {message.sender === "user" && (
+              <div className="ud-chat-avatar ud-small">
+                <FaUserCircle />
+              </div>
+            )}
           </div>
         ))}
         {isLoading && (
           <div className="ud-chat-message-wrapper ai">
-            <div className="ud-chat-avatar ud-small"><FaRobot /></div>
+            <div className="ud-chat-avatar ud-small">
+              <FaRobot />
+            </div>
             <div className="ud-chat-bubble">
-              <div className="ud-loading-dots"><span></span><span></span><span></span></div>
+              <div className="ud-loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
           </div>
         )}
       </div>
       <div className="ud-chat-popup-footer">
-        <input type="text" placeholder="Type your message..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyPress={handleKeyPress} className="ud-chat-input" />
-        <button className="ud-send-btn" onClick={sendMessage} disabled={isLoading || !newMessage.trim()}><FaPaperPlane /></button>
+        <input
+          type="text"
+          placeholder="Type your message..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          className="ud-chat-input"
+        />
+        <button
+          className="ud-send-btn"
+          onClick={sendMessage}
+          disabled={isLoading || !newMessage.trim()}
+        >
+          <FaPaperPlane />
+        </button>
       </div>
     </div>
   </div>
@@ -201,7 +147,16 @@ export default function UserDashboard() {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showCallModal, setShowCallModal] = useState(false);
   const [callType, setCallType] = useState("video");
-  const [callerInfo, setCallerInfo] = useState({ name: "", image: null, userId: "", userName: "", callId: "", roomId: "", waitingDuration: 0, onEndCall: null });
+  const [callerInfo, setCallerInfo] = useState({
+    name: "",
+    image: null,
+    userId: "",
+    userName: "",
+    callId: "",
+    roomId: "",
+    waitingDuration: 0,
+    onEndCall: null,
+  });
   const [waitingCalls, setWaitingCalls] = useState([]);
   const [pollingInterval, setPollingInterval] = useState(null);
   const [isPolling, setIsPolling] = useState(true);
@@ -214,13 +169,33 @@ export default function UserDashboard() {
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
   const vibrate = useVibration();
+  const { startRinging, stopRinging } = useRingtone();
 
-  const [userData, setUserData] = useState({ name: "", email: "", phone: "", profilePhoto: "" });
+  // Ringtone Control
+  useEffect(() => {
+    if (showCallModal) {
+      startRinging();
+    } else {
+      stopRinging();
+    }
+  }, [showCallModal, startRinging, stopRinging]);
+
+  const [userData, setUserData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    profilePhoto: "",
+  });
 
   const getProfilePhotoUrl = (userData) => {
     if (userData.profilePhoto) {
-      if (typeof userData.profilePhoto === "object" && userData.profilePhoto.url) return userData.profilePhoto.url;
-      if (typeof userData.profilePhoto === "string") return userData.profilePhoto;
+      if (
+        typeof userData.profilePhoto === "object" &&
+        userData.profilePhoto.url
+      )
+        return userData.profilePhoto.url;
+      if (typeof userData.profilePhoto === "string")
+        return userData.profilePhoto;
     }
     return "";
   };
@@ -230,10 +205,22 @@ export default function UserDashboard() {
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       const acceptorId = localStorage.getItem("userId");
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/accept`, { acceptorId, acceptorType: "user" }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/accept`,
+        { acceptorId, acceptorType: "user" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
       if (response.data && response.data.success) return response.data;
       return null;
-    } catch (error) { console.error("Error accepting call:", error); return null; }
+    } catch (error) {
+      console.error("Error accepting call:", error);
+      return null;
+    }
   };
 
   const endCall = async (callId) => {
@@ -241,10 +228,22 @@ export default function UserDashboard() {
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/end`, { userId, endedBy: "user" }, { headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/end`,
+        { userId, endedBy: "user" },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
       if (response.data && response.data.success) return response.data;
       return null;
-    } catch (error) { console.error("Error ending call:", error); return null; }
+    } catch (error) {
+      console.error("Error ending call:", error);
+      return null;
+    }
   };
 
   const rejectCall = async (callId) => {
@@ -252,9 +251,16 @@ export default function UserDashboard() {
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
-      const response = await axios.put(`${API_BASE_URL}/api/video/calls/${callId}/reject`, { userId, reason: "declined" }, { headers: { Authorization: `Bearer ${token}` } });
+      const response = await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/reject`,
+        { userId, reason: "declined" },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
       return response.data?.success || false;
-    } catch (error) { console.error("Error rejecting call:", error); return false; }
+    } catch (error) {
+      console.error("Error rejecting call:", error);
+      return false;
+    }
   };
 
   const fetchWaitingCalls = async () => {
@@ -263,29 +269,111 @@ export default function UserDashboard() {
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       const userId = localStorage.getItem("userId");
       if (!userId || !token) return;
-      const response = await axios.get(`${API_BASE_URL}/api/video/calls/pending/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
-      const callsList = response.data.pendingRequests || response.data.waitingCalls || response.data.calls;
-      if (response.data && response.data.success && callsList && callsList.length > 0) {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/video/calls/pending/${userId}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const callsList =
+        response.data.pendingRequests ||
+        response.data.waitingCalls ||
+        response.data.calls;
+      if (
+        response.data &&
+        response.data.success &&
+        callsList &&
+        callsList.length > 0
+      ) {
         setWaitingCalls(callsList);
-        const waitingCall = callsList.find(call => !call.status || call.status === "waiting" || call.status === "ringing") || callsList[0];
+        const waitingCall =
+          callsList.find(
+            (call) =>
+              !call.status ||
+              call.status === "waiting" ||
+              call.status === "ringing",
+          ) || callsList[0];
         if (waitingCall && !showCallModal) {
           const callTypeValue = waitingCall.callType || "video";
           setCallType(callTypeValue);
           const fromData = waitingCall.from || waitingCall.initiator || {};
-          const callerFullName = fromData.fullName || fromData.displayName || fromData.name || waitingCall.fromName || "Counselor";
-          const profilePhoto = fromData.profilePhoto || waitingCall.fromProfilePhoto || null;
-          const callId = waitingCall.callId || waitingCall.id || waitingCall._id;
+          const callerFullName =
+            fromData.fullName ||
+            fromData.displayName ||
+            fromData.name ||
+            waitingCall.fromName ||
+            "Counselor";
+
+          const currentIncomingId = callerInfo?.callId;
+          const stillWaiting = currentIncomingId
+            ? callsList.some(
+                (c) => (c.callId || c.id || c._id) === currentIncomingId,
+              )
+            : false;
+
+          if (showCallModal && currentIncomingId && !stillWaiting) {
+            console.log("Call no longer in pending list, closing modal");
+            setShowCallModal(false);
+            setCallerInfo({
+              name: "",
+              image: null,
+              userId: "",
+              userName: "",
+              callId: "",
+              roomId: "",
+              waitingDuration: 0,
+              onEndCall: null,
+            });
+            return;
+          }
+
+          const profilePhoto =
+            fromData.profilePhoto || waitingCall.fromProfilePhoto || null;
+          const callId =
+            waitingCall.callId || waitingCall.id || waitingCall._id;
           const roomId = waitingCall.roomId;
-          setCallerInfo({ name: callerFullName, image: profilePhoto, userId: fromData.id || fromData._id || waitingCall.fromId, userName: callerFullName, callId: callId, roomId: roomId, waitingDuration: waitingCall.waitingDuration || waitingCall.remainingSeconds || 0, onEndCall: endCall, from: fromData, requestMessage: waitingCall.requestMessage || `Incoming ${callTypeValue} call...`, requestedAt: waitingCall.requestedAt || waitingCall.createdAt, callType: callTypeValue });
+          setCallerInfo({
+            name: callerFullName,
+            image: profilePhoto,
+            userId: fromData.id || fromData._id || waitingCall.fromId,
+            userName: callerFullName,
+            callId: callId,
+            roomId: roomId,
+            waitingDuration:
+              waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
+            onEndCall: endCall,
+            from: fromData,
+            requestMessage:
+              waitingCall.requestMessage || `Incoming ${callTypeValue} call...`,
+            requestedAt: waitingCall.requestedAt || waitingCall.createdAt,
+            callType: callTypeValue,
+          });
           setShowCallModal(true);
-          if (window.navigator && window.navigator.vibrate) window.navigator.vibrate([200, 100, 200]);
+          if (window.navigator && window.navigator.vibrate)
+            window.navigator.vibrate([200, 100, 200]);
         }
-      } else { setWaitingCalls([]); }
-    } catch (error) { console.error("Error fetching waiting calls:", error); }
+      } else {
+        setWaitingCalls([]);
+        if (showCallModal) {
+          console.log("No pending calls remaining, closing incoming modal");
+          setShowCallModal(false);
+          setCallerInfo({
+            name: "",
+            image: null,
+            userId: "",
+            userName: "",
+            callId: "",
+            roomId: "",
+            waitingDuration: 0,
+            onEndCall: null,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching waiting calls:", error);
+    }
   };
 
   useEffect(() => {
-    if (isPolling && !showCallModal && !isVideoModalOpen) {
+    if (isPolling && !isVideoModalOpen) {
       fetchWaitingCalls();
       const interval = setInterval(() => fetchWaitingCalls(), 5000);
       setPollingInterval(interval);
@@ -302,7 +390,7 @@ export default function UserDashboard() {
   }, [isPolling, showCallModal, isVideoModalOpen]);
 
   useEffect(() => {
-    if (showCallModal || isVideoModalOpen) {
+    if (isVideoModalOpen) {
       setIsPolling(false);
       if (pollingInterval) {
         clearInterval(pollingInterval);
@@ -311,7 +399,22 @@ export default function UserDashboard() {
     } else {
       setIsPolling(true);
     }
-  }, [showCallModal, isVideoModalOpen]);
+  }, [isVideoModalOpen]);
+
+  useEffect(() => {
+    if (showCallModal && !isVideoModalOpen) {
+      void startRinging();
+      return;
+    }
+
+    stopRinging();
+  }, [showCallModal, isVideoModalOpen, startRinging, stopRinging]);
+
+  useEffect(() => {
+    return () => {
+      stopRinging();
+    };
+  }, [stopRinging]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -319,18 +422,32 @@ export default function UserDashboard() {
         const userId = localStorage.getItem("userId");
         const token = localStorage.getItem("token");
         if (!userId) return;
-        const response = await axios.get(`${API_BASE_URL}/api/auth/getUser/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+        const response = await axios.get(
+          `${API_BASE_URL}/api/auth/getUser/${userId}`,
+          { headers: { Authorization: `Bearer ${token}` } },
+        );
         if (response.data.success) {
           const user = response.data.user;
-          setUserData({ name: user.fullName || "", email: user.email || "", phone: user.phoneNumber || "", profilePhoto: getProfilePhotoUrl(user) });
+          setUserData({
+            name: user.fullName || "",
+            email: user.email || "",
+            phone: user.phoneNumber || "",
+            profilePhoto: getProfilePhotoUrl(user),
+          });
         }
-      } catch (error) { console.error("Error fetching user:", error); }
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
     };
     fetchUserData();
   }, []);
 
   const [chatMessages, setChatMessages] = useState([
-    { id: 1, text: "Hello! I'm your AI assistant. How can I help you today?", sender: "ai" },
+    {
+      id: 1,
+      text: "Hello! I'm your AI assistant. How can I help you today?",
+      sender: "ai",
+    },
     { id: 2, text: "I'm feeling anxious today.", sender: "user" },
   ]);
 
@@ -342,23 +459,35 @@ export default function UserDashboard() {
   }, []);
 
   useEffect(() => {
-    if (chatBodyRef.current) chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+    if (chatBodyRef.current)
+      chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
   }, [chatMessages, isLoading]);
 
-  useEffect(() => { if (chatOpen) setUnreadCount(0); }, [chatOpen]);
+  useEffect(() => {
+    if (chatOpen) setUnreadCount(0);
+  }, [chatOpen]);
 
   const sendMessage = () => {
     if (newMessage.trim()) {
       const userMessage = { id: Date.now(), text: newMessage, sender: "user" };
-      setChatMessages(prev => [...prev, userMessage]);
+      setChatMessages((prev) => [...prev, userMessage]);
       setNewMessage("");
       setIsLoading(true);
       setTimeout(() => {
-        const aiResponses = ["I understand. Would you like to try some breathing exercises?", "Thank you for sharing. How long have you been feeling this way?", "I'm here to listen. Would you like me to suggest some coping strategies?", "Would you like me to connect you with a mental health professional?"];
-        const aiMessage = { id: Date.now() + 1, text: aiResponses[Math.floor(Math.random() * aiResponses.length)], sender: "ai" };
-        setChatMessages(prev => [...prev, aiMessage]);
+        const aiResponses = [
+          "I understand. Would you like to try some breathing exercises?",
+          "Thank you for sharing. How long have you been feeling this way?",
+          "I'm here to listen. Would you like me to suggest some coping strategies?",
+          "Would you like me to connect you with a mental health professional?",
+        ];
+        const aiMessage = {
+          id: Date.now() + 1,
+          text: aiResponses[Math.floor(Math.random() * aiResponses.length)],
+          sender: "ai",
+        };
+        setChatMessages((prev) => [...prev, aiMessage]);
         setIsLoading(false);
-        if (!chatOpen) setUnreadCount(prev => prev + 1);
+        if (!chatOpen) setUnreadCount((prev) => prev + 1);
       }, 1000);
     }
   };
@@ -389,7 +518,14 @@ export default function UserDashboard() {
 
   const handleAcceptCall = async (callId) => {
     try {
-      const result = await acceptCall(callId);
+      const resolvedCallId =
+        callId || callerInfo?.callId || callerInfo?.id || callerInfo?._id;
+
+      if (!resolvedCallId) {
+        return null;
+      }
+
+      const result = await acceptCall(resolvedCallId);
       if (result) {
         console.log("Call accepted successfully", result);
         console.log("callType:", callType);
@@ -414,20 +550,36 @@ export default function UserDashboard() {
 
   const handleRejectCall = async (callId) => {
     try {
-      await rejectCall(callId);
+      const resolvedCallId =
+        callId || callerInfo?.callId || callerInfo?.id || callerInfo?._id;
+
+      if (!resolvedCallId) {
+        return false;
+      }
+
+      await rejectCall(resolvedCallId);
       console.log("Call rejected successfully");
+      return true;
     } catch (error) {
       console.error("Error in reject call:", error);
+      return false;
     }
-  };
-
-  const handleAcceptCallModal = () => {
-    console.log("Call accepted");
   };
 
   const handleEndCall = async (callId) => {
     try {
-      const result = await endCall(callId);
+      const resolvedCallId =
+        callId ||
+        selectedCall?.callId ||
+        selectedCall?.id ||
+        callerInfo?.callId ||
+        callerInfo?.id;
+
+      if (!resolvedCallId) {
+        return false;
+      }
+
+      const result = await endCall(resolvedCallId);
       if (!result?.success) {
         console.warn("End call API did not report success", result);
       }
@@ -517,7 +669,7 @@ export default function UserDashboard() {
 
   return (
     <div className="user-dashboard">
-      <CallModal
+      <IncomingCallModal
         isOpen={showCallModal}
         onClose={() => {
           setShowCallModal(false);
@@ -536,10 +688,9 @@ export default function UserDashboard() {
         callerName={callerInfo.userName || callerInfo.name}
         callerImage={callerInfo.image}
         callData={callerInfo}
-        onAccept={handleAcceptCallModal}
-        onEnd={handleEndCall}
-        onAcceptCall={handleAcceptCall}
-        onRejectCall={handleRejectCall}
+        onAccept={handleAcceptCall}
+        onReject={handleRejectCall}
+        fallbackName="Counselor"
       />
 
       <VideoCallModal
@@ -553,20 +704,62 @@ export default function UserDashboard() {
 
       {isMobile && (
         <div className="ud-mobile-header">
-          <div className="ud-mobile-header-left"><h2 className="ud-mobile-logo">MChat</h2></div>
+          <div className="ud-mobile-header-left">
+            <h2 className="ud-mobile-logo">MChat</h2>
+          </div>
           <div className="ud-mobile-header-right">
-            <button className="ud-mobile-profile-btn" onClick={() => setShowProfileMenu(!showProfileMenu)}>
-              {userData.profilePhoto ? <img src={userData.profilePhoto} alt={userData.name} className="ud-mobile-user-avatar" onError={(e) => { e.target.onerror = null; e.target.style.display = "none"; e.target.parentElement.innerHTML = '<FaUserCircle class="ud-mobile-user-icon" />'; }} /> : <FaUserCircle className="ud-mobile-user-icon" />}
+            <button
+              className="ud-mobile-profile-btn"
+              onClick={() => setShowProfileMenu(!showProfileMenu)}
+            >
+              {userData.profilePhoto ? (
+                <img
+                  src={userData.profilePhoto}
+                  alt={userData.name}
+                  className="ud-mobile-user-avatar"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.style.display = "none";
+                    e.target.parentElement.innerHTML =
+                      '<FaUserCircle class="ud-mobile-user-icon" />';
+                  }}
+                />
+              ) : (
+                <FaUserCircle className="ud-mobile-user-icon" />
+              )}
             </button>
             {showProfileMenu && (
               <div className="ud-profile-dropdown-menu">
                 <div className="ud-profile-dropdown-header">
-                  {userData.profilePhoto ? <img src={userData.profilePhoto} alt={userData.name} className="ud-dropdown-avatar" /> : <FaUserCircle className="ud-dropdown-avatar-icon" />}
-                  <div className="ud-dropdown-user-info"><h4>{userData.name}</h4><p>{userData.email}</p></div>
+                  {userData.profilePhoto ? (
+                    <img
+                      src={userData.profilePhoto}
+                      alt={userData.name}
+                      className="ud-dropdown-avatar"
+                    />
+                  ) : (
+                    <FaUserCircle className="ud-dropdown-avatar-icon" />
+                  )}
+                  <div className="ud-dropdown-user-info">
+                    <h4>{userData.name}</h4>
+                    <p>{userData.email}</p>
+                  </div>
                 </div>
                 <div className="ud-profile-dropdown-items">
-                  <button className="ud-dropdown-item" onClick={handleProfileClick}><FaUser className="ud-dropdown-icon" /><span>My Profile</span></button>
-                  <button className="ud-dropdown-item ud-logout-item" onClick={handleLogoutClick}><FaSignOutAlt className="ud-dropdown-icon" /><span>Logout</span></button>
+                  <button
+                    className="ud-dropdown-item"
+                    onClick={handleProfileClick}
+                  >
+                    <FaUser className="ud-dropdown-icon" />
+                    <span>My Profile</span>
+                  </button>
+                  <button
+                    className="ud-dropdown-item ud-logout-item"
+                    onClick={handleLogoutClick}
+                  >
+                    <FaSignOutAlt className="ud-dropdown-icon" />
+                    <span>Logout</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -581,18 +774,41 @@ export default function UserDashboard() {
               <div className="ud-sidebar-header">
                 <div className="ud-profile-section">
                   <div className="ud-profile-image">
-                    {userData.profilePhoto ? <img src={userData.profilePhoto} alt={userData.name} onError={(e) => { e.target.onerror = null; e.target.style.display = "none"; e.target.parentElement.innerHTML = '<FaUserCircle className="ud-default-avatar" />'; }} /> : <FaUserCircle className="ud-default-avatar" />}
+                    {userData.profilePhoto ? (
+                      <img
+                        src={userData.profilePhoto}
+                        alt={userData.name}
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.style.display = "none";
+                          e.target.parentElement.innerHTML =
+                            '<FaUserCircle className="ud-default-avatar" />';
+                        }}
+                      />
+                    ) : (
+                      <FaUserCircle className="ud-default-avatar" />
+                    )}
                   </div>
                   <div className="ud-profile-info">
-                    <h3 className="ud-sidebar-title">Name: <span>{userData.name}</span></h3>
-                    <p className="ud-sidebar-subtitle">Email: <span>{userData.email}</span></p>
-                    <p className="ud-sidebar-subtitle">Phone: <span>{userData.phone}</span></p>
+                    <h3 className="ud-sidebar-title">
+                      Name: <span>{userData.name}</span>
+                    </h3>
+                    <p className="ud-sidebar-subtitle">
+                      Email: <span>{userData.email}</span>
+                    </p>
+                    <p className="ud-sidebar-subtitle">
+                      Phone: <span>{userData.phone}</span>
+                    </p>
                   </div>
                 </div>
               </div>
               <div className="ud-sidebar-menu">
                 {allMenuItems.map((item) => (
-                  <button key={item.id} onClick={() => handleMenuItemClick(item.id)} className={`ud-sidebar-item ${active === item.id ? "ud-active" : ""}`}>
+                  <button
+                    key={item.id}
+                    onClick={() => handleMenuItemClick(item.id)}
+                    className={`ud-sidebar-item ${active === item.id ? "ud-active" : ""}`}
+                  >
                     <span className="ud-sidebar-icon">{item.icon}</span>
                     <span className="ud-sidebar-text">{item.label}</span>
                   </button>
@@ -600,8 +816,13 @@ export default function UserDashboard() {
               </div>
               <hr className="ud-sidebar-separator" />
               <div className="ud-sidebar-actions">
-                <button className="ud-sidebar-item ud-logout" onClick={handleLogoutClick}>
-                  <span className="ud-sidebar-icon"><FaSignOutAlt /></span>
+                <button
+                  className="ud-sidebar-item ud-logout"
+                  onClick={handleLogoutClick}
+                >
+                  <span className="ud-sidebar-icon">
+                    <FaSignOutAlt />
+                  </span>
                   <span className="ud-sidebar-text">Logout</span>
                 </button>
               </div>
@@ -621,8 +842,22 @@ export default function UserDashboard() {
               <div className="ud-content-section">
                 <h2 className="ud-section-title">Help & Support</h2>
                 <div className="ud-help-content">
-                  <div className="ud-support-card" onClick={() => handleSupportClick("FAQ")}><FaQuestionCircle className="ud-support-icon" /><h3>FAQ</h3><p>Find answers to frequently asked questions</p></div>
-                  <div className="ud-support-card" onClick={() => handleSupportClick("Contact Support")}><FaEnvelope className="ud-support-icon" /><h3>Contact Support</h3><p>Email us at support@example.com</p></div>
+                  <div
+                    className="ud-support-card"
+                    onClick={() => handleSupportClick("FAQ")}
+                  >
+                    <FaQuestionCircle className="ud-support-icon" />
+                    <h3>FAQ</h3>
+                    <p>Find answers to frequently asked questions</p>
+                  </div>
+                  <div
+                    className="ud-support-card"
+                    onClick={() => handleSupportClick("Contact Support")}
+                  >
+                    <FaEnvelope className="ud-support-icon" />
+                    <h3>Contact Support</h3>
+                    <p>Email us at support@example.com</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -630,8 +865,26 @@ export default function UserDashboard() {
               <div className="ud-content-section">
                 <h2 className="ud-section-title">Privacy Settings</h2>
                 <div className="ud-privacy-content">
-                  <div className="ud-privacy-option"><h3>Data Privacy</h3><p>Control how your data is used and shared</p><button className="ud-privacy-btn" onClick={() => handlePrivacyAction("Data Privacy")}>Manage Settings</button></div>
-                  <div className="ud-privacy-option"><h3>Session Privacy</h3><p>Configure privacy settings for your sessions</p><button className="ud-privacy-btn" onClick={() => handlePrivacyAction("Session Privacy")}>Configure</button></div>
+                  <div className="ud-privacy-option">
+                    <h3>Data Privacy</h3>
+                    <p>Control how your data is used and shared</p>
+                    <button
+                      className="ud-privacy-btn"
+                      onClick={() => handlePrivacyAction("Data Privacy")}
+                    >
+                      Manage Settings
+                    </button>
+                  </div>
+                  <div className="ud-privacy-option">
+                    <h3>Session Privacy</h3>
+                    <p>Configure privacy settings for your sessions</p>
+                    <button
+                      className="ud-privacy-btn"
+                      onClick={() => handlePrivacyAction("Session Privacy")}
+                    >
+                      Configure
+                    </button>
+                  </div>
                 </div>
               </div>
             )}
@@ -639,35 +892,180 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {!chatOpen && <ChatButton onClick={() => setChatOpen(true)} unreadCount={unreadCount} />}
-      {chatOpen && <ChatPopup messages={chatMessages} newMessage={newMessage} setNewMessage={setNewMessage} sendMessage={sendMessage} handleKeyPress={handleKeyPress} isLoading={isLoading} onClose={() => setChatOpen(false)} chatBodyRef={chatBodyRef} />}
+      {!chatOpen && (
+        <ChatButton
+          onClick={() => setChatOpen(true)}
+          unreadCount={unreadCount}
+        />
+      )}
+      {chatOpen && (
+        <ChatPopup
+          messages={chatMessages}
+          newMessage={newMessage}
+          setNewMessage={setNewMessage}
+          sendMessage={sendMessage}
+          handleKeyPress={handleKeyPress}
+          isLoading={isLoading}
+          onClose={() => setChatOpen(false)}
+          chatBodyRef={chatBodyRef}
+        />
+      )}
 
       {isMobile && (
         <nav className="ud-mobile-bottom-nav">
-          {bottomMenuItems.map((item) => (<button key={item.id} className={`ud-mobile-nav-btn ${active === item.id ? "ud-active" : ""}`} onClick={() => handleMenuItemClick(item.id)}><span className="ud-nav-icon">{item.icon}</span><span className="ud-nav-label">{item.label}</span></button>))}
-          <button className="ud-mobile-nav-btn ud-more-btn" onClick={handleMoreModalToggle}><span className="ud-nav-icon"><FaEllipsisH /></span><span className="ud-nav-label">More</span></button>
+          {bottomMenuItems.map((item) => (
+            <button
+              key={item.id}
+              className={`ud-mobile-nav-btn ${active === item.id ? "ud-active" : ""}`}
+              onClick={() => handleMenuItemClick(item.id)}
+            >
+              <span className="ud-nav-icon">{item.icon}</span>
+              <span className="ud-nav-label">{item.label}</span>
+            </button>
+          ))}
+          <button
+            className="ud-mobile-nav-btn ud-more-btn"
+            onClick={handleMoreModalToggle}
+          >
+            <span className="ud-nav-icon">
+              <FaEllipsisH />
+            </span>
+            <span className="ud-nav-label">More</span>
+          </button>
         </nav>
       )}
 
       {showMoreModal && (
         <div className="ud-modal-overlay" onClick={handleCloseModal}>
-          <div className="ud-modal-container ud-more-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="ud-modal-header"><h3 className="ud-modal-title">Menu Options</h3><button className="ud-close-modal-btn" onClick={handleCloseModal}><FaTimes /></button></div>
+          <div
+            className="ud-modal-container ud-more-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ud-modal-header">
+              <h3 className="ud-modal-title">Menu Options</h3>
+              <button className="ud-close-modal-btn" onClick={handleCloseModal}>
+                <FaTimes />
+              </button>
+            </div>
             <div className="ud-modal-body">
               <div className="ud-more-options-list">
-                {allMenuItems.map((item) => (<button key={item.id} className={`ud-more-option-item ${active === item.id ? "ud-active" : ""}`} onClick={() => handleMenuItemClick(item.id)}><span className="ud-more-option-icon">{item.icon}</span><span className="ud-more-option-text">{item.label}</span><span className="ud-more-option-arrow"><FaArrowRight /></span></button>))}
-                <div className="ud-more-actions"><button className="ud-more-action-btn ud-logout-btn" onClick={() => { vibrate(30); setShowMoreModal(false); setShowLogoutConfirm(true); }}><FaSignOutAlt className="ud-action-icon" /><span>Logout</span></button></div>
+                {allMenuItems.map((item) => (
+                  <button
+                    key={item.id}
+                    className={`ud-more-option-item ${active === item.id ? "ud-active" : ""}`}
+                    onClick={() => handleMenuItemClick(item.id)}
+                  >
+                    <span className="ud-more-option-icon">{item.icon}</span>
+                    <span className="ud-more-option-text">{item.label}</span>
+                    <span className="ud-more-option-arrow">
+                      <FaArrowRight />
+                    </span>
+                  </button>
+                ))}
+                <div className="ud-more-actions">
+                  <button
+                    className="ud-more-action-btn ud-logout-btn"
+                    onClick={() => {
+                      vibrate(30);
+                      setShowMoreModal(false);
+                      setShowLogoutConfirm(true);
+                    }}
+                  >
+                    <FaSignOutAlt className="ud-action-icon" />
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {showLogoutConfirm && (<div className="ud-modal-overlay" onClick={() => setShowLogoutConfirm(false)}><div className="ud-modal-container" onClick={(e) => e.stopPropagation()}><div className="ud-modal-header"><h3 className="ud-modal-title">Confirm Logout</h3></div><div className="ud-modal-body"><p>Are you sure you want to logout?</p></div><div className="ud-modal-footer"><button className="ud-btn-secondary" onClick={() => { vibrate(20); setShowLogoutConfirm(false); }}>Cancel</button><button className="ud-btn-danger" onClick={handleLogout}>Logout</button></div></div></div>)}
+      {showLogoutConfirm && (
+        <div
+          className="ud-modal-overlay"
+          onClick={() => setShowLogoutConfirm(false)}
+        >
+          <div
+            className="ud-modal-container"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ud-modal-header">
+              <h3 className="ud-modal-title">Confirm Logout</h3>
+            </div>
+            <div className="ud-modal-body">
+              <p>Are you sure you want to logout?</p>
+            </div>
+            <div className="ud-modal-footer">
+              <button
+                className="ud-btn-secondary"
+                onClick={() => {
+                  vibrate(20);
+                  setShowLogoutConfirm(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button className="ud-btn-danger" onClick={handleLogout}>
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {showDeleteConfirm && (<div className="ud-modal-overlay" onClick={() => setShowDeleteConfirm(false)}><div className="ud-modal-container" onClick={(e) => e.stopPropagation()}><div className="ud-modal-header"><h3 className="ud-modal-title">Delete Account</h3></div><div className="ud-modal-body"><p>This action cannot be undone. All your data will be permanently deleted.</p></div><div className="ud-modal-footer"><button className="ud-btn-secondary" onClick={() => { vibrate(20); setShowDeleteConfirm(false); }}>Cancel</button><button className="ud-btn-danger" onClick={handleDeleteConfirm}>Delete Account</button></div></div></div>)}
+      {showDeleteConfirm && (
+        <div
+          className="ud-modal-overlay"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            className="ud-modal-container"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="ud-modal-header">
+              <h3 className="ud-modal-title">Delete Account</h3>
+            </div>
+            <div className="ud-modal-body">
+              <p>
+                This action cannot be undone. All your data will be permanently
+                deleted.
+              </p>
+            </div>
+            <div className="ud-modal-footer">
+              <button
+                className="ud-btn-secondary"
+                onClick={() => {
+                  vibrate(20);
+                  setShowDeleteConfirm(false);
+                }}
+              >
+                Cancel
+              </button>
+              <button className="ud-btn-danger" onClick={handleDeleteConfirm}>
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
-      {deleteSuccess && (<div className="ud-modal-overlay"><div className="ud-modal-container ud-success-modal"><div className="ud-modal-header"><h3 className="ud-modal-title ud-success"><FaCheckCircle className="ud-success-icon" />Account Deleted!</h3></div><div className="ud-modal-body"><p>Your account has been successfully deleted.</p><p>Redirecting...</p></div></div></div>)}
+      {deleteSuccess && (
+        <div className="ud-modal-overlay">
+          <div className="ud-modal-container ud-success-modal">
+            <div className="ud-modal-header">
+              <h3 className="ud-modal-title ud-success">
+                <FaCheckCircle className="ud-success-icon" />
+                Account Deleted!
+              </h3>
+            </div>
+            <div className="ud-modal-body">
+              <p>Your account has been successfully deleted.</p>
+              <p>Redirecting...</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
