@@ -7,7 +7,6 @@ import React, {
 } from "react";
 import axios from "axios";
 import {
-  CallControls,
   CallingState,
   ParticipantView,
   StreamCall,
@@ -18,6 +17,15 @@ import {
 } from "@stream-io/video-react-sdk";
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "./VideoCallModal.css";
+import {
+  FaCompress,
+  FaExpand,
+  FaMicrophone,
+  FaMicrophoneSlash,
+  FaPhoneSlash,
+  FaVideo,
+  FaVideoSlash,
+} from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import {
   getStreamToken,
@@ -56,8 +64,57 @@ const normalizeCallStatus = (status) =>
     .trim()
     .toLowerCase();
 
+const normalizeUiStatus = (status) => {
+  const normalized = String(status || "")
+    .trim()
+    .toLowerCase();
+
+  if (
+    normalized === "connecting" ||
+    normalized === "ringing" ||
+    normalized === "connected"
+  ) {
+    return normalized;
+  }
+
+  return "";
+};
+
 const getAuthToken = () =>
   localStorage.getItem("token") || localStorage.getItem("accessToken") || "";
+
+const resolveCalleeName = (callData) =>
+  String(
+    callData?.name ||
+      callData?.receiver?.displayName ||
+      callData?.receiver?.fullName ||
+      callData?.receiver?.name ||
+      callData?.initiator?.displayName ||
+      callData?.initiator?.fullName ||
+      callData?.initiator?.name ||
+      "Participant",
+  ).trim();
+
+const buildInitials = (name) => {
+  const normalizedName = String(name || "").trim();
+  return normalizedName ? normalizedName.charAt(0).toUpperCase() : "?";
+};
+
+const formatDuration = (seconds) => {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+  const hrs = Math.floor(safeSeconds / 3600);
+  const mins = Math.floor((safeSeconds % 3600) / 60);
+  const secs = safeSeconds % 60;
+
+  const mm = String(mins).padStart(2, "0");
+  const ss = String(secs).padStart(2, "0");
+
+  if (hrs > 0) {
+    return `${String(hrs).padStart(2, "0")}:${mm}:${ss}`;
+  }
+
+  return `${mm}:${ss}`;
+};
 
 const resolveCurrentUserType = (currentUser, callData) => {
   const explicitType =
@@ -113,7 +170,7 @@ const resolveParticipantName = (participant) =>
   participant?.userId ||
   "Participant";
 
-const StreamVideoBody = ({ onLeave, onControlLeave, localUserId }) => {
+const StreamVideoBody = ({ onLeave, localUserId }) => {
   const { useCallCallingState, useParticipants, useLocalParticipant } =
     useCallStateHooks();
   const callingState = useCallCallingState();
@@ -211,10 +268,6 @@ const StreamVideoBody = ({ onLeave, onControlLeave, localUserId }) => {
             />
           </div>
         )}
-
-        <div className="stream-controls-dock">
-          <CallControls onLeave={onControlLeave} />
-        </div>
       </div>
     </StreamTheme>
   );
@@ -246,6 +299,7 @@ const VideoCallModal = ({
   currentUser,
   onEndCall,
   callMode,
+  status,
 }) => {
   const [client, setClient] = useState(null);
   const [call, setCall] = useState(null);
@@ -266,6 +320,12 @@ const VideoCallModal = ({
   const callUnsubsRef = useRef([]);
   const clientUnsubsRef = useRef([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMicMuted, setIsMicMuted] = useState(false);
+  const [isCameraOff, setIsCameraOff] = useState(false);
+  const [connectedAt, setConnectedAt] = useState(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const micMutedRef = useRef(false);
+  const cameraOffRef = useRef(false);
 
   const callId = useMemo(() => resolveCallId(callData), [callData]);
   const resolvedCallMode = useMemo(
@@ -312,9 +372,31 @@ const VideoCallModal = ({
       ),
     [currentUserRole, currentUserTypeFromCall],
   );
+  const calleeName = useMemo(() => resolveCalleeName(callData), [callData]);
+  const calleeInitials = useMemo(() => buildInitials(calleeName), [calleeName]);
   const isPendingCall = PENDING_STATUSES.has(callStatus);
   const isTerminalCall = TERMINAL_STATUSES.has(callStatus);
   const canJoinCall = !isPendingCall && !isTerminalCall;
+  const explicitUiStatus = useMemo(() => normalizeUiStatus(status), [status]);
+  const uiStatus = useMemo(() => {
+    if (explicitUiStatus) {
+      return explicitUiStatus;
+    }
+
+    if (canJoinCall && client && call && !loading) {
+      return "connected";
+    }
+
+    if (isPendingCall) {
+      return "ringing";
+    }
+
+    return "connecting";
+  }, [explicitUiStatus, canJoinCall, client, call, loading, isPendingCall]);
+  const showConnectingAnimation =
+    (uiStatus === "connecting" || uiStatus === "ringing") && !error;
+  const showTopActions = uiStatus === "connected";
+  const showConnectedTimer = uiStatus === "connected" && !error;
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -327,6 +409,42 @@ const VideoCallModal = ({
   useEffect(() => {
     localUserRef.current = localUser;
   }, [localUser]);
+
+  useEffect(() => {
+    micMutedRef.current = isMicMuted;
+  }, [isMicMuted]);
+
+  useEffect(() => {
+    cameraOffRef.current = isCameraOff;
+  }, [isCameraOff]);
+
+  useEffect(() => {
+    if (!isOpen || uiStatus !== "connected") {
+      setConnectedAt(null);
+      setElapsedSeconds(0);
+      return;
+    }
+
+    setConnectedAt((prev) => prev || Date.now());
+  }, [isOpen, uiStatus]);
+
+  useEffect(() => {
+    if (!connectedAt || uiStatus !== "connected") {
+      return undefined;
+    }
+
+    const updateElapsed = () => {
+      const seconds = Math.floor((Date.now() - connectedAt) / 1000);
+      setElapsedSeconds(Math.max(0, seconds));
+    };
+
+    updateElapsed();
+    const intervalId = setInterval(updateElapsed, 1000);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [connectedAt, uiStatus]);
 
   const clearReconnectTimer = useCallback(() => {
     if (reconnectTimeoutRef.current) {
@@ -468,6 +586,48 @@ const VideoCallModal = ({
     isVoiceMode,
   ]);
 
+  const handleToggleMic = useCallback(async () => {
+    const nextMuted = !micMutedRef.current;
+    const activeCall = callRef.current;
+
+    try {
+      if (activeCall?.microphone) {
+        if (nextMuted) {
+          await activeCall.microphone.disable?.();
+        } else {
+          await activeCall.microphone.enable?.();
+        }
+      }
+
+      micMutedRef.current = nextMuted;
+      setIsMicMuted(nextMuted);
+    } catch (err) {
+      console.error("Failed to toggle microphone:", err);
+    }
+  }, []);
+
+  const handleToggleCamera = useCallback(async () => {
+    if (isVoiceMode) return;
+
+    const nextCameraOff = !cameraOffRef.current;
+    const activeCall = callRef.current;
+
+    try {
+      if (activeCall?.camera) {
+        if (nextCameraOff) {
+          await activeCall.camera.disable?.();
+        } else {
+          await activeCall.camera.enable?.();
+        }
+      }
+
+      cameraOffRef.current = nextCameraOff;
+      setIsCameraOff(nextCameraOff);
+    } catch (err) {
+      console.error("Failed to toggle camera:", err);
+    }
+  }, [isVoiceMode]);
+
   const handleToggleFullscreen = useCallback(async () => {
     const container = modalContainerRef.current;
     if (!container || typeof document === "undefined") return;
@@ -494,11 +654,17 @@ const VideoCallModal = ({
       setCallStatus(initialCallStatus);
       setError("");
       setLoading(false);
+      setIsMicMuted(false);
+      setIsCameraOff(isVoiceMode);
+      micMutedRef.current = false;
+      cameraOffRef.current = isVoiceMode;
+      setConnectedAt(null);
+      setElapsedSeconds(0);
       reconnectAttemptRef.current = 0;
       reconnectInFlightRef.current = false;
       clearReconnectTimer();
     }
-  }, [clearReconnectTimer, initialCallStatus, isOpen]);
+  }, [clearReconnectTimer, initialCallStatus, isOpen, isVoiceMode]);
 
   useEffect(() => {
     if (typeof document === "undefined") return undefined;
@@ -773,6 +939,22 @@ const VideoCallModal = ({
           await nextCall.camera.disable();
         }
 
+        if (!isVoiceMode && nextCall.camera) {
+          if (cameraOffRef.current) {
+            await nextCall.camera.disable?.();
+          } else {
+            await nextCall.camera.enable?.();
+          }
+        }
+
+        if (nextCall.microphone) {
+          if (micMutedRef.current) {
+            await nextCall.microphone.disable?.();
+          } else {
+            await nextCall.microphone.enable?.();
+          }
+        }
+
         if (isAborted()) {
           await cleanupStreamSession({
             call: nextCall,
@@ -854,35 +1036,77 @@ const VideoCallModal = ({
       >
         <div className="stream-modal-header">
           <h3>{isVoiceMode ? "Voice Call" : "Video Call"}</h3>
-          <div className="stream-modal-actions">
-            {!isVoiceMode && (
+          {showTopActions && (
+            <div className="stream-modal-actions">
+              {!isVoiceMode && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    void handleToggleFullscreen();
+                  }}
+                  className="stream-fullscreen-btn"
+                >
+                  {isFullscreen ? (
+                    <>
+                      <FaCompress aria-hidden="true" />
+                      <span>Exit Full Screen</span>
+                    </>
+                  ) : (
+                    <>
+                      <FaExpand aria-hidden="true" />
+                      <span>Full Screen</span>
+                    </>
+                  )}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {
-                  void handleToggleFullscreen();
+                  void handleEndForEveryone();
                 }}
-                className="stream-fullscreen-btn"
+                className="stream-close-btn"
               >
-                {isFullscreen ? "Exit Full Screen" : "Full Screen"}
+                {isPendingCall ? "Cancel" : "End"}
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                void handleEndForEveryone();
-              }}
-              className="stream-close-btn"
-            >
-              {isPendingCall ? "Cancel" : "End"}
-            </button>
-          </div>
+            </div>
+          )}
         </div>
 
         <div className="stream-modal-content">
-          {!loading && !error && isPendingCall && (
+          {showConnectingAnimation && (
+            <div className="stream-connecting-state" aria-live="polite">
+              <div className="stream-connecting-center">
+                <div className="stream-avatar-rings" aria-hidden="true">
+                  <span className="stream-pulse-ring stream-pulse-ring-1" />
+                  <span className="stream-pulse-ring stream-pulse-ring-2" />
+                  <span className="stream-pulse-ring stream-pulse-ring-3" />
+                </div>
+                <div className="stream-avatar-glow">{calleeInitials}</div>
+                <h4 className="stream-callee-name">{calleeName}</h4>
+                <p className="stream-connecting-note">
+                  {uiStatus === "ringing" ? "Ringing" : "Connecting call"}
+                  <span className="stream-ellipsis" aria-hidden="true">
+                    <span>.</span>
+                    <span>.</span>
+                    <span>.</span>
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          {showConnectedTimer && (
+            <div className="stream-connected-timer" aria-live="polite">
+              Connected • {formatDuration(elapsedSeconds)}
+            </div>
+          )}
+
+          {!loading && !error && isPendingCall && !showConnectingAnimation && (
             <p className="stream-modal-note">Waiting for call acceptance...</p>
           )}
-          {loading && <p className="stream-modal-note">Connecting call...</p>}
+          {loading && !showConnectingAnimation && (
+            <p className="stream-modal-note">Connecting call...</p>
+          )}
           {!loading && error && <p className="stream-modal-error">{error}</p>}
 
           {!loading && !error && client && call && (
@@ -891,13 +1115,72 @@ const VideoCallModal = ({
                 <StreamVideoBody
                   localUserId={localUser?.id}
                   onLeave={handleCallLeft}
-                  onControlLeave={() => {
-                    void handleEndForEveryone();
-                  }}
                 />
               </StreamCall>
             </StreamVideo>
           )}
+
+          <div className="stream-bottom-controls-wrap">
+            <div
+              className="stream-bottom-controls"
+              role="toolbar"
+              aria-label="Call controls"
+            >
+              <button
+                type="button"
+                className={`stream-icon-btn ${isMicMuted ? "stream-icon-btn-muted" : ""}`.trim()}
+                onClick={() => {
+                  void handleToggleMic();
+                }}
+                aria-label={
+                  isMicMuted ? "Unmute microphone" : "Mute microphone"
+                }
+              >
+                {isMicMuted ? (
+                  <FaMicrophoneSlash aria-hidden="true" />
+                ) : (
+                  <FaMicrophone aria-hidden="true" />
+                )}
+                <span className="stream-tooltip">
+                  {isMicMuted ? "Unmute" : "Mute"}
+                </span>
+              </button>
+
+              {!isVoiceMode && (
+                <button
+                  type="button"
+                  className={`stream-icon-btn ${isCameraOff ? "stream-icon-btn-muted" : ""}`.trim()}
+                  onClick={() => {
+                    void handleToggleCamera();
+                  }}
+                  aria-label={
+                    isCameraOff ? "Turn camera on" : "Turn camera off"
+                  }
+                >
+                  {isCameraOff ? (
+                    <FaVideoSlash aria-hidden="true" />
+                  ) : (
+                    <FaVideo aria-hidden="true" />
+                  )}
+                  <span className="stream-tooltip">
+                    {isCameraOff ? "Camera On" : "Camera Off"}
+                  </span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                className="stream-icon-btn stream-icon-btn-danger"
+                onClick={() => {
+                  void handleEndForEveryone();
+                }}
+                aria-label="End call"
+              >
+                <FaPhoneSlash aria-hidden="true" />
+                <span className="stream-tooltip">End Call</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
