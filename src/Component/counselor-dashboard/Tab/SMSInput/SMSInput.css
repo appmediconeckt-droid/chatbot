@@ -1,14 +1,17 @@
-/* SMSInput.css - Fully Responsive with NO BORDER on Input Field */
-/* Icon-only call buttons, fixed back navigation on mobile */
+/* SMSInput.css - Fully Responsive with NO BORDER on Input Field & Zero Mobile Padding Issues */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
 
-/* CSS Variables for Consistent Theming */
 :root {
-  --primary-color: #2563eb;
+  --primary: #2563eb;
   --primary-dark: #1d4ed8;
   --primary-light: #3b82f6;
-  --success-color: #22c55e;
-  --danger-color: #dc2626;
-  --danger-dark: #b91c1c;
+  --success: #22c55e;
+  --danger: #dc2626;
   --gray-50: #f8fafc;
   --gray-100: #f1f5f9;
   --gray-200: #e2e8f0;
@@ -22,36 +25,16 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-full: 9999px;
 }
 
-/* Base Reset */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-/* Main Container */
+/* Main Container - Full viewport with zero default padding */
 .smsinput-container {
   width: 100%;
-  min-height: 100vh;
   height: 100dvh;
   background: white;
   display: flex;
   flex-direction: column;
-  font-family:
-    "Inter",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    sans-serif;
-  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.02);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   position: relative;
   overflow: hidden;
 }
@@ -66,161 +49,127 @@
 
 .smsinput-empty-state {
   text-align: center;
-  padding: clamp(20px, 8vw, 40px);
+  padding: 20px;
   max-width: 90%;
-  margin: 0 auto;
 }
 
 .smsinput-empty-state .empty-icon {
-  font-size: clamp(3rem, 15vw, 5rem);
+  font-size: 4rem;
   display: block;
-  margin-bottom: clamp(16px, 5vw, 20px);
+  margin-bottom: 16px;
   opacity: 0.3;
-  animation: float 3s ease-in-out infinite;
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
 }
 
 .smsinput-empty-state h3 {
-  font-size: clamp(1.25rem, 5vw, 1.5rem);
+  font-size: 1.25rem;
   color: var(--gray-800);
-  margin-bottom: clamp(8px, 3vw, 10px);
-  font-weight: 600;
+  margin-bottom: 8px;
 }
 
 .smsinput-empty-state p {
   color: var(--gray-500);
-  font-size: clamp(0.9rem, 3vw, 1rem);
-  margin-bottom: clamp(16px, 5vw, 20px);
+  font-size: 0.9rem;
+  margin-bottom: 20px;
 }
 
-/* Header Styles - Fixed for mobile back button */
+/* Header - Zero horizontal padding on mobile */
 .smsinput-header {
-  padding: clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px);
+  padding: 12px 16px;
   background: white;
   border-bottom: 1px solid var(--gray-200);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: clamp(10px, 2vw, 15px);
-  box-shadow: var(--shadow-sm);
-  z-index: 10;
-  position: sticky;
-  top: 0;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Mobile: reduce padding */
+@media (max-width: 480px) {
+  .smsinput-header {
+    padding: 10px 12px;
+  }
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 3vw, 16px);
+  gap: 12px;
   flex: 1;
-  min-width: 200px;
+  min-width: 0;
 }
 
-/* Back Button Styles - Fixed for mobile */
+/* Back Button */
 .back-button {
   display: flex;
   align-items: center;
-  gap: clamp(4px, 1.5vw, 8px);
-  padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px);
+  justify-content: center;
+  padding: 8px;
   background: var(--gray-50);
   border: 1px solid var(--gray-200);
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
   color: var(--gray-600);
-  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
-  font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-  z-index: 20;
-  position: relative;
-}
-
-.back-button:hover:not(:active) {
-  background: var(--gray-200);
-  border-color: var(--gray-400);
-  transform: translateX(-4px);
-  color: var(--gray-800);
-}
-
-.back-button:active {
-  transform: translateX(-2px) scale(0.98);
-  background: var(--gray-300);
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
 }
 
 .back-button svg {
-  width: clamp(18px, 4vw, 20px);
-  height: clamp(18px, 4vw, 20px);
+  width: 18px;
+  height: 18px;
 }
 
-.back-text {
-  display: inline;
+.back-button:active {
+  transform: scale(0.95);
+  background: var(--gray-200);
 }
 
 /* User Info */
 .smsinput-user-info {
   display: flex;
   align-items: center;
-  gap: clamp(12px, 3vw, 16px);
+  gap: 12px;
   flex: 1;
-  min-width: 200px;
+  min-width: 0;
 }
 
 .smsinput-user-avatar {
-  width: clamp(48px, 12vw, 56px);
-  height: clamp(48px, 12vw, 56px);
+  width: 44px;
+  height: 44px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: clamp(14px, 4vw, 18px);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(1.5rem, 5vw, 1.8rem);
+  font-size: 1.5rem;
   color: white;
   position: relative;
   flex-shrink: 0;
-  box-shadow: var(--shadow-md);
+}
+
+@media (max-width: 480px) {
+  .smsinput-user-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 1.3rem;
+    border-radius: 12px;
+  }
 }
 
 .smsinput-user-avatar .status-dot {
-  width: clamp(10px, 3vw, 14px);
-  height: clamp(10px, 3vw, 14px);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   position: absolute;
   bottom: 2px;
   right: 2px;
   border: 2px solid white;
-  box-shadow: var(--shadow-sm);
 }
 
 .smsinput-user-avatar .status-dot.online {
-  background: var(--success-color);
-  animation: pulse 2s infinite;
-}
-
-.smsinput-user-avatar .status-dot.offline {
-  background: var(--gray-400);
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(34, 197, 94, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0);
-  }
+  background: var(--success);
 }
 
 .smsinput-user-details {
@@ -229,113 +178,129 @@
 }
 
 .smsinput-user-details h3 {
-  font-size: clamp(1rem, 4vw, 1.2rem);
+  font-size: 1rem;
   color: var(--gray-800);
-  margin-bottom: clamp(2px, 1vw, 4px);
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.smsinput-user-phone {
-  font-size: clamp(0.7rem, 2.5vw, 0.85rem);
-  color: var(--gray-500);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+@media (max-width: 480px) {
+  .smsinput-user-details h3 {
+    font-size: 0.9rem;
+  }
 }
 
-.smsinput-user-email {
-  font-size: clamp(0.65rem, 2vw, 0.75rem);
-  color: var(--gray-400);
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Call Buttons - ICON ONLY, no text */
+/* Call Buttons */
 .smsinput-call-buttons {
   display: flex;
-  gap: clamp(8px, 2vw, 12px);
-  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .call-btn {
-  padding: clamp(10px, 2.5vw, 14px);
+  width: 40px;
+  height: 40px;
   border: none;
   border-radius: 50%;
-  font-size: 0; /* Hide any potential text */
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-  width: clamp(44px, 10vw, 52px);
-  height: clamp(44px, 10vw, 52px);
-  box-shadow: var(--shadow-sm);
+}
+
+@media (max-width: 480px) {
+  .call-btn {
+    width: 38px;
+    height: 38px;
+  }
 }
 
 .call-btn .call-icon {
-  font-size: clamp(1.3rem, 4vw, 1.6rem);
+  font-size: 1.2rem;
   line-height: 1;
 }
 
 .call-btn.voice {
   background: #eef2ff;
-  color: var(--primary-color);
-}
-
-.call-btn.voice:hover:not(:active) {
-  background: #dbeafe;
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  color: var(--primary);
 }
 
 .call-btn.video {
-  background: var(--primary-color);
+  background: var(--primary);
   color: white;
-}
-
-.call-btn.video:hover:not(:active) {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
 }
 
 .call-btn:active {
   transform: scale(0.92);
 }
 
-/* Messages Area */
+.call-btn.loading {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* Error Banner */
+.sms-call-error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fef2f2;
+  border-left: 3px solid var(--danger);
+  padding: 10px 16px;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.sms-call-error-banner .error-icon {
+  font-size: 1rem;
+}
+
+.sms-call-error-banner .error-text {
+  flex: 1;
+  color: #991b1b;
+}
+
+.sms-call-error-banner .error-close {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  color: #991b1b;
+  padding: 4px;
+}
+
+/* Messages Area - Zero extra padding */
 .smsinput-messages {
   flex: 1;
   overflow-y: auto;
-  padding: clamp(16px, 4vw, 24px);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: clamp(12px, 3vw, 16px);
+  gap: 12px;
   background: linear-gradient(135deg, var(--gray-50) 0%, #ffffff 100%);
   -webkit-overflow-scrolling: touch;
 }
 
+@media (max-width: 480px) {
+  .smsinput-messages {
+    padding: 12px;
+    gap: 10px;
+  }
+}
+
+/* Message Bubbles */
 .smsinput-message {
   display: flex;
-  max-width: min(80%, 400px);
-  animation: fadeIn 0.3s ease;
+  max-width: min(80%, 320px);
+  animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .smsinput-message.sent {
@@ -347,16 +312,22 @@
 }
 
 .message-bubble {
-  padding: clamp(10px, 3vw, 14px) clamp(14px, 4vw, 18px);
-  border-radius: clamp(16px, 4vw, 20px);
-  position: relative;
+  padding: 10px 14px;
+  border-radius: 18px;
   word-wrap: break-word;
   max-width: 100%;
   box-shadow: var(--shadow-sm);
 }
 
+@media (max-width: 480px) {
+  .message-bubble {
+    padding: 8px 12px;
+    border-radius: 16px;
+  }
+}
+
 .sent .message-bubble {
-  background: var(--primary-color);
+  background: var(--primary);
   color: white;
   border-bottom-right-radius: 4px;
 }
@@ -369,122 +340,144 @@
 }
 
 .message-text {
-  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
-  line-height: 1.5;
-  margin-bottom: 6px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 4px;
   word-break: break-word;
 }
 
+@media (max-width: 480px) {
+  .message-text {
+    font-size: 0.85rem;
+  }
+}
+
+.message-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+.message-time {
+  font-size: 0.6rem;
+  opacity: 0.7;
+}
+
+.msg-status {
+  font-size: 0.6rem;
+}
+
+.msg-status.sending { opacity: 0.6; }
+.msg-status.error { color: #ff6b6b; }
+
+/* Typing Indicator */
+.typing-bubble {
+  padding: 12px 16px !important;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.typing-dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--gray-400);
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite ease-in-out;
+}
+
+.typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+.typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); }
+  30% { transform: translateY(-6px); }
+}
+
+/* Attachment Styles */
 .sms-attachment-image {
-  width: 100%;
-  max-width: 260px;
+  max-width: 200px;
   border-radius: 10px;
   margin-bottom: 6px;
-  object-fit: cover;
 }
 
 .sms-attachment-link {
   display: inline-block;
-  margin-bottom: 6px;
+  font-size: 0.8rem;
   text-decoration: underline;
-  font-size: clamp(0.8rem, 2.2vw, 0.9rem);
+  margin-bottom: 4px;
   word-break: break-all;
 }
 
-.sent .sms-attachment-link {
-  color: #dbeafe;
-}
+.sent .sms-attachment-link { color: #dbeafe; }
+.received .sms-attachment-link { color: var(--primary); }
 
-.received .sms-attachment-link {
-  color: var(--primary-color);
-}
-
-.message-time {
-  font-size: clamp(0.55rem, 2vw, 0.65rem);
-  opacity: 0.7;
-  display: block;
-  text-align: right;
-}
-
-/* Message Input Form */
+/* Input Form - Zero border */
 .smsinput-form {
-  padding: clamp(12px, 3vw, 16px) clamp(16px, 4vw, 24px);
-  padding-bottom: calc(
-    clamp(12px, 3vw, 16px) + env(safe-area-inset-bottom, 0px)
-  );
+  padding: 12px 16px;
   background: white;
   border-top: 1px solid var(--gray-200);
-  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.02);
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .smsinput-form {
+    padding: 10px 12px;
+  }
 }
 
 .smsinput-input-wrapper {
   display: flex;
   align-items: center;
-  gap: clamp(8px, 2vw, 12px);
+  gap: 8px;
   background: var(--gray-50);
-  border-radius: var(--radius-full);
-  padding: 4px 4px 4px clamp(12px, 3vw, 16px);
-  transition: all 0.2s ease;
+  border-radius: 9999px;
+  padding: 4px 4px 4px 16px;
 }
 
-/* NO BORDER ON INPUT FIELD - Critical fix */
+/* CRITICAL: NO BORDER ON INPUT */
 .smsinput-input-wrapper,
-.smsinput-input-wrapper:focus-within,
 .smsinput-input,
-.smsinput-input:focus {
+.smsinput-input:focus,
+.smsinput-input:active {
   border: none !important;
   outline: none !important;
   box-shadow: none !important;
 }
 
-/* Keep the wrapper background change on focus but no border */
 .smsinput-input-wrapper:focus-within {
   background: white;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-.attach-btn,
-.emoji-btn {
+.attach-btn {
   background: none;
   border: none;
-  font-size: clamp(1.2rem, 3.5vw, 1.3rem);
+  font-size: 1.2rem;
   cursor: pointer;
-  padding: clamp(6px, 2vw, 8px);
+  padding: 6px;
   border-radius: 50%;
-  transition: all 0.2s ease;
   color: var(--gray-500);
-  line-height: 1;
-  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.attach-btn:hover:not(:active),
-.emoji-btn:hover:not(:active) {
-  background: var(--gray-200);
-  transform: scale(1.1);
-}
-
-.attach-btn:active,
-.emoji-btn:active {
-  transform: scale(0.95);
+.attach-btn:active {
+  transform: scale(0.9);
 }
 
 .smsinput-input {
   flex: 1;
-  padding: clamp(10px, 3vw, 14px) 8px;
+  padding: 10px 0;
   background: none;
-  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
-  min-width: 50px;
+  font-size: 0.9rem;
   color: var(--gray-800);
-}
-
-/* Additional reinforcement for no border */
-.smsinput-input,
-.smsinput-input:focus,
-.smsinput-input:active,
-.smsinput-input:hover {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
 }
 
 .smsinput-input::placeholder {
@@ -492,680 +485,116 @@
 }
 
 .send-btn {
-  padding: clamp(8px, 2.5vw, 12px) clamp(16px, 5vw, 28px);
+  padding: 8px 20px;
   background: var(--gray-200);
   color: var(--gray-400);
   border: none;
-  border-radius: var(--radius-full);
+  border-radius: 9999px;
   font-weight: 600;
   cursor: not-allowed;
-  transition: all 0.2s ease;
-  font-size: clamp(0.85rem, 2.5vw, 0.95rem);
+  font-size: 0.85rem;
   white-space: nowrap;
 }
 
 .send-btn.active {
-  background: var(--primary-color);
+  background: var(--primary);
   color: white;
   cursor: pointer;
-}
-
-.send-btn.active:hover:not(:active) {
-  background: var(--primary-dark);
-  transform: scale(1.05);
-  box-shadow: var(--shadow-md);
 }
 
 .send-btn.active:active {
-  transform: scale(0.95);
+  transform: scale(0.96);
 }
 
-/* Quick Reply Suggestions */
-.smsinput-suggestions {
-  padding: clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px) clamp(16px, 4vw, 20px);
-  display: flex;
-  gap: clamp(8px, 2vw, 10px);
-  flex-wrap: wrap;
-  background: white;
-  border-top: 1px solid var(--gray-100);
-}
-
-.suggestion-btn {
-  padding: clamp(6px, 2vw, 8px) clamp(12px, 3vw, 16px);
-  background: var(--gray-100);
-  border: 1px solid var(--gray-200);
-  border-radius: var(--radius-full);
-  font-size: clamp(0.75rem, 2.5vw, 0.85rem);
-  color: var(--gray-600);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.suggestion-btn:hover:not(:active) {
-  background: var(--gray-200);
-  border-color: var(--gray-400);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-sm);
-}
-
-.suggestion-btn:active {
-  transform: translateY(0) scale(0.95);
-}
-
-/* Back to List Button (for empty state) */
-.back-to-list-btn {
-  margin-top: 20px;
-  padding: clamp(10px, 3vw, 12px) clamp(20px, 6vw, 24px);
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: var(--radius-full);
-  font-size: clamp(0.9rem, 3vw, 1rem);
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.back-to-list-btn:hover:not(:active) {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-
-.back-to-list-btn:active {
-  transform: translateY(0) scale(0.95);
-}
-
-/* Custom Scrollbar */
-.smsinput-messages::-webkit-scrollbar {
-  width: 6px;
-}
-
-.smsinput-messages::-webkit-scrollbar-track {
-  background: var(--gray-100);
-  border-radius: var(--radius-full);
-}
-
-.smsinput-messages::-webkit-scrollbar-thumb {
-  background: var(--gray-300);
-  border-radius: var(--radius-full);
-}
-
-.smsinput-messages::-webkit-scrollbar-thumb:hover {
-  background: var(--gray-400);
-}
-
-/* Firefox Scrollbar */
-.smsinput-messages {
-  scrollbar-width: thin;
-  scrollbar-color: var(--gray-300) var(--gray-100);
-}
-
-/* New Message Animation */
-.smsinput-message:last-child .message-bubble {
-  animation: newMessage 0.5s ease;
-}
-
-@keyframes newMessage {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Touch Device Optimizations */
-@media (hover: none) and (pointer: coarse) {
-  .back-button,
-  .call-btn,
-  .send-btn.active,
-  .suggestion-btn,
-  .back-to-list-btn,
-  .attach-btn,
-  .emoji-btn {
-    -webkit-tap-highlight-color: transparent;
-    touch-action: manipulation;
-  }
-
-  .back-button:active,
-  .call-btn:active,
-  .send-btn.active:active,
-  .suggestion-btn:active,
-  .back-to-list-btn:active,
-  .attach-btn:active,
-  .emoji-btn:active {
-    transform: scale(0.95);
-  }
-
-  .smsinput-messages {
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
-/* Small Phones (320px and up) - Critical mobile fixes */
-@media (max-width: 374px) {
-  .smsinput-user-avatar {
-    width: 44px;
-    height: 44px;
-    border-radius: 14px;
-    font-size: 1.3rem;
-  }
-
-  .header-left {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .back-button {
-    width: 100%;
-    justify-content: center;
-    margin-bottom: 4px;
-  }
-
-  .smsinput-user-info {
-    width: 100%;
-  }
-
-  .smsinput-call-buttons {
-    width: 100%;
-    justify-content: flex-end;
-  }
-
-  .call-btn {
-    width: 44px;
-    height: 44px;
-    padding: 0;
-  }
-
-  .call-btn .call-icon {
-    font-size: 1.4rem;
-  }
-
-  .smsinput-message {
-    max-width: 90%;
-  }
-
-  .smsinput-suggestions {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: 16px;
-  }
-
-  .suggestion-btn {
-    flex-shrink: 0;
-  }
-
-  .smsinput-user-details h3 {
-    font-size: 0.95rem;
-  }
-
-  .smsinput-user-phone,
-  .smsinput-user-email {
-    font-size: 0.65rem;
-  }
-
-  /* Back button fix for mobile - ensure it's tappable */
-  .back-button {
-    min-height: 44px;
-    min-width: 44px;
-  }
-}
-
-/* Medium Phones (375px to 424px) */
-@media (min-width: 375px) and (max-width: 424px) {
-  .smsinput-user-avatar {
-    width: 48px;
-    height: 48px;
-  }
-
-  .header-left {
-    gap: 10px;
-  }
-
-  .call-btn {
-    width: 48px;
-    height: 48px;
-    padding: 0;
-  }
-
-  .call-btn .call-icon {
-    font-size: 1.5rem;
-  }
-
-  .smsinput-message {
-    max-width: 85%;
-  }
-
-  .back-button {
-    min-height: 44px;
-  }
-}
-
-/* Large Phones (425px to 767px) */
-@media (min-width: 425px) and (max-width: 767px) {
-  .smsinput-container {
-    max-width: 100%;
-  }
-
-  .header-left {
-    flex: 1;
-  }
-
-  .call-btn {
-    width: 50px;
-    height: 50px;
-    padding: 0;
-  }
-
-  .call-btn .call-icon {
-    font-size: 1.6rem;
-  }
-
-  .smsinput-message {
-    max-width: 80%;
-  }
-
-  .back-button {
-    min-height: 44px;
-  }
-}
-
-/* Tablets (768px to 1023px) */
-@media (min-width: 768px) and (max-width: 1023px) {
-  .smsinput-container {
-    max-width: 100%;
-  }
-
-  .smsinput-header {
-    padding: 16px 20px;
-  }
-
-  .smsinput-user-avatar {
-    width: 52px;
-    height: 52px;
-  }
-
-  .call-btn {
-    width: 52px;
-    height: 52px;
-    padding: 0;
-  }
-
-  .call-btn .call-icon {
-    font-size: 1.7rem;
-  }
-
-  .smsinput-message {
-    max-width: 70%;
-  }
-
-  .smsinput-suggestions {
-    padding: 12px 20px 16px;
-  }
-}
-
-/* Small Laptops (1024px to 1279px) */
-@media (min-width: 1024px) and (max-width: 1279px) {
-  .smsinput-container {
-    max-width: calc(100% - 360px);
-    margin-left: auto;
-  }
-
-  .smsinput-message {
-    max-width: 60%;
-  }
-
-  .call-btn {
-    width: 52px;
-    height: 52px;
-  }
-}
-
-/* Large Laptops and Desktops (1280px and up) */
-@media (min-width: 1280px) {
-  .smsinput-container {
-    margin-left: auto;
-  }
-
-  .smsinput-message {
-    max-width: 55%;
-  }
-
-  .smsinput-message:hover .message-bubble {
-    transform: scale(1.02);
-    transition: transform 0.2s;
-  }
-
-  .call-btn {
-    width: 54px;
-    height: 54px;
-  }
-}
-
-/* Landscape Mode */
-@media (orientation: landscape) and (max-height: 600px) {
-  .smsinput-container {
-    height: 100vh;
-  }
-
-  .smsinput-header {
-    padding: 8px 16px;
-  }
-
-  .smsinput-user-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    font-size: 1.2rem;
-  }
-
-  .smsinput-messages {
-    padding: 12px 16px;
-  }
-
-  .smsinput-form {
-    padding: 8px 16px;
-  }
-
-  .smsinput-suggestions {
-    display: none;
-  }
-
-  .call-btn {
-    width: 42px;
-    height: 42px;
-    padding: 0;
-  }
-
-  .call-btn .call-icon {
-    font-size: 1.3rem;
-  }
-
-  .back-button {
-    min-height: 40px;
-  }
-}
-
-/* High Resolution Screens */
-@media (min-width: 1440px) {
-  .smsinput-message {
-    max-width: 50%;
-  }
-
-  .call-btn {
-    width: 56px;
-    height: 56px;
-  }
-}
-
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
-  .back-button,
-  .call-btn,
-  .send-btn,
-  .suggestion-btn,
-  .message-bubble,
-  .smsinput-message,
-  .back-to-list-btn,
-  .attach-btn,
-  .emoji-btn {
-    transition: none;
-    animation: none;
-  }
-}
-
-/* Focus Styles for Keyboard Navigation */
-.back-button:focus-visible,
-.call-btn:focus-visible,
-.send-btn:focus-visible,
-.suggestion-btn:focus-visible,
-.back-to-list-btn:focus-visible,
-.attach-btn:focus-visible,
-.emoji-btn:focus-visible {
-  outline: 2px solid var(--primary-color);
-  outline-offset: 2px;
-}
-
+/* Loading States */
 .sms-loading-messages {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 40px;
-  gap: 16px;
+  gap: 12px;
   height: 100%;
 }
 
 .sms-loading-spinner {
-  width: 40px;
-  height: 40px;
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--primary);
   border-radius: 50%;
-  animation: sms-spin 1s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
-/* Error banner styles */
-.sms-call-error-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  border-left: 4px solid #ef4444;
-  padding: 10px 16px;
-  margin: 0 16px 12px;
-  border-radius: 10px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
-  animation: slideDown 0.3s ease;
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.sms-call-error-banner .error-icon {
-  font-size: 18px;
-  margin-right: 10px;
-}
-
-.sms-call-error-banner .error-text {
-  flex: 1;
-  color: #991b1b;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.sms-call-error-banner .error-close {
-  background: transparent;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
-  color: #991b1b;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-}
-
-.sms-call-error-banner .error-close:hover {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-/* Chat Status Banner */
-.sms-chat-status-banner {
-  padding: 8px 16px;
-  margin: 0 16px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  font-weight: 500;
+.sms-empty-messages {
   text-align: center;
-  animation: slideDown 0.3s ease;
+  padding: 40px 20px;
+  color: var(--gray-400);
 }
 
-.sms-chat-status-banner.status-accepted {
-  background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-  color: #065f46;
-  border-left: 3px solid #10b981;
+.empty-messages-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 12px;
+  opacity: 0.5;
 }
 
-.sms-chat-status-banner.status-pending {
-  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
-  color: #92400e;
-  border-left: 3px solid #f59e0b;
+/* Scrollbar */
+.smsinput-messages::-webkit-scrollbar {
+  width: 4px;
 }
 
-.sms-chat-status-banner.status-ended {
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-  color: #991b1b;
-  border-left: 3px solid #ef4444;
+.smsinput-messages::-webkit-scrollbar-track {
+  background: var(--gray-100);
 }
 
-/* =============================================
-   PROFESSIONAL VIDEO CALL MODAL (Counselor Receiving)
-   ============================================= */
-
-@keyframes couns-callFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-@keyframes couns-callPulse {
-  0%,
-  100% {
-    transform: scale(1);
-    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.5);
-  }
-  50% {
-    transform: scale(1.06);
-    box-shadow: 0 0 0 14px rgba(37, 99, 235, 0);
-  }
-}
-@keyframes couns-rippleRing {
-  0% {
-    transform: scale(1);
-    opacity: 0.6;
-  }
-  100% {
-    transform: scale(2.4);
-    opacity: 0;
-  }
-}
-@keyframes couns-dotBounce {
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-@keyframes couns-slideInModal {
-  from {
-    opacity: 0;
-    transform: translateY(32px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-@keyframes couns-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.smsinput-messages::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 9999px;
 }
 
-.call-modal-overlay {
+/* Incoming Call Modal */
+.incoming-call-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 10, 25, 0.6);
+  background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 9999;
   padding: 20px;
-  animation: couns-callFadeIn 0.25s ease;
 }
 
-.call-modal {
-  position: relative;
+.incoming-call-modal {
+  background: white;
+  border-radius: 28px;
+  max-width: 320px;
   width: 100%;
-  max-width: 360px;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 26px;
-  box-shadow:
-    0 24px 64px rgba(0, 0, 0, 0.18),
-    0 4px 16px rgba(37, 99, 235, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   overflow: hidden;
-  animation: couns-slideInModal 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: slideUp 0.3s ease;
 }
 
-.call-modal::before {
-  content: "";
-  display: block;
-  height: 4px;
-  background: linear-gradient(
-    90deg,
-    var(--primary-light) 0%,
-    var(--primary-color) 100%
-  );
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.call-modal-content {
-  padding: 28px 24px 26px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-}
-
-.caller-info {
+.incoming-call-content {
+  padding: 24px 20px 20px;
   text-align: center;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 
-.caller-avatar {
-  position: relative;
-  width: 90px;
-  height: 90px;
-  margin: 0 auto 14px;
+.incoming-caller-avatar {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 12px;
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    var(--primary-light) 0%,
-    var(--primary-color) 100%
-  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1272,175 +701,57 @@
 }
 
 .accept-btn {
-  background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
-  box-shadow: 0 6px 22px rgba(34, 197, 94, 0.38);
-}
-.accept-btn:hover {
-  box-shadow: 0 10px 32px rgba(34, 197, 94, 0.5);
+  background: var(--success);
+  color: white;
 }
 
 .reject-btn {
-  background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
-  box-shadow: 0 6px 22px rgba(239, 68, 68, 0.38);
-}
-.reject-btn:hover {
-  box-shadow: 0 10px 32px rgba(239, 68, 68, 0.5);
+  background: var(--danger);
+  color: white;
 }
 
-.join-btn {
-  background: linear-gradient(
-    135deg,
-    var(--primary-light) 0%,
-    var(--primary-color) 100%
-  );
-  box-shadow: 0 6px 22px rgba(37, 99, 235, 0.38);
-}
-.join-btn:hover {
-  box-shadow: 0 10px 32px rgba(37, 99, 235, 0.5);
-}
-
-.end-call-btn {
-  background: linear-gradient(135deg, #f87171 0%, #dc2626 100%);
-  box-shadow: 0 6px 22px rgba(239, 68, 68, 0.35);
-  flex: 1;
-  max-width: 180px;
-}
-
-.icon-btn {
-  background: rgba(37, 99, 235, 0.1);
-  color: var(--primary-color);
-  border: 1.5px solid rgba(37, 99, 235, 0.2);
-}
-.icon-btn:hover {
-  background: rgba(37, 99, 235, 0.18);
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.22);
-}
-
-.close-btn {
-  background: rgba(0, 0, 0, 0.06);
-  color: #555;
-}
-.close-btn:hover {
-  background: rgba(0, 0, 0, 0.11);
-}
-
-.connecting-animation {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  color: var(--primary-color);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-  padding: 6px 0;
-}
-
-.connecting-dots {
-  display: flex;
-  gap: 8px;
-}
-.connecting-dots span {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  background: linear-gradient(
-    135deg,
-    var(--primary-light) 0%,
-    var(--primary-color) 100%
-  );
-  border-radius: 50%;
-  animation: couns-dotBounce 1.4s infinite ease-in-out both;
-}
-.connecting-dots span:nth-child(1) {
-  animation-delay: -0.32s;
-}
-.connecting-dots span:nth-child(2) {
-  animation-delay: -0.16s;
-}
-.connecting-dots span:nth-child(3) {
-  animation-delay: 0s;
+.incoming-call-btn:active {
+  transform: scale(0.96);
 }
 
 .spinning {
-  animation: couns-spin 0.8s linear infinite;
+  animation: spin 0.8s linear infinite;
 }
 
-.video-background {
-  position: relative;
-  width: 100%;
-  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-  border-radius: 14px;
-  overflow: hidden;
-  aspect-ratio: 16/9;
-}
-
-.remote-video-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+/* Back to List Button */
+.back-to-list-btn {
+  padding: 10px 20px;
+  background: var(--primary);
   color: white;
-  gap: 10px;
+  border: none;
+  border-radius: 40px;
+  font-size: 0.9rem;
+  cursor: pointer;
 }
 
-.video-loading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.local-video-preview {
-  position: absolute;
-  bottom: 10px;
-  right: 10px;
-  width: 78px;
-  height: 58px;
-  background: rgba(255, 255, 255, 0.13);
-  backdrop-filter: blur(8px);
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.28);
-  overflow: hidden;
-}
-
-.local-video-placeholder {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 10px;
-  gap: 3px;
-}
-
-.voice-call-modal .caller-avatar {
-  width: 104px;
-  height: 104px;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.42);
-}
-
-@media (max-width: 480px) {
-  .call-modal {
-    max-width: 100%;
-    border-radius: 20px;
+/* Landscape Mode */
+@media (orientation: landscape) and (max-height: 500px) {
+  .smsinput-header {
+    padding: 6px 12px;
   }
-  .call-modal-content {
-    padding: 22px 16px 20px;
+  .smsinput-messages {
+    padding: 8px;
   }
-  .caller-avatar {
-    width: 76px;
-    height: 76px;
+  .smsinput-user-avatar {
+    width: 36px;
+    height: 36px;
   }
   .call-controls .call-btn {
     min-width: 72px;
     padding: 12px 14px;
     font-size: 11px;
+  }
+}
+
+/* Reduce motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
   }
 }
