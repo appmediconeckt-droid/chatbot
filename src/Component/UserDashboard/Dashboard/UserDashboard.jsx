@@ -835,7 +835,9 @@ export default function UserDashboard() {
             {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
             {active === "Counselor" && <CounselorTable />}
             {active === "Wallet" && <WalletDashboard />}
-            {active === "Video" && <CallHistory />}
+            {active === "Video" && (
+              <CallHistory currentUser={{ id: userId, role: "user" }} />
+            )}
             {active === "profile" && <PatientProfile />}
             {active === "Live Chat" && <LiveChatSupport />}
             {active === "help" && (

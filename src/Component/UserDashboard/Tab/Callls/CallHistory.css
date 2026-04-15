@@ -13,7 +13,8 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
 }
 
@@ -147,6 +148,16 @@
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   box-shadow: 0 4px 10px rgba(102, 126, 234, 0.3);
+}
+
+.call-error-banner {
+  margin: 0 16px 12px 16px;
+  padding: 10px 12px;
+  border: 1px solid #f6c4c4;
+  background: #fff3f3;
+  color: #a61d24;
+  border-radius: 10px;
+  font-size: 13px;
 }
 
 /* Scrollable Calls List */
@@ -354,8 +365,12 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Video Call UI */
@@ -396,9 +411,18 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.05); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .video-placeholder h3 {
@@ -414,13 +438,12 @@
 .local-video {
   position: absolute;
 
-
   width: 120px;
   height: 160px;
   border-radius: 12px;
   overflow: hidden;
   border: 2px solid white;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .local-video-placeholder {
@@ -462,7 +485,7 @@
   justify-content: center;
   font-size: 80px;
   margin-bottom: 30px;
-  box-shadow: 0 20px 30px -10px rgba(0,0,0,0.4);
+  box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.4);
   animation: pulse 2s infinite;
 }
 
@@ -479,7 +502,7 @@
 /* Call Controls */
 .call-controls {
   padding: 30px 20px;
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(10px);
 }
 
@@ -503,7 +526,7 @@
   height: 60px;
   border-radius: 50%;
   border: none;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   color: white;
   font-size: 24px;
   cursor: pointer;
@@ -516,7 +539,7 @@
 
 .control-btn:hover {
   transform: scale(1.1);
-  background: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .control-btn.active {
@@ -526,12 +549,10 @@
 
 .control-btn.end-call {
   background: #ef4444;
- 
 }
 
 .control-btn.end-call:hover {
   background: #dc2626;
-  
 }
 
 /* Call Actions (Voice) */
@@ -540,7 +561,7 @@
   justify-content: center;
   gap: 30px;
   padding: 20px;
-  background: rgba(0,0,0,0.1);
+  background: rgba(0, 0, 0, 0.1);
 }
 
 .action-btn {
@@ -555,7 +576,7 @@
 }
 
 .action-btn:hover {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   transform: scale(1.1);
 }
 
@@ -607,7 +628,6 @@
   .local-video {
     width: 90px;
     height: 120px;
-    
   }
 
   .remote-avatar {
@@ -793,7 +813,8 @@
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
