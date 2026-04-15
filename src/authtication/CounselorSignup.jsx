@@ -21,7 +21,7 @@ import "./CounselorSignup.css";
 import logo from "../image/Mediconect Logo-3.png";
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
-
+  
 const CounselorSignup = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
