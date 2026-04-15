@@ -335,27 +335,7 @@ const CallHistory = ({ currentUser }) => {
     <div className="call-history-container">
       {/* Fixed Header Section */}
       <div className="call-history-header-fixed">
-        <div className="call-header">
-          <h2 className="call-title">Call History</h2>
-          <div className="call-header-actions">
-            <button
-              className="call-icon-btn"
-              onClick={openNewVoiceCall}
-              title="New Voice Call"
-              aria-label="New Voice Call"
-            >
-              📞
-            </button>
-            <button
-              className="call-icon-btn"
-              onClick={openNewVideoCall}
-              title="New Video Call"
-              aria-label="New Video Call"
-            >
-              📹
-            </button>
-          </div>
-        </div>
+       
 
         {/* Search Bar */}
         <div className="call-search">

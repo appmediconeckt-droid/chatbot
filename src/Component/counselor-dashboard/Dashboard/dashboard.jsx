@@ -21,6 +21,7 @@ import {
   FaCheck,
   FaTimes as FaClose,
   FaMicrophone,
+  FaUser,
   FaVideo as FaVideoIcon,
 } from "react-icons/fa";
 // Custom Hooks
@@ -897,7 +898,7 @@ export default function CounselorDashboard() {
     { id: "sessions", icon: <FaVideo />, label: "Sessions", badge: 0 },
     { id: "patients", icon: <FaUsers />, label: "Patients", badge: 0 },
     { id: "earnings", icon: <FaMoneyBillWave />, label: "Earnings", badge: 0 },
-    { id: "profile", icon: <FaChartPie />, label: "Profile", badge: 0 },
+    { id: "profile", icon: <FaUser />, label: "Profile", badge: 0 },
     { id: "settings", icon: <FaCog />, label: "Settings", badge: 0 },
   ];
 

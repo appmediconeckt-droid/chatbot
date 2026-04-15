@@ -660,7 +660,7 @@ export default function UserDashboard() {
     { id: "Chat", icon: <FaCommentDots />, label: "Chat" },
     { id: "Live Chat", icon: <FaUserMd />, label: "Counselor" },
     { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
-    { id: "Video", icon: <FaVideo />, label: "Video Call" },
+    { id: "Video", icon: <FaVideo />, label: "Call History" },
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
     { id: "privacy", icon: <FaLock />, label: "Privacy" },
   ];

@@ -197,9 +197,7 @@
   transition: background 0.2s ease;
 }
 
-.call-item:hover {
-  background: #fafbfc;
-}
+
 
 @keyframes slideIn {
   from {
@@ -361,7 +359,7 @@
   bottom: 0;
   z-index: 1000;
   background: #1a1f2e;
-  animation: fadeIn 0.3s ease;
+ 
 }
 
 @keyframes fadeIn {
@@ -763,9 +761,7 @@
 }
 
 /* Animation for missed calls */
-.call-item.missed-call .call-avatar {
-  animation: pulse 1.5s ease infinite;
-}
+
 
 /* Floating action buttons */
 .floating-call-buttons {
