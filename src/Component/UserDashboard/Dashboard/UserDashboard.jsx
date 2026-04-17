@@ -36,12 +36,13 @@ import CallHistory from "../Tab/Callls/CallHistory";
 import useVibration from "../../../hooks/useVibration";
 import useRingtone from "../../../hooks/useRingtone";
 import PatientProfile from "../../PatientProfile/PatientProfile";
-import BookAppointment from "../Tab/Appointment/BookAppointment";
+
 import LiveChatSupport from "../Tab/Appointment/BookAppointment";
 import axios from "axios";
 import CounselorTable from "../Tab/Counselor/CounselorDirectory";
 import VideoCallModal from "../Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
+import CounselorRequestChat from "../Tab/Appointment/BookAppointment";
 
 // ChatPopup Component
 const ChatPopup = ({
@@ -305,8 +306,8 @@ export default function UserDashboard() {
           const currentIncomingId = callerInfo?.callId;
           const stillWaiting = currentIncomingId
             ? callsList.some(
-                (c) => (c.callId || c.id || c._id) === currentIncomingId,
-              )
+              (c) => (c.callId || c.id || c._id) === currentIncomingId,
+            )
             : false;
 
           if (showCallModal && currentIncomingId && !stillWaiting) {
@@ -686,6 +687,21 @@ export default function UserDashboard() {
 
   const bottomMenuItems = allMenuItems.slice(0, 4);
 
+  // Wrapper component with error boundary for CounselorTable
+  const SafeCounselorTable = () => {
+    try {
+      return <CounselorTable />;
+    } catch (error) {
+      console.error("Error rendering CounselorTable:", error);
+      return (
+        <div className="ud-error-container">
+          <h3>Unable to load counselor directory</h3>
+          <p>Please try again later or contact support.</p>
+        </div>
+      );
+    }
+  };
+
   return (
     <div className="user-dashboard">
       <IncomingCallModal
@@ -852,61 +868,25 @@ export default function UserDashboard() {
         <div className={`ud-dashboard-content ${isMobile ? "ud-mobile" : ""}`}>
           <div className="ud-content-scrollable">
             {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
-            {active === "Counselor" && <CounselorTable />}
-            {active === "Wallet" && <WalletDashboard />}
+            {active === "Counselor" && <CounselorRequestChat />}
+            {active === "Live Chat" && <LiveChatSupport />}
+            {active === "Wallet" && (
+              <div className="ud-work-in-progress">
+                The remaining work is currently in progress.
+              </div>
+            )}
             {active === "Video" && (
               <CallHistory currentUser={{ id: userId, role: "user" }} />
             )}
             {active === "profile" && <PatientProfile />}
-            {active === "Live Chat" && <LiveChatSupport />}
             {active === "help" && (
-              <div className="ud-content-section">
-                <h2 className="ud-section-title">Help & Support</h2>
-                <div className="ud-help-content">
-                  <div
-                    className="ud-support-card"
-                    onClick={() => handleSupportClick("FAQ")}
-                  >
-                    <FaQuestionCircle className="ud-support-icon" />
-                    <h3>FAQ</h3>
-                    <p>Find answers to frequently asked questions</p>
-                  </div>
-                  <div
-                    className="ud-support-card"
-                    onClick={() => handleSupportClick("Contact Support")}
-                  >
-                    <FaEnvelope className="ud-support-icon" />
-                    <h3>Contact Support</h3>
-                    <p>Email us at support@example.com</p>
-                  </div>
-                </div>
+              <div className="ud-work-in-progress">
+                The remaining work is currently in progress.
               </div>
             )}
             {active === "privacy" && (
-              <div className="ud-content-section">
-                <h2 className="ud-section-title">Privacy Settings</h2>
-                <div className="ud-privacy-content">
-                  <div className="ud-privacy-option">
-                    <h3>Data Privacy</h3>
-                    <p>Control how your data is used and shared</p>
-                    <button
-                      className="ud-privacy-btn"
-                      onClick={() => handlePrivacyAction("Data Privacy")}
-                    >
-                      Manage Settings
-                    </button>
-                  </div>
-                  <div className="ud-privacy-option">
-                    <h3>Session Privacy</h3>
-                    <p>Configure privacy settings for your sessions</p>
-                    <button
-                      className="ud-privacy-btn"
-                      onClick={() => handlePrivacyAction("Session Privacy")}
-                    >
-                      Configure
-                    </button>
-                  </div>
-                </div>
+              <div className="ud-work-in-progress">
+                The remaining work is currently in progress.
               </div>
             )}
           </div>

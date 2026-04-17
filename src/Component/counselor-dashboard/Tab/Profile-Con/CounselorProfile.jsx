@@ -7,7 +7,7 @@ import { API_BASE_URL } from '../../../../axiosConfig';
 const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
 
 const CounselorProfile = () => {
-    const [loading, setLoading] = useState(false);
+   const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
 
@@ -557,16 +557,7 @@ const CounselorProfile = () => {
         });
     };
 
-    if (loading && !counselor._id) {
-        return (
-            <div className={COUNSELOR_PROFILE_CLASS}>
-                <div className="loading-spinner">
-                    <div className="spinner"></div>
-                    <p>Loading profile...</p>
-                </div>
-            </div>
-        );
-    }
+    
 
     return (
         <div className={COUNSELOR_PROFILE_CLASS}>
