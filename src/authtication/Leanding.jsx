@@ -4,6 +4,7 @@ import axios from 'axios';
 import './Leanding.css';
 import logo from '../image/Mediconect Logo-3.png';
 import { API_BASE_URL } from '../axiosConfig';
+import { Link } from 'react-router-dom';
 
 const Leanding = () => {
   const [chatOpen, setChatOpen] = useState(false);
@@ -245,10 +246,10 @@ const HeroSection = () => (
           Connect with top Indian psychiatrists and therapists. Get 24/7 AI support in Hindi, English, and regional languages. Emergency crisis support across all major Indian cities.
         </p>
         <div className="hero-actions">
-          <button className="btn btn-primary btn-large">
-            Start Free Trial
+          <Link to="/role-selector" className="btn btn-primary">
+            Get Started
             <i className="btn-icon fas fa-arrow-right"></i>
-          </button>
+          </Link>
           <button className="btn btn-outline btn-large">
             <i className="btn-icon fas fa-play"></i>
             Watch Demo
@@ -873,7 +874,7 @@ const ChatPopup = ({
       <div className="chat-popup-input">
         <input
           type="text"
-          placeholder="Type your message in English or Hindi..."
+          placeholder=" Type in English or Hindi..."
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={handleKeyPress}

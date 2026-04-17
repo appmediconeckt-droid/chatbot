@@ -365,8 +365,8 @@ export default function CounselorDashboard() {
         const currentIncomingId = incomingCallData?.callId;
         const stillWaiting = currentIncomingId
           ? callsList.some(
-              (c) => (c.callId || c.id || c._id) === currentIncomingId,
-            )
+            (c) => (c.callId || c.id || c._id) === currentIncomingId,
+          )
           : false;
 
         if (showIncomingCallModal && currentIncomingId && !stillWaiting) {
@@ -1030,27 +1030,8 @@ export default function CounselorDashboard() {
           >
             {showMobileMenu ? <FaTimes /> : <FaBars />}
           </button>
-          <div className="couns-mobile-title">
-            <h2>Counselor Dashboard</h2>
-            <p>
-              {new Date().toLocaleDateString("en-US", {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-              })}
-            </p>
-          </div>
-          <div
-            className="couns-mobile-notif"
-            onClick={() => fetchPendingRequests()}
-          >
-            <FaBell />
-            {pendingRequests.length > 0 && (
-              <span className="couns-notif-badge">
-                {pendingRequests.length}
-              </span>
-            )}
-          </div>
+
+
         </div>
       )}
 
@@ -1179,93 +1160,32 @@ export default function CounselorDashboard() {
 
         {activeTab === "appointments" && (
           <div className="couns-tab-content">
-            <div className="couns-tab-header">
-              <h2>My Appointments</h2>
-              <div className="couns-appointment-filters">
-                <div className="couns-search-box">
-                  <span className="couns-search-icon">🔍</span>
-                  <input type="text" placeholder="Search appointments..." />
-                </div>
-                <select className="couns-filter-select">
-                  <option>All Appointments</option>
-                  <option>Today</option>
-                  <option>Upcoming</option>
-                  <option>Completed</option>
-                </select>
-              </div>
-            </div>
-            <div className="couns-appointments-grid">
-              <div className="couns-coming-soon">
-                <FaCalendarAlt className="couns-coming-icon" />
-                <h3>Coming Soon</h3>
-                <p>Your appointments will appear here</p>
-              </div>
+            <div className="couns-work-in-progress">
+              The remaining work is currently in progress.
             </div>
           </div>
         )}
 
         {activeTab === "sessions" && (
-          <div className="couns-tab-content">
-            <div className="couns-tab-header">
-              <h2>Today's Sessions</h2>
-            </div>
-            <div className="couns-sessions-list">
-              <div className="couns-coming-soon">
-                <FaVideo className="couns-coming-icon" />
-                <h3>No Sessions Today</h3>
-                <p>Your scheduled sessions will appear here</p>
-              </div>
+         <div className="couns-tab-content">
+            <div className="couns-work-in-progress">
+              The remaining work is currently in progress.
             </div>
           </div>
         )}
 
         {activeTab === "patients" && (
           <div className="couns-tab-content">
-            <div className="couns-tab-header">
-              <PatientRequests />
+            <div className="couns-work-in-progress">
+              The remaining work is currently in progress.
             </div>
           </div>
         )}
 
         {activeTab === "earnings" && (
-          <div className="couns-tab-content">
-            <div className="couns-tab-header">
-              <h2>Earnings Overview</h2>
-            </div>
-            <div className="couns-earnings-summary">
-              <div className="couns-earnings-card">
-                <h3>Total Earnings</h3>
-                <div className="couns-earnings-amount">₹0</div>
-                <div className="couns-earnings-badge">+0% from last month</div>
-              </div>
-              <div className="couns-earnings-card pending">
-                <h3>Pending Payout</h3>
-                <div className="couns-earnings-amount">₹0</div>
-                <div className="couns-earnings-badge">Awaiting processing</div>
-              </div>
-              <div className="couns-earnings-card">
-                <h3>This Month</h3>
-                <div className="couns-earnings-amount">₹0</div>
-                <div className="couns-earnings-badge">0 sessions completed</div>
-              </div>
-            </div>
-            <div className="couns-earnings-chart">
-              <h3>Earnings Overview</h3>
-              <div className="couns-chart-placeholder">
-                <div className="couns-chart-bars">
-                  {["Jan", "Feb", "Mar", "Apr", "May", "Jun"].map(
-                    (month, i) => (
-                      <div
-                        key={i}
-                        className="couns-chart-bar"
-                        style={{ height: "0px" }}
-                      >
-                        {month}
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
+         <div className="couns-tab-content">
+            <div className="couns-work-in-progress">
+              The remaining work is currently in progress.
             </div>
           </div>
         )}
@@ -1285,19 +1205,9 @@ export default function CounselorDashboard() {
         )}
 
         {activeTab === "settings" && (
-          <div className="couns-tab-content">
-            <div className="couns-tab-header">
-              <h2>Settings</h2>
-            </div>
-            <div className="couns-section">
-              <div className="couns-section-header">
-                <h2>Profile Settings</h2>
-              </div>
-              <div className="couns-coming-soon">
-                <FaCog className="couns-coming-icon" />
-                <h3>Coming Soon</h3>
-                <p>Profile settings will be available here</p>
-              </div>
+         <div className="couns-tab-content">
+            <div className="couns-work-in-progress">
+              The remaining work is currently in progress.
             </div>
           </div>
         )}
@@ -1305,7 +1215,7 @@ export default function CounselorDashboard() {
 
       {/* Request Modal */}
       {showRequestModal && currentRequest && (
-        <div className="couns-request-modal-overlay" onClick={() => {}}>
+        <div className="couns-request-modal-overlay" onClick={() => { }}>
           <div
             className="couns-request-modal"
             onClick={(e) => e.stopPropagation()}

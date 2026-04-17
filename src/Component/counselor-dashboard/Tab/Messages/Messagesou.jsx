@@ -241,7 +241,7 @@ const SMSList = () => {
 
       {/* Search Bar */}
       <div className="smslist-search">
-        <span className="search-icon">🔍</span>
+        
         <input
           type="text"
           placeholder="Search chats..."

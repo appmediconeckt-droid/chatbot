@@ -309,12 +309,7 @@ const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
             </div>
           )}
 
-          {localParticipant && (
-            <div className="stream-voice-local-pill">
-              You • {localParticipantName}
-            </div>
-          )}
-
+         
           {mainParticipant && (
             <ParticipantView
               className="stream-hidden-media-probe"
@@ -345,9 +340,7 @@ const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
                 participant={mainParticipant}
                 trackType={isPresentingMain ? "screenShareTrack" : "videoTrack"}
               />
-              <div className="stream-main-name">
-                {resolveParticipantName(mainParticipant)}
-              </div>
+             
             </>
           ) : (
             <div className="stream-empty-state">
