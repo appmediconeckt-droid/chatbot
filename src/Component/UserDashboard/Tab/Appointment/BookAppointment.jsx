@@ -4,7 +4,7 @@ import './BookAppointment.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axios from 'axios';
 
-const CounselorRequestChat = () => {
+const CounselorRequestChat = ({ initialSearch = "" }) => {
   const navigate = useNavigate();
 
   // State for counselors list
@@ -21,10 +21,16 @@ const CounselorRequestChat = () => {
   const [selectedCounselorForRequest, setSelectedCounselorForRequest] = useState(null);
 
   // Search state
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [searchLocation, setSearchLocation] = useState('');
   const [uniqueLocations, setUniqueLocations] = useState([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+
+  useEffect(() => {
+    if (initialSearch) {
+      setSearchTerm(initialSearch);
+    }
+  }, [initialSearch]);
 
   // Get user ID and token from localStorage
   const userId = localStorage.getItem("userId");

@@ -1938,3 +1938,26 @@
     height: 36px;
   }
 }
+
+/* AI Chat Mention Highlighting */
+.ud-chat-mention {
+  color: #667eea;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-style: dashed;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 1px 4px;
+  border-radius: 4px;
+}
+
+.ud-chat-mention:hover {
+  background: rgba(102, 126, 234, 0.1);
+  color: #764ba2;
+  text-decoration-style: solid;
+}
+
+.clickable {
+  cursor: pointer;
+}

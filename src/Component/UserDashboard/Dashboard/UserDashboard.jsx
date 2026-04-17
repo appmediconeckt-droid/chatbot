@@ -44,7 +44,6 @@ import VideoCallModal from "../Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
 import CounselorRequestChat from "../Tab/Appointment/BookAppointment";
 
-// ChatPopup Component
 const ChatPopup = ({
   messages,
   newMessage,
@@ -54,42 +53,67 @@ const ChatPopup = ({
   isLoading,
   onClose,
   chatBodyRef,
-}) => (
-  <div className="ud-chat-popup-overlay">
-    <div className="ud-chat-popup">
-      <div className="ud-chat-popup-header">
-        <div className="ud-chat-header-info">
-          <div className="ud-chat-avatar">
-            <FaRobot />
-          </div>
-          <div>
-            <h3>MediConeckt AI Assistant</h3>
-            <p className="ud-chat-status">Online • 24/7 Support</p>
-          </div>
-        </div>
-        <button className="ud-chat-close-btn" onClick={onClose}>
-          ×
-        </button>
-      </div>
-      <div className="ud-chat-popup-body" ref={chatBodyRef}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`ud-chat-message-wrapper ${message.sender}`}
+  handleCounselorClick,
+}) => {
+  const renderMessageText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\[.*?\])/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("[") && part.endsWith("]")) {
+        const name = part.substring(1, part.length - 1);
+        return (
+          <span
+            key={index}
+            className="ud-chat-mention clickable"
+            onClick={() => handleCounselorClick(name)}
+            title={`View profile of ${name}`}
           >
-            {message.sender === "ai" && (
-              <div className="ud-chat-avatar ud-small">
-                <FaRobot />
-              </div>
-            )}
-            <div className="ud-chat-bubble">{message.text}</div>
-            {message.sender === "user" && (
-              <div className="ud-chat-avatar ud-small">
-                <FaUserCircle />
-              </div>
-            )}
+            {name}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  return (
+    <div className="ud-chat-popup-overlay">
+      <div className="ud-chat-popup">
+        <div className="ud-chat-popup-header">
+          <div className="ud-chat-header-info">
+            <div className="ud-chat-avatar">
+              <FaRobot />
+            </div>
+            <div>
+              <h3>MediConeckt AI Assistant</h3>
+              <p className="ud-chat-status">Online • 24/7 Support</p>
+            </div>
           </div>
-        ))}
+          <button className="ud-chat-close-btn" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="ud-chat-popup-body" ref={chatBodyRef}>
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`ud-chat-message-wrapper ${message.sender}`}
+            >
+              {message.sender === "ai" && (
+                <div className="ud-chat-avatar ud-small">
+                  <FaRobot />
+                </div>
+              )}
+              <div className="ud-chat-bubble">
+                {renderMessageText(message.text)}
+              </div>
+              {message.sender === "user" && (
+                <div className="ud-chat-avatar ud-small">
+                  <FaUserCircle />
+                </div>
+              )}
+            </div>
+          ))}
         {isLoading && (
           <div className="ud-chat-message-wrapper ai">
             <div className="ud-chat-avatar ud-small">
@@ -124,7 +148,8 @@ const ChatPopup = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ChatButton Component
 const ChatButton = ({ onClick, unreadCount }) => (
@@ -137,7 +162,14 @@ const ChatButton = ({ onClick, unreadCount }) => (
 export default function UserDashboard() {
   const [active, setActive] = useState("Chat");
   const [chatOpen, setChatOpen] = useState(false);
+  const [targetCounselor, setTargetCounselor] = useState("");
   const [newMessage, setNewMessage] = useState("");
+
+  const handleAIContactClick = (name) => {
+    setTargetCounselor(name);
+    setActive("Counselor");
+    setChatOpen(false);
+  };
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
@@ -449,7 +481,6 @@ export default function UserDashboard() {
       text: "Hello! I'm your AI assistant. How can I help you today?",
       sender: "ai",
     },
-    { id: 2, text: "I'm feeling anxious today.", sender: "user" },
   ]);
 
   useEffect(() => {
@@ -522,6 +553,7 @@ export default function UserDashboard() {
   const handleMenuItemClick = (id) => {
     vibrate(30);
     setActive(id);
+    setTargetCounselor(""); // Reset search when navigating manually
     if (isMobile) {
       setShowMoreModal(false);
       setShowProfileMenu(false);
@@ -531,6 +563,7 @@ export default function UserDashboard() {
   const handleProfileClick = () => {
     vibrate(30);
     setActive("profile");
+    setTargetCounselor("");
     if (isMobile) {
       setShowProfileMenu(false);
     }
@@ -868,7 +901,9 @@ export default function UserDashboard() {
         <div className={`ud-dashboard-content ${isMobile ? "ud-mobile" : ""}`}>
           <div className="ud-content-scrollable">
             {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
-            {active === "Counselor" && <CounselorRequestChat />}
+            {active === "Counselor" && (
+              <CounselorRequestChat initialSearch={targetCounselor} />
+            )}
             {active === "Live Chat" && <LiveChatSupport />}
             {active === "Wallet" && (
               <div className="ud-work-in-progress">
@@ -909,6 +944,7 @@ export default function UserDashboard() {
           isLoading={isLoading}
           onClose={() => setChatOpen(false)}
           chatBodyRef={chatBodyRef}
+          handleCounselorClick={handleAIContactClick}
         />
       )}
 
