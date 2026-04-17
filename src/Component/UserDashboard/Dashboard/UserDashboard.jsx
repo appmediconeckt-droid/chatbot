@@ -36,14 +36,14 @@ import CallHistory from "../Tab/Callls/CallHistory";
 import useVibration from "../../../hooks/useVibration";
 import useRingtone from "../../../hooks/useRingtone";
 import PatientProfile from "../../PatientProfile/PatientProfile";
-import BookAppointment from "../Tab/Appointment/BookAppointment";
+
 import LiveChatSupport from "../Tab/Appointment/BookAppointment";
 import axios from "axios";
 import CounselorTable from "../Tab/Counselor/CounselorDirectory";
 import VideoCallModal from "../Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
+import CounselorRequestChat from "../Tab/Appointment/BookAppointment";
 
-// ChatPopup Component
 const ChatPopup = ({
   messages,
   newMessage,
@@ -53,42 +53,67 @@ const ChatPopup = ({
   isLoading,
   onClose,
   chatBodyRef,
-}) => (
-  <div className="ud-chat-popup-overlay">
-    <div className="ud-chat-popup">
-      <div className="ud-chat-popup-header">
-        <div className="ud-chat-header-info">
-          <div className="ud-chat-avatar">
-            <FaRobot />
-          </div>
-          <div>
-            <h3>MediConeckt AI Assistant</h3>
-            <p className="ud-chat-status">Online • 24/7 Support</p>
-          </div>
-        </div>
-        <button className="ud-chat-close-btn" onClick={onClose}>
-          ×
-        </button>
-      </div>
-      <div className="ud-chat-popup-body" ref={chatBodyRef}>
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`ud-chat-message-wrapper ${message.sender}`}
+  handleCounselorClick,
+}) => {
+  const renderMessageText = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\[.*?\])/g);
+    return parts.map((part, index) => {
+      if (part.startsWith("[") && part.endsWith("]")) {
+        const name = part.substring(1, part.length - 1);
+        return (
+          <span
+            key={index}
+            className="ud-chat-mention clickable"
+            onClick={() => handleCounselorClick(name)}
+            title={`View profile of ${name}`}
           >
-            {message.sender === "ai" && (
-              <div className="ud-chat-avatar ud-small">
-                <FaRobot />
-              </div>
-            )}
-            <div className="ud-chat-bubble">{message.text}</div>
-            {message.sender === "user" && (
-              <div className="ud-chat-avatar ud-small">
-                <FaUserCircle />
-              </div>
-            )}
+            {name}
+          </span>
+        );
+      }
+      return part;
+    });
+  };
+
+  return (
+    <div className="ud-chat-popup-overlay">
+      <div className="ud-chat-popup">
+        <div className="ud-chat-popup-header">
+          <div className="ud-chat-header-info">
+            <div className="ud-chat-avatar">
+              <FaRobot />
+            </div>
+            <div>
+              <h3>MediConeckt AI Assistant</h3>
+              <p className="ud-chat-status">Online • 24/7 Support</p>
+            </div>
           </div>
-        ))}
+          <button className="ud-chat-close-btn" onClick={onClose}>
+            ×
+          </button>
+        </div>
+        <div className="ud-chat-popup-body" ref={chatBodyRef}>
+          {messages.map((message) => (
+            <div
+              key={message.id}
+              className={`ud-chat-message-wrapper ${message.sender}`}
+            >
+              {message.sender === "ai" && (
+                <div className="ud-chat-avatar ud-small">
+                  <FaRobot />
+                </div>
+              )}
+              <div className="ud-chat-bubble">
+                {renderMessageText(message.text)}
+              </div>
+              {message.sender === "user" && (
+                <div className="ud-chat-avatar ud-small">
+                  <FaUserCircle />
+                </div>
+              )}
+            </div>
+          ))}
         {isLoading && (
           <div className="ud-chat-message-wrapper ai">
             <div className="ud-chat-avatar ud-small">
@@ -123,7 +148,8 @@ const ChatPopup = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ChatButton Component
 const ChatButton = ({ onClick, unreadCount }) => (
@@ -136,7 +162,14 @@ const ChatButton = ({ onClick, unreadCount }) => (
 export default function UserDashboard() {
   const [active, setActive] = useState("Chat");
   const [chatOpen, setChatOpen] = useState(false);
+  const [targetCounselor, setTargetCounselor] = useState("");
   const [newMessage, setNewMessage] = useState("");
+
+  const handleAIContactClick = (name) => {
+    setTargetCounselor(name);
+    setActive("Counselor");
+    setChatOpen(false);
+  };
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleteSuccess, setDeleteSuccess] = useState(false);
@@ -305,8 +338,8 @@ export default function UserDashboard() {
           const currentIncomingId = callerInfo?.callId;
           const stillWaiting = currentIncomingId
             ? callsList.some(
-                (c) => (c.callId || c.id || c._id) === currentIncomingId,
-              )
+              (c) => (c.callId || c.id || c._id) === currentIncomingId,
+            )
             : false;
 
           if (showCallModal && currentIncomingId && !stillWaiting) {
@@ -448,7 +481,6 @@ export default function UserDashboard() {
       text: "Hello! I'm your AI assistant. How can I help you today?",
       sender: "ai",
     },
-    { id: 2, text: "I'm feeling anxious today.", sender: "user" },
   ]);
 
   useEffect(() => {
@@ -467,28 +499,47 @@ export default function UserDashboard() {
     if (chatOpen) setUnreadCount(0);
   }, [chatOpen]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (newMessage.trim()) {
       const userMessage = { id: Date.now(), text: newMessage, sender: "user" };
       setChatMessages((prev) => [...prev, userMessage]);
       setNewMessage("");
       setIsLoading(true);
-      setTimeout(() => {
-        const aiResponses = [
-          "I understand. Would you like to try some breathing exercises?",
-          "Thank you for sharing. How long have you been feeling this way?",
-          "I'm here to listen. Would you like me to suggest some coping strategies?",
-          "Would you like me to connect you with a mental health professional?",
-        ];
-        const aiMessage = {
+
+      try {
+        // Prepare history for the AI (limit to last 10 messages)
+        const history = chatMessages.slice(-10).map((msg) => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.text,
+        }));
+
+        const response = await axiosInstance.post(`${API_BASE_URL}/api/ai-chat`, {
+          message: userMessage.text,
+          history: history,
+        });
+
+        if (response.data && response.data.success) {
+          const aiResponse = {
+            id: Date.now() + 1,
+            text: response.data.data.aiResponse,
+            sender: "ai",
+          };
+          setChatMessages((prev) => [...prev, aiResponse]);
+        } else {
+          throw new Error("Invalid AI response");
+        }
+      } catch (error) {
+        console.error("AI Chat error:", error);
+        const errorMessage = {
           id: Date.now() + 1,
-          text: aiResponses[Math.floor(Math.random() * aiResponses.length)],
+          text: "I'm sorry, I'm having trouble connecting to the medical server. Please try again later.",
           sender: "ai",
         };
-        setChatMessages((prev) => [...prev, aiMessage]);
+        setChatMessages((prev) => [...prev, errorMessage]);
+      } finally {
         setIsLoading(false);
         if (!chatOpen) setUnreadCount((prev) => prev + 1);
-      }, 1000);
+      }
     }
   };
 
@@ -502,6 +553,7 @@ export default function UserDashboard() {
   const handleMenuItemClick = (id) => {
     vibrate(30);
     setActive(id);
+    setTargetCounselor(""); // Reset search when navigating manually
     if (isMobile) {
       setShowMoreModal(false);
       setShowProfileMenu(false);
@@ -511,6 +563,7 @@ export default function UserDashboard() {
   const handleProfileClick = () => {
     vibrate(30);
     setActive("profile");
+    setTargetCounselor("");
     if (isMobile) {
       setShowProfileMenu(false);
     }
@@ -666,6 +719,21 @@ export default function UserDashboard() {
   ];
 
   const bottomMenuItems = allMenuItems.slice(0, 4);
+
+  // Wrapper component with error boundary for CounselorTable
+  const SafeCounselorTable = () => {
+    try {
+      return <CounselorTable />;
+    } catch (error) {
+      console.error("Error rendering CounselorTable:", error);
+      return (
+        <div className="ud-error-container">
+          <h3>Unable to load counselor directory</h3>
+          <p>Please try again later or contact support.</p>
+        </div>
+      );
+    }
+  };
 
   return (
     <div className="user-dashboard">
@@ -833,61 +901,27 @@ export default function UserDashboard() {
         <div className={`ud-dashboard-content ${isMobile ? "ud-mobile" : ""}`}>
           <div className="ud-content-scrollable">
             {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
-            {active === "Counselor" && <CounselorTable />}
-            {active === "Wallet" && <WalletDashboard />}
+            {active === "Counselor" && (
+              <CounselorRequestChat initialSearch={targetCounselor} />
+            )}
+            {active === "Live Chat" && <LiveChatSupport />}
+            {active === "Wallet" && (
+              <div className="ud-work-in-progress">
+                The remaining work is currently in progress.
+              </div>
+            )}
             {active === "Video" && (
               <CallHistory currentUser={{ id: userId, role: "user" }} />
             )}
             {active === "profile" && <PatientProfile />}
-            {active === "Live Chat" && <LiveChatSupport />}
             {active === "help" && (
-              <div className="ud-content-section">
-                <h2 className="ud-section-title">Help & Support</h2>
-                <div className="ud-help-content">
-                  <div
-                    className="ud-support-card"
-                    onClick={() => handleSupportClick("FAQ")}
-                  >
-                    <FaQuestionCircle className="ud-support-icon" />
-                    <h3>FAQ</h3>
-                    <p>Find answers to frequently asked questions</p>
-                  </div>
-                  <div
-                    className="ud-support-card"
-                    onClick={() => handleSupportClick("Contact Support")}
-                  >
-                    <FaEnvelope className="ud-support-icon" />
-                    <h3>Contact Support</h3>
-                    <p>Email us at support@example.com</p>
-                  </div>
-                </div>
+              <div className="ud-work-in-progress">
+                The remaining work is currently in progress.
               </div>
             )}
             {active === "privacy" && (
-              <div className="ud-content-section">
-                <h2 className="ud-section-title">Privacy Settings</h2>
-                <div className="ud-privacy-content">
-                  <div className="ud-privacy-option">
-                    <h3>Data Privacy</h3>
-                    <p>Control how your data is used and shared</p>
-                    <button
-                      className="ud-privacy-btn"
-                      onClick={() => handlePrivacyAction("Data Privacy")}
-                    >
-                      Manage Settings
-                    </button>
-                  </div>
-                  <div className="ud-privacy-option">
-                    <h3>Session Privacy</h3>
-                    <p>Configure privacy settings for your sessions</p>
-                    <button
-                      className="ud-privacy-btn"
-                      onClick={() => handlePrivacyAction("Session Privacy")}
-                    >
-                      Configure
-                    </button>
-                  </div>
-                </div>
+              <div className="ud-work-in-progress">
+                The remaining work is currently in progress.
               </div>
             )}
           </div>
@@ -910,6 +944,7 @@ export default function UserDashboard() {
           isLoading={isLoading}
           onClose={() => setChatOpen(false)}
           chatBodyRef={chatBodyRef}
+          handleCounselorClick={handleAIContactClick}
         />
       )}
 

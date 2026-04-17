@@ -4,11 +4,12 @@ import './BookAppointment.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axios from 'axios';
 
-const CounselorRequestChat = () => {
+const CounselorRequestChat = ({ initialSearch = "" }) => {
   const navigate = useNavigate();
 
   // State for counselors list
   const [counselors, setCounselors] = useState([]);
+  const [filteredCounselors, setFilteredCounselors] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [activeChats, setActiveChats] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
@@ -18,6 +19,18 @@ const CounselorRequestChat = () => {
 
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedCounselorForRequest, setSelectedCounselorForRequest] = useState(null);
+
+  // Search state
+  const [searchTerm, setSearchTerm] = useState(initialSearch);
+  const [searchLocation, setSearchLocation] = useState('');
+  const [uniqueLocations, setUniqueLocations] = useState([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+
+  useEffect(() => {
+    if (initialSearch) {
+      setSearchTerm(initialSearch);
+    }
+  }, [initialSearch]);
 
   // Get user ID and token from localStorage
   const userId = localStorage.getItem("userId");
@@ -99,6 +112,40 @@ const CounselorRequestChat = () => {
       .slice(0, 2);
   };
 
+  // Extract unique locations from counselors
+  const extractUniqueLocations = (counselorsList) => {
+    const locations = counselorsList
+      .map(c => c.location)
+      .filter(location => location && location.trim() !== '')
+      .map(location => location.trim());
+    return [...new Set(locations)].sort();
+  };
+
+  // Filter counselors based on search term and location
+  useEffect(() => {
+    let filtered = [...counselors];
+
+    // Filter by name/search term
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(counselor =>
+        counselor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        counselor.specialization.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (counselor.expertise && counselor.expertise.some(exp => 
+          exp.toLowerCase().includes(searchTerm.toLowerCase())
+        ))
+      );
+    }
+
+    // Filter by location
+    if (searchLocation && searchLocation.trim()) {
+      filtered = filtered.filter(counselor =>
+        counselor.location && counselor.location.toLowerCase().includes(searchLocation.toLowerCase())
+      );
+    }
+
+    setFilteredCounselors(filtered);
+  }, [searchTerm, searchLocation, counselors]);
+
   // Fetch counselors from API
   useEffect(() => {
     const fetchCounselors = async () => {
@@ -137,6 +184,11 @@ const CounselorRequestChat = () => {
           }));
 
           setCounselors(formattedCounselors);
+          setFilteredCounselors(formattedCounselors);
+          
+          // Extract unique locations
+          const locations = extractUniqueLocations(formattedCounselors);
+          setUniqueLocations(locations);
         }
       } catch (error) {
         console.error("Error fetching counselors:", error);
@@ -281,6 +333,13 @@ const CounselorRequestChat = () => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   };
 
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSearchLocation('');
+    setShowLocationDropdown(false);
+  };
+
   return (
     <div className="counselor-request-unique">
       {/* Notification Panel - Right Side Top */}
@@ -328,9 +387,104 @@ const CounselorRequestChat = () => {
           <h1 className="page-title-unique">Online Counselors</h1>
           <p className="page-subtitle-unique">Click 'Chat Now' to send a request</p>
 
+          {/* Search Bar Section */}
+          <div className="search-section-unique">
+            <div className="search-container-unique">
+              {/* Search by Name */}
+              <div className="search-input-wrapper-unique">
+                <span className="search-icon-unique">🔍</span>
+                <input
+                  type="text"
+                  className="search-input-unique"
+                  placeholder="Search by name, specialization, or expertise..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <button
+                    className="clear-search-btn-unique"
+                    onClick={() => setSearchTerm('')}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              {/* Search by Location */}
+              <div className="location-input-wrapper-unique">
+                <span className="location-icon-unique">📍</span>
+                <input
+                  type="text"
+                  className="location-input-unique"
+                  placeholder="Search by location..."
+                  value={searchLocation}
+                  onChange={(e) => {
+                    setSearchLocation(e.target.value);
+                    setShowLocationDropdown(true);
+                  }}
+                  onFocus={() => setShowLocationDropdown(true)}
+                />
+                {searchLocation && (
+                  <button
+                    className="clear-location-btn-unique"
+                    onClick={() => setSearchLocation('')}
+                  >
+                    ✕
+                  </button>
+                )}
+                
+                {/* Location Dropdown */}
+                {showLocationDropdown && uniqueLocations.length > 0 && (
+                  <div className="location-dropdown-unique">
+                    {uniqueLocations
+                      .filter(location => 
+                        location.toLowerCase().includes(searchLocation.toLowerCase())
+                      )
+                      .map((location, index) => (
+                        <div
+                          key={index}
+                          className="location-option-unique"
+                          onClick={() => {
+                            setSearchLocation(location);
+                            setShowLocationDropdown(false);
+                          }}
+                        >
+                          📍 {location}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Filter Stats and Clear Button */}
+              {(searchTerm || searchLocation) && (
+                <div className="filter-stats-unique">
+                  <span className="filter-count-unique">
+                    Found {filteredCounselors.length} counselor{filteredCounselors.length !== 1 ? 's' : ''}
+                  </span>
+                  <button className="clear-filters-btn-unique" onClick={clearFilters}>
+                    Clear Filters
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* No Results Message */}
+          {filteredCounselors.length === 0 && (
+            <div className="no-results-unique">
+              <div className="no-results-icon-unique">🔍</div>
+              <h3>No counselors found</h3>
+              <p>Try adjusting your search or location filters</p>
+              <button className="reset-search-btn-unique" onClick={clearFilters}>
+                Clear all filters
+              </button>
+            </div>
+          )}
+
           {/* Desktop View - Cards Grid */}
           <div className="counselors-grid-unique desktop-view">
-            {counselors.map(counselor => (
+            {filteredCounselors.map(counselor => (
               <div key={counselor.id} className={`counselor-card-unique ${!counselor.available ? 'unavailable' : ''}`}>
                 <div className="counselor-card-header-unique">
                   <div className="counselor-avatar-unique">
@@ -388,7 +542,7 @@ const CounselorRequestChat = () => {
 
           {/* Mobile View - Table/List Style */}
           <div className="counselors-table-unique mobile-view">
-            {counselors.map(counselor => (
+            {filteredCounselors.map(counselor => (
               <div
                 key={counselor.id}
                 className="counselor-row-unique"
@@ -414,6 +568,11 @@ const CounselorRequestChat = () => {
                   <div className="row-specialization-unique">
                     {counselor.specialization}
                   </div>
+                  {counselor.location && (
+                    <div className="row-location-unique">
+                      📍 {counselor.location}
+                    </div>
+                  )}
                   {counselor.experience && (
                     <div className="row-experience-unique">
                       💼 {counselor.experience}
@@ -545,6 +704,11 @@ const CounselorRequestChat = () => {
                         <div className="counselor-preview-specialization-unique">
                           {selectedCounselorForRequest.specialization}
                         </div>
+                        {selectedCounselorForRequest.location && (
+                          <div className="counselor-preview-location-unique">
+                            📍 {selectedCounselorForRequest.location}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

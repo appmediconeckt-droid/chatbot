@@ -211,10 +211,10 @@ body {
 
 .couns-main-content.mobile {
   margin-left: 0;
-  padding-top: 75px;
+  padding-top: 35px;
   padding-bottom: 80px;
-  padding-left: 1rem;
-  padding-right: 1rem;
+
+ 
   width: 100%;
   max-width: 100%;
 }
@@ -232,7 +232,7 @@ body {
   z-index: 998;
   align-items: center;
   justify-content: space-between;
-  height: 60px;
+  height: 50px;
 }
 
 .couns-menu-toggle {
@@ -1059,9 +1059,7 @@ body {
     grid-template-columns: repeat(2, 1fr);
   }
   
-  .couns-main-content {
-    padding: 1rem 1.5rem;
-  }
+ 
 }
 
 @media (max-width: 768px) {
@@ -1075,8 +1073,8 @@ body {
 
   .couns-main-content {
     margin-left: 0;
-    padding: 1rem;
-    padding-top: 75px;
+    
+    padding-top: 60px;
     padding-bottom: 80px;
     width: 100%;
     max-width: 100%;
@@ -1166,8 +1164,8 @@ body {
 
 @media (max-width: 480px) {
   .couns-main-content {
-    padding: 0.75rem;
-    padding-top: 75px;
+   
+    padding-top: 60px;
     padding-bottom: 80px;
   }
 
@@ -2390,4 +2388,22 @@ button:focus {
 .reject-btn:hover {
   background: #dc2626;
   transform: scale(1.1);
-}
+}
+
+
+
+
+.couns-work-in-progress {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #6b7280;
+  padding: 2rem;
+}
+
+@media (max-width: 768px) {
+  .couns-work-in-progress {
+    font-size: 1.125rem;
+    padding: 1.5rem;
+  }
+}
