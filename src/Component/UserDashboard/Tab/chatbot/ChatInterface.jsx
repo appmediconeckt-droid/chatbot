@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
-import axios from 'axios';
+import axiosInstance from '../../../../axiosConfig';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
@@ -139,36 +139,22 @@ const ChatInterface = ({ setActiveTab }) => {
             setError(null);
 
             // Get token from localStorage
-            const token = localStorage.getItem('token');
-            if (!token) {
-                console.log('No token found');
+                const token = localStorage.getItem('accessToken');
+                if (!token) {
+                    console.log('No access token found');
                 setCounselors([]);
                 setLoading(false);
                 setInitialLoading(false);
                 return;
             }
 
-            const response = await fetch(`${API_BASE_URL}/api/chat/chats`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+                const response = await axiosInstance.get(`${API_BASE_URL}/api/chat/chats`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
-            if (!response.ok) {
-                if (response.status === 401) {
-                    // Token expired or invalid - just clear token and show empty state
-                    localStorage.removeItem('token');
-                    setCounselors([]);
-                    setLoading(false);
-                    setInitialLoading(false);
-                    return;
-                }
-                throw new Error(`Failed to fetch chats: ${response.status}`);
-            }
-
-            const data = await response.json();
+                const data = response.data;
 
             if (data && data.chats && Array.isArray(data.chats)) {
                 // Transform API data to counselor list format
@@ -301,14 +287,13 @@ const ChatInterface = ({ setActiveTab }) => {
             const token = localStorage.getItem('token');
             if (!token) return;
 
-            const response = await axios.post(`${API_BASE_URL}/api/chat/mark-all-read`, {
-                chatId: chatId
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+                const response = await axiosInstance.post(`${API_BASE_URL}/api/chat/mark-all-read`, {
+                    chatId: chatId,
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
 
             if (response.status === 200) {
                 // Update local state
@@ -328,7 +313,7 @@ const ChatInterface = ({ setActiveTab }) => {
             if (!token) return false;
 
             const response = await fetch(`${API_BASE_URL}/chat/chats/${chatId}`, {
-                method: 'DELETE',
+                    method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -450,20 +435,14 @@ const ChatInterface = ({ setActiveTab }) => {
         }, 500);
     }, []);
 
-    // Handle touch end
+    // Handle touch end (clears long press timer; actual click handling is done elsewhere)
     const handleTouchEnd = useCallback((e) => {
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
         }
-
-        if (contextMenu.visible) {
-            e.preventDefault();
-        }
-
-        pressedItem.current = null;
-        touchMoved.current = false;
-    }, [contextMenu.visible]);
+        // No additional actions needed here; click is handled by onClick/onTouchStart logic.
+    }, []);
 
     // Handle touch move
     const handleTouchMove = useCallback((e) => {

@@ -467,28 +467,47 @@ export default function UserDashboard() {
     if (chatOpen) setUnreadCount(0);
   }, [chatOpen]);
 
-  const sendMessage = () => {
+  const sendMessage = async () => {
     if (newMessage.trim()) {
       const userMessage = { id: Date.now(), text: newMessage, sender: "user" };
       setChatMessages((prev) => [...prev, userMessage]);
       setNewMessage("");
       setIsLoading(true);
-      setTimeout(() => {
-        const aiResponses = [
-          "I understand. Would you like to try some breathing exercises?",
-          "Thank you for sharing. How long have you been feeling this way?",
-          "I'm here to listen. Would you like me to suggest some coping strategies?",
-          "Would you like me to connect you with a mental health professional?",
-        ];
-        const aiMessage = {
+
+      try {
+        // Prepare history for the AI (limit to last 10 messages)
+        const history = chatMessages.slice(-10).map((msg) => ({
+          role: msg.sender === "user" ? "user" : "assistant",
+          content: msg.text,
+        }));
+
+        const response = await axiosInstance.post(`${API_BASE_URL}/api/ai-chat`, {
+          message: userMessage.text,
+          history: history,
+        });
+
+        if (response.data && response.data.success) {
+          const aiResponse = {
+            id: Date.now() + 1,
+            text: response.data.data.aiResponse,
+            sender: "ai",
+          };
+          setChatMessages((prev) => [...prev, aiResponse]);
+        } else {
+          throw new Error("Invalid AI response");
+        }
+      } catch (error) {
+        console.error("AI Chat error:", error);
+        const errorMessage = {
           id: Date.now() + 1,
-          text: aiResponses[Math.floor(Math.random() * aiResponses.length)],
+          text: "I'm sorry, I'm having trouble connecting to the medical server. Please try again later.",
           sender: "ai",
         };
-        setChatMessages((prev) => [...prev, aiMessage]);
+        setChatMessages((prev) => [...prev, errorMessage]);
+      } finally {
         setIsLoading(false);
         if (!chatOpen) setUnreadCount((prev) => prev + 1);
-      }, 1000);
+      }
     }
   };
 
