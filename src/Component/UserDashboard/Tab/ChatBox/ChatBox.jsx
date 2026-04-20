@@ -84,7 +84,7 @@ const ChatBox = () => {
   const getProfilePhotoUrl = (counselor) => {
     if (!counselor) return null;
     if (counselor?.profilePhoto?.url) return counselor.profilePhoto.url;
-    if (counselor?.avatar && counselor.avatarType === "image") return counselor.avatar;
+    if (counselor?.avatar && counselor?.avatarType === "image") return counselor.avatar;
     return null;
   };
 
