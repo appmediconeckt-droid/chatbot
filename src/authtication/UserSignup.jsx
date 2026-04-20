@@ -56,6 +56,9 @@ const UserSignup = () => {
   const [showVerifyButton, setShowVerifyButton] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
+  const [loginOtp, setLoginOtp] = useState("");
+  const [otpSentForLogin, setOtpSentForLogin] = useState(false);
+  const [isOtpVerifyLoading, setIsOtpVerifyLoading] = useState(false);
   const [notification, setNotification] = useState({
     show: false,
     message: "",
@@ -313,133 +316,62 @@ const UserSignup = () => {
     setPhoneResendTimer(0);
   };
 
+  const persistUserSession = (data) => {
+    const token =
+      data?.token ||
+      data?.accessToken ||
+      data?.data?.token ||
+      data?.data?.accessToken;
+    const refreshToken = data?.refreshToken || data?.data?.refreshToken;
+
+    if (!token) return false;
+
+    localStorage.setItem("isAuthenticated", "true");
+    localStorage.setItem("userType", "user");
+    localStorage.setItem("userEmail", formData.email);
+    localStorage.setItem("token", token);
+    localStorage.setItem("accessToken", token);
+    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
+    if (data?.user) localStorage.setItem("userData", JSON.stringify(data.user));
+    if (data?.user?._id) localStorage.setItem("userId", data.user._id);
+
+    return true;
+  };
+
   const handleLogin = async () => {
-    const doLogin = async (forceLogin = false) =>
-      axios.post(
+    try {
+      const response = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
           role: "user",
-          forceLogin,
         },
         { withCredentials: true },
       );
 
-    try {
-      const response = await doLogin(false);
-
-      const token =
-        response.data?.token ||
-        response.data?.accessToken ||
-        response.data?.data?.token ||
-        response.data?.data?.accessToken;
-      const refreshToken =
-        response.data?.refreshToken || response.data?.data?.refreshToken;
-
-      if (response.data?.message === "User already logged in") {
-        setApiError("User already logged in");
-        setShowVerifyButton(true);
-        return;
-      }
-
-      if (token) {
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userType", "user");
-        localStorage.setItem("refreshToken", response?.data?.refreshToken); // ← CRITICAL
-        localStorage.setItem("userEmail", formData.email);
-        localStorage.setItem("token", token);
-        localStorage.setItem("accessToken", token);
-        console.log("All localStorage:", localStorage);
-
-        // Check specific tokens
-        console.log("Access Token:", localStorage.getItem("accessToken"));
-        console.log("Refresh Token:", localStorage.getItem("refreshToken"));
-        console.log("User:", localStorage.getItem("user"));
-
-        // Check if tokens exist
-        console.log("Has accessToken?", !!localStorage.getItem("accessToken"));
-        console.log(
-          "Has refreshToken?",
-          !!localStorage.getItem("refreshToken"),
-        );
-        if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
-
-        if (response.data.user) {
-          localStorage.setItem("userData", JSON.stringify(response.data.user));
-        }
-
-        // ✅ ADD THIS
-        if (response.data.user?._id) {
-          localStorage.setItem("userId", response.data.user._id);
-        }
-
+      if (persistUserSession(response.data)) {
         showNotification("Login successful!", "success");
-        setTimeout(() => navigate("/user-dashboard"), 1500);
-
+        setTimeout(() => navigate("/user-dashboard"), 1200);
         return;
       }
 
-      if (response.data?.message) {
-        setApiError(response.data.message);
-        showNotification(response.data.message, "error");
-        return;
-      }
-
-      setApiError("Login failed");
-      showNotification("Login failed", "error");
+      setApiError(response.data?.message || "Login failed");
+      showNotification(response.data?.message || "Login failed", "error");
     } catch (error) {
       console.error("Login error:", error);
 
-      const isAlreadyLoggedIn =
-        error.response?.status === 409 && error.response?.data?.canForceLogin;
-
-      if (isAlreadyLoggedIn) {
-        try {
-          const response = await doLogin(true);
-
-          const token =
-            response.data?.token ||
-            response.data?.accessToken ||
-            response.data?.data?.token ||
-            response.data?.data?.accessToken;
-          const refreshToken =
-            response.data?.refreshToken || response.data?.data?.refreshToken;
-
-          if (token) {
-            localStorage.setItem("isAuthenticated", "true");
-            localStorage.setItem("userType", "user");
-            localStorage.setItem("userEmail", formData.email);
-            localStorage.setItem("token", token);
-            localStorage.setItem("accessToken", token);
-            if (refreshToken)
-              localStorage.setItem("refreshToken", refreshToken);
-
-            if (response.data.user) {
-              localStorage.setItem(
-                "userData",
-                JSON.stringify(response.data.user),
-              );
-            }
-
-            if (response.data.user?._id) {
-              localStorage.setItem("userId", response.data.user._id);
-            }
-
-            showNotification(
-              "Logged in and previous device session was ended.",
-              "success",
-            );
-            setTimeout(() => navigate("/user-dashboard"), 1500);
-            return;
-          }
-        } catch (forceError) {
-          const msg =
-            forceError.response?.data?.message || "Unable to force login";
-          setApiError(msg);
-          showNotification(msg, "error");
-          return;
-        }
+      if (error.response?.status === 409 && error.response?.data?.needLogout) {
+        setShowVerifyButton(true);
+        setVerifySuccess(false);
+        setOtpSentForLogin(false);
+        setLoginOtp("");
+        setApiError("");
+        showNotification(
+          "Already login detected. Continue with email OTP.",
+          "info",
+        );
+        return;
       }
 
       let errorMessage = "Something went wrong";
@@ -609,26 +541,59 @@ const UserSignup = () => {
       setIsVerifying(true);
       setVerifySuccess(false);
       const verifyResponse = await axios.post(
-        `${API_BASE_URL}/api/auth/send-verification-email`,
+        `${API_BASE_URL}/api/auth/logout-other-devices`,
         { email: formData.email },
+        { withCredentials: true },
       );
-      if (verifyResponse.data?.success || verifyResponse.data?.message) {
+      if (verifyResponse.data?.success) {
         setVerifySuccess(true);
-        showNotification(
-          "Verification email sent successfully! Check your inbox.",
-          "success",
-        );
-        setTimeout(() => setVerifySuccess(false), 3000);
+        setOtpSentForLogin(true);
+        showNotification("OTP sent successfully! Check your email.", "success");
       }
     } catch (error) {
       console.error("Verification error:", error);
       const errorMessage =
         error.response?.data?.message ||
-        "Failed to send verification email. Please try again.";
+        "Failed to send OTP. Please try again.";
       setApiError(errorMessage);
       showNotification(errorMessage, "error");
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const handleVerifyLoginOtp = async () => {
+    if (!loginOtp || loginOtp.length !== 6) {
+      showNotification("Please enter a valid 6-digit OTP", "error");
+      return;
+    }
+    try {
+      setIsOtpVerifyLoading(true);
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/verify-login-otp`,
+        { email: formData.email, otp: loginOtp },
+        { withCredentials: true },
+      );
+
+      if (persistUserSession(response.data)) {
+        setShowVerifyButton(false);
+        setOtpSentForLogin(false);
+        setLoginOtp("");
+        showNotification("OTP verified! Login successful.", "success");
+        setTimeout(() => navigate("/user-dashboard"), 1200);
+      } else {
+        showNotification(
+          response.data?.message || "OTP verification failed",
+          "error",
+        );
+      }
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.message || "OTP verification failed";
+      setApiError(errorMessage);
+      showNotification(errorMessage, "error");
+    } finally {
+      setIsOtpVerifyLoading(false);
     }
   };
 
@@ -638,6 +603,8 @@ const UserSignup = () => {
     setApiError("");
     setShowVerifyButton(false);
     setVerifySuccess(false);
+    setOtpSentForLogin(false);
+    setLoginOtp("");
     setEmailVerified(false);
     setPhoneVerified(false);
     setFormData({
@@ -864,7 +831,11 @@ const UserSignup = () => {
         <div className="us-brand">
           <div className="us-brand-content">
             <div className="us-logo">
-              <img src={logo} alt="Mediconeckt ChatBot Logo" className="us-logo-img" />
+              <img
+                src={logo}
+                alt="Mediconeckt ChatBot Logo"
+                className="us-logo-img"
+              />
               <span className="us-logo-text">Mediconeckt ChatBot</span>
             </div>
             <h1 className="us-brand-title">
@@ -914,7 +885,7 @@ const UserSignup = () => {
               {verifySuccess ? (
                 <div className="us-verify-success">
                   <span className="us-verify-icon">✓</span>
-                  <p>Verification email sent successfully! Check your inbox.</p>
+                  <p>OTP sent successfully! Check your email inbox.</p>
                 </div>
               ) : (
                 <>
@@ -929,13 +900,43 @@ const UserSignup = () => {
                     {isVerifying ? (
                       <>
                         <span className="us-spinner-small"></span>
-                        Sending...
+                        Sending OTP...
                       </>
                     ) : (
-                      "📧 Verify Mail"
+                      "📧 Logout Other Devices & Send OTP"
                     )}
                   </button>
                 </>
+              )}
+
+              {otpSentForLogin && (
+                <div className="us-login-otp-row">
+                  <input
+                    type="text"
+                    value={loginOtp}
+                    onChange={(e) =>
+                      setLoginOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                    }
+                    className="us-input"
+                    placeholder="Enter 6-digit OTP"
+                    maxLength="6"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyLoginOtp}
+                    className="us-verify-btn"
+                    disabled={isOtpVerifyLoading}
+                  >
+                    {isOtpVerifyLoading ? (
+                      <>
+                        <span className="us-spinner-small"></span>
+                        Verifying...
+                      </>
+                    ) : (
+                      "Verify OTP"
+                    )}
+                  </button>
+                </div>
               )}
             </div>
           )}

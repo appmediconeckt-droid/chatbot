@@ -70,6 +70,11 @@ const CounselorSignup = () => {
     message: "",
     type: "",
   });
+  const [showDeviceConflict, setShowDeviceConflict] = useState(false);
+  const [deviceOtp, setDeviceOtp] = useState("");
+  const [deviceOtpSent, setDeviceOtpSent] = useState(false);
+  const [isSendingDeviceOtp, setIsSendingDeviceOtp] = useState(false);
+  const [isVerifyingDeviceOtp, setIsVerifyingDeviceOtp] = useState(false);
 
   const consultationModes = ["Online", "Offline", "Both"];
   const languageOptions = [
@@ -105,8 +110,8 @@ const CounselorSignup = () => {
   useEffect(() => {
     const token =
       localStorage.getItem("accessToken") || localStorage.getItem("token");
-    const userRole = localStorage.getItem("userRole");
-    if (token && userRole === "counselor") {
+    const userRole = (localStorage.getItem("userRole") || "").toLowerCase();
+    if (token && (userRole === "counselor" || userRole === "counsellor")) {
       navigate("/counselor-dashboard");
     } else if (token && userRole === "user") {
       navigate("/user-dashboard");
@@ -392,89 +397,146 @@ const CounselorSignup = () => {
     setPhoneResendTimer(0);
   };
 
+  const persistCounselorSession = (data) => {
+    const token = data?.token || data?.accessToken;
+    if (!token) return false;
+
+    const decodeUserIdFromToken = (jwtToken) => {
+      try {
+        const payloadBase64 = jwtToken.split(".")[1];
+        const normalized = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
+        const payload = JSON.parse(atob(normalized));
+        return payload?.userId || payload?.id || "";
+      } catch {
+        return "";
+      }
+    };
+
+    localStorage.setItem("accessToken", token);
+    localStorage.setItem("token", token);
+    if (data.refreshToken)
+      localStorage.setItem("refreshToken", data.refreshToken);
+    const resolvedUserId =
+      data?.user?._id || decodeUserIdFromToken(token) || "";
+
+    if (resolvedUserId) {
+      localStorage.setItem("counsellorId", resolvedUserId);
+      localStorage.setItem("counselorId", resolvedUserId);
+      localStorage.setItem("userId", resolvedUserId);
+    }
+
+    if (data.user) {
+      localStorage.setItem("userData", JSON.stringify(data.user));
+      localStorage.setItem("userRole", data.user.role || "counsellor");
+    } else {
+      localStorage.setItem("userRole", "counselor");
+    }
+    localStorage.setItem("userEmail", formData.email);
+    localStorage.setItem("isAuthenticated", "true");
+    return true;
+  };
+
   const handleLogin = async () => {
-    const doLogin = async (forceLogin = false) =>
-      axios.post(
+    try {
+      const response = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
           role: "counsellor",
-          forceLogin,
         },
         { withCredentials: true },
       );
 
-    try {
-      const response = await doLogin(false);
-
-      const token = response.data?.token || response.data?.accessToken;
-
-      if (token) {
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("token", token);
-        if (response.data.refreshToken)
-          localStorage.setItem("refreshToken", response.data.refreshToken);
-        if (response.data.user) {
-          localStorage.setItem("userData", JSON.stringify(response.data.user));
-          localStorage.setItem("userRole", response.data.user.role);
-          localStorage.setItem("counsellorId", response.data.user._id);
-        }
-        localStorage.setItem("userEmail", formData.email);
-        localStorage.setItem("isAuthenticated", "true");
-
+      if (persistCounselorSession(response.data)) {
         showNotification(
           "Login successful! Redirecting to dashboard...",
           "success",
         );
-        setTimeout(() => navigate("/counselor-dashboard"), 1500);
+        setTimeout(() => navigate("/counselor-dashboard"), 1200);
       } else {
-        showNotification(response.data.message || "Login failed", "error");
+        showNotification(response.data?.message || "Login failed", "error");
       }
     } catch (error) {
       console.error("Login error:", error);
-      const isAlreadyLoggedIn =
-        error.response?.status === 409 && error.response?.data?.canForceLogin;
 
-      if (isAlreadyLoggedIn) {
-        try {
-          const response = await doLogin(true);
-          const token = response.data?.token || response.data?.accessToken;
-
-          if (token) {
-            localStorage.setItem("accessToken", token);
-            localStorage.setItem("token", token);
-            if (response.data.refreshToken)
-              localStorage.setItem("refreshToken", response.data.refreshToken);
-            if (response.data.user) {
-              localStorage.setItem(
-                "userData",
-                JSON.stringify(response.data.user),
-              );
-              localStorage.setItem("userRole", response.data.user.role);
-              localStorage.setItem("counsellorId", response.data.user._id);
-            }
-            localStorage.setItem("userEmail", formData.email);
-            localStorage.setItem("isAuthenticated", "true");
-
-            showNotification(
-              "Logged in and previous device session was ended.",
-              "success",
-            );
-            setTimeout(() => navigate("/counselor-dashboard"), 1500);
-            return;
-          }
-        } catch (forceError) {
-          const errorMessage =
-            forceError.response?.data?.message || "Unable to force login";
-          showNotification(errorMessage, "error");
-          return;
-        }
+      if (error.response?.status === 409 && error.response?.data?.needLogout) {
+        setShowDeviceConflict(true);
+        setDeviceOtpSent(false);
+        setDeviceOtp("");
+        showNotification(
+          "Already login detected. Continue with email OTP verification.",
+          "info",
+        );
+        return;
       }
 
       const errorMessage =
         error.response?.data?.message || "Something went wrong";
       showNotification(errorMessage, "error");
+    }
+  };
+
+  const handleSendDeviceOtp = async () => {
+    setIsSendingDeviceOtp(true);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/logout-other-devices`,
+        { email: formData.email },
+        { withCredentials: true },
+      );
+      if (response.data?.success) {
+        setDeviceOtpSent(true);
+        showNotification("OTP sent to your email. Enter it below.", "success");
+      } else {
+        showNotification(
+          response.data?.message || "Failed to send OTP",
+          "error",
+        );
+      }
+    } catch (error) {
+      showNotification(
+        error.response?.data?.message || "Failed to send OTP",
+        "error",
+      );
+    } finally {
+      setIsSendingDeviceOtp(false);
+    }
+  };
+
+  const handleVerifyDeviceOtp = async () => {
+    if (!deviceOtp || deviceOtp.length !== 6) {
+      showNotification("Please enter a valid 6-digit OTP", "error");
+      return;
+    }
+    setIsVerifyingDeviceOtp(true);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/verify-login-otp`,
+        { email: formData.email, otp: deviceOtp },
+        { withCredentials: true },
+      );
+
+      if (persistCounselorSession(response.data)) {
+        setShowDeviceConflict(false);
+        showNotification(
+          "OTP verified! Redirecting to dashboard...",
+          "success",
+        );
+        setTimeout(() => navigate("/counselor-dashboard"), 1200);
+      } else {
+        showNotification(
+          response.data?.message || "OTP verification failed",
+          "error",
+        );
+      }
+    } catch (error) {
+      showNotification(
+        error.response?.data?.message || "OTP verification failed",
+        "error",
+      );
+    } finally {
+      setIsVerifyingDeviceOtp(false);
     }
   };
 
@@ -631,6 +693,9 @@ const CounselorSignup = () => {
   const toggleMode = () => {
     setIsLogin(!isLogin);
     setErrors({});
+    setShowDeviceConflict(false);
+    setDeviceOtpSent(false);
+    setDeviceOtp("");
     setEmailVerified(false);
     setPhoneVerified(false);
     setFormData({
@@ -899,6 +964,59 @@ const CounselorSignup = () => {
               </button>
             </p>
           </div>
+
+          {isLogin && showDeviceConflict && (
+            <div className="cs-device-conflict-box">
+              <p className="cs-device-conflict-text">
+                Already login detected on another device.
+              </p>
+              <button
+                type="button"
+                onClick={handleSendDeviceOtp}
+                className="cs-device-action-btn"
+                disabled={isSendingDeviceOtp}
+              >
+                {isSendingDeviceOtp ? (
+                  <>
+                    <FaSpinner className="cs-spin" /> Sending OTP...
+                  </>
+                ) : (
+                  "Logout Other Devices & Send OTP"
+                )}
+              </button>
+
+              {deviceOtpSent && (
+                <div className="cs-device-otp-row">
+                  <input
+                    type="text"
+                    value={deviceOtp}
+                    onChange={(e) =>
+                      setDeviceOtp(
+                        e.target.value.replace(/\D/g, "").slice(0, 6),
+                      )
+                    }
+                    className="cs-input"
+                    placeholder="Enter 6-digit OTP"
+                    maxLength="6"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleVerifyDeviceOtp}
+                    className="cs-device-action-btn cs-device-verify-btn"
+                    disabled={isVerifyingDeviceOtp}
+                  >
+                    {isVerifyingDeviceOtp ? (
+                      <>
+                        <FaSpinner className="cs-spin" /> Verifying...
+                      </>
+                    ) : (
+                      "Verify OTP"
+                    )}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="cs-form">
             {isLogin ? (

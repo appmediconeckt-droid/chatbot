@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Messagesou.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
@@ -13,6 +13,19 @@ const SMSList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+
+  const handleSessionExpired = useCallback(() => {
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/role-selector", {
+      replace: true,
+      state: {
+        reason: "session-expired",
+        message:
+          "You were logged out because your account was used on another device.",
+      },
+    });
+  }, [navigate]);
 
   const getInitials = (name) => {
     if (!name) return "US";
@@ -67,8 +80,12 @@ const SMSList = () => {
       });
     }
     if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return messageTime.toLocaleDateString([], { weekday: "short" });
-    return messageTime.toLocaleDateString([], { month: "short", day: "numeric" });
+    if (diffDays < 7)
+      return messageTime.toLocaleDateString([], { weekday: "short" });
+    return messageTime.toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
   };
 
   const formatFullDateTime = (timeString) => {
@@ -88,10 +105,10 @@ const SMSList = () => {
   // Fetch chats from API
   useEffect(() => {
     const fetchChats = async () => {
-      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       if (!token) {
-        setError("No access token found. Please log in.");
-        setLoading(false);
+        handleSessionExpired();
         return;
       }
       try {
@@ -102,6 +119,11 @@ const SMSList = () => {
           },
         });
 
+        if (response.status === 401) {
+          handleSessionExpired();
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -111,7 +133,8 @@ const SMSList = () => {
         // Transform API data to match component structure
         const transformedUsers = (data.chats || []).map((chat) => {
           const otherParty = chat.otherParty || {};
-          const displayName = otherParty.anonymous || otherParty.name || "Anonymous User";
+          const displayName =
+            otherParty.anonymous || otherParty.name || "Anonymous User";
           const actualUserId =
             otherParty.id ||
             otherParty._id ||
@@ -119,10 +142,14 @@ const SMSList = () => {
             otherParty.user_id ||
             chat.userId;
 
-          const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
+          const lastMessageTime =
+            chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
           const chatStatus = String(chat.status || "pending").toLowerCase();
           let specialization = "Patient";
-          if (Array.isArray(otherParty.specialization) && otherParty.specialization[0]) {
+          if (
+            Array.isArray(otherParty.specialization) &&
+            otherParty.specialization[0]
+          ) {
             specialization = otherParty.specialization[0];
           } else if (typeof otherParty.specialization === "string") {
             specialization = otherParty.specialization;
@@ -156,11 +183,15 @@ const SMSList = () => {
         });
 
         transformedUsers.sort((a, b) => {
-          const aTime = a.lastActivityAt ? new Date(a.lastActivityAt).getTime() : 0;
-          const bTime = b.lastActivityAt ? new Date(b.lastActivityAt).getTime() : 0;
+          const aTime = a.lastActivityAt
+            ? new Date(a.lastActivityAt).getTime()
+            : 0;
+          const bTime = b.lastActivityAt
+            ? new Date(b.lastActivityAt).getTime()
+            : 0;
           return bTime - aTime;
         });
-        
+
         setUsers(transformedUsers);
         setLoading(false);
       } catch (err) {
@@ -171,12 +202,13 @@ const SMSList = () => {
     };
 
     fetchChats();
-  }, []);
+  }, [handleSessionExpired]);
 
   // Filter users based on the displayed (anonymous) name
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.specialization.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.specialization.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleUserClick = (user) => {
@@ -218,7 +250,10 @@ const SMSList = () => {
           <span className="error-icon">⚠️</span>
           <h4>Error loading chats</h4>
           <p>{error}</p>
-          <button onClick={() => window.location.reload()} className="retry-button">
+          <button
+            onClick={() => window.location.reload()}
+            className="retry-button"
+          >
             Retry
           </button>
         </div>
@@ -241,7 +276,6 @@ const SMSList = () => {
 
       {/* Search Bar */}
       <div className="smslist-search">
-        
         <input
           type="text"
           placeholder="Search chats..."
@@ -274,7 +308,9 @@ const SMSList = () => {
                 >
                   {getInitials(user.name)}
                 </div>
-                <span className={`status-dot ${user.online ? "online" : "offline"}`}></span>
+                <span
+                  className={`status-dot ${user.online ? "online" : "offline"}`}
+                ></span>
               </div>
 
               {/* User Info */}
@@ -285,7 +321,7 @@ const SMSList = () => {
                     {user.time}
                   </span>
                 </div>
-                
+
                 <div className="smslist-last-message">
                   <p className="message-preview">{user.lastMessage}</p>
                   {user.unread > 0 && (
@@ -294,7 +330,9 @@ const SMSList = () => {
                 </div>
 
                 <div className="smslist-user-details">
-                  <span className="user-specialization">{user.specialization}</span>
+                  <span className="user-specialization">
+                    {user.specialization}
+                  </span>
                   <span className={`user-status status-${user.status}`}>
                     {getStatusBadgeText(user.status)}
                   </span>
