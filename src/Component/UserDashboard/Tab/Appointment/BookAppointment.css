@@ -784,9 +784,7 @@
     margin-bottom: 20px;
   }
 
-  .counselors-table-unique {
-    padding: 0 12px;
-  }
+ 
 
   .notification-panel-unique {
     width: calc(100% - 32px);
@@ -891,8 +889,8 @@
 
 /* Search Section Styles */
 .search-section-unique {
-  margin-bottom: 30px;
-  padding: 0 20px;
+  margin-bottom: 10px;
+
 }
 
 .search-container-unique {
@@ -1111,9 +1109,7 @@
 }
 
 @media (max-width: 767px) {
-  .search-section-unique {
-    padding: 0 15px;
-  }
+ 
   
   .search-container-unique {
     padding: 15px;

@@ -384,8 +384,8 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       <div className="main-content-unique">
         {/* Counselors Grid */}
         <div className="counselors-section-unique">
-          <h1 className="page-title-unique">Online Counselors</h1>
-          <p className="page-subtitle-unique">Click 'Chat Now' to send a request</p>
+          {/* <h1 className="page-title-unique">Online Counselors</h1>
+          <p className="page-subtitle-unique">Click 'Chat Now' to send a request</p> */}
 
           {/* Search Bar Section */}
           <div className="search-section-unique">
