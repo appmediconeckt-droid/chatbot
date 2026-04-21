@@ -39,7 +39,6 @@ const Login = () => {
 
   const handleLogin = async () => {
     if (!validateEmail()) return;
-
     if (!password) {
       setErrorMessage("Please enter your password");
       return;
@@ -50,11 +49,49 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      await axios.post(
+      const response = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         { email, password },
         { withCredentials: true },
       );
+
+      // FIRST: Get the role from response
+      const userRole =
+        response.data?.role || response.data?.user?.role || "user";
+      const normalizedUserRole = userRole.toLowerCase();
+      const isCounselor =
+        normalizedUserRole === "counselor" ||
+        normalizedUserRole === "counsellor";
+
+      // SECOND: Read the role the user selected in RoleSelector.
+      // RoleSelector saves the key as "role" with value "user" or "counsellor".
+      const selectedRole = localStorage.getItem("role"); // "user" | "counsellor" | null
+      const selectedAsCounselor =
+        selectedRole === "counselor" || selectedRole === "counsellor";
+
+      // THIRD: Validate — if a role was explicitly selected, enforce it.
+      if (selectedRole) {
+        if (selectedAsCounselor && !isCounselor) {
+          setErrorMessage(
+            "Access denied: You selected the Counsellor login but your account is registered as a User. Please go back and select the correct role.",
+          );
+          setIsLoading(false);
+          return;
+        }
+
+        if (!selectedAsCounselor && isCounselor) {
+          setErrorMessage(
+            "Access denied: You selected the User login but your account is registered as a Counsellor. Please go back and select the correct role.",
+          );
+          setIsLoading(false);
+          return;
+        }
+      }
+
+      // ONLY NOW store the role and proceed with successful login
+      localStorage.setItem("userRole", userRole);
+      // Clear the temporary selectedRole flag after successful login
+      localStorage.removeItem("role");
 
       if (rememberMe) {
         localStorage.setItem("rememberedUserId", email);
@@ -63,20 +100,18 @@ const Login = () => {
       }
 
       setSuccessMessage("Login successful! Redirecting...");
-      setTimeout(() => navigate("/user-dashboard"), 1200);
+      setTimeout(() => {
+        if (isCounselor) {
+          navigate("/counselor-dashboard");
+        } else {
+          navigate("/user-dashboard");
+        }
+      }, 1200);
     } catch (err) {
-      if (
-        err?.isOneDeviceConflict ||
-        (err?.response?.status === 409 && err?.response?.data?.needLogout)
-      ) {
-        setShowConflictModal(true);
-        setOtpSent(false);
-        setOtp("");
-        return;
-      }
-
       const msg =
-        err?.response?.data?.message || err?.message || "Login failed";
+        err?.response?.data?.message ||
+        err?.message ||
+        "Login failed. Please check your credentials and try again.";
       setErrorMessage(msg);
     } finally {
       setIsLoading(false);

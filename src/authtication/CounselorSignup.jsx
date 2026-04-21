@@ -173,6 +173,65 @@ const CounselorSignup = () => {
     return newErrors;
   };
 
+  const handleForgotPassword = async () => {
+    const emailFromForm = String(formData.email || "")
+      .trim()
+      .toLowerCase();
+    const promptedEmail = emailFromForm
+      ? ""
+      : window.prompt("Enter your registered email:", "") || "";
+    const normalizedEmail = String(emailFromForm || promptedEmail)
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedEmail) {
+      showNotification("Please enter your registered email", "error");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
+      showNotification("Please enter a valid email address", "error");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const endpoints = ["forgot-password", "forgotPassword"];
+      let sent = false;
+
+      for (const endpoint of endpoints) {
+        try {
+          await axios.post(
+            `${API_BASE_URL}/api/auth/${endpoint}`,
+            { email: normalizedEmail },
+            { withCredentials: true },
+          );
+          sent = true;
+          break;
+        } catch (error) {
+          if (error?.response?.status !== 404) {
+            throw error;
+          }
+        }
+      }
+
+      if (!sent) {
+        throw new Error("Unable to reach forgot password API");
+      }
+
+      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
+      showNotification("Reset link sent to your email", "success");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to send reset link right now";
+      showNotification(message, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const validateSignup = () => {
     const newErrors = {};
     if (!formData.fullName) newErrors.fullName = "Full name is required";
@@ -443,10 +502,26 @@ const CounselorSignup = () => {
         {
           email: formData.email,
           password: formData.password,
-          role: "counsellor",
         },
         { withCredentials: true },
       );
+
+      // Enforce role: only counsellor accounts can login here
+      const returnedRole = (
+        response.data?.role ||
+        response.data?.user?.role ||
+        "counsellor"
+      ).toLowerCase();
+      const isCounselor =
+        returnedRole === "counselor" || returnedRole === "counsellor";
+
+      if (!isCounselor) {
+        showNotification(
+          "Access denied: Your account is registered as a User. Please use the User login page.",
+          "error",
+        );
+        return;
+      }
 
       if (persistCounselorSession(response.data)) {
         showNotification(
@@ -1076,6 +1151,12 @@ const CounselorSignup = () => {
                   <a
                     href="#"
                     className={`cs-forgot ${isLoading ? "cs-disabled" : ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!isLoading) {
+                        void handleForgotPassword();
+                      }
+                    }}
                   >
                     Forgot password?
                   </a>
