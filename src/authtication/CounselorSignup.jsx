@@ -147,6 +147,65 @@ const CounselorSignup = () => {
     return newErrors;
   };
 
+  const handleForgotPassword = async () => {
+    const emailFromForm = String(formData.email || "")
+      .trim()
+      .toLowerCase();
+    const promptedEmail = emailFromForm
+      ? ""
+      : window.prompt("Enter your registered email:", "") || "";
+    const normalizedEmail = String(emailFromForm || promptedEmail)
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedEmail) {
+      showNotification("Please enter your registered email", "error");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
+      showNotification("Please enter a valid email address", "error");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const endpoints = ["forgot-password", "forgotPassword"];
+      let sent = false;
+
+      for (const endpoint of endpoints) {
+        try {
+          await axios.post(
+            `${API_BASE_URL}/api/auth/${endpoint}`,
+            { email: normalizedEmail },
+            { withCredentials: true },
+          );
+          sent = true;
+          break;
+        } catch (error) {
+          if (error?.response?.status !== 404) {
+            throw error;
+          }
+        }
+      }
+
+      if (!sent) {
+        throw new Error("Unable to reach forgot password API");
+      }
+
+      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
+      showNotification("Reset link sent to your email", "success");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to send reset link right now";
+      showNotification(message, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const validateSignup = () => {
     const newErrors = {};
     if (!formData.fullName) newErrors.fullName = "Full name is required";
@@ -312,11 +371,31 @@ const CounselorSignup = () => {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/auth/login`, {
-        email: formData.email,
-        password: formData.password,
-        role: "counsellor",
-      }, { withCredentials: true });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/login`,
+        {
+          email: formData.email,
+          password: formData.password,
+        },
+        { withCredentials: true },
+      );
+
+      // Enforce role: only counsellor accounts can login here
+      const returnedRole = (
+        response.data?.role ||
+        response.data?.user?.role ||
+        "counsellor"
+      ).toLowerCase();
+      const isCounselor =
+        returnedRole === "counselor" || returnedRole === "counsellor";
+
+      if (!isCounselor) {
+        showNotification(
+          "Access denied: Your account is registered as a User. Please use the User login page.",
+          "error",
+        );
+        return;
+      }
 
       if (persistCounselorSession(response.data)) {
         showNotification("Login successful! Redirecting...", "success");
@@ -778,15 +857,475 @@ const CounselorSignup = () => {
             </div>
           )}
 
-          {/* Slider Container with Animation */}
-          <div className={`cs-slider-container ${slideAnim}`}>
-            <div className={`cs-slider-panel ${isLogin ? "active" : "inactive"}`}>
-              <LoginForm />
-            </div>
-            <div className={`cs-slider-panel ${!isLogin ? "active" : "inactive"}`}>
-              <SignupForm />
-            </div>
-          </div>
+          <form onSubmit={handleSubmit} className="cs-form">
+            {isLogin ? (
+              <>
+                <div className="cs-field">
+                  <label className="cs-label">
+                    <FaEnvelope className="cs-field-icon" />
+                    Email Address <span className="cs-required">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className={`cs-input ${errors.email ? "cs-input-error" : ""}`}
+                    placeholder="Enter your email"
+                    disabled={isLoading}
+                  />
+                  {errors.email && (
+                    <span className="cs-error">{errors.email}</span>
+                  )}
+                </div>
+
+                <div className="cs-field">
+                  <label className="cs-label">
+                    <FaLock className="cs-field-icon" />
+                    Password <span className="cs-required">*</span>
+                  </label>
+                  <div className="cs-password-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.password ? "cs-input-error" : ""}`}
+                      placeholder="Enter your password"
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="cs-password-toggle"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <span className="cs-error">{errors.password}</span>
+                  )}
+                </div>
+
+                <div className="cs-options">
+                  <label className="cs-checkbox">
+                    <input type="checkbox" disabled={isLoading} /> Remember me
+                  </label>
+                  <a
+                    href="#"
+                    className={`cs-forgot ${isLoading ? "cs-disabled" : ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!isLoading) {
+                        void handleForgotPassword();
+                      }
+                    }}
+                  >
+                    Forgot password?
+                  </a>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="cs-grid">
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaUser className="cs-field-icon" />
+                      Full Name <span className="cs-required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="fullName"
+                      value={formData.fullName}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.fullName ? "cs-input-error" : ""}`}
+                      placeholder="Enter your full name"
+                      disabled={isLoading}
+                    />
+                    {errors.fullName && (
+                      <span className="cs-error">{errors.fullName}</span>
+                    )}
+                  </div>
+
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaEnvelope className="cs-field-icon" />
+                      Email <span className="cs-required">*</span>
+                    </label>
+                    <div className="cs-verify-group">
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className={`cs-input ${errors.email ? "cs-input-error" : ""} ${emailVerified ? "cs-verified-input" : ""}`}
+                        placeholder="Enter your email"
+                        disabled={isLoading || emailVerified}
+                      />
+                      {!emailVerified &&
+                        formData.email &&
+                        /\S+@\S+\.\S+/.test(formData.email) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetEmailOtpState();
+                              setShowEmailOtpModal(true);
+                              handleSendEmailOtp();
+                            }}
+                            className="cs-verify-btn"
+                            disabled={isLoading}
+                          >
+                            Verify
+                          </button>
+                        )}
+                      {emailVerified && (
+                        <span className="cs-verified-badge">
+                          <FaCheckCircle /> Verified
+                        </span>
+                      )}
+                    </div>
+                    {errors.email && (
+                      <span className="cs-error">{errors.email}</span>
+                    )}
+                  </div>
+
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaPhone className="cs-field-icon" />
+                      Phone Number <span className="cs-required">*</span>
+                    </label>
+                    <div className="cs-verify-group">
+                      <input
+                        type="tel"
+                        name="phoneNumber"
+                        value={formData.phoneNumber}
+                        onChange={handleChange}
+                        className={`cs-input ${errors.phoneNumber ? "cs-input-error" : ""} ${phoneVerified ? "cs-verified-input" : ""}`}
+                        placeholder="10 digit mobile number"
+                        maxLength="10"
+                        disabled={isLoading || phoneVerified}
+                      />
+                      {!phoneVerified &&
+                        formData.phoneNumber &&
+                        /^\d{10}$/.test(formData.phoneNumber) && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              resetPhoneOtpState();
+                              setShowPhoneOtpModal(true);
+                              handleSendPhoneOtp();
+                            }}
+                            className="cs-verify-btn"
+                            disabled={isLoading}
+                          >
+                            Verify
+                          </button>
+                        )}
+                      {phoneVerified && (
+                        <span className="cs-verified-badge">
+                          <FaCheckCircle /> Verified
+                        </span>
+                      )}
+                    </div>
+                    {errors.phoneNumber && (
+                      <span className="cs-error">{errors.phoneNumber}</span>
+                    )}
+                  </div>
+
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaCalendarAlt className="cs-field-icon" />
+                      Age <span className="cs-required">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="age"
+                      value={formData.age}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.age ? "cs-input-error" : ""}`}
+                      placeholder="Your age"
+                      min="18"
+                      max="100"
+                      disabled={isLoading}
+                    />
+                    {errors.age && (
+                      <span className="cs-error">{errors.age}</span>
+                    )}
+                  </div>
+
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaVenusMars className="cs-field-icon" />
+                      Gender <span className="cs-required">*</span>
+                    </label>
+                    <select
+                      name="gender"
+                      value={formData.gender}
+                      onChange={handleChange}
+                      className={`cs-select ${errors.gender ? "cs-input-error" : ""}`}
+                      disabled={isLoading}
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    {errors.gender && (
+                      <span className="cs-error">{errors.gender}</span>
+                    )}
+                  </div>
+
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaGraduationCap className="cs-field-icon" />
+                      Qualification <span className="cs-required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="qualification"
+                      value={formData.qualification}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.qualification ? "cs-input-error" : ""}`}
+                      placeholder="e.g., M.Sc Psychology"
+                      disabled={isLoading}
+                    />
+                    {errors.qualification && (
+                      <span className="cs-error">{errors.qualification}</span>
+                    )}
+                  </div>
+
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaIdCard className="cs-field-icon" />
+                      Specialization <span className="cs-required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="specialization"
+                      value={formData.specialization}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.specialization ? "cs-input-error" : ""}`}
+                      placeholder="e.g., Clinical Psychology"
+                      disabled={isLoading}
+                    />
+                    {errors.specialization && (
+                      <span className="cs-error">{errors.specialization}</span>
+                    )}
+                  </div>
+
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaBriefcase className="cs-field-icon" />
+                      Experience (Years) <span className="cs-required">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="experience"
+                      value={formData.experience}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.experience ? "cs-input-error" : ""}`}
+                      placeholder="Years of experience"
+                      min="0"
+                      step="0.5"
+                      disabled={isLoading}
+                    />
+                    {errors.experience && (
+                      <span className="cs-error">{errors.experience}</span>
+                    )}
+                  </div>
+
+                  <div className="cs-field">
+                    <label className="cs-label">
+                      <FaMapMarkerAlt className="cs-field-icon" />
+                      Location <span className="cs-required">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.location ? "cs-input-error" : ""}`}
+                      placeholder="City, State"
+                      disabled={isLoading}
+                    />
+                    {errors.location && (
+                      <span className="cs-error">{errors.location}</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="cs-field">
+                  <label className="cs-label">
+                    <FaUsers className="cs-field-icon" />
+                    Consultation Mode <span className="cs-required">*</span>
+                  </label>
+                  <div className="cs-checkbox-group">
+                    {consultationModes.map((mode) => (
+                      <label key={mode} className="cs-checkbox-label">
+                        <input
+                          type="checkbox"
+                          name="consultationMode"
+                          value={mode}
+                          checked={formData.consultationMode.includes(mode)}
+                          onChange={handleChange}
+                          disabled={isLoading}
+                        />
+                        {mode}
+                      </label>
+                    ))}
+                  </div>
+                  {errors.consultationMode && (
+                    <span className="cs-error">{errors.consultationMode}</span>
+                  )}
+                </div>
+
+                <div className="cs-field">
+                  <label className="cs-label">
+                    Languages <span className="cs-required">*</span>
+                  </label>
+                  <div className="cs-checkbox-group">
+                    {languageOptions.map((lang) => (
+                      <label key={lang} className="cs-checkbox-label">
+                        <input
+                          type="checkbox"
+                          name="languages"
+                          value={lang}
+                          checked={formData.languages.includes(lang)}
+                          onChange={handleChange}
+                          disabled={isLoading}
+                        />
+                        {lang}
+                      </label>
+                    ))}
+                  </div>
+                  {errors.languages && (
+                    <span className="cs-error">{errors.languages}</span>
+                  )}
+                </div>
+
+                <div className="cs-field">
+                  <label className="cs-label">
+                    About Me <span className="cs-required">*</span>
+                  </label>
+                  <textarea
+                    name="aboutMe"
+                    value={formData.aboutMe}
+                    onChange={handleChange}
+                    className={`cs-textarea ${errors.aboutMe ? "cs-input-error" : ""}`}
+                    placeholder="Tell us about yourself, your approach, and expertise..."
+                    rows="4"
+                    disabled={isLoading}
+                  />
+                  {errors.aboutMe && (
+                    <span className="cs-error">{errors.aboutMe}</span>
+                  )}
+                </div>
+
+                <div className="cs-field">
+                  <label className="cs-label">Profile Photo</label>
+                  <input
+                    type="file"
+                    name="profilePhoto"
+                    onChange={handleChange}
+                    accept="image/*"
+                    className="cs-file"
+                    disabled={isLoading}
+                  />
+                </div>
+
+                <div className="cs-field">
+                  <label className="cs-label">
+                    <FaLock className="cs-field-icon" />
+                    Password <span className="cs-required">*</span>
+                  </label>
+                  <div className="cs-password-wrapper">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.password ? "cs-input-error" : ""}`}
+                      placeholder="Create a password"
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="cs-password-toggle"
+                      disabled={isLoading}
+                    >
+                      {showPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {errors.password && (
+                    <span className="cs-error">{errors.password}</span>
+                  )}
+                </div>
+
+                <div className="cs-field">
+                  <label className="cs-label">
+                    <FaLock className="cs-field-icon" />
+                    Confirm Password <span className="cs-required">*</span>
+                  </label>
+                  <div className="cs-password-wrapper">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      name="confirmPassword"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      className={`cs-input ${errors.confirmPassword ? "cs-input-error" : ""}`}
+                      placeholder="Confirm your password"
+                      disabled={isLoading}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="cs-password-toggle"
+                      disabled={isLoading}
+                    >
+                      {showConfirmPassword ? "Hide" : "Show"}
+                    </button>
+                  </div>
+                  {errors.confirmPassword && (
+                    <span className="cs-error">{errors.confirmPassword}</span>
+                  )}
+                </div>
+              </>
+            )}
+
+            <button
+              type="submit"
+              className={`cs-submit ${isLoading ? "cs-submit-loading" : ""}`}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <span className="cs-spinner"></span>
+                  {isLogin ? "Logging in..." : "Creating Account..."}
+                </>
+              ) : isLogin ? (
+                "Login"
+              ) : (
+                "Create Account"
+              )}
+            </button>
+
+            {!isLogin && (
+              <p className="cs-terms">
+                By signing up, you agree to our{" "}
+                <a href="#" className={isLoading ? "cs-disabled" : ""}>
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a href="#" className={isLoading ? "cs-disabled" : ""}>
+                  Privacy Policy
+                </a>
+              </p>
+            )}
+          </form>
         </div>
       </div>
     </div>

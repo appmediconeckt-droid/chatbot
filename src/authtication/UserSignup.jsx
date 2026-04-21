@@ -10,7 +10,7 @@ import {
   FaSpinner,
   FaTimes,
 } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./UserSignup.css";
 import logo from "../image/Mediconect Logo-3.png";
@@ -127,6 +127,65 @@ const UserSignup = () => {
       newErrors.password = "Password is required";
     }
     return newErrors;
+  };
+
+  const handleForgotPassword = async () => {
+    const emailFromForm = String(formData.email || "")
+      .trim()
+      .toLowerCase();
+    const promptedEmail = emailFromForm
+      ? ""
+      : window.prompt("Enter your registered email:", "") || "";
+    const normalizedEmail = String(emailFromForm || promptedEmail)
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedEmail) {
+      showNotification("Please enter your registered email", "error");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
+      showNotification("Please enter a valid email address", "error");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const endpoints = ["forgot-password", "forgotPassword"];
+      let sent = false;
+
+      for (const endpoint of endpoints) {
+        try {
+          await axios.post(
+            `${API_BASE_URL}/api/auth/${endpoint}`,
+            { email: normalizedEmail },
+            { withCredentials: true },
+          );
+          sent = true;
+          break;
+        } catch (error) {
+          if (error?.response?.status !== 404) {
+            throw error;
+          }
+        }
+      }
+
+      if (!sent) {
+        throw new Error("Unable to reach forgot password API");
+      }
+
+      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
+      showNotification("Reset link sent to your email", "success");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to send reset link right now";
+      showNotification(message, "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const validateSignup = () => {
@@ -346,10 +405,29 @@ const UserSignup = () => {
         {
           email: formData.email,
           password: formData.password,
-          role: "user",
         },
         { withCredentials: true },
       );
+
+      // Enforce role: only "user" accounts can login here
+      const returnedRole = (
+        response.data?.role ||
+        response.data?.user?.role ||
+        "user"
+      ).toLowerCase();
+      const isCounselor =
+        returnedRole === "counselor" || returnedRole === "counsellor";
+
+      if (isCounselor) {
+        setApiError(
+          "Access denied: Your account is registered as a Counsellor. Please use the Counsellor login page.",
+        );
+        showNotification(
+          "Access denied: Please use the Counsellor login page.",
+          "error",
+        );
+        return;
+      }
 
       if (persistUserSession(response.data)) {
         showNotification("Login successful!", "success");
@@ -1005,11 +1083,16 @@ const UserSignup = () => {
                   <label className="us-checkbox">
                     <input type="checkbox" disabled={isLoading} /> Remember me
                   </label>
-                  <Link to="/otp-verification">
-                    <button className="us-forgot" disabled={isLoading}>
-                      Forgot Password?
-                    </button>
-                  </Link>
+                  <button
+                    type="button"
+                    className="us-forgot"
+                    disabled={isLoading}
+                    onClick={() => {
+                      void handleForgotPassword();
+                    }}
+                  >
+                    Forgot Password?
+                  </button>
                 </div>
               </>
             ) : (
