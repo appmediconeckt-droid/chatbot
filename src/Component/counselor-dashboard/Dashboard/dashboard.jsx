@@ -68,12 +68,77 @@ export default function CounselorDashboard() {
   const vibrate = useVibration();
   const { startRinging, stopRinging } = useRingtone();
 
+  const getAuthToken = () =>
+    localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+  const handleSessionExpired = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    setShowLogoutConfirm(false);
+    navigate("/role-selector", {
+      replace: true,
+      state: {
+        reason: "session-expired",
+        message:
+          "You were logged out because your account was used on another device.",
+      },
+    });
+  };
+
+  const getCounsellorId = () => {
+    const byKey =
+      localStorage.getItem("counsellorId") ||
+      localStorage.getItem("counselorId") ||
+      localStorage.getItem("userId");
+    if (byKey) return byKey;
+
+    try {
+      const userDataRaw = localStorage.getItem("userData");
+      if (userDataRaw) {
+        const userData = JSON.parse(userDataRaw);
+        if (userData?._id) {
+          const resolvedId = String(userData._id);
+          localStorage.setItem("counsellorId", resolvedId);
+          localStorage.setItem("counselorId", resolvedId);
+          localStorage.setItem("userId", resolvedId);
+          return resolvedId;
+        }
+      }
+    } catch (error) {
+      console.warn(
+        "Failed to parse userData while resolving counsellorId",
+        error,
+      );
+    }
+
+    const token = getAuthToken();
+    if (!token) return "";
+
+    try {
+      const payloadBase64 = token.split(".")[1];
+      const normalized = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
+      const payload = JSON.parse(atob(normalized));
+      const resolvedId = payload?.userId || payload?.id || "";
+      if (resolvedId) {
+        localStorage.setItem("counsellorId", resolvedId);
+        localStorage.setItem("counselorId", resolvedId);
+        localStorage.setItem("userId", resolvedId);
+      }
+      return resolvedId;
+    } catch (error) {
+      console.warn(
+        "Failed to decode token while resolving counsellorId",
+        error,
+      );
+      return "";
+    }
+  };
+
   // Accept Call API (POST) for Counselor
   const acceptCall = async (callId) => {
     try {
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
-      const userId = localStorage.getItem("counsellorId");
+      const token = getAuthToken();
+      const userId = getCounsellorId();
 
       if (!userId) {
         console.error("No counsellorId found in localStorage");
@@ -121,9 +186,8 @@ export default function CounselorDashboard() {
   // Join Call API (POST) for Counselor
   const joinCall = async (callId) => {
     try {
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
-      const counsellorId = localStorage.getItem("counsellorId");
+      const token = getAuthToken();
+      const counsellorId = getCounsellorId();
 
       const requestBody = {
         userId: counsellorId,
@@ -158,9 +222,8 @@ export default function CounselorDashboard() {
   // End Call API (PUT) for Counselor
   const endCall = async (callId) => {
     try {
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
-      const counsellorId = localStorage.getItem("counsellorId");
+      const token = getAuthToken();
+      const counsellorId = getCounsellorId();
 
       const requestBody = {
         userId: counsellorId,
@@ -195,9 +258,8 @@ export default function CounselorDashboard() {
   // Reject Call API
   const rejectCall = async (callId) => {
     try {
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
-      const counsellorId = localStorage.getItem("counsellorId");
+      const token = getAuthToken();
+      const counsellorId = getCounsellorId();
 
       const response = await axios.put(
         `${API_BASE_URL}/api/video/calls/${callId}/reject`,
@@ -329,9 +391,8 @@ export default function CounselorDashboard() {
   // Fetch waiting calls from API
   const fetchWaitingCalls = async () => {
     try {
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
-      const counsellorId = localStorage.getItem("counsellorId");
+      const token = getAuthToken();
+      const counsellorId = getCounsellorId();
 
       if (!counsellorId || !token) {
         console.log("No counsellorId or token found");
@@ -365,8 +426,8 @@ export default function CounselorDashboard() {
         const currentIncomingId = incomingCallData?.callId;
         const stillWaiting = currentIncomingId
           ? callsList.some(
-            (c) => (c.callId || c.id || c._id) === currentIncomingId,
-          )
+              (c) => (c.callId || c.id || c._id) === currentIncomingId,
+            )
           : false;
 
         if (showIncomingCallModal && currentIncomingId && !stillWaiting) {
@@ -485,7 +546,11 @@ export default function CounselorDashboard() {
   const fetchPendingRequests = async () => {
     setLoadingRequests(true);
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
+      if (!token) {
+        handleSessionExpired();
+        return null;
+      }
 
       const response = await axios.get(
         `${API_BASE_URL}/api/chat/pending-requests`,
@@ -524,6 +589,10 @@ export default function CounselorDashboard() {
       return data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          handleSessionExpired();
+          return null;
+        }
         console.error("Axios error:", error.response?.data || error.message);
         console.error("Status:", error.response?.status);
       } else {
@@ -592,7 +661,7 @@ export default function CounselorDashboard() {
     vibrate([50, 30, 50]);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const chatId = currentRequest.chatId;
 
       if (!chatId) {
@@ -644,7 +713,7 @@ export default function CounselorDashboard() {
     vibrate([50]);
 
     try {
-      const token = localStorage.getItem("token");
+      const token = getAuthToken();
       const chatId = currentRequest.chatId;
 
       if (!chatId) {
@@ -771,25 +840,17 @@ export default function CounselorDashboard() {
       const accessToken = localStorage.getItem("accessToken");
       const refreshToken = localStorage.getItem("refreshToken");
 
-      if (!accessToken && !refreshToken) {
-        console.warn("No tokens found, clearing storage and redirecting");
-        localStorage.clear();
-        navigate("/role-selector");
-        return;
-      }
-
-      if (accessToken) {
-        await axios.post(
-          `${API_BASE_URL}/api/auth/logout`,
-          { refreshToken: refreshToken },
-          {
-            headers: {
-              Authorization: `Bearer ${accessToken}`,
-              "Content-Type": "application/json",
-            },
+      await axios.post(
+        `${API_BASE_URL}/api/auth/logout`,
+        { refreshToken },
+        {
+          withCredentials: true,
+          headers: {
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+            "Content-Type": "application/json",
           },
-        );
-      }
+        },
+      );
 
       localStorage.clear();
       setShowLogoutConfirm(false);
@@ -817,8 +878,8 @@ export default function CounselorDashboard() {
   useEffect(() => {
     const fetchCounsellor = async () => {
       try {
-        const counsellorId = localStorage.getItem("counsellorId");
-        const token = localStorage.getItem("token");
+        const counsellorId = getCounsellorId();
+        const token = getAuthToken();
 
         if (!counsellorId) {
           console.error("No counsellor ID found");
@@ -1030,8 +1091,6 @@ export default function CounselorDashboard() {
           >
             {showMobileMenu ? <FaTimes /> : <FaBars />}
           </button>
-
-
         </div>
       )}
 
@@ -1167,7 +1226,7 @@ export default function CounselorDashboard() {
         )}
 
         {activeTab === "sessions" && (
-         <div className="couns-tab-content">
+          <div className="couns-tab-content">
             <div className="couns-work-in-progress">
               The remaining work is currently in progress.
             </div>
@@ -1183,7 +1242,7 @@ export default function CounselorDashboard() {
         )}
 
         {activeTab === "earnings" && (
-         <div className="couns-tab-content">
+          <div className="couns-tab-content">
             <div className="couns-work-in-progress">
               The remaining work is currently in progress.
             </div>
@@ -1205,7 +1264,7 @@ export default function CounselorDashboard() {
         )}
 
         {activeTab === "settings" && (
-         <div className="couns-tab-content">
+          <div className="couns-tab-content">
             <div className="couns-work-in-progress">
               The remaining work is currently in progress.
             </div>
@@ -1215,7 +1274,7 @@ export default function CounselorDashboard() {
 
       {/* Request Modal */}
       {showRequestModal && currentRequest && (
-        <div className="couns-request-modal-overlay" onClick={() => { }}>
+        <div className="couns-request-modal-overlay" onClick={() => {}}>
           <div
             className="couns-request-modal"
             onClick={(e) => e.stopPropagation()}

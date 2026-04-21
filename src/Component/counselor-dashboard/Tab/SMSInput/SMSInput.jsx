@@ -45,11 +45,27 @@ const SMSInput = () => {
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
 
+  const handleSessionExpired = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/role-selector", {
+      replace: true,
+      state: {
+        reason: "session-expired",
+        message:
+          "You were logged out because your account was used on another device.",
+      },
+    });
+  };
+
   const focusMessageInput = () => {
     const input = messageInputRef.current;
     if (!input) return;
     requestAnimationFrame(() => input.focus({ preventScroll: true }));
-    setTimeout(() => messageInputRef.current?.focus({ preventScroll: true }), 50);
+    setTimeout(
+      () => messageInputRef.current?.focus({ preventScroll: true }),
+      50,
+    );
   };
 
   // Get selected user from navigation state
@@ -62,25 +78,30 @@ const SMSInput = () => {
     if (storedCounselor) {
       try {
         counselorData = JSON.parse(storedCounselor);
-      } catch (e) { }
+      } catch (e) {}
     }
     if (!counselorData) {
       const sessionCounselor = sessionStorage.getItem("counselor");
       if (sessionCounselor) {
         try {
           counselorData = JSON.parse(sessionCounselor);
-        } catch (e) { }
+        } catch (e) {}
       }
     }
     if (!counselorData) {
-      const userData = localStorage.getItem("user") || localStorage.getItem("userData");
+      const userData =
+        localStorage.getItem("user") || localStorage.getItem("userData");
       if (userData) {
         try {
           const user = JSON.parse(userData);
-          if (user.role === "counselor" || user.role === "counsellor" || user.userType === "counselor") {
+          if (
+            user.role === "counselor" ||
+            user.role === "counsellor" ||
+            user.userType === "counselor"
+          ) {
             counselorData = user;
           }
-        } catch (e) { }
+        } catch (e) {}
       }
     }
     return counselorData;
@@ -92,35 +113,62 @@ const SMSInput = () => {
       if (currentCounselor.id) return currentCounselor.id;
       if (currentCounselor.counselorId) return currentCounselor.counselorId;
     }
-    const storedId = localStorage.getItem("counselorId") || localStorage.getItem("counsellorId");
+    const storedId =
+      localStorage.getItem("counselorId") ||
+      localStorage.getItem("counsellorId");
     if (storedId) return storedId;
-    const sessionId = sessionStorage.getItem("counselorId") || sessionStorage.getItem("counsellorId");
+    const sessionId =
+      sessionStorage.getItem("counselorId") ||
+      sessionStorage.getItem("counsellorId");
     if (sessionId) return sessionId;
     return "69c679b6e0e8f0800ff08fd1";
   };
 
   const currentCounselor = getCurrentCounselor();
   const COUNSELOR_ID = getCounselorId();
-  const COUNSELOR_NAME = currentCounselor?.name || currentCounselor?.fullName || "Counselor";
+  const COUNSELOR_NAME =
+    currentCounselor?.name || currentCounselor?.fullName || "Counselor";
 
   const getSelectedUserId = () => {
     if (!selectedUser) return null;
-    return selectedUser.receiverId || selectedUser._id || selectedUser.id ||
-      selectedUser.userId || selectedUser.user_id || selectedUser.user?._id ||
-      selectedUser.user?.id || selectedUser.user?.userId || selectedUser.otherParty?._id ||
-      selectedUser.otherParty?.id || null;
+    return (
+      selectedUser.receiverId ||
+      selectedUser._id ||
+      selectedUser.id ||
+      selectedUser.userId ||
+      selectedUser.user_id ||
+      selectedUser.user?._id ||
+      selectedUser.user?.id ||
+      selectedUser.user?.userId ||
+      selectedUser.otherParty?._id ||
+      selectedUser.otherParty?.id ||
+      null
+    );
   };
 
   const getUserDetails = () => {
     const id = getSelectedUserId();
     return {
       id,
-      name: selectedUser?.name || selectedUser?.fullName || selectedUser?.user?.name ||
-        selectedUser?.otherParty?.name || "User",
-      gender: selectedUser?.gender || selectedUser?.user?.gender || selectedUser?.otherParty?.gender,
-      phone: selectedUser?.phone || selectedUser?.phoneNumber || selectedUser?.user?.phone ||
+      name:
+        selectedUser?.name ||
+        selectedUser?.fullName ||
+        selectedUser?.user?.name ||
+        selectedUser?.otherParty?.name ||
+        "User",
+      gender:
+        selectedUser?.gender ||
+        selectedUser?.user?.gender ||
+        selectedUser?.otherParty?.gender,
+      phone:
+        selectedUser?.phone ||
+        selectedUser?.phoneNumber ||
+        selectedUser?.user?.phone ||
         selectedUser?.otherParty?.phone,
-      email: selectedUser?.email || selectedUser?.user?.email || selectedUser?.otherParty?.email,
+      email:
+        selectedUser?.email ||
+        selectedUser?.user?.email ||
+        selectedUser?.otherParty?.email,
     };
   };
 
@@ -147,30 +195,45 @@ const SMSInput = () => {
       const token = localStorage.getItem("token");
       setIsLoadingMessages(true);
       setError(null);
-      const response = await axios.get(`${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`, {
-        headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
-      });
+      const response = await axios.get(
+        `${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: token ? `Bearer ${token}` : "",
+          },
+        },
+      );
       if (response.data && response.data.messages) {
         if (response.data.chatStatus) setChatStatus(response.data.chatStatus);
-        const transformedMessages = response.data.messages.map((msg, index) => ({
-          id: msg.id || index,
-          messageId: msg.messageId,
-          text: msg.content,
-          sender: msg.senderRole === "counsellor" ? "me" : "user",
-          senderRole: msg.senderRole,
-          time: new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          fullTime: msg.createdAt,
-          contentType: msg.contentType,
-          attachmentUrl: msg.attachmentUrl || null,
-          attachmentName: msg.attachmentName || null,
-          isRead: msg.isRead,
-          status: "sent",
-        }));
+        const transformedMessages = response.data.messages.map(
+          (msg, index) => ({
+            id: msg.id || index,
+            messageId: msg.messageId,
+            text: msg.content,
+            sender: msg.senderRole === "counsellor" ? "me" : "user",
+            senderRole: msg.senderRole,
+            time: new Date(msg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            fullTime: msg.createdAt,
+            contentType: msg.contentType,
+            attachmentUrl: msg.attachmentUrl || null,
+            attachmentName: msg.attachmentName || null,
+            isRead: msg.isRead,
+            status: "sent",
+          }),
+        );
         setMessages(transformedMessages);
         saveMessagesToLocalStorage(transformedMessages);
       }
     } catch (error) {
       console.error("Error fetching messages:", error);
+      if (error?.response?.status === 401) {
+        handleSessionExpired();
+        return;
+      }
       loadMessagesFromLocalStorage();
     } finally {
       setIsLoadingMessages(false);
@@ -181,12 +244,21 @@ const SMSInput = () => {
     try {
       const savedChats = JSON.parse(localStorage.getItem("smsChats") || "[]");
       const chatIdToSave = getChatIdForAPI();
-      const existingChatIndex = savedChats.findIndex((chat) => chat.chatId === chatIdToSave);
-      const chatData = { chatId: chatIdToSave, userId: USER_ID, userName: USER_NAME, messages: messagesToSave, chatStatus, lastUpdated: new Date().toISOString() };
+      const existingChatIndex = savedChats.findIndex(
+        (chat) => chat.chatId === chatIdToSave,
+      );
+      const chatData = {
+        chatId: chatIdToSave,
+        userId: USER_ID,
+        userName: USER_NAME,
+        messages: messagesToSave,
+        chatStatus,
+        lastUpdated: new Date().toISOString(),
+      };
       if (existingChatIndex >= 0) savedChats[existingChatIndex] = chatData;
       else savedChats.push(chatData);
       localStorage.setItem("smsChats", JSON.stringify(savedChats));
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const loadMessagesFromLocalStorage = () => {
@@ -195,7 +267,7 @@ const SMSInput = () => {
       const chatIdToLoad = getChatIdForAPI();
       const savedChat = savedChats.find((chat) => chat.chatId === chatIdToLoad);
       if (savedChat && savedChat.messages) setMessages(savedChat.messages);
-    } catch (error) { }
+    } catch (error) {}
   };
 
   const sendMessageToAPI = async ({ messageContent = "", file = null }) => {
@@ -205,20 +277,35 @@ const SMSInput = () => {
       let response;
       if (file) {
         const formData = new FormData();
-        if (messageContent.trim()) formData.append("content", messageContent.trim());
+        if (messageContent.trim())
+          formData.append("content", messageContent.trim());
         formData.append("attachment", file);
-        response = await axios.post(`${API_BASE_URL}/api/chat/chat/${apiChatId}/message`, formData, {
-          headers: { Authorization: token ? `Bearer ${token}` : "" },
-        });
+        response = await axios.post(
+          `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
+          formData,
+          {
+            headers: { Authorization: token ? `Bearer ${token}` : "" },
+          },
+        );
       } else {
-        response = await axios.post(`${API_BASE_URL}/api/chat/chat/${apiChatId}/message`, { content: messageContent }, {
-          headers: { "Content-Type": "application/json", Authorization: token ? `Bearer ${token}` : "" },
-        });
+        response = await axios.post(
+          `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
+          { content: messageContent },
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          },
+        );
       }
       if (response.data && response.data.success) return response.data.message;
       else throw new Error("Invalid API response");
     } catch (error) {
       console.error("Error sending message:", error);
+      if (error?.response?.status === 401) {
+        handleSessionExpired();
+      }
       throw error;
     }
   };
@@ -232,7 +319,10 @@ const SMSInput = () => {
       text: messageText,
       sender: "me",
       senderRole: "counsellor",
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
       createdAt: new Date().toISOString(),
       status: "sending",
       isTemporary: true,
@@ -247,25 +337,46 @@ const SMSInput = () => {
       setMessages((prev) => {
         const withoutTemp = prev.filter((m) => !m.isTemporary);
         if (!sentMsg) return withoutTemp;
-        const alreadyHas = withoutTemp.some((m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId);
+        const alreadyHas = withoutTemp.some(
+          (m) =>
+            m.messageId &&
+            sentMsg.messageId &&
+            m.messageId === sentMsg.messageId,
+        );
         if (alreadyHas) return withoutTemp;
-        return [...withoutTemp, {
-          id: sentMsg.id || sentMsg._id,
-          messageId: sentMsg.messageId,
-          text: sentMsg.content,
-          sender: "me",
-          senderRole: "counsellor",
-          time: new Date(sentMsg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-          fullTime: sentMsg.createdAt,
-          contentType: sentMsg.contentType,
-          isRead: sentMsg.isRead,
-          status: "sent",
-        }];
+        return [
+          ...withoutTemp,
+          {
+            id: sentMsg.id || sentMsg._id,
+            messageId: sentMsg.messageId,
+            text: sentMsg.content,
+            sender: "me",
+            senderRole: "counsellor",
+            time: new Date(sentMsg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            fullTime: sentMsg.createdAt,
+            contentType: sentMsg.contentType,
+            isRead: sentMsg.isRead,
+            status: "sent",
+          },
+        ];
       });
     } catch (err) {
-      setMessages((prev) => prev.map((msg) => msg.id === tempMessage.id ? { ...msg, status: "error" } : msg));
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempMessage.id ? { ...msg, status: "error" } : msg,
+        ),
+      );
       setError("Failed to send message");
-      setTimeout(() => setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id)), 3000);
+      setTimeout(
+        () =>
+          setMessages((prev) =>
+            prev.filter((msg) => msg.id !== tempMessage.id),
+          ),
+        3000,
+      );
     } finally {
       setIsSending(false);
       focusMessageInput();
@@ -280,9 +391,14 @@ const SMSInput = () => {
     }
   };
 
-  useEffect(() => { if (!isSending) focusMessageInput(); }, [isSending]);
+  useEffect(() => {
+    if (!isSending) focusMessageInput();
+  }, [isSending]);
 
-  const handleFileAttachClick = () => { if (isSending) return; fileInputRef.current?.click(); };
+  const handleFileAttachClick = () => {
+    if (isSending) return;
+    fileInputRef.current?.click();
+  };
 
   const handleFileSelected = async (e) => {
     const file = e.target.files?.[0];
@@ -292,7 +408,10 @@ const SMSInput = () => {
       text: file.name,
       sender: "me",
       senderRole: "counsellor",
-      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
       contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE",
       status: "sending",
       isTemporary: true,
@@ -303,7 +422,11 @@ const SMSInput = () => {
       await sendMessageToAPI({ file });
       setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
     } catch (err) {
-      setMessages((prev) => prev.map((msg) => msg.id === tempFileMessage.id ? { ...msg, status: "error" } : msg));
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === tempFileMessage.id ? { ...msg, status: "error" } : msg,
+        ),
+      );
       setError("Failed to send file");
     } finally {
       setIsSending(false);
@@ -312,15 +435,25 @@ const SMSInput = () => {
   };
 
   const initiateStreamCall = async (requestedCallType = "video") => {
-    const normalizedMode = requestedCallType === "audio" || requestedCallType === "voice" ? "voice" : "video";
-    if (!selectedUser) { setCallError("No user selected for call"); return; }
+    const normalizedMode =
+      requestedCallType === "audio" || requestedCallType === "voice"
+        ? "voice"
+        : "video";
+    if (!selectedUser) {
+      setCallError("No user selected for call");
+      return;
+    }
     const counselorId = getCounselorId();
     const userId = getSelectedUserId();
-    if (!counselorId || !userId) { setCallError("Missing user information"); return; }
+    if (!counselorId || !userId) {
+      setCallError("Missing user information");
+      return;
+    }
     setIsInitiatingCall(true);
     setCallError(null);
     try {
-      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       if (!token) throw new Error("Authentication token not found");
       const requestBody = {
         initiatorId: counselorId,
@@ -329,9 +462,16 @@ const SMSInput = () => {
         receiverType: "user",
         callType: normalizedMode === "voice" ? "audio" : "video",
       };
-      const response = await axios.post(`${API_BASE_URL}/api/video/calls/initiate`, requestBody, {
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/api/video/calls/initiate`,
+        requestBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
       if (response.data && response.data.success) {
         const callData = {
           id: response.data.callData?.id,
@@ -344,17 +484,26 @@ const SMSInput = () => {
           phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
           status: response.data.status || "ringing",
           date: "Today",
-          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          time: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
           apiCallData: response.data.callData,
         };
         setSelectedCall(callData);
         setIsVideoModalOpen(true);
       } else {
-        throw new Error(response.data?.message || `Failed to initiate ${normalizedMode} call`);
+        throw new Error(
+          response.data?.message || `Failed to initiate ${normalizedMode} call`,
+        );
       }
     } catch (error) {
       console.error("Call initiation error:", error);
-      setCallError(error.response?.data?.message || error.message || "Failed to initiate call");
+      setCallError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to initiate call",
+      );
     } finally {
       setIsInitiatingCall(false);
     }
@@ -550,7 +699,9 @@ const SMSInput = () => {
         },
       );
       return true;
-    } catch (error) { return true; }
+    } catch (error) {
+      return true;
+    }
   };
 
   useEffect(() => {
@@ -644,7 +795,9 @@ const SMSInput = () => {
             name: displayName,
             avatar: avatar,
             callType: waitingCall.callType || "video",
-            requestMessage: waitingCall.requestMessage || `Incoming ${waitingCall.callType || "video"} call...`,
+            requestMessage:
+              waitingCall.requestMessage ||
+              `Incoming ${waitingCall.callType || "video"} call...`,
           });
           setShowIncomingModal(true);
         } else if (showIncomingModal) {
@@ -657,7 +810,9 @@ const SMSInput = () => {
             callType: "video",
           });
         }
-      } catch (error) { console.error("Error polling for calls:", error); }
+      } catch (error) {
+        console.error("Error polling for calls:", error);
+      }
     };
     intervalId = setInterval(fetchIncomingCalls, 5000);
     return () => {
@@ -686,41 +841,80 @@ const SMSInput = () => {
     };
   }, [stopRinging]);
 
-  const handleCloseModal = () => { setIsVideoModalOpen(false); setSelectedCall(null); setCallError(null); };
-  const handleBack = () => navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
-  const getAvatarIcon = (gender) => { if (gender === "male") return "👨"; if (gender === "female") return "👩"; return "👤"; };
-  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  useEffect(() => { scrollToBottom(); }, [messages]);
-  useEffect(() => { if (selectedUser && COUNSELOR_ID) fetchMessagesFromAPI(); }, [selectedUser, chatId, COUNSELOR_ID]);
-  useEffect(() => { if (callError) { const timer = setTimeout(() => setCallError(null), 5000); return () => clearTimeout(timer); } }, [callError]);
+  const handleCloseModal = () => {
+    setIsVideoModalOpen(false);
+    setSelectedCall(null);
+    setCallError(null);
+  };
+  const handleBack = () =>
+    navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
+  const getAvatarIcon = (gender) => {
+    if (gender === "male") return "👨";
+    if (gender === "female") return "👩";
+    return "👤";
+  };
+  const scrollToBottom = () =>
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+  useEffect(() => {
+    if (selectedUser && COUNSELOR_ID) fetchMessagesFromAPI();
+  }, [selectedUser, chatId, COUNSELOR_ID]);
+  useEffect(() => {
+    if (callError) {
+      const timer = setTimeout(() => setCallError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [callError]);
 
   // Socket connection
   useEffect(() => {
     const apiChatId = chatId;
     if (!apiChatId || !selectedUser) return;
-    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
     if (!token) return;
-    const socket = io(API_BASE_URL, { auth: { token }, transports: ["websocket", "polling"] });
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+    });
     chatSocketRef.current = socket;
-    socket.on("connect", () => { socket.emit("join-chat", { chatId: apiChatId }); });
+    socket.on("connect", () => {
+      socket.emit("join-chat", { chatId: apiChatId });
+    });
     socket.on("new-message", (messageData) => {
-      if (messageData.senderRole === "counsellor" && String(messageData.senderId) === String(COUNSELOR_ID)) {
+      if (
+        messageData.senderRole === "counsellor" &&
+        String(messageData.senderId) === String(COUNSELOR_ID)
+      ) {
         setMessages((prev) => {
           const withoutTemp = prev.filter((msg) => !msg.isTemporary);
-          const alreadyHas = withoutTemp.some((msg) => msg.messageId && messageData.messageId && msg.messageId === messageData.messageId);
+          const alreadyHas = withoutTemp.some(
+            (msg) =>
+              msg.messageId &&
+              messageData.messageId &&
+              msg.messageId === messageData.messageId,
+          );
           if (alreadyHas) return withoutTemp;
-          return [...withoutTemp, {
-            id: messageData.id || messageData.messageId,
-            messageId: messageData.messageId,
-            text: messageData.content,
-            sender: "me",
-            senderRole: "counsellor",
-            time: new Date(messageData.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-            fullTime: messageData.createdAt,
-            contentType: messageData.contentType,
-            isRead: messageData.isRead,
-            status: "sent",
-          }];
+          return [
+            ...withoutTemp,
+            {
+              id: messageData.id || messageData.messageId,
+              messageId: messageData.messageId,
+              text: messageData.content,
+              sender: "me",
+              senderRole: "counsellor",
+              time: new Date(messageData.createdAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              fullTime: messageData.createdAt,
+              contentType: messageData.contentType,
+              isRead: messageData.isRead,
+              status: "sent",
+            },
+          ];
         });
         return;
       }
@@ -730,14 +924,22 @@ const SMSInput = () => {
         text: messageData.content,
         sender: "user",
         senderRole: messageData.senderRole,
-        time: new Date(messageData.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        time: new Date(messageData.createdAt).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         fullTime: messageData.createdAt,
         contentType: messageData.contentType,
         isRead: messageData.isRead,
         status: "sent",
       };
       setMessages((prev) => {
-        const isDuplicate = prev.some((msg) => msg.messageId && messageData.messageId && msg.messageId === messageData.messageId);
+        const isDuplicate = prev.some(
+          (msg) =>
+            msg.messageId &&
+            messageData.messageId &&
+            msg.messageId === messageData.messageId,
+        );
         if (isDuplicate) return prev;
         return [...prev, transformedMessage];
       });
@@ -812,9 +1014,12 @@ const SMSInput = () => {
   const renderMessageStatus = (message) => {
     if (message.sender !== "me") return null;
     switch (message.status) {
-      case "sending": return <span className="msg-status sending">⌛</span>;
-      case "error": return <span className="msg-status error">⚠️</span>;
-      default: return null;
+      case "sending":
+        return <span className="msg-status sending">⌛</span>;
+      case "error":
+        return <span className="msg-status error">⚠️</span>;
+      default:
+        return null;
     }
   };
 
@@ -825,7 +1030,9 @@ const SMSInput = () => {
           <span className="empty-icon">💬</span>
           <h3>No user selected</h3>
           <p>Please select a user from the list to start messaging</p>
-          <button className="back-to-list-btn" onClick={handleBack}>← Back to SMS List</button>
+          <button className="back-to-list-btn" onClick={handleBack}>
+            ← Back to SMS List
+          </button>
         </div>
       </div>
     );
@@ -836,15 +1043,32 @@ const SMSInput = () => {
       {/* Header */}
       <div className="smsinput-header">
         <div className="header-left">
-          <button className="back-button" onClick={handleBack} title="Back to SMS List">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor" />
+          <button
+            className="back-button"
+            onClick={handleBack}
+            title="Back to SMS List"
+          >
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z"
+                fill="currentColor"
+              />
             </svg>
           </button>
           <div className="smsinput-user-info">
             <div className="smsinput-user-avatar">
-              <span className="avatar-icon">{getAvatarIcon(userDetails.gender)}</span>
-              <span className={`status-dot ${selectedUser.status || "online"}`}></span>
+              <span className="avatar-icon">
+                {getAvatarIcon(userDetails.gender)}
+              </span>
+              <span
+                className={`status-dot ${selectedUser.status || "online"}`}
+              ></span>
             </div>
             <div className="smsinput-user-details">
               <h3>{USER_NAME}</h3>
@@ -852,10 +1076,20 @@ const SMSInput = () => {
           </div>
         </div>
         <div className="smsinput-call-buttons">
-          <button className={`call-btn voice ${isInitiatingCall ? "loading" : ""}`} onClick={handleVoiceCall} disabled={isInitiatingCall} title="Voice call">
+          <button
+            className={`call-btn voice ${isInitiatingCall ? "loading" : ""}`}
+            onClick={handleVoiceCall}
+            disabled={isInitiatingCall}
+            title="Voice call"
+          >
             <span className="call-icon">{isInitiatingCall ? "⏳" : "📞"}</span>
           </button>
-          <button className={`call-btn video ${isInitiatingCall ? "loading" : ""}`} onClick={handleVideoCall} disabled={isInitiatingCall} title="Video call">
+          <button
+            className={`call-btn video ${isInitiatingCall ? "loading" : ""}`}
+            onClick={handleVideoCall}
+            disabled={isInitiatingCall}
+            title="Video call"
+          >
             <span className="call-icon">{isInitiatingCall ? "⏳" : "📹"}</span>
           </button>
         </div>
@@ -866,31 +1100,69 @@ const SMSInput = () => {
         <div className="sms-call-error-banner">
           <span className="error-icon">⚠️</span>
           <span className="error-text">{callError}</span>
-          <button className="error-close" onClick={() => setCallError(null)}>✕</button>
+          <button className="error-close" onClick={() => setCallError(null)}>
+            ✕
+          </button>
         </div>
       )}
 
       {/* Messages Area */}
       <div className="smsinput-messages" ref={messagesContainerRef}>
         {isLoadingMessages && messages.length === 0 ? (
-          <div className="sms-loading-messages"><div className="sms-loading-spinner"></div><p>Loading messages...</p></div>
+          <div className="sms-loading-messages">
+            <div className="sms-loading-spinner"></div>
+            <p>Loading messages...</p>
+          </div>
         ) : error && messages.length === 0 ? (
-          <div className="sms-error-message"><span className="error-icon">⚠️</span><p>{error}</p><button onClick={fetchMessagesFromAPI} className="retry-btn">Retry</button></div>
+          <div className="sms-error-message">
+            <span className="error-icon">⚠️</span>
+            <p>{error}</p>
+            <button onClick={fetchMessagesFromAPI} className="retry-btn">
+              Retry
+            </button>
+          </div>
         ) : messages.length === 0 ? (
-          <div className="sms-empty-messages"><span className="empty-messages-icon">💬</span><p>No messages yet</p><p className="empty-messages-subtext">Start a conversation by sending a message</p></div>
+          <div className="sms-empty-messages">
+            <span className="empty-messages-icon">💬</span>
+            <p>No messages yet</p>
+            <p className="empty-messages-subtext">
+              Start a conversation by sending a message
+            </p>
+          </div>
         ) : (
           messages.map((msg) => (
-            <div key={msg.id} className={`smsinput-message ${msg.sender === "me" ? "sent" : "received"}`}>
+            <div
+              key={msg.id}
+              className={`smsinput-message ${msg.sender === "me" ? "sent" : "received"}`}
+            >
               <div className="message-bubble">
                 {msg.contentType === "IMAGE" && msg.attachmentUrl ? (
                   <>
-                    <img src={msg.attachmentUrl} alt={msg.attachmentName || "Shared image"} className="sms-attachment-image" />
-                    <a href={msg.attachmentUrl} target="_blank" rel="noreferrer" className="sms-attachment-link">{msg.attachmentName || "Open image"}</a>
+                    <img
+                      src={msg.attachmentUrl}
+                      alt={msg.attachmentName || "Shared image"}
+                      className="sms-attachment-image"
+                    />
+                    <a
+                      href={msg.attachmentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="sms-attachment-link"
+                    >
+                      {msg.attachmentName || "Open image"}
+                    </a>
                     {msg.text && <p className="message-text">{msg.text}</p>}
                   </>
                 ) : msg.contentType === "FILE" && msg.attachmentUrl ? (
                   <>
-                    <a href={msg.attachmentUrl} target="_blank" rel="noreferrer" className="sms-attachment-link">{msg.attachmentName || msg.text || "Open attachment"}</a>
+                    <a
+                      href={msg.attachmentUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="sms-attachment-link"
+                    >
+                      {msg.attachmentName || msg.text || "Open attachment"}
+                    </a>
                     {msg.text && <p className="message-text">{msg.text}</p>}
                   </>
                 ) : (
@@ -907,7 +1179,11 @@ const SMSInput = () => {
         {remoteIsTyping && (
           <div className="smsinput-message received">
             <div className="message-bubble typing-bubble">
-              <div className="typing-dots"><span></span><span></span><span></span></div>
+              <div className="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
           </div>
         )}
@@ -917,10 +1193,36 @@ const SMSInput = () => {
       {/* Input Form */}
       <form className="smsinput-form" onSubmit={handleSendMessage}>
         <div className="smsinput-input-wrapper">
-          <input ref={fileInputRef} type="file" style={{ display: "none" }} onChange={handleFileSelected} />
-          <button type="button" className="attach-btn" title="Attach file" disabled={isSending} onClick={handleFileAttachClick}>📎</button>
-          <input type="text" ref={messageInputRef} className="smsinput-input" placeholder={isSending ? "Sending..." : "Type your message..."} value={message} onChange={(e) => setMessage(e.target.value)} onKeyDown={handleInputKeyDown} disabled={isSending} />
-          <button type="submit" className={`send-btn ${message.trim() && !isSending ? "active" : ""}`} disabled={!message.trim() || isSending}>
+          <input
+            ref={fileInputRef}
+            type="file"
+            style={{ display: "none" }}
+            onChange={handleFileSelected}
+          />
+          <button
+            type="button"
+            className="attach-btn"
+            title="Attach file"
+            disabled={isSending}
+            onClick={handleFileAttachClick}
+          >
+            📎
+          </button>
+          <input
+            type="text"
+            ref={messageInputRef}
+            className="smsinput-input"
+            placeholder={isSending ? "Sending..." : "Type your message..."}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleInputKeyDown}
+            disabled={isSending}
+          />
+          <button
+            type="submit"
+            className={`send-btn ${message.trim() && !isSending ? "active" : ""}`}
+            disabled={!message.trim() || isSending}
+          >
             {isSending ? "Sending..." : "Send"}
           </button>
         </div>

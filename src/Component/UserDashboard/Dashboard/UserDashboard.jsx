@@ -114,40 +114,40 @@ const ChatPopup = ({
               )}
             </div>
           ))}
-        {isLoading && (
-          <div className="ud-chat-message-wrapper ai">
-            <div className="ud-chat-avatar ud-small">
-              <FaRobot />
-            </div>
-            <div className="ud-chat-bubble">
-              <div className="ud-loading-dots">
-                <span></span>
-                <span></span>
-                <span></span>
+          {isLoading && (
+            <div className="ud-chat-message-wrapper ai">
+              <div className="ud-chat-avatar ud-small">
+                <FaRobot />
+              </div>
+              <div className="ud-chat-bubble">
+                <div className="ud-loading-dots">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-      <div className="ud-chat-popup-footer">
-        <input
-          type="text"
-          placeholder="Type your message..."
-          value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
-          onKeyPress={handleKeyPress}
-          className="ud-chat-input"
-        />
-        <button
-          className="ud-send-btn"
-          onClick={sendMessage}
-          disabled={isLoading || !newMessage.trim()}
-        >
-          <FaPaperPlane />
-        </button>
+          )}
+        </div>
+        <div className="ud-chat-popup-footer">
+          <input
+            type="text"
+            placeholder="Type your message..."
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyPress={handleKeyPress}
+            className="ud-chat-input"
+          />
+          <button
+            className="ud-send-btn"
+            onClick={sendMessage}
+            disabled={isLoading || !newMessage.trim()}
+          >
+            <FaPaperPlane />
+          </button>
+        </div>
       </div>
     </div>
-  </div>
   );
 };
 
@@ -338,8 +338,8 @@ export default function UserDashboard() {
           const currentIncomingId = callerInfo?.callId;
           const stillWaiting = currentIncomingId
             ? callsList.some(
-              (c) => (c.callId || c.id || c._id) === currentIncomingId,
-            )
+                (c) => (c.callId || c.id || c._id) === currentIncomingId,
+              )
             : false;
 
           if (showCallModal && currentIncomingId && !stillWaiting) {
@@ -513,10 +513,13 @@ export default function UserDashboard() {
           content: msg.text,
         }));
 
-        const response = await axiosInstance.post(`${API_BASE_URL}/api/ai-chat`, {
-          message: userMessage.text,
-          history: history,
-        });
+        const response = await axiosInstance.post(
+          `${API_BASE_URL}/api/ai-chat`,
+          {
+            message: userMessage.text,
+            history: history,
+          },
+        );
 
         if (response.data && response.data.success) {
           const aiResponse = {
@@ -650,10 +653,11 @@ export default function UserDashboard() {
 
       const response = await axiosInstance.post(
         `${API_BASE_URL}/api/auth/logout`,
-        { refreshToken: refreshToken },
+        { refreshToken },
         {
+          withCredentials: true,
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
             "Content-Type": "application/json",
           },
         },

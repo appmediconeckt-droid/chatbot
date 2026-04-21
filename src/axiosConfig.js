@@ -1,4 +1,3 @@
-
 import axios from "axios";
 
 const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
@@ -59,12 +58,15 @@ axiosInstance.interceptors.response.use(
           { withCredentials: true },
         );
 
-        const { accessToken } = response.data;
+        const { accessToken, refreshToken } = response.data;
 
         if (!accessToken) throw new Error("No access token");
 
         // ✅ Save new token
         localStorage.setItem("accessToken", accessToken);
+        if (refreshToken) {
+          localStorage.setItem("refreshToken", refreshToken);
+        }
 
         // ✅ Update queue
         processQueue(null, accessToken);
@@ -79,8 +81,13 @@ axiosInstance.interceptors.response.use(
         processQueue(refreshError, null);
 
         localStorage.removeItem("accessToken");
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        sessionStorage.clear();
 
-        // logout redirect
+        if (typeof window !== "undefined") {
+          window.location.replace("/role-selector");
+        }
 
         return Promise.reject(refreshError);
       } finally {

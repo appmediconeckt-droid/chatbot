@@ -195,7 +195,7 @@ const OTPVerification = () => {
 
             {/* ✅ TIMER */}
             <div>
-              {canResend ? (
+              {canResend ? (  
                 <button onClick={handleResendOtp}>
                   Resend OTP
                 </button>
