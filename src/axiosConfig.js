@@ -1,17 +1,19 @@
 import axios from "axios";
 
-const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL;
-
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://chatbot-backend-js25.onrender.com";
+console.log(envApiBaseUrl);
 if (!envApiBaseUrl) {
   throw new Error(
     "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",
   );
 }
 
-export const API_BASE_URL = envApiBaseUrl.replace(/\/+$/, "");
+export const VITE_API_BASE_URL = envApiBaseUrl.replace(/\/+$/, "");
+
+export const API_BASE_URL = VITE_API_BASE_URL;
 
 const axiosInstance = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: VITE_API_BASE_URL,
   withCredentials: true, // ✅ MUST
 });
 
@@ -79,7 +81,7 @@ axiosInstance.interceptors.response.use(
         const storedRefreshToken = localStorage.getItem("refreshToken");
 
         const response = await axios.post(
-          `${API_BASE_URL}/api/auth/refresh-token`,
+          `${VITE_API_BASE_URL}/api/auth/refresh-token`,
           { refreshToken: storedRefreshToken },
           { withCredentials: true },
         );
