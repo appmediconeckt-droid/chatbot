@@ -11,6 +11,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./UserSignup.css";
 import logo from "../image/Mediconect Logo-3.png";
@@ -65,6 +66,15 @@ const UserSignup = () => {
     message: "",
     type: "",
   });
+
+  const location = useLocation();
+  const roleFromState = location.state?.role;
+
+  useEffect(() => {
+    if (roleFromState) {
+      localStorage.setItem("role", roleFromState);
+    }
+  }, [roleFromState]);
 
   useEffect(() => {
     let interval;
@@ -388,10 +398,26 @@ const UserSignup = () => {
 
     localStorage.setItem("isAuthenticated", "true");
     localStorage.setItem("userType", "user");
+    // Store user role if provided in response
+    const role =
+      data?.role ||
+      data?.user?.role ||
+      (data?.user?.role ? data.user.role : null);
+    if (role) {
+      localStorage.setItem("userRole", role);
+    }
+    // Store tokens from response if present
+    if (data?.accessToken) {
+      localStorage.setItem("accessToken", data.accessToken);
+    }
+    if (data?.refreshToken) {
+      localStorage.setItem("refreshToken", data.refreshToken);
+    }
+    if (token) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("accessToken", token);
+    }
     localStorage.setItem("userEmail", formData.email);
-    localStorage.setItem("token", token);
-    localStorage.setItem("accessToken", token);
-    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
     if (data?.user) localStorage.setItem("userData", JSON.stringify(data.user));
     if (data?.user?._id) localStorage.setItem("userId", data.user._id);
 
@@ -400,11 +426,14 @@ const UserSignup = () => {
 
   const handleLogin = async () => {
     try {
+      // Always send role for login to match backend expectation
+      const role = roleFromState || localStorage.getItem("role") || "user";
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
+          role,
         },
         { withCredentials: true },
       );
@@ -518,6 +547,11 @@ const UserSignup = () => {
           localStorage.setItem("userEmail", formData.email);
           localStorage.setItem("token", token);
           localStorage.setItem("accessToken", token);
+          // Store role from response if present
+          const signupRole = response.data?.role || response.data?.user?.role;
+          if (signupRole) {
+            localStorage.setItem("userRole", signupRole);
+          }
         }
 
         if (response.data.user?._id) {
@@ -676,9 +710,9 @@ const UserSignup = () => {
 
   const toggleMode = () => {
     if (isAnimating) return;
-    
+
     setIsAnimating(true);
-    
+
     setTimeout(() => {
       setIsLogin(!isLogin);
       setErrors({});
@@ -700,7 +734,7 @@ const UserSignup = () => {
         confirmPassword: "",
       });
       setNotification({ show: false, message: "", type: "" });
-      
+
       setTimeout(() => {
         setIsAnimating(false);
       }, 500);
@@ -914,7 +948,9 @@ const UserSignup = () => {
       {showEmailOtpModal && <EmailOtpModal />}
       {showPhoneOtpModal && <PhoneOtpModal />}
 
-      <div className={`us-container ${isLogin ? "us-login-layout" : "us-signup-layout"}`}>
+      <div
+        className={`us-container ${isLogin ? "us-login-layout" : "us-signup-layout"}`}
+      >
         <div className="us-brand">
           <div className="us-brand-content">
             <div className="us-logo">

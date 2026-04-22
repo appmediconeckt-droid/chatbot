@@ -21,11 +21,12 @@ export const getVerificationStatus = () => {
 // Store access token
 export const setAccessToken = (token) => {
   localStorage.setItem('accessToken', token);
+  localStorage.setItem('token', token);
 };
 
 // Get access token
 export const getAccessToken = () => {
-  return localStorage.getItem('accessToken');
+  return localStorage.getItem('accessToken') || localStorage.getItem('token');
 };
 
 // Clear all auth data (logout)
@@ -33,4 +34,5 @@ export const clearAuthData = () => {
   localStorage.removeItem('userEmail');
   localStorage.removeItem('isVerified');
   localStorage.removeItem('accessToken');
+  localStorage.removeItem('token');
 };

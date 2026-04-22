@@ -15,6 +15,17 @@ const axiosInstance = axios.create({
   withCredentials: true, // ✅ MUST
 });
 
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -30,6 +41,20 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+    const requestUrl = originalRequest?.url || "";
+
+    // ✅ Exclude auth endpoints from refresh logic
+    if (
+      requestUrl.includes("/api/auth/login") ||
+      requestUrl.includes("/api/auth/refresh-token") ||
+      requestUrl.includes("/api/auth/verify-login-otp") ||
+      requestUrl.includes("/api/auth/verifyOtp") ||
+      requestUrl.includes("/api/auth/logout-other-devices") ||
+      requestUrl.includes("/api/auth/generateOtp") ||
+      requestUrl.includes("/api/auth/resendOtp")
+    ) {
+      return Promise.reject(error);
+    }
 
     // ✅ ONLY handle 401
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -51,28 +76,31 @@ axiosInstance.interceptors.response.use(
 
       try {
         console.log("🔄 Calling refresh-token API");
+        const storedRefreshToken = localStorage.getItem("refreshToken");
 
         const response = await axios.post(
           `${API_BASE_URL}/api/auth/refresh-token`,
-          {},
+          { refreshToken: storedRefreshToken },
           { withCredentials: true },
         );
 
-        const { accessToken, refreshToken } = response.data;
+        const newToken = response.data.accessToken || response.data.token;
+        const newRefreshToken = response.data.refreshToken;
 
-        if (!accessToken) throw new Error("No access token");
+        if (!newToken) throw new Error("No access token returned from refresh");
 
         // ✅ Save new token
-        localStorage.setItem("accessToken", accessToken);
-        if (refreshToken) {
-          localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("accessToken", newToken);
+        localStorage.setItem("token", newToken);
+        if (newRefreshToken) {
+          localStorage.setItem("refreshToken", newRefreshToken);
         }
 
         // ✅ Update queue
-        processQueue(null, accessToken);
+        processQueue(null, newToken);
 
         // ✅ Retry original request
-        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {

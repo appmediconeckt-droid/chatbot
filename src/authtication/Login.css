@@ -87,3 +87,29 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+.conflict-close-button {
+  background: transparent;
+  color: #666;
+  border: 1px solid #ccc;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+.otp-resend-link {
+  color: #1976d2;
+  font-size: 0.85rem;
+  cursor: pointer;
+  margin-top: 0.8rem;
+  text-decoration: underline;
+}
+
+.otp-resend-link.disabled {
+  color: #999;
+  cursor: not-allowed;
+  text-decoration: none;
+}

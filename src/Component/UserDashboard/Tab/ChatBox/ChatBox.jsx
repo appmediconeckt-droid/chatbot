@@ -468,7 +468,7 @@ const ChatBox = () => {
   const fetchMessagesFromAPI = async () => {
     try {
       const apiChatId = getChatIdForAPI();
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       setIsLoadingMessages(true);
       const response = await axios.get(`${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`, {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -518,7 +518,7 @@ const ChatBox = () => {
   const sendMessageToAPI = async ({ messageContent = "", file = null }) => {
     try {
       const apiChatId = getChatIdForAPI();
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       let response;
       if (file) {
         const formData = new FormData();
@@ -607,7 +607,7 @@ const ChatBox = () => {
     setIsInitiatingCall(true);
     setCallError(null);
     try {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       const initiatorId = resolveCurrentUserId();
       const initiatorType = "user";
       const receiverId = resolveCounselorId();

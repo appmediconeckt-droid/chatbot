@@ -111,8 +111,24 @@ const OTPVerification = () => {
 
       if (res.data.success) {
         localStorage.setItem('accessToken', res.data.token);
-        updateVerificationStatus(true);
+        localStorage.setItem('token', res.data.token);
+        if (res.data.refreshToken) {
+          localStorage.setItem('refreshToken', res.data.refreshToken);
+        }
+        
+        localStorage.setItem('userRole', 'user'); // OTPVerification seems specific to users
+        localStorage.setItem('isAuthenticated', 'true');
+        localStorage.setItem('userEmail', email);
+        
+        const user = res.data.user || {};
+        localStorage.setItem('userData', JSON.stringify(user));
+        
+        const id = user._id || user.id || res.data.userId;
+        if (id) {
+          localStorage.setItem('userId', id);
+        }
 
+        updateVerificationStatus(true);
         setSuccess('Login successful');
 
         setTimeout(() => navigate('/user-dashboard'), 1500);

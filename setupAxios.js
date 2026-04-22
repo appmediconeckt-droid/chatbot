@@ -34,12 +34,15 @@ axios.interceptors.response.use(
     const originalRequest = error.config;
     const requestUrl = originalRequest?.url || "";
 
-    // Do not run refresh flow for login/refresh endpoints.
-    // Do not run refresh flow for login/refresh endpoints.
+    // ✅ Exclude auth endpoints from refresh logic
     if (
       requestUrl.includes("/api/auth/login") ||
       requestUrl.includes("/api/auth/refresh-token") ||
-      requestUrl.includes("/refresh-token")
+      requestUrl.includes("/api/auth/verify-login-otp") ||
+      requestUrl.includes("/api/auth/verifyOtp") ||
+      requestUrl.includes("/api/auth/logout-other-devices") ||
+      requestUrl.includes("/api/auth/generateOtp") ||
+      requestUrl.includes("/api/auth/resendOtp")
     ) {
       // Special handling for the one‑device conflict response (409)
       if (
@@ -95,9 +98,13 @@ axios.interceptors.response.use(
           { withCredentials: true },
         );
 
-        const newToken = response.data.accessToken;
+        const newToken = response.data.accessToken || response.data.token;
         const newRefreshToken = response.data.refreshToken;
-        localStorage.setItem("accessToken", newToken);
+        
+        if (newToken) {
+          localStorage.setItem("accessToken", newToken);
+          localStorage.setItem("token", newToken);
+        }
         if (newRefreshToken) {
           localStorage.setItem("refreshToken", newRefreshToken);
         }
