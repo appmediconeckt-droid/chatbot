@@ -23,6 +23,9 @@ const SMSInput = lazy(
   () => import("./Component/counselor-dashboard/Tab/SMSInput/SMSInput"),
 );
 const OTPVerification = lazy(() => import("./authtication/OTPVerification"));
+// const ResetPasswordRedirect = lazy(
+//   () => import("./authtication/ResetPasswordRedirect"),
+// );
 
 function App() {
   const navigate = useNavigate();

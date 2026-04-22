@@ -453,7 +453,7 @@ export default function UserDashboard() {
     const fetchUserData = async () => {
       try {
         const userId = localStorage.getItem("userId");
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
         if (!userId) return;
         const response = await axios.get(
           `${API_BASE_URL}/api/auth/getUser/${userId}`,

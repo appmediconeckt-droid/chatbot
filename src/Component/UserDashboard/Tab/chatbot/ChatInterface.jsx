@@ -139,9 +139,9 @@ const ChatInterface = ({ setActiveTab }) => {
             setError(null);
 
             // Get token from localStorage
-                const token = localStorage.getItem('accessToken');
-                if (!token) {
-                    console.log('No access token found');
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+            if (!token) {
+                console.log('No access token found');
                 setCounselors([]);
                 setLoading(false);
                 setInitialLoading(false);
@@ -155,10 +155,14 @@ const ChatInterface = ({ setActiveTab }) => {
                 });
 
                 const data = response.data;
+                console.log('Chat data received:', data);
 
-            if (data && data.chats && Array.isArray(data.chats)) {
-                // Transform API data to counselor list format
-                const counselorList = data.chats.map(chat => {
+                // Check for chats in multiple possible locations
+                const chatsArray = data.chats || data.data?.chats || (Array.isArray(data) ? data : []);
+
+                if (Array.isArray(chatsArray)) {
+                    // Transform API data to counselor list format
+                    const counselorList = chatsArray.map(chat => {
                     const otherParty = chat.otherParty || {};
                     const lastMessage = chat.lastMessage?.content || 'No messages yet';
                     const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
@@ -204,17 +208,20 @@ const ChatInterface = ({ setActiveTab }) => {
                     return timeB - timeA;
                 });
 
-                setCounselors(counselorList);
+                    console.log('Transformed counselor list:', counselorList);
+                    setCounselors(counselorList);
 
-                // Also save to localStorage for offline access
-                try {
-                    localStorage.setItem('activeChats', JSON.stringify(data.chats));
-                } catch (error) {
-                    console.error('Error saving chats to localStorage:', error);
+                    // Also save to localStorage for offline access
+                    try {
+                        localStorage.setItem('activeChats', JSON.stringify(chatsArray));
+                    } catch (error) {
+                        console.error('Error saving chats to localStorage:', error);
+                    }
+                } else {
+                    console.log('No valid chats array found in response');
+                    setCounselors([]);
+                    localStorage.setItem('activeChats', JSON.stringify([]));
                 }
-            } else {
-                setCounselors([]);
-            }
         } catch (error) {
             console.error('Error fetching chats:', error);
             setError(error.message);
@@ -284,7 +291,7 @@ const ChatInterface = ({ setActiveTab }) => {
     // Mark chat as read
     const markChatAsRead = useCallback(async (chatId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
             if (!token) return;
 
                 const response = await axiosInstance.post(`${API_BASE_URL}/api/chat/mark-all-read`, {
@@ -309,7 +316,7 @@ const ChatInterface = ({ setActiveTab }) => {
     // Delete chat
     const deleteChat = useCallback(async (chatId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
             if (!token) return false;
 
             const response = await fetch(`${API_BASE_URL}/chat/chats/${chatId}`, {

@@ -1343,10 +1343,8 @@
       font-size: 12px;
     }
     
-    .ud-send-btn {
-      width: 36px;
-      height: 36px;
-    }
+   
+    
     
     .ud-more-option-item {
       padding: 12px 16px;
@@ -1933,10 +1931,8 @@
     font-size: 12px;
   }
   
-  .ud-send-btn {
-    width: 36px;
-    height: 36px;
-  }
+
+  
 }
 
 /* AI Chat Mention Highlighting */

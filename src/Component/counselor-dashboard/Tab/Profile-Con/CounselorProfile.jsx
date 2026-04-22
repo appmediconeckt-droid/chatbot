@@ -86,7 +86,7 @@ const CounselorProfile = () => {
             setError('');
 
             const counsellorId = localStorage.getItem("counsellorId");
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
 
             if (!counsellorId) {
                 setError('Counselor ID not found. Please login again.');
@@ -197,7 +197,7 @@ const CounselorProfile = () => {
             const counsellorId = localStorage.getItem("counsellorId");
             const token = localStorage.getItem('token');
             const refreshToken = localStorage.getItem('refreshToken');
-            const accessToken = localStorage.getItem('accessToken');
+            const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
 
             const response = await axios.patch(`${API_BASE_URL}/api/auth/update/${counsellorId}`, formData, {
                 refreshToken: refreshToken,

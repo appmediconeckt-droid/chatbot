@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  FaBrain,
   FaEnvelope,
   FaLock,
   FaUser,
@@ -17,6 +16,7 @@ import {
   FaTimes,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import "./CounselorSignup.css";
 import logo from "../image/Mediconect Logo-3.png";
 import axios from "axios";
@@ -25,6 +25,7 @@ import { API_BASE_URL } from "../axiosConfig";
 const CounselorSignup = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
+  const [slideAnim, setSlideAnim] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -87,12 +88,14 @@ const CounselorSignup = () => {
     "Bengali",
     "Punjabi",
   ];
+
   useEffect(() => {
     let interval;
     if (emailResendTimer > 0) {
-      interval = setInterval(() => {
-        setEmailResendTimer((prev) => prev - 1);
-      }, 1000);
+      interval = setInterval(
+        () => setEmailResendTimer((prev) => prev - 1),
+        1000,
+      );
     }
     return () => clearInterval(interval);
   }, [emailResendTimer]);
@@ -100,9 +103,10 @@ const CounselorSignup = () => {
   useEffect(() => {
     let interval;
     if (phoneResendTimer > 0) {
-      interval = setInterval(() => {
-        setPhoneResendTimer((prev) => prev - 1);
-      }, 1000);
+      interval = setInterval(
+        () => setPhoneResendTimer((prev) => prev - 1),
+        1000,
+      );
     }
     return () => clearInterval(interval);
   }, [phoneResendTimer]);
@@ -120,10 +124,19 @@ const CounselorSignup = () => {
 
   const showNotification = (message, type = "success") => {
     setNotification({ show: true, message, type });
-    setTimeout(() => {
-      setNotification({ show: false, message: "", type: "" });
-    }, 3000);
+    setTimeout(
+      () => setNotification({ show: false, message: "", type: "" }),
+      3000,
+    );
   };
+  const location = useLocation();
+  const roleFromState = location.state?.role;
+
+  useEffect(() => {
+    if (roleFromState) {
+      localStorage.setItem("role", roleFromState);
+    }
+  }, [roleFromState]);
 
   const handleChange = (e) => {
     const { name, value, type, checked, files } = e.target;
@@ -133,119 +146,147 @@ const CounselorSignup = () => {
     } else if (type === "checkbox") {
       if (name === "consultationMode") {
         let updatedModes = [...formData.consultationMode];
-        if (checked) {
-          updatedModes.push(value);
-        } else {
-          updatedModes = updatedModes.filter((mode) => mode !== value);
-        }
+        if (checked) updatedModes.push(value);
+        else updatedModes = updatedModes.filter((mode) => mode !== value);
         setFormData({ ...formData, consultationMode: updatedModes });
       } else if (name === "languages") {
         let updatedLanguages = [...formData.languages];
-        if (checked) {
-          updatedLanguages.push(value);
-        } else {
+        if (checked) updatedLanguages.push(value);
+        else
           updatedLanguages = updatedLanguages.filter((lang) => lang !== value);
-        }
         setFormData({ ...formData, languages: updatedLanguages });
       }
     } else {
       setFormData({ ...formData, [name]: value });
     }
 
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
-
+    if (errors[name]) setErrors({ ...errors, [name]: "" });
     if (name === "email") setEmailVerified(false);
     if (name === "phoneNumber") setPhoneVerified(false);
   };
 
   const validateLogin = () => {
     const newErrors = {};
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email is invalid";
-    }
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    }
+    if (!formData.password) newErrors.password = "Password is required";
     return newErrors;
+  };
+
+  const handleForgotPassword = async () => {
+    const emailFromForm = String(formData.email || "")
+      .trim()
+      .toLowerCase();
+    const promptedEmail = emailFromForm
+      ? ""
+      : window.prompt("Enter your registered email:", "") || "";
+    const normalizedEmail = String(emailFromForm || promptedEmail)
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedEmail) {
+      showNotification("Please enter your registered email", "error");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
+      showNotification("Please enter a valid email address", "error");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const endpoints = ["forgot-password", "forgotPassword"];
+      let sent = false;
+
+      for (const endpoint of endpoints) {
+        try {
+          await axios.post(
+            `${API_BASE_URL}/api/auth/${endpoint}`,
+            { email: normalizedEmail },
+            { withCredentials: true },
+          );
+          sent = true;
+          break;
+        } catch (error) {
+          if (error?.response?.status !== 404) {
+            throw error;
+          }
+        }
+      }
+
+      if (!sent) {
+        throw new Error("Unable to reach forgot password API");
+      }
+
+      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
+      showNotification("Reset link sent to your email", "success");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to send reset link right now";
+      showNotification(message, "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const validateSignup = () => {
     const newErrors = {};
     if (!formData.fullName) newErrors.fullName = "Full name is required";
-    if (!formData.email) {
-      newErrors.email = "Email is required";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(formData.email))
       newErrors.email = "Email is invalid";
-    } else if (!emailVerified) {
-      newErrors.email = "Please verify your email first";
-    }
-    if (!formData.phoneNumber) {
+    else if (!emailVerified) newErrors.email = "Please verify your email first";
+
+    if (!formData.phoneNumber)
       newErrors.phoneNumber = "Phone number is required";
-    } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
+    else if (!/^\d{10}$/.test(formData.phoneNumber))
       newErrors.phoneNumber = "Phone number must be 10 digits";
-    } else if (!phoneVerified) {
+    else if (!phoneVerified)
       newErrors.phoneNumber = "Please verify your phone number first";
-    }
-    if (!formData.age) {
-      newErrors.age = "Age is required";
-    } else if (formData.age < 18 || formData.age > 100) {
+
+    if (!formData.age) newErrors.age = "Age is required";
+    else if (formData.age < 18 || formData.age > 100)
       newErrors.age = "Age must be between 18 and 100";
-    }
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.qualification)
       newErrors.qualification = "Qualification is required";
     if (!formData.specialization)
       newErrors.specialization = "Specialization is required";
-    if (!formData.experience) {
-      newErrors.experience = "Experience is required";
-    } else if (formData.experience < 0) {
+    if (!formData.experience) newErrors.experience = "Experience is required";
+    else if (formData.experience < 0)
       newErrors.experience = "Experience cannot be negative";
-    }
     if (!formData.location) newErrors.location = "Location is required";
-    if (formData.consultationMode.length === 0) {
+    if (formData.consultationMode.length === 0)
       newErrors.consultationMode = "Select at least one consultation mode";
-    }
-    if (formData.languages.length === 0) {
+    if (formData.languages.length === 0)
       newErrors.languages = "Select at least one language";
-    }
     if (!formData.aboutMe) newErrors.aboutMe = "About me is required";
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
+    if (!formData.password) newErrors.password = "Password is required";
+    else if (formData.password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
-    }
-    if (!formData.confirmPassword) {
+    if (!formData.confirmPassword)
       newErrors.confirmPassword = "Please confirm password";
-    } else if (formData.password !== formData.confirmPassword) {
+    else if (formData.password !== formData.confirmPassword)
       newErrors.confirmPassword = "Passwords do not match";
-    }
     return newErrors;
   };
 
   const handleSendEmailOtp = async () => {
-    if (!formData.email) {
-      setEmailOtpError("Please enter email address first");
-      return;
-    }
-    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+    if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
       setEmailOtpError("Please enter a valid email address");
       return;
     }
-
     setIsSendingEmailOtp(true);
     setEmailOtpError("");
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/send-email-otp`,
-        {
-          email: formData.email,
-        },
+        { email: formData.email },
       );
-
       if (response.data.success) {
         showNotification("OTP sent to your email!", "success");
         setEmailResendTimer(60);
@@ -255,11 +296,7 @@ const CounselorSignup = () => {
         setEmailOtpError(response.data.message || "Failed to send OTP");
       }
     } catch (error) {
-      console.error("Send email OTP error:", error);
-      setEmailOtpError(
-        error.response?.data?.message ||
-          "Failed to send OTP. Please try again.",
-      );
+      setEmailOtpError(error.response?.data?.message || "Failed to send OTP");
     } finally {
       setIsSendingEmailOtp(false);
     }
@@ -270,18 +307,13 @@ const CounselorSignup = () => {
       setEmailOtpError("Please enter 6-digit OTP");
       return;
     }
-
     setIsVerifyingEmailOtp(true);
     setEmailOtpError("");
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/verify-email-otp`,
-        {
-          email: formData.email,
-          otp: emailOtp,
-        },
+        { email: formData.email, otp: emailOtp },
       );
-
       if (response.data.success) {
         setEmailVerified(true);
         setEmailOtpSuccess(true);
@@ -294,11 +326,7 @@ const CounselorSignup = () => {
         setEmailOtpError(response.data.message || "Invalid OTP");
       }
     } catch (error) {
-      console.error("Verify email OTP error:", error);
-      setEmailOtpError(
-        error.response?.data?.message ||
-          "Verification failed. Please try again.",
-      );
+      setEmailOtpError(error.response?.data?.message || "Verification failed");
     } finally {
       setIsVerifyingEmailOtp(false);
     }
@@ -312,26 +340,17 @@ const CounselorSignup = () => {
   };
 
   const handleSendPhoneOtp = async () => {
-    if (!formData.phoneNumber) {
-      setPhoneOtpError("Please enter phone number first");
-      return;
-    }
-    if (!/^\d{10}$/.test(formData.phoneNumber)) {
+    if (!formData.phoneNumber || !/^\d{10}$/.test(formData.phoneNumber)) {
       setPhoneOtpError("Please enter a valid 10-digit phone number");
       return;
     }
-
     setIsSendingPhoneOtp(true);
     setPhoneOtpError("");
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/send-phone-otp`,
-        {
-          phoneNumber: formData.phoneNumber,
-          email: formData.email,
-        },
+        { phoneNumber: formData.phoneNumber, email: formData.email },
       );
-
       if (response.data.success) {
         showNotification("OTP sent to your phone!", "success");
         setPhoneResendTimer(60);
@@ -341,11 +360,7 @@ const CounselorSignup = () => {
         setPhoneOtpError(response.data.message || "Failed to send OTP");
       }
     } catch (error) {
-      console.error("Send phone OTP error:", error);
-      setPhoneOtpError(
-        error.response?.data?.message ||
-          "Failed to send OTP. Please try again.",
-      );
+      setPhoneOtpError(error.response?.data?.message || "Failed to send OTP");
     } finally {
       setIsSendingPhoneOtp(false);
     }
@@ -356,18 +371,13 @@ const CounselorSignup = () => {
       setPhoneOtpError("Please enter 6-digit OTP");
       return;
     }
-
     setIsVerifyingPhoneOtp(true);
     setPhoneOtpError("");
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/verify-phone-otp`,
-        {
-          phoneNumber: formData.phoneNumber,
-          otp: phoneOtp,
-        },
+        { phoneNumber: formData.phoneNumber, otp: phoneOtp },
       );
-
       if (response.data.success) {
         setPhoneVerified(true);
         setPhoneOtpSuccess(true);
@@ -380,11 +390,7 @@ const CounselorSignup = () => {
         setPhoneOtpError(response.data.message || "Invalid OTP");
       }
     } catch (error) {
-      console.error("Verify phone OTP error:", error);
-      setPhoneOtpError(
-        error.response?.data?.message ||
-          "Verification failed. Please try again.",
-      );
+      setPhoneOtpError(error.response?.data?.message || "Verification failed");
     } finally {
       setIsVerifyingPhoneOtp(false);
     }
@@ -398,36 +404,27 @@ const CounselorSignup = () => {
   };
 
   const persistCounselorSession = (data) => {
-    const token = data?.token || data?.accessToken;
-    if (!token) return false;
-
-    const decodeUserIdFromToken = (jwtToken) => {
-      try {
-        const payloadBase64 = jwtToken.split(".")[1];
-        const normalized = payloadBase64.replace(/-/g, "+").replace(/_/g, "/");
-        const payload = JSON.parse(atob(normalized));
-        return payload?.userId || payload?.id || "";
-      } catch {
-        return "";
-      }
-    };
-
-    localStorage.setItem("accessToken", token);
-    localStorage.setItem("token", token);
-    if (data.refreshToken)
-      localStorage.setItem("refreshToken", data.refreshToken);
-    const resolvedUserId =
-      data?.user?._id || decodeUserIdFromToken(token) || "";
-
-    if (resolvedUserId) {
-      localStorage.setItem("counsellorId", resolvedUserId);
-      localStorage.setItem("counselorId", resolvedUserId);
-      localStorage.setItem("userId", resolvedUserId);
+    // Store tokens from response if present
+    if (data?.accessToken) {
+      localStorage.setItem("accessToken", data.accessToken);
     }
-
+    if (data?.refreshToken) {
+      localStorage.setItem("refreshToken", data.refreshToken);
+    }
+    const token = data?.token || data?.accessToken;
+    if (token) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("accessToken", token);
+    }
     if (data.user) {
       localStorage.setItem("userData", JSON.stringify(data.user));
       localStorage.setItem("userRole", data.user.role || "counsellor");
+      const id = data.user._id || data.user.id;
+      if (id) {
+        localStorage.setItem("counsellorId", id);
+        localStorage.setItem("counselorId", id);
+        localStorage.setItem("userId", id);
+      }
     } else {
       localStorage.setItem("userRole", "counselor");
     }
@@ -438,42 +435,56 @@ const CounselorSignup = () => {
 
   const handleLogin = async () => {
     try {
+      // Always send role for login to match backend expectation
+      const role = roleFromState || localStorage.getItem("role") || "counselor";
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
-          role: "counsellor",
+          role,
         },
         { withCredentials: true },
       );
 
-      if (persistCounselorSession(response.data)) {
+      // Enforce role: only counsellor accounts can login here
+      const returnedRole = (
+        response.data?.role ||
+        response.data?.user?.role ||
+        "counsellor"
+      ).toLowerCase();
+      const isCounselor =
+        returnedRole === "counselor" || returnedRole === "counsellor";
+
+      if (!isCounselor) {
         showNotification(
-          "Login successful! Redirecting to dashboard...",
-          "success",
+          "Access denied: Your account is registered as a User. Please use the User login page.",
+          "error",
         );
+        return;
+      }
+
+      if (persistCounselorSession(response.data)) {
+        showNotification("Login successful! Redirecting...", "success");
         setTimeout(() => navigate("/counselor-dashboard"), 1200);
       } else {
         showNotification(response.data?.message || "Login failed", "error");
       }
     } catch (error) {
-      console.error("Login error:", error);
-
       if (error.response?.status === 409 && error.response?.data?.needLogout) {
         setShowDeviceConflict(true);
         setDeviceOtpSent(false);
         setDeviceOtp("");
         showNotification(
-          "Already login detected. Continue with email OTP verification.",
+          "Already login detected. Continue with OTP verification.",
           "info",
         );
         return;
       }
-
-      const errorMessage =
-        error.response?.data?.message || "Something went wrong";
-      showNotification(errorMessage, "error");
+      showNotification(
+        error.response?.data?.message || "Something went wrong",
+        "error",
+      );
     }
   };
 
@@ -516,13 +527,9 @@ const CounselorSignup = () => {
         { email: formData.email, otp: deviceOtp },
         { withCredentials: true },
       );
-
       if (persistCounselorSession(response.data)) {
         setShowDeviceConflict(false);
-        showNotification(
-          "OTP verified! Redirecting to dashboard...",
-          "success",
-        );
+        showNotification("OTP verified! Redirecting...", "success");
         setTimeout(() => navigate("/counselor-dashboard"), 1200);
       } else {
         showNotification(
@@ -584,10 +591,9 @@ const CounselorSignup = () => {
 
       if (response.data.success) {
         showNotification(
-          "Counselor registered successfully! Redirecting to dashboard...",
+          "Counselor registered successfully! Redirecting...",
           "success",
         );
-
         const token = response.data?.token || response.data?.accessToken;
         if (token) {
           localStorage.setItem("accessToken", token);
@@ -603,10 +609,7 @@ const CounselorSignup = () => {
             localStorage.setItem("counsellorId", response.data.user._id);
           }
         }
-
-        setTimeout(() => {
-          navigate("/counselor-dashboard");
-        }, 1500);
+        setTimeout(() => navigate("/counselor-dashboard"), 1500);
       } else {
         showNotification(
           response.data.message || "Registration failed",
@@ -614,48 +617,13 @@ const CounselorSignup = () => {
         );
       }
     } catch (error) {
-      console.error("Signup error:", error);
-
-      if (error.response) {
-        if (error.response.status === 400) {
-          if (
-            error.response.data.message &&
-            error.response.data.message.includes("duplicate key error")
-          ) {
-            showNotification(
-              "This phone number is already registered. Please use a different number.",
-              "error",
-            );
-          } else if (error.response.data.errors) {
-            const serverErrors = {};
-            Object.keys(error.response.data.errors).forEach((key) => {
-              serverErrors[key] = error.response.data.errors[key][0];
-            });
-            setErrors(serverErrors);
-            showNotification("Please check the form for errors", "error");
-          } else if (error.response.data.message) {
-            showNotification(error.response.data.message, "error");
-          } else {
-            showNotification(
-              "Registration failed. Please check your information.",
-              "error",
-            );
-          }
-        } else if (error.response.status === 409) {
-          showNotification(
-            "Counselor with this email or phone already exists",
-            "error",
-          );
-        } else {
-          showNotification("Registration failed. Please try again.", "error");
-        }
-      } else if (error.request) {
+      if (error.response?.status === 409) {
         showNotification(
-          "Network error. Please check your connection.",
+          "Counselor with this email or phone already exists",
           "error",
         );
       } else {
-        showNotification("An error occurred. Please try again.", "error");
+        showNotification("Registration failed. Please try again.", "error");
       }
     }
   };
@@ -663,7 +631,6 @@ const CounselorSignup = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-
     if (isLogin) {
       const loginErrors = validateLogin();
       if (Object.keys(loginErrors).length > 0) {
@@ -686,38 +653,492 @@ const CounselorSignup = () => {
       }
       await handleSignup();
     }
-
     setIsLoading(false);
   };
 
+  // Smooth toggle with slide animation
   const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setErrors({});
-    setShowDeviceConflict(false);
-    setDeviceOtpSent(false);
-    setDeviceOtp("");
-    setEmailVerified(false);
-    setPhoneVerified(false);
-    setFormData({
-      email: "",
-      password: "",
-      fullName: "",
-      phoneNumber: "",
-      age: "",
-      gender: "",
-      qualification: "",
-      specialization: "",
-      experience: "",
-      location: "",
-      consultationMode: [],
-      languages: [],
-      aboutMe: "",
-      profilePhoto: null,
-      confirmPassword: "",
-    });
-    setNotification({ show: false, message: "", type: "" });
+    if (isLoading) return;
+    // Set animation direction: slide-left when going to signup, slide-right when going to login
+    setSlideAnim(isLogin ? "slide-left" : "slide-right");
+    setTimeout(() => {
+      setIsLogin(!isLogin);
+      setErrors({});
+      setShowDeviceConflict(false);
+      setDeviceOtpSent(false);
+      setDeviceOtp("");
+      setEmailVerified(false);
+      setPhoneVerified(false);
+      setFormData({
+        email: "",
+        password: "",
+        fullName: "",
+        phoneNumber: "",
+        age: "",
+        gender: "",
+        qualification: "",
+        specialization: "",
+        experience: "",
+        location: "",
+        consultationMode: [],
+        languages: [],
+        aboutMe: "",
+        profilePhoto: null,
+        confirmPassword: "",
+      });
+      setNotification({ show: false, message: "", type: "" });
+      setTimeout(() => setSlideAnim(""), 50);
+    }, 300);
   };
 
+  // Login Form Component
+  const LoginForm = () => (
+    <form onSubmit={handleSubmit} className="cs-form">
+      <div className="cs-field">
+        <label className="cs-label">
+          <FaEnvelope className="cs-field-icon" /> Email Address{" "}
+          <span className="cs-required">*</span>
+        </label>
+        <input
+          type="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          className={`cs-input ${errors.email ? "cs-input-error" : ""}`}
+          placeholder="Enter your email"
+          disabled={isLoading}
+        />
+        {errors.email && <span className="cs-error">{errors.email}</span>}
+      </div>
+
+      <div className="cs-field">
+        <label className="cs-label">
+          <FaLock className="cs-field-icon" /> Password{" "}
+          <span className="cs-required">*</span>
+        </label>
+        <div className="cs-password-wrapper">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            className={`cs-input ${errors.password ? "cs-input-error" : ""}`}
+            placeholder="Enter your password"
+            disabled={isLoading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="cs-password-toggle"
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+        {errors.password && <span className="cs-error">{errors.password}</span>}
+      </div>
+
+      <div className="cs-options">
+        <label className="cs-checkbox">
+          <input type="checkbox" disabled={isLoading} /> Remember me
+        </label>
+        <a href="#" className={`cs-forgot ${isLoading ? "cs-disabled" : ""}`}>
+          Forgot password?
+        </a>
+      </div>
+
+      <button
+        type="submit"
+        className={`cs-submit ${isLoading ? "cs-submit-loading" : ""}`}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <span className="cs-spinner"></span> Logging in...
+          </>
+        ) : (
+          "Login"
+        )}
+      </button>
+    </form>
+  );
+
+  // Signup Form Component
+  const SignupForm = () => (
+    <form onSubmit={handleSubmit} className="cs-form">
+      <div className="cs-grid">
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaUser className="cs-field-icon" /> Full Name{" "}
+            <span className="cs-required">*</span>
+          </label>
+          <input
+            type="text"
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            className={`cs-input ${errors.fullName ? "cs-input-error" : ""}`}
+            placeholder="Enter your full name"
+            disabled={isLoading}
+          />
+          {errors.fullName && (
+            <span className="cs-error">{errors.fullName}</span>
+          )}
+        </div>
+
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaEnvelope className="cs-field-icon" /> Email{" "}
+            <span className="cs-required">*</span>
+          </label>
+          <div className="cs-verify-group">
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`cs-input ${errors.email ? "cs-input-error" : ""} ${emailVerified ? "cs-verified-input" : ""}`}
+              placeholder="Enter your email"
+              disabled={isLoading || emailVerified}
+            />
+            {!emailVerified &&
+              formData.email &&
+              /\S+@\S+\.\S+/.test(formData.email) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetEmailOtpState();
+                    setShowEmailOtpModal(true);
+                    handleSendEmailOtp();
+                  }}
+                  className="cs-verify-btn"
+                  disabled={isLoading}
+                >
+                  Verify
+                </button>
+              )}
+            {emailVerified && (
+              <span className="cs-verified-badge">
+                <FaCheckCircle /> Verified
+              </span>
+            )}
+          </div>
+          {errors.email && <span className="cs-error">{errors.email}</span>}
+        </div>
+
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaPhone className="cs-field-icon" /> Phone Number{" "}
+            <span className="cs-required">*</span>
+          </label>
+          <div className="cs-verify-group">
+            <input
+              type="tel"
+              name="phoneNumber"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              className={`cs-input ${errors.phoneNumber ? "cs-input-error" : ""} ${phoneVerified ? "cs-verified-input" : ""}`}
+              placeholder="10 digit mobile number"
+              maxLength="10"
+              disabled={isLoading || phoneVerified}
+            />
+            {!phoneVerified &&
+              formData.phoneNumber &&
+              /^\d{10}$/.test(formData.phoneNumber) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    resetPhoneOtpState();
+                    setShowPhoneOtpModal(true);
+                    handleSendPhoneOtp();
+                  }}
+                  className="cs-verify-btn"
+                  disabled={isLoading}
+                >
+                  Verify
+                </button>
+              )}
+            {phoneVerified && (
+              <span className="cs-verified-badge">
+                <FaCheckCircle /> Verified
+              </span>
+            )}
+          </div>
+          {errors.phoneNumber && (
+            <span className="cs-error">{errors.phoneNumber}</span>
+          )}
+        </div>
+
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaCalendarAlt className="cs-field-icon" /> Age{" "}
+            <span className="cs-required">*</span>
+          </label>
+          <input
+            type="number"
+            name="age"
+            value={formData.age}
+            onChange={handleChange}
+            className={`cs-input ${errors.age ? "cs-input-error" : ""}`}
+            placeholder="Your age"
+            min="18"
+            max="100"
+            disabled={isLoading}
+          />
+          {errors.age && <span className="cs-error">{errors.age}</span>}
+        </div>
+
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaVenusMars className="cs-field-icon" /> Gender{" "}
+            <span className="cs-required">*</span>
+          </label>
+          <select
+            name="gender"
+            value={formData.gender}
+            onChange={handleChange}
+            className={`cs-select ${errors.gender ? "cs-input-error" : ""}`}
+            disabled={isLoading}
+          >
+            <option value="">Select Gender</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+            <option value="Other">Other</option>
+          </select>
+          {errors.gender && <span className="cs-error">{errors.gender}</span>}
+        </div>
+
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaGraduationCap className="cs-field-icon" /> Qualification{" "}
+            <span className="cs-required">*</span>
+          </label>
+          <input
+            type="text"
+            name="qualification"
+            value={formData.qualification}
+            onChange={handleChange}
+            className={`cs-input ${errors.qualification ? "cs-input-error" : ""}`}
+            placeholder="e.g., M.Sc Psychology"
+            disabled={isLoading}
+          />
+          {errors.qualification && (
+            <span className="cs-error">{errors.qualification}</span>
+          )}
+        </div>
+
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaIdCard className="cs-field-icon" /> Specialization{" "}
+            <span className="cs-required">*</span>
+          </label>
+          <input
+            type="text"
+            name="specialization"
+            value={formData.specialization}
+            onChange={handleChange}
+            className={`cs-input ${errors.specialization ? "cs-input-error" : ""}`}
+            placeholder="e.g., Clinical Psychology"
+            disabled={isLoading}
+          />
+          {errors.specialization && (
+            <span className="cs-error">{errors.specialization}</span>
+          )}
+        </div>
+
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaBriefcase className="cs-field-icon" /> Experience (Years){" "}
+            <span className="cs-required">*</span>
+          </label>
+          <input
+            type="number"
+            name="experience"
+            value={formData.experience}
+            onChange={handleChange}
+            className={`cs-input ${errors.experience ? "cs-input-error" : ""}`}
+            placeholder="Years of experience"
+            min="0"
+            step="0.5"
+            disabled={isLoading}
+          />
+          {errors.experience && (
+            <span className="cs-error">{errors.experience}</span>
+          )}
+        </div>
+
+        <div className="cs-field">
+          <label className="cs-label">
+            <FaMapMarkerAlt className="cs-field-icon" /> Location{" "}
+            <span className="cs-required">*</span>
+          </label>
+          <input
+            type="text"
+            name="location"
+            value={formData.location}
+            onChange={handleChange}
+            className={`cs-input ${errors.location ? "cs-input-error" : ""}`}
+            placeholder="City, State"
+            disabled={isLoading}
+          />
+          {errors.location && (
+            <span className="cs-error">{errors.location}</span>
+          )}
+        </div>
+      </div>
+
+      <div className="cs-field">
+        <label className="cs-label">
+          <FaUsers className="cs-field-icon" /> Consultation Mode{" "}
+          <span className="cs-required">*</span>
+        </label>
+        <div className="cs-checkbox-group">
+          {consultationModes.map((mode) => (
+            <label key={mode} className="cs-checkbox-label">
+              <input
+                type="checkbox"
+                name="consultationMode"
+                value={mode}
+                checked={formData.consultationMode.includes(mode)}
+                onChange={handleChange}
+                disabled={isLoading}
+              />{" "}
+              {mode}
+            </label>
+          ))}
+        </div>
+        {errors.consultationMode && (
+          <span className="cs-error">{errors.consultationMode}</span>
+        )}
+      </div>
+
+      <div className="cs-field">
+        <label className="cs-label">
+          Languages <span className="cs-required">*</span>
+        </label>
+        <div className="cs-checkbox-group">
+          {languageOptions.map((lang) => (
+            <label key={lang} className="cs-checkbox-label">
+              <input
+                type="checkbox"
+                name="languages"
+                value={lang}
+                checked={formData.languages.includes(lang)}
+                onChange={handleChange}
+                disabled={isLoading}
+              />{" "}
+              {lang}
+            </label>
+          ))}
+        </div>
+        {errors.languages && (
+          <span className="cs-error">{errors.languages}</span>
+        )}
+      </div>
+
+      <div className="cs-field">
+        <label className="cs-label">
+          About Me <span className="cs-required">*</span>
+        </label>
+        <textarea
+          name="aboutMe"
+          value={formData.aboutMe}
+          onChange={handleChange}
+          className={`cs-textarea ${errors.aboutMe ? "cs-input-error" : ""}`}
+          placeholder="Tell us about yourself, your approach, and expertise..."
+          rows="4"
+          disabled={isLoading}
+        />
+        {errors.aboutMe && <span className="cs-error">{errors.aboutMe}</span>}
+      </div>
+
+      <div className="cs-field">
+        <label className="cs-label">Profile Photo</label>
+        <input
+          type="file"
+          name="profilePhoto"
+          onChange={handleChange}
+          accept="image/*"
+          className="cs-file"
+          disabled={isLoading}
+        />
+      </div>
+
+      <div className="cs-field">
+        <label className="cs-label">
+          <FaLock className="cs-field-icon" /> Password{" "}
+          <span className="cs-required">*</span>
+        </label>
+        <div className="cs-password-wrapper">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            className={`cs-input ${errors.password ? "cs-input-error" : ""}`}
+            placeholder="Create a password"
+            disabled={isLoading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="cs-password-toggle"
+          >
+            {showPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+        {errors.password && <span className="cs-error">{errors.password}</span>}
+      </div>
+
+      <div className="cs-field">
+        <label className="cs-label">
+          <FaLock className="cs-field-icon" /> Confirm Password{" "}
+          <span className="cs-required">*</span>
+        </label>
+        <div className="cs-password-wrapper">
+          <input
+            type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            className={`cs-input ${errors.confirmPassword ? "cs-input-error" : ""}`}
+            placeholder="Confirm your password"
+            disabled={isLoading}
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="cs-password-toggle"
+          >
+            {showConfirmPassword ? "Hide" : "Show"}
+          </button>
+        </div>
+        {errors.confirmPassword && (
+          <span className="cs-error">{errors.confirmPassword}</span>
+        )}
+      </div>
+
+      <button
+        type="submit"
+        className={`cs-submit ${isLoading ? "cs-submit-loading" : ""}`}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <span className="cs-spinner"></span> Creating Account...
+          </>
+        ) : (
+          "Create Account"
+        )}
+      </button>
+
+      <p className="cs-terms">
+        By signing up, you agree to our <a href="#">Terms of Service</a> and{" "}
+        <a href="#">Privacy Policy</a>
+      </p>
+    </form>
+  );
+
+  // Email OTP Modal
   const EmailOtpModal = () => (
     <div
       className="cs-otp-overlay"
@@ -748,7 +1169,6 @@ const CounselorSignup = () => {
         <div className="cs-otp-body">
           <p>Enter the verification code sent to</p>
           <div className="cs-otp-recipient">{formData.email}</div>
-
           <div className="cs-otp-input-group">
             <input
               type="text"
@@ -766,9 +1186,7 @@ const CounselorSignup = () => {
               <FaCheckCircle className="cs-otp-success-icon" />
             )}
           </div>
-
           {emailOtpError && <div className="cs-otp-error">{emailOtpError}</div>}
-
           <div className="cs-otp-actions">
             <button
               onClick={handleVerifyEmailOtp}
@@ -799,7 +1217,6 @@ const CounselorSignup = () => {
               )}
             </button>
           </div>
-
           {emailOtpSuccess && (
             <div className="cs-otp-success">
               <FaCheckCircle /> Email verified successfully!
@@ -810,6 +1227,7 @@ const CounselorSignup = () => {
     </div>
   );
 
+  // Phone OTP Modal
   const PhoneOtpModal = () => (
     <div
       className="cs-otp-overlay"
@@ -843,7 +1261,6 @@ const CounselorSignup = () => {
         <div className="cs-otp-body">
           <p>Enter the verification code sent to</p>
           <div className="cs-otp-recipient">{formData.phoneNumber}</div>
-
           <div className="cs-otp-input-group">
             <input
               type="text"
@@ -861,9 +1278,7 @@ const CounselorSignup = () => {
               <FaCheckCircle className="cs-otp-success-icon" />
             )}
           </div>
-
           {phoneOtpError && <div className="cs-otp-error">{phoneOtpError}</div>}
-
           <div className="cs-otp-actions">
             <button
               onClick={handleVerifyPhoneOtp}
@@ -894,7 +1309,6 @@ const CounselorSignup = () => {
               )}
             </button>
           </div>
-
           {phoneOtpSuccess && (
             <div className="cs-otp-success">
               <FaCheckCircle /> Phone verified successfully!
@@ -984,7 +1398,6 @@ const CounselorSignup = () => {
                   "Logout Other Devices & Send OTP"
                 )}
               </button>
-
               {deviceOtpSent && (
                 <div className="cs-device-otp-row">
                   <input
@@ -1076,6 +1489,12 @@ const CounselorSignup = () => {
                   <a
                     href="#"
                     className={`cs-forgot ${isLoading ? "cs-disabled" : ""}`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (!isLoading) {
+                        void handleForgotPassword();
+                      }
+                    }}
                   >
                     Forgot password?
                   </a>

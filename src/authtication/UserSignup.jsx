@@ -10,7 +10,8 @@ import {
   FaSpinner,
   FaTimes,
 } from "react-icons/fa";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./UserSignup.css";
 import logo from "../image/Mediconect Logo-3.png";
@@ -19,6 +20,7 @@ import { API_BASE_URL } from "../axiosConfig";
 const UserSignup = () => {
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -64,6 +66,15 @@ const UserSignup = () => {
     message: "",
     type: "",
   });
+
+  const location = useLocation();
+  const roleFromState = location.state?.role;
+
+  useEffect(() => {
+    if (roleFromState) {
+      localStorage.setItem("role", roleFromState);
+    }
+  }, [roleFromState]);
 
   useEffect(() => {
     let interval;
@@ -126,6 +137,65 @@ const UserSignup = () => {
       newErrors.password = "Password is required";
     }
     return newErrors;
+  };
+
+  const handleForgotPassword = async () => {
+    const emailFromForm = String(formData.email || "")
+      .trim()
+      .toLowerCase();
+    const promptedEmail = emailFromForm
+      ? ""
+      : window.prompt("Enter your registered email:", "") || "";
+    const normalizedEmail = String(emailFromForm || promptedEmail)
+      .trim()
+      .toLowerCase();
+
+    if (!normalizedEmail) {
+      showNotification("Please enter your registered email", "error");
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
+      showNotification("Please enter a valid email address", "error");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const endpoints = ["forgot-password", "forgotPassword"];
+      let sent = false;
+
+      for (const endpoint of endpoints) {
+        try {
+          await axios.post(
+            `${API_BASE_URL}/api/auth/${endpoint}`,
+            { email: normalizedEmail },
+            { withCredentials: true },
+          );
+          sent = true;
+          break;
+        } catch (error) {
+          if (error?.response?.status !== 404) {
+            throw error;
+          }
+        }
+      }
+
+      if (!sent) {
+        throw new Error("Unable to reach forgot password API");
+      }
+
+      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
+      showNotification("Reset link sent to your email", "success");
+    } catch (error) {
+      const message =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to send reset link right now";
+      showNotification(message, "error");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const validateSignup = () => {
@@ -328,10 +398,26 @@ const UserSignup = () => {
 
     localStorage.setItem("isAuthenticated", "true");
     localStorage.setItem("userType", "user");
+    // Store user role if provided in response
+    const role =
+      data?.role ||
+      data?.user?.role ||
+      (data?.user?.role ? data.user.role : null);
+    if (role) {
+      localStorage.setItem("userRole", role);
+    }
+    // Store tokens from response if present
+    if (data?.accessToken) {
+      localStorage.setItem("accessToken", data.accessToken);
+    }
+    if (data?.refreshToken) {
+      localStorage.setItem("refreshToken", data.refreshToken);
+    }
+    if (token) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("accessToken", token);
+    }
     localStorage.setItem("userEmail", formData.email);
-    localStorage.setItem("token", token);
-    localStorage.setItem("accessToken", token);
-    if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
     if (data?.user) localStorage.setItem("userData", JSON.stringify(data.user));
     if (data?.user?._id) localStorage.setItem("userId", data.user._id);
 
@@ -340,15 +426,37 @@ const UserSignup = () => {
 
   const handleLogin = async () => {
     try {
+      // Always send role for login to match backend expectation
+      const role = roleFromState || localStorage.getItem("role") || "user";
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
-          role: "user",
+          role,
         },
         { withCredentials: true },
       );
+
+      // Enforce role: only "user" accounts can login here
+      const returnedRole = (
+        response.data?.role ||
+        response.data?.user?.role ||
+        "user"
+      ).toLowerCase();
+      const isCounselor =
+        returnedRole === "counselor" || returnedRole === "counsellor";
+
+      if (isCounselor) {
+        setApiError(
+          "Access denied: Your account is registered as a Counsellor. Please use the Counsellor login page.",
+        );
+        showNotification(
+          "Access denied: Please use the Counsellor login page.",
+          "error",
+        );
+        return;
+      }
 
       if (persistUserSession(response.data)) {
         showNotification("Login successful!", "success");
@@ -439,14 +547,17 @@ const UserSignup = () => {
           localStorage.setItem("userEmail", formData.email);
           localStorage.setItem("token", token);
           localStorage.setItem("accessToken", token);
+          // Store role from response if present
+          const signupRole = response.data?.role || response.data?.user?.role;
+          if (signupRole) {
+            localStorage.setItem("userRole", signupRole);
+          }
         }
 
-        // ✅ IMPORTANT: userId save karo
         if (response.data.user?._id) {
           localStorage.setItem("userId", response.data.user._id);
         }
 
-        // optional
         if (response.data.user) {
           localStorage.setItem("userData", JSON.stringify(response.data.user));
         }
@@ -598,26 +709,36 @@ const UserSignup = () => {
   };
 
   const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setErrors({});
-    setApiError("");
-    setShowVerifyButton(false);
-    setVerifySuccess(false);
-    setOtpSentForLogin(false);
-    setLoginOtp("");
-    setEmailVerified(false);
-    setPhoneVerified(false);
-    setFormData({
-      email: "",
-      password: "",
-      fullName: "",
-      anonymous: "",
-      phoneNumber: "",
-      age: "",
-      gender: "",
-      confirmPassword: "",
-    });
-    setNotification({ show: false, message: "", type: "" });
+    if (isAnimating) return;
+
+    setIsAnimating(true);
+
+    setTimeout(() => {
+      setIsLogin(!isLogin);
+      setErrors({});
+      setApiError("");
+      setShowVerifyButton(false);
+      setVerifySuccess(false);
+      setOtpSentForLogin(false);
+      setLoginOtp("");
+      setEmailVerified(false);
+      setPhoneVerified(false);
+      setFormData({
+        email: "",
+        password: "",
+        fullName: "",
+        anonymous: "",
+        phoneNumber: "",
+        age: "",
+        gender: "",
+        confirmPassword: "",
+      });
+      setNotification({ show: false, message: "", type: "" });
+
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 500);
+    }, 300);
   };
 
   const EmailOtpModal = () => (
@@ -827,7 +948,9 @@ const UserSignup = () => {
       {showEmailOtpModal && <EmailOtpModal />}
       {showPhoneOtpModal && <PhoneOtpModal />}
 
-      <div className="us-container">
+      <div
+        className={`us-container ${isLogin ? "us-login-layout" : "us-signup-layout"}`}
+      >
         <div className="us-brand">
           <div className="us-brand-content">
             <div className="us-logo">
@@ -866,7 +989,7 @@ const UserSignup = () => {
               <button
                 onClick={toggleMode}
                 className="us-toggle"
-                disabled={isLoading}
+                disabled={isLoading || isAnimating}
               >
                 {isLogin ? "Sign Up" : "Login"}
               </button>
@@ -996,11 +1119,16 @@ const UserSignup = () => {
                   <label className="us-checkbox">
                     <input type="checkbox" disabled={isLoading} /> Remember me
                   </label>
-                  <Link to="/otp-verification">
-                    <button className="us-forgot" disabled={isLoading}>
-                      Forgot Password?
-                    </button>
-                  </Link>
+                  <button
+                    type="button"
+                    className="us-forgot"
+                    disabled={isLoading}
+                    onClick={() => {
+                      void handleForgotPassword();
+                    }}
+                  >
+                    Forgot Password?
+                  </button>
                 </div>
               </>
             ) : (

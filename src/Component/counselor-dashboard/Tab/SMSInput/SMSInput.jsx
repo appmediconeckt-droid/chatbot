@@ -192,7 +192,7 @@ const SMSInput = () => {
     if (!selectedUser) return;
     try {
       const apiChatId = getChatIdForAPI();
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       setIsLoadingMessages(true);
       setError(null);
       const response = await axios.get(
@@ -273,7 +273,7 @@ const SMSInput = () => {
   const sendMessageToAPI = async ({ messageContent = "", file = null }) => {
     try {
       const apiChatId = getChatIdForAPI();
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       let response;
       if (file) {
         const formData = new FormData();

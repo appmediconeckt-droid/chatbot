@@ -165,6 +165,8 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
     [getLastMessageText],
   );
 
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Load active chats from localStorage on mount
   useEffect(() => {
     const savedChats = localStorage.getItem("activeChats");
@@ -178,12 +180,15 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
         console.error("Failed to parse active chats from localStorage:", error);
       }
     }
+    setIsInitialized(true);
   }, [normalizeChatMessagePreview]);
 
   // Save active chats to localStorage whenever they change
   useEffect(() => {
-    localStorage.setItem("activeChats", JSON.stringify(activeChats));
-  }, [activeChats]);
+    if (isInitialized) {
+      localStorage.setItem("activeChats", JSON.stringify(activeChats));
+    }
+  }, [activeChats, isInitialized]);
 
   // Function to get counselor profile photo URL
   const getProfilePhotoUrl = (counselor) => {
@@ -369,7 +374,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       setShowUserModal(false);
     } catch (error) {
       console.error("❌ Error:", error);
-      alert(error?.response?.data?.message || "Failed to send request");
+      alert(error?.response?.data?.message || "You are already connected on chat here.");
     } finally {
       setIsLoading(false);
     }
