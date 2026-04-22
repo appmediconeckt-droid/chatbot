@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { io } from "socket.io-client";
 import "./CounselorDashboard.css";
 import { useNavigate } from "react-router-dom";
 import {
@@ -23,6 +24,11 @@ import {
   FaMicrophone,
   FaUser,
   FaVideo as FaVideoIcon,
+  FaInfoCircle,
+  FaChevronRight,
+  FaFileAlt,
+  FaMapMarkerAlt,
+  FaBrain
 } from "react-icons/fa";
 // Custom Hooks
 import useVibration from "../../../hooks/useVibration";
@@ -46,12 +52,69 @@ export default function CounselorDashboard() {
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const [latestRequest, setLatestRequest] = useState(null);
+  const [appointments, setAppointments] = useState([]);
+  const socketRef = useRef(null);
 
   // Modal States
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
   const [incomingCallData, setIncomingCallData] = useState(null);
+
+  const handleInitiateVideoCall = async (apt) => {
+    const patientInfo = apt.patient || {};
+    const counselorId = getCounsellorId();
+    const userId = patientInfo._id || patientInfo.id;
+    const token = getAuthToken();
+
+    if (!userId) {
+      alert("Missing patient information.");
+      return;
+    }
+
+    try {
+      const requestBody = {
+        initiatorId: counselorId,
+        initiatorType: "counsellor",
+        receiverId: userId,
+        receiverType: "user",
+        callType: "video",
+      };
+
+      const response = await axios.post(
+        `${API_BASE_URL}/api/video/calls/initiate`,
+        requestBody,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data && response.data.success) {
+        const callData = {
+          id: response.data.callData?.id,
+          callId: response.data.callId,
+          roomId: response.data.roomId,
+          name: patientInfo.fullName || "Anonymous User",
+          profilePic: patientInfo.profilePhoto,
+          isIncoming: false,
+          callType: 'video',
+          currentUserId: counselorId,
+          currentUserType: 'counsellor',
+          apiCallData: response.data.callData,
+        };
+        setSelectedCall(callData);
+        setIsVideoModalOpen(true);
+      } else {
+        alert(response.data?.message || "Failed to initiate call");
+      }
+    } catch (error) {
+      console.error("Call initiation error:", error);
+      alert(error.response?.data?.message || error.message || "Failed to initiate call");
+    }
+  };
 
   // Waiting calls polling
   const [waitingCalls, setWaitingCalls] = useState([]);
@@ -63,6 +126,7 @@ export default function CounselorDashboard() {
   const [currentRequest, setCurrentRequest] = useState(null);
   const [modalTimer, setModalTimer] = useState(null);
   const [modalCountdown, setModalCountdown] = useState(10);
+
 
   const navigate = useNavigate();
   const vibrate = useVibration();
@@ -131,6 +195,24 @@ export default function CounselorDashboard() {
         error,
       );
       return "";
+    }
+  };
+
+  const handleUpdateAppointmentStatus = async (id, status) => {
+    try {
+      const token = getAuthToken();
+      await axios.patch(`${API_BASE_URL}/api/appointments/${id}/status`, 
+        { status },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      // Refresh appointments
+      const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAppointments(response.data);
+    } catch (err) {
+      console.error("Error updating appointment status:", err);
+      alert("Failed to update appointment status.");
     }
   };
 
@@ -833,6 +915,56 @@ export default function CounselorDashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // Socket listener for new appointments
+  useEffect(() => {
+    const token = getAuthToken();
+    if (!token) return;
+
+    const counsellorId = getCounsellorId();
+    if (!counsellorId) return;
+
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+    });
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      console.log("✅ Counselor Socket Connected");
+      // Join relevant rooms
+      socket.emit("join-chat", { chatId: `counselor_${counsellorId}` });
+      socket.emit("join-chat", { chatId: `user_${counsellorId}` });
+    });
+
+    socket.on("appointmentBooked", (appointment) => {
+      console.log("📅 New Appointment Booked:", appointment);
+      setAppointments((prev) => [appointment, ...prev]);
+      vibrate([100, 50, 100]);
+      alert(`📅 New appointment requested for ${new Date(appointment.date).toLocaleString()}`);
+    });
+
+    return () => {
+      if (socket) socket.disconnect();
+    };
+  }, []);
+
+  // Fetch existing appointments
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        const token = getAuthToken();
+        const res = await axios.get(`${API_BASE_URL}/api/appointments`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAppointments(res.data || []);
+      } catch (err) {
+        console.error("Error fetching appointments:", err);
+      }
+    };
+    fetchAppointments();
+  }, [activeTab]);
+
   const handleLogout = async () => {
     try {
       vibrate([50, 30, 50]);
@@ -1218,9 +1350,144 @@ export default function CounselorDashboard() {
         )}
 
         {activeTab === "appointments" && (
-          <div className="couns-tab-content">
-            <div className="couns-work-in-progress">
-              The remaining work is currently in progress.
+          <div className="couns-tab-content-stitch">
+            <div className="stitch-apt-layout">
+              {/* Left Column: Manage Appointments */}
+              <div className="stitch-apt-left">
+                <div className="stitch-apt-header">
+                  <h2>Manage Appointments</h2>
+                  <button>
+                    View all requests <FaArrowRight style={{ marginLeft: '4px' }} />
+                  </button>
+                </div>
+
+                <div className="stitch-apt-grid">
+                  {appointments.length === 0 ? (
+                    <div className="stitch-empty-state-couns">No pending appointment requests.</div>
+                  ) : (
+                    appointments.map(apt => (
+                      <div key={apt._id} className="stitch-apt-card" style={{ position: 'relative' }}>
+                        <div>
+                          <div className="stitch-apt-card-top">
+                            <div className="stitch-apt-avatar">
+                              {apt.patient?.profilePhoto ? (
+                                <img 
+                                  src={typeof apt.patient.profilePhoto === 'string' ? apt.patient.profilePhoto : apt.patient.profilePhoto.url} 
+                                  alt={apt.patient.fullName} 
+                                  style={{ width: '100%', height: '100%', borderRadius: '8px', objectFit: 'cover' }}
+                                />
+                              ) : <FaUser />}
+                            </div>
+                            <div className="stitch-apt-info">
+                              <h3>{apt.patient?.fullName || "Anonymous User"}</h3>
+                              <div className="stitch-apt-tag">
+                                <FaBrain />
+                                INITIAL CONSULTATION
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className={`status-badge-stitch ${apt.status}`}>
+                            {apt.status.toUpperCase()}
+                          </div>
+
+                          {apt.notes && apt.notes.trim() !== '' && (
+                            <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', fontSize: '13px', color: '#475569', borderLeft: '3px solid #cbd5e1', fontStyle: 'italic' }}>
+                              "{apt.notes}"
+                            </div>
+                          )}
+
+                          <div className="stitch-apt-time">
+                            <span className="stitch-apt-time-label">Requested:</span>
+                            <span className="stitch-apt-time-value">
+                              {new Date(apt.date).toLocaleDateString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+
+                        {apt.status === 'pending' && (
+                          <div className="stitch-apt-actions">
+                            <button 
+                              className="stitch-btn-accept"
+                              onClick={() => handleUpdateAppointmentStatus(apt._id, 'confirmed')}
+                            >
+                              Accept
+                            </button>
+                            <button 
+                              className="stitch-btn-reject"
+                              onClick={() => handleUpdateAppointmentStatus(apt._id, 'canceled')}
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Schedule & Notes */}
+              <div className="stitch-apt-right">
+                {/* Confirmed Schedule */}
+                <div className="stitch-schedule-section">
+                  <div className="stitch-section-header">
+                    <h2>Today's Schedule</h2>
+                    <span className="stitch-date-badge">
+                      {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
+                    </span>
+                  </div>
+                  
+                  <div className="stitch-schedule-list">
+                    {appointments.filter(apt => apt.status === 'confirmed').length === 0 ? (
+                      <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontStyle: 'italic', fontSize: '14px' }}>
+                        No confirmed appointments yet.
+                      </div>
+                    ) : (
+                      appointments
+                        .filter(apt => apt.status === 'confirmed')
+                        .sort((a, b) => new Date(a.date) - new Date(b.date))
+                        .map((apt, index) => {
+                          const dateObj = new Date(apt.date);
+                          const timeParts = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).split(' ');
+                          const timeStr = timeParts[0];
+                          const ampm = timeParts[1];
+                          const colors = ['blue', 'indigo', 'gray'];
+                          const color = colors[index % colors.length];
+                          
+                          const isToday = dateObj.toDateString() === new Date().toDateString();
+
+                          return (
+                            <div key={apt._id} className="stitch-schedule-item">
+                              <div className="stitch-schedule-time">
+                                <div className="stitch-schedule-time-hh">{timeStr}</div>
+                                <div className="stitch-schedule-time-ampm">{ampm}</div>
+                              </div>
+                              <div className={`stitch-schedule-line ${color}`}></div>
+                              <div className="stitch-schedule-details">
+                                <div className="stitch-schedule-name">{apt.patient?.fullName || "Anonymous User"}</div>
+                                <div className="stitch-schedule-type">
+                                  {!isToday && <span style={{ fontWeight: '600', color: '#4648d4', marginRight: '4px' }}>{dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                  Initial Consultation
+                                </div>
+                              </div>
+                              <div 
+                                style={{ cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eef2ff', color: '#4f46e5', borderRadius: '50%', transition: 'all 0.2s' }} 
+                                onClick={() => handleInitiateVideoCall(apt)} 
+                                title="Start Video Call"
+                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4f46e5'; e.currentTarget.style.color = 'white'; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#eef2ff'; e.currentTarget.style.color = '#4f46e5'; }}
+                              >
+                                <FaVideo className="stitch-schedule-icon" style={{ margin: 0, color: 'inherit' }} />
+                              </div>
+                            </div>
+                          );
+                        })
+                    )}
+                  </div>
+                </div>
+
+              </div>
             </div>
           </div>
         )}
@@ -1383,6 +1650,7 @@ export default function CounselorDashboard() {
           </div>
         </div>
       )}
+
     </div>
   );
 }

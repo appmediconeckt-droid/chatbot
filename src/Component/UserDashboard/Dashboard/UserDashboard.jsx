@@ -43,6 +43,7 @@ import CounselorTable from "../Tab/Counselor/CounselorDirectory";
 import VideoCallModal from "../Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
 import CounselorRequestChat from "../Tab/Appointment/BookAppointment";
+import MyAppointments from "../Tab/Appointment/MyAppointments";
 
 const ChatPopup = ({
   messages,
@@ -716,6 +717,7 @@ export default function UserDashboard() {
   const allMenuItems = [
     { id: "Chat", icon: <FaCommentDots />, label: "Chat" },
     { id: "Live Chat", icon: <FaUserMd />, label: "Counselor" },
+    { id: "MyAppointments", icon: <FaCalendarAlt />, label: "My Appointments" },
     { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
     { id: "Video", icon: <FaVideo />, label: "Call History" },
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
@@ -909,11 +911,8 @@ export default function UserDashboard() {
               <CounselorRequestChat initialSearch={targetCounselor} />
             )}
             {active === "Live Chat" && <LiveChatSupport />}
-            {active === "Wallet" && (
-              <div className="ud-work-in-progress">
-                The remaining work is currently in progress.
-              </div>
-            )}
+            {active === "MyAppointments" && <MyAppointments />}
+            {active === "Wallet" && <WalletDashboard userData={userData} />}
             {active === "Video" && (
               <CallHistory currentUser={{ id: userId, role: "user" }} />
             )}
