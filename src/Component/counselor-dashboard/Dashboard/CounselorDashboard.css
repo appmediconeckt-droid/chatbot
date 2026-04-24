@@ -2603,11 +2603,11 @@ button:focus {
   justify-content: space-between;
 }
 
-.stitch-section-header h2 {
+.stitch-section-header h3 {
   font-family: 'Manrope', sans-serif;
   font-size: 24px;
   font-weight: 600;
-  color: #0b1c30;
+  color: #050b13;
   margin: 0;
 }
 
@@ -2809,4 +2809,4 @@ button:focus {
   background-color: #fee2e2;
   color: #ef4444;
 }
-
+

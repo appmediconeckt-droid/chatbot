@@ -195,11 +195,58 @@ const cleanupStreamSession = (session) => {
   return session.cleanupPromise;
 };
 
-const resolveParticipantName = (participant) =>
-  participant?.name ||
-  participant?.user?.name ||
-  participant?.userId ||
-  "Participant";
+const resolveDisplayName = (participant, viewerRole) => {
+  if (!participant) return "Participant";
+
+  const participantRole = (
+    participant?.user?.role ||
+    participant?.role ||
+    ""
+  ).toLowerCase();
+
+  if (participantRole === "user") {
+    if (viewerRole === "user") {
+      return (
+        participant?.user?.anonymous ||
+        participant?.anonymous ||
+        localStorage.getItem("userAnonymousName") ||
+        participant?.user?.name ||
+        "Anonymous"
+      );
+    }
+
+    return (
+      participant?.user?.anonymous ||
+      participant?.anonymous ||
+      participant?.user?.name ||
+      participant?.name ||
+      localStorage.getItem("userAnonymousName") ||
+      "Anonymous"
+    );
+  }
+
+  if (participantRole === "counselor" || participantRole === "counsellor") {
+    return participant?.user?.name || participant?.name || "Counselor";
+  }
+
+  if (viewerRole === "counsellor" || viewerRole === "counselor") {
+    return (
+      participant?.user?.anonymous ||
+      participant?.anonymous ||
+      participant?.user?.name ||
+      participant?.name ||
+      localStorage.getItem("userAnonymousName") ||
+      "Anonymous"
+    );
+  }
+
+  return (
+    participant?.user?.name ||
+    participant?.name ||
+    participant?.userId ||
+    "Participant"
+  );
+};
 
 const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
   const { useCallCallingState, useParticipants, useLocalParticipant } =
@@ -273,14 +320,15 @@ const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
   const mainParticipant = presenter || remoteParticipants[0] || null;
   const isPresentingMain =
     presenter && mainParticipant?.sessionId === presenter.sessionId;
+  const currentUserRole = (localStorage.getItem("userRole") || "").toLowerCase();
   const mainParticipantName = mainParticipant
-    ? resolveParticipantName(mainParticipant)
+    ? resolveDisplayName(mainParticipant, currentUserRole)
     : "";
   const voiceParticipantName =
     mainParticipantName || String(calleeName || "Participant").trim();
   const voiceParticipantInitial = buildInitials(voiceParticipantName);
   const localParticipantName = localParticipant
-    ? resolveParticipantName(localParticipant)
+    ? resolveDisplayName(localParticipant, currentUserRole)
     : "You";
 
   useEffect(() => {
@@ -438,25 +486,6 @@ const VideoCallModal = ({
     () => normalizeCallStatus(callData?.status) || "active",
     [callData?.status],
   );
-  const localUser = useMemo(
-    () =>
-      resolveStreamUser({
-        id: currentUserId,
-        _id: currentUserDbId,
-        fullName: currentUserFullName,
-        name: currentUserName,
-        profilePic: currentUserProfilePic,
-        profilePhoto: currentUserProfilePhoto,
-      }),
-    [
-      currentUserId,
-      currentUserDbId,
-      currentUserFullName,
-      currentUserName,
-      currentUserProfilePic,
-      currentUserProfilePhoto,
-    ],
-  );
   const resolvedUserType = useMemo(
     () =>
       resolveCurrentUserType(
@@ -465,8 +494,89 @@ const VideoCallModal = ({
       ),
     [currentUserRole, currentUserTypeFromCall],
   );
+  const storedCurrentUser = useMemo(() => {
+    try {
+      const rawUser =
+        localStorage.getItem("userData") || localStorage.getItem("user");
+      return rawUser ? JSON.parse(rawUser) : {};
+    } catch {
+      return {};
+    }
+  }, []);
+  const resolvedAnonymousName = useMemo(
+    () =>
+      currentUser?.anonymous ||
+      callData?.receiver?.anonymous ||
+      callData?.initiator?.anonymous ||
+      storedCurrentUser?.anonymous ||
+      localStorage.getItem("userAnonymousName") ||
+      "Anonymous",
+    [
+      currentUser?.anonymous,
+      callData?.receiver?.anonymous,
+      callData?.initiator?.anonymous,
+      storedCurrentUser?.anonymous,
+    ],
+  );
+  const localUser = useMemo(() => {
+    const userObj = resolveStreamUser({
+      id: currentUserId,
+      _id: currentUserDbId,
+      fullName: currentUserFullName || storedCurrentUser?.fullName,
+      name: currentUserName || storedCurrentUser?.name,
+      profilePic: currentUserProfilePic || storedCurrentUser?.profilePic,
+      profilePhoto:
+        currentUserProfilePhoto || storedCurrentUser?.profilePhoto,
+    });
+
+    userObj.role = resolvedUserType;
+    userObj.anonymous = resolvedAnonymousName;
+
+    if (resolvedUserType === "user") {
+      userObj.name = resolvedAnonymousName;
+    } else {
+      userObj.name =
+        currentUserFullName ||
+        currentUserName ||
+        storedCurrentUser?.fullName ||
+        storedCurrentUser?.name ||
+        userObj.name ||
+        "Counselor";
+    }
+
+    return userObj;
+  }, [
+    currentUserId,
+    currentUserDbId,
+    currentUserFullName,
+    currentUserName,
+    currentUserProfilePic,
+    currentUserProfilePhoto,
+    storedCurrentUser?.fullName,
+    storedCurrentUser?.name,
+    storedCurrentUser?.profilePic,
+    storedCurrentUser?.profilePhoto,
+    resolvedUserType,
+    resolvedAnonymousName,
+  ]);
   const calleeName = useMemo(() => resolveCalleeName(callData), [callData]);
   const calleeInitials = useMemo(() => buildInitials(calleeName), [calleeName]);
+  const maskedCalleeName = useMemo(() => {
+    if (resolvedUserType === "counsellor" || resolvedUserType === "counselor") {
+      return (
+        callData?.receiver?.anonymous ||
+        callData?.initiator?.anonymous ||
+        localStorage.getItem("userAnonymousName") ||
+        calleeName
+      );
+    }
+
+    return calleeName;
+  }, [calleeName, resolvedUserType, callData]);
+  const maskedCalleeInitials = useMemo(
+    () => buildInitials(maskedCalleeName),
+    [maskedCalleeName],
+  );
   const isPendingCall = PENDING_STATUSES.has(callStatus);
   const isTerminalCall = TERMINAL_STATUSES.has(callStatus);
   const canJoinCall = !isPendingCall && !isTerminalCall;
@@ -1087,6 +1197,21 @@ const VideoCallModal = ({
           tokenPayload,
         );
 
+        user.role = resolvedUserType;
+        user.anonymous = resolvedAnonymousName;
+
+        if (resolvedUserType === "user") {
+          user.name = resolvedAnonymousName;
+        } else {
+          user.name =
+            localUserRef.current?.name ||
+            currentUserFullName ||
+            currentUserName ||
+            storedCurrentUser?.fullName ||
+            storedCurrentUser?.name ||
+            "Counselor";
+        }
+
         if (!user.id) {
           throw new Error("Missing current user ID");
         }
@@ -1261,12 +1386,19 @@ const VideoCallModal = ({
     canJoinCall,
     callId,
     localUser?.id,
+    localUser?.name,
     closeModalOnce,
     isVoiceMode,
     clearReconnectTimer,
     detachCallListeners,
     detachClientListeners,
     scheduleReconnect,
+    resolvedUserType,
+    resolvedAnonymousName,
+    currentUserFullName,
+    currentUserName,
+    storedCurrentUser?.fullName,
+    storedCurrentUser?.name,
   ]);
 
   if (!isOpen) return null;
@@ -1323,9 +1455,11 @@ const VideoCallModal = ({
                   <div className="stream-pulse-ring stream-pulse-ring-1" />
                   <div className="stream-pulse-ring stream-pulse-ring-2" />
                   <div className="stream-pulse-ring stream-pulse-ring-3" />
-                  <div className="stream-avatar-glow">{calleeInitials}</div>
+                  <div className="stream-avatar-glow">
+                    {maskedCalleeInitials}
+                  </div>
                 </div>
-                <h1 className="stream-callee-name">{calleeName}</h1>
+                <h1 className="stream-callee-name">{maskedCalleeName}</h1>
                 <p className="stream-connecting-note">
                   {uiStatus === "ringing" ? "Ringing" : "Connecting call"}
                   <span className="stream-ellipsis" aria-hidden="true">
@@ -1355,7 +1489,7 @@ const VideoCallModal = ({
             <StreamVideo client={client}>
               <StreamCall call={call}>
                 <StreamVideoBody
-                  calleeName={calleeName}
+                  calleeName={maskedCalleeName}
                   isVoiceMode={isVoiceMode}
                   localUserId={localUser?.id}
                   onLeave={handleCallLeft}

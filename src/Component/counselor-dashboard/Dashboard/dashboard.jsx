@@ -28,7 +28,7 @@ import {
   FaChevronRight,
   FaFileAlt,
   FaMapMarkerAlt,
-  FaBrain
+  FaBrain,
 } from "react-icons/fa";
 // Custom Hooks
 import useVibration from "../../../hooks/useVibration";
@@ -89,7 +89,7 @@ export default function CounselorDashboard() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.data && response.data.success) {
@@ -97,12 +97,12 @@ export default function CounselorDashboard() {
           id: response.data.callData?.id,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name: patientInfo.fullName || "Anonymous User",
+          name: patientInfo.anonymous || "Anonymous User",
           profilePic: patientInfo.profilePhoto,
           isIncoming: false,
-          callType: 'video',
+          callType: "video",
           currentUserId: counselorId,
-          currentUserType: 'counsellor',
+          currentUserType: "counsellor",
           apiCallData: response.data.callData,
         };
         setSelectedCall(callData);
@@ -112,7 +112,11 @@ export default function CounselorDashboard() {
       }
     } catch (error) {
       console.error("Call initiation error:", error);
-      alert(error.response?.data?.message || error.message || "Failed to initiate call");
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to initiate call",
+      );
     }
   };
 
@@ -126,7 +130,6 @@ export default function CounselorDashboard() {
   const [currentRequest, setCurrentRequest] = useState(null);
   const [modalTimer, setModalTimer] = useState(null);
   const [modalCountdown, setModalCountdown] = useState(10);
-
 
   const navigate = useNavigate();
   const vibrate = useVibration();
@@ -201,9 +204,10 @@ export default function CounselorDashboard() {
   const handleUpdateAppointmentStatus = async (id, status) => {
     try {
       const token = getAuthToken();
-      await axios.patch(`${API_BASE_URL}/api/appointments/${id}/status`, 
+      await axios.patch(
+        `${API_BASE_URL}/api/appointments/${id}/status`,
         { status },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       // Refresh appointments
       const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
@@ -932,16 +936,15 @@ export default function CounselorDashboard() {
 
     socket.on("connect", () => {
       console.log("✅ Counselor Socket Connected");
-      // Join relevant rooms
-      socket.emit("join-chat", { chatId: `counselor_${counsellorId}` });
-      socket.emit("join-chat", { chatId: `user_${counsellorId}` });
     });
 
     socket.on("appointmentBooked", (appointment) => {
       console.log("📅 New Appointment Booked:", appointment);
       setAppointments((prev) => [appointment, ...prev]);
       vibrate([100, 50, 100]);
-      alert(`📅 New appointment requested for ${new Date(appointment.date).toLocaleString()}`);
+      alert(
+        `📅 New appointment requested for ${new Date(appointment.date).toLocaleString()}`,
+      );
     });
 
     return () => {
@@ -1357,65 +1360,115 @@ export default function CounselorDashboard() {
                 <div className="stitch-apt-header">
                   <h2>Manage Appointments</h2>
                   <button>
-                    View all requests <FaArrowRight style={{ marginLeft: '4px' }} />
+                    View all requests{" "}
+                    <FaArrowRight style={{ marginLeft: "4px" }} />
                   </button>
                 </div>
 
                 <div className="stitch-apt-grid">
                   {appointments.length === 0 ? (
-                    <div className="stitch-empty-state-couns">No pending appointment requests.</div>
+                    <div className="stitch-empty-state-couns">
+                      No pending appointment requests.
+                    </div>
                   ) : (
-                    appointments.map(apt => (
-                      <div key={apt._id} className="stitch-apt-card" style={{ position: 'relative' }}>
+                    appointments.map((apt) => (
+                      <div
+                        key={apt._id}
+                        className="stitch-apt-card"
+                        style={{ position: "relative" }}
+                      >
                         <div>
                           <div className="stitch-apt-card-top">
                             <div className="stitch-apt-avatar">
                               {apt.patient?.profilePhoto ? (
-                                <img 
-                                  src={typeof apt.patient.profilePhoto === 'string' ? apt.patient.profilePhoto : apt.patient.profilePhoto.url} 
-                                  alt={apt.patient.fullName} 
-                                  style={{ width: '100%', height: '100%', borderRadius: '8px', objectFit: 'cover' }}
+                                <img
+                                  src={
+                                    typeof apt.patient.profilePhoto === "string"
+                                      ? apt.patient.profilePhoto
+                                      : apt.patient.profilePhoto.url
+                                  }
+                                  alt={apt.patient.anonymous}
+                                  style={{
+                                    width: "100%",
+                                    height: "100%",
+                                    borderRadius: "8px",
+                                    objectFit: "cover",
+                                  }}
                                 />
-                              ) : <FaUser />}
+                              ) : (
+                                <FaUser />
+                              )}
                             </div>
                             <div className="stitch-apt-info">
-                              <h3>{apt.patient?.fullName || "Anonymous User"}</h3>
+                              <h3>
+                                {apt.patient?.anonymous ||
+                                  apt.patient?.fullName ||
+                                  "Anonymous User"}
+                              </h3>
+
                               <div className="stitch-apt-tag">
                                 <FaBrain />
                                 INITIAL CONSULTATION
                               </div>
                             </div>
                           </div>
-                          
+
                           <div className={`status-badge-stitch ${apt.status}`}>
                             {apt.status.toUpperCase()}
                           </div>
 
-                          {apt.notes && apt.notes.trim() !== '' && (
-                            <div style={{ marginTop: '16px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', fontSize: '13px', color: '#475569', borderLeft: '3px solid #cbd5e1', fontStyle: 'italic' }}>
+                          {apt.notes && apt.notes.trim() !== "" && (
+                            <div
+                              style={{
+                                marginTop: "16px",
+                                padding: "12px",
+                                backgroundColor: "#f8fafc",
+                                borderRadius: "8px",
+                                fontSize: "13px",
+                                color: "#475569",
+                                borderLeft: "3px solid #cbd5e1",
+                                fontStyle: "italic",
+                              }}
+                            >
                               "{apt.notes}"
                             </div>
                           )}
 
                           <div className="stitch-apt-time">
-                            <span className="stitch-apt-time-label">Requested:</span>
+                            <span className="stitch-apt-time-label">
+                              Requested:
+                            </span>
                             <span className="stitch-apt-time-value">
-                              {new Date(apt.date).toLocaleDateString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+                              {new Date(apt.date).toLocaleDateString("en-US", {
+                                weekday: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </span>
                           </div>
                         </div>
 
-                        {apt.status === 'pending' && (
+                        {apt.status === "pending" && (
                           <div className="stitch-apt-actions">
-                            <button 
+                            <button
                               className="stitch-btn-accept"
-                              onClick={() => handleUpdateAppointmentStatus(apt._id, 'confirmed')}
+                              onClick={() =>
+                                handleUpdateAppointmentStatus(
+                                  apt._id,
+                                  "confirmed",
+                                )
+                              }
                             >
                               Accept
                             </button>
-                            <button 
+                            <button
                               className="stitch-btn-reject"
-                              onClick={() => handleUpdateAppointmentStatus(apt._id, 'canceled')}
+                              onClick={() =>
+                                handleUpdateAppointmentStatus(
+                                  apt._id,
+                                  "canceled",
+                                )
+                              }
                             >
                               Reject
                             </button>
@@ -1432,53 +1485,119 @@ export default function CounselorDashboard() {
                 {/* Confirmed Schedule */}
                 <div className="stitch-schedule-section">
                   <div className="stitch-section-header">
-                    <h2>Today's Schedule</h2>
+                    <h3>Appointments Timeline</h3>
                     <span className="stitch-date-badge">
-                      {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()}
+                      {new Date()
+                        .toLocaleDateString("en-US", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        })
+                        .toUpperCase()}
                     </span>
                   </div>
-                  
+
                   <div className="stitch-schedule-list">
-                    {appointments.filter(apt => apt.status === 'confirmed').length === 0 ? (
-                      <div style={{ padding: '24px', textAlign: 'center', color: '#64748b', fontStyle: 'italic', fontSize: '14px' }}>
+                    {appointments.filter((apt) => apt.status === "confirmed")
+                      .length === 0 ? (
+                      <div
+                        style={{
+                          padding: "24px",
+                          textAlign: "center",
+                          color: "#64748b",
+                          fontStyle: "italic",
+                          fontSize: "14px",
+                        }}
+                      >
                         No confirmed appointments yet.
                       </div>
                     ) : (
                       appointments
-                        .filter(apt => apt.status === 'confirmed')
+                        .filter((apt) => apt.status === "confirmed")
                         .sort((a, b) => new Date(a.date) - new Date(b.date))
                         .map((apt, index) => {
                           const dateObj = new Date(apt.date);
-                          const timeParts = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }).split(' ');
+                          const timeParts = dateObj
+                            .toLocaleTimeString("en-US", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })
+                            .split(" ");
                           const timeStr = timeParts[0];
                           const ampm = timeParts[1];
-                          const colors = ['blue', 'indigo', 'gray'];
+                          const colors = ["blue", "indigo", "gray"];
                           const color = colors[index % colors.length];
-                          
-                          const isToday = dateObj.toDateString() === new Date().toDateString();
+
+                          const isToday =
+                            dateObj.toDateString() ===
+                            new Date().toDateString();
 
                           return (
                             <div key={apt._id} className="stitch-schedule-item">
                               <div className="stitch-schedule-time">
-                                <div className="stitch-schedule-time-hh">{timeStr}</div>
-                                <div className="stitch-schedule-time-ampm">{ampm}</div>
+                                <div className="stitch-schedule-time-hh">
+                                  {timeStr}
+                                </div>
+                                <div className="stitch-schedule-time-ampm">
+                                  {ampm}
+                                </div>
                               </div>
-                              <div className={`stitch-schedule-line ${color}`}></div>
+                              <div
+                                className={`stitch-schedule-line ${color}`}
+                              ></div>
                               <div className="stitch-schedule-details">
-                                <div className="stitch-schedule-name">{apt.patient?.fullName || "Anonymous User"}</div>
+                                <div className="stitch-schedule-name">
+                                  {apt.patient?.anonymous ||
+                                    apt.patient?.fullName ||
+                                    "Anonymous User"}
+                                </div>
                                 <div className="stitch-schedule-type">
-                                  {!isToday && <span style={{ fontWeight: '600', color: '#4648d4', marginRight: '4px' }}>{dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>}
+                                  {!isToday && (
+                                    <span
+                                      style={{
+                                        fontWeight: "600",
+                                        color: "#4648d4",
+                                        marginRight: "4px",
+                                      }}
+                                    >
+                                      {dateObj.toLocaleDateString("en-US", {
+                                        month: "short",
+                                        day: "numeric",
+                                      })}
+                                    </span>
+                                  )}
                                   Initial Consultation
                                 </div>
                               </div>
-                              <div 
-                                style={{ cursor: 'pointer', padding: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#eef2ff', color: '#4f46e5', borderRadius: '50%', transition: 'all 0.2s' }} 
-                                onClick={() => handleInitiateVideoCall(apt)} 
+                              <div
+                                style={{
+                                  cursor: "pointer",
+                                  padding: "8px",
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  backgroundColor: "#eef2ff",
+                                  color: "#4f46e5",
+                                  borderRadius: "50%",
+                                  transition: "all 0.2s",
+                                }}
+                                onClick={() => handleInitiateVideoCall(apt)}
                                 title="Start Video Call"
-                                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#4f46e5'; e.currentTarget.style.color = 'white'; }}
-                                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#eef2ff'; e.currentTarget.style.color = '#4f46e5'; }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#4f46e5";
+                                  e.currentTarget.style.color = "white";
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor =
+                                    "#eef2ff";
+                                  e.currentTarget.style.color = "#4f46e5";
+                                }}
                               >
-                                <FaVideo className="stitch-schedule-icon" style={{ margin: 0, color: 'inherit' }} />
+                                <FaVideo
+                                  className="stitch-schedule-icon"
+                                  style={{ margin: 0, color: "inherit" }}
+                                />
                               </div>
                             </div>
                           );
@@ -1486,7 +1605,6 @@ export default function CounselorDashboard() {
                     )}
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -1650,7 +1768,6 @@ export default function CounselorDashboard() {
           </div>
         </div>
       )}
-
     </div>
   );
 }

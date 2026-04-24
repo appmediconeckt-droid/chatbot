@@ -322,7 +322,7 @@ const MyAppointments = () => {
               margin: 0,
             }}
           >
-            Today's Schedule
+            Appointment Schedule
           </h3>
           <span
             style={{
