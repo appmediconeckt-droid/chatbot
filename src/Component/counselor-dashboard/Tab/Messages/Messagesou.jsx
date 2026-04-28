@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import "./Messagesou.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 /**
@@ -168,7 +169,8 @@ const SMSList = () => {
             lastActivityAt: lastMessageTime,
             unread: chat.unreadCount || 0,
             status: chatStatus,
-            online: chatStatus === "accepted" && !chat.isExpired,
+            online: Boolean(otherParty.isOnline),
+            lastSeen: otherParty.lastSeen || null,
             phone: otherParty.phone || "Not available",
             email: otherParty.email || "Not available",
             specialization,
@@ -203,6 +205,37 @@ const SMSList = () => {
 
     fetchChats();
   }, [handleSessionExpired]);
+
+  useEffect(() => {
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) return undefined;
+
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+    });
+
+    socket.on("presence-update", ({ userId, isOnline, lastSeen }) => {
+      setUsers((prev) =>
+        prev.map((user) =>
+          String(user.receiverId || user._id) === String(userId)
+            ? { ...user, online: Boolean(isOnline), lastSeen }
+            : user,
+        ),
+      );
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Messages presence socket error:", err.message);
+    });
+
+    return () => {
+      socket.off("presence-update");
+      socket.off("connect_error");
+      socket.disconnect();
+    };
+  }, []);
 
   // Filter users based on the displayed (anonymous) name
   const filteredUsers = users.filter(

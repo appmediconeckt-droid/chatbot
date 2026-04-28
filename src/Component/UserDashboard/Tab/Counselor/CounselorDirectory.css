@@ -254,6 +254,7 @@
 }
 
 .counselor-avatar {
+  position: relative;
   width: 56px;
   height: 56px;
   background: linear-gradient(145deg, #233b6e, #1e4b8f);
@@ -266,6 +267,33 @@
   font-size: 1.2rem;
   box-shadow: 0 8px 14px -6px #233b6e80;
   flex-shrink: 0;
+  overflow: visible;
+}
+
+.counselor-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.presence-dot {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+}
+
+.presence-dot.online {
+  background: #22c55e;
+}
+
+.presence-dot.offline {
+  background: #94a3b8;
 }
 
 .counselor-basic {
@@ -332,7 +360,7 @@
 
 /* Stats grid */
 .stats-grid {
-  display: ruby;
+  display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 0.6rem;
   background: #f8fcfd;

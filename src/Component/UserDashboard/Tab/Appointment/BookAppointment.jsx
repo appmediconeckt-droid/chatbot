@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { io } from "socket.io-client";
 import "./BookAppointment.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import axios from "axios";
@@ -263,8 +264,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
             specialization: c.specialization?.join(" , ") || "General",
             experience: `${c.experience || 0} years`,
             rating: c.rating || 4.5,
-            online: c.isActive,
+            online: Boolean(c.isOnline),
             available: c.isActive,
+            lastSeen: c.lastSeen || null,
             avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
             avatarType: getProfilePhotoUrl(c) ? "image" : "text",
             expertise: c.specialization || [],
@@ -296,6 +298,40 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
     };
 
     fetchCounselors();
+  }, []);
+
+  useEffect(() => {
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) return undefined;
+
+    const socket = io(API_BASE_URL, {
+      auth: { token },
+      transports: ["websocket", "polling"],
+    });
+
+    const updatePresence = ({ userId, isOnline, lastSeen }) => {
+      const applyPresence = (list) =>
+        list.map((counselor) =>
+          String(counselor.id) === String(userId)
+            ? { ...counselor, online: Boolean(isOnline), lastSeen }
+            : counselor,
+        );
+
+      setCounselors(applyPresence);
+      setFilteredCounselors(applyPresence);
+    };
+
+    socket.on("presence-update", updatePresence);
+    socket.on("connect_error", (err) => {
+      console.error("Appointment presence socket error:", err.message);
+    });
+
+    return () => {
+      socket.off("presence-update", updatePresence);
+      socket.off("connect_error");
+      socket.disconnect();
+    };
   }, []);
 
   // Fetch user data when modal opens
@@ -673,10 +709,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                   </div>
                   <div className="counselor-status-unique">
                     <span
-                      className={`status-dot-unique ${counselor.available ? "online" : "offline"}`}
+                      className={`status-dot-unique ${counselor.online ? "online" : "offline"}`}
                     ></span>
                     <span className="status-text-unique">
-                      {counselor.available ? "Online" : "Offline"}
+                      {counselor.online ? "Online" : "Offline"}
                     </span>
                   </div>
                 </div>
@@ -770,9 +806,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
                 <div className="row-action-unique">
                   <span
-                    className={`dot ${counselor.available ? "online" : "offline"}`}
+                    className={`dot ${counselor.online ? "online" : "offline"}`}
                   ></span>
-                  <button
+                  <div className="row-buttons-unique">
+                    <button
                     disabled={!counselor.available}
                     className="row-btn-unique"
                     onClick={(e) => {
@@ -782,6 +819,16 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                   >
                     Chat
                   </button>
+                  <button
+                    className="row-book-btn-unique"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBookAppointment(counselor);
+                    }}
+                  >
+                    Book
+                  </button>
+                </div>
                 </div>
               </div>
             ))}

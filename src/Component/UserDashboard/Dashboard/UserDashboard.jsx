@@ -911,7 +911,9 @@ export default function UserDashboard() {
               <CounselorRequestChat initialSearch={targetCounselor} />
             )}
             {active === "Live Chat" && <LiveChatSupport />}
-            {active === "MyAppointments" && <MyAppointments />}
+            {active === "MyAppointments" && (
+              <MyAppointments setDashboardTab={setActive} />
+            )}
             {active === "Wallet" && <WalletDashboard userData={userData} />}
             {active === "Video" && (
               <CallHistory currentUser={{ id: userId, role: "user" }} />

@@ -71,6 +71,10 @@ const SMSInput = () => {
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
+  const [remotePresence, setRemotePresence] = useState({
+    isOnline: Boolean(selectedUser?.isOnline || selectedUser?.online),
+    lastSeen: selectedUser?.lastSeen || null,
+  });
 
   const getCurrentCounselor = () => {
     let counselorData = null;
@@ -175,6 +179,14 @@ const SMSInput = () => {
   const userDetails = getUserDetails();
   const USER_ID = userDetails.id;
   const USER_NAME = userDetails.name;
+  const remoteStatusClass = remotePresence.isOnline ? "online" : "offline";
+
+  useEffect(() => {
+    setRemotePresence({
+      isOnline: Boolean(selectedUser?.isOnline || selectedUser?.online),
+      lastSeen: selectedUser?.lastSeen || null,
+    });
+  }, [selectedUser]);
 
   const getAvatarByGender = (gender) => {
     if (gender === "male") return "👨";
@@ -959,6 +971,15 @@ const SMSInput = () => {
       );
     });
 
+    socket.on("presence-update", ({ userId, isOnline, lastSeen }) => {
+      if (String(userId) !== String(USER_ID)) return;
+
+      setRemotePresence({
+        isOnline: Boolean(isOnline),
+        lastSeen: lastSeen || null,
+      });
+    });
+
     // Show caller-facing feedback when the other participant declines.
     socket.on("call_rejected", (payload) => {
       const declinedBy = payload?.by ? ` by ${payload.by}` : "";
@@ -1001,6 +1022,7 @@ const SMSInput = () => {
         chatSocketRef.current.off("new-message");
         chatSocketRef.current.off("user-typing");
         chatSocketRef.current.off("messages-read");
+        chatSocketRef.current.off("presence-update");
         chatSocketRef.current.off("call_rejected");
         chatSocketRef.current.off("call-status-update");
         chatSocketRef.current.off("connect");
@@ -1009,7 +1031,7 @@ const SMSInput = () => {
         chatSocketRef.current = null;
       }
     };
-  }, [chatId, selectedUser, COUNSELOR_ID]);
+  }, [chatId, selectedUser, COUNSELOR_ID, USER_ID]);
 
   const renderMessageStatus = (message) => {
     if (message.sender !== "me") return null;
@@ -1067,7 +1089,7 @@ const SMSInput = () => {
                 {getAvatarIcon(userDetails.gender)}
               </span>
               <span
-                className={`status-dot ${selectedUser.status || "online"}`}
+                className={`status-dot ${remoteStatusClass}`}
               ></span>
             </div>
             <div className="smsinput-user-details">

@@ -2810,3 +2810,52 @@ button:focus {
   color: #ef4444;
 }
 
+/* Date Filter Styles */
+.stitch-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: white;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.stitch-date-filter:hover {
+  border-color: #4648d4;
+  box-shadow: 0 4px 6px rgba(70, 72, 212, 0.05);
+}
+
+.stitch-date-input {
+  border: none;
+  background: none;
+  outline: none;
+  color: #0b1c30;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+}
+
+.stitch-clear-filter {
+  background: #f1f5f9;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.stitch-clear-filter:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
 
-const MyAppointments = () => {
+const MyAppointments = ({ setDashboardTab }) => {
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("Upcoming");
@@ -72,7 +72,7 @@ const MyAppointments = () => {
       style={{ fontFamily: "'Manrope', sans-serif" }}
     >
       {/* ── Main Content ── */}
-      <main className="flex-1 p-8 min-w-0">
+      <main className="flex-1 p-4 sm:p-8 min-w-0">
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
@@ -122,7 +122,7 @@ const MyAppointments = () => {
         ) : (
           <div className="grid grid-cols-1 gap-6 mb-8">
             {displayApts.length === 0 ? (
-              <div className="bg-white rounded-xl p-16 border border-dashed border-slate-200 text-center shadow-[0px_4px_20px_rgba(0,0,0,0.05)]">
+              <div className="bg-white rounded-xl p-8 sm:p-16 border border-dashed border-slate-200 text-center shadow-[0px_4px_20px_rgba(0,0,0,0.05)]">
                 <span className="material-symbols-outlined text-slate-300 text-5xl block mb-3">
                   calendar_today
                 </span>
@@ -134,7 +134,7 @@ const MyAppointments = () => {
               displayApts.map((apt) => (
                 <div
                   key={apt._id}
-                  className="bg-white rounded-xl p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col md:flex-row gap-6 items-start hover:shadow-md transition-shadow"
+                  className="bg-white rounded-xl p-5 sm:p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col md:flex-row gap-4 sm:gap-6 items-start hover:shadow-md transition-shadow"
                 >
                   {/* Doctor Photo */}
                   <div className="flex-shrink-0">
@@ -147,7 +147,7 @@ const MyAppointments = () => {
 
                   {/* Card Body */}
                   <div className="flex-1 space-y-2 w-full">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                       <div>
                         <span
                           className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${getStatusStyle(apt.status)}`}
@@ -165,7 +165,7 @@ const MyAppointments = () => {
                             "Medical Specialist"}
                         </p>
                       </div>
-                      <div className="text-right shrink-0">
+                       <div className="text-left sm:text-right shrink-0">
                         <div className="text-[#4648d4] font-bold text-lg">
                           {new Date(apt.date).toLocaleDateString("en-US", {
                             month: "short",
@@ -297,7 +297,10 @@ const MyAppointments = () => {
               Schedule your annual physical exam and stay on top of your health
               goals. Integrated lab results and insurance tracking included.
             </p>
-            <button className="bg-white text-[#4648d4] px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-50 transition-colors active:scale-95">
+            <button 
+              onClick={() => setDashboardTab && setDashboardTab("Live Chat")}
+              className="bg-white text-[#4648d4] px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-50 transition-colors active:scale-95"
+            >
               Book New Appointment
             </button>
           </div>

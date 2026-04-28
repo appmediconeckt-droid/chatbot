@@ -53,6 +53,7 @@ export default function CounselorDashboard() {
   const [showNotificationPopup, setShowNotificationPopup] = useState(false);
   const [latestRequest, setLatestRequest] = useState(null);
   const [appointments, setAppointments] = useState([]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString('en-CA'));
   const socketRef = useRef(null);
 
   // Modal States
@@ -211,6 +212,7 @@ export default function CounselorDashboard() {
       );
       // Refresh appointments
       const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
+        params: { date: selectedDate },
         headers: { Authorization: `Bearer ${token}` },
       });
       setAppointments(response.data);
@@ -958,6 +960,7 @@ export default function CounselorDashboard() {
       try {
         const token = getAuthToken();
         const res = await axios.get(`${API_BASE_URL}/api/appointments`, {
+          params: { date: selectedDate },
           headers: { Authorization: `Bearer ${token}` },
         });
         setAppointments(res.data || []);
@@ -966,7 +969,7 @@ export default function CounselorDashboard() {
       }
     };
     fetchAppointments();
-  }, [activeTab]);
+  }, [activeTab, selectedDate]);
 
   const handleLogout = async () => {
     try {
@@ -1359,10 +1362,31 @@ export default function CounselorDashboard() {
               <div className="stitch-apt-left">
                 <div className="stitch-apt-header">
                   <h2>Manage Appointments</h2>
-                  <button>
-                    View all requests{" "}
-                    <FaArrowRight style={{ marginLeft: "4px" }} />
-                  </button>
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div className="stitch-date-filter">
+                      <FaCalendarAlt style={{ color: "#4648d4", fontSize: "14px" }} />
+                      <input
+                        type="date"
+                        className="stitch-date-input"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        title="Filter by date"
+                      />
+                      {selectedDate && (
+                        <button
+                          className="stitch-clear-filter"
+                          onClick={() => setSelectedDate("")}
+                          title="Clear date filter"
+                        >
+                          <FaTimes size={10} />
+                        </button>
+                      )}
+                    </div>
+                    <button>
+                      View all requests{" "}
+                      <FaArrowRight style={{ marginLeft: "4px" }} />
+                    </button>
+                  </div>
                 </div>
 
                 <div className="stitch-apt-grid">

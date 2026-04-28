@@ -647,6 +647,29 @@
   background: #a0aec0;
 }
 
+.row-buttons-unique {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.row-book-btn-unique {
+  padding: 8px 16px;
+  border: 1.5px solid #667eea;
+  border-radius: 20px;
+  background: white;
+  color: #667eea;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.row-book-btn-unique:hover {
+  background: #f0f4ff;
+  transform: translateY(-1px);
+}
+
 /* Modal Styles */
 .modal-overlay-unique {
   position: fixed;
@@ -903,12 +926,28 @@
 /* Mobile Devices (max-width: 768px) */
 @media (max-width: 768px) {
   .desktop-view {
-    display: none !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 20px;
+    padding: 0 16px;
   }
 
   .mobile-view {
-    display: flex !important;
-    flex-direction: column;
+    display: none !important;
+  }
+
+  .counselor-card-unique {
+    padding: 20px !important;
+    border-radius: 20px !important;
+  }
+
+  .counselor-avatar-unique {
+    width: 70px !important;
+    height: 70px !important;
+  }
+
+  .counselor-name-unique {
+    font-size: 1.2rem !important;
   }
 
   .main-content-unique {
