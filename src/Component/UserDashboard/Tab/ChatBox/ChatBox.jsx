@@ -93,8 +93,8 @@ const ChatBox = () => {
     return name.split(" ").map((word) => word[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  const scrollToBottom = useCallback((behavior = "smooth") => {
-    if (messagesContainerRef.current && shouldScrollToBottom) {
+  const scrollToBottom = useCallback((behavior = "smooth", force = false) => {
+    if (messagesContainerRef.current && (shouldScrollToBottom || force)) {
       messagesContainerRef.current.scrollTo({
         top: messagesContainerRef.current.scrollHeight,
         behavior,
@@ -317,12 +317,19 @@ const ChatBox = () => {
   useEffect(() => {
     if (messages.length === 0) return;
 
-    if (shouldScrollToBottom) {
-      const behavior = isInitialLoadRef.current ? "auto" : "smooth";
-      scrollToBottom(behavior);
-      if (isInitialLoadRef.current) isInitialLoadRef.current = false;
+    if (isInitialLoadRef.current) {
+      // Force scroll to bottom on initial load regardless of state
+      // Use behavior: "auto" for instant jump and a small delay for DOM paint
+      const timer = setTimeout(() => {
+        scrollToBottom("auto", true);
+        isInitialLoadRef.current = false;
+      }, 50);
+      return () => clearTimeout(timer);
+    } else if (shouldScrollToBottom) {
+      // Normal smooth scroll for incoming messages
+      scrollToBottom("smooth");
     } else {
-      // Store scroll position to maintain it
+      // Store scroll position to maintain it if user has scrolled up
       if (messagesContainerRef.current) {
         prevScrollHeightRef.current = messagesContainerRef.current.scrollHeight;
       }

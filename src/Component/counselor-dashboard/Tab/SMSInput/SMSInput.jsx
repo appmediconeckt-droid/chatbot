@@ -1,5 +1,5 @@
 // SMSInput.jsx - Fully Responsive Chat Interface with Zero Padding Issues on Mobile
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { io } from "socket.io-client";
@@ -20,6 +20,8 @@ const SMSInput = () => {
   const chatSocketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const [remoteIsTyping, setRemoteIsTyping] = useState(false);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
+  const isInitialLoadRef = useRef(true);
 
   // Call modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -865,11 +867,43 @@ const SMSInput = () => {
     if (gender === "female") return "👩";
     return "👤";
   };
-  const scrollToBottom = () =>
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Handle scroll events to detect if user is near bottom
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    // Consider "at bottom" if within 100px of the actual bottom
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShouldScrollToBottom(isNearBottom);
+  }, []);
+
+  // Set up scroll listener
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }
+  }, [handleScroll]);
+
+  const scrollToBottom = useCallback((behavior = "smooth", force = false) => {
+    if (messagesEndRef.current && (shouldScrollToBottom || force)) {
+      messagesEndRef.current.scrollIntoView({ behavior });
+    }
+  }, [shouldScrollToBottom]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    if (isInitialLoadRef.current) {
+      const timer = setTimeout(() => {
+        scrollToBottom("auto", true);
+        isInitialLoadRef.current = false;
+      }, 50);
+      return () => clearTimeout(timer);
+    } else if (shouldScrollToBottom) {
+      scrollToBottom("smooth");
+    }
+  }, [messages, scrollToBottom, shouldScrollToBottom]);
   useEffect(() => {
     if (selectedUser && COUNSELOR_ID) fetchMessagesFromAPI();
   }, [selectedUser, chatId, COUNSELOR_ID]);
