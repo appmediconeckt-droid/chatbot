@@ -185,7 +185,7 @@ const ChatInterface = ({ setActiveTab }) => {
                         time: formatTime(lastMessageTime),
                         fullDateTime: formatFullDateTime(lastMessageTime),
                         unread: chat.unreadCount || 0,
-                        online: otherParty.isActive || false,
+                        online: otherParty.isOnline || false,
                         lastSeen: otherParty.lastSeen || null,
                         avatar: otherParty.avatar || null,
                         avatarType: 'image',
@@ -254,7 +254,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                 time: formatTime(lastMessageTime),
                                 fullDateTime: formatFullDateTime(lastMessageTime),
                                 unread: chat.unreadCount || 0,
-                                online: otherParty.isActive || false,
+                                online: otherParty.isOnline || false,
                                 lastSeen: otherParty.lastSeen || null,
                                 avatar: otherParty.avatar || null,
                                 avatarType: 'image',
@@ -621,7 +621,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                         <div className="counselorAvatar">
                                             {renderAvatar(counselor, 'md')}
                                         </div>
-                                        <div className={`counselorStatus ${counselor.online ? 'counselorStatusOnline' : 'counselorStatusOffline'}`} />
+                                        {/* <div className={`counselorStatus ${counselor.online ? 'counselorStatusOnline' : 'counselorStatusOffline'}`} /> */}
                                     </div>
 
                                     <div className="counselorInfo">

@@ -828,6 +828,14 @@ const ChatBox = () => {
       setCurrentChat((prev) => (prev ? { ...prev, status } : prev));
     });
 
+    // Listen for real-time presence updates
+    socket.on("presence-update", ({ userId, isOnline, lastSeen }) => {
+      const counselorId = resolveCounselorId();
+      if (String(userId) === String(counselorId)) {
+        setCurrentCounselor(prev => prev ? { ...prev, online: Boolean(isOnline), lastSeen } : prev);
+      }
+    });
+
     socket.on("connect_error", (err) => {
       console.error("Chat socket connection error:", err.message);
     });
