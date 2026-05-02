@@ -185,6 +185,10 @@ export default function CounselorDashboard() {
     setShowMobileMenu(false);
   };
 
+  const handleViewAllRequests = () => {
+    setSelectedDate("");
+  };
+
   return (
     <div className="couns-dashboard">
       <IncomingCallModal
@@ -265,6 +269,7 @@ export default function CounselorDashboard() {
             appointments={appointments}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
+            handleViewAllRequests={handleViewAllRequests}
             handleUpdateAppointmentStatus={handleUpdateAppointmentStatus}
             handleInitiateVideoCall={handleInitiateVideoCall}
           />

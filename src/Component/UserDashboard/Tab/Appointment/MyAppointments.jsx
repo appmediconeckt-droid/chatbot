@@ -165,7 +165,7 @@ const MyAppointments = ({ setDashboardTab }) => {
                             "Medical Specialist"}
                         </p>
                       </div>
-                       <div className="text-left sm:text-right shrink-0">
+                      <div className="text-left sm:text-right shrink-0">
                         <div className="text-[#4648d4] font-bold text-lg">
                           {new Date(apt.date).toLocaleDateString("en-US", {
                             month: "short",
@@ -184,12 +184,6 @@ const MyAppointments = ({ setDashboardTab }) => {
 
                     {/* Actions */}
                     <div className="flex flex-wrap gap-3 pt-4">
-                      <button className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-[#4648d4] rounded-lg text-sm font-[500] hover:bg-indigo-100 transition-colors">
-                        <span className="material-symbols-outlined text-sm">
-                          event_repeat
-                        </span>
-                        Reschedule
-                      </button>
                       <button
                         className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg text-sm font-[500] hover:bg-slate-50 transition-colors"
                         onClick={() => {
@@ -297,7 +291,7 @@ const MyAppointments = ({ setDashboardTab }) => {
               Schedule your annual physical exam and stay on top of your health
               goals. Integrated lab results and insurance tracking included.
             </p>
-            <button 
+            <button
               onClick={() => setDashboardTab && setDashboardTab("Live Chat")}
               className="bg-white text-[#4648d4] px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-50 transition-colors active:scale-95"
             >

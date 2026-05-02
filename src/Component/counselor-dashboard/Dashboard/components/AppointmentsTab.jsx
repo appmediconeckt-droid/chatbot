@@ -12,6 +12,7 @@ export default function AppointmentsTab({
   appointments,
   selectedDate,
   setSelectedDate,
+  handleViewAllRequests,
   handleUpdateAppointmentStatus,
   handleInitiateVideoCall,
 }) {
@@ -42,7 +43,7 @@ export default function AppointmentsTab({
                   </button>
                 )}
               </div>
-              <button>
+              <button type="button" onClick={handleViewAllRequests}>
                 View all requests <FaArrowRight style={{ marginLeft: "4px" }} />
               </button>
             </div>
@@ -63,31 +64,10 @@ export default function AppointmentsTab({
                   <div>
                     <div className="stitch-apt-card-top">
                       <div className="stitch-apt-avatar">
-                        {apt.patient?.profilePhoto ? (
-                          <img
-                            src={
-                              typeof apt.patient.profilePhoto === "string"
-                                ? apt.patient.profilePhoto
-                                : apt.patient.profilePhoto.url
-                            }
-                            alt={apt.patient.anonymous}
-                            style={{
-                              width: "100%",
-                              height: "100%",
-                              borderRadius: "8px",
-                              objectFit: "cover",
-                            }}
-                          />
-                        ) : (
-                          <FaUser />
-                        )}
+                        <FaUser />
                       </div>
                       <div className="stitch-apt-info">
-                        <h3>
-                          {apt.patient?.anonymous ||
-                            apt.patient?.fullName ||
-                            "Anonymous User"}
-                        </h3>
+                        <h3>Anonymous</h3>
                         <div className="stitch-apt-tag">
                           <FaBrain />
                           INITIAL CONSULTATION
@@ -171,8 +151,8 @@ export default function AppointmentsTab({
             </div>
 
             <div className="stitch-schedule-list">
-              {appointments.filter((apt) => apt.status === "confirmed").length ===
-              0 ? (
+              {appointments.filter((apt) => apt.status === "confirmed")
+                .length === 0 ? (
                 <div
                   style={{
                     padding: "24px",
@@ -206,16 +186,16 @@ export default function AppointmentsTab({
                     return (
                       <div key={apt._id} className="stitch-schedule-item">
                         <div className="stitch-schedule-time">
-                          <div className="stitch-schedule-time-hh">{timeStr}</div>
-                          <div className="stitch-schedule-time-ampm">{ampm}</div>
+                          <div className="stitch-schedule-time-hh">
+                            {timeStr}
+                          </div>
+                          <div className="stitch-schedule-time-ampm">
+                            {ampm}
+                          </div>
                         </div>
                         <div className={`stitch-schedule-line ${color}`}></div>
                         <div className="stitch-schedule-details">
-                          <div className="stitch-schedule-name">
-                            {apt.patient?.anonymous ||
-                              apt.patient?.fullName ||
-                              "Anonymous User"}
-                          </div>
+                          <div className="stitch-schedule-name">Anonymous</div>
                           <div className="stitch-schedule-type">
                             {!isToday && (
                               <span

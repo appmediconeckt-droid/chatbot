@@ -454,7 +454,8 @@ export default function UserDashboard() {
     const fetchUserData = async () => {
       try {
         const userId = localStorage.getItem("userId");
-        const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+        const token =
+          localStorage.getItem("token") || localStorage.getItem("accessToken");
         if (!userId) return;
         const response = await axios.get(
           `${API_BASE_URL}/api/auth/getUser/${userId}`,
@@ -890,6 +891,15 @@ export default function UserDashboard() {
               </div>
               <hr className="ud-sidebar-separator" />
               <div className="ud-sidebar-actions">
+                <button
+                  className="ud-sidebar-item ud-profile-action"
+                  onClick={handleProfileClick}
+                >
+                  <span className="ud-sidebar-icon">
+                    <FaUser />
+                  </span>
+                  <span className="ud-sidebar-text">My Profile</span>
+                </button>
                 <button
                   className="ud-sidebar-item ud-logout"
                   onClick={handleLogoutClick}
