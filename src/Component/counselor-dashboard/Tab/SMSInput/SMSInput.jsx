@@ -1,10 +1,10 @@
 // SMSInput.jsx - Fully Responsive Chat Interface with Zero Padding Issues on Mobile
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { io } from "socket.io-client";
 import "./SMSInput.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
@@ -20,6 +20,8 @@ const SMSInput = () => {
   const chatSocketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const [remoteIsTyping, setRemoteIsTyping] = useState(false);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
+  const isInitialLoadRef = useRef(true);
 
   // Call modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -71,6 +73,10 @@ const SMSInput = () => {
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
+  const [remotePresence, setRemotePresence] = useState({
+    isOnline: Boolean(selectedUser?.isOnline || selectedUser?.online),
+    lastSeen: selectedUser?.lastSeen || null,
+  });
 
   const getCurrentCounselor = () => {
     let counselorData = null;
@@ -175,6 +181,14 @@ const SMSInput = () => {
   const userDetails = getUserDetails();
   const USER_ID = userDetails.id;
   const USER_NAME = userDetails.name;
+  const remoteStatusClass = remotePresence.isOnline ? "online" : "offline";
+
+  useEffect(() => {
+    setRemotePresence({
+      isOnline: Boolean(selectedUser?.isOnline || selectedUser?.online),
+      lastSeen: selectedUser?.lastSeen || null,
+    });
+  }, [selectedUser]);
 
   const getAvatarByGender = (gender) => {
     if (gender === "male") return "👨";
@@ -853,11 +867,43 @@ const SMSInput = () => {
     if (gender === "female") return "👩";
     return "👤";
   };
-  const scrollToBottom = () =>
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  // Handle scroll events to detect if user is near bottom
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    // Consider "at bottom" if within 100px of the actual bottom
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShouldScrollToBottom(isNearBottom);
+  }, []);
+
+  // Set up scroll listener
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }
+  }, [handleScroll]);
+
+  const scrollToBottom = useCallback((behavior = "smooth", force = false) => {
+    if (messagesEndRef.current && (shouldScrollToBottom || force)) {
+      messagesEndRef.current.scrollIntoView({ behavior });
+    }
+  }, [shouldScrollToBottom]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    if (isInitialLoadRef.current) {
+      const timer = setTimeout(() => {
+        scrollToBottom("auto", true);
+        isInitialLoadRef.current = false;
+      }, 50);
+      return () => clearTimeout(timer);
+    } else if (shouldScrollToBottom) {
+      scrollToBottom("smooth");
+    }
+  }, [messages, scrollToBottom, shouldScrollToBottom]);
   useEffect(() => {
     if (selectedUser && COUNSELOR_ID) fetchMessagesFromAPI();
   }, [selectedUser, chatId, COUNSELOR_ID]);
@@ -872,18 +918,11 @@ const SMSInput = () => {
   useEffect(() => {
     const apiChatId = chatId;
     if (!apiChatId || !selectedUser) return;
-    const token =
-      localStorage.getItem("token") || localStorage.getItem("accessToken");
-    if (!token) return;
-    const socket = io(API_BASE_URL, {
-      auth: { token },
-      transports: ["websocket", "polling"],
-    });
-    chatSocketRef.current = socket;
-    socket.on("connect", () => {
-      socket.emit("join-chat", { chatId: apiChatId });
-    });
-    socket.on("new-message", (messageData) => {
+
+    let mounted = true;
+
+    const onNewMessage = (messageData) => {
+      if (!mounted) return;
       if (
         messageData.senderRole === "counsellor" &&
         String(messageData.senderId) === String(COUNSELOR_ID)
@@ -891,10 +930,7 @@ const SMSInput = () => {
         setMessages((prev) => {
           const withoutTemp = prev.filter((msg) => !msg.isTemporary);
           const alreadyHas = withoutTemp.some(
-            (msg) =>
-              msg.messageId &&
-              messageData.messageId &&
-              msg.messageId === messageData.messageId,
+            (msg) => msg.messageId && messageData.messageId && msg.messageId === messageData.messageId,
           );
           if (alreadyHas) return withoutTemp;
           return [
@@ -905,10 +941,7 @@ const SMSInput = () => {
               text: messageData.content,
               sender: "me",
               senderRole: "counsellor",
-              time: new Date(messageData.createdAt).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
+              time: new Date(messageData.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
               fullTime: messageData.createdAt,
               contentType: messageData.contentType,
               isRead: messageData.isRead,
@@ -924,10 +957,7 @@ const SMSInput = () => {
         text: messageData.content,
         sender: "user",
         senderRole: messageData.senderRole,
-        time: new Date(messageData.createdAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
+        time: new Date(messageData.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         fullTime: messageData.createdAt,
         contentType: messageData.contentType,
         isRead: messageData.isRead,
@@ -935,81 +965,81 @@ const SMSInput = () => {
       };
       setMessages((prev) => {
         const isDuplicate = prev.some(
-          (msg) =>
-            msg.messageId &&
-            messageData.messageId &&
-            msg.messageId === messageData.messageId,
+          (msg) => msg.messageId && messageData.messageId && msg.messageId === messageData.messageId,
         );
         if (isDuplicate) return prev;
         return [...prev, transformedMessage];
       });
-    });
+    };
 
-    socket.on("user-typing", ({ userRole, isTyping: typing }) => {
-      if (userRole === "user") {
-        setRemoteIsTyping(typing);
-      }
-    });
+    const onTyping = ({ userRole, isTyping: typing }) => {
+      if (!mounted) return;
+      if (userRole === "user") setRemoteIsTyping(typing);
+    };
 
-    socket.on("messages-read", () => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.sender === "me" ? { ...msg, isRead: true } : msg,
-        ),
-      );
-    });
+    const onMessagesRead = () => {
+      if (!mounted) return;
+      setMessages((prev) => prev.map((msg) => msg.sender === "me" ? { ...msg, isRead: true } : msg));
+    };
 
-    // Show caller-facing feedback when the other participant declines.
-    socket.on("call_rejected", (payload) => {
+    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
+      if (!mounted || String(userId) !== String(USER_ID)) return;
+      setRemotePresence({ isOnline: Boolean(isOnline), lastSeen: lastSeen || null });
+    };
+
+    const onCallRejected = (payload) => {
+      if (!mounted) return;
       const declinedBy = payload?.by ? ` by ${payload.by}` : "";
       setCallError(`Call was declined${declinedBy}.`);
       setIsVideoModalOpen(false);
       setSelectedCall(null);
       setShowIncomingModal(false);
-    });
+    };
 
-    socket.on("call-status-update", ({ status }) => {
+    const onCallStatusUpdate = ({ status }) => {
+      if (!mounted) return;
       const normalizedStatus = String(status || "").toLowerCase();
-
-      if (normalizedStatus === "rejected") {
-        // setCallError("Call was declined by the other participant.");
-        setIsVideoModalOpen(false);
-        setSelectedCall(null);
-        setShowIncomingModal(false);
-        return;
-      }
-
-      if (
-        normalizedStatus === "ended" ||
-        normalizedStatus === "cancelled" ||
-        normalizedStatus === "canceled" ||
-        normalizedStatus === "expired"
-      ) {
-        // setCallError("Call was canceled before acceptance.");
+      if (normalizedStatus === "rejected" || normalizedStatus === "ended" || normalizedStatus === "cancelled" || normalizedStatus === "canceled" || normalizedStatus === "expired") {
         setIsVideoModalOpen(false);
         setSelectedCall(null);
         setShowIncomingModal(false);
       }
-    });
+    };
 
-    socket.on("connect_error", (err) => {
+    const onConnectError = (err) => {
       console.error("Chat socket connection error:", err.message);
+    };
+
+    socketService.connect().then((socket) => {
+      if (!mounted) return;
+      chatSocketRef.current = socket;
+      socket.emit("join-chat", { chatId: apiChatId });
+      socket.on("new-message", onNewMessage);
+      socket.on("user-typing", onTyping);
+      socket.on("messages-read", onMessagesRead);
+      socket.on("presence-update", onPresenceUpdate);
+      socket.on("call_rejected", onCallRejected);
+      socket.on("call-status-update", onCallStatusUpdate);
+      socket.on("connect_error", onConnectError);
+    }).catch((err) => {
+      console.error("[SMSInput] Socket connect failed:", err.message);
     });
 
     return () => {
-      if (chatSocketRef.current) {
-        chatSocketRef.current.off("new-message");
-        chatSocketRef.current.off("user-typing");
-        chatSocketRef.current.off("messages-read");
-        chatSocketRef.current.off("call_rejected");
-        chatSocketRef.current.off("call-status-update");
-        chatSocketRef.current.off("connect");
-        chatSocketRef.current.off("connect_error");
-        chatSocketRef.current.disconnect();
-        chatSocketRef.current = null;
+      mounted = false;
+      const socket = chatSocketRef.current;
+      if (socket) {
+        socket.off("new-message", onNewMessage);
+        socket.off("user-typing", onTyping);
+        socket.off("messages-read", onMessagesRead);
+        socket.off("presence-update", onPresenceUpdate);
+        socket.off("call_rejected", onCallRejected);
+        socket.off("call-status-update", onCallStatusUpdate);
+        socket.off("connect_error", onConnectError);
       }
+      chatSocketRef.current = null;
     };
-  }, [chatId, selectedUser, COUNSELOR_ID]);
+  }, [chatId, selectedUser, COUNSELOR_ID, USER_ID]);
 
   const renderMessageStatus = (message) => {
     if (message.sender !== "me") return null;
@@ -1067,7 +1097,7 @@ const SMSInput = () => {
                 {getAvatarIcon(userDetails.gender)}
               </span>
               <span
-                className={`status-dot ${selectedUser.status || "online"}`}
+                className={`status-dot ${remoteStatusClass}`}
               ></span>
             </div>
             <div className="smsinput-user-details">

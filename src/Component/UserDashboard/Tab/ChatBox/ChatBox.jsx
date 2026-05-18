@@ -1,11 +1,11 @@
 // ChatBox.jsx - Fully Responsive Chat Interface with Proper Scroll Behavior
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import axios from "axios";
-import { io } from "socket.io-client";
 import { Link, useParams, useLocation } from "react-router-dom";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 
@@ -93,11 +93,14 @@ const ChatBox = () => {
     return name.split(" ").map((word) => word[0]).join("").toUpperCase().slice(0, 2);
   };
 
-  const scrollToBottom = useCallback((behavior = "smooth") => {
-    if (messagesContainerRef.current && shouldScrollToBottom) {
-      messagesContainerRef.current.scrollTo({
-        top: messagesContainerRef.current.scrollHeight,
-        behavior,
+  const scrollToBottom = useCallback((behavior = "smooth", force = false) => {
+    if (messagesContainerRef.current && (shouldScrollToBottom || force)) {
+      const container = messagesContainerRef.current;
+      requestAnimationFrame(() => {
+        container.scrollTo({
+          top: container.scrollHeight,
+          behavior: behavior,
+        });
       });
     }
   }, [shouldScrollToBottom]);
@@ -313,16 +316,22 @@ const ChatBox = () => {
     }
   }, []);
 
-  // Scroll to bottom when new messages arrive (only if user hasn't scrolled up)
+  // Scroll to bottom when new messages arrive
   useEffect(() => {
     if (messages.length === 0) return;
-
-    if (shouldScrollToBottom) {
-      const behavior = isInitialLoadRef.current ? "auto" : "smooth";
-      scrollToBottom(behavior);
-      if (isInitialLoadRef.current) isInitialLoadRef.current = false;
+    
+    if (isInitialLoadRef.current) {
+      // Force an immediate scroll
+      scrollToBottom("auto", true);
+      
+      const timer = setTimeout(() => {
+        scrollToBottom("auto", true);
+        isInitialLoadRef.current = false;
+      }, 50);
+      return () => clearTimeout(timer);
+    } else if (shouldScrollToBottom) {
+      scrollToBottom("smooth");
     } else {
-      // Store scroll position to maintain it
       if (messagesContainerRef.current) {
         prevScrollHeightRef.current = messagesContainerRef.current.scrollHeight;
       }
@@ -733,12 +742,11 @@ const ChatBox = () => {
   useEffect(() => {
     const apiChatId = chatId || currentChat?.chatId;
     if (!apiChatId) return;
-    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
-    if (!token) return;
-    const socket = io(API_BASE_URL, { auth: { token }, transports: ["websocket", "polling"] });
-    chatSocketRef.current = socket;
-    socket.on("connect", () => { socket.emit("join-chat", { chatId: apiChatId }); });
-    socket.on("new-message", (messageData) => {
+
+    let mounted = true;
+
+    const onNewMessage = (messageData) => {
+      if (!mounted) return;
       const userId = resolveCurrentUserId();
       if (messageData.senderRole === "user" && String(messageData.senderId) === String(userId)) {
         setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
@@ -761,79 +769,75 @@ const ChatBox = () => {
         if (isDuplicate) return prev;
         return [...prev, transformedMessage];
       });
-    });
+    };
 
-    // Listen for typing indicators from the other participant
-    socket.on("user-typing", ({ userRole, isTyping: typing }) => {
-      if (userRole !== "user") {
-        setRemoteIsTyping(typing);
-      }
-    });
+    const onTyping = ({ userRole, isTyping: typing }) => {
+      if (!mounted) return;
+      if (userRole !== "user") setRemoteIsTyping(typing);
+    };
 
-    // Listen for messages being read
-    socket.on("messages-read", () => {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.sender === "user" ? { ...msg, isRead: true } : msg,
-        ),
-      );
-    });
+    const onMessagesRead = () => {
+      if (!mounted) return;
+      setMessages((prev) => prev.map((msg) => msg.sender === "user" ? { ...msg, isRead: true } : msg));
+    };
 
-    // Show caller-facing feedback when the other participant declines.
-    socket.on("call_rejected", (payload) => {
+    const onCallRejected = (payload) => {
+      if (!mounted) return;
       const declinedBy = payload?.by ? ` by ${payload.by}` : "";
       setCallError(`Call was declined${declinedBy}.`);
       setIsVideoModalOpen(false);
       setSelectedCall(null);
       setShowIncomingModal(false);
-    });
+    };
 
-    socket.on("call-status-update", ({ status }) => {
+    const onCallStatusUpdate = ({ status }) => {
+      if (!mounted) return;
       const normalizedStatus = String(status || "").toLowerCase();
-
-      if (normalizedStatus === "rejected") {
-        // setCallError("Call was declined by the other participant.");[]
-        setIsVideoModalOpen(false);
-        setSelectedCall(null);
-        setShowIncomingModal(false);
-        return;
-      }
-
-      if (
-        normalizedStatus === "ended" ||
-        normalizedStatus === "cancelled" ||
-        normalizedStatus === "canceled" ||
-        normalizedStatus === "expired"
-      ) {
-        // setCallError("Call was canceled before acceptance.");-
+      if (normalizedStatus === "rejected" || normalizedStatus === "ended" || normalizedStatus === "cancelled" || normalizedStatus === "canceled" || normalizedStatus === "expired") {
         setIsVideoModalOpen(false);
         setSelectedCall(null);
         setShowIncomingModal(false);
       }
-    });
+    };
 
-    // Listen for chat-status-update (e.g. counselor accepted/rejected the chat)
-    socket.on("chat-status-update", ({ status, chatId: updatedChatId }) => {
-      console.log("✅ Chat status updated via socket:", status);
+    const onChatStatusUpdate = ({ status }) => {
+      if (!mounted) return;
       setChatStatus(status);
       setCurrentChat((prev) => (prev ? { ...prev, status } : prev));
-    });
+    };
 
-    socket.on("connect_error", (err) => {
+    const onConnectError = (err) => {
       console.error("Chat socket connection error:", err.message);
+    };
+
+    socketService.connect().then((socket) => {
+      if (!mounted) return;
+      chatSocketRef.current = socket;
+      socket.emit("join-chat", { chatId: apiChatId });
+      socket.on("new-message", onNewMessage);
+      socket.on("user-typing", onTyping);
+      socket.on("messages-read", onMessagesRead);
+      socket.on("call_rejected", onCallRejected);
+      socket.on("call-status-update", onCallStatusUpdate);
+      socket.on("chat-status-update", onChatStatusUpdate);
+      socket.on("connect_error", onConnectError);
+    }).catch((err) => {
+      console.error("[ChatBox] Socket connect failed:", err.message);
     });
 
     return () => {
-      if (chatSocketRef.current) {
-        chatSocketRef.current.off("new-message");
-        chatSocketRef.current.off("user-typing");
-        chatSocketRef.current.off("messages-read");
-        chatSocketRef.current.off("call_rejected");
-        chatSocketRef.current.off("call-status-update");
-        chatSocketRef.current.off("chat-status-update");
-        chatSocketRef.current.disconnect();
-        chatSocketRef.current = null;
+      mounted = false;
+      const socket = chatSocketRef.current;
+      if (socket) {
+        socket.off("new-message", onNewMessage);
+        socket.off("user-typing", onTyping);
+        socket.off("messages-read", onMessagesRead);
+        socket.off("call_rejected", onCallRejected);
+        socket.off("call-status-update", onCallStatusUpdate);
+        socket.off("chat-status-update", onChatStatusUpdate);
+        socket.off("connect_error", onConnectError);
       }
+      chatSocketRef.current = null;
     };
   }, [chatId, currentChat?.chatId]);
 

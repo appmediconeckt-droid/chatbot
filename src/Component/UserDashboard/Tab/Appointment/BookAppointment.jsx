@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./BookAppointment.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 import axios from "axios";
 
 const CounselorRequestChat = ({ initialSearch = "" }) => {
@@ -20,6 +21,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedCounselorForRequest, setSelectedCounselorForRequest] =
     useState(null);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingNotes, setBookingNotes] = useState("");
 
   // Search state
   const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -41,6 +45,11 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   const handleCounselorClick = (counselor) => {
     setSelectedCounselorForRequest(counselor);
     setShowUserModal(true);
+  };
+
+  const handleBookAppointment = (counselor) => {
+    setSelectedCounselorForRequest(counselor);
+    setShowBookingModal(true);
   };
 
   // Function to fetch user data from API
@@ -255,8 +264,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
             specialization: c.specialization?.join(" , ") || "General",
             experience: `${c.experience || 0} years`,
             rating: c.rating || 4.5,
-            online: c.isActive,
+            online: Boolean(c.isOnline),
             available: c.isActive,
+            lastSeen: c.lastSeen || null,
             avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
             avatarType: getProfilePhotoUrl(c) ? "image" : "text",
             expertise: c.specialization || [],
@@ -288,6 +298,40 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
     };
 
     fetchCounselors();
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const updatePresence = ({ userId, isOnline, lastSeen }) => {
+      if (!mounted) return;
+      const applyPresence = (list) =>
+        list.map((counselor) =>
+          String(counselor.id) === String(userId)
+            ? { ...counselor, online: Boolean(isOnline), lastSeen }
+            : counselor,
+        );
+      setCounselors(applyPresence);
+      setFilteredCounselors(applyPresence);
+    };
+
+    const onConnectError = (err) => {
+      console.error("Appointment presence socket error:", err.message);
+    };
+
+    socketService.connect().then((socket) => {
+      if (!mounted) return;
+      socket.on("presence-update", updatePresence);
+      socket.on("connect_error", onConnectError);
+    }).catch((err) => {
+      console.error("[BookAppointment] Socket connect failed:", err.message);
+    });
+
+    return () => {
+      mounted = false;
+      socketService.off("presence-update", updatePresence);
+      socketService.off("connect_error", onConnectError);
+    };
   }, []);
 
   // Fetch user data when modal opens
@@ -374,7 +418,46 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       setShowUserModal(false);
     } catch (error) {
       console.error("❌ Error:", error);
-      alert(error?.response?.data?.message || "You are already connected on chat here.");
+      alert(
+        error?.response?.data?.message || "You are already connected on chat here.",
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleConfirmBooking = async (e) => {
+    e.preventDefault();
+    if (!bookingDate) {
+      alert("Please select a date and time");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const res = await axios.post(
+        `${API_BASE_URL}/api/appointments`,
+        {
+          counselorId: selectedCounselorForRequest.id,
+          date: bookingDate,
+          notes: bookingNotes,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      console.log("✅ Appointment Booked:", res.data);
+      alert("✅ Appointment booked successfully! The counselor has been notified.");
+      setShowBookingModal(false);
+      setBookingDate("");
+      setBookingNotes("");
+    } catch (error) {
+      console.error("❌ Error booking appointment:", error);
+      alert(error?.response?.data?.message || "Failed to book appointment");
     } finally {
       setIsLoading(false);
     }
@@ -626,10 +709,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                   </div>
                   <div className="counselor-status-unique">
                     <span
-                      className={`status-dot-unique ${counselor.available ? "online" : "offline"}`}
+                      className={`status-dot-unique ${counselor.online ? "online" : "offline"}`}
                     ></span>
                     <span className="status-text-unique">
-                      {counselor.available ? "Online" : "Offline"}
+                      {counselor.online ? "Online" : "Offline"}
                     </span>
                   </div>
                 </div>
@@ -662,13 +745,21 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                   ⚡ Avg response: {counselor.responseTime}
                 </div>
 
-                <button
-                  onClick={() => handleChatNow(counselor)}
-                  disabled={!counselor.available}
-                  className={`chat-now-btn-unique ${!counselor.available ? "disabled" : ""}`}
-                >
-                  {counselor.available ? "💬 Chat Now" : "🔴 Unavailable"}
-                </button>
+                <div className="card-actions-unique">
+                  <button
+                    onClick={() => handleChatNow(counselor)}
+                    disabled={!counselor.available}
+                    className={`chat-now-btn-unique ${!counselor.available ? "disabled" : ""}`}
+                  >
+                    {counselor.available ? "💬 Chat Now" : "🔴 Unavailable"}
+                  </button>
+                  <button
+                    onClick={() => handleBookAppointment(counselor)}
+                    className="book-apt-btn-unique"
+                  >
+                    📅 Book
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -715,9 +806,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
                 <div className="row-action-unique">
                   <span
-                    className={`dot ${counselor.available ? "online" : "offline"}`}
+                    className={`dot ${counselor.online ? "online" : "offline"}`}
                   ></span>
-                  <button
+                  <div className="row-buttons-unique">
+                    <button
                     disabled={!counselor.available}
                     className="row-btn-unique"
                     onClick={(e) => {
@@ -727,6 +819,16 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                   >
                     Chat
                   </button>
+                  <button
+                    className="row-book-btn-unique"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleBookAppointment(counselor);
+                    }}
+                  >
+                    Book
+                  </button>
+                </div>
                 </div>
               </div>
             ))}
@@ -785,7 +887,6 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           </div>
         )} */}
 
-        {/* User Info Modal */}
         {showUserModal && (
           <div
             className="modal-overlay-unique"
@@ -888,6 +989,65 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                   disabled={isLoading || !userAnonymous}
                 >
                   {isLoading ? "Loading..." : "Send Chat Request"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {showBookingModal && (
+          <div
+            className="modal-overlay-unique"
+            onClick={() => setShowBookingModal(false)}
+          >
+            <div
+              className="modal-content-unique"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="modal-header-unique">
+                <h2>Book Appointment with {selectedCounselorForRequest?.name}</h2>
+                <button
+                  className="modal-close-unique"
+                  onClick={() => setShowBookingModal(false)}
+                >
+                  ×
+                </button>
+              </div>
+              <form onSubmit={handleConfirmBooking}>
+                <div className="booking-form-unique">
+                  <div className="form-group-unique">
+                    <label>Select Date and Time</label>
+                    <input
+                      type="datetime-local"
+                      className="form-input-unique"
+                      value={bookingDate}
+                      onChange={(e) => setBookingDate(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="form-group-unique">
+                    <label>Clinical Notes / Reason (Required)</label>
+                    <textarea
+                      className="form-textarea-unique"
+                      placeholder="Share what you'd like to discuss..."
+                      value={bookingNotes}
+                      onChange={(e) => setBookingNotes(e.target.value)}
+                      required
+                    ></textarea>
+                  </div>
+                </div>
+
+                <div className="modal-info-unique">
+                  <p>⏳ Appointment will be sent for confirmation</p>
+                  <p>✅ Counselor will be notified instantly</p>
+                </div>
+
+                <button
+                  type="submit"
+                  className="modal-submit-btn-unique"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Booking..." : "Confirm Appointment"}
                 </button>
               </form>
             </div>

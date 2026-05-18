@@ -5,6 +5,43 @@
     <link rel="icon" type="image/svg+xml" href="./public/Mediconect Logo-3.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mediconeckt</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        corePlugins: {
+          preflight: false,
+        },
+        theme: {
+          extend: {
+            "colors": {
+              "primary": "#4648d4",
+              "primary-container": "#6063ee",
+              "on-primary-container": "#fffbff",
+              "secondary-container": "#39b8fd",
+              "background": "#f8f9ff",
+              "on-background": "#0b1c30",
+              "on-surface": "#0b1c30",
+              "on-surface-variant": "#464554",
+              "outline-variant": "#c7c4d7",
+              "surface-container-high": "#dce9ff",
+            },
+            "fontFamily": {
+              "manrope": ["Manrope", "sans-serif"],
+              "inter": ["Inter", "sans-serif"],
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-family: 'Material Symbols Outlined' !important;
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      .font-manrope { font-family: 'Manrope', sans-serif !important; }
+    </style>
   </head>
   <body>
     <div id="root"></div>

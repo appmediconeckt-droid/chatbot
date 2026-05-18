@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Messagesou.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 /**
  * SMSList Component - Fetches and displays users/patients list from API
  * Displays anonymous name and gender-based avatar icons (no photos)
@@ -168,7 +169,8 @@ const SMSList = () => {
             lastActivityAt: lastMessageTime,
             unread: chat.unreadCount || 0,
             status: chatStatus,
-            online: chatStatus === "accepted" && !chat.isExpired,
+            online: Boolean(otherParty.isOnline),
+            lastSeen: otherParty.lastSeen || null,
             phone: otherParty.phone || "Not available",
             email: otherParty.email || "Not available",
             specialization,
@@ -203,6 +205,39 @@ const SMSList = () => {
 
     fetchChats();
   }, [handleSessionExpired]);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
+      if (!mounted) return;
+      setUsers((prev) =>
+        prev.map((user) =>
+          String(user.receiverId || user._id) === String(userId)
+            ? { ...user, online: Boolean(isOnline), lastSeen }
+            : user,
+        ),
+      );
+    };
+
+    const onConnectError = (err) => {
+      console.error("Messages presence socket error:", err.message);
+    };
+
+    socketService.connect().then((socket) => {
+      if (!mounted) return;
+      socket.on("presence-update", onPresenceUpdate);
+      socket.on("connect_error", onConnectError);
+    }).catch((err) => {
+      console.error("[Messagesou] Socket connect failed:", err.message);
+    });
+
+    return () => {
+      mounted = false;
+      socketService.off("presence-update", onPresenceUpdate);
+      socketService.off("connect_error", onConnectError);
+    };
+  }, []);
 
   // Filter users based on the displayed (anonymous) name
   const filteredUsers = users.filter(
