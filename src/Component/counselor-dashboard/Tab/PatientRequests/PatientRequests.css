@@ -241,11 +241,7 @@
   border: 1px solid #ffe0b2;
 }
 
-.status-accepted {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #c8e6c9;
-}
+
 
 .status-cancelled {
   background: #ffebee;

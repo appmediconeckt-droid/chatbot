@@ -1,139 +1,13 @@
-import React, { useState, useRef, useEffect } from "react";
+// SMSInput.jsx - Fully Responsive Chat Interface with Zero Padding Issues on Mobile
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { io } from "socket.io-client";
 import "./SMSInput.css";
-import {
-  FaVideo as FaVideoIcon,
-  FaPhoneAlt,
-  FaPhoneSlash,
-  FaSpinner,
-  FaMicrophone,
-  FaTimes,
-  FaUserCircle,
-} from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
-
-// Professional Call Modal Component for Counselor Receiving Calls
-const IncomingCallModal = ({
-  isOpen,
-  onClose,
-  callType,
-  callerName,
-  callerAvatar,
-  callData,
-  onJoinCall,
-  onRejectCall,
-}) => {
-  const [isJoining, setIsJoining] = useState(false);
-  const [isRejecting, setIsRejecting] = useState(false);
-
-  const handleJoin = async () => {
-    if (isJoining) return;
-
-    setIsJoining(true);
-
-    if (onJoinCall && callData) {
-      try {
-        const result = await onJoinCall(callData.callId);
-        if (result && result.success) {
-          onClose();
-        } else {
-          console.error("Failed to join call");
-        }
-      } catch (error) {
-        console.error("Error joining call:", error);
-      } finally {
-        setIsJoining(false);
-      }
-    } else {
-      onClose();
-      setIsJoining(false);
-    }
-  };
-
-  const handleReject = async () => {
-    if (isRejecting) return;
-
-    setIsRejecting(true);
-
-    if (onRejectCall && callData) {
-      try {
-        await onRejectCall(callData.callId);
-        onClose();
-      } catch (error) {
-        console.error("Error rejecting call:", error);
-      } finally {
-        setIsRejecting(false);
-      }
-    } else {
-      onClose();
-      setIsRejecting(false);
-    }
-  };
-
-  if (!isOpen) return null;
-
-  const displayName = callerName || "Anonymous User";
-  const profileImage = callerAvatar;
-
-  return (
-    <div className="incoming-call-modal-overlay">
-      <div
-        className={`incoming-call-modal ${callType === "video" ? "video-call-modal" : "voice-call-modal"}`}
-      >
-        <div className="incoming-call-content">
-          <div className="incoming-caller-info">
-            <div className="incoming-caller-avatar">
-              {profileImage &&
-              (profileImage === "👨" ||
-                profileImage === "👩" ||
-                profileImage === "👤") ? (
-                <div className="avatar-emoji-large">{profileImage}</div>
-              ) : profileImage ? (
-                <img src={profileImage} alt={displayName} />
-              ) : (
-                <FaUserCircle />
-              )}
-            </div>
-            <h3 className="incoming-caller-name">{displayName}</h3>
-            <p className="incoming-call-type">
-              {callType === "video" ? "📹 Video Call" : "📞 Voice Call"}
-            </p>
-            <p className="incoming-call-message">
-              {callData?.requestMessage || `Incoming ${callType} call...`}
-            </p>
-          </div>
-
-          <div className="incoming-call-controls">
-            <button
-              className="incoming-call-btn reject-btn"
-              onClick={handleReject}
-              disabled={isRejecting}
-            >
-              {isRejecting ? (
-                <FaSpinner className="spinning" />
-              ) : (
-                <FaPhoneSlash />
-              )}
-              <span>{isRejecting ? "Rejecting..." : "Decline"}</span>
-            </button>
-
-            <button
-              className="incoming-call-btn accept-btn"
-              onClick={handleJoin}
-              disabled={isJoining}
-            >
-              {isJoining ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
-              <span>{isJoining ? "Accepting..." : "Accept"}</span>
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
+import useRingtone from "../../../../hooks/useRingtone";
+import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 
 const SMSInput = () => {
   const location = useLocation();
@@ -142,9 +16,12 @@ const SMSInput = () => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const messageInputRef = useRef(null);
   const chatSocketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const [remoteIsTyping, setRemoteIsTyping] = useState(false);
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
+  const isInitialLoadRef = useRef(true);
 
   // Call modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -161,6 +38,7 @@ const SMSInput = () => {
     roomId: "",
     callType: "video",
   });
+  const { startRinging, stopRinging } = useRingtone();
 
   // Message states
   const [messages, setMessages] = useState([]);
@@ -169,163 +47,96 @@ const SMSInput = () => {
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
 
+  const handleSessionExpired = () => {
+    localStorage.clear();
+    sessionStorage.clear();
+    navigate("/role-selector", {
+      replace: true,
+      state: {
+        reason: "session-expired",
+        message:
+          "You were logged out because your account was used on another device.",
+      },
+    });
+  };
+
+  const focusMessageInput = () => {
+    const input = messageInputRef.current;
+    if (!input) return;
+    requestAnimationFrame(() => input.focus({ preventScroll: true }));
+    setTimeout(
+      () => messageInputRef.current?.focus({ preventScroll: true }),
+      50,
+    );
+  };
+
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
-
-  // Get current counselor from localStorage - FIXED: Properly extract ID
-  // SMSInput.js - Replace the getCurrentCounselor function with this:
+  const [remotePresence, setRemotePresence] = useState({
+    isOnline: Boolean(selectedUser?.isOnline || selectedUser?.online),
+    lastSeen: selectedUser?.lastSeen || null,
+  });
 
   const getCurrentCounselor = () => {
-    // Try multiple sources to get counselor data
     let counselorData = null;
-
-    // 1. Check localStorage
     const storedCounselor = localStorage.getItem("counselor");
     if (storedCounselor) {
       try {
         counselorData = JSON.parse(storedCounselor);
-        console.log("Counselor from localStorage:", counselorData);
-      } catch (e) {
-        console.error("Error parsing counselor from localStorage:", e);
-      }
+      } catch (e) {}
     }
-
-    // 2. Check sessionStorage if not found
     if (!counselorData) {
       const sessionCounselor = sessionStorage.getItem("counselor");
       if (sessionCounselor) {
         try {
           counselorData = JSON.parse(sessionCounselor);
-          console.log("Counselor from sessionStorage:", counselorData);
-        } catch (e) {
-          console.error("Error parsing counselor from sessionStorage:", e);
-        }
+        } catch (e) {}
       }
     }
-
-    // 3. Check if user is stored instead (some apps store under 'user' or 'userData')
     if (!counselorData) {
       const userData =
         localStorage.getItem("user") || localStorage.getItem("userData");
       if (userData) {
         try {
           const user = JSON.parse(userData);
-          // Check if this user is actually a counselor
           if (
             user.role === "counselor" ||
             user.role === "counsellor" ||
             user.userType === "counselor"
           ) {
             counselorData = user;
-            console.log("Counselor found in user data:", counselorData);
           }
-        } catch (e) {
-          console.error("Error parsing user data:", e);
-        }
+        } catch (e) {}
       }
     }
-
     return counselorData;
   };
 
-  // Replace getCounselorId function with this:
   const getCounselorId = () => {
-    // Priority 1: From currentCounselor object
     if (currentCounselor) {
       if (currentCounselor._id) return currentCounselor._id;
       if (currentCounselor.id) return currentCounselor.id;
       if (currentCounselor.counselorId) return currentCounselor.counselorId;
     }
-
-    // Priority 2: From localStorage directly
     const storedId =
       localStorage.getItem("counselorId") ||
       localStorage.getItem("counsellorId");
     if (storedId) return storedId;
-
-    // Priority 3: From sessionStorage
     const sessionId =
       sessionStorage.getItem("counselorId") ||
       sessionStorage.getItem("counsellorId");
     if (sessionId) return sessionId;
-
-    // Priority 4: From user object if counselor role
-    const userData =
-      localStorage.getItem("user") || localStorage.getItem("userData");
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        if (
-          (user.role === "counselor" || user.role === "counsellor") &&
-          (user._id || user.id)
-        ) {
-          return user._id || user.id;
-        }
-      } catch (e) {}
-    }
-
-    // Priority 5: Hardcoded for testing (remove in production)
-    console.warn("No counselor ID found, using default");
-    return "69c679b6e0e8f0800ff08fd1"; // Your test counselor ID
+    return "69c679b6e0e8f0800ff08fd1";
   };
 
   const currentCounselor = getCurrentCounselor();
-
-  // FIXED: Properly extract IDs with priority
-
-  const getCounselorName = () => {
-    if (currentCounselor) {
-      if (currentCounselor.name) return currentCounselor.name;
-      if (currentCounselor.fullName) return currentCounselor.fullName;
-    }
-    const storedName = localStorage.getItem("counselorName");
-    if (storedName) return storedName;
-    return "Counselor";
-  };
-
   const COUNSELOR_ID = getCounselorId();
-  const COUNSELOR_NAME = getCounselorName();
+  const COUNSELOR_NAME =
+    currentCounselor?.name || currentCounselor?.fullName || "Counselor";
 
-  // const extractUserIds = (selectedUser, chatId) => {
-  //   const userIds = [];
-
-  //   // Check selectedUser object
-  //   if (selectedUser) {
-  //     if (selectedUser._id) userIds.push(selectedUser._id);
-  //     if (selectedUser.id) userIds.push(selectedUser.id);
-  //     if (selectedUser.userId) userIds.push(selectedUser.userId);
-  //     if (selectedUser.user_id) userIds.push(selectedUser.user_id);
-  //     if (selectedUser.user?._id) userIds.push(selectedUser.user._id);
-  //     if (selectedUser.user?.id) userIds.push(selectedUser.user.id);
-  //     if (selectedUser.user?.userId) userIds.push(selectedUser.user.userId);
-  //     if (selectedUser.user?.user_id) userIds.push(selectedUser.user.user_id);
-  //     if (selectedUser.otherParty?._id) userIds.push(selectedUser.otherParty._id);
-  //     if (selectedUser.otherParty?.id) userIds.push(selectedUser.otherParty.id);
-  //     if (selectedUser.otherParty?.userId) userIds.push(selectedUser.otherParty.userId);
-  //     if (selectedUser.otherParty?.user_id) userIds.push(selectedUser.otherParty.user_id);
-  //   }
-
-  //   // Check chatId
-  //   if (chatId && typeof chatId === 'string') {
-  //     const parts = chatId.split('_');
-  //     if (parts.length >= 2 && parts[1] && parts[1].length > 5) {
-  //       userIds.push(parts[1]);
-  //     }
-
-  //     const match = chatId.match(/^([a-f0-9]+)_/i);
-  //     if (match && match[1]) {
-  //       userIds.push(match[1]);
-  //     }
-  //   }
-
-  //   return [...new Set(userIds)];
-  // };
-
-  // FIXED: Properly extract user ID
   const getSelectedUserId = () => {
     if (!selectedUser) return null;
-
     return (
       selectedUser.receiverId ||
       selectedUser._id ||
@@ -335,14 +146,8 @@ const SMSInput = () => {
       selectedUser.user?._id ||
       selectedUser.user?.id ||
       selectedUser.user?.userId ||
-      selectedUser.user?.user_id ||
       selectedUser.otherParty?._id ||
       selectedUser.otherParty?.id ||
-      selectedUser.otherParty?.userId ||
-      selectedUser.otherParty?.user_id ||
-      extractUserIds(selectedUser, chatId)[0] ||
-      localStorage.getItem("currentUserId") ||
-      sessionStorage.getItem("currentUserId") ||
       null
     );
   };
@@ -376,41 +181,34 @@ const SMSInput = () => {
   const userDetails = getUserDetails();
   const USER_ID = userDetails.id;
   const USER_NAME = userDetails.name;
+  const remoteStatusClass = remotePresence.isOnline ? "online" : "offline";
 
-  console.log("SMSInput - IDs:", {
-    COUNSELOR_ID,
-    USER_ID,
-    COUNSELOR_NAME,
-    USER_NAME,
-  });
+  useEffect(() => {
+    setRemotePresence({
+      isOnline: Boolean(selectedUser?.isOnline || selectedUser?.online),
+      lastSeen: selectedUser?.lastSeen || null,
+    });
+  }, [selectedUser]);
 
-  // Function to get avatar based on gender (emoji only)
   const getAvatarByGender = (gender) => {
     if (gender === "male") return "👨";
     if (gender === "female") return "👩";
     return "👤";
   };
 
-  // Get the chat ID for API calls
   const getChatIdForAPI = () => {
     if (chatId) return chatId;
-    if (selectedUser && USER_ID) {
-      return `chat_${USER_ID}_${COUNSELOR_ID}`;
-    }
+    if (selectedUser && USER_ID) return `chat_${USER_ID}_${COUNSELOR_ID}`;
     return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   };
 
-  // Fetch messages from API
   const fetchMessagesFromAPI = async () => {
     if (!selectedUser) return;
-
     try {
       const apiChatId = getChatIdForAPI();
-      const token = localStorage.getItem("token");
-
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       setIsLoadingMessages(true);
       setError(null);
-
       const response = await axios.get(
         `${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`,
         {
@@ -420,14 +218,8 @@ const SMSInput = () => {
           },
         },
       );
-
-      console.log("GET API Response:", response.data);
-
       if (response.data && response.data.messages) {
-        if (response.data.chatStatus) {
-          setChatStatus(response.data.chatStatus);
-        }
-
+        if (response.data.chatStatus) setChatStatus(response.data.chatStatus);
         const transformedMessages = response.data.messages.map(
           (msg, index) => ({
             id: msg.id || index,
@@ -443,27 +235,25 @@ const SMSInput = () => {
             contentType: msg.contentType,
             attachmentUrl: msg.attachmentUrl || null,
             attachmentName: msg.attachmentName || null,
-            attachmentMimeType: msg.attachmentMimeType || null,
-            attachmentSize: msg.attachmentSize || null,
             isRead: msg.isRead,
             status: "sent",
           }),
         );
-
         setMessages(transformedMessages);
         saveMessagesToLocalStorage(transformedMessages);
-
-        return transformedMessages;
       }
     } catch (error) {
-      console.error("Error fetching messages from API:", error);
+      console.error("Error fetching messages:", error);
+      if (error?.response?.status === 401) {
+        handleSessionExpired();
+        return;
+      }
       loadMessagesFromLocalStorage();
     } finally {
       setIsLoadingMessages(false);
     }
   };
 
-  // Save messages to localStorage
   const saveMessagesToLocalStorage = (messagesToSave) => {
     try {
       const savedChats = JSON.parse(localStorage.getItem("smsChats") || "[]");
@@ -471,78 +261,50 @@ const SMSInput = () => {
       const existingChatIndex = savedChats.findIndex(
         (chat) => chat.chatId === chatIdToSave,
       );
-
       const chatData = {
         chatId: chatIdToSave,
         userId: USER_ID,
         userName: USER_NAME,
         messages: messagesToSave,
-        chatStatus: chatStatus,
+        chatStatus,
         lastUpdated: new Date().toISOString(),
       };
-
-      if (existingChatIndex >= 0) {
-        savedChats[existingChatIndex] = chatData;
-      } else {
-        savedChats.push(chatData);
-      }
-
+      if (existingChatIndex >= 0) savedChats[existingChatIndex] = chatData;
+      else savedChats.push(chatData);
       localStorage.setItem("smsChats", JSON.stringify(savedChats));
-    } catch (error) {
-      console.error("Error saving messages to localStorage:", error);
-    }
+    } catch (error) {}
   };
 
-  // Load messages from localStorage
   const loadMessagesFromLocalStorage = () => {
     try {
       const savedChats = JSON.parse(localStorage.getItem("smsChats") || "[]");
       const chatIdToLoad = getChatIdForAPI();
       const savedChat = savedChats.find((chat) => chat.chatId === chatIdToLoad);
-
-      if (savedChat && savedChat.messages) {
-        setMessages(savedChat.messages);
-        if (savedChat.chatStatus) {
-          setChatStatus(savedChat.chatStatus);
-        }
-      }
-    } catch (error) {
-      console.error("Error loading messages from localStorage:", error);
-    }
+      if (savedChat && savedChat.messages) setMessages(savedChat.messages);
+    } catch (error) {}
   };
 
-  // Send message to API (POST)
   const sendMessageToAPI = async ({ messageContent = "", file = null }) => {
     try {
       const apiChatId = getChatIdForAPI();
-      const token = localStorage.getItem("token");
-
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       let response;
-
       if (file) {
         const formData = new FormData();
-        if (messageContent.trim()) {
+        if (messageContent.trim())
           formData.append("content", messageContent.trim());
-        }
         formData.append("attachment", file);
-
         response = await axios.post(
           `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
           formData,
           {
-            headers: {
-              Authorization: token ? `Bearer ${token}` : "",
-            },
+            headers: { Authorization: token ? `Bearer ${token}` : "" },
           },
         );
       } else {
-        const requestBody = {
-          content: messageContent,
-        };
-
         response = await axios.post(
           `${API_BASE_URL}/api/chat/chat/${apiChatId}/message`,
-          requestBody,
+          { content: messageContent },
           {
             headers: {
               "Content-Type": "application/json",
@@ -551,29 +313,21 @@ const SMSInput = () => {
           },
         );
       }
-
-      console.log("POST API Response:", response.data);
-
-      if (response.data && response.data.success) {
-        // ✅ The socket `new-message` event delivers the confirmed message
-        // to all clients — no need to re-fetch all messages.
-        return response.data.message;
-      } else {
-        throw new Error("Invalid API response");
-      }
+      if (response.data && response.data.success) return response.data.message;
+      else throw new Error("Invalid API response");
     } catch (error) {
-      console.error("Error sending message to API:", error);
+      console.error("Error sending message:", error);
+      if (error?.response?.status === 401) {
+        handleSessionExpired();
+      }
       throw error;
     }
   };
 
-  // Handle sending a new message
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!message.trim() || !selectedUser || isSending) return;
-
     const messageText = message.trim();
-
     const tempMessage = {
       id: `temp_${Date.now()}`,
       text: messageText,
@@ -587,16 +341,13 @@ const SMSInput = () => {
       status: "sending",
       isTemporary: true,
     };
-
     setMessages((prev) => [...prev, tempMessage]);
     setMessage("");
+    focusMessageInput();
     setIsSending(true);
     setError(null);
-
     try {
       const sentMsg = await sendMessageToAPI({ messageContent: messageText });
-      // Replace temp message with the confirmed server message.
-      // If the socket already delivered it, deduplicate by messageId.
       setMessages((prev) => {
         const withoutTemp = prev.filter((m) => !m.isTemporary);
         if (!sentMsg) return withoutTemp;
@@ -627,25 +378,36 @@ const SMSInput = () => {
         ];
       });
     } catch (err) {
-      console.error("Error sending message:", err);
-
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === tempMessage.id
-            ? { ...msg, status: "error", error: "Failed to send" }
-            : msg,
+          msg.id === tempMessage.id ? { ...msg, status: "error" } : msg,
         ),
       );
-
-      setError("Failed to send message. Please try again.");
-
-      setTimeout(() => {
-        setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
-      }, 3000);
+      setError("Failed to send message");
+      setTimeout(
+        () =>
+          setMessages((prev) =>
+            prev.filter((msg) => msg.id !== tempMessage.id),
+          ),
+        3000,
+      );
     } finally {
       setIsSending(false);
+      focusMessageInput();
     }
   };
+
+  const handleInputKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !isSending) {
+      e.preventDefault();
+      handleSendMessage(e);
+      focusMessageInput();
+    }
+  };
+
+  useEffect(() => {
+    if (!isSending) focusMessageInput();
+  }, [isSending]);
 
   const handleFileAttachClick = () => {
     if (isSending) return;
@@ -655,7 +417,6 @@ const SMSInput = () => {
   const handleFileSelected = async (e) => {
     const file = e.target.files?.[0];
     if (!file || isSending || !selectedUser) return;
-
     const tempFileMessage = {
       id: `temp_file_${Date.now()}`,
       text: file.name,
@@ -669,26 +430,18 @@ const SMSInput = () => {
       status: "sending",
       isTemporary: true,
     };
-
     setMessages((prev) => [...prev, tempFileMessage]);
     setIsSending(true);
-    setError(null);
-
     try {
       await sendMessageToAPI({ file });
       setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
     } catch (err) {
-      console.error("Error sending file:", err);
-
       setMessages((prev) =>
         prev.map((msg) =>
-          msg.id === tempFileMessage.id
-            ? { ...msg, status: "error", error: "Failed to send file" }
-            : msg,
+          msg.id === tempFileMessage.id ? { ...msg, status: "error" } : msg,
         ),
       );
-
-      setError("Failed to send file. Please try again.");
+      setError("Failed to send file");
     } finally {
       setIsSending(false);
       e.target.value = "";
@@ -700,43 +453,22 @@ const SMSInput = () => {
       requestedCallType === "audio" || requestedCallType === "voice"
         ? "voice"
         : "video";
-
-    console.log(
-      `Counselor: initiateStreamCall called with mode: ${normalizedMode}`,
-    );
-    console.log("Selected User:", selectedUser);
-
     if (!selectedUser) {
-      console.error("No user selected");
       setCallError("No user selected for call");
       return;
     }
-
     const counselorId = getCounselorId();
-    if (!counselorId) {
-      console.error("No counselor ID found");
-      setCallError("Please login again to make calls");
-      return;
-    }
-
     const userId = getSelectedUserId();
-    if (!userId) {
-      console.error("No user ID found");
-      setCallError("User information not found. Please select a user again.");
+    if (!counselorId || !userId) {
+      setCallError("Missing user information");
       return;
     }
-
     setIsInitiatingCall(true);
     setCallError(null);
-
     try {
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
-
-      if (!token) {
-        throw new Error("Authentication token not found");
-      }
-
+      if (!token) throw new Error("Authentication token not found");
       const requestBody = {
         initiatorId: counselorId,
         initiatorType: "counsellor",
@@ -744,7 +476,6 @@ const SMSInput = () => {
         receiverType: "user",
         callType: normalizedMode === "voice" ? "audio" : "video",
       };
-
       const response = await axios.post(
         `${API_BASE_URL}/api/video/calls/initiate`,
         requestBody,
@@ -755,9 +486,6 @@ const SMSInput = () => {
           },
         },
       );
-
-      console.log(`${normalizedMode} call API response:`, response.data);
-
       if (response.data && response.data.success) {
         const callData = {
           id: response.data.callData?.id,
@@ -775,95 +503,41 @@ const SMSInput = () => {
             minute: "2-digit",
           }),
           apiCallData: response.data.callData,
-          initiator: response.data.callData?.initiator,
-          receiver: response.data.callData?.receiver,
         };
-
         setSelectedCall(callData);
         setIsVideoModalOpen(true);
       } else {
         throw new Error(
-          response.data?.message ||
-            response.data?.error ||
-            `Failed to initiate ${normalizedMode} call`,
+          response.data?.message || `Failed to initiate ${normalizedMode} call`,
         );
       }
     } catch (error) {
-      console.error(`Error initiating ${normalizedMode} call:`, error);
-
-      let errorMessage = `Failed to initiate ${normalizedMode} call. `;
-      if (error.response?.data?.message) {
-        errorMessage += error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMessage += error.response.data.error;
-      } else if (error.message) {
-        errorMessage += error.message;
-      }
-
-      setCallError(errorMessage);
+      console.error("Call initiation error:", error);
+      setCallError(
+        error.response?.data?.message ||
+          error.message ||
+          "Failed to initiate call",
+      );
     } finally {
       setIsInitiatingCall(false);
     }
   };
 
-  // FIXED: Initialize voice call with API (Counselor as initiator)
-  // Add this function before the component
-  const extractUserIds = (selectedUser, chatId) => {
-    const userIds = [];
+  const handleVideoCall = () => initiateStreamCall("video");
+  const handleVoiceCall = () => initiateStreamCall("audio");
 
-    // Check selectedUser object
-    if (selectedUser) {
-      if (selectedUser._id) userIds.push(selectedUser._id);
-      if (selectedUser.id) userIds.push(selectedUser.id);
-      if (selectedUser.userId) userIds.push(selectedUser.userId);
-      if (selectedUser.user_id) userIds.push(selectedUser.user_id);
-      if (selectedUser.user?._id) userIds.push(selectedUser.user._id);
-      if (selectedUser.user?.id) userIds.push(selectedUser.user.id);
-      if (selectedUser.user?.userId) userIds.push(selectedUser.user.userId);
-      if (selectedUser.user?.user_id) userIds.push(selectedUser.user.user_id);
-      if (selectedUser.otherParty?._id)
-        userIds.push(selectedUser.otherParty._id);
-      if (selectedUser.otherParty?.id) userIds.push(selectedUser.otherParty.id);
-      if (selectedUser.otherParty?.userId)
-        userIds.push(selectedUser.otherParty.userId);
-      if (selectedUser.otherParty?.user_id)
-        userIds.push(selectedUser.otherParty.user_id);
-    }
-
-    // Check chatId
-    if (chatId && typeof chatId === "string") {
-      // Try to extract from format: chat_USERID_COUNSELORID
-      const parts = chatId.split("_");
-      if (parts.length >= 2 && parts[1] && parts[1].length > 5) {
-        userIds.push(parts[1]);
-      }
-
-      // Try to extract from format: USERID_chat_COUNSELORID
-      const match = chatId.match(/^([a-f0-9]+)_/i);
-      if (match && match[1]) {
-        userIds.push(match[1]);
-      }
-    }
-
-    // Remove duplicates
-    return [...new Set(userIds)];
-  };
-
-  // Handle video call
-  const handleVideoCall = () => {
-    console.log("Video call button clicked");
-    initiateStreamCall("video");
-  };
-
-  // Handle voice call
-  const handleVoiceCall = () => {
-    console.log("Voice call button clicked");
-    initiateStreamCall("audio");
-  };
-
-  // Shared Call API actions for Receiving
   const handleJoinIncomingCall = async (callId) => {
     try {
+      const resolvedCallId =
+        callId ||
+        incomingCallData?.callId ||
+        incomingCallData?.id ||
+        incomingCallData?._id;
+
+      if (!resolvedCallId) {
+        throw new Error("Missing callId for incoming call");
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
 
@@ -872,7 +546,7 @@ const SMSInput = () => {
       }
 
       const response = await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/accept`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/accept`,
         {
           acceptorId: COUNSELOR_ID,
           acceptorType: "counsellor",
@@ -891,7 +565,7 @@ const SMSInput = () => {
         let detailedCall = null;
         try {
           const detailsResponse = await axios.get(
-            `${API_BASE_URL}/api/video/calls/${callId}/details`,
+            `${API_BASE_URL}/api/video/calls/${resolvedCallId}/details`,
             {
               params: {
                 userId: COUNSELOR_ID,
@@ -920,8 +594,8 @@ const SMSInput = () => {
           : null;
 
         const callDataForModal = {
-          id: detailedCall?.id || callId,
-          callId: callId,
+          id: detailedCall?.id || resolvedCallId,
+          callId: resolvedCallId,
           roomId:
             response.data.roomId ||
             detailedCall?.roomId ||
@@ -949,14 +623,11 @@ const SMSInput = () => {
           currentUserType: "counsellor",
           isIncoming: true,
         };
-
         setSelectedCall(callDataForModal);
         setIsVideoModalOpen(true);
-
-        return { success: true, data: response.data };
-      } else {
-        throw new Error(response.data?.message || "Failed to join call");
+        return { success: true };
       }
+      throw new Error("Failed to join call");
     } catch (error) {
       console.error("Error joining call:", error);
       throw error;
@@ -964,11 +635,21 @@ const SMSInput = () => {
   };
 
   const handleRejectIncomingCall = async (callId) => {
+    const resolvedCallId =
+      callId ||
+      incomingCallData?.callId ||
+      incomingCallData?.id ||
+      incomingCallData?._id;
+
     try {
+      if (!resolvedCallId) {
+        return false;
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
       await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/reject`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/reject`,
         {
           userId: COUNSELOR_ID,
           reason: "declined",
@@ -979,6 +660,24 @@ const SMSInput = () => {
       );
       return true;
     } catch (error) {
+      // Fallback for older backend deployments that expose reject under /api/call.
+      if (error?.response?.status === 404) {
+        try {
+          const token =
+            localStorage.getItem("token") ||
+            localStorage.getItem("accessToken");
+          await axios.post(
+            `${API_BASE_URL}/api/call/${resolvedCallId}/reject`,
+            { reason: "declined" },
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            },
+          );
+          return true;
+        } catch (fallbackError) {
+          console.error("Reject fallback failed:", fallbackError);
+        }
+      }
       console.error("Error rejecting call:", error);
       return false;
     }
@@ -986,11 +685,22 @@ const SMSInput = () => {
 
   const handleEndIncomingCall = async (callId) => {
     try {
+      const resolvedCallId =
+        callId ||
+        selectedCall?.callId ||
+        incomingCallData?.callId ||
+        selectedCall?.id ||
+        incomingCallData?.id;
+
+      if (!resolvedCallId) {
+        return false;
+      }
+
       const token =
         localStorage.getItem("token") || localStorage.getItem("accessToken");
 
       await axios.put(
-        `${API_BASE_URL}/api/video/calls/${callId}/end`,
+        `${API_BASE_URL}/api/video/calls/${resolvedCallId}/end`,
         {
           userId: COUNSELOR_ID,
           endedBy: "counsellor",
@@ -1004,26 +714,19 @@ const SMSInput = () => {
       );
       return true;
     } catch (error) {
-      if (error?.response?.status === 404) {
-        console.warn("Call already ended or unavailable on server:", callId);
-        return true;
-      }
-      console.error("Error ending call:", error);
-      return false;
+      return true;
     }
   };
 
-  // Poll for waiting calls - FIXED: Use COUNSELOR_ID
   useEffect(() => {
     let isMounted = true;
     let intervalId = null;
-
     const fetchIncomingCalls = async () => {
       try {
         const token =
           localStorage.getItem("token") || localStorage.getItem("accessToken");
 
-        if (!COUNSELOR_ID || !token || showIncomingModal || isVideoModalOpen) {
+        if (!COUNSELOR_ID || !token || isVideoModalOpen) {
           console.log("Skipping poll - missing data:", {
             COUNSELOR_ID,
             hasToken: !!token,
@@ -1044,112 +747,189 @@ const SMSInput = () => {
 
         if (!isMounted) return;
 
-        const callsList = response.data.pendingRequests || [];
+        const callsList =
+          response.data.pendingRequests ||
+          response.data.waitingCalls ||
+          response.data.calls ||
+          [];
+
+        const currentIncomingId =
+          incomingCallData?.callId ||
+          incomingCallData?.id ||
+          incomingCallData?._id;
+        const stillWaiting = currentIncomingId
+          ? callsList.some(
+              (c) => (c.callId || c.id || c._id) === currentIncomingId,
+            )
+          : false;
+
+        if (showIncomingModal && currentIncomingId && !stillWaiting) {
+          setShowIncomingModal(false);
+          setIncomingCallData({
+            name: "",
+            avatar: "👤",
+            callId: "",
+            roomId: "",
+            callType: "video",
+          });
+          return;
+        }
 
         if (response.data.success && callsList.length > 0) {
-          const waitingCall = callsList[0];
-          const fromData = waitingCall.from || {};
+          const waitingCall =
+            callsList.find((call) => {
+              const normalizedStatus = String(call.status || "").toLowerCase();
+              return (
+                !normalizedStatus ||
+                normalizedStatus === "waiting" ||
+                normalizedStatus === "ringing" ||
+                normalizedStatus === "pending" ||
+                normalizedStatus === "requested"
+              );
+            }) || callsList[0];
 
-          let displayName = "Anonymous User";
-          if (fromData.isAnonymous) {
-            displayName = fromData.isAnonymous;
-          } else if (fromData.displayName) {
-            displayName = fromData.displayName;
-          } else if (fromData.fullName) {
-            displayName = fromData.fullName;
-          } else if (fromData.name) {
-            displayName = fromData.name;
+          if (!waitingCall || showIncomingModal) {
+            return;
           }
 
+          const fromData = waitingCall.from || {};
+          let displayName = "Anonymous User";
+          if (fromData.isAnonymous) displayName = fromData.isAnonymous;
+          else if (fromData.displayName) displayName = fromData.displayName;
+          else if (fromData.fullName) displayName = fromData.fullName;
+          else if (fromData.name) displayName = fromData.name;
           let avatar = "👤";
           if (fromData.gender === "female") avatar = "👩";
           else if (fromData.gender === "male") avatar = "👨";
-
           setIncomingCallData({
-            callId: waitingCall.callId,
-            roomId: waitingCall.roomId,
+            callId: waitingCall.callId || waitingCall.id || waitingCall._id,
+            id: waitingCall.id || waitingCall.callId || waitingCall._id || "",
+            _id: waitingCall._id || waitingCall.callId || waitingCall.id || "",
+            roomId: waitingCall.roomId || waitingCall.callId || waitingCall.id,
             name: displayName,
             avatar: avatar,
             callType: waitingCall.callType || "video",
             requestMessage:
               waitingCall.requestMessage ||
               `Incoming ${waitingCall.callType || "video"} call...`,
-            onEndCall: handleEndIncomingCall,
           });
           setShowIncomingModal(true);
+        } else if (showIncomingModal) {
+          setShowIncomingModal(false);
+          setIncomingCallData({
+            name: "",
+            avatar: "👤",
+            callId: "",
+            roomId: "",
+            callType: "video",
+          });
         }
       } catch (error) {
         console.error("Error polling for calls:", error);
       }
     };
-
     intervalId = setInterval(fetchIncomingCalls, 5000);
     return () => {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [showIncomingModal, COUNSELOR_ID, isVideoModalOpen]);
+  }, [
+    showIncomingModal,
+    COUNSELOR_ID,
+    isVideoModalOpen,
+    incomingCallData?.callId,
+  ]);
 
-  // Handle close modal
+  useEffect(() => {
+    if (showIncomingModal && !isVideoModalOpen) {
+      void startRinging();
+      return;
+    }
+
+    stopRinging();
+  }, [showIncomingModal, isVideoModalOpen, startRinging, stopRinging]);
+
+  useEffect(() => {
+    return () => {
+      stopRinging();
+    };
+  }, [stopRinging]);
+
   const handleCloseModal = () => {
-    console.log("Closing call modal");
     setIsVideoModalOpen(false);
     setSelectedCall(null);
     setCallError(null);
   };
-
-  const handleBack = () => {
+  const handleBack = () =>
     navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
-  };
-
-  // Get gender-based avatar icon
   const getAvatarIcon = (gender) => {
     if (gender === "male") return "👨";
     if (gender === "female") return "👩";
     return "👤";
   };
+  // Handle scroll events to detect if user is near bottom
+  const handleScroll = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    // Consider "at bottom" if within 100px of the actual bottom
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+    setShouldScrollToBottom(isNearBottom);
+  }, []);
 
-  // Auto-scroll to bottom function
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  // Scroll to bottom when messages change
+  // Set up scroll listener
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Load messages when component mounts or selectedUser changes
-  useEffect(() => {
-    if (selectedUser && COUNSELOR_ID) {
-      fetchMessagesFromAPI();
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
     }
-  }, [selectedUser, chatId, COUNSELOR_ID]);
+  }, [handleScroll]);
 
-  // ========== REAL-TIME SOCKET CONNECTION FOR CHAT ==========
+  const scrollToBottom = useCallback((behavior = "smooth", force = false) => {
+    if (messagesEndRef.current && (shouldScrollToBottom || force)) {
+      messagesEndRef.current.scrollIntoView({ behavior });
+    }
+  }, [shouldScrollToBottom]);
+
+  useEffect(() => {
+    if (messages.length === 0) return;
+
+    if (isInitialLoadRef.current) {
+      const timer = setTimeout(() => {
+        scrollToBottom("auto", true);
+        isInitialLoadRef.current = false;
+      }, 50);
+      return () => clearTimeout(timer);
+    } else if (shouldScrollToBottom) {
+      scrollToBottom("smooth");
+    }
+  }, [messages, scrollToBottom, shouldScrollToBottom]);
+  useEffect(() => {
+    if (selectedUser && COUNSELOR_ID) fetchMessagesFromAPI();
+  }, [selectedUser, chatId, COUNSELOR_ID]);
+  useEffect(() => {
+    if (callError) {
+      const timer = setTimeout(() => setCallError(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [callError]);
+
+  // Socket connection
   useEffect(() => {
     const apiChatId = chatId;
     if (!apiChatId || !selectedUser) return;
-
     const token =
       localStorage.getItem("token") || localStorage.getItem("accessToken");
     if (!token) return;
-
     const socket = io(API_BASE_URL, {
       auth: { token },
       transports: ["websocket", "polling"],
     });
     chatSocketRef.current = socket;
-
     socket.on("connect", () => {
-      console.log("\ud83d\udcac Counselor chat socket connected");
       socket.emit("join-chat", { chatId: apiChatId });
     });
-
     socket.on("new-message", (messageData) => {
-      console.log("\ud83d\udce9 New message received via socket:", messageData);
-
-      // Own message confirmed via socket: replace temp with real one
       if (
         messageData.senderRole === "counsellor" &&
         String(messageData.senderId) === String(COUNSELOR_ID)
@@ -1166,7 +946,7 @@ const SMSInput = () => {
           return [
             ...withoutTemp,
             {
-              id: messageData.id || messageData.messageId || "rt_" + Date.now(),
+              id: messageData.id || messageData.messageId,
               messageId: messageData.messageId,
               text: messageData.content,
               sender: "me",
@@ -1184,12 +964,11 @@ const SMSInput = () => {
         });
         return;
       }
-
       const transformedMessage = {
-        id: messageData.id || messageData.messageId || "rt_" + Date.now(),
+        id: messageData.id || messageData.messageId,
         messageId: messageData.messageId,
         text: messageData.content,
-        sender: messageData.senderRole === "counsellor" ? "me" : "user",
+        sender: "user",
         senderRole: messageData.senderRole,
         time: new Date(messageData.createdAt).toLocaleTimeString([], {
           hour: "2-digit",
@@ -1200,7 +979,6 @@ const SMSInput = () => {
         isRead: messageData.isRead,
         status: "sent",
       };
-
       setMessages((prev) => {
         const isDuplicate = prev.some(
           (msg) =>
@@ -1227,6 +1005,48 @@ const SMSInput = () => {
       );
     });
 
+    socket.on("presence-update", ({ userId, isOnline, lastSeen }) => {
+      if (String(userId) !== String(USER_ID)) return;
+
+      setRemotePresence({
+        isOnline: Boolean(isOnline),
+        lastSeen: lastSeen || null,
+      });
+    });
+
+    // Show caller-facing feedback when the other participant declines.
+    socket.on("call_rejected", (payload) => {
+      const declinedBy = payload?.by ? ` by ${payload.by}` : "";
+      setCallError(`Call was declined${declinedBy}.`);
+      setIsVideoModalOpen(false);
+      setSelectedCall(null);
+      setShowIncomingModal(false);
+    });
+
+    socket.on("call-status-update", ({ status }) => {
+      const normalizedStatus = String(status || "").toLowerCase();
+
+      if (normalizedStatus === "rejected") {
+        // setCallError("Call was declined by the other participant.");
+        setIsVideoModalOpen(false);
+        setSelectedCall(null);
+        setShowIncomingModal(false);
+        return;
+      }
+
+      if (
+        normalizedStatus === "ended" ||
+        normalizedStatus === "cancelled" ||
+        normalizedStatus === "canceled" ||
+        normalizedStatus === "expired"
+      ) {
+        // setCallError("Call was canceled before acceptance.");
+        setIsVideoModalOpen(false);
+        setSelectedCall(null);
+        setShowIncomingModal(false);
+      }
+    });
+
     socket.on("connect_error", (err) => {
       console.error("Chat socket connection error:", err.message);
     });
@@ -1236,68 +1056,24 @@ const SMSInput = () => {
         chatSocketRef.current.off("new-message");
         chatSocketRef.current.off("user-typing");
         chatSocketRef.current.off("messages-read");
+        chatSocketRef.current.off("presence-update");
+        chatSocketRef.current.off("call_rejected");
+        chatSocketRef.current.off("call-status-update");
         chatSocketRef.current.off("connect");
         chatSocketRef.current.off("connect_error");
         chatSocketRef.current.disconnect();
         chatSocketRef.current = null;
       }
     };
-  }, [chatId, selectedUser, COUNSELOR_ID]);
+  }, [chatId, selectedUser, COUNSELOR_ID, USER_ID]);
 
-  // Auto-refresh messages every 30 seconds
-  // Add this useEffect to debug user data
-  useEffect(() => {
-    if (selectedUser) {
-      console.log("=== DEBUG: Selected User Data ===");
-      console.log("Full selectedUser object:", selectedUser);
-      console.log("All keys in selectedUser:", Object.keys(selectedUser));
-      console.log("Possible ID fields:", {
-        _id: selectedUser._id,
-        id: selectedUser.id,
-        userId: selectedUser.userId,
-        user_id: selectedUser.user_id,
-        uid: selectedUser.uid,
-      });
-      console.log("ChatId:", chatId);
-      console.log("===============================");
-    }
-  }, [selectedUser, chatId]);
-
-  // Clear call error after 5 seconds
-  useEffect(() => {
-    if (callError) {
-      const timer = setTimeout(() => {
-        setCallError(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [callError]);
-
-  // Render chat status banner
-  const renderChatStatusBanner = () => {
-    if (!chatStatus) return null;
-
-    let statusClass = "";
-    let statusText = "";
-
-    return (
-      <div className={`sms-chat-status-banner ${statusClass}`}>
-        {statusText}
-      </div>
-    );
-  };
-
-  // Render message status indicator
   const renderMessageStatus = (message) => {
     if (message.sender !== "me") return null;
-
     switch (message.status) {
       case "sending":
-        return <span className="sms-message-status sending">⌛</span>;
-      case "sent":
-        return <span className="sms-message-status sent">✓</span>;
+        return <span className="msg-status sending">⌛</span>;
       case "error":
-        return <span className="sms-message-status error">⚠️</span>;
+        return <span className="msg-status error">⚠️</span>;
       default:
         return null;
     }
@@ -1320,7 +1096,7 @@ const SMSInput = () => {
 
   return (
     <div className="smsinput-container">
-      {/* Header with Back Button and User Info */}
+      {/* Header */}
       <div className="smsinput-header">
         <div className="header-left">
           <button
@@ -1341,25 +1117,20 @@ const SMSInput = () => {
               />
             </svg>
           </button>
-
           <div className="smsinput-user-info">
             <div className="smsinput-user-avatar">
               <span className="avatar-icon">
                 {getAvatarIcon(userDetails.gender)}
               </span>
               <span
-                className={`status-dot ${selectedUser.status || "online"}`}
+                className={`status-dot ${remoteStatusClass}`}
               ></span>
             </div>
             <div className="smsinput-user-details">
               <h3>{USER_NAME}</h3>
-              <p className="smsinput-user-phone">{userDetails.phone}</p>
-              <p className="smsinput-user-email">{userDetails.email}</p>
             </div>
           </div>
         </div>
-
-        {/* Call buttons */}
         <div className="smsinput-call-buttons">
           <button
             className={`call-btn voice ${isInitiatingCall ? "loading" : ""}`}
@@ -1380,7 +1151,7 @@ const SMSInput = () => {
         </div>
       </div>
 
-      {/* Call Error Banner */}
+      {/* Error Banner */}
       {callError && (
         <div className="sms-call-error-banner">
           <span className="error-icon">⚠️</span>
@@ -1391,10 +1162,7 @@ const SMSInput = () => {
         </div>
       )}
 
-      {/* Chat Status Banner */}
-      {renderChatStatusBanner()}
-
-      {/* Messages Display Area */}
+      {/* Messages Area */}
       <div className="smsinput-messages" ref={messagesContainerRef}>
         {isLoadingMessages && messages.length === 0 ? (
           <div className="sms-loading-messages">
@@ -1464,10 +1232,21 @@ const SMSInput = () => {
             </div>
           ))
         )}
+        {remoteIsTyping && (
+          <div className="smsinput-message received">
+            <div className="message-bubble typing-bubble">
+              <div className="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Message Input Form */}
+      {/* Input Form */}
       <form className="smsinput-form" onSubmit={handleSendMessage}>
         <div className="smsinput-input-wrapper">
           <input
@@ -1485,20 +1264,14 @@ const SMSInput = () => {
           >
             📎
           </button>
-          <button
-            type="button"
-            className="emoji-btn"
-            title="Add emoji"
-            disabled={isSending}
-          >
-            😊
-          </button>
           <input
             type="text"
+            ref={messageInputRef}
             className="smsinput-input"
             placeholder={isSending ? "Sending..." : "Type your message..."}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={handleInputKeyDown}
             disabled={isSending}
           />
           <button
@@ -1527,10 +1300,11 @@ const SMSInput = () => {
         onClose={() => setShowIncomingModal(false)}
         callType={incomingCallData.callType}
         callerName={incomingCallData.name}
-        callerAvatar={incomingCallData.avatar}
+        callerImage={incomingCallData.avatar}
         callData={incomingCallData}
-        onJoinCall={handleJoinIncomingCall}
-        onRejectCall={handleRejectIncomingCall}
+        onAccept={handleJoinIncomingCall}
+        onReject={handleRejectIncomingCall}
+        fallbackName="Anonymous User"
       />
     </div>
   );

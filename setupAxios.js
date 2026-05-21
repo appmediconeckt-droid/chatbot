@@ -34,12 +34,36 @@ axios.interceptors.response.use(
     const originalRequest = error.config;
     const requestUrl = originalRequest?.url || "";
 
-    // Do not run refresh flow for login/refresh endpoints.
+    // ✅ Exclude auth endpoints from refresh logic
     if (
       requestUrl.includes("/api/auth/login") ||
       requestUrl.includes("/api/auth/refresh-token") ||
-      requestUrl.includes("/refresh-token")
+      requestUrl.includes("/api/auth/verify-login-otp") ||
+      requestUrl.includes("/api/auth/verifyOtp") ||
+      requestUrl.includes("/api/auth/logout-other-devices") ||
+      requestUrl.includes("/api/auth/generateOtp") ||
+      requestUrl.includes("/api/auth/resendOtp")
     ) {
+      // Special handling for the one‑device conflict response (409)
+      if (
+        error.response &&
+        error.response.status === 409 &&
+        error.response.data.needLogout
+      ) {
+        // Propagate a custom error flag so UI can react (e.g., show modal)
+        error.isOneDeviceConflict = true;
+        let parsedEmail = "";
+        try {
+          if (typeof originalRequest?.data === "string") {
+            parsedEmail = JSON.parse(originalRequest.data)?.email || "";
+          } else {
+            parsedEmail = originalRequest?.data?.email || "";
+          }
+        } catch {
+          parsedEmail = "";
+        }
+        error.conflictEmail = parsedEmail;
+      }
       return Promise.reject(error);
     }
 
@@ -74,8 +98,16 @@ axios.interceptors.response.use(
           { withCredentials: true },
         );
 
-        const newToken = response.data.accessToken;
-        localStorage.setItem("accessToken", newToken);
+        const newToken = response.data.accessToken || response.data.token;
+        const newRefreshToken = response.data.refreshToken;
+        
+        if (newToken) {
+          localStorage.setItem("accessToken", newToken);
+          localStorage.setItem("token", newToken);
+        }
+        if (newRefreshToken) {
+          localStorage.setItem("refreshToken", newRefreshToken);
+        }
 
         processQueue(null, newToken);
 
@@ -84,7 +116,12 @@ axios.interceptors.response.use(
       } catch (err) {
         processQueue(err, null);
         localStorage.removeItem("accessToken");
-        // Optional: window.location.href = "/login";
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        sessionStorage.clear();
+        if (typeof window !== "undefined") {
+          window.location.replace("/role-selector");
+        }
         return Promise.reject(err);
       } finally {
         isRefreshing = false;

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
-import axios from 'axios';
+import axiosInstance from '../../../../axiosConfig';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
@@ -10,6 +10,7 @@ const ChatInterface = ({ setActiveTab }) => {
     // State for counselors and chats
     const [counselors, setCounselors] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [contextMenu, setContextMenu] = useState({
         visible: false,
@@ -129,44 +130,39 @@ const ChatInterface = ({ setActiveTab }) => {
     };
 
     // Fetch chats from API
-    const fetchChats = useCallback(async () => {
+    const fetchChats = useCallback(async (isInitial = false) => {
         try {
+            if (isInitial) {
+                setInitialLoading(true);
+            }
             setLoading(true);
             setError(null);
 
             // Get token from localStorage
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
             if (!token) {
-                console.log('No token found');
+                console.log('No access token found');
                 setCounselors([]);
                 setLoading(false);
+                setInitialLoading(false);
                 return;
             }
 
-            const response = await fetch(`${API_BASE_URL}/api/chat/chats`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+                const response = await axiosInstance.get(`${API_BASE_URL}/api/chat/chats`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
 
-            if (!response.ok) {
-                if (response.status === 401) {
-                    // Token expired or invalid - just clear token and show empty state
-                    localStorage.removeItem('token');
-                    setCounselors([]);
-                    setLoading(false);
-                    return;
-                }
-                throw new Error(`Failed to fetch chats: ${response.status}`);
-            }
+                const data = response.data;
+                console.log('Chat data received:', data);
 
-            const data = await response.json();
+                // Check for chats in multiple possible locations
+                const chatsArray = data.chats || data.data?.chats || (Array.isArray(data) ? data : []);
 
-            if (data && data.chats && Array.isArray(data.chats)) {
-                // Transform API data to counselor list format
-                const counselorList = data.chats.map(chat => {
+                if (Array.isArray(chatsArray)) {
+                    // Transform API data to counselor list format
+                    const counselorList = chatsArray.map(chat => {
                     const otherParty = chat.otherParty || {};
                     const lastMessage = chat.lastMessage?.content || 'No messages yet';
                     const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
@@ -189,7 +185,7 @@ const ChatInterface = ({ setActiveTab }) => {
                         time: formatTime(lastMessageTime),
                         fullDateTime: formatFullDateTime(lastMessageTime),
                         unread: chat.unreadCount || 0,
-                        online: otherParty.isActive || false,
+                        online: otherParty.isOnline || false,
                         lastSeen: otherParty.lastSeen || null,
                         avatar: otherParty.avatar || null,
                         avatarType: 'image',
@@ -212,17 +208,20 @@ const ChatInterface = ({ setActiveTab }) => {
                     return timeB - timeA;
                 });
 
-                setCounselors(counselorList);
+                    console.log('Transformed counselor list:', counselorList);
+                    setCounselors(counselorList);
 
-                // Also save to localStorage for offline access
-                try {
-                    localStorage.setItem('activeChats', JSON.stringify(data.chats));
-                } catch (error) {
-                    console.error('Error saving chats to localStorage:', error);
+                    // Also save to localStorage for offline access
+                    try {
+                        localStorage.setItem('activeChats', JSON.stringify(chatsArray));
+                    } catch (error) {
+                        console.error('Error saving chats to localStorage:', error);
+                    }
+                } else {
+                    console.log('No valid chats array found in response');
+                    setCounselors([]);
+                    localStorage.setItem('activeChats', JSON.stringify([]));
                 }
-            } else {
-                setCounselors([]);
-            }
         } catch (error) {
             console.error('Error fetching chats:', error);
             setError(error.message);
@@ -255,7 +254,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                 time: formatTime(lastMessageTime),
                                 fullDateTime: formatFullDateTime(lastMessageTime),
                                 unread: chat.unreadCount || 0,
-                                online: otherParty.isActive || false,
+                                online: otherParty.isOnline || false,
                                 lastSeen: otherParty.lastSeen || null,
                                 avatar: otherParty.avatar || null,
                                 avatarType: 'image',
@@ -285,23 +284,23 @@ const ChatInterface = ({ setActiveTab }) => {
             }
         } finally {
             setLoading(false);
+            setInitialLoading(false);
         }
-    }, [navigate]);
+    }, []);
 
     // Mark chat as read
     const markChatAsRead = useCallback(async (chatId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
             if (!token) return;
 
-            const response = await axios.post(`${API_BASE_URL}/api/chat/mark-all-read`, {
-                chatId: chatId
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
+                const response = await axiosInstance.post(`${API_BASE_URL}/api/chat/mark-all-read`, {
+                    chatId: chatId,
+                }, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
 
             if (response.status === 200) {
                 // Update local state
@@ -317,11 +316,11 @@ const ChatInterface = ({ setActiveTab }) => {
     // Delete chat
     const deleteChat = useCallback(async (chatId) => {
         try {
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
             if (!token) return false;
 
             const response = await fetch(`${API_BASE_URL}/chat/chats/${chatId}`, {
-                method: 'DELETE',
+                    method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -352,17 +351,17 @@ const ChatInterface = ({ setActiveTab }) => {
 
     // Load active chats from API
     useEffect(() => {
-        fetchChats();
+        fetchChats(true);
 
         // Set up polling for new messages (every 30 seconds)
         const intervalId = setInterval(() => {
-            fetchChats();
+            fetchChats(false);
         }, 30000);
 
         // Listen for storage changes (for multiple tabs)
         const handleStorageChange = (e) => {
             if (e.key === 'activeChats') {
-                fetchChats();
+                fetchChats(false);
             }
         };
 
@@ -443,20 +442,14 @@ const ChatInterface = ({ setActiveTab }) => {
         }, 500);
     }, []);
 
-    // Handle touch end
+    // Handle touch end (clears long press timer; actual click handling is done elsewhere)
     const handleTouchEnd = useCallback((e) => {
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
         }
-
-        if (contextMenu.visible) {
-            e.preventDefault();
-        }
-
-        pressedItem.current = null;
-        touchMoved.current = false;
-    }, [contextMenu.visible]);
+        // No additional actions needed here; click is handled by onClick/onTouchStart logic.
+    }, []);
 
     // Handle touch move
     const handleTouchMove = useCallback((e) => {
@@ -581,7 +574,6 @@ const ChatInterface = ({ setActiveTab }) => {
         <div className="chatAppContainer">
             <div className="counselorSidebar">
                 <div className="counselorSidebarHeader">
-
                     <div className="counselorSearchBox">
                         <input
                             type="text"
@@ -595,19 +587,24 @@ const ChatInterface = ({ setActiveTab }) => {
                 </div>
 
                 <div className="counselorListContainer">
-                    {loading && counselors.length === 0 ? (
-                        <div className="loading-container">
-                            <div className="loading-spinner"></div>
-                            <p className="loading-text">Loading your chats...</p>
-                        </div>
-                    ) : error ? (
+                    {/* Initial Loading - Full screen centered */}
+                    
+
+                    {/* Refresh Loading - Overlay style */}
+                   
+
+                    {/* Error State */}
+                    {!initialLoading && !loading && error && (
                         <div className="error-message">
                             <p>⚠️ {error}</p>
-                            <button onClick={fetchChats} className="retry-button">
+                            <button onClick={() => fetchChats(false)} className="retry-button">
                                 Retry
                             </button>
                         </div>
-                    ) : filteredCounselors.length > 0 ? (
+                    )}
+
+                    {/* Chat List */}
+                    {!initialLoading && !loading && !error && filteredCounselors.length > 0 && (
                         filteredCounselors.map(counselor => (
                             <div
                                 key={counselor.id}
@@ -624,7 +621,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                         <div className="counselorAvatar">
                                             {renderAvatar(counselor, 'md')}
                                         </div>
-                                        <div className={`counselorStatus ${counselor.online ? 'counselorStatusOnline' : 'counselorStatusOffline'}`} />
+                                        {/* <div className={`counselorStatus ${counselor.online ? 'counselorStatusOnline' : 'counselorStatusOffline'}`} /> */}
                                     </div>
 
                                     <div className="counselorInfo">
@@ -661,12 +658,15 @@ const ChatInterface = ({ setActiveTab }) => {
                                 </div>
                             </div>
                         ))
-                    ) : (
+                    )}
+
+                    {/* No Chats State */}
+                    {!initialLoading && !loading && !error && filteredCounselors.length === 0 && !initialLoading && (
                         <div className="no-chats-message">
                             {searchTerm ? (
                                 <>
                                     <p>No counselors found matching "{searchTerm}"</p>
-                                    <button onClick={() => setSearchTerm('')} className="clear-search-link">
+                                    <button onClick={() => setSearchTerm('')} className="start-chat-link">
                                         Clear search
                                     </button>
                                 </>

@@ -137,7 +137,7 @@ const PatientProfile = () => {
     try {
       setLoading(true);
       const userId = localStorage.getItem("userId");
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
 
       if (!userId) {
         showNotificationMessage(
@@ -238,7 +238,7 @@ const PatientProfile = () => {
 
   const updatePatientProfile = async (formData) => {
     const userId = localStorage.getItem("userId");
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
     return await axios.patch(
       `${API_BASE_URL}/api/auth/update/${userId}`,
       formData,
