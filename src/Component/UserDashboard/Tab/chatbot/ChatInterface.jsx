@@ -6,7 +6,7 @@ import axios from 'axios';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
-    
+
     // State for counselors and chats
     const [counselors, setCounselors] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,7 +20,7 @@ const ChatInterface = ({ setActiveTab }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [counselorToDelete, setCounselorToDelete] = useState(null);
     const [error, setError] = useState(null);
-    
+
     // Refs for long press
     const longPressTimer = useRef(null);
     const pressedItem = useRef(null);
@@ -46,18 +46,18 @@ const ChatInterface = ({ setActiveTab }) => {
     // Get random color for avatar based on name
     const getAvatarColor = (name) => {
         if (!name) return '#4f46e5';
-        
+
         const colors = [
             '#4f46e5', '#0891b2', '#059669', '#b45309', '#c2410c',
             '#7e22ce', '#be123c', '#1e40af', '#0f766e', '#6b21a8',
             '#d97706', '#dc2626', '#16a34a', '#9333ea', '#db2777'
         ];
-        
+
         let hash = 0;
         for (let i = 0; i < name.length; i++) {
             hash = name.charCodeAt(i) + ((hash << 5) - hash);
         }
-        
+
         const index = Math.abs(hash) % colors.length;
         return colors[index];
     };
@@ -65,7 +65,7 @@ const ChatInterface = ({ setActiveTab }) => {
     // Format time for display (relative time)
     const formatTime = (timeString) => {
         if (!timeString) return '';
-        
+
         try {
             const messageTime = new Date(timeString);
             const now = new Date();
@@ -73,7 +73,7 @@ const ChatInterface = ({ setActiveTab }) => {
             const diffMins = Math.floor(diffMs / (1000 * 60));
             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            
+
             if (diffMins < 1) return 'Just now';
             if (diffHours < 1) return `${diffMins}m ago`;
             if (diffDays === 0) return messageTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -107,7 +107,7 @@ const ChatInterface = ({ setActiveTab }) => {
     // Format last seen time
     const formatLastSeen = (lastSeen) => {
         if (!lastSeen) return 'Offline';
-        
+
         try {
             const lastSeenTime = new Date(lastSeen);
             const now = new Date();
@@ -115,7 +115,7 @@ const ChatInterface = ({ setActiveTab }) => {
             const diffMins = Math.floor(diffMs / (1000 * 60));
             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            
+
             if (diffMins < 1) return 'Just now';
             if (diffHours < 1) return `${diffMins} minutes ago`;
             if (diffHours === 1) return '1 hour ago';
@@ -133,7 +133,7 @@ const ChatInterface = ({ setActiveTab }) => {
         try {
             setLoading(true);
             setError(null);
-            
+
             // Get token from localStorage
             const token = localStorage.getItem('token');
             if (!token) {
@@ -163,14 +163,14 @@ const ChatInterface = ({ setActiveTab }) => {
             }
 
             const data = await response.json();
-            
+
             if (data && data.chats && Array.isArray(data.chats)) {
                 // Transform API data to counselor list format
                 const counselorList = data.chats.map(chat => {
                     const otherParty = chat.otherParty || {};
                     const lastMessage = chat.lastMessage?.content || 'No messages yet';
                     const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
-                    
+
                     // Get the specialization as string
                     let specialization = 'Counselor';
                     if (otherParty.specialization) {
@@ -180,7 +180,7 @@ const ChatInterface = ({ setActiveTab }) => {
                             specialization = otherParty.specialization;
                         }
                     }
-                    
+
                     return {
                         id: otherParty.id || chat.chatId,
                         name: otherParty.name || 'Unknown Counselor',
@@ -204,16 +204,16 @@ const ChatInterface = ({ setActiveTab }) => {
                         messageCount: 0
                     };
                 });
-                
+
                 // Sort by latest message time (most recent first)
                 counselorList.sort((a, b) => {
                     const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
                     const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
                     return timeB - timeA;
                 });
-                
+
                 setCounselors(counselorList);
-                
+
                 // Also save to localStorage for offline access
                 try {
                     localStorage.setItem('activeChats', JSON.stringify(data.chats));
@@ -226,7 +226,7 @@ const ChatInterface = ({ setActiveTab }) => {
         } catch (error) {
             console.error('Error fetching chats:', error);
             setError(error.message);
-            
+
             // Try to load from localStorage as fallback
             try {
                 const savedChats = localStorage.getItem('activeChats');
@@ -237,7 +237,7 @@ const ChatInterface = ({ setActiveTab }) => {
                             const otherParty = chat.otherParty || {};
                             const lastMessage = chat.lastMessage?.content || 'No messages yet';
                             const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
-                            
+
                             let specialization = 'Counselor';
                             if (otherParty.specialization) {
                                 if (Array.isArray(otherParty.specialization) && otherParty.specialization.length > 0) {
@@ -246,7 +246,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                     specialization = otherParty.specialization;
                                 }
                             }
-                            
+
                             return {
                                 id: otherParty.id || chat.chatId,
                                 name: otherParty.name || 'Unknown Counselor',
@@ -270,13 +270,13 @@ const ChatInterface = ({ setActiveTab }) => {
                                 messageCount: 0
                             };
                         });
-                        
+
                         counselorList.sort((a, b) => {
                             const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
                             const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
                             return timeB - timeA;
                         });
-                        
+
                         setCounselors(counselorList);
                     }
                 }
@@ -305,7 +305,7 @@ const ChatInterface = ({ setActiveTab }) => {
 
             if (response.status === 200) {
                 // Update local state
-                setCounselors(prev => prev.map(c => 
+                setCounselors(prev => prev.map(c =>
                     c.id === chatId ? { ...c, unread: 0 } : c
                 ));
             }
@@ -331,7 +331,7 @@ const ChatInterface = ({ setActiveTab }) => {
             if (response.ok) {
                 // Remove from local state
                 setCounselors(prev => prev.filter(c => c.id !== chatId));
-                
+
                 // Also remove from localStorage
                 try {
                     const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
@@ -340,7 +340,7 @@ const ChatInterface = ({ setActiveTab }) => {
                 } catch (error) {
                     console.error('Error updating localStorage:', error);
                 }
-                
+
                 return true;
             }
             return false;
@@ -367,7 +367,7 @@ const ChatInterface = ({ setActiveTab }) => {
         };
 
         window.addEventListener('storage', handleStorageChange);
-        
+
         return () => {
             clearInterval(intervalId);
             window.removeEventListener('storage', handleStorageChange);
@@ -377,13 +377,13 @@ const ChatInterface = ({ setActiveTab }) => {
     // Handle counselor selection
     const handleCounselorSelect = useCallback(async (counselor) => {
         if (contextMenu.visible) return;
-        
+
         // Mark messages as read
         await markChatAsRead(counselor.id);
-        
+
         // Navigate to chat box
-        navigate(`/chat/${counselor.id}`, { 
-            state: { 
+        navigate(`/chat/${counselor.id}`, {
+            state: {
                 chatId: counselor.chatId,
                 counselor: {
                     id: counselor.id,
@@ -396,7 +396,7 @@ const ChatInterface = ({ setActiveTab }) => {
                     avatarType: counselor.avatarType
                 },
                 user: counselor.user
-            } 
+            }
         });
     }, [contextMenu.visible, markChatAsRead, navigate]);
 
@@ -425,13 +425,13 @@ const ChatInterface = ({ setActiveTab }) => {
     const handleTouchStart = useCallback((e, counselor) => {
         touchMoved.current = false;
         pressedItem.current = counselor;
-        
+
         longPressTimer.current = setTimeout(() => {
             if (pressedItem.current && !touchMoved.current) {
                 if (window.navigator.vibrate) {
                     window.navigator.vibrate(50);
                 }
-                
+
                 const touch = e.touches[0];
                 setContextMenu({
                     visible: true,
@@ -449,11 +449,11 @@ const ChatInterface = ({ setActiveTab }) => {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
         }
-        
+
         if (contextMenu.visible) {
             e.preventDefault();
         }
-        
+
         pressedItem.current = null;
         touchMoved.current = false;
     }, [contextMenu.visible]);
@@ -461,7 +461,7 @@ const ChatInterface = ({ setActiveTab }) => {
     // Handle touch move
     const handleTouchMove = useCallback((e) => {
         touchMoved.current = true;
-        
+
         if (longPressTimer.current) {
             clearTimeout(longPressTimer.current);
             longPressTimer.current = null;
@@ -503,11 +503,11 @@ const ChatInterface = ({ setActiveTab }) => {
     const confirmDeleteChat = useCallback(async () => {
         if (counselorToDelete) {
             const success = await deleteChat(counselorToDelete.id);
-            
+
             if (success && window.navigator.vibrate) {
                 window.navigator.vibrate([50, 30, 50]);
             }
-            
+
             setShowDeleteConfirm(false);
             setCounselorToDelete(null);
         }
@@ -546,11 +546,11 @@ const ChatInterface = ({ setActiveTab }) => {
     // Render avatar with profile photo support
     const renderAvatar = useCallback((counselor, size = 'md') => {
         const profilePhotoUrl = getProfilePhotoUrl(counselor);
-        
+
         if (profilePhotoUrl) {
             return (
-                <img 
-                    src={profilePhotoUrl} 
+                <img
+                    src={profilePhotoUrl}
                     alt={counselor.name}
                     className={`counselor-avatar-img-${size}`}
                     onError={(e) => {
@@ -566,9 +566,9 @@ const ChatInterface = ({ setActiveTab }) => {
                 />
             );
         }
-        
+
         return (
-            <div 
+            <div
                 className={`counselor-avatar-initials-${size}`}
                 style={{ backgroundColor: getAvatarColor(counselor.name) }}
             >
@@ -581,7 +581,7 @@ const ChatInterface = ({ setActiveTab }) => {
         <div className="chatAppContainer">
             <div className="counselorSidebar">
                 <div className="counselorSidebarHeader">
-                    <h2 className="counselorListTitle">My Counselors</h2>
+
                     <div className="counselorSearchBox">
                         <input
                             type="text"
@@ -609,8 +609,8 @@ const ChatInterface = ({ setActiveTab }) => {
                         </div>
                     ) : filteredCounselors.length > 0 ? (
                         filteredCounselors.map(counselor => (
-                            <div 
-                                key={counselor.id} 
+                            <div
+                                key={counselor.id}
                                 className="counselorListItemWrapper"
                                 onClick={(e) => handleItemClick(e, counselor)}
                                 onContextMenu={(e) => handleContextMenu(e, counselor)}
@@ -634,14 +634,14 @@ const ChatInterface = ({ setActiveTab }) => {
                                                 {counselor.time}
                                             </span>
                                         </div>
-                                        
+
                                         <div className="counselorLastMessageRow">
                                             <p className="counselorLastMessage">{counselor.lastMessage}</p>
                                             {counselor.unread > 0 && (
                                                 <span className="counselorUnreadBadge">{counselor.unread}</span>
                                             )}
                                         </div>
-                                        
+
                                         <div className="counselorMetaInfo">
                                             <span className="counselorSpecialization">{counselor.specialization}</span>
                                             {counselor.status === 'accepted' && (
@@ -651,7 +651,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                                 <span className="counselorStatusBadge expired">⌛ Expired</span>
                                             )}
                                         </div>
-                                        
+
                                         {!counselor.online && counselor.lastSeen && (
                                             <div className="counselorLastSeen">
                                                 Last seen: {formatLastSeen(counselor.lastSeen)}
@@ -685,7 +685,7 @@ const ChatInterface = ({ setActiveTab }) => {
 
             {/* Context Menu */}
             {contextMenu.visible && contextMenu.counselor && (
-                <div 
+                <div
                     className="context-menu"
                     style={{
                         position: 'fixed',
@@ -711,7 +711,7 @@ const ChatInterface = ({ setActiveTab }) => {
                         </div>
                     </div>
                     <div className="context-menu-items">
-                        <button 
+                        <button
                             className="context-menu-item"
                             onClick={() => {
                                 markChatAsRead(contextMenu.counselor.id);
@@ -721,14 +721,14 @@ const ChatInterface = ({ setActiveTab }) => {
                             <span className="context-menu-icon">✓</span>
                             <span className="context-menu-text">Mark as Read</span>
                         </button>
-                        <button 
+                        <button
                             className="context-menu-item delete"
                             onClick={() => handleDeleteChat(contextMenu.counselor)}
                         >
                             <span className="context-menu-icon">🗑️</span>
                             <span className="context-menu-text">Delete Chat</span>
                         </button>
-                        <button 
+                        <button
                             className="context-menu-item"
                             onClick={closeContextMenu}
                         >

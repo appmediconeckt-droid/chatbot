@@ -22,20 +22,19 @@ const CounselorRequestChat = () => {
   // Get user ID and token from localStorage
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
-    const handleCounselorClick = (counselor) => {
-  setSelectedCounselorForRequest(counselor);
-  setShowUserModal(true);
-};
+  
+  const handleCounselorClick = (counselor) => {
+    setSelectedCounselorForRequest(counselor);
+    setShowUserModal(true);
+  };
 
   // Function to fetch user data from API
   const fetchUserData = async () => {
     if (!userId) {
-      // If no user ID, generate anonymous name
       const anonymousName = `Anonymous_${Math.floor(Math.random() * 10000)}`;
       setUserAnonymous(anonymousName);
       return;
     }
-  
 
     try {
       setIsLoading(true);
@@ -189,75 +188,45 @@ const CounselorRequestChat = () => {
     setShowUserModal(true);
   };
 
-
-  
-
-const startChatAPI = async (counselorId, token) => {
-  try {
-    const response = await axios.post(
-      `${API_BASE_URL}/api/chat/start`,
-      {
-        counselorId: counselorId,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
-};
   // Send chat request
-const sendChatRequest = async (e) => {
-  e.preventDefault();
+  const sendChatRequest = async (e) => {
+    e.preventDefault();
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const counselorId = selectedCounselorForRequest?.id;
 
-    const counselorId = selectedCounselorForRequest?.id;
-
-    if (!counselorId) {
-      alert("❌ Counselor not selected");
-      return;
-    }
-
-    const res = await axios.post(
-      `${API_BASE_URL}/api/chat/start`,
-      {
-        counselorId: counselorId,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      if (!counselorId) {
+        alert("❌ Counselor not selected");
+        return;
       }
-    );
 
-    console.log("✅ Chat Started:", res.data);
+      const res = await axios.post(
+        `${API_BASE_URL}/api/chat/start`,
+        {
+          counselorId: counselorId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-    alert("✅ Chat request sent successfully!");
+      console.log("✅ Chat Started:", res.data);
+      alert("✅ Chat request sent successfully!");
+      setShowUserModal(false);
 
-    // OPTIONAL: redirect to chat page
-    // navigate(`/chat/${res.data.chatId}`);
-
-    setShowUserModal(false);
-
-  } catch (error) {
-    console.error("❌ Error:", error);
-
-    alert(error?.response?.data?.message || "Failed to send request");
-  } finally {
-    setIsLoading(false);
-  }
-};
+    } catch (error) {
+      console.error("❌ Error:", error);
+      alert(error?.response?.data?.message || "Failed to send request");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Accept chat request
   const acceptChatRequest = (counselor) => {
@@ -391,13 +360,11 @@ const sendChatRequest = async (e) => {
                 )}
                 <div className="counselor-specialization-unique">{counselor.specialization}</div>
                 
-               
-                
                 <div className="counselor-experience-unique">
                   💼 {counselor.experience} experience
                 </div>
                 
-                 <div className="counselor-rating-unique">
+                <div className="counselor-rating-unique">
                   <div className="stars-unique">
                     {'★'.repeat(Math.floor(counselor.rating))}{'☆'.repeat(5 - Math.floor(counselor.rating))}
                   </div>
@@ -427,7 +394,6 @@ const sendChatRequest = async (e) => {
                 className="counselor-row-unique"
                 onClick={() => handleChatNow(counselor)}
               >
-                {/* Avatar */}
                 <div className="row-avatar-unique">
                   {counselor.avatarType === 'image' ? (
                     <img 
@@ -443,7 +409,6 @@ const sendChatRequest = async (e) => {
                   )}
                 </div>
 
-                {/* Info */}
                 <div className="row-info-unique">
                   <div className="row-name-unique">{counselor.name}</div>
                   <div className="row-specialization-unique">
@@ -456,7 +421,6 @@ const sendChatRequest = async (e) => {
                   )}
                 </div>
 
-                {/* Status + Button */}
                 <div className="row-action-unique">
                   <span className={`dot ${counselor.available ? 'online' : 'offline'}`}></span>
                   <button
@@ -607,219 +571,6 @@ const sendChatRequest = async (e) => {
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        /* Avatar Styles */
-        .counselor-avatar-container-unique {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          overflow: hidden;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .counselor-avatar-image-unique {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .counselor-avatar-text-unique {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 32px;
-          font-weight: 600;
-          color: white;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .chat-tab-avatar-container-unique {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          overflow: hidden;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .chat-tab-avatar-image-unique {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .chat-tab-avatar-text-unique {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 18px;
-          font-weight: 600;
-          color: white;
-        }
-
-        .counselor-preview-unique {
-          margin-bottom: 20px;
-          padding: 16px;
-          background: #f8f9fa;
-          border-radius: 12px;
-          border: 1px solid #e5e7eb;
-        }
-
-        .counselor-preview-header-unique {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .counselor-preview-avatar-unique {
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          overflow: hidden;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-        }
-
-        .counselor-preview-image-unique {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
-        .counselor-preview-text-unique {
-          width: 100%;
-          height: 100%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          font-weight: 600;
-          color: white;
-        }
-
-        .counselor-preview-info-unique {
-          flex: 1;
-        }
-
-        .counselor-preview-name-unique {
-          font-size: 18px;
-          font-weight: 600;
-          color: #1f2937;
-          margin-bottom: 4px;
-        }
-
-        .counselor-preview-specialization-unique {
-          font-size: 14px;
-          color: #6b7280;
-        }
-
-        .modal-user-info-unique {
-          margin-bottom: 20px;
-        }
-        
-        .user-info-card-unique {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 12px;
-          padding: 16px;
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          color: white;
-        }
-        
-        .user-info-icon-unique {
-          width: 48px;
-          height: 48px;
-          background: rgba(255, 255, 255, 0.2);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-        }
-        
-        .user-info-details-unique {
-          flex: 1;
-        }
-        
-        .user-info-label-unique {
-          font-size: 12px;
-          opacity: 0.8;
-          margin-bottom: 4px;
-        }
-        
-        .user-info-name-unique {
-          font-size: 20px;
-          font-weight: 700;
-          margin-bottom: 6px;
-          letter-spacing: 0.5px;
-        }
-        
-        .anonymous-name-unique {
-          background: rgba(255, 255, 255, 0.2);
-          padding: 4px 12px;
-          border-radius: 20px;
-          display: inline-block;
-          font-size: 18px;
-        }
-        
-        .user-info-note-unique {
-          font-size: 11px;
-          opacity: 0.9;
-        }
-        
-        .loading-text-unique {
-          display: inline-block;
-          animation: pulse 1.5s ease-in-out infinite;
-        }
-        
-        .privacy-note-unique {
-          font-size: 12px;
-          color: #666;
-          margin-top: 10px;
-          padding-top: 10px;
-          border-top: 1px solid #e5e7eb;
-        }
-        
-        @keyframes pulse {
-          0%, 100% {
-            opacity: 1;
-          }
-          50% {
-            opacity: 0.5;
-          }
-        }
-
-        @media (max-width: 768px) {
-          .counselor-avatar-container-unique {
-            width: 60px;
-            height: 60px;
-          }
-          
-          .counselor-avatar-text-unique {
-            font-size: 24px;
-          }
-          
-          .chat-tab-avatar-container-unique {
-            width: 40px;
-            height: 40px;
-          }
-        }
-      `}</style>
     </div>
   );
 };

@@ -14,7 +14,6 @@ import {
 } from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
-import VoiceCallModal from "../../../UserDashboard/Tab/CallModal/VoiceCallModal";
 
 // Professional Call Modal Component for Counselor Receiving Calls
 const IncomingCallModal = ({
@@ -149,7 +148,6 @@ const SMSInput = () => {
 
   // Call modal states
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
-  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
   const [isInitiatingCall, setIsInitiatingCall] = useState(false);
   const [callError, setCallError] = useState(null);
@@ -603,7 +601,10 @@ const SMSInput = () => {
         const withoutTemp = prev.filter((m) => !m.isTemporary);
         if (!sentMsg) return withoutTemp;
         const alreadyHas = withoutTemp.some(
-          (m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId,
+          (m) =>
+            m.messageId &&
+            sentMsg.messageId &&
+            m.messageId === sentMsg.messageId,
         );
         if (alreadyHas) return withoutTemp;
         return [
@@ -694,12 +695,15 @@ const SMSInput = () => {
     }
   };
 
-  // FIXED: Initialize video call with API (Counselor as initiator)
-  // SMSInput.js - Replace the initiateVideoCall and initiateVoiceCall functions
+  const initiateStreamCall = async (requestedCallType = "video") => {
+    const normalizedMode =
+      requestedCallType === "audio" || requestedCallType === "voice"
+        ? "voice"
+        : "video";
 
-  // FIXED: Initialize video call with proper user ID validation
-  const initiateVideoCall = async () => {
-    console.log("Counselor: initiateVideoCall called");
+    console.log(
+      `Counselor: initiateStreamCall called with mode: ${normalizedMode}`,
+    );
     console.log("Selected User:", selectedUser);
 
     if (!selectedUser) {
@@ -708,7 +712,6 @@ const SMSInput = () => {
       return;
     }
 
-    // Get counselor ID
     const counselorId = getCounselorId();
     if (!counselorId) {
       console.error("No counselor ID found");
@@ -717,10 +720,6 @@ const SMSInput = () => {
     }
 
     const userId = getSelectedUserId();
-
-    console.log("Extracted User ID:", userId);
-    console.log("Counselor ID:", counselorId);
-
     if (!userId) {
       console.error("No user ID found");
       setCallError("User information not found. Please select a user again.");
@@ -737,16 +736,14 @@ const SMSInput = () => {
       if (!token) {
         throw new Error("Authentication token not found");
       }
-      console.log("SELECTED USER:", selectedUser);
+
       const requestBody = {
         initiatorId: counselorId,
-        initiatorType: "counsellor", // ✅ correct
+        initiatorType: "counsellor",
         receiverId: userId,
-        receiverType: "user", // ✅ correct
-        callType: "video",
+        receiverType: "user",
+        callType: normalizedMode === "voice" ? "audio" : "video",
       };
-
-      console.log("Sending call request:", requestBody);
 
       const response = await axios.post(
         `${API_BASE_URL}/api/video/calls/initiate`,
@@ -759,7 +756,7 @@ const SMSInput = () => {
         },
       );
 
-      console.log("API Response:", response.data);
+      console.log(`${normalizedMode} call API response:`, response.data);
 
       if (response.data && response.data.success) {
         const callData = {
@@ -767,7 +764,8 @@ const SMSInput = () => {
           callId: response.data.callId,
           roomId: response.data.roomId,
           name: selectedUser.name || USER_NAME,
-          type: "video",
+          type: normalizedMode,
+          callType: normalizedMode,
           profilePic: getAvatarByGender(selectedUser.gender),
           phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
           status: response.data.status || "ringing",
@@ -787,120 +785,13 @@ const SMSInput = () => {
         throw new Error(
           response.data?.message ||
             response.data?.error ||
-            "Failed to initiate video call",
+            `Failed to initiate ${normalizedMode} call`,
         );
       }
     } catch (error) {
-      console.error("Error initiating video call:", error);
+      console.error(`Error initiating ${normalizedMode} call:`, error);
 
-      let errorMessage = "Failed to initiate video call. ";
-      if (error.response?.data?.message) {
-        errorMessage += error.response.data.message;
-      } else if (error.response?.data?.error) {
-        errorMessage += error.response.data.error;
-      } else if (error.message) {
-        errorMessage += error.message;
-      }
-
-      setCallError(errorMessage);
-    } finally {
-      setIsInitiatingCall(false);
-    }
-  };
-
-  // FIXED: Initialize voice call with proper user ID validation
-  const initiateVoiceCall = async () => {
-    console.log("Counselor: initiateVoiceCall called");
-
-    if (!selectedUser) {
-      console.error("No user selected");
-      setCallError("No user selected for call");
-      return;
-    }
-
-    const counselorId = getCounselorId();
-    if (!counselorId) {
-      console.error("No counselor ID found");
-      setCallError("Please login again to make calls");
-      return;
-    }
-
-    const userId = getSelectedUserId();
-
-    console.log("Extracted User ID for voice call:", userId);
-
-    if (!userId) {
-      console.error("No user ID found");
-      setCallError("User information not found");
-      return;
-    }
-
-    setIsInitiatingCall(true);
-    setCallError(null);
-
-    try {
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
-
-      if (!token) {
-        throw new Error("Authentication token not found");
-      }
-      const counselorId = getCounselorId();
-
-      const requestBody = {
-        initiatorId: counselorId,
-        initiatorType: "counsellor",
-        receiverId: userId,
-        receiverType: "user",
-        callType: "audio",
-      };
-
-      console.log("Sending voice call request:", requestBody);
-
-      const response = await axios.post(
-        `${API_BASE_URL}/api/video/calls/initiate`,
-        requestBody,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
-
-      console.log("Voice call API response:", response.data);
-
-      if (response.data && response.data.success) {
-        const callData = {
-          id: response.data.callData?.id,
-          callId: response.data.callId,
-          roomId: response.data.roomId,
-          name: selectedUser.name || USER_NAME,
-          type: "voice",
-          profilePic: getAvatarByGender(selectedUser.gender),
-          phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
-          status: response.data.status || "ringing",
-          date: "Today",
-          time: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
-          apiCallData: response.data.callData,
-        };
-
-        setSelectedCall(callData);
-        setIsVoiceModalOpen(true);
-      } else {
-        throw new Error(
-          response.data?.message ||
-            response.data?.error ||
-            "Failed to initiate voice call",
-        );
-      }
-    } catch (error) {
-      console.error("Error initiating voice call:", error);
-
-      let errorMessage = "Failed to initiate voice call. ";
+      let errorMessage = `Failed to initiate ${normalizedMode} call. `;
       if (error.response?.data?.message) {
         errorMessage += error.response.data.message;
       } else if (error.response?.data?.error) {
@@ -961,13 +852,13 @@ const SMSInput = () => {
   // Handle video call
   const handleVideoCall = () => {
     console.log("Video call button clicked");
-    initiateVideoCall();
+    initiateStreamCall("video");
   };
 
   // Handle voice call
   const handleVoiceCall = () => {
     console.log("Voice call button clicked");
-    initiateVoiceCall();
+    initiateStreamCall("audio");
   };
 
   // Shared Call API actions for Receiving
@@ -1059,13 +950,8 @@ const SMSInput = () => {
           isIncoming: true,
         };
 
-        if (modalType === "video") {
-          setSelectedCall(callDataForModal);
-          setIsVideoModalOpen(true);
-        } else {
-          setSelectedCall(callDataForModal);
-          setIsVoiceModalOpen(true);
-        }
+        setSelectedCall(callDataForModal);
+        setIsVideoModalOpen(true);
 
         return { success: true, data: response.data };
       } else {
@@ -1079,7 +965,8 @@ const SMSInput = () => {
 
   const handleRejectIncomingCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
       await axios.put(
         `${API_BASE_URL}/api/video/calls/${callId}/reject`,
         {
@@ -1099,7 +986,8 @@ const SMSInput = () => {
 
   const handleEndIncomingCall = async (callId) => {
     try {
-      const token = localStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
 
       await axios.put(
         `${API_BASE_URL}/api/video/calls/${callId}/end`,
@@ -1132,21 +1020,15 @@ const SMSInput = () => {
 
     const fetchIncomingCalls = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token =
+          localStorage.getItem("token") || localStorage.getItem("accessToken");
 
-        if (
-          !COUNSELOR_ID ||
-          !token ||
-          showIncomingModal ||
-          isVideoModalOpen ||
-          isVoiceModalOpen
-        ) {
+        if (!COUNSELOR_ID || !token || showIncomingModal || isVideoModalOpen) {
           console.log("Skipping poll - missing data:", {
             COUNSELOR_ID,
             hasToken: !!token,
             showIncomingModal,
             isVideoModalOpen,
-            isVoiceModalOpen,
           });
           return;
         }
@@ -1206,13 +1088,12 @@ const SMSInput = () => {
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [showIncomingModal, COUNSELOR_ID, isVideoModalOpen, isVoiceModalOpen]);
+  }, [showIncomingModal, COUNSELOR_ID, isVideoModalOpen]);
 
   // Handle close modal
   const handleCloseModal = () => {
     console.log("Closing call modal");
     setIsVideoModalOpen(false);
-    setIsVoiceModalOpen(false);
     setSelectedCall(null);
     setCallError(null);
   };
@@ -1635,14 +1516,8 @@ const SMSInput = () => {
         isOpen={isVideoModalOpen}
         onClose={handleCloseModal}
         callData={selectedCall}
+        callMode={selectedCall?.callType || selectedCall?.type || "video"}
         currentUser={{ id: COUNSELOR_ID, role: "counsellor" }}
-        onEndCall={handleEndIncomingCall}
-      />
-
-      <VoiceCallModal
-        isOpen={isVoiceModalOpen}
-        onClose={handleCloseModal}
-        callData={selectedCall}
         onEndCall={handleEndIncomingCall}
       />
 
