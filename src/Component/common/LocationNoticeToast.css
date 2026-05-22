@@ -1,0 +1,148 @@
+.location-notice-toast {
+  position: fixed;
+  top: 56px;
+  right: 16px;
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: 360px;
+  padding: 12px 14px;
+  background: #fff8e1;
+  color: #5a4a14;
+  border: 1px solid #f6c453;
+  border-left: 4px solid #e0a800;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-size: 13.5px;
+  line-height: 1.4;
+  animation: location-notice-in 0.25s ease-out;
+}
+
+@keyframes location-notice-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.location-notice-icon {
+  font-size: 18px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.location-notice-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.location-notice-body strong {
+  font-size: 13.5px;
+  color: #5a4a14;
+}
+
+.location-notice-msg {
+  font-size: 12.5px;
+  color: #6a5a24;
+}
+
+.location-notice-close {
+  background: transparent;
+  border: none;
+  color: #5a4a14;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.location-notice-close:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 540px) {
+  .location-notice-toast {
+    left: 12px;
+    right: 12px;
+    max-width: none;
+    top: 12px;
+  }
+}
+
+/* Sticky banner — shown when the user declined location during auth */
+.location-banner-sticky {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, #fff8e1 0%, #fff3cd 100%);
+  color: #5a4a14;
+  border-bottom: 1px solid #f6c453;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  font-size: 13.5px;
+  line-height: 1.4;
+  animation: location-notice-in 0.25s ease-out;
+}
+
+.location-banner-sticky .location-notice-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.location-banner-try {
+  background: #e0a800;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.18s ease;
+}
+
+.location-banner-try:hover:not(:disabled) {
+  background: #c68f00;
+}
+
+.location-banner-try:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.location-banner-err {
+  color: #b45309;
+  font-weight: 500;
+}
+
+@media (max-width: 540px) {
+  .location-banner-sticky {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .location-banner-sticky .location-notice-body {
+    flex-basis: 100%;
+    order: -1;
+  }
+}

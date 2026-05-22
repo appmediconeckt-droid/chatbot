@@ -5,6 +5,8 @@ import axios from "axios";
 import "./Login.css";
 import logo from "../image/Mediconect Logo-3.png";
 import { API_BASE_URL } from "../axiosConfig";
+import GoogleAuthButton from "./GoogleAuthButton";
+import LocationGate from "./LocationGate";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -23,6 +25,10 @@ const Login = () => {
   const [otpLoading, setOtpLoading] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+
+  // Mandatory-location gate: when set, modal mounts and we navigate only after
+  // the gate resolves (either captured or user chose "continue without").
+  const [pendingNav, setPendingNav] = useState(null); // { path, event }
 
   const location = useLocation();
   const roleFromState = location.state?.role;
@@ -123,15 +129,11 @@ const Login = () => {
         localStorage.removeItem("rememberedUserId");
       }
 
-      setSuccessMessage("Login successful! Redirecting...");
-
-      setTimeout(() => {
-        if (isCounselor) {
-          navigate("/counselor-dashboard");
-        } else {
-          navigate("/user-dashboard");
-        }
-      }, 1200);
+      setSuccessMessage("Login successful! One last step…");
+      setPendingNav({
+        path: isCounselor ? "/counselor-dashboard" : "/user-dashboard",
+        event: "login",
+      });
     } catch (err) {
       if (err.response?.status === 409 || err.isOneDeviceConflict) {
         setShowConflictModal(true);
@@ -222,14 +224,11 @@ const Login = () => {
       }
 
       setShowConflictModal(false);
-      setSuccessMessage("OTP verified! Redirecting...");
-      setTimeout(() => {
-        if (isCounselor) {
-          navigate("/counselor-dashboard");
-        } else {
-          navigate("/user-dashboard");
-        }
-      }, 1200);
+      setSuccessMessage("OTP verified! One last step…");
+      setPendingNav({
+        path: isCounselor ? "/counselor-dashboard" : "/user-dashboard",
+        event: "login",
+      });
     } catch (err) {
       const msg =
         err?.response?.data?.message ||
@@ -359,6 +358,32 @@ const Login = () => {
                   "Login"
                 )}
               </button>
+
+              <div className="auth-divider">
+                <span>or continue with</span>
+              </div>
+
+              <GoogleAuthButton
+                role={roleFromState || localStorage.getItem("role") || "user"}
+                text="signin_with"
+                disabled={isLoading}
+                gateDriven
+                onSuccess={({ isCounselor }) => {
+                  setSuccessMessage("Login successful! One last step…");
+                  setPendingNav({
+                    path: isCounselor
+                      ? "/counselor-dashboard"
+                      : "/user-dashboard",
+                    event: "login",
+                  });
+                }}
+                onConflict={({ email: conflictEmail }) => {
+                  if (conflictEmail) setEmail(conflictEmail);
+                  setShowConflictModal(true);
+                  setErrorMessage("");
+                }}
+                onError={(msg) => setErrorMessage(msg)}
+              />
             </div>
 
             {errorMessage && (
@@ -461,6 +486,17 @@ const Login = () => {
           </div>
         </div>
       </div>
+
+      {pendingNav && (
+        <LocationGate
+          event={pendingNav.event}
+          onDone={() => {
+            const target = pendingNav.path;
+            setPendingNav(null);
+            navigate(target);
+          }}
+        />
+      )}
     </div>
   );
 };

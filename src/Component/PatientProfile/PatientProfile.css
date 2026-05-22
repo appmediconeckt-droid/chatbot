@@ -145,6 +145,37 @@
 
 .header-actions {
   flex-shrink: 0;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.btn-location {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-location-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #667eea;
+  border-top-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: btn-location-spin 0.8s linear infinite;
+}
+
+@keyframes btn-location-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .btn-primary {

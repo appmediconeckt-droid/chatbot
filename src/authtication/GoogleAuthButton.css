@@ -1,0 +1,67 @@
+/* Single, clean Google sign-in surface — no outer shell box.
+   Google's iframe already renders a full button with its own border,
+   icon and label, so we only need a wrapper for centering + busy state. */
+
+.g-auth-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+}
+
+.g-auth-wrap-disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.g-auth-wrap-busy {
+  pointer-events: none;
+}
+
+/* Make the library's iframe button stretch full width up to a sane max,
+   so it lines up with the form's primary submit button. */
+.g-auth-wrap > div {
+  width: 100% !important;
+  max-width: 360px;
+  display: flex;
+  justify-content: center;
+}
+
+.g-auth-wrap > div > div {
+  width: 100% !important;
+}
+
+.g-auth-wrap iframe {
+  width: 100% !important;
+  max-width: 360px !important;
+  margin: 0 auto !important;
+}
+
+.g-auth-wrap-spinner {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border: 2px solid #4285f4;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: g-auth-wrap-spin 0.8s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes g-auth-wrap-spin {
+  to {
+    transform: translateY(-50%) rotate(360deg);
+  }
+}
+
+@media (max-width: 480px) {
+  .g-auth-wrap > div,
+  .g-auth-wrap iframe {
+    max-width: 100% !important;
+  }
+}

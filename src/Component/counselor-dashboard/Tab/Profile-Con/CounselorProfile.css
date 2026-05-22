@@ -1402,3 +1402,46 @@
     align-items: flex-start;
   }
 }
+/* Location button (manual GPS update) */
+.counselor-profile-container__actions {
+  flex-wrap: wrap;
+}
+
+.counselor-profile-container__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.counselor-profile-container__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+}
+
+.counselor-profile-container__btn--location {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+}
+
+.counselor-profile-container__btn--location:hover:not(:disabled) {
+  background: #f8fafc;
+  transform: translateY(-2px);
+}
+
+.counselor-profile-container__btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: counselor-profile-spin 0.8s linear infinite;
+}
+
+@keyframes counselor-profile-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

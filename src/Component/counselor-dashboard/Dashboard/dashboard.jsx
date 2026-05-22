@@ -21,6 +21,8 @@ import Messagesou from "../Tab/Messages/Messagesou";
 import CounselorProfile from "../Tab/Profile-Con/CounselorProfile";
 import VideoCallModal from "../../UserDashboard/Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
+import LocationNoticeToast from "../../common/LocationNoticeToast";
+import LocationBadge from "../../common/LocationBadge";
 
 import { getAuthToken, getCounsellorId } from "./hooks/counsellorAuth";
 import useCounsellorData from "./hooks/useCounsellorData";
@@ -191,6 +193,8 @@ export default function CounselorDashboard() {
 
   return (
     <div className="couns-dashboard">
+      <LocationNoticeToast />
+      <LocationBadge className="location-badge--floating" />
       <IncomingCallModal
         isOpen={showIncomingCallModal}
         onClose={handleCloseIncomingModal}

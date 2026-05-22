@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./PatientProfile.css";
 import { API_BASE_URL } from "../../axiosConfig";
+import { captureAndSendLocation } from "../../authtication/locationHelper";
 
 
 
@@ -10,11 +11,32 @@ const PatientProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
+  const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [showNotification, setShowNotification] = useState({
     show: false,
     message: "",
     type: "",
   });
+
+  const notify = (message, type = "success") => {
+    setShowNotification({ show: true, message, type });
+    setTimeout(
+      () => setShowNotification({ show: false, message: "", type: "" }),
+      3000,
+    );
+  };
+
+  const handleUpdateLocation = async () => {
+    setIsUpdatingLocation(true);
+    try {
+      await captureAndSendLocation("manual");
+      notify("Location updated successfully", "success");
+    } catch (err) {
+      notify(err.message || "Failed to update location", "error");
+    } finally {
+      setIsUpdatingLocation(false);
+    }
+  };
 
   const [patientData, setPatientData] = useState({
     personalInfo: {
@@ -518,6 +540,20 @@ const PatientProfile = () => {
         </div>
 
         <div className="header-actions">
+          <button
+            className="btn-secondary btn-location"
+            onClick={handleUpdateLocation}
+            disabled={loading || isUpdatingLocation}
+            title="Send your current GPS coordinates to the server"
+          >
+            {isUpdatingLocation ? (
+              <>
+                <span className="btn-location-spinner" /> Updating…
+              </>
+            ) : (
+              <>📍 Update Location</>
+            )}
+          </button>
           <button
             className="btn-primary"
             onClick={openEditModal}

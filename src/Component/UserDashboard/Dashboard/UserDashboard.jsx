@@ -28,6 +28,7 @@ import {
   FaMicrophone,
   FaVideo as FaVideoIcon,
   FaStop,
+  FaRedoAlt,
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
@@ -44,6 +45,8 @@ import VideoCallModal from "../Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
 import CounselorRequestChat from "../Tab/Appointment/BookAppointment";
 import MyAppointments from "../Tab/Appointment/MyAppointments";
+import LocationNoticeToast from "../../common/LocationNoticeToast";
+import LocationBadge from "../../common/LocationBadge";
 
 const ChatPopup = ({
   messages,
@@ -53,6 +56,7 @@ const ChatPopup = ({
   handleKeyPress,
   isLoading,
   onClose,
+  onReset,
   chatBodyRef,
   handleCounselorClick,
 }) => {
@@ -90,9 +94,29 @@ const ChatPopup = ({
               <p className="ud-chat-status">Online • 24/7 Support</p>
             </div>
           </div>
-          <button className="ud-chat-close-btn" onClick={onClose}>
-            ×
-          </button>
+          <div className="ud-chat-header-actions">
+            {onReset && (
+              <button
+                type="button"
+                className="ud-chat-icon-btn ud-chat-reset-btn"
+                onClick={onReset}
+                disabled={isLoading}
+                title="Start a fresh chat"
+                aria-label="Reset chat"
+              >
+                <FaRedoAlt aria-hidden="true" />
+              </button>
+            )}
+            <button
+              type="button"
+              className="ud-chat-icon-btn ud-chat-close-btn"
+              onClick={onClose}
+              title="Close chat"
+              aria-label="Close chat"
+            >
+              <FaTimes aria-hidden="true" />
+            </button>
+          </div>
         </div>
         <div className="ud-chat-popup-body" ref={chatBodyRef}>
           {messages.map((message) => (
@@ -477,13 +501,10 @@ export default function UserDashboard() {
     fetchUserData();
   }, []);
 
-  const [chatMessages, setChatMessages] = useState([
-    {
-      id: 1,
-      text: "Hello! I'm your AI assistant. How can I help you today?",
-      sender: "ai",
-    },
-  ]);
+  // Start empty so the backend's onboarding question (or the user's first
+  // turn-based AI reply) is what the user actually sees first. The old
+  // hard-coded "Hello! I'm your AI assistant" suppressed the warm onboarding.
+  const [chatMessages, setChatMessages] = useState([]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -501,6 +522,48 @@ export default function UserDashboard() {
     if (chatOpen) setUnreadCount(0);
   }, [chatOpen]);
 
+  // Kickoff the chat with a silent "hi" so the backend's onboarding turn
+  // fires immediately when the user first opens the chat. We don't render
+  // the synthetic "hi" in the bubble list — only the AI's onboarding reply.
+  useEffect(() => {
+    if (!chatOpen) return;
+    if (chatMessages.length > 0) return;
+    if (isLoading) return;
+
+    const kickoff = async () => {
+      setIsLoading(true);
+      try {
+        const response = await axiosInstance.post(
+          `${API_BASE_URL}/api/ai-chat/send-message`,
+          { message: "hi", history: [] },
+        );
+        if (response.data?.success) {
+          setChatMessages([
+            {
+              id: Date.now(),
+              text: response.data.data.aiResponse,
+              sender: "ai",
+            },
+          ]);
+        }
+      } catch (err) {
+        console.warn("[AI-CHAT] kickoff failed:", err.message);
+        setChatMessages([
+          {
+            id: Date.now(),
+            text: "Hi! I'm here to help. What's on your mind today?",
+            sender: "ai",
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void kickoff();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatOpen]);
+
   const sendMessage = async () => {
     if (newMessage.trim()) {
       const userMessage = { id: Date.now(), text: newMessage, sender: "user" };
@@ -516,7 +579,7 @@ export default function UserDashboard() {
         }));
 
         const response = await axiosInstance.post(
-          `${API_BASE_URL}/api/ai-chat`,
+          `${API_BASE_URL}/api/ai-chat/send-message`,
           {
             message: userMessage.text,
             history: history,
@@ -744,6 +807,8 @@ export default function UserDashboard() {
 
   return (
     <div className="user-dashboard">
+      <LocationNoticeToast />
+      <LocationBadge className="location-badge--floating" />
       <IncomingCallModal
         isOpen={showCallModal}
         onClose={() => {
@@ -865,15 +930,21 @@ export default function UserDashboard() {
                     )}
                   </div>
                   <div className="ud-profile-info">
-                    <h3 className="ud-sidebar-title">
-                      Name: <span>{userData.name}</span>
+                    <h3 className="ud-sidebar-name" title={userData.name}>
+                      {userData.name || "Welcome"}
                     </h3>
-                    <p className="ud-sidebar-subtitle">
-                      Email: <span>{userData.email}</span>
-                    </p>
-                    <p className="ud-sidebar-subtitle">
-                      Phone: <span>{userData.phone}</span>
-                    </p>
+                    {userData.email && (
+                      <p className="ud-sidebar-meta" title={userData.email}>
+                        <FaEnvelope className="ud-sidebar-meta-icon" />
+                        <span>{userData.email}</span>
+                      </p>
+                    )}
+                    {userData.phone && (
+                      <p className="ud-sidebar-meta" title={userData.phone}>
+                        <FaPhone className="ud-sidebar-meta-icon" />
+                        <span>{userData.phone}</span>
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>
@@ -889,7 +960,6 @@ export default function UserDashboard() {
                   </button>
                 ))}
               </div>
-              <hr className="ud-sidebar-separator" />
               <div className="ud-sidebar-actions">
                 <button
                   className="ud-sidebar-item ud-profile-action"
@@ -958,6 +1028,26 @@ export default function UserDashboard() {
           handleKeyPress={handleKeyPress}
           isLoading={isLoading}
           onClose={() => setChatOpen(false)}
+          onReset={async () => {
+            if (isLoading) return;
+            const ok = window.confirm(
+              "Start a fresh chat? Your previous messages will be cleared.",
+            );
+            if (!ok) return;
+            setIsLoading(true);
+            try {
+              await axiosInstance.delete(
+                `${API_BASE_URL}/api/ai-chat/my-history`,
+              );
+              setChatMessages([]);
+              // The chatOpen useEffect will fire kickoff again because
+              // chatMessages is now empty.
+            } catch (err) {
+              console.warn("[AI-CHAT] reset failed:", err.message);
+            } finally {
+              setIsLoading(false);
+            }
+          }}
           chatBodyRef={chatBodyRef}
           handleCounselorClick={handleAIContactClick}
         />

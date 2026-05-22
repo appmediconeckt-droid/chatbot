@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import './CounselorProfile.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
+import { captureAndSendLocation } from '../../../../authtication/locationHelper';
 
 // Unique class name prefix to avoid conflicts
 const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
@@ -10,6 +11,23 @@ const CounselorProfile = () => {
    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+
+    const handleUpdateLocation = async () => {
+        setIsUpdatingLocation(true);
+        setError('');
+        setSuccessMessage('');
+        try {
+            await captureAndSendLocation('manual');
+            setSuccessMessage('Location updated successfully');
+            setTimeout(() => setSuccessMessage(''), 3000);
+        } catch (err) {
+            setError(err.message || 'Failed to update location');
+            setTimeout(() => setError(''), 3000);
+        } finally {
+            setIsUpdatingLocation(false);
+        }
+    };
 
     // State for counselor data
     const [counselor, setCounselor] = useState({
@@ -707,13 +725,30 @@ const CounselorProfile = () => {
                 </div>
                 <div className={`${COUNSELOR_PROFILE_CLASS}__actions`}>
                     {!isEditing ? (
-                        <button
-                            onClick={() => setIsEditing(true)}
-                            className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--edit`}
-                            disabled={loading}
-                        >
-                            Edit Profile
-                        </button>
+                        <>
+                            <button
+                                onClick={handleUpdateLocation}
+                                className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--location`}
+                                disabled={loading || isUpdatingLocation}
+                                title="Send your current GPS coordinates to the server"
+                            >
+                                {isUpdatingLocation ? (
+                                    <>
+                                        <span className={`${COUNSELOR_PROFILE_CLASS}__btn-spinner`} />
+                                        Updating…
+                                    </>
+                                ) : (
+                                    <>📍 Update Location</>
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setIsEditing(true)}
+                                className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--edit`}
+                                disabled={loading}
+                            >
+                                Edit Profile
+                            </button>
+                        </>
                     ) : (
                         <>
                             <button

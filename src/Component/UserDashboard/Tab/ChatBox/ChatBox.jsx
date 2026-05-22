@@ -53,6 +53,7 @@ const ChatBox = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [chatStatus, setChatStatus] = useState(null);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
+  const [blockedPopup, setBlockedPopup] = useState({ show: false, reason: "" });
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -590,17 +591,26 @@ const ChatBox = () => {
       });
     } catch (err) {
       console.error("Error in message sending flow:", err);
-      setMessages((prev) => prev.map((msg) => msg.id === tempUserMessage.id ? { ...msg, status: "error", error: "Failed to send message" } : msg));
-      const errorMessage = {
-        id: `error_${Date.now()}`,
-        text: "⚠️ Failed to send message. Please check your internet connection and try again.",
-        sender: "counselor",
-        senderRole: "counsellor",
-        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-        isError: true,
-        status: "error",
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      const status = err?.response?.status;
+      const serverError = err?.response?.data?.error || err?.response?.data?.message || "";
+      const isBlocked = status === 403 && /restricted|blocked|unavailable/i.test(serverError);
+
+      setMessages((prev) => prev.filter((msg) => msg.id !== tempUserMessage.id));
+
+      if (isBlocked) {
+        setBlockedPopup({ show: true, reason: serverError });
+      } else {
+        const errorMessage = {
+          id: `error_${Date.now()}`,
+          text: "⚠️ Failed to send message. Please check your internet connection and try again.",
+          sender: "counselor",
+          senderRole: "counsellor",
+          time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          isError: true,
+          status: "error",
+        };
+        setMessages((prev) => [...prev, errorMessage]);
+      }
     } finally {
       setIsSending(false);
       focusMessageInput();
@@ -1075,6 +1085,49 @@ const ChatBox = () => {
         onReject={handleRejectCall}
         fallbackName="Counselor"
       />
+
+      {blockedPopup.show && (
+        <div
+          onClick={() => setBlockedPopup({ show: false, reason: "" })}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 9999, padding: 16,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff", borderRadius: 12, maxWidth: 380, width: "100%",
+              padding: "24px 22px", boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: 42, marginBottom: 8 }}>🚫</div>
+            <h3 style={{ margin: "0 0 8px", color: "#c0392b", fontSize: 18 }}>
+              Chat Unavailable
+            </h3>
+            <p style={{ margin: "0 0 16px", color: "#444", fontSize: 14, lineHeight: 1.5 }}>
+              This counselor has been blocked by admin. You cannot send messages right now.
+            </p>
+            {blockedPopup.reason && (
+              <p style={{ margin: "0 0 16px", color: "#888", fontSize: 12, fontStyle: "italic" }}>
+                {blockedPopup.reason}
+              </p>
+            )}
+            <button
+              onClick={() => setBlockedPopup({ show: false, reason: "" })}
+              style={{
+                background: "#c0392b", color: "#fff", border: "none",
+                padding: "10px 24px", borderRadius: 8, cursor: "pointer",
+                fontSize: 14, fontWeight: 600,
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -24,6 +24,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [bookingDate, setBookingDate] = useState("");
   const [bookingNotes, setBookingNotes] = useState("");
+  const [blockedPopup, setBlockedPopup] = useState({ show: false, reason: "" });
 
   // Search state
   const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -418,9 +419,16 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       setShowUserModal(false);
     } catch (error) {
       console.error("❌ Error:", error);
-      alert(
-        error?.response?.data?.message || "You are already connected on chat here.",
-      );
+      const status = error?.response?.status;
+      const serverError = error?.response?.data?.error || error?.response?.data?.message || "";
+      const isBlocked = status === 403 && /restricted|blocked|unavailable/i.test(serverError);
+
+      if (isBlocked) {
+        setShowUserModal(false);
+        setBlockedPopup({ show: true, reason: serverError });
+      } else {
+        alert(serverError || "You are already connected on chat here.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -1054,6 +1062,49 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           </div>
         )}
       </div>
+
+      {blockedPopup.show && (
+        <div
+          onClick={() => setBlockedPopup({ show: false, reason: "" })}
+          style={{
+            position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            zIndex: 9999, padding: 16,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: "#fff", borderRadius: 12, maxWidth: 380, width: "100%",
+              padding: "24px 22px", boxShadow: "0 10px 40px rgba(0,0,0,0.25)",
+              textAlign: "center",
+            }}
+          >
+            <div style={{ fontSize: 42, marginBottom: 8 }}>🚫</div>
+            <h3 style={{ margin: "0 0 8px", color: "#c0392b", fontSize: 18 }}>
+              Chat Unavailable
+            </h3>
+            <p style={{ margin: "0 0 16px", color: "#444", fontSize: 14, lineHeight: 1.5 }}>
+              This counselor has been blocked by admin. You cannot start a chat right now.
+            </p>
+            {blockedPopup.reason && (
+              <p style={{ margin: "0 0 16px", color: "#888", fontSize: 12, fontStyle: "italic" }}>
+                {blockedPopup.reason}
+              </p>
+            )}
+            <button
+              onClick={() => setBlockedPopup({ show: false, reason: "" })}
+              style={{
+                background: "#c0392b", color: "#fff", border: "none",
+                padding: "10px 24px", borderRadius: 8, cursor: "pointer",
+                fontSize: 14, fontWeight: 600,
+              }}
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

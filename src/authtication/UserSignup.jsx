@@ -16,6 +16,8 @@ import axios from "axios";
 import "./UserSignup.css";
 import logo from "../image/Mediconect Logo-3.png";
 import { API_BASE_URL } from "../axiosConfig";
+import GoogleAuthButton from "./GoogleAuthButton";
+import LocationGate from "./LocationGate";
 
 const UserSignup = () => {
   const navigate = useNavigate();
@@ -66,6 +68,9 @@ const UserSignup = () => {
     message: "",
     type: "",
   });
+  // Mandatory-location gate state; when set, the gate mounts and navigates
+  // to pendingNav.path on resolve.
+  const [pendingNav, setPendingNav] = useState(null); // { path, event }
 
   const location = useLocation();
   const roleFromState = location.state?.role;
@@ -459,8 +464,8 @@ const UserSignup = () => {
       }
 
       if (persistUserSession(response.data)) {
-        showNotification("Login successful!", "success");
-        setTimeout(() => navigate("/user-dashboard"), 1200);
+        showNotification("Login successful! One last step…", "success");
+        setPendingNav({ path: "/user-dashboard", event: "login" });
         return;
       }
 
@@ -562,19 +567,14 @@ const UserSignup = () => {
           localStorage.setItem("userData", JSON.stringify(response.data.user));
         }
 
-        showNotification("Account created successfully!", "success");
-
-        setTimeout(() => {
-          navigate("/user-dashboard");
-        }, 1500);
+        showNotification("Account created! One last step…", "success");
+        setPendingNav({ path: "/user-dashboard", event: "signup" });
       } else {
         showNotification(
-          "Account created successfully! Redirecting to dashboard...",
+          "Account created! One last step…",
           "success",
         );
-        setTimeout(() => {
-          navigate("/user-dashboard");
-        }, 1500);
+        setPendingNav({ path: "/user-dashboard", event: "signup" });
       }
     } catch (error) {
       console.error("Signup error:", error);
@@ -690,8 +690,8 @@ const UserSignup = () => {
         setShowVerifyButton(false);
         setOtpSentForLogin(false);
         setLoginOtp("");
-        showNotification("OTP verified! Login successful.", "success");
-        setTimeout(() => navigate("/user-dashboard"), 1200);
+        showNotification("OTP verified! One last step…", "success");
+        setPendingNav({ path: "/user-dashboard", event: "login" });
       } else {
         showNotification(
           response.data?.message || "OTP verification failed",
@@ -1383,6 +1383,42 @@ const UserSignup = () => {
               )}
             </button>
 
+            <div className="us-divider">
+              <span>or {isLogin ? "sign in" : "sign up"} with</span>
+            </div>
+
+            <GoogleAuthButton
+              role="user"
+              text={isLogin ? "signin_with" : "signup_with"}
+              disabled={isLoading}
+              gateDriven
+              onSuccess={() => {
+                showNotification(
+                  isLogin
+                    ? "Logged in with Google! One last step…"
+                    : "Account created with Google! One last step…",
+                  "success",
+                );
+                setPendingNav({
+                  path: "/user-dashboard",
+                  event: isLogin ? "login" : "signup",
+                });
+              }}
+              onConflict={() => {
+                setApiError(
+                  "You're already signed in on another device. Use the standard login screen to resolve the conflict.",
+                );
+                showNotification(
+                  "Active session on another device. Please use the login page.",
+                  "error",
+                );
+              }}
+              onError={(msg) => {
+                setApiError(msg);
+                showNotification(msg, "error");
+              }}
+            />
+
             {!isLogin && (
               <p className="us-terms">
                 By signing up, you agree to our{" "}
@@ -1398,6 +1434,17 @@ const UserSignup = () => {
           </form>
         </div>
       </div>
+
+      {pendingNav && (
+        <LocationGate
+          event={pendingNav.event}
+          onDone={() => {
+            const target = pendingNav.path;
+            setPendingNav(null);
+            navigate(target);
+          }}
+        />
+      )}
     </div>
   );
 };

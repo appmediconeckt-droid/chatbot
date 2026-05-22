@@ -44,7 +44,7 @@ const Leanding = () => {
   const sendMessageToAPI = async (message) => {
     try {
       const response = await axios.post(
-        `${API_BASE_URL}/api/ai-chat`,
+        `${API_BASE_URL}/api/ai-chat/send-message`,
         {
           message: message,
           history: [] // Add empty history for the initial guest chat

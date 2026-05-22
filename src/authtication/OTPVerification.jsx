@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_BASE_URL } from '../axiosConfig';
 import { updateVerificationStatus, setUserEmail, getAccessToken } from './authUtils';
+import LocationGate from './LocationGate';
 import './OTPVerification.css';
 
 const OTPVerification = () => {
@@ -16,6 +17,7 @@ const OTPVerification = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [pendingNav, setPendingNav] = useState(null); // { path, event }
 
   const inputRefs = useRef([]);
 
@@ -129,9 +131,8 @@ const OTPVerification = () => {
         }
 
         updateVerificationStatus(true);
-        setSuccess('Login successful');
-
-        setTimeout(() => navigate('/user-dashboard'), 1500);
+        setSuccess('Login successful! One last step…');
+        setPendingNav({ path: '/user-dashboard', event: 'login' });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid OTP');
@@ -230,6 +231,17 @@ const OTPVerification = () => {
         )}
 
       </div>
+
+      {pendingNav && (
+        <LocationGate
+          event={pendingNav.event}
+          onDone={() => {
+            const target = pendingNav.path;
+            setPendingNav(null);
+            navigate(target);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -21,6 +21,8 @@ import "./CounselorSignup.css";
 import logo from "../image/Mediconect Logo-3.png";
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
+import GoogleAuthButton from "./GoogleAuthButton";
+import LocationGate from "./LocationGate";
   
 const CounselorSignup = () => {
   const navigate = useNavigate();
@@ -47,6 +49,8 @@ const CounselorSignup = () => {
   // Verification states
   const [emailVerified, setEmailVerified] = useState(false);
   const [phoneVerified, setPhoneVerified] = useState(false);
+  // Mandatory-location gate state.
+  const [pendingNav, setPendingNav] = useState(null); // { path, event }
   const [showEmailOtpModal, setShowEmailOtpModal] = useState(false);
   const [showPhoneOtpModal, setShowPhoneOtpModal] = useState(false);
   const [emailOtp, setEmailOtp] = useState("");
@@ -465,8 +469,8 @@ const CounselorSignup = () => {
       }
 
       if (persistCounselorSession(response.data)) {
-        showNotification("Login successful! Redirecting...", "success");
-        setTimeout(() => navigate("/counselor-dashboard"), 1200);
+        showNotification("Login successful! One last step…", "success");
+        setPendingNav({ path: "/counselor-dashboard", event: "login" });
       } else {
         showNotification(response.data?.message || "Login failed", "error");
       }
@@ -529,8 +533,8 @@ const CounselorSignup = () => {
       );
       if (persistCounselorSession(response.data)) {
         setShowDeviceConflict(false);
-        showNotification("OTP verified! Redirecting...", "success");
-        setTimeout(() => navigate("/counselor-dashboard"), 1200);
+        showNotification("OTP verified! One last step…", "success");
+        setPendingNav({ path: "/counselor-dashboard", event: "login" });
       } else {
         showNotification(
           response.data?.message || "OTP verification failed",
@@ -609,7 +613,7 @@ const CounselorSignup = () => {
             localStorage.setItem("counsellorId", response.data.user._id);
           }
         }
-        setTimeout(() => navigate("/counselor-dashboard"), 1500);
+        setPendingNav({ path: "/counselor-dashboard", event: "signup" });
       } else {
         showNotification(
           response.data.message || "Registration failed",
@@ -759,6 +763,28 @@ const CounselorSignup = () => {
           "Login"
         )}
       </button>
+
+      <div className="cs-divider">
+        <span>or continue with</span>
+      </div>
+
+      <GoogleAuthButton
+        role="counsellor"
+        text="signin_with"
+        disabled={isLoading}
+        gateDriven
+        onSuccess={() => {
+          showNotification("Logged in with Google! One last step…", "success");
+          setPendingNav({ path: "/counselor-dashboard", event: "login" });
+        }}
+        onConflict={() => {
+          showNotification(
+            "Active session on another device. Use email login to verify with OTP.",
+            "error",
+          );
+        }}
+        onError={(msg) => showNotification(msg, "error")}
+      />
     </form>
   );
 
@@ -1130,6 +1156,31 @@ const CounselorSignup = () => {
           "Create Account"
         )}
       </button>
+
+      <div className="cs-divider">
+        <span>or sign up with</span>
+      </div>
+
+      <GoogleAuthButton
+        role="counsellor"
+        mode="signup"
+        disabled={isLoading}
+        gateDriven
+        onSuccess={() => {
+          showNotification(
+            "Signed up with Google! One last step…",
+            "success",
+          );
+          setPendingNav({ path: "/counselor-dashboard", event: "signup" });
+        }}
+        onConflict={() =>
+          showNotification(
+            "Active session on another device. Use email login.",
+            "error",
+          )
+        }
+        onError={(msg) => showNotification(msg, "error")}
+      />
 
       <p className="cs-terms">
         By signing up, you agree to our <a href="#">Terms of Service</a> and{" "}
@@ -1887,6 +1938,36 @@ const CounselorSignup = () => {
               )}
             </button>
 
+            <div className="cs-divider">
+              <span>or {isLogin ? "sign in" : "sign up"} with</span>
+            </div>
+
+            <GoogleAuthButton
+              role="counsellor"
+              mode={isLogin ? "signin" : "signup"}
+              disabled={isLoading}
+              gateDriven
+              onSuccess={() => {
+                showNotification(
+                  isLogin
+                    ? "Logged in with Google! One last step…"
+                    : "Signed up with Google! One last step…",
+                  "success",
+                );
+                setPendingNav({
+                  path: "/counselor-dashboard",
+                  event: isLogin ? "login" : "signup",
+                });
+              }}
+              onConflict={() =>
+                showNotification(
+                  "Active session on another device. Use email login.",
+                  "error",
+                )
+              }
+              onError={(msg) => showNotification(msg, "error")}
+            />
+
             {!isLogin && (
               <p className="cs-terms">
                 By signing up, you agree to our{" "}
@@ -1902,6 +1983,17 @@ const CounselorSignup = () => {
           </form>
         </div>
       </div>
+
+      {pendingNav && (
+        <LocationGate
+          event={pendingNav.event}
+          onDone={() => {
+            const target = pendingNav.path;
+            setPendingNav(null);
+            navigate(target);
+          }}
+        />
+      )}
     </div>
   );
 };
