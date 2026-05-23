@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
 import "./BookAppointment.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 import axios from "axios";
 
 const CounselorRequestChat = ({ initialSearch = "" }) => {
@@ -302,36 +302,36 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   }, []);
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("token") || localStorage.getItem("accessToken");
-    if (!token) return undefined;
-
-    const socket = io(API_BASE_URL, {
-      auth: { token },
-      transports: ["websocket", "polling"],
-    });
+    let mounted = true;
 
     const updatePresence = ({ userId, isOnline, lastSeen }) => {
+      if (!mounted) return;
       const applyPresence = (list) =>
         list.map((counselor) =>
           String(counselor.id) === String(userId)
             ? { ...counselor, online: Boolean(isOnline), lastSeen }
             : counselor,
         );
-
       setCounselors(applyPresence);
       setFilteredCounselors(applyPresence);
     };
 
-    socket.on("presence-update", updatePresence);
-    socket.on("connect_error", (err) => {
+    const onConnectError = (err) => {
       console.error("Appointment presence socket error:", err.message);
+    };
+
+    socketService.connect().then((socket) => {
+      if (!mounted) return;
+      socket.on("presence-update", updatePresence);
+      socket.on("connect_error", onConnectError);
+    }).catch((err) => {
+      console.error("[BookAppointment] Socket connect failed:", err.message);
     });
 
     return () => {
-      socket.off("presence-update", updatePresence);
-      socket.off("connect_error");
-      socket.disconnect();
+      mounted = false;
+      socketService.off("presence-update", updatePresence);
+      socketService.off("connect_error", onConnectError);
     };
   }, []);
 

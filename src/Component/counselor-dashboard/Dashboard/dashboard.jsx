@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { io } from "socket.io-client";
+import socketService from "../../../services/socketService";
 import "./CounselorDashboard.css";
 import { useNavigate } from "react-router-dom";
 import {
@@ -137,23 +137,34 @@ export default function CounselorDashboard() {
     const counsellorId = getCounsellorId();
     if (!counsellorId) return;
 
-    const socket = io(API_BASE_URL, {
-      auth: { token },
-      transports: ["websocket", "polling"],
-    });
-    socketRef.current = socket;
+    let mounted = true;
 
-    socket.on("connect", () => console.log("Counselor Socket Connected"));
-    socket.on("appointmentBooked", (appointment) => {
+    const onAppointmentBooked = (appointment) => {
+      if (!mounted) return;
       setAppointments((prev) => [appointment, ...prev]);
       vibrate([100, 50, 100]);
-      alert(
-        `New appointment requested for ${new Date(appointment.date).toLocaleString()}`,
-      );
+      alert(`New appointment requested for ${new Date(appointment.date).toLocaleString()}`);
+    };
+
+    const onConnectError = (error) => {
+      console.error("Counselor socket connection error:", error.message);
+    };
+
+    socketService.connect().then((socket) => {
+      if (!mounted) return;
+      socketRef.current = socket;
+      console.log("Counselor Socket Connected");
+      socket.on("appointmentBooked", onAppointmentBooked);
+      socket.on("connect_error", onConnectError);
+    }).catch((err) => {
+      console.error("[Dashboard] Socket connect failed:", err.message);
     });
 
     return () => {
-      if (socket) socket.disconnect();
+      mounted = false;
+      socketService.off("appointmentBooked", onAppointmentBooked);
+      socketService.off("connect_error", onConnectError);
+      socketRef.current = null;
     };
   }, []);
 

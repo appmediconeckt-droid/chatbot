@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { io } from "socket.io-client";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 import "./CounselorDirectory.css";
 
 const getInitials = (name = "Counselor") =>
@@ -74,15 +74,10 @@ const CounselorTable = () => {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
-    if (!token) return undefined;
+    let mounted = true;
 
-    const socket = io(API_BASE_URL, {
-      auth: { token },
-      transports: ["websocket", "polling"],
-    });
-
-    socket.on("presence-update", ({ userId, isOnline, lastSeen }) => {
+    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
+      if (!mounted) return;
       setCounselorsData((prev) =>
         prev.map((counselor) =>
           String(counselor._id || counselor.id) === String(userId)
@@ -90,16 +85,24 @@ const CounselorTable = () => {
             : counselor,
         ),
       );
-    });
+    };
 
-    socket.on("connect_error", (err) => {
+    const onConnectError = (err) => {
       console.error("Presence socket connection error:", err.message);
+    };
+
+    socketService.connect().then((socket) => {
+      if (!mounted) return;
+      socket.on("presence-update", onPresenceUpdate);
+      socket.on("connect_error", onConnectError);
+    }).catch((err) => {
+      console.error("[CounselorDirectory] Socket connect failed:", err.message);
     });
 
     return () => {
-      socket.off("presence-update");
-      socket.off("connect_error");
-      socket.disconnect();
+      mounted = false;
+      socketService.off("presence-update", onPresenceUpdate);
+      socketService.off("connect_error", onConnectError);
     };
   }, []);
 

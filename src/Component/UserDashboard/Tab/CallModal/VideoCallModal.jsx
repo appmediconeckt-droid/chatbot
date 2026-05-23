@@ -31,11 +31,13 @@ import {
 } from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import {
+  cleanCallId,
   getStreamToken,
   resolveStreamApiKey,
   resolveStreamUser,
   resolveStreamUserFromToken,
   validateStreamTokenPayload,
+  verifyCallExists,
 } from "./streamCallClient";
 
 const PENDING_STATUSES = new Set([
@@ -412,13 +414,43 @@ const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
 };
 
 const resolveCallId = (callData) =>
-  String(
+  cleanCallId(
     callData?.callId ||
       callData?.id ||
       callData?.roomId ||
       callData?.apiCallData?.id ||
+      callData?.apiCallData?.callId ||
       "",
-  ).trim();
+  );
+
+// Web is the RECEIVER when the call was started elsewhere (e.g. mobile user
+// tapped Call in ChatBox). The initiator's client must call.create() first;
+// the receiver must verify the call exists and join with create:false.
+const resolveIsReceiver = (callData) => {
+  if (callData?.isIncoming === true) return true;
+  if (callData?.isIncoming === false) return false;
+
+  const initiatorType = String(
+    callData?.initiator?.type || callData?.initiator?.role || "",
+  )
+    .trim()
+    .toLowerCase();
+  const currentUserType = String(callData?.currentUserType || "")
+    .trim()
+    .toLowerCase();
+
+  if (initiatorType && currentUserType) {
+    // If the logged-in side is not the initiator, we're the receiver.
+    return initiatorType !== currentUserType;
+  }
+
+  // Fallback: if an initiator is set and it's not us, assume receiver.
+  const initiatorId = String(callData?.initiator?.id || "").trim();
+  const myId = String(callData?.currentUserId || "").trim();
+  if (initiatorId && myId) return initiatorId !== myId;
+
+  return false;
+};
 
 const resolveCallMode = (callMode, callData) => {
   const mode = String(

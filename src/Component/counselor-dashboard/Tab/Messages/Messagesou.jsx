@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { io } from "socket.io-client";
 import "./Messagesou.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 /**
  * SMSList Component - Fetches and displays users/patients list from API
  * Displays anonymous name and gender-based avatar icons (no photos)
@@ -207,16 +207,10 @@ const SMSList = () => {
   }, [handleSessionExpired]);
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("token") || localStorage.getItem("accessToken");
-    if (!token) return undefined;
+    let mounted = true;
 
-    const socket = io(API_BASE_URL, {
-      auth: { token },
-      transports: ["websocket", "polling"],
-    });
-
-    socket.on("presence-update", ({ userId, isOnline, lastSeen }) => {
+    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
+      if (!mounted) return;
       setUsers((prev) =>
         prev.map((user) =>
           String(user.receiverId || user._id) === String(userId)
@@ -224,16 +218,24 @@ const SMSList = () => {
             : user,
         ),
       );
-    });
+    };
 
-    socket.on("connect_error", (err) => {
+    const onConnectError = (err) => {
       console.error("Messages presence socket error:", err.message);
+    };
+
+    socketService.connect().then((socket) => {
+      if (!mounted) return;
+      socket.on("presence-update", onPresenceUpdate);
+      socket.on("connect_error", onConnectError);
+    }).catch((err) => {
+      console.error("[Messagesou] Socket connect failed:", err.message);
     });
 
     return () => {
-      socket.off("presence-update");
-      socket.off("connect_error");
-      socket.disconnect();
+      mounted = false;
+      socketService.off("presence-update", onPresenceUpdate);
+      socketService.off("connect_error", onConnectError);
     };
   }, []);
 

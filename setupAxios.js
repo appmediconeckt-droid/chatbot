@@ -1,5 +1,6 @@
 import axios from "axios";
-import { API_BASE_URL } from "./src/axiosConfig";
+import { API_BASE_URL } from './src/axiosConfig.js';
+
 
 // ✅ REQUEST INTERCEPTOR
 axios.interceptors.request.use(

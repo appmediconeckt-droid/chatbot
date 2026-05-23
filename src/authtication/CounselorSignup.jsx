@@ -441,8 +441,7 @@ const CounselorSignup = () => {
     try {
       // Always send role for login to match backend expectation
       const role = roleFromState || localStorage.getItem("role") || "counselor";
-      const response = await axios.post(
-        `${API_BASE_URL}/api/auth/login`,
+      const response = await axios.post(`${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
           password: formData.password,
