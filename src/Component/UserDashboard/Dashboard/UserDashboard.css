@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
   /* UserDashboard.css - Unique Class Names with 'ud-' prefix */
   /* Fully Responsive - Zero Unnecessary Padding */
 
@@ -58,6 +60,12 @@
     box-shadow: 2px 0 24px rgba(0, 0, 0, 0.06);
     border-right: 1px solid #e9eef3;
     overflow-y: auto;
+    /* Inter — modern, geometric sans used by GitHub, Figma, Linear.
+       Falls back to system fonts if the web font fails to load. */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   .ud-sidebar-content {
@@ -65,8 +73,10 @@
     flex-direction: column;
     min-height: 100%;
     padding: 20px 14px;
-    /* No gap between sections — menu and actions flow as one continuous
-       list. Spacing between rows is controlled inside each section. */
+    /* Header + menu sit at the top, actions get margin-top: auto so they
+       pin to the bottom (WhatsApp-style). A thin divider above the actions
+       block makes the empty space read as intentional separation rather
+       than an ugly gap. */
     gap: 0;
   }
 
@@ -74,10 +84,10 @@
      Avatar centered, name prominent below, email & phone as subtle
      icon-prefixed meta lines that truncate gracefully when long. */
   .ud-sidebar-header {
-    padding: 18px 12px 18px;
-    margin-bottom: 14px;
+    padding: 12px 10px;
+    margin-bottom: 10px;
     background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
-    border-radius: 14px;
+    border-radius: 12px;
     border: 1px solid #eef2f7;
     text-align: center;
     flex-shrink: 0;
@@ -87,16 +97,16 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
   }
 
   .ud-profile-image {
-    width: 84px;
-    height: 84px;
+    width: 60px;
+    height: 60px;
     border-radius: 50%;
     overflow: hidden;
-    border: 3px solid #ffffff;
-    box-shadow: 0 0 0 2px #667eea, 0 8px 18px rgba(102, 126, 234, 0.22);
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 2px #667eea, 0 4px 12px rgba(102, 126, 234, 0.18);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -113,7 +123,7 @@
   .ud-default-avatar {
     width: 100%;
     height: 100%;
-    font-size: 52px;
+    font-size: 38px;
     color: #667eea;
   }
 
@@ -122,17 +132,17 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
+    gap: 3px;
     min-width: 0;
   }
 
   .ud-sidebar-name {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    margin: 6px 0 2px;
+    margin: 2px 0 0;
     color: #0f172a;
     line-height: 1.3;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     text-align: center;
     max-width: 100%;
     overflow: hidden;
@@ -148,7 +158,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 5px;
     font-size: 12px;
     color: #64748b;
     line-height: 1.35;
@@ -176,7 +186,7 @@
   .ud-sidebar-menu {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
   }
 
   .ud-sidebar-item {
@@ -187,14 +197,15 @@
     padding: 10px 14px;
     background: none;
     border: none;
-    border-radius: 10px;
-    font-size: 14px;
+    border-radius: 9px;
+    font-size: 16px;
     font-weight: 500;
+    letter-spacing: -0.005em;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease,
       transform 0.2s ease, box-shadow 0.2s ease;
     text-align: left;
-    color: #4b5563;
+    color: #475569;
   }
 
   .ud-sidebar-item:hover {
@@ -231,14 +242,18 @@
     border-top: 1px solid #edf2f7;
   }
 
-  /* Actions block (My Profile + Logout) sits right under the separator —
-     no flex push, no extra padding. */
+  /* Actions block (My Profile + Logout) — WhatsApp-style dock at the
+     bottom of the sidebar. margin-top: auto pushes it down regardless
+     of how many menu items are above. The border-top makes the gap
+     above it read as a clean section break, not empty white space. */
   .ud-sidebar-actions {
     display: flex;
     flex-direction: column;
     gap: 4px;
     flex-shrink: 0;
-    padding-top: 0;
+    margin-top: auto;
+    padding-top: 12px;
+    border-top: 1px solid #edf2f7;
   }
 
   .ud-sidebar-item.ud-logout {
@@ -1179,14 +1194,17 @@
 
   /* Tablet (768px - 1024px) */
   @media (max-width: 1024px) and (min-width: 769px) {
+    /* Tablet: sidebar widened to 260px so 16px labels like "My
+       Appointments" don't truncate. Item sizing kept identical to
+       desktop for a consistent feel across breakpoints. */
     .ud-user-sidebar {
-      width: 240px;
-      min-width: 240px;
+      width: 260px;
+      min-width: 260px;
     }
 
     .ud-dashboard-content {
-      margin-left: 240px;
-      width: calc(100% - 240px);
+      margin-left: 260px;
+      width: calc(100% - 260px);
     }
 
     .ud-content-section {
@@ -1194,26 +1212,23 @@
       padding: 18px 20px;
     }
 
-    /* Tighter sidebar on smaller widths so labels don't truncate and the
-       My Profile / Logout group stays close to the menu list. */
     .ud-sidebar-content {
       padding: 16px 12px;
       gap: 0;
     }
 
-    .ud-sidebar-item {
-      padding: 9px 12px;
-      font-size: 13.5px;
-      gap: 10px;
-    }
-
-    .ud-sidebar-icon {
-      font-size: 16px;
-      width: 22px;
-    }
-
     .ud-sidebar-header {
-      padding-bottom: 14px;
+      padding: 12px 10px;
+      margin-bottom: 10px;
+    }
+
+    .ud-profile-image {
+      width: 56px;
+      height: 56px;
+    }
+
+    .ud-default-avatar {
+      font-size: 36px;
     }
   }
 
@@ -1585,6 +1600,43 @@
   }
 
   /* Landscape Mode */
+  /* Short laptop screens (height ≤ 760px, e.g. 1366×768 minus taskbar).
+     Sidebar items shrink slightly so the Logout dock stays visible
+     without the user having to scroll. Applies on desktop AND tablet. */
+  @media (min-width: 769px) and (max-height: 760px) {
+    .ud-sidebar-header {
+      padding: 10px 8px;
+      margin-bottom: 8px;
+    }
+
+    .ud-profile-image {
+      width: 52px;
+      height: 52px;
+    }
+
+    .ud-default-avatar {
+      font-size: 32px;
+    }
+
+    .ud-sidebar-name {
+      font-size: 14px;
+    }
+
+    .ud-sidebar-meta {
+      font-size: 11.5px;
+    }
+
+    .ud-sidebar-item {
+      padding: 8px 12px;
+      font-size: 15px;
+    }
+
+    .ud-sidebar-icon {
+      font-size: 17px;
+      width: 22px;
+    }
+  }
+
   @media (max-height: 600px) and (orientation: landscape) {
     .ud-content-scrollable {
       height: calc(100vh - 80px);
@@ -1622,38 +1674,32 @@
     }
   }
 
-  /* Desktop Large Screens */
+  /* Desktop Large Screens (4K monitors etc) — sidebar slightly wider for
+     visual balance with the wider content area, but item sizing stays the
+     same as the base desktop so labels don't feel oversized. */
   @media (min-width: 1600px) {
     .ud-user-sidebar {
-      width: 320px;
-      min-width: 320px;
+      width: 300px;
+      min-width: 300px;
     }
-    
+
     .ud-dashboard-content {
-      margin-left: 320px;
-      width: calc(100% - 320px);
+      margin-left: 300px;
+      width: calc(100% - 300px);
     }
-    
+
     .ud-content-section {
       max-width: 1600px;
       margin: 24px auto;
     }
-    
+
     .ud-profile-image {
-      width: 120px;
-      height: 120px;
+      width: 68px;
+      height: 68px;
     }
-    
+
     .ud-default-avatar {
-      font-size: 80px;
-    }
-    
-    .ud-sidebar-title {
-      font-size: 16px;
-    }
-    
-    .ud-sidebar-subtitle {
-      font-size: 14px;
+      font-size: 42px;
     }
   }
   /* Add this to your existing UserDashboard.css file */
