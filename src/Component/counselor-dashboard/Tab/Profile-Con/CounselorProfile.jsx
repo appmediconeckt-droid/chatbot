@@ -13,6 +13,19 @@ const CounselorProfile = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
 
+    // Profile-change OTP state — see PatientProfile.jsx for the shape rationale.
+    const blankChange = {
+      sending: false,
+      sent: false,
+      verifying: false,
+      verified: false,
+      verifiedValue: null,
+      otp: "",
+      error: "",
+    };
+    const [emailChange, setEmailChange] = useState(blankChange);
+    const [phoneChange, setPhoneChange] = useState(blankChange);
+
     const handleUpdateLocation = async () => {
         setIsUpdatingLocation(true);
         setError('');
@@ -417,6 +430,139 @@ const CounselorProfile = () => {
         }));
     };
 
+    // ─── Profile-change OTP helpers (email + phone) ──────────────────
+    const authHeaders = () => {
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+      return token ? { Authorization: `Bearer ${token}` } : {};
+    };
+
+    const isEmailDirty = () =>
+      String(editedData?.email || "").trim().toLowerCase() !==
+      String(counselor?.email || "").trim().toLowerCase();
+    const isPhoneDirty = () =>
+      String(editedData?.phoneNumber || "").replace(/\D/g, "") !==
+      String(counselor?.phoneNumber || "").replace(/\D/g, "");
+
+    const emailReady =
+      !isEmailDirty() ||
+      (emailChange.verified &&
+        emailChange.verifiedValue ===
+          String(editedData?.email || "").trim().toLowerCase());
+    const phoneReady =
+      !isPhoneDirty() ||
+      (phoneChange.verified &&
+        phoneChange.verifiedValue ===
+          String(editedData?.phoneNumber || "").replace(/\D/g, ""));
+
+    const sendChangeOtp = async (field) => {
+      const setState = field === "email" ? setEmailChange : setPhoneChange;
+      const newValue =
+        field === "email"
+          ? String(editedData.email || "").trim().toLowerCase()
+          : String(editedData.phoneNumber || "").replace(/\D/g, "");
+      setState((s) => ({ ...s, sending: true, error: "" }));
+      try {
+        const res = await axios.post(
+          `${API_BASE_URL}/api/auth/profile-change/send-otp`,
+          { field, newValue },
+          { headers: authHeaders() },
+        );
+        if (res.data?.success) {
+          setState({
+            sending: false,
+            sent: true,
+            verifying: false,
+            verified: false,
+            verifiedValue: null,
+            otp: "",
+            error: "",
+          });
+          setSuccessMessage(res.data.message || "OTP sent");
+          setTimeout(() => setSuccessMessage(""), 3000);
+        } else {
+          throw new Error(res.data?.message || "Failed to send OTP");
+        }
+      } catch (err) {
+        const msg = err.response?.data?.message || err.message;
+        setState((s) => ({ ...s, sending: false, error: msg }));
+        setError(msg);
+      }
+    };
+
+    const verifyChangeOtp = async (field) => {
+      const setState = field === "email" ? setEmailChange : setPhoneChange;
+      const state = field === "email" ? emailChange : phoneChange;
+      const newValue =
+        field === "email"
+          ? String(editedData.email || "").trim().toLowerCase()
+          : String(editedData.phoneNumber || "").replace(/\D/g, "");
+      if (!state.otp || state.otp.length < 4) {
+        setState((s) => ({ ...s, error: "Enter the OTP first" }));
+        return;
+      }
+      setState((s) => ({ ...s, verifying: true, error: "" }));
+      try {
+        const res = await axios.post(
+          `${API_BASE_URL}/api/auth/profile-change/verify-otp`,
+          { field, newValue, otp: state.otp },
+          { headers: authHeaders() },
+        );
+        if (res.data?.success) {
+          setState({
+            sending: false,
+            sent: false,
+            verifying: false,
+            verified: true,
+            verifiedValue: newValue,
+            otp: "",
+            error: "",
+          });
+          setSuccessMessage(
+            `${field === "email" ? "Email" : "Phone"} verified`,
+          );
+          setTimeout(() => setSuccessMessage(""), 3000);
+        } else {
+          throw new Error(res.data?.message || "Verification failed");
+        }
+      } catch (err) {
+        const msg = err.response?.data?.message || err.message;
+        setState((s) => ({ ...s, verifying: false, error: msg }));
+        setError(msg);
+      }
+    };
+
+    // Drop verified flag if user re-edits field.
+    useEffect(() => {
+      if (
+        emailChange.verified &&
+        emailChange.verifiedValue !==
+          String(editedData?.email || "").trim().toLowerCase()
+      ) {
+        setEmailChange(blankChange);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editedData?.email]);
+
+    useEffect(() => {
+      if (
+        phoneChange.verified &&
+        phoneChange.verifiedValue !==
+          String(editedData?.phoneNumber || "").replace(/\D/g, "")
+      ) {
+        setPhoneChange(blankChange);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [editedData?.phoneNumber]);
+
+    useEffect(() => {
+      if (!isEditing) {
+        setEmailChange(blankChange);
+        setPhoneChange(blankChange);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isEditing]);
+
     const handleSave = async () => {
         try {
             setLoading(true);
@@ -754,7 +900,14 @@ const CounselorProfile = () => {
                             <button
                                 onClick={handleSave}
                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--save`}
-                                disabled={loading}
+                                disabled={loading || !emailReady || !phoneReady}
+                                title={
+                                  !emailReady
+                                    ? 'Verify your new email via OTP first'
+                                    : !phoneReady
+                                      ? 'Verify your new phone via OTP first'
+                                      : ''
+                                }
                             >
                                 {loading ? 'Saving...' : 'Save Changes'}
                             </button>
@@ -780,15 +933,65 @@ const CounselorProfile = () => {
                         <div className={`${COUNSELOR_PROFILE_CLASS}__contact-info`}>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__contact-item`}>
                                 <span className={`${COUNSELOR_PROFILE_CLASS}__contact-icon`}>📧</span>
-                                <div>
+                                <div style={{ flex: 1 }}>
                                     <label>Email</label>
                                     {isEditing ? (
-                                        <input
-                                            type="email"
-                                            value={editedData.email || ''}
-                                            onChange={(e) => handleInputChange('email', e.target.value)}
-                                            className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                        />
+                                        <>
+                                            <div className="otp-field-row">
+                                                <input
+                                                    type="email"
+                                                    value={editedData.email || ''}
+                                                    onChange={(e) => handleInputChange('email', e.target.value)}
+                                                    className={`${COUNSELOR_PROFILE_CLASS}__input`}
+                                                />
+                                                {isEmailDirty() && !emailChange.verified && (
+                                                    <button
+                                                        type="button"
+                                                        className="otp-verify-btn"
+                                                        onClick={() => sendChangeOtp('email')}
+                                                        disabled={emailChange.sending}
+                                                    >
+                                                        {emailChange.sending ? 'Sending…' : emailChange.sent ? 'Resend' : 'Verify'}
+                                                    </button>
+                                                )}
+                                                {emailChange.verified && (
+                                                    <span className="otp-verified-badge">✓ Verified</span>
+                                                )}
+                                            </div>
+                                            {isEmailDirty() && emailChange.sent && !emailChange.verified && (
+                                                <div className="otp-input-row">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        maxLength={6}
+                                                        placeholder="Enter 6-digit OTP"
+                                                        value={emailChange.otp}
+                                                        onChange={(e) =>
+                                                            setEmailChange((s) => ({
+                                                                ...s,
+                                                                otp: e.target.value.replace(/\D/g, ''),
+                                                            }))
+                                                        }
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="otp-confirm-btn"
+                                                        onClick={() => verifyChangeOtp('email')}
+                                                        disabled={emailChange.verifying}
+                                                    >
+                                                        {emailChange.verifying ? 'Verifying…' : 'Confirm'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {emailChange.error && (
+                                                <div className="otp-error">{emailChange.error}</div>
+                                            )}
+                                            {isEmailDirty() && !emailChange.verified && !emailChange.sent && (
+                                                <div className="otp-hint">
+                                                    OTP will be sent to the new email before saving.
+                                                </div>
+                                            )}
+                                        </>
                                     ) : (
                                         <p>{counselor?.email || 'Not specified'}</p>
                                     )}
@@ -796,15 +999,65 @@ const CounselorProfile = () => {
                             </div>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__contact-item`}>
                                 <span className={`${COUNSELOR_PROFILE_CLASS}__contact-icon`}>📱</span>
-                                <div>
+                                <div style={{ flex: 1 }}>
                                     <label>Phone</label>
                                     {isEditing ? (
-                                        <input
-                                            type="tel"
-                                            value={editedData.phoneNumber || ''}
-                                            onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                                            className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                        />
+                                        <>
+                                            <div className="otp-field-row">
+                                                <input
+                                                    type="tel"
+                                                    value={editedData.phoneNumber || ''}
+                                                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                                                    className={`${COUNSELOR_PROFILE_CLASS}__input`}
+                                                />
+                                                {isPhoneDirty() && !phoneChange.verified && (
+                                                    <button
+                                                        type="button"
+                                                        className="otp-verify-btn"
+                                                        onClick={() => sendChangeOtp('phone')}
+                                                        disabled={phoneChange.sending}
+                                                    >
+                                                        {phoneChange.sending ? 'Sending…' : phoneChange.sent ? 'Resend' : 'Verify'}
+                                                    </button>
+                                                )}
+                                                {phoneChange.verified && (
+                                                    <span className="otp-verified-badge">✓ Verified</span>
+                                                )}
+                                            </div>
+                                            {isPhoneDirty() && phoneChange.sent && !phoneChange.verified && (
+                                                <div className="otp-input-row">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        maxLength={6}
+                                                        placeholder="Enter 6-digit OTP"
+                                                        value={phoneChange.otp}
+                                                        onChange={(e) =>
+                                                            setPhoneChange((s) => ({
+                                                                ...s,
+                                                                otp: e.target.value.replace(/\D/g, ''),
+                                                            }))
+                                                        }
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        className="otp-confirm-btn"
+                                                        onClick={() => verifyChangeOtp('phone')}
+                                                        disabled={phoneChange.verifying}
+                                                    >
+                                                        {phoneChange.verifying ? 'Verifying…' : 'Confirm'}
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {phoneChange.error && (
+                                                <div className="otp-error">{phoneChange.error}</div>
+                                            )}
+                                            {isPhoneDirty() && !phoneChange.verified && !phoneChange.sent && (
+                                                <div className="otp-hint">
+                                                    OTP will be sent to the new phone via SMS.
+                                                </div>
+                                            )}
+                                        </>
                                     ) : (
                                         <p>{counselor?.phoneNumber || 'Not specified'}</p>
                                     )}

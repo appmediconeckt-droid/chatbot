@@ -569,27 +569,43 @@ const CounselorSignup = () => {
     }
 
     try {
-      const payload = {
-        fullName: formData.fullName.trim(),
-        email: formData.email.trim(),
-        phoneNumber: formData.phoneNumber.trim(),
-        age: Number(formData.age),
-        gender: formData.gender.toLowerCase(),
-        qualification: formData.qualification.trim(),
-        specialization: formData.specialization.trim(),
-        experience: Number(formData.experience),
-        location: formData.location.trim(),
-        consultationMode: formData.consultationMode.map((m) => m.toLowerCase()),
-        languages: formData.languages,
-        aboutMe: formData.aboutMe.trim(),
-        password: formData.password,
-        confirmPassword: formData.confirmPassword,
-        role: "counselor",
-      };
+      // Build a FormData payload so the profile photo File object actually
+      // reaches the backend. Sending plain JSON drops the photo silently —
+      // axios serialises it to "[object File]" and multer never sees it.
+      const fd = new FormData();
+      fd.append("fullName", formData.fullName.trim());
+      fd.append("email", formData.email.trim());
+      fd.append("phoneNumber", formData.phoneNumber.trim());
+      fd.append("age", String(Number(formData.age)));
+      fd.append("gender", formData.gender.toLowerCase());
+      fd.append("qualification", formData.qualification.trim());
+      fd.append("specialization", formData.specialization.trim());
+      fd.append("experience", String(Number(formData.experience)));
+      fd.append("location", formData.location.trim());
+      // Arrays must be CSV strings here — the backend already splits on ","
+      // for both consultationMode and languages.
+      fd.append(
+        "consultationMode",
+        formData.consultationMode.map((m) => m.toLowerCase()).join(","),
+      );
+      fd.append(
+        "languages",
+        Array.isArray(formData.languages)
+          ? formData.languages.join(",")
+          : formData.languages || "",
+      );
+      fd.append("aboutMe", formData.aboutMe.trim());
+      fd.append("password", formData.password);
+      fd.append("confirmPassword", formData.confirmPassword);
+      fd.append("role", "counselor");
+      if (formData.profilePhoto instanceof File) {
+        fd.append("profilePhoto", formData.profilePhoto);
+      }
 
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/complete-registration`,
-        payload,
+        fd,
+        { headers: { "Content-Type": "multipart/form-data" } },
       );
 
       if (response.data.success) {
