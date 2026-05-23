@@ -1443,6 +1443,37 @@ main {
   box-shadow: var(--shadow-sm);
 }
 
+.chat-quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.chat-quick-reply-btn {
+  background: var(--white);
+  border: 1.5px solid var(--primary-light, #c7d2fe);
+  color: var(--primary, #4338ca);
+  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.chat-quick-reply-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: var(--white);
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+
+.chat-quick-reply-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .chat-popup-input {
   padding: var(--spacing-md);
   border-top: 1px solid var(--gray-200);

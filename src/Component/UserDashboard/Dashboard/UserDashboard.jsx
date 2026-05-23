@@ -46,7 +46,6 @@ import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal"
 import CounselorRequestChat from "../Tab/Appointment/BookAppointment";
 import MyAppointments from "../Tab/Appointment/MyAppointments";
 import LocationNoticeToast from "../../common/LocationNoticeToast";
-import LocationBadge from "../../common/LocationBadge";
 
 const ChatPopup = ({
   messages,
@@ -59,6 +58,7 @@ const ChatPopup = ({
   onReset,
   chatBodyRef,
   handleCounselorClick,
+  sendQuickReply,
 }) => {
   const renderMessageText = (text) => {
     if (!text) return null;
@@ -131,6 +131,23 @@ const ChatPopup = ({
               )}
               <div className="ud-chat-bubble">
                 {renderMessageText(message.text)}
+                {message.sender === "ai" &&
+                  Array.isArray(message.quickReplies) &&
+                  message.quickReplies.length > 0 && (
+                    <div className="ud-chat-quick-replies">
+                      {message.quickReplies.map((qr) => (
+                        <button
+                          key={qr}
+                          type="button"
+                          className="ud-chat-quick-reply-btn"
+                          disabled={isLoading}
+                          onClick={() => sendQuickReply && sendQuickReply(qr)}
+                        >
+                          {qr}
+                        </button>
+                      ))}
+                    </div>
+                  )}
               </div>
               {message.sender === "user" && (
                 <div className="ud-chat-avatar ud-small">
@@ -505,6 +522,11 @@ export default function UserDashboard() {
   // turn-based AI reply) is what the user actually sees first. The old
   // hard-coded "Hello! I'm your AI assistant" suppressed the warm onboarding.
   const [chatMessages, setChatMessages] = useState([]);
+  // Tracks the current AI chat session. Backend uses (userId, sessionId) to
+  // load history, so echoing the same id keeps the conversation threaded.
+  // Cleared on reset → next turn has no sessionId → backend treats it as a
+  // brand-new session → onboarding (age/gender/where) fires again.
+  const [aiSessionId, setAiSessionId] = useState(null);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -538,11 +560,15 @@ export default function UserDashboard() {
           { message: "hi", history: [] },
         );
         if (response.data?.success) {
+          if (response.data.data?.sessionId) {
+            setAiSessionId(response.data.data.sessionId);
+          }
           setChatMessages([
             {
               id: Date.now(),
               text: response.data.data.aiResponse,
               sender: "ai",
+              quickReplies: response.data.data.quickReplies || null,
             },
           ]);
         }
@@ -564,51 +590,74 @@ export default function UserDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatOpen]);
 
-  const sendMessage = async () => {
-    if (newMessage.trim()) {
-      const userMessage = { id: Date.now(), text: newMessage, sender: "user" };
-      setChatMessages((prev) => [...prev, userMessage]);
-      setNewMessage("");
-      setIsLoading(true);
+  // Single send pipeline used by both the text input and the mood quick-reply
+  // buttons. Strips quickReplies from older AI messages so old buttons don't
+  // re-trigger after the user has already responded.
+  const sendChat = async (text) => {
+    const trimmed = (text || "").trim();
+    if (!trimmed) return;
+    const userMessage = { id: Date.now(), text: trimmed, sender: "user" };
+    setChatMessages((prev) => [
+      ...prev.map((m) =>
+        m.sender === "ai" && m.quickReplies ? { ...m, quickReplies: null } : m,
+      ),
+      userMessage,
+    ]);
+    setIsLoading(true);
 
-      try {
-        // Prepare history for the AI (limit to last 10 messages)
-        const history = chatMessages.slice(-10).map((msg) => ({
-          role: msg.sender === "user" ? "user" : "assistant",
-          content: msg.text,
-        }));
+    try {
+      const history = chatMessages.slice(-10).map((msg) => ({
+        role: msg.sender === "user" ? "user" : "assistant",
+        content: msg.text,
+      }));
 
-        const response = await axiosInstance.post(
-          `${API_BASE_URL}/api/ai-chat/send-message`,
-          {
-            message: userMessage.text,
-            history: history,
-          },
-        );
+      const response = await axiosInstance.post(
+        `${API_BASE_URL}/api/ai-chat/send-message`,
+        {
+          message: userMessage.text,
+          history: history,
+          sessionId: aiSessionId,
+        },
+      );
 
-        if (response.data && response.data.success) {
-          const aiResponse = {
-            id: Date.now() + 1,
-            text: response.data.data.aiResponse,
-            sender: "ai",
-          };
-          setChatMessages((prev) => [...prev, aiResponse]);
-        } else {
-          throw new Error("Invalid AI response");
+      if (response.data && response.data.success) {
+        if (response.data.data?.sessionId) {
+          setAiSessionId(response.data.data.sessionId);
         }
-      } catch (error) {
-        console.error("AI Chat error:", error);
-        const errorMessage = {
+        const aiResponse = {
           id: Date.now() + 1,
-          text: "I'm sorry, I'm having trouble connecting to the medical server. Please try again later.",
+          text: response.data.data.aiResponse,
           sender: "ai",
+          quickReplies: response.data.data.quickReplies || null,
         };
-        setChatMessages((prev) => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
-        if (!chatOpen) setUnreadCount((prev) => prev + 1);
+        setChatMessages((prev) => [...prev, aiResponse]);
+      } else {
+        throw new Error("Invalid AI response");
       }
+    } catch (error) {
+      console.error("AI Chat error:", error);
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: "I'm sorry, I'm having trouble connecting to the medical server. Please try again later.",
+        sender: "ai",
+      };
+      setChatMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+      if (!chatOpen) setUnreadCount((prev) => prev + 1);
     }
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim()) return;
+    const text = newMessage;
+    setNewMessage("");
+    await sendChat(text);
+  };
+
+  const sendQuickReply = async (text) => {
+    if (isLoading) return;
+    await sendChat(text);
   };
 
   const handleKeyPress = (e) => {
@@ -808,7 +857,6 @@ export default function UserDashboard() {
   return (
     <div className="user-dashboard">
       <LocationNoticeToast />
-      <LocationBadge className="location-badge--floating" />
       <IncomingCallModal
         isOpen={showCallModal}
         onClose={() => {
@@ -1040,6 +1088,7 @@ export default function UserDashboard() {
                 `${API_BASE_URL}/api/ai-chat/my-history`,
               );
               setChatMessages([]);
+              setAiSessionId(null);
               // The chatOpen useEffect will fire kickoff again because
               // chatMessages is now empty.
             } catch (err) {
@@ -1050,6 +1099,7 @@ export default function UserDashboard() {
           }}
           chatBodyRef={chatBodyRef}
           handleCounselorClick={handleAIContactClick}
+          sendQuickReply={sendQuickReply}
         />
       )}
 

@@ -1871,6 +1871,37 @@
   border-top-right-radius: 4px;
 }
 
+.ud-chat-quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.ud-chat-quick-reply-btn {
+  background: white;
+  border: 1.5px solid #c7d2fe;
+  color: #4338ca;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.ud-chat-quick-reply-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: transparent;
+  transform: translateY(-1px);
+}
+
+.ud-chat-quick-reply-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* --- Avatar positioning (fine-tuning) --- */
 .ud-chat-message-wrapper.ai .ud-chat-avatar {
   order: 1; /* Avatar stays on the left */

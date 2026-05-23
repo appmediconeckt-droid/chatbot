@@ -17,6 +17,9 @@ const Leanding = () => {
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  // Echo this back to the backend so guest turns thread into one session
+  // instead of every message looking like a brand-new first turn.
+  const [aiSessionId, setAiSessionId] = useState(null);
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
 
@@ -47,7 +50,8 @@ const Leanding = () => {
         `${API_BASE_URL}/api/ai-chat/send-message`,
         {
           message: message,
-          history: [] // Add empty history for the initial guest chat
+          history: [], // Guest: server threads via sessionId, history is fallback
+          sessionId: aiSessionId,
         },
         {
           headers: {
@@ -56,7 +60,7 @@ const Leanding = () => {
           timeout: 10000 // 10 second timeout
         }
       );
-      
+
       return response.data;
     } catch (error) {
       console.error('Error sending message:', error);
@@ -64,75 +68,85 @@ const Leanding = () => {
     }
   };
 
-  // Send message handler
-  const sendMessage = async () => {
-    if (newMessage.trim()) {
-      const userMessage = { 
-        id: Date.now(), 
-        text: newMessage, 
-        sender: 'user' 
-      };
-      
-      setChatMessages(prev => [...prev, userMessage]);
-      setNewMessage('');
-      setIsLoading(true);
+  // Shared send pipeline: handles both typed input and mood quick-reply taps.
+  // Strips quickReplies off prior AI messages so old buttons can't fire twice.
+  const sendChat = async (text) => {
+    const trimmed = (text || '').trim();
+    if (!trimmed) return;
+    const userMessage = { id: Date.now(), text: trimmed, sender: 'user' };
+    setChatMessages(prev => [
+      ...prev.map(m => (m.sender === 'ai' && m.quickReplies ? { ...m, quickReplies: null } : m)),
+      userMessage,
+    ]);
+    setIsLoading(true);
 
-      try {
-        const response = await sendMessageToAPI(newMessage);
-        
-        // Extract AI response from the API response structure
-        let aiResponseText = "I understand. Could you tell me more about how you're feeling?";
-        
-        if (response && response.success && response.data) {
-          // New API response structure
-          aiResponseText = response.data.aiResponse || response.data.message || response.data.text;
-        } else if (response && response.response) {
-          // Alternative response structure
-          aiResponseText = response.response;
-        } else if (response && response.message) {
-          aiResponseText = response.message;
-        } else if (response && response.text) {
-          aiResponseText = response.text;
-        } else if (response && response.data) {
-          aiResponseText = response.data;
+    try {
+      const response = await sendMessageToAPI(trimmed);
+
+      let aiResponseText = "I understand. Could you tell me more about how you're feeling?";
+      let quickReplies = null;
+
+      if (response && response.success && response.data) {
+        aiResponseText = response.data.aiResponse || response.data.message || response.data.text;
+        if (response.data.sessionId) {
+          setAiSessionId(response.data.sessionId);
         }
-        
-        const aiMessage = {
-          id: Date.now() + 1,
-          text: aiResponseText,
-          sender: 'ai'
-        };
-        
-        setChatMessages(prev => [...prev, aiMessage]);
-        
-      } catch (error) {
-        // Handle error - show error message to user
-        let errorMessageText = "I'm having trouble connecting. Please try again or call our crisis helpline at 9152987821 if you need immediate support.";
-        
-        if (error.response) {
-          // Server responded with error
-          console.error('Server Error:', error.response.data);
-          errorMessageText = "Server is busy. Please try again in a moment.";
-        } else if (error.request) {
-          // Request made but no response
-          console.error('No response:', error.request);
-          errorMessageText = "Network issue. Please check your internet connection.";
-        } else {
-          // Something else happened
-          console.error('Error:', error.message);
+        if (Array.isArray(response.data.quickReplies)) {
+          quickReplies = response.data.quickReplies;
         }
-        
-        const errorMessage = {
-          id: Date.now() + 1,
-          text: errorMessageText,
-          sender: 'ai'
-        };
-        
-        setChatMessages(prev => [...prev, errorMessage]);
-      } finally {
-        setIsLoading(false);
+      } else if (response && response.response) {
+        aiResponseText = response.response;
+      } else if (response && response.message) {
+        aiResponseText = response.message;
+      } else if (response && response.text) {
+        aiResponseText = response.text;
+      } else if (response && response.data) {
+        aiResponseText = response.data;
       }
+
+      const aiMessage = {
+        id: Date.now() + 1,
+        text: aiResponseText,
+        sender: 'ai',
+        quickReplies,
+      };
+
+      setChatMessages(prev => [...prev, aiMessage]);
+    } catch (error) {
+      let errorMessageText = "I'm having trouble connecting. Please try again or call our crisis helpline at 9152987821 if you need immediate support.";
+
+      if (error.response) {
+        console.error('Server Error:', error.response.data);
+        errorMessageText = 'Server is busy. Please try again in a moment.';
+      } else if (error.request) {
+        console.error('No response:', error.request);
+        errorMessageText = 'Network issue. Please check your internet connection.';
+      } else {
+        console.error('Error:', error.message);
+      }
+
+      const errorMessage = {
+        id: Date.now() + 1,
+        text: errorMessageText,
+        sender: 'ai',
+      };
+
+      setChatMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const sendMessage = async () => {
+    if (!newMessage.trim()) return;
+    const text = newMessage;
+    setNewMessage('');
+    await sendChat(text);
+  };
+
+  const sendQuickReply = async (text) => {
+    if (isLoading) return;
+    await sendChat(text);
   };
 
   const handleKeyPress = (e) => {
@@ -167,6 +181,7 @@ const Leanding = () => {
           isLoading={isLoading}
           onClose={() => setChatOpen(false)}
           chatBodyRef={chatBodyRef}
+          sendQuickReply={sendQuickReply}
         />
       )}
       
@@ -802,15 +817,16 @@ const Footer = () => (
 );
 
 // ========== CHAT POPUP COMPONENT ==========
-const ChatPopup = ({ 
-  messages, 
-  newMessage, 
-  setNewMessage, 
-  sendMessage, 
-  handleKeyPress, 
-  isLoading, 
-  onClose, 
-  chatBodyRef 
+const ChatPopup = ({
+  messages,
+  newMessage,
+  setNewMessage,
+  sendMessage,
+  handleKeyPress,
+  isLoading,
+  onClose,
+  chatBodyRef,
+  sendQuickReply,
 }) => (
   <div className="chat-popup">
     <div className="chat-popup-content">
@@ -847,6 +863,23 @@ const ChatPopup = ({
                   {i < message.text.split('\n').length - 1 && <br />}
                 </React.Fragment>
               ))}
+              {message.sender === 'ai' &&
+                Array.isArray(message.quickReplies) &&
+                message.quickReplies.length > 0 && (
+                  <div className="chat-quick-replies">
+                    {message.quickReplies.map((qr) => (
+                      <button
+                        key={qr}
+                        type="button"
+                        className="chat-quick-reply-btn"
+                        disabled={isLoading}
+                        onClick={() => sendQuickReply && sendQuickReply(qr)}
+                      >
+                        {qr}
+                      </button>
+                    ))}
+                  </div>
+                )}
             </div>
             {message.sender === 'user' && (
               <div className="chat-avatar small">
