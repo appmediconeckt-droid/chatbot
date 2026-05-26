@@ -192,7 +192,7 @@ export default function usePendingRequests({ vibrate, onSessionExpired }) {
         clearInterval(modalTimer);
         setModalTimer(null);
       }
-    }, 10000);
+    }, 30000);
     return () => clearTimeout(timeout);
   }, [showRequestModal]);
 
