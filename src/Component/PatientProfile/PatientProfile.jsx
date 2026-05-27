@@ -125,6 +125,7 @@ const PatientProfile = () => {
 
   const [editFormData, setEditFormData] = useState({
     name: "",
+    anonymous: "",
     age: "",
     gender: "",
     dateOfBirth: "",
@@ -204,6 +205,7 @@ const PatientProfile = () => {
           personalInfo: {
             id: userData._id,
             name: userData.fullName || "",
+            anonymous: userData.anonymous || "",
             age: userData.age || null,
             gender: userData.gender || "",
             dateOfBirth: userData.dateOfBirth
@@ -426,6 +428,7 @@ const PatientProfile = () => {
   const initializeEditForm = (data) => {
     setEditFormData({
       name: data.personalInfo.name || "",
+      anonymous: data.personalInfo.anonymous || "",
       age: data.personalInfo.age || "",
       gender: data.personalInfo.gender || "",
       dateOfBirth: data.personalInfo.dateOfBirth || "",
@@ -516,6 +519,7 @@ const PatientProfile = () => {
       const formData = new FormData();
 
       formData.append("fullName", editFormData.name);
+      formData.append("anonymous", editFormData.anonymous || "");
       formData.append("email", editFormData.email);
       formData.append("phoneNumber", editFormData.phone);
       formData.append("age", editFormData.age.toString());
@@ -727,18 +731,20 @@ const PatientProfile = () => {
               <span>{patientData.personalInfo.name}</span>
             </div>
             <div className="info-item">
+              <label>Anonymous Name</label>
+              <span>
+                {patientData.personalInfo.anonymous
+                  ? patientData.personalInfo.anonymous
+                  : "Not specified"}
+              </span>
+            </div>
+            <div className="info-item">
               <label>Date of Birth</label>
               <span>{formatDate(patientData.personalInfo.dateOfBirth)}</span>
             </div>
             <div className="info-item">
               <label>Gender</label>
               <span>{patientData.personalInfo.gender || "Not specified"}</span>
-            </div>
-            <div className="info-item">
-              <label>Blood Group</label>
-              <span>
-                {patientData.personalInfo.bloodGroup || "Not specified"}
-              </span>
             </div>
             <div className="info-item">
               <label>Email</label>
@@ -985,6 +991,18 @@ const PatientProfile = () => {
                       value={patientData.personalInfo.id}
                       readOnly
                       className="readonly"
+                    />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Anonymous Name (optional)</label>
+                    <input
+                      type="text"
+                      name="anonymous"
+                      value={editFormData.anonymous}
+                      onChange={handleEditFormChange}
+                      placeholder="Display name for anonymous chats"
                     />
                   </div>
                 </div>
