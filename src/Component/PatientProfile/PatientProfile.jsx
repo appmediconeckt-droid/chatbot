@@ -3,6 +3,7 @@ import axios from "axios";
 import "./PatientProfile.css";
 import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
+import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
 
 
 
@@ -98,6 +99,11 @@ const PatientProfile = () => {
       nominee: "",
       relationship: "",
       insuranceType: "",
+    },
+    security: {
+      hasPassword: false,
+      authProvider: "",
+      googleId: "",
     },
   });
 
@@ -257,6 +263,14 @@ const PatientProfile = () => {
             nominee: userData.insuranceInfo?.nominee || "",
             relationship: userData.insuranceInfo?.relationship || "",
             insuranceType: userData.insuranceInfo?.insuranceType || "",
+          },
+          security: {
+            hasPassword:
+              typeof userData.hasPassword === "boolean"
+                ? userData.hasPassword
+                : userData.authProvider !== "google" || !userData.googleId,
+            authProvider: userData.authProvider || "",
+            googleId: userData.googleId || "",
           },
         };
 
@@ -614,6 +628,27 @@ const PatientProfile = () => {
     setProfileImageFile(null);
   };
 
+  const handlePasswordUpdated = ({ hasPassword, requiresLogin } = {}) => {
+    setPatientData((prev) => ({
+      ...prev,
+      security: {
+        ...prev.security,
+        hasPassword: Boolean(hasPassword),
+      },
+    }));
+
+    if (requiresLogin) {
+      showNotificationMessage("Password updated. Please login again.", "success");
+      setTimeout(() => {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("isAuthenticated");
+        window.location.replace("/login");
+      }, 1400);
+    }
+  };
+
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
     if (name.includes(".")) {
@@ -717,6 +752,12 @@ const PatientProfile = () => {
           </button>
         </div>
       </div>
+
+      <PasswordChangePage
+        email={patientData.personalInfo.email}
+        hasPassword={patientData.security.hasPassword}
+        onPasswordUpdated={handlePasswordUpdated}
+      />
 
       {/* Main Content */}
       <div className="profile-content">

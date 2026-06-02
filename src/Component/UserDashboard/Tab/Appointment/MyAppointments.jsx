@@ -2,30 +2,53 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
 
-const MyAppointments = ({ setDashboardTab }) => {
+const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
+  const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [bookingLoading, setBookingLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("Upcoming");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedApt, setSelectedApt] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [selectedCounselorId, setSelectedCounselorId] = useState("");
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingNotes, setBookingNotes] = useState("");
+
+  const token =
+    localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+  const fetchAppointments = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAppointments(Array.isArray(response.data) ? response.data : []);
+    } catch (err) {
+      console.error("Error fetching appointments:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAppointments = async () => {
+    fetchAppointments();
+  }, []);
+
+  useEffect(() => {
+    const fetchCounselors = async () => {
       try {
-        const token =
-          localStorage.getItem("token") || localStorage.getItem("accessToken");
-        const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAppointments(response.data);
+        const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors`);
+        const list =
+          response.data?.counsellors || response.data?.counselors || [];
+        setCounselors(Array.isArray(list) ? list : []);
       } catch (err) {
-        console.error("Error fetching appointments:", err);
-      } finally {
-        setLoading(false);
+        console.error("Error fetching counselors:", err);
       }
     };
-    fetchAppointments();
+
+    fetchCounselors();
   }, []);
 
   // Filter by tab
@@ -64,6 +87,59 @@ const MyAppointments = ({ setDashboardTab }) => {
         : apt.counselor.profilePhoto.url;
     }
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(apt.counselor?.fullName || "C")}&background=e0e7ff&color=4648d4&bold=true`;
+  };
+
+  const resetBookingForm = () => {
+    setSelectedCounselorId("");
+    setBookingDate("");
+    setBookingNotes("");
+  };
+
+  const handleBookNewClick = () => {
+    resetBookingForm();
+    setShowBookingModal(true);
+  };
+
+  const handleConfirmBooking = async (e) => {
+    e.preventDefault();
+
+    if (!selectedCounselorId) {
+      alert("Please select a counselor");
+      return;
+    }
+
+    if (!bookingDate) {
+      alert("Please select a date and time");
+      return;
+    }
+
+    try {
+      setBookingLoading(true);
+      await axios.post(
+        `${API_BASE_URL}/api/appointments`,
+        {
+          counselorId: selectedCounselorId,
+          date: bookingDate,
+          notes: bookingNotes,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      alert("Appointment booked successfully! The counselor has been notified.");
+      setShowBookingModal(false);
+      resetBookingForm();
+      fetchAppointments();
+    } catch (error) {
+      console.error("Error booking appointment:", error);
+      alert(error?.response?.data?.message || "Failed to book appointment");
+    } finally {
+      setBookingLoading(false);
+    }
   };
 
   return (
@@ -292,7 +368,7 @@ const MyAppointments = ({ setDashboardTab }) => {
               goals. Integrated lab results and insurance tracking included.
             </p>
             <button
-              onClick={() => setDashboardTab && setDashboardTab("Live Chat")}
+              onClick={handleBookNewClick}
               className="bg-white text-[#4648d4] px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-50 transition-colors active:scale-95"
             >
               Book New Appointment
@@ -304,6 +380,101 @@ const MyAppointments = ({ setDashboardTab }) => {
             health_and_safety
           </span>
         </section>
+
+        {showBookingModal && (
+          <div
+            className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 p-4"
+            onClick={() => setShowBookingModal(false)}
+          >
+            <div
+              className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between gap-4 mb-5">
+                <div>
+                  <h2 className="text-2xl font-bold text-[#0b1c30]">
+                    Book New Appointment
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1">
+                    Choose a counselor and schedule without leaving this page.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowBookingModal(false)}
+                  className="text-slate-400 hover:text-slate-700 text-2xl leading-none"
+                  aria-label="Close booking modal"
+                >
+                  ×
+                </button>
+              </div>
+
+              <form onSubmit={handleConfirmBooking} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-bold text-[#0b1c30] mb-2">
+                    Counselor
+                  </label>
+                  <select
+                    value={selectedCounselorId}
+                    onChange={(e) => setSelectedCounselorId(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
+                    required
+                  >
+                    <option value="">Select counselor</option>
+                    {counselors.map((counselor) => (
+                      <option
+                        key={counselor._id || counselor.id}
+                        value={counselor._id || counselor.id}
+                      >
+                        Dr. {counselor.fullName || counselor.name || "Counselor"}
+                        {counselor.specialization?.length
+                          ? ` - ${Array.isArray(counselor.specialization) ? counselor.specialization.join(", ") : counselor.specialization}`
+                          : ""}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#0b1c30] mb-2">
+                    Date and Time
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-[#0b1c30] mb-2">
+                    Clinical Notes / Reason
+                  </label>
+                  <textarea
+                    value={bookingNotes}
+                    onChange={(e) => setBookingNotes(e.target.value)}
+                    placeholder="Share what you'd like to discuss..."
+                    className="min-h-[110px] w-full rounded-xl border border-slate-200 px-4 py-3 text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
+                    required
+                  />
+                </div>
+
+                <div className="rounded-xl bg-indigo-50 p-4 text-sm text-[#4648d4]">
+                  Appointment will be sent to the counselor for confirmation.
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={bookingLoading}
+                  className="w-full rounded-xl bg-[#4648d4] px-5 py-3 font-bold text-white transition-colors hover:bg-[#3839b8] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {bookingLoading ? "Booking..." : "Confirm Appointment"}
+                </button>
+              </form>
+            </div>
+          </div>
+        )}
       </main>
 
       {/* ── Right Sidebar: Today's Schedule ── */}

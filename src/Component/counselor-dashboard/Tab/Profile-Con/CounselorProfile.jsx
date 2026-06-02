@@ -3,6 +3,7 @@ import axios from 'axios';
 import './CounselorProfile.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import { captureAndSendLocation } from '../../../../authtication/locationHelper';
+import PasswordChangePage from '../../../ChangesPassword/PasswordChangePage';
 
 // Unique class name prefix to avoid conflicts
 const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';

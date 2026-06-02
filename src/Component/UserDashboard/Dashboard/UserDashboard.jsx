@@ -554,7 +554,7 @@ export default function UserDashboard() {
 
     const kickoff = async () => {
       setIsLoading(true);
-      try {
+       try {
         const response = await axiosInstance.post(
           `${API_BASE_URL}/api/ai-chat/send-message`,
           { message: "hi", history: [] },
@@ -572,7 +572,7 @@ export default function UserDashboard() {
             },
           ]);
         }
-      } catch (err) {
+      }catch (err) {
         console.warn("[AI-CHAT] kickoff failed:", err.message);
         setChatMessages([
           {
@@ -1039,9 +1039,7 @@ export default function UserDashboard() {
               <CounselorRequestChat initialSearch={targetCounselor} />
             )}
             {active === "Live Chat" && <LiveChatSupport />}
-            {active === "MyAppointments" && (
-              <MyAppointments setDashboardTab={setActive} />
-            )}
+            {active === "MyAppointments" && <MyAppointments />}
             {active === "Wallet" && <WalletDashboard userData={userData} />}
             {active === "Video" && (
               <CallHistory currentUser={{ id: userId, role: "user" }} />
