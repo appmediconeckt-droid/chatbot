@@ -11,7 +11,7 @@ const UserDashboard = lazy(
 const ChatBox = lazy(
   () => import("./Component/UserDashboard/Tab/ChatBox/ChatBox"),
 );
-const Login = lazy(() => import("./authtication/Login"));
+// const Login = lazy(() => import("./authtication/Login"));
 const RoleSelector = lazy(() => import("./authtication/RoleSelector"));
 const CounselorSignup = lazy(() => import("./authtication/CounselorSignup"));
 const UserSignup = lazy(() => import("./authtication/UserSignup"));
@@ -56,7 +56,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Leanding />} />
-          <Route path="/login" element={<Login />} />
+          {/* <Route path="/login" element={<Login />} /> */}
           <Route path="/role-selector" element={<RoleSelector />} />
           <Route path="/otp-verification" element={<OTPVerification />} />
           <Route path="/user-signup" element={<UserSignup />} />
