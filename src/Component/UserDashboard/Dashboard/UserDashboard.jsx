@@ -9,6 +9,7 @@ import {
   FaVideo,
   FaQuestionCircle,
   FaLock,
+  FaCog,
   FaSignOutAlt,
   FaTrash,
   FaBars,
@@ -46,6 +47,7 @@ import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal"
 import CounselorRequestChat from "../Tab/Appointment/BookAppointment";
 import MyAppointments from "../Tab/Appointment/MyAppointments";
 import LocationNoticeToast from "../../common/LocationNoticeToast";
+import AccountSettings from "../../Settings/AccountSettings";
 
 const ChatPopup = ({
   messages,
@@ -686,6 +688,15 @@ export default function UserDashboard() {
     }
   };
 
+  const handleSettingsClick = () => {
+    vibrate(30);
+    setActive("settings");
+    setTargetCounselor("");
+    if (isMobile) {
+      setShowProfileMenu(false);
+    }
+  };
+
   const handleAcceptCall = async (callId) => {
     try {
       const resolvedCallId =
@@ -835,6 +846,7 @@ export default function UserDashboard() {
     { id: "Video", icon: <FaVideo />, label: "Call History" },
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
     { id: "privacy", icon: <FaLock />, label: "Privacy" },
+     { id: "settings", icon: <FaCog />, label: "Settings" },
   ];
 
   const bottomMenuItems = allMenuItems.slice(0, 4);
@@ -853,6 +865,278 @@ export default function UserDashboard() {
       );
     }
   };
+
+  const supportOptions = [
+    {
+      icon: <FaCommentDots />,
+      title: "AI chat",
+      text: "Ask health-related questions, continue your chat history, and start again when you want a fresh conversation.",
+      action: "Open Chat",
+      onClick: () => handleMenuItemClick("Chat"),
+    },
+    {
+      icon: <FaUserMd />,
+      title: "Find a counselor",
+      text: "Search counselors, view details, and request chat or appointment support from the counselor section.",
+      action: "Find Counselor",
+      onClick: () => handleMenuItemClick("Counselor"),
+    },
+    {
+      icon: <FaCalendarAlt />,
+      title: "Appointments",
+      text: "View booked sessions, appointment status, and counselor responses from one place.",
+      action: "My Appointments",
+      onClick: () => handleMenuItemClick("MyAppointments"),
+    },
+    {
+      icon: <FaVideo />,
+      title: "Calls and sessions",
+      text: "Check your call history and join accepted video or voice sessions from the dashboard.",
+      action: "Call History",
+      onClick: () => handleMenuItemClick("Video"),
+    },
+    {
+      icon: <FaWallet />,
+      title: "Wallet and payments",
+      text: "Review your wallet balance, payment activity, and payment support details.",
+      action: "Open Wallet",
+      onClick: () => handleMenuItemClick("Wallet"),
+    },
+  ];
+
+  const userHelpItems = [
+    "Profile: update your name, photo, contact details, date of birth, gender, blood group, address, emergency contact, medical info, insurance info, and location.",
+    "Verification: email and phone changes need OTP before saving, so your account cannot be changed silently.",
+    "Appointments: check request status, upcoming sessions, and previous appointment details from My Appointments.",
+    "Calls: use Call History to review video or voice sessions and reconnect from the correct dashboard area.",
+    "Payments: use Wallet for balance, payment activity, and payment-related support information.",
+    "Account security: use Settings for password, login security, and location permission controls.",
+    "Emergency note: this app is not an emergency service. For urgent danger or medical emergency, contact local emergency services immediately.",
+  ];
+
+  const commonIssueItems = [
+    {
+      title: "Profile not updating",
+      text: "Check required fields, verify changed email or phone with OTP, then save again.",
+    },
+    {
+      title: "Call not connecting",
+      text: "Allow camera and microphone permission, keep the dashboard open, and check your internet connection.",
+    },
+    {
+      title: "Appointment not visible",
+      text: "Refresh My Appointments and confirm you are logged in with the same user account.",
+    },
+    {
+      title: "Payment issue",
+      text: "Open Wallet and review recent activity before contacting support with payment details.",
+    },
+  ];
+
+  const privacyItems = [
+    {
+      icon: <FaUser />,
+      title: "Profile data",
+      text: "Name, photo, age, gender, blood group, contact details, address, emergency contact, medical info, and insurance info are used to show your profile and support care workflows.",
+    },
+    {
+      icon: <FaCommentDots />,
+      title: "Chat and appointment data",
+      text: "AI chat, counselor requests, appointments, and call history help the app keep your support and session history available inside your account.",
+    },
+    {
+      icon: <FaLock />,
+      title: "Security data",
+      text: "Tokens, password status, OTP verification, and login details are used to protect account access and sensitive profile changes.",
+    },
+    {
+      icon: <FaCog />,
+      title: "Location data",
+      text: "Location is requested for profile context, matching, and manual updates. You can manage browser location permission from Settings or your browser.",
+    },
+  ];
+
+  const privacyHighlights = [
+    {
+      label: "OTP protected",
+      value: "Email and phone",
+      icon: <FaCheckCircle />,
+    },
+    {
+      label: "Manage from",
+      value: "Profile and Settings",
+      icon: <FaCog />,
+    },
+    {
+      label: "Sensitive areas",
+      value: "Health, chat, calls",
+      icon: <FaLock />,
+    },
+  ];
+
+  const privacyChecklist = [
+    "Keep your phone and email up to date so OTP verification and account recovery work properly.",
+    "Update medical, allergy, medication, and emergency contact details only with accurate information.",
+    "Use Logout on shared devices so the next person cannot open your dashboard.",
+    "Review browser camera, microphone, and location permissions if calls or location updates are not working.",
+    "Only share information in chat or appointments that you are comfortable using for care support.",
+    "Use Delete Account carefully because account removal can affect profile, appointment, chat, wallet, and session history.",
+  ];
+
+  const visibilityItems = [
+    {
+      title: "Visible to you",
+      text: "Your profile, wallet, appointment records, chat history, settings, and call history in the user dashboard.",
+    },
+    {
+      title: "Shared for care",
+      text: "Relevant profile, request, appointment, and session details may be available to the counselor involved in your support.",
+    },
+    {
+      title: "Protected changes",
+      text: "Email and phone updates require OTP verification before they become active on your profile.",
+    },
+  ];
+
+  const renderHelpSupport = () => (
+    <section className="ud-content-section ud-info-page">
+      <div className="ud-info-page-header">
+        <span className="ud-info-page-icon">
+          <FaQuestionCircle />
+        </span>
+        <div>
+          <h2 className="ud-section-title">Help & Support</h2>
+          <p>
+            Quick help for your user account, chat, counselor requests,
+            appointments, calls, wallet, profile, privacy, and settings.
+          </p>
+        </div>
+      </div>
+
+      <div className="ud-help-content">
+        {supportOptions.map((item) => (
+          <button
+            type="button"
+            className="ud-support-card"
+            key={item.title}
+            onClick={item.onClick}
+          >
+            <span className="ud-support-icon">{item.icon}</span>
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+            <span className="ud-card-link">{item.action}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="ud-role-help-grid ud-role-help-grid-single">
+        <article className="ud-role-help-card">
+          <div className="ud-role-help-title">
+            <FaUser />
+            <h3>Important User Help</h3>
+          </div>
+          <ul>
+            {userHelpItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+        </article>
+      </div>
+
+      <div className="ud-issue-grid">
+        {commonIssueItems.map((item) => (
+          <article className="ud-issue-card" key={item.title}>
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="ud-support-strip">
+        <div>
+          <h3>Need account help?</h3>
+          <p>
+            Check your profile and settings first. For urgent care or emergency
+            issues, contact local emergency services directly.
+          </p>
+        </div>
+        <div className="ud-support-strip-actions">
+          <button type="button" className="ud-privacy-btn" onClick={handleProfileClick}>
+            My Profile
+          </button>
+          <button type="button" className="ud-privacy-btn" onClick={handleSettingsClick}>
+            Settings
+          </button>
+        </div>
+      </div>
+    </section>
+  );
+
+  const renderPrivacyCenter = () => (
+    <section className="ud-content-section ud-info-page">
+      <div className="ud-info-page-header">
+        <span className="ud-info-page-icon">
+          <FaLock />
+        </span>
+        <div>
+          <h2 className="ud-section-title">Privacy</h2>
+          <p>
+            Review the important privacy points for your user account, health
+            profile, chat, appointments, calls, security, and permissions.
+          </p>
+        </div>
+      </div>
+
+      <div className="ud-privacy-highlight-row">
+        {privacyHighlights.map((item) => (
+          <article className="ud-privacy-highlight" key={item.label}>
+            <span>{item.icon}</span>
+            <div>
+              <p>{item.label}</p>
+              <strong>{item.value}</strong>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div className="ud-privacy-content">
+        {privacyItems.map((item) => (
+          <article className="ud-privacy-option" key={item.title}>
+            <span className="ud-privacy-option-icon">{item.icon}</span>
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="ud-privacy-content">
+        {visibilityItems.map((item) => (
+          <article className="ud-privacy-option ud-privacy-option-soft" key={item.title}>
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))}
+      </div>
+
+      <div className="ud-privacy-policy-panel">
+        <h3>Important privacy checklist</h3>
+        <ul>
+          {privacyChecklist.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="ud-privacy-actions">
+        <button type="button" className="ud-privacy-btn" onClick={handleProfileClick}>
+          Manage Profile Data
+        </button>
+        <button type="button" className="ud-privacy-btn" onClick={handleSettingsClick}>
+          Security Settings
+        </button>
+      </div>
+    </section>
+  );
 
   return (
     <div className="user-dashboard">
@@ -940,6 +1224,13 @@ export default function UserDashboard() {
                   >
                     <FaUser className="ud-dropdown-icon" />
                     <span>My Profile</span>
+                  </button>
+                  <button
+                    className="ud-dropdown-item"
+                    onClick={handleSettingsClick}
+                  >
+                    <FaCog className="ud-dropdown-icon" />
+                    <span>Settings</span>
                   </button>
                   <button
                     className="ud-dropdown-item ud-logout-item"
@@ -1045,16 +1336,11 @@ export default function UserDashboard() {
               <CallHistory currentUser={{ id: userId, role: "user" }} />
             )}
             {active === "profile" && <PatientProfile />}
-            {active === "help" && (
-              <div className="ud-work-in-progress">
-                The remaining work is currently in progress.
-              </div>
+            {active === "settings" && (
+              <AccountSettings role="user" onOpenProfile={handleProfileClick} />
             )}
-            {active === "privacy" && (
-              <div className="ud-work-in-progress">
-                The remaining work is currently in progress.
-              </div>
-            )}
+            {active === "help" && renderHelpSupport()}
+            {active === "privacy" && renderPrivacyCenter()}
           </div>
         </div>
       </div>

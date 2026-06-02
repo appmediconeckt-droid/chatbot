@@ -1,0 +1,138 @@
+.account-settings {
+  color: #111827;
+  padding: 24px;
+}
+
+.account-settings__header {
+  align-items: flex-start;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.account-settings__header h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0 0 6px;
+}
+
+.account-settings__header p,
+.account-settings__panel p {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.account-settings__header button,
+.account-settings__primary {
+  background: #0f766e;
+  border: 0;
+  border-radius: 6px;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  min-height: 40px;
+  padding: 10px 16px;
+}
+
+.account-settings__header button {
+  background: #111827;
+}
+
+.account-settings__grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
+}
+
+.account-settings__panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  padding: 20px;
+}
+
+.account-settings__panel h2 {
+  font-size: 18px;
+  margin: 0 0 14px;
+}
+
+.account-settings__details {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+}
+
+.account-settings__details div {
+  align-items: start;
+  border-bottom: 1px solid #f3f4f6;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 120px minmax(0, 1fr);
+  padding-bottom: 12px;
+}
+
+.account-settings__details div:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.account-settings__details dt {
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.account-settings__details dd {
+  color: #111827;
+  font-size: 14px;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.account-settings__panel .account-settings__primary {
+  margin-top: 16px;
+}
+
+.account-settings__notice,
+.account-settings__loading {
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 16px;
+  padding: 12px 14px;
+}
+
+.account-settings__notice.success {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.account-settings__notice.error {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.account-settings__loading {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .account-settings {
+    padding: 16px;
+  }
+
+  .account-settings__header,
+  .account-settings__grid,
+  .account-settings__details div {
+    grid-template-columns: 1fr;
+  }
+
+  .account-settings__header {
+    display: grid;
+  }
+}

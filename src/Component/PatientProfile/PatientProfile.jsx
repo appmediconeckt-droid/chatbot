@@ -3,12 +3,12 @@ import axios from "axios";
 import "./PatientProfile.css";
 import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
-import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
 
 
 
 const PatientProfile = () => {
-  const [loading, setLoading] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
@@ -181,9 +181,9 @@ const PatientProfile = () => {
     return "";
   };
 
-  const fetchPatientProfile = async () => {
+  const fetchPatientProfile = async ({ showSkeleton = true } = {}) => {
     try {
-      setLoading(true);
+      if (showSkeleton) setIsInitialLoading(true);
       const userId = localStorage.getItem("userId");
       const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
 
@@ -192,7 +192,7 @@ const PatientProfile = () => {
           "User ID not found. Please login again.",
           "error",
         );
-        setLoading(false);
+        if (showSkeleton) setIsInitialLoading(false);
         return;
       }
 
@@ -289,7 +289,7 @@ const PatientProfile = () => {
         "error",
       );
     } finally {
-      setLoading(false);
+      if (showSkeleton) setIsInitialLoading(false);
     }
   };
 
@@ -529,7 +529,7 @@ const PatientProfile = () => {
 
   const handleSaveProfile = async () => {
     try {
-      setLoading(true);
+      setIsSaving(true);
       const formData = new FormData();
 
       formData.append("fullName", editFormData.name);
@@ -600,7 +600,7 @@ const PatientProfile = () => {
 
       if (response.data.success) {
         showNotificationMessage("Profile updated successfully!", "success");
-        await fetchPatientProfile();
+        await fetchPatientProfile({ showSkeleton: false });
         setIsEditing(false);
         setProfileImage(null);
         setProfileImageFile(null);
@@ -617,7 +617,7 @@ const PatientProfile = () => {
         "error",
       );
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
@@ -626,27 +626,6 @@ const PatientProfile = () => {
     initializeEditForm(patientData);
     setProfileImage(null);
     setProfileImageFile(null);
-  };
-
-  const handlePasswordUpdated = ({ hasPassword, requiresLogin } = {}) => {
-    setPatientData((prev) => ({
-      ...prev,
-      security: {
-        ...prev.security,
-        hasPassword: Boolean(hasPassword),
-      },
-    }));
-
-    if (requiresLogin) {
-      showNotificationMessage("Password updated. Please login again.", "success");
-      setTimeout(() => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("isAuthenticated");
-        window.location.replace("/login");
-      }, 1400);
-    }
   };
 
   const handleEditFormChange = (e) => {
@@ -671,12 +650,42 @@ const PatientProfile = () => {
     });
   };
 
-  if (loading && !patientData.personalInfo.id) {
+  if (isInitialLoading && !patientData.personalInfo.id) {
     return (
       <div className="profile-container">
-        <div className="loading-spinner">
-          <div className="spinner"></div>
-          <p>Loading profile...</p>
+        <div className="profile-skeleton" aria-label="Loading profile">
+          <div className="profile-header profile-skeleton-header">
+            <div className="skeleton-avatar shimmer" />
+            <div className="skeleton-profile-copy">
+              <div className="skeleton-line shimmer skeleton-name" />
+              <div className="skeleton-line shimmer skeleton-email" />
+              <div className="skeleton-badge-row">
+                <div className="skeleton-badge shimmer" />
+                <div className="skeleton-badge shimmer" />
+                <div className="skeleton-badge shimmer" />
+              </div>
+            </div>
+            <div className="skeleton-actions">
+              <div className="skeleton-button shimmer" />
+              <div className="skeleton-button shimmer" />
+            </div>
+          </div>
+
+          <div className="profile-content">
+            {[0, 1, 2].map((card) => (
+              <div className="info-card-modern skeleton-card" key={card}>
+                <div className="skeleton-line shimmer skeleton-card-title" />
+                <div className="skeleton-grid">
+                  {[0, 1, 2, 3, 4, 5].map((item) => (
+                    <div className="skeleton-field" key={item}>
+                      <div className="skeleton-line shimmer skeleton-label" />
+                      <div className="skeleton-line shimmer skeleton-value" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -732,7 +741,7 @@ const PatientProfile = () => {
           <button
             className="btn-secondary btn-location"
             onClick={handleUpdateLocation}
-            disabled={loading || isUpdatingLocation}
+            disabled={isSaving || isUpdatingLocation}
             title="Send your current GPS coordinates to the server"
           >
             {isUpdatingLocation ? (
@@ -746,18 +755,12 @@ const PatientProfile = () => {
           <button
             className="btn-primary"
             onClick={openEditModal}
-            disabled={loading}
+            disabled={isSaving}
           >
             ✏️ Edit Profile
           </button>
         </div>
       </div>
-
-      <PasswordChangePage
-        email={patientData.personalInfo.email}
-        hasPassword={patientData.security.hasPassword}
-        onPasswordUpdated={handlePasswordUpdated}
-      />
 
       {/* Main Content */}
       <div className="profile-content">
@@ -1488,14 +1491,14 @@ const PatientProfile = () => {
               <button
                 className="btn-secondary"
                 onClick={handleCancelEdit}
-                disabled={loading}
+                disabled={isSaving}
               >
                 Cancel
               </button>
               <button
                 className="btn-primary"
                 onClick={handleSaveProfile}
-                disabled={loading || !emailReady || !phoneReady}
+                disabled={isSaving || !emailReady || !phoneReady}
                 title={
                   !emailReady
                     ? "Verify your new email via OTP first"
@@ -1504,7 +1507,7 @@ const PatientProfile = () => {
                       : ""
                 }
               >
-                {loading ? "Saving..." : "Save Changes"}
+                {isSaving ? "Saving..." : "Save Changes"}
               </button>
             </div>
           </div>

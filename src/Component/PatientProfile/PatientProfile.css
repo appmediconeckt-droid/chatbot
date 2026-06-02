@@ -43,26 +43,124 @@
   }
 }
 
-/* Loading Spinner */
-.loading-spinner {
+/* Profile Skeleton */
+.profile-skeleton {
   display: flex;
   flex-direction: column;
+  gap: 24px;
+}
+
+.profile-skeleton-header {
   align-items: center;
-  justify-content: center;
-  height: 60vh;
 }
 
-.spinner {
-  width: 50px;
-  height: 50px;
-  border: 4px solid #e2e8f0;
-  border-top-color: #667eea;
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  background: #e8edf5;
+}
+
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.7) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: skeletonShimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-avatar {
+  width: 128px;
+  height: 128px;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  flex: 0 0 auto;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-profile-copy {
+  flex: 1;
+  min-width: 220px;
+}
+
+.skeleton-line {
+  border-radius: 999px;
+}
+
+.skeleton-name {
+  width: min(320px, 70%);
+  height: 28px;
+  margin-bottom: 14px;
+}
+
+.skeleton-email {
+  width: min(420px, 82%);
+  height: 16px;
+  margin-bottom: 18px;
+}
+
+.skeleton-badge-row,
+.skeleton-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.skeleton-badge {
+  width: 92px;
+  height: 32px;
+  border-radius: 999px;
+}
+
+.skeleton-actions {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+
+.skeleton-button {
+  width: 150px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-card-title {
+  width: 220px;
+  height: 24px;
+  margin-bottom: 22px;
+}
+
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 18px;
+}
+
+.skeleton-field {
+  padding: 14px 0;
+}
+
+.skeleton-label {
+  width: 38%;
+  height: 12px;
+  margin-bottom: 12px;
+}
+
+.skeleton-value {
+  width: 72%;
+  height: 18px;
 }
 
 /* Profile Header */

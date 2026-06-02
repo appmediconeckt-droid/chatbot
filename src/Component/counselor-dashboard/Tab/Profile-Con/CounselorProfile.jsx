@@ -3,7 +3,6 @@ import axios from 'axios';
 import './CounselorProfile.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import { captureAndSendLocation } from '../../../../authtication/locationHelper';
-import PasswordChangePage from '../../../ChangesPassword/PasswordChangePage';
 
 // Unique class name prefix to avoid conflicts
 const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
@@ -235,7 +234,6 @@ const CounselorProfile = () => {
                 refreshToken: refreshToken,
                 headers: {
                     Authorization: `Bearer ${accessToken}`,
-                    'Content-Type': 'multipart/form-data'
                 }
             });
 
@@ -265,6 +263,18 @@ const CounselorProfile = () => {
     // Profile Photo Handlers
     const handleProfilePhotoUpload = (file) => {
         if (file) {
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+            if (!allowedTypes.includes(file.type)) {
+                setError('Only JPG, PNG, GIF, and WEBP images are allowed for profile photo.');
+                setTimeout(() => setError(''), 3000);
+                return;
+            }
+            if (file.size > 10 * 1024 * 1024) {
+                setError('Profile photo must be less than 10MB.');
+                setTimeout(() => setError(''), 3000);
+                return;
+            }
+
             const photoUrl = URL.createObjectURL(file);
             setEditedData(prev => ({
                 ...prev,

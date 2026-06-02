@@ -178,7 +178,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
           <h2>Password Security</h2>
           <p>
             {mode === "set"
-              ? "Add a password to sign in without Google."
+              ? "Add or reset your password using email OTP."
               : "Change your account password."}
           </p>
         </div>
@@ -244,7 +244,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
             />
           </div>
           <button type="submit" className="password-security-panel__primary" disabled={loading}>
-            {loading ? "Saving..." : "Set Password"}
+            {loading ? "Saving..." : "Save Password"}
           </button>
         </form>
       ) : (

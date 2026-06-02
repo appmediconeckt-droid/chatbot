@@ -22,6 +22,7 @@ import CounselorProfile from "../Tab/Profile-Con/CounselorProfile";
 import VideoCallModal from "../../UserDashboard/Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
 import LocationNoticeToast from "../../common/LocationNoticeToast";
+import AccountSettings from "../../Settings/AccountSettings";
 
 import { getAuthToken, getCounsellorId } from "./hooks/counsellorAuth";
 import useCounsellorData from "./hooks/useCounsellorData";
@@ -328,9 +329,10 @@ export default function CounselorDashboard() {
 
         {activeTab === "settings" && (
           <div className="couns-tab-content">
-            <div className="couns-work-in-progress">
-              The remaining work is currently in progress.
-            </div>
+            <AccountSettings
+              role="counsellor"
+              onOpenProfile={() => handleTabChange("profile")}
+            />
           </div>
         )}
       </div>
