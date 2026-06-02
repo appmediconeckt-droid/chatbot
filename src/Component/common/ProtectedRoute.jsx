@@ -8,7 +8,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (!token || !isAuthenticated) {
     // Not logged in, redirect to login
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/role-selector" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(userRole)) {
