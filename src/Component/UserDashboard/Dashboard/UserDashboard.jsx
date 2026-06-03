@@ -30,6 +30,8 @@ import {
   FaVideo as FaVideoIcon,
   FaStop,
   FaRedoAlt,
+  FaVolumeUp,
+  FaSpinner,
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
@@ -61,7 +63,172 @@ const ChatPopup = ({
   chatBodyRef,
   handleCounselorClick,
   sendQuickReply,
+  sendChat,
 }) => {
+  const [isRecording, setIsRecording] = React.useState(false);
+  const [speakingId, setSpeakingId] = React.useState(null);
+  const [ttsLoadingId, setTtsLoadingId] = React.useState(null);
+  const recognitionRef = React.useRef(null);
+  const audioRef = React.useRef(null);
+  const sendChatRef = React.useRef(sendChat);
+
+  React.useEffect(() => {
+    sendChatRef.current = sendChat;
+  }, [sendChat]);
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser. Try Chrome.");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript.trim();
+      if (transcript && sendChatRef.current) {
+        sendChatRef.current(transcript);
+      }
+    };
+
+    recognition.onerror = () => setIsRecording(false);
+    recognition.onend = () => setIsRecording(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  const speakMessage = async (messageId, text) => {
+    // Stop if already speaking this message
+    if (speakingId === messageId) {
+      audioRef.current?.pause();
+      window.speechSynthesis?.cancel();
+      setSpeakingId(null);
+      return;
+    }
+    // Stop any previous audio
+    audioRef.current?.pause();
+    window.speechSynthesis?.cancel();
+    setSpeakingId(null);
+    setTtsLoadingId(messageId);
+
+    try {
+      const token =
+        localStorage.getItem("accessToken") || localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/api/ai-chat/tts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) throw new Error("TTS backend failed");
+
+      const blob = await response.blob();
+      if (blob.size === 0) throw new Error("Empty audio response");
+
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      setSpeakingId(messageId);
+      setTtsLoadingId(null);
+
+      await audio.play();
+      audio.onended = () => {
+        setSpeakingId(null);
+        URL.revokeObjectURL(url);
+      };
+      audio.onerror = () => {
+        setSpeakingId(null);
+        URL.revokeObjectURL(url);
+      };
+    } catch (err) {
+      console.warn("[TTS] Backend failed, using browser fallback:", err.message);
+      // Browser Web Speech API fallback — auto language + female voice
+      if (window.speechSynthesis) {
+        // Detect language from text
+        const detectLang = (t) => {
+          if (/[ऀ-ॿ]/.test(t)) return "hi-IN";        // Hindi (Devanagari script)
+          if (/[؀-ۿ]/.test(t)) return "ur-PK";        // Urdu
+          if (/[ঀ-৿]/.test(t)) return "bn-IN";        // Bengali
+          if (/[஀-௿]/.test(t)) return "ta-IN";        // Tamil
+          if (/[ఀ-౿]/.test(t)) return "te-IN";        // Telugu
+          if (/[ऀ-ॿ]/.test(t)) return "mr-IN";        // Marathi
+          // Hindi words written in English (romanized)
+          if (/\b(kya|hai|nahi|aap|hum|tum|mera|tera|yeh|woh|acha|theek|bilkul|bahut|bohot|abhi|phir|bhi|toh|haan|nahi|kaise|kahan|kab|kyun)\b/i.test(t)) return "hi-IN";
+          return "en-US"; // default English
+        };
+
+        const lang = detectLang(text);
+
+        // Female voice preferences per language
+        const femaleVoiceNames = {
+          "hi-IN": /lekha|aditi|google hindi|hindi female|hi.in/i,
+          "en-US": /samantha|zira|google us english|microsoft zira|female|woman/i,
+          "en-GB": /google uk english female|kate|serena|emily/i,
+          "en-IN": /google hindi|veena|rishi|en.in/i,
+          "ur-PK": /urdu|ur.pk/i,
+          "bn-IN": /bengali|bn.in/i,
+          "ta-IN": /tamil|lekha|ta.in/i,
+          "te-IN": /telugu|te.in/i,
+          "mr-IN": /marathi|mr.in/i,
+        };
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.rate = lang === "hi-IN" ? 0.9 : 0.95;
+        utterance.pitch = 1.2;
+        utterance.volume = 1;
+
+        const applyVoice = () => {
+          const voices = window.speechSynthesis.getVoices();
+          const pattern = femaleVoiceNames[lang] || femaleVoiceNames["en-US"];
+
+          const voice =
+            voices.find(v => v.lang === lang && pattern.test(v.name)) ||
+            voices.find(v => v.lang === lang) ||
+            voices.find(v => v.lang.startsWith(lang.split("-")[0]) && pattern.test(v.name)) ||
+            voices.find(v => v.lang.startsWith(lang.split("-")[0])) ||
+            voices.find(v => pattern.test(v.name)) ||
+            voices.find(v => v.lang === "en-US") ||
+            voices[0];
+
+          if (voice) utterance.voice = voice;
+        };
+
+        if (window.speechSynthesis.getVoices().length > 0) {
+          applyVoice();
+        } else {
+          window.speechSynthesis.onvoiceschanged = applyVoice;
+        }
+
+        utterance.onstart = () => setSpeakingId(messageId);
+        utterance.onend = () => setSpeakingId(null);
+        utterance.onerror = () => setSpeakingId(null);
+        setTtsLoadingId(null);
+        window.speechSynthesis.speak(utterance);
+      } else {
+        setSpeakingId(null);
+      }
+    } finally {
+      setTtsLoadingId(null);
+    }
+  };
+
   const renderMessageText = (text) => {
     if (!text) return null;
     const parts = text.split(/(\[.*?\])/g);
@@ -88,12 +255,18 @@ const ChatPopup = ({
       <div className="ud-chat-popup">
         <div className="ud-chat-popup-header">
           <div className="ud-chat-header-info">
-            <div className="ud-chat-avatar">
-              <FaRobot />
+            <div className="ud-chat-avatar-wrap">
+              <div className="ud-chat-avatar ud-chat-avatar--bounce">
+                <FaRobot />
+              </div>
+              <span className="ud-chat-avatar-dot" />
             </div>
             <div>
-              <h3>MediConeckt AI Assistant</h3>
-              <p className="ud-chat-status">Online • 24/7 Support</p>
+              <h3>MediConeckt AI</h3>
+              <p className="ud-chat-status">
+                <span className="ud-status-dot" />
+                Online • Always here
+              </p>
             </div>
           </div>
           <div className="ud-chat-header-actions">
@@ -120,6 +293,12 @@ const ChatPopup = ({
             </button>
           </div>
         </div>
+        {/* Curved bottom edge of header */}
+        <div className="ud-chat-header-curve" aria-hidden="true">
+          <svg viewBox="0 0 320 20" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,0 L320,0 L320,0 Q160,20 0,0 Z" fill="#f9fafb"/>
+          </svg>
+        </div>
         <div className="ud-chat-popup-body" ref={chatBodyRef}>
           {messages.map((message) => (
             <div
@@ -133,6 +312,24 @@ const ChatPopup = ({
               )}
               <div className="ud-chat-bubble">
                 {renderMessageText(message.text)}
+                {message.sender === "ai" && (
+                  <div className="ud-chat-bubble-actions">
+                    <button
+                      type="button"
+                      className={`ud-tts-btn ${speakingId === message.id ? "ud-tts-btn--playing" : ""}`}
+                      onClick={() => speakMessage(message.id, message.text)}
+                      disabled={ttsLoadingId === message.id}
+                      title={speakingId === message.id ? "Stop speaking" : "Listen to response"}
+                      aria-label={speakingId === message.id ? "Stop" : "Speak"}
+                    >
+                      {ttsLoadingId === message.id ? (
+                        <FaSpinner className="ud-tts-spinner" aria-hidden="true" />
+                      ) : (
+                        <FaVolumeUp aria-hidden="true" />
+                      )}
+                    </button>
+                  </div>
+                )}
                 {message.sender === "ai" &&
                   Array.isArray(message.quickReplies) &&
                   message.quickReplies.length > 0 && (
@@ -174,18 +371,31 @@ const ChatPopup = ({
           )}
         </div>
         <div className="ud-chat-popup-footer">
-          <input
-            type="text"
-            placeholder="Type your message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="ud-chat-input"
-          />
+          <div className="ud-chat-input-wrap">
+            <input
+              type="text"
+              placeholder={isRecording ? "Listening…" : "Type a message…"}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="ud-chat-input"
+              readOnly={isRecording}
+            />
+            <button
+              type="button"
+              className={`ud-mic-btn ${isRecording ? "ud-mic-btn--recording" : ""}`}
+              onClick={toggleRecording}
+              title={isRecording ? "Click to stop" : "Click to speak"}
+              aria-label={isRecording ? "Stop recording" : "Start voice input"}
+            >
+              {isRecording ? <FaStop aria-hidden="true" /> : <FaMicrophone aria-hidden="true" />}
+            </button>
+          </div>
           <button
             className="ud-send-btn"
             onClick={sendMessage}
             disabled={isLoading || !newMessage.trim()}
+            aria-label="Send message"
           >
             <FaPaperPlane />
           </button>
@@ -197,10 +407,15 @@ const ChatPopup = ({
 
 // ChatButton Component
 const ChatButton = ({ onClick, unreadCount }) => (
-  <button className="ud-floating-chat-btn" onClick={onClick}>
-    AI
-    {unreadCount > 0 && <span className="ud-unread-badge">{unreadCount}</span>}
-  </button>
+  <div className="ud-floating-chat-wrap">
+    <span className="ud-float-ring ud-float-ring-1" />
+    <span className="ud-float-ring ud-float-ring-2" />
+    <button className="ud-floating-chat-btn" onClick={onClick} title="Chat with AI Assistant" aria-label="Open AI chat">
+      <span className="ud-floating-ai-star" aria-hidden="true">✨</span>
+      <span className="ud-floating-ai-label">AI</span>
+      {unreadCount > 0 && <span className="ud-unread-badge">{unreadCount}</span>}
+    </button>
+  </div>
 );
 
 export default function UserDashboard() {
@@ -1384,6 +1599,7 @@ export default function UserDashboard() {
           chatBodyRef={chatBodyRef}
           handleCounselorClick={handleAIContactClick}
           sendQuickReply={sendQuickReply}
+          sendChat={sendChat}
         />
       )}
 
