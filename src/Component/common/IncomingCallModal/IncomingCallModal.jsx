@@ -6,6 +6,7 @@ import {
   FaUserCircle,
 } from "react-icons/fa";
 import "./IncomingCallModal.css";
+import { getAnonymousUserDisplay } from "../../../utils/anonymousUser";
 
 const EMOJI_AVATARS = new Set(["👨", "👩", "👤"]);
 
@@ -42,8 +43,24 @@ const IncomingCallModal = ({
   const normalizedCallType = normalizeCallType(
     callData?.callType || callData?.type || callType,
   );
+  const fromData = callData?.from || callData?.initiator || {};
+  const fromRole = String(
+    fromData?.role || fromData?.type || callData?.initiatorType || callData?.fromType || "",
+  ).toLowerCase();
+  const isPatientCaller =
+    fromRole === "user" ||
+    fromRole === "patient" ||
+    Boolean(fromData?.anonymous || fromData?.isAnonymous || callData?.patientName);
+  const anonymousCaller = getAnonymousUserDisplay({
+    ...callData,
+    ...fromData,
+  });
 
   const displayName = useMemo(() => {
+    if (isPatientCaller) {
+      return anonymousCaller.name;
+    }
+
     if (callData?.from?.isAnonymous) {
       return typeof callData.from.isAnonymous === "string"
         ? callData.from.isAnonymous
@@ -56,10 +73,11 @@ const IncomingCallModal = ({
       callerName ||
       fallbackName
     );
-  }, [callData, callerName, fallbackName]);
+  }, [anonymousCaller.name, callData, callerName, fallbackName, isPatientCaller]);
 
-  const profilePhoto =
-    callData?.from?.profilePhoto || callData?.from?.avatar || callerImage;
+  const profilePhoto = isPatientCaller
+    ? anonymousCaller.avatarUrl || anonymousCaller.avatar
+    : callData?.from?.profilePhoto || callData?.from?.avatar || callerImage;
 
   const requestedTime = formatRequestTime(
     callData?.requestedAt || callData?.createdAt,

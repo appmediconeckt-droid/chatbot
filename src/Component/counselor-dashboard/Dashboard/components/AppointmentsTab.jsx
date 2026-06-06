@@ -3,10 +3,10 @@ import {
   FaCalendarAlt,
   FaTimes,
   FaArrowRight,
-  FaUser,
   FaBrain,
   FaVideo,
 } from "react-icons/fa";
+import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 
 export default function AppointmentsTab({
   appointments,
@@ -16,6 +16,12 @@ export default function AppointmentsTab({
   handleUpdateAppointmentStatus,
   handleInitiateVideoCall,
 }) {
+  const getAppointmentDisplay = (appointment) =>
+    getAnonymousUserDisplay({
+      ...appointment,
+      ...(appointment?.user || appointment?.patient || appointment?.client || {}),
+    });
+
   return (
     <div className="couns-tab-content-stitch">
       <div className="stitch-apt-layout">
@@ -55,81 +61,93 @@ export default function AppointmentsTab({
                 No pending appointment requests.
               </div>
             ) : (
-              appointments.map((apt) => (
-                <div
-                  key={apt._id}
-                  className="stitch-apt-card"
-                  style={{ position: "relative" }}
-                >
-                  <div>
-                    <div className="stitch-apt-card-top">
-                      <div className="stitch-apt-avatar">
-                        <FaUser />
-                      </div>
-                      <div className="stitch-apt-info">
-                        <h3>Anonymous</h3>
-                        <div className="stitch-apt-tag">
-                          <FaBrain />
-                          INITIAL CONSULTATION
+              appointments.map((apt) => {
+                const anonymousUser = getAppointmentDisplay(apt);
+
+                return (
+                  <div
+                    key={apt._id}
+                    className="stitch-apt-card"
+                    style={{ position: "relative" }}
+                  >
+                    <div>
+                      <div className="stitch-apt-card-top">
+                        <div className="stitch-apt-avatar">
+                          {anonymousUser.avatarUrl ? (
+                            <img
+                              src={anonymousUser.avatarUrl}
+                              alt={anonymousUser.name}
+                              className="stitch-apt-avatar-img"
+                            />
+                          ) : (
+                            <span>{anonymousUser.avatar}</span>
+                          )}
+                        </div>
+                        <div className="stitch-apt-info">
+                          <h3>{anonymousUser.name}</h3>
+                          <div className="stitch-apt-tag">
+                            <FaBrain />
+                            INITIAL CONSULTATION
+                          </div>
                         </div>
                       </div>
+
+                      <div className={`status-badge-stitch ${apt.status}`}>
+                        {apt.status.toUpperCase()}
+                      </div>
+
+                      {apt.notes && apt.notes.trim() !== "" && (
+                        <div
+                          style={{
+                            marginTop: "16px",
+                            padding: "12px",
+                            backgroundColor: "#f8fafc",
+                            borderRadius: "8px",
+                            fontSize: "13px",
+                            color: "#475569",
+                            borderLeft: "3px solid #cbd5e1",
+                            fontStyle: "italic",
+                          }}
+                        >
+                          "{apt.notes}"
+                        </div>
+                      )}
+
+                      <div className="stitch-apt-time">
+                        <span className="stitch-apt-time-label">Requested:</span>
+                        <span className="stitch-apt-time-value">
+                          {new Date(apt.date).toLocaleDateString("en-US", {
+                            weekday: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
                     </div>
 
-                    <div className={`status-badge-stitch ${apt.status}`}>
-                      {apt.status.toUpperCase()}
-                    </div>
-
-                    {apt.notes && apt.notes.trim() !== "" && (
-                      <div
-                        style={{
-                          marginTop: "16px",
-                          padding: "12px",
-                          backgroundColor: "#f8fafc",
-                          borderRadius: "8px",
-                          fontSize: "13px",
-                          color: "#475569",
-                          borderLeft: "3px solid #cbd5e1",
-                          fontStyle: "italic",
-                        }}
-                      >
-                        "{apt.notes}"
+                    {apt.status === "pending" && (
+                      <div className="stitch-apt-actions">
+                        <button
+                          className="stitch-btn-accept"
+                          onClick={() =>
+                            handleUpdateAppointmentStatus(apt._id, "confirmed")
+                          }
+                        >
+                          Accept
+                        </button>
+                        <button
+                          className="stitch-btn-reject"
+                          onClick={() =>
+                            handleUpdateAppointmentStatus(apt._id, "canceled")
+                          }
+                        >
+                          Reject
+                        </button>
                       </div>
                     )}
-
-                    <div className="stitch-apt-time">
-                      <span className="stitch-apt-time-label">Requested:</span>
-                      <span className="stitch-apt-time-value">
-                        {new Date(apt.date).toLocaleDateString("en-US", {
-                          weekday: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
                   </div>
-
-                  {apt.status === "pending" && (
-                    <div className="stitch-apt-actions">
-                      <button
-                        className="stitch-btn-accept"
-                        onClick={() =>
-                          handleUpdateAppointmentStatus(apt._id, "confirmed")
-                        }
-                      >
-                        Accept
-                      </button>
-                      <button
-                        className="stitch-btn-reject"
-                        onClick={() =>
-                          handleUpdateAppointmentStatus(apt._id, "canceled")
-                        }
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
@@ -169,6 +187,7 @@ export default function AppointmentsTab({
                   .filter((apt) => apt.status === "confirmed")
                   .sort((a, b) => new Date(a.date) - new Date(b.date))
                   .map((apt, index) => {
+                    const anonymousUser = getAppointmentDisplay(apt);
                     const dateObj = new Date(apt.date);
                     const timeParts = dateObj
                       .toLocaleTimeString("en-US", {
@@ -195,7 +214,9 @@ export default function AppointmentsTab({
                         </div>
                         <div className={`stitch-schedule-line ${color}`}></div>
                         <div className="stitch-schedule-details">
-                          <div className="stitch-schedule-name">Anonymous</div>
+                          <div className="stitch-schedule-name">
+                            {anonymousUser.name}
+                          </div>
                           <div className="stitch-schedule-type">
                             {!isToday && (
                               <span

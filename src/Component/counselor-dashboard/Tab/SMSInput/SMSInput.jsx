@@ -8,6 +8,11 @@ import socketService from "../../../../services/socketService";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
+import {
+  getAnonymousParticipantId,
+  getAnonymousUserAvatar,
+  getAnonymousUserDisplay,
+} from "../../../../utils/anonymousUser";
 
 const SMSInput = () => {
   const location = useLocation();
@@ -138,44 +143,20 @@ const SMSInput = () => {
 
   const getSelectedUserId = () => {
     if (!selectedUser) return null;
-    return (
-      selectedUser.receiverId ||
-      selectedUser._id ||
-      selectedUser.id ||
-      selectedUser.userId ||
-      selectedUser.user_id ||
-      selectedUser.user?._id ||
-      selectedUser.user?.id ||
-      selectedUser.user?.userId ||
-      selectedUser.otherParty?._id ||
-      selectedUser.otherParty?.id ||
-      null
-    );
+    return getAnonymousParticipantId(selectedUser);
   };
 
   const getUserDetails = () => {
     const id = getSelectedUserId();
+    const anonymousUser = getAnonymousUserDisplay(selectedUser);
     return {
       id,
-      name:
-        selectedUser?.name ||
-        selectedUser?.fullName ||
-        selectedUser?.user?.name ||
-        selectedUser?.otherParty?.name ||
-        "User",
-      gender:
-        selectedUser?.gender ||
-        selectedUser?.user?.gender ||
-        selectedUser?.otherParty?.gender,
-      phone:
-        selectedUser?.phone ||
-        selectedUser?.phoneNumber ||
-        selectedUser?.user?.phone ||
-        selectedUser?.otherParty?.phone,
-      email:
-        selectedUser?.email ||
-        selectedUser?.user?.email ||
-        selectedUser?.otherParty?.email,
+      name: anonymousUser.name,
+      gender: anonymousUser.gender,
+      avatar: anonymousUser.avatar,
+      avatarUrl: anonymousUser.avatarUrl,
+      phone: "Not available",
+      email: "Not available",
     };
   };
 
@@ -192,9 +173,7 @@ const SMSInput = () => {
   }, [selectedUser]);
 
   const getAvatarByGender = (gender) => {
-    if (gender === "male") return "👨";
-    if (gender === "female") return "👩";
-    return "👤";
+    return getAnonymousUserAvatar({ gender });
   };
 
   const getChatIdForAPI = () => {
@@ -497,11 +476,11 @@ const SMSInput = () => {
           id: response.data.callData?.id,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name: selectedUser.name || USER_NAME,
+          name: USER_NAME,
           type: normalizedMode,
           callType: normalizedMode,
-          profilePic: getAvatarByGender(selectedUser.gender),
-          phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
+          profilePic: userDetails.avatarUrl || getAvatarByGender(userDetails.gender),
+          phoneNumber: "Not available",
           status: response.data.status || "ringing",
           date: "Today",
           time: new Date().toLocaleTimeString([], {
@@ -799,21 +778,17 @@ const SMSInput = () => {
           }
 
           const fromData = waitingCall.from || {};
-          let displayName = "Anonymous User";
-          if (fromData.isAnonymous) displayName = fromData.isAnonymous;
-          else if (fromData.displayName) displayName = fromData.displayName;
-          else if (fromData.fullName) displayName = fromData.fullName;
-          else if (fromData.name) displayName = fromData.name;
-          let avatar = "👤";
-          if (fromData.gender === "female") avatar = "👩";
-          else if (fromData.gender === "male") avatar = "👨";
+          const anonymousCaller = getAnonymousUserDisplay({
+            ...waitingCall,
+            ...fromData,
+          });
           setIncomingCallData({
             callId: waitingCall.callId || waitingCall.id || waitingCall._id,
             id: waitingCall.id || waitingCall.callId || waitingCall._id || "",
             _id: waitingCall._id || waitingCall.callId || waitingCall.id || "",
             roomId: waitingCall.roomId || waitingCall.callId || waitingCall.id,
-            name: displayName,
-            avatar: avatar,
+            name: anonymousCaller.name,
+            avatar: anonymousCaller.avatarUrl || anonymousCaller.avatar,
             callType: waitingCall.callType || "video",
             requestMessage:
               waitingCall.requestMessage ||
@@ -869,9 +844,7 @@ const SMSInput = () => {
   const handleBack = () =>
     navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
   const getAvatarIcon = (gender) => {
-    if (gender === "male") return "👨";
-    if (gender === "female") return "👩";
-    return "👤";
+    return getAnonymousUserAvatar({ gender });
   };
   // Handle scroll events to detect if user is near bottom
   const handleScroll = useCallback(() => {
@@ -1099,9 +1072,17 @@ const SMSInput = () => {
           </button>
           <div className="smsinput-user-info">
             <div className="smsinput-user-avatar">
-              <span className="avatar-icon">
-                {getAvatarIcon(userDetails.gender)}
-              </span>
+              {userDetails.avatarUrl ? (
+                <img
+                  src={userDetails.avatarUrl}
+                  alt={USER_NAME}
+                  className="smsinput-user-avatar-img"
+                />
+              ) : (
+                <span className="avatar-icon">
+                  {getAvatarIcon(userDetails.gender)}
+                </span>
+              )}
               <span
                 className={`status-dot ${remoteStatusClass}`}
               ></span>

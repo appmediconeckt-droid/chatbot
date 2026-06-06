@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { getAuthToken, getCounsellorId } from "./counsellorAuth";
+import {
+  getAnonymousParticipantId,
+  getAnonymousUserDisplay,
+} from "../../../../utils/anonymousUser";
 
 export default function useCallManagement({ vibrate, startRinging, stopRinging }) {
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
@@ -13,9 +17,10 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
   const [isPolling, setIsPolling] = useState(true);
 
   const handleInitiateVideoCall = async (apt) => {
-    const patientInfo = apt.patient || {};
+    const patientInfo = { ...apt, ...(apt.patient || apt.user || apt.client || {}) };
+    const anonymousPatient = getAnonymousUserDisplay(patientInfo);
     const counselorId = getCounsellorId();
-    const userId = patientInfo._id || patientInfo.id;
+    const userId = getAnonymousParticipantId(patientInfo);
     const token = getAuthToken();
 
     if (!userId) {
@@ -46,8 +51,8 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
           id: response.data.callData?.id,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name: patientInfo.anonymous || "Anonymous User",
-          profilePic: patientInfo.profilePhoto,
+          name: anonymousPatient.name,
+          profilePic: anonymousPatient.avatarUrl || anonymousPatient.avatar,
           isIncoming: false,
           callType: "video",
           currentUserId: counselorId,
@@ -212,21 +217,40 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
           ? detailedCall.receiver
           : detailedCall.initiator
         : callData?.from || null;
+      const remoteRole = String(
+        remoteParticipant?.role ||
+          remoteParticipant?.type ||
+          callData?.initiatorType ||
+          "",
+      ).toLowerCase();
+      const isPatientRemote =
+        remoteRole === "user" ||
+        remoteRole === "patient" ||
+        Boolean(remoteParticipant?.anonymous || callData?.patientName);
+      const anonymousRemote = getAnonymousUserDisplay({
+        ...callData,
+        ...(remoteParticipant || {}),
+      });
 
       const acceptedCallData = {
         id: detailedCall?.id || resolvedCallId,
         callId: resolvedCallId,
         roomId: result.data?.roomId || detailedCall?.roomId || callData.roomId,
-        name:
-          remoteParticipant?.displayName ||
-          remoteParticipant?.fullName ||
-          callData.name,
+        name: isPatientRemote
+          ? anonymousRemote.name
+          : remoteParticipant?.displayName ||
+            remoteParticipant?.fullName ||
+            callData.name,
         isIncoming: true,
         status: result.data?.status || detailedCall?.status || "active",
         type: modalType,
         callType: modalType,
-        profilePic: remoteParticipant?.profilePhoto || callData.image || null,
-        phoneNumber: remoteParticipant?.phoneNumber || remoteParticipant?.phone || "",
+        profilePic: isPatientRemote
+          ? anonymousRemote.avatarUrl || anonymousRemote.avatar
+          : remoteParticipant?.profilePhoto || callData.image || null,
+        phoneNumber: isPatientRemote
+          ? "Not available"
+          : remoteParticipant?.phoneNumber || remoteParticipant?.phone || "",
         apiCallData: detailedCall,
         receiver: detailedCall?.receiver,
         currentUserId: counsellorId,
@@ -298,22 +322,16 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
 
         if (waitingCall && !showIncomingCallModal && !isVideoModalOpen) {
           const fromData = waitingCall.from || waitingCall.initiator || {};
-
-          let displayName = "Anonymous";
-          if (fromData.isAnonymous) displayName = fromData.isAnonymous;
-          else if (fromData.displayName) displayName = fromData.displayName;
-          else if (fromData.fullName) displayName = fromData.fullName;
-          else if (fromData.name) displayName = fromData.name;
-
-          let initiatorAvatar = "👤";
-          if (fromData.gender === "female") initiatorAvatar = "👩";
-          else if (fromData.gender === "male") initiatorAvatar = "👨";
+          const anonymousCaller = getAnonymousUserDisplay({
+            ...waitingCall,
+            ...fromData,
+          });
 
           setIncomingCallData({
             callId: waitingCall.callId || waitingCall.id || waitingCall._id,
             roomId: waitingCall.roomId,
-            name: displayName,
-            image: initiatorAvatar,
+            name: anonymousCaller.name,
+            image: anonymousCaller.avatarUrl || anonymousCaller.avatar,
             callType: waitingCall.callType || "video",
             from: fromData,
             initiator: waitingCall.initiator,

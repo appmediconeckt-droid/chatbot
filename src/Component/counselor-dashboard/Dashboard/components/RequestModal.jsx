@@ -1,5 +1,6 @@
 import React from "react";
 import { FaUsers, FaCheck, FaTimes as FaClose } from "react-icons/fa";
+import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 
 export default function RequestModal({
   showRequestModal,
@@ -10,6 +11,10 @@ export default function RequestModal({
   handleRejectRequest,
 }) {
   if (!showRequestModal || !currentRequest) return null;
+  const anonymousUser = getAnonymousUserDisplay({
+    ...currentRequest,
+    ...(currentRequest.user || currentRequest.patient || currentRequest.from || {}),
+  });
 
   return (
     <div className="couns-request-modal-overlay" onClick={() => {}}>
@@ -33,12 +38,17 @@ export default function RequestModal({
 
         <div className="couns-request-modal-body">
           <div className="couns-request-patient-info">
-            <div className="couns-request-patient-name">
-              <h4>
-                {currentRequest.user?.anonymous ||
-                  currentRequest.patientName ||
-                  "Unknown User"}
-              </h4>
+            <div className="couns-request-patient-main">
+              <div className="couns-request-avatar">
+                {anonymousUser.avatarUrl ? (
+                  <img src={anonymousUser.avatarUrl} alt={anonymousUser.name} />
+                ) : (
+                  <span>{anonymousUser.avatar}</span>
+                )}
+              </div>
+              <div className="couns-request-patient-name">
+                <h4>{anonymousUser.name}</h4>
+              </div>
             </div>
             <div className="couns-request-type">
               <span className="couns-request-type-badge">Chat Request</span>

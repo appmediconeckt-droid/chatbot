@@ -7,47 +7,47 @@ const PatientRequests = () => {
   const [patients, setPatients] = useState([
     {
       id: 'PT001',
-      name: 'Rahul Sharma',
+      name: 'Anonymous User',
       age: 28,
       gender: 'Male',
       issue: 'Anxiety and Stress',
       requestedDate: '2024-01-15',
       status: 'pending',
       priority: 'high',
-      contact: '+91 98765 43210'
+      contact: 'Not available'
     },
     {
       id: 'PT002',
-      name: 'Priya Patel',
+      name: 'Anonymous User',
       age: 32,
       gender: 'Female',
       issue: 'Depression',
       requestedDate: '2024-01-14',
       status: 'pending',
       priority: 'medium',
-      contact: '+91 98765 43211'
+      contact: 'Not available'
     },
     {
       id: 'PT003',
-      name: 'Amit Kumar',
+      name: 'Anonymous User',
       age: 45,
       gender: 'Male',
       issue: 'Work-life balance',
       requestedDate: '2024-01-14',
       status: 'pending',
       priority: 'low',
-      contact: '+91 98765 43212'
+      contact: 'Not available'
     },
     {
       id: 'PT004',
-      name: 'Neha Singh',
+      name: 'Anonymous User',
       age: 24,
       gender: 'Female',
       issue: 'Relationship counseling',
       requestedDate: '2024-01-13',
       status: 'pending',
       priority: 'high',
-      contact: '+91 98765 43213'
+      contact: 'Not available'
     }
   ]);
 

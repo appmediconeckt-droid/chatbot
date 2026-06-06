@@ -3,6 +3,11 @@ import { useNavigate } from "react-router-dom";
 import "./Messagesou.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
+import {
+  getAnonymousParticipantId,
+  getAnonymousUserAvatar,
+  getAnonymousUserDisplay,
+} from "../../../../utils/anonymousUser";
 /**
  * SMSList Component - Fetches and displays users/patients list from API
  * Displays anonymous name and gender-based avatar icons (no photos)
@@ -134,14 +139,21 @@ const SMSList = () => {
         // Transform API data to match component structure
         const transformedUsers = (data.chats || []).map((chat) => {
           const otherParty = chat.otherParty || {};
-          const displayName =
-            otherParty.anonymous || otherParty.name || "Anonymous User";
+          const anonymousUser = getAnonymousUserDisplay(otherParty);
           const actualUserId =
-            otherParty.id ||
-            otherParty._id ||
-            otherParty.userId ||
-            otherParty.user_id ||
+            getAnonymousParticipantId({ ...otherParty, userId: chat.userId }) ||
             chat.userId;
+          const safeOtherParty = {
+            id: actualUserId,
+            _id: actualUserId,
+            userId: actualUserId,
+            anonymous: anonymousUser.name,
+            gender: anonymousUser.gender,
+            avatar: anonymousUser.avatar,
+            avatarUrl: anonymousUser.avatarUrl,
+            isOnline: Boolean(otherParty.isOnline),
+            lastSeen: otherParty.lastSeen || null,
+          };
 
           const lastMessageTime =
             chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
@@ -160,9 +172,12 @@ const SMSList = () => {
             id: chat.chatId,
             _id: actualUserId,
             receiverId: actualUserId,
-            user: otherParty,
+            user: safeOtherParty,
             chatId: chat.chatId,
-            name: displayName,
+            name: anonymousUser.name,
+            gender: anonymousUser.gender,
+            avatar: anonymousUser.avatar,
+            avatarUrl: anonymousUser.avatarUrl,
             lastMessage: chat.lastMessage?.content || "No messages yet",
             time: formatTime(lastMessageTime),
             fullDateTime: formatFullDateTime(lastMessageTime),
@@ -171,8 +186,8 @@ const SMSList = () => {
             status: chatStatus,
             online: Boolean(otherParty.isOnline),
             lastSeen: otherParty.lastSeen || null,
-            phone: otherParty.phone || "Not available",
-            email: otherParty.email || "Not available",
+            phone: "Not available",
+            email: "Not available",
             specialization,
             rating: otherParty.rating,
             isExpired: chat.isExpired,
@@ -337,12 +352,20 @@ const SMSList = () => {
             >
               {/* Avatar with status indicator */}
               <div className="smslist-user-avatar">
-                <div
-                  className="avatar-initials"
-                  style={{ backgroundColor: getAvatarColor(user.name) }}
-                >
-                  {getInitials(user.name)}
-                </div>
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="avatar-image"
+                  />
+                ) : (
+                  <div
+                    className="avatar-initials"
+                    style={{ backgroundColor: getAvatarColor(user.name) }}
+                  >
+                    {user.avatar || getAnonymousUserAvatar(user) || getInitials(user.name)}
+                  </div>
+                )}
                 <span
                   className={`status-dot ${user.online ? "online" : "offline"}`}
                 ></span>

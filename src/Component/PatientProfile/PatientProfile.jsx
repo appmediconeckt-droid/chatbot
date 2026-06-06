@@ -644,6 +644,27 @@ const PatientProfile = () => {
     setProfileImageFile(null);
   };
 
+  const handlePasswordUpdated = ({ hasPassword, requiresLogin } = {}) => {
+    setPatientData((prev) => ({
+      ...prev,
+      security: {
+        ...prev.security,
+        hasPassword: Boolean(hasPassword),
+      },
+    }));
+
+    if (requiresLogin) {
+      showNotificationMessage("Password updated. Please login again.", "success");
+      setTimeout(() => {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("token");
+        localStorage.removeItem("refreshToken");
+        localStorage.removeItem("isAuthenticated");
+        window.location.replace("/user-signup");
+      }, 1400);
+    }
+  };
+
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
     if (name.includes(".")) {
