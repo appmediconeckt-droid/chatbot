@@ -61,6 +61,7 @@ const ChatBox = () => {
   const emojiPickerRef = useRef(null);
   const timeoutRef = useRef(null);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const messageInputRef = useRef(null);
   const chatSocketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -884,6 +885,7 @@ const ChatBox = () => {
   const emojis = ["😊", "😂", "🥰", "😎", "😢", "😡", "👍", "👋", "❤️", "🎉", "🙏", "💪"];
   const optionsMenuItems = [{ id: 1, label: "Refresh Messages", icon: "🔄" }, { id: 2, label: "Clear Chat", icon: "🗑️" }, { id: 3, label: "Report Issue", icon: "⚠️" }, { id: 4, label: "Chat Details", icon: "📋" }];
   const handleFileAttach = () => { if (isSending) return; fileInputRef.current?.click(); };
+  const handlePhotoCapture = () => { if (isSending) return; cameraInputRef.current?.click(); };
   const handleFileSelected = async (e) => {
     const file = e.target.files?.[0];
     if (!file || isSending) return;
@@ -1046,8 +1048,12 @@ const ChatBox = () => {
         <footer className="chatInputArea">
           <div className="chatInputGroup">
             <input ref={fileInputRef} type="file" className="chatHiddenFileInput" onChange={handleFileSelected} style={{ display: "none" }} />
+            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="chatHiddenFileInput" onChange={handleFileSelected} style={{ display: "none" }} />
             <button className="chatAttachBtn" onClick={handleFileAttach} disabled={isSending} aria-label="Attach file">
               <span className="attachIcon" aria-hidden="true">📎</span>
+            </button>
+            <button className="chatCameraBtn" onClick={handlePhotoCapture} disabled={isSending} aria-label="Take photo">
+              <span className="cameraIcon" aria-hidden="true">📷</span>
             </button>
             <div className="chatInputWrapper">
               <input ref={messageInputRef} id="messageInput" type="text" value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder={`Message ${counselorName}...`} className="chatTextInput" autoComplete="off" enterKeyHint="send" aria-label="Message input" />

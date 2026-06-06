@@ -1,7 +1,7 @@
 import { lazy, Suspense, useState, useEffect } from "react";
 import "./App.css";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
-import "../setupAxios"; // 🔥 THIS LINE MAGIC
+import "../setupAxios";
 import ProtectedRoute from "./Component/common/ProtectedRoute";
 
 const Leanding = lazy(() => import("./authtication/Leanding"));

@@ -3,6 +3,8 @@ import axios from "axios";
 import "./PatientProfile.css";
 import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
+import AvatarGenerator from "./AvatarGenerator";
+import AvatarBuilder from "./AvatarBuilder";
 
 
 
@@ -12,6 +14,8 @@ const PatientProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
+  const [showAvatarGen, setShowAvatarGen] = useState(false);
+  const [showAvatarBuilder, setShowAvatarBuilder] = useState(false);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [showNotification, setShowNotification] = useState({
     show: false,
@@ -527,6 +531,11 @@ const PatientProfile = () => {
     );
   };
 
+  const handleAvatarSelect = (avatarUrl) => {
+    setProfileImage(avatarUrl);
+    setProfileImageFile(null); // URL-based avatar, no file upload needed
+  };
+
   const handleSaveProfile = async () => {
     try {
       setIsSaving(true);
@@ -589,6 +598,13 @@ const PatientProfile = () => {
 
       if (profileImageFile) {
         formData.append("profilePhoto", profileImageFile);
+      } else if (
+        profileImage &&
+        typeof profileImage === "string" &&
+        profileImage.startsWith("http")
+      ) {
+        // Avatar URL from generator — store directly without file upload
+        formData.append("avatarUrl", profileImage);
       } else if (
         profileImage === null &&
         patientData.personalInfo.profilePhoto
@@ -990,17 +1006,15 @@ const PatientProfile = () => {
                     )}
                   </div>
                   <div className="upload-actions">
-                    <label className="upload-btn">
-                      📷 Change Photo
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        hidden
-                      />
-                    </label>
-                    {(profileImage ||
-                      patientData.personalInfo.profilePhoto) && (
+                    <button
+                      type="button"
+                      className="upload-btn"
+                      style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", color: "#fff" }}
+                      onClick={() => setShowAvatarBuilder(true)}
+                    >
+                      ✨ Create Avatar
+                    </button>
+                    {(profileImage || patientData.personalInfo.profilePhoto) && (
                       <button
                         type="button"
                         className="remove-btn"
@@ -1010,7 +1024,7 @@ const PatientProfile = () => {
                       </button>
                     )}
                   </div>
-                  <small>JPG, PNG, GIF (max 5MB)</small>
+                  <small>Take a selfie → AI generates your cartoon avatar</small>
                 </div>
               </div>
 
@@ -1512,6 +1526,14 @@ const PatientProfile = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {showAvatarBuilder && (
+        <AvatarBuilder
+          userName={editFormData.name || patientData.personalInfo.name}
+          onSelect={handleAvatarSelect}
+          onClose={() => setShowAvatarBuilder(false)}
+        />
       )}
     </div>
   );

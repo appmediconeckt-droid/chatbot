@@ -51,6 +51,19 @@ import MyAppointments from "../Tab/Appointment/MyAppointments";
 import LocationNoticeToast from "../../common/LocationNoticeToast";
 import AccountSettings from "../../Settings/AccountSettings";
 
+const VOICE_LANGUAGES = [
+  { label: 'English (India)', code: 'en-IN' },
+  { label: 'English (US)',    code: 'en-US' },
+  { label: 'Hindi',          code: 'hi-IN' },
+  { label: 'Tamil',          code: 'ta-IN' },
+  { label: 'Telugu',         code: 'te-IN' },
+  { label: 'Kannada',        code: 'kn-IN' },
+  { label: 'Malayalam',      code: 'ml-IN' },
+  { label: 'Bengali',        code: 'bn-IN' },
+  { label: 'Gujarati',       code: 'gu-IN' },
+  { label: 'Marathi',        code: 'mr-IN' },
+];
+
 const ChatPopup = ({
   messages,
   newMessage,
@@ -64,10 +77,13 @@ const ChatPopup = ({
   handleCounselorClick,
   sendQuickReply,
   sendChat,
+  selectedLang,
+  onLangChange,
 }) => {
   const [isRecording, setIsRecording] = React.useState(false);
   const [speakingId, setSpeakingId] = React.useState(null);
   const [ttsLoadingId, setTtsLoadingId] = React.useState(null);
+  const [showLangPicker, setShowLangPicker] = React.useState(false);
   const recognitionRef = React.useRef(null);
   const audioRef = React.useRef(null);
   const sendChatRef = React.useRef(sendChat);
@@ -91,14 +107,14 @@ const ChatPopup = ({
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = "en-IN";
+    recognition.lang = selectedLang || 'en-IN';
     recognition.interimResults = false;
     recognition.maxAlternatives = 1;
 
     recognition.onresult = (event) => {
       const transcript = event.results[0][0].transcript.trim();
-      if (transcript && sendChatRef.current) {
-        sendChatRef.current(transcript);
+      if (transcript) {
+        setNewMessage(transcript);
       }
     };
 
@@ -133,7 +149,7 @@ const ChatPopup = ({
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, lang: selectedLang }),
       });
 
       if (!response.ok) throw new Error("TTS backend failed");
@@ -160,53 +176,27 @@ const ChatPopup = ({
       console.warn("[TTS] Backend failed, using browser fallback:", err.message);
       // Browser Web Speech API fallback — auto language + female voice
       if (window.speechSynthesis) {
-        // Detect language from text
-        const detectLang = (t) => {
-          if (/[ऀ-ॿ]/.test(t)) return "hi-IN";        // Hindi (Devanagari script)
-          if (/[؀-ۿ]/.test(t)) return "ur-PK";        // Urdu
-          if (/[ঀ-৿]/.test(t)) return "bn-IN";        // Bengali
-          if (/[஀-௿]/.test(t)) return "ta-IN";        // Tamil
-          if (/[ఀ-౿]/.test(t)) return "te-IN";        // Telugu
-          if (/[ऀ-ॿ]/.test(t)) return "mr-IN";        // Marathi
-          // Hindi words written in English (romanized)
-          if (/\b(kya|hai|nahi|aap|hum|tum|mera|tera|yeh|woh|acha|theek|bilkul|bahut|bohot|abhi|phir|bhi|toh|haan|nahi|kaise|kahan|kab|kyun)\b/i.test(t)) return "hi-IN";
-          return "en-US"; // default English
-        };
-
-        const lang = detectLang(text);
-
-        // Female voice preferences per language
-        const femaleVoiceNames = {
-          "hi-IN": /lekha|aditi|google hindi|hindi female|hi.in/i,
-          "en-US": /samantha|zira|google us english|microsoft zira|female|woman/i,
-          "en-GB": /google uk english female|kate|serena|emily/i,
-          "en-IN": /google hindi|veena|rishi|en.in/i,
-          "ur-PK": /urdu|ur.pk/i,
-          "bn-IN": /bengali|bn.in/i,
-          "ta-IN": /tamil|lekha|ta.in/i,
-          "te-IN": /telugu|te.in/i,
-          "mr-IN": /marathi|mr.in/i,
-        };
+        const lang = selectedLang || 'en-IN';
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        utterance.rate = lang === "hi-IN" ? 0.9 : 0.95;
-        utterance.pitch = 1.2;
+        utterance.rate = 0.9;
+        utterance.pitch = 1.15;
         utterance.volume = 1;
 
         const applyVoice = () => {
           const voices = window.speechSynthesis.getVoices();
-          const pattern = femaleVoiceNames[lang] || femaleVoiceNames["en-US"];
-
+          // Priority: exact lang + female keyword → exact lang → Indian English female → any female → first available
+          const femalePattern = /female|woman|girl|lekha|aditi|veena|heera|zira|samantha|google.*female/i;
           const voice =
-            voices.find(v => v.lang === lang && pattern.test(v.name)) ||
+            voices.find(v => v.lang === lang && femalePattern.test(v.name)) ||
             voices.find(v => v.lang === lang) ||
-            voices.find(v => v.lang.startsWith(lang.split("-")[0]) && pattern.test(v.name)) ||
-            voices.find(v => v.lang.startsWith(lang.split("-")[0])) ||
-            voices.find(v => pattern.test(v.name)) ||
-            voices.find(v => v.lang === "en-US") ||
+            voices.find(v => v.lang.startsWith(lang.split('-')[0]) && femalePattern.test(v.name)) ||
+            voices.find(v => v.lang.startsWith(lang.split('-')[0])) ||
+            voices.find(v => v.lang === 'en-IN' && femalePattern.test(v.name)) ||
+            voices.find(v => v.lang === 'en-IN') ||
+            voices.find(v => femalePattern.test(v.name)) ||
             voices[0];
-
           if (voice) utterance.voice = voice;
         };
 
@@ -371,7 +361,53 @@ const ChatPopup = ({
           )}
         </div>
         <div className="ud-chat-popup-footer">
-          <div className="ud-chat-input-wrap">
+          <div className="ud-lang-picker-wrap" style={{ position: 'relative' }}>
+            <button
+              type="button"
+              className="ud-lang-btn"
+              onClick={() => setShowLangPicker(p => !p)}
+              title="Select language"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '4px 8px', borderRadius: 8, border: '1px solid #e2e8f0',
+                background: '#f8fafc', cursor: 'pointer', fontSize: 12,
+                color: '#4f46e5', fontWeight: 600, whiteSpace: 'nowrap',
+              }}
+            >
+              🌐 {VOICE_LANGUAGES.find(l => l.code === selectedLang)?.label?.split(' ')[0] || 'EN'}
+            </button>
+            {showLangPicker && (
+              <div style={{
+                position: 'absolute', bottom: '110%', left: 0,
+                background: '#fff', borderRadius: 12, boxShadow: '0 4px 24px rgba(0,0,0,0.13)',
+                zIndex: 9999, minWidth: 180, padding: '8px 0', border: '1px solid #e2e8f0',
+              }}>
+                <div style={{ padding: '6px 14px 4px', fontSize: 11, color: '#94a3b8', fontWeight: 700, letterSpacing: 1 }}>
+                  SELECT LANGUAGE
+                </div>
+                {VOICE_LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    type="button"
+                    onClick={() => {
+                      setShowLangPicker(false);
+                      if (lang.code !== selectedLang) onLangChange?.(lang.code);
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', padding: '8px 14px', background: 'none', border: 'none',
+                      cursor: 'pointer', fontSize: 13, color: lang.code === selectedLang ? '#4f46e5' : '#1e293b',
+                      fontWeight: lang.code === selectedLang ? 700 : 400,
+                    }}
+                  >
+                    {lang.label}
+                    {lang.code === selectedLang && <span style={{ color: '#4f46e5' }}>✓</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="ud-chat-input-wrap" style={{ flex: 1 }}>
             <input
               type="text"
               placeholder={isRecording ? "Listening…" : "Type a message…"}
@@ -739,11 +775,8 @@ export default function UserDashboard() {
   // turn-based AI reply) is what the user actually sees first. The old
   // hard-coded "Hello! I'm your AI assistant" suppressed the warm onboarding.
   const [chatMessages, setChatMessages] = useState([]);
-  // Tracks the current AI chat session. Backend uses (userId, sessionId) to
-  // load history, so echoing the same id keeps the conversation threaded.
-  // Cleared on reset → next turn has no sessionId → backend treats it as a
-  // brand-new session → onboarding (age/gender/where) fires again.
   const [aiSessionId, setAiSessionId] = useState(null);
+  const [selectedLang, setSelectedLang] = useState('en-IN');
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -774,7 +807,7 @@ export default function UserDashboard() {
        try {
         const response = await axiosInstance.post(
           `${API_BASE_URL}/api/ai-chat/send-message`,
-          { message: "hi", history: [] },
+          { message: "hi", history: [], language: selectedLang },
         );
         if (response.data?.success) {
           if (response.data.data?.sessionId) {
@@ -834,6 +867,7 @@ export default function UserDashboard() {
           message: userMessage.text,
           history: history,
           sessionId: aiSessionId,
+          language: selectedLang,
         },
       );
 
@@ -881,6 +915,37 @@ export default function UserDashboard() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
+    }
+  };
+
+  const handleLangChange = async (newLang) => {
+    if (isLoading) return;
+    setSelectedLang(newLang);
+    setIsLoading(true);
+    try {
+      await axiosInstance.delete(`${API_BASE_URL}/api/ai-chat/my-history`);
+    } catch (_) {}
+    setAiSessionId(null);
+    setNewMessage("");
+    setChatMessages([]);
+    try {
+      const response = await axiosInstance.post(
+        `${API_BASE_URL}/api/ai-chat/send-message`,
+        { message: "hi", history: [], language: newLang },
+      );
+      if (response.data?.success) {
+        if (response.data.data?.sessionId) setAiSessionId(response.data.data.sessionId);
+        setChatMessages([{
+          id: Date.now(),
+          text: response.data.data.aiResponse,
+          sender: "ai",
+          quickReplies: response.data.data.quickReplies || null,
+        }]);
+      }
+    } catch (err) {
+      console.warn("[AI-CHAT] lang change kickoff failed:", err.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -1600,6 +1665,8 @@ export default function UserDashboard() {
           handleCounselorClick={handleAIContactClick}
           sendQuickReply={sendQuickReply}
           sendChat={sendChat}
+          selectedLang={selectedLang}
+          onLangChange={handleLangChange}
         />
       )}
 

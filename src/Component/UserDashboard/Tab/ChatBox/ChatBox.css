@@ -460,7 +460,8 @@
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-.chatAttachBtn {
+.chatAttachBtn,
+.chatCameraBtn {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
@@ -474,6 +475,7 @@
   font-size: 1.25rem;
 }
 .chatAttachBtn:active { background: #e2e8f0; transform: rotate(15deg); }
+.chatCameraBtn:active { background: #e2e8f0; transform: scale(0.95); }
 
 .chatInputWrapper {
   flex: 1;
@@ -647,7 +649,7 @@
   .chatInputArea { padding: 0.75rem 1rem; }
   .chatInputGroup { gap: 0.5rem; padding: 0.375rem 0.375rem 0.375rem 0.75rem; }
   .chatTextInput { padding: 0.5rem 2.25rem 0.5rem 0.75rem; font-size: 0.85rem; }
-  .chatAttachBtn, .chatEmojiBtn, .chatSendBtn { width: 2rem; height: 2rem; font-size: 1rem; }
+  .chatAttachBtn, .chatCameraBtn, .chatEmojiBtn, .chatSendBtn { width: 2rem; height: 2rem; font-size: 1rem; }
   .chatEmojiBox { max-width: calc(100vw - 2rem); bottom: 4.75rem; right: 0.5rem; }
   .emojiBoxGrid { grid-template-columns: repeat(4, 1fr); gap: 0.5rem; padding: 0.75rem; }
   .incoming-call-modal { width: 95%; }
@@ -704,13 +706,13 @@
   .chatMsgContent { padding: 0.5rem 0.75rem; }
   .chatInputArea { padding: 0.5rem 1rem; }
   .chatTextInput { padding: 0.375rem 2.25rem 0.375rem 0.75rem; font-size: 0.8rem; min-height: 2.25rem; }
-  .chatAttachBtn, .chatEmojiBtn, .chatSendBtn { width: 2rem; height: 2rem; font-size: 0.95rem; }
+  .chatAttachBtn, .chatCameraBtn, .chatEmojiBtn, .chatSendBtn { width: 2rem; height: 2rem; font-size: 0.95rem; }
   .chatEmojiBox { display: none; }
 }
 
 /* Touch Device Optimization */
 @media (hover: none) and (pointer: coarse) {
-  .chatActionBtn, .chatAttachBtn, .chatEmojiBtn, .chatSendBtn, .incoming-call-btn {
+  .chatActionBtn, .chatAttachBtn, .chatCameraBtn, .chatEmojiBtn, .chatSendBtn, .incoming-call-btn {
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
     min-height: 44px;

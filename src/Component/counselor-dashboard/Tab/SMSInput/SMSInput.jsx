@@ -16,6 +16,7 @@ const SMSInput = () => {
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
   const messageInputRef = useRef(null);
   const chatSocketRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -412,6 +413,11 @@ const SMSInput = () => {
   const handleFileAttachClick = () => {
     if (isSending) return;
     fileInputRef.current?.click();
+  };
+
+  const handlePhotoCaptureClick = () => {
+    if (isSending) return;
+    cameraInputRef.current?.click();
   };
 
   const handleFileSelected = async (e) => {
@@ -1229,6 +1235,14 @@ const SMSInput = () => {
             style={{ display: "none" }}
             onChange={handleFileSelected}
           />
+          <input
+            ref={cameraInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: "none" }}
+            onChange={handleFileSelected}
+          />
           <button
             type="button"
             className="attach-btn"
@@ -1237,6 +1251,15 @@ const SMSInput = () => {
             onClick={handleFileAttachClick}
           >
             📎
+          </button>
+          <button
+            type="button"
+            className="camera-btn"
+            title="Take photo"
+            disabled={isSending}
+            onClick={handlePhotoCaptureClick}
+          >
+            📷
           </button>
           <input
             type="text"
