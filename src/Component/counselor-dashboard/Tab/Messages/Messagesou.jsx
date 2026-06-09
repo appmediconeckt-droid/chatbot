@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import "./Messagesou.css";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import {
@@ -13,6 +14,7 @@ import {
  * Displays anonymous name and gender-based avatar icons (no photos)
  */
 const SMSList = () => {
+  const { t } = useCounselorTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState(null);
@@ -77,7 +79,7 @@ const SMSList = () => {
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    if (diffMins < 1) return "Just now";
+    if (diffMins < 1) return t('just_now');
     if (diffHours < 1) return `${diffMins}m ago`;
     if (diffDays === 0) {
       return messageTime.toLocaleTimeString([], {
@@ -85,7 +87,7 @@ const SMSList = () => {
         minute: "2-digit",
       });
     }
-    if (diffDays === 1) return "Yesterday";
+    if (diffDays === 1) return t('yesterday');
     if (diffDays < 7)
       return messageTime.toLocaleDateString([], { weekday: "short" });
     return messageTime.toLocaleDateString([], {
@@ -287,7 +289,7 @@ const SMSList = () => {
       <div className="smslist-container">
         <div className="smslist-loading">
           <div className="loading-spinner"></div>
-          <p>Loading conversations...</p>
+          <p>{t('loading')}</p>
         </div>
       </div>
     );
@@ -328,7 +330,7 @@ const SMSList = () => {
       <div className="smslist-search">
         <input
           type="text"
-          placeholder="Search chats..."
+          placeholder={t('search_chats')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -407,7 +409,7 @@ const SMSList = () => {
         ) : (
           <div className="smslist-empty">
             <span className="empty-icon">🔍</span>
-            <h4>No conversations found</h4>
+            <h4>{t('no_chats')}</h4>
             <p>Try searching with a different anonymous name</p>
           </div>
         )}

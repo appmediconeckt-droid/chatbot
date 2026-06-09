@@ -50,6 +50,8 @@ import CounselorRequestChat from "../Tab/Appointment/BookAppointment";
 import MyAppointments from "../Tab/Appointment/MyAppointments";
 import LocationNoticeToast from "../../common/LocationNoticeToast";
 import AccountSettings from "../../Settings/AccountSettings";
+import { useUserTranslation } from "../../../i18n/LanguageContext";
+import { LanguageSelector } from "../../common/LanguageSelector";
 
 const VOICE_LANGUAGES = [
   { label: 'English (India)', code: 'en-IN' },
@@ -454,7 +456,11 @@ const ChatButton = ({ onClick, unreadCount }) => (
   </div>
 );
 
+// Map i18n lang codes to VOICE_LANGUAGES codes
+const LANG_TO_VOICE = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', bn: 'bn-IN', gu: 'gu-IN', mr: 'mr-IN' };
+
 export default function UserDashboard() {
+  const { t, lang, setLang } = useUserTranslation();
   const [active, setActive] = useState("Chat");
   const [chatOpen, setChatOpen] = useState(false);
   const [targetCounselor, setTargetCounselor] = useState("");
@@ -776,7 +782,7 @@ export default function UserDashboard() {
   // hard-coded "Hello! I'm your AI assistant" suppressed the warm onboarding.
   const [chatMessages, setChatMessages] = useState([]);
   const [aiSessionId, setAiSessionId] = useState(null);
-  const [selectedLang, setSelectedLang] = useState('en-IN');
+  const [selectedLang, setSelectedLang] = useState(() => LANG_TO_VOICE[lang] || 'en-IN');
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -921,6 +927,9 @@ export default function UserDashboard() {
   const handleLangChange = async (newLang) => {
     if (isLoading) return;
     setSelectedLang(newLang);
+    // sync with the global i18n context (strip -IN/-US suffix → base code)
+    const baseCode = newLang.split('-')[0];
+    setLang(baseCode);
     setIsLoading(true);
     try {
       await axiosInstance.delete(`${API_BASE_URL}/api/ai-chat/my-history`);
@@ -1119,14 +1128,14 @@ export default function UserDashboard() {
   };
 
   const allMenuItems = [
-    { id: "Chat", icon: <FaCommentDots />, label: "Chat" },
-    { id: "Live Chat", icon: <FaUserMd />, label: "Counselor" },
-    { id: "MyAppointments", icon: <FaCalendarAlt />, label: "My Appointments" },
-    { id: "Wallet", icon: <FaWallet />, label: "Wallet" },
-    { id: "Video", icon: <FaVideo />, label: "Call History" },
+    { id: "Chat", icon: <FaCommentDots />, label: t('ai_chat') },
+    { id: "Live Chat", icon: <FaUserMd />, label: t('find_counselor') },
+    { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('my_appointments') },
+    { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
+    { id: "Video", icon: <FaVideo />, label: t('call_history') },
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
     { id: "privacy", icon: <FaLock />, label: "Privacy" },
-     { id: "settings", icon: <FaCog />, label: "Settings" },
+    { id: "settings", icon: <FaCog />, label: t('settings') },
   ];
 
   const bottomMenuItems = allMenuItems.slice(0, 4);
@@ -1503,21 +1512,21 @@ export default function UserDashboard() {
                     onClick={handleProfileClick}
                   >
                     <FaUser className="ud-dropdown-icon" />
-                    <span>My Profile</span>
+                    <span>{t('my_profile')}</span>
                   </button>
                   <button
                     className="ud-dropdown-item"
                     onClick={handleSettingsClick}
                   >
                     <FaCog className="ud-dropdown-icon" />
-                    <span>Settings</span>
+                    <span>{t('settings')}</span>
                   </button>
                   <button
                     className="ud-dropdown-item ud-logout-item"
                     onClick={handleLogoutClick}
                   >
                     <FaSignOutAlt className="ud-dropdown-icon" />
-                    <span>Logout</span>
+                    <span>{t('logout')}</span>
                   </button>
                 </div>
               </div>
@@ -1580,6 +1589,9 @@ export default function UserDashboard() {
                 ))}
               </div>
               <div className="ud-sidebar-actions">
+                <div style={{ padding: '8px 12px 4px' }}>
+                  <LanguageSelector lang={lang} setLang={setLang} t={t} />
+                </div>
                 <button
                   className="ud-sidebar-item ud-profile-action"
                   onClick={handleProfileClick}
@@ -1587,7 +1599,7 @@ export default function UserDashboard() {
                   <span className="ud-sidebar-icon">
                     <FaUser />
                   </span>
-                  <span className="ud-sidebar-text">My Profile</span>
+                  <span className="ud-sidebar-text">{t('my_profile')}</span>
                 </button>
                 <button
                   className="ud-sidebar-item ud-logout"
@@ -1596,7 +1608,7 @@ export default function UserDashboard() {
                   <span className="ud-sidebar-icon">
                     <FaSignOutAlt />
                   </span>
-                  <span className="ud-sidebar-text">Logout</span>
+                  <span className="ud-sidebar-text">{t('logout')}</span>
                 </button>
               </div>
             </div>

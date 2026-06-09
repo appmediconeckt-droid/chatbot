@@ -8,8 +8,10 @@ import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
+import { useUserTranslation } from "../../../../i18n/LanguageContext";
 
 const ChatBox = () => {
+  const { t } = useUserTranslation();
   const { id: counselorId } = useParams();
   const location = useLocation();
   const { chatId, counselor: initialCounselor, user: initialUser } = location.state || {};
@@ -952,7 +954,7 @@ const ChatBox = () => {
               <div className="chatProfileInfo">
                 <h2 className="chatProfileName">{counselorName}</h2>
                 <p className="chatProfileStatus">
-                  {remoteIsTyping ? <span className="chatTypingText" role="status">Typing...</span> : <span className="chatStatusText">{counselorOnline ? "Online" : "Offline"}</span>}
+                  {remoteIsTyping ? <span className="chatTypingText" role="status">{t('typing')}</span> : <span className="chatStatusText">{counselorOnline ? t('online') : t('offline')}</span>}
                 </p>
               </div>
             </div>
@@ -998,7 +1000,7 @@ const ChatBox = () => {
           {isLoadingMessages && messages.length === 0 ? (
             <div className="chatLoadingMessages">
               
-              <p>Loading messages...</p>
+              <p>{t('loading_messages')}</p>
             </div>
           ) : (
             <>

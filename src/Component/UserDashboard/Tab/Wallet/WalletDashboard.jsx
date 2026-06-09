@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../../../axiosConfig';
+import { useUserTranslation } from '../../../../i18n/LanguageContext';
 
 const WalletDashboard = ({ userData }) => {
+    const { t } = useUserTranslation();
     const [amount, setAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('upi');
     const [balance, setBalance] = useState(0);
@@ -37,7 +39,7 @@ const WalletDashboard = ({ userData }) => {
     const handlePayment = async (e) => {
         e.preventDefault();
         if (!amount || amount <= 0) {
-            alert('Please enter a valid amount');
+            alert(t('amount') + ': Please enter a valid amount');
             return;
         }
 
@@ -63,13 +65,13 @@ const WalletDashboard = ({ userData }) => {
                         });
 
                         if (verifyRes.data.success) {
-                            alert('Payment successful!');
+                            alert(t('payment_success'));
                             setAmount('');
                             fetchWalletData();
                         }
                     } catch (err) {
                         console.error('Verification failed:', err);
-                        alert('Payment verification failed. Please contact support.');
+                        alert(t('payment_failed'));
                     }
                 },
                 prefill: {
@@ -115,8 +117,8 @@ const WalletDashboard = ({ userData }) => {
     return (
         <div className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full font-manrope bg-[#f8f9ff] text-[#0b1c30]">
             <header className={styles.mbXl}>
-                <h1 className={`${styles.headlineLg} text-[#0b1c30]`}>Wallet Overview</h1>
-                <p className={`${styles.bodyMd} text-[#464554]`}>Manage your healthcare credits and view transaction history.</p>
+                <h1 className={`${styles.headlineLg} text-[#0b1c30]`}>{t('wallet')}</h1>
+                <p className={`${styles.bodyMd} text-[#464554]`}>{t('transaction_history')}</p>
             </header>
 
             {/* Top Row: Balance and Spending Summary */}

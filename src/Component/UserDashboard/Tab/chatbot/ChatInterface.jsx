@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
+import { useUserTranslation } from '../../../../i18n/LanguageContext';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
+    const { t } = useUserTranslation();
 
     // State for counselors and chats
     const [counselors, setCounselors] = useState([]);
@@ -75,10 +77,10 @@ const ChatInterface = ({ setActiveTab }) => {
             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-            if (diffMins < 1) return 'Just now';
+            if (diffMins < 1) return t('just_now');
             if (diffHours < 1) return `${diffMins}m ago`;
             if (diffDays === 0) return messageTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            if (diffDays === 1) return 'Yesterday';
+            if (diffDays === 1) return t('yesterday');
             if (diffDays < 7) return messageTime.toLocaleDateString([], { weekday: 'short' });
             if (diffDays < 30) return `${diffDays}d ago`;
             return messageTime.toLocaleDateString([], { month: 'short', day: 'numeric' });
@@ -107,7 +109,7 @@ const ChatInterface = ({ setActiveTab }) => {
 
     // Format last seen time
     const formatLastSeen = (lastSeen) => {
-        if (!lastSeen) return 'Offline';
+        if (!lastSeen) return t('offline');
 
         try {
             const lastSeenTime = new Date(lastSeen);
@@ -117,11 +119,11 @@ const ChatInterface = ({ setActiveTab }) => {
             const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-            if (diffMins < 1) return 'Just now';
+            if (diffMins < 1) return t('just_now');
             if (diffHours < 1) return `${diffMins} minutes ago`;
             if (diffHours === 1) return '1 hour ago';
             if (diffHours < 24) return `${diffHours} hours ago`;
-            if (diffDays === 1) return 'Yesterday';
+            if (diffDays === 1) return t('yesterday');
             if (diffDays < 7) return `${diffDays} days ago`;
             return lastSeenTime.toLocaleDateString();
         } catch (error) {
@@ -577,7 +579,7 @@ const ChatInterface = ({ setActiveTab }) => {
                     <div className="counselorSearchBox">
                         <input
                             type="text"
-                            placeholder="Search counselors..."
+                            placeholder={t('search_counselors')}
                             className="counselorSearchInput"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -598,7 +600,7 @@ const ChatInterface = ({ setActiveTab }) => {
                         <div className="error-message">
                             <p>⚠️ {error}</p>
                             <button onClick={() => fetchChats(false)} className="retry-button">
-                                Retry
+                                {t('retry')}
                             </button>
                         </div>
                     )}
@@ -672,9 +674,9 @@ const ChatInterface = ({ setActiveTab }) => {
                                 </>
                             ) : (
                                 <>
-                                    <p>No active chats yet.</p>
+                                    <p>{t('no_chats')}</p>
                                     <button onClick={handleStartNewChat} className="start-chat-link">
-                                        Start a new chat
+                                        {t('start_chat')}
                                     </button>
                                 </>
                             )}

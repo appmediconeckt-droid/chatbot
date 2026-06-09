@@ -4,9 +4,11 @@ import "./BookAppointment.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import axios from "axios";
+import { useUserTranslation } from "../../../../i18n/LanguageContext";
 
 const CounselorRequestChat = ({ initialSearch = "" }) => {
   const navigate = useNavigate();
+  const { t } = useUserTranslation();
 
   // State for counselors list
   const [counselors, setCounselors] = useState([]);
@@ -597,7 +599,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                 <input
                   type="text"
                   className="search-input-unique"
-                  placeholder="Search by name, specialization, or expertise..."
+                  placeholder={t('search_counselors')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -617,7 +619,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                 <input
                   type="text"
                   className="location-input-unique"
-                  placeholder="Search by location..."
+                  placeholder={`${t('search')} ${t('location').toLowerCase()}...`}
                   value={searchLocation}
                   onChange={(e) => {
                     setSearchLocation(e.target.value);

@@ -4,6 +4,7 @@ import axios from "axios";
 import "./CallHistory.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import { useUserTranslation } from "../../../../i18n/LanguageContext";
 
 const normalizeRole = (role) => {
   const normalized = String(role || "")
@@ -89,6 +90,7 @@ const isMissedCall = (call) => {
 };
 
 const CallHistory = ({ currentUser }) => {
+  const { t } = useUserTranslation();
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -343,7 +345,7 @@ const CallHistory = ({ currentUser }) => {
           <input
             type="text"
             className="call-search-input"
-            placeholder="Search calls..."
+            placeholder={t('search_calls')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             aria-label="Search calls"
@@ -364,25 +366,25 @@ const CallHistory = ({ currentUser }) => {
             className={`call-filter-btn ${activeFilter === "all" ? "active" : ""}`}
             onClick={() => setActiveFilter("all")}
           >
-            All
+            {t('all')}
           </button>
           <button
             className={`call-filter-btn ${activeFilter === "missed" ? "active" : ""}`}
             onClick={() => setActiveFilter("missed")}
           >
-            Missed
+            {t('missed')}
           </button>
           <button
             className={`call-filter-btn ${activeFilter === "video" ? "active" : ""}`}
             onClick={() => setActiveFilter("video")}
           >
-            Video
+            {t('video_call')}
           </button>
           <button
             className={`call-filter-btn ${activeFilter === "voice" ? "active" : ""}`}
             onClick={() => setActiveFilter("voice")}
           >
-            Voice
+            {t('voice_call')}
           </button>
         </div>
 
@@ -394,7 +396,7 @@ const CallHistory = ({ currentUser }) => {
         {isLoadingCalls && (
           <div className="call-no-results">
             <span className="call-no-results-icon">⏳</span>
-            <p>Loading call history...</p>
+            <p>{t('loading_calls')}</p>
           </div>
         )}
 
@@ -434,7 +436,7 @@ const CallHistory = ({ currentUser }) => {
                         {getCallIcon(call.type)}
                       </span>
                       <span className="call-type">
-                        {call.type === "video" ? "Video Call" : "Voice Call"}
+                        {call.type === "video" ? t('video_call') : t('voice_call')}
                       </span>
                       {call.duration && (
                         <>
@@ -443,7 +445,7 @@ const CallHistory = ({ currentUser }) => {
                         </>
                       )}
                       {call.missed && (
-                        <span className="call-missed-tag">Missed</span>
+                        <span className="call-missed-tag">{t('missed')}</span>
                       )}
                     </div>
                   </div>
@@ -468,7 +470,7 @@ const CallHistory = ({ currentUser }) => {
         {!isLoadingCalls && filteredCalls.length === 0 && (
           <div className="call-no-results">
             <span className="call-no-results-icon">📞</span>
-            <p>No calls found</p>
+            <p>{t('no_calls')}</p>
             <small>Try changing your search or filter</small>
           </div>
         )}

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import "./CounselorDirectory.css";
+import { useUserTranslation } from "../../../../i18n/LanguageContext";
 
 const getInitials = (name = "Counselor") =>
   name
@@ -38,6 +39,7 @@ const formatLastSeen = (lastSeen) => {
 };
 
 const CounselorTable = () => {
+  const { t } = useUserTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("online");
@@ -60,7 +62,7 @@ const CounselorTable = () => {
         if (isMounted) setCounselorsData(counselors);
       } catch (err) {
         console.error("Failed to fetch counselors:", err);
-        if (isMounted) setError("Unable to load counselors right now.");
+        if (isMounted) setError(t('error_load_counselors'));
       } finally {
         if (isMounted) setIsLoading(false);
       }
@@ -169,7 +171,7 @@ const CounselorTable = () => {
           <input
             type="text"
             className="search-input"
-            placeholder="Search by name, specialization, treatment or language..."
+            placeholder={t('search_counselors')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -187,7 +189,7 @@ const CounselorTable = () => {
             className={`filter-chip ${selectedCategory === "all" ? "active" : ""}`}
             onClick={() => setSelectedCategory("all")}
           >
-            All
+            {t('all')}
           </button>
           {allTreatments.slice(0, 12).map((treatment) => (
             <button
@@ -276,7 +278,7 @@ const CounselorTable = () => {
                       counselor.isOnline ? "now" : ""
                     }`}
                   >
-                    {counselor.isOnline ? "Online" : formatLastSeen(counselor.lastSeen)}
+                    {counselor.isOnline ? t('online') : formatLastSeen(counselor.lastSeen)}
                   </div>
                 </div>
 
@@ -320,7 +322,7 @@ const CounselorTable = () => {
                       </span>
                     ))}
                   </div>
-                  <button className="book-btn">Book session</button>
+                  <button className="book-btn">{t('book_appointment')}</button>
                 </div>
               </div>
             );
@@ -331,8 +333,8 @@ const CounselorTable = () => {
             <svg width="80" height="80" viewBox="0 0 24 24" fill="#a0b3d9">
               <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
             </svg>
-            <h4>No counselors found</h4>
-            <p>Try adjusting your search or filter</p>
+            <h4>{t('error_load_counselors')}</h4>
+            <p>{t('search_counselors')}</p>
           </div>
         )}
       </div>

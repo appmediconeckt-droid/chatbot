@@ -3,11 +3,13 @@ import axios from 'axios';
 import './CounselorProfile.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import { captureAndSendLocation } from '../../../../authtication/locationHelper';
+import { useCounselorTranslation } from '../../../../i18n/LanguageContext';
 
 // Unique class name prefix to avoid conflicts
 const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
 
 const CounselorProfile = () => {
+   const { t } = useCounselorTranslation();
    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
@@ -801,10 +803,10 @@ const CounselorProfile = () => {
 
                     <div className={`${COUNSELOR_PROFILE_CLASS}__unique-code`}>
                         <span className={`${COUNSELOR_PROFILE_CLASS}__unique-code-label`}>
-                            Counselor Code:
+                            {t('counselor_code')}:
                         </span>
                         <span className={`${COUNSELOR_PROFILE_CLASS}__unique-code-value`}>
-                            {counselor?.uniqueCode || 'Not assigned'}
+                            {counselor?.uniqueCode || t('not_assigned')}
                         </span>
                     </div>
                 </div>
@@ -851,7 +853,7 @@ const CounselorProfile = () => {
                                         onClick={handleAddSpecialization}
                                         className={`${COUNSELOR_PROFILE_CLASS}__add-btn`}
                                     >
-                                        + Add
+                                        + {t('add')}
                                     </button>
                                 </div>
                             </div>
@@ -864,19 +866,19 @@ const CounselorProfile = () => {
                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-value`}>
                                 {counselor?.rating || 0} ★
                             </span>
-                            <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>Rating</span>
+                            <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>{t('rating')}</span>
                         </div>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__stat`}>
                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-value`}>
                                 {counselor?.totalSessions || 0}
                             </span>
-                            <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>Sessions</span>
+                            <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>{t('sessions')}</span>
                         </div>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__stat`}>
                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-value`}>
                                 {counselor?.activeClients || 0}
                             </span>
-                            <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>Active Clients</span>
+                            <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>{t('active_clients')}</span>
                         </div>
                     </div>
                 </div>
@@ -892,10 +894,10 @@ const CounselorProfile = () => {
                                 {isUpdatingLocation ? (
                                     <>
                                         <span className={`${COUNSELOR_PROFILE_CLASS}__btn-spinner`} />
-                                        Updating…
+                                        {t('updating')}
                                     </>
                                 ) : (
-                                    <>📍 Update Location</>
+                                    <>📍 {t('update_location')}</>
                                 )}
                             </button>
                             <button
@@ -903,7 +905,7 @@ const CounselorProfile = () => {
                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--edit`}
                                 disabled={loading}
                             >
-                                Edit Profile
+                                {t('edit_profile')}
                             </button>
                         </>
                     ) : (
@@ -920,14 +922,14 @@ const CounselorProfile = () => {
                                       : ''
                                 }
                             >
-                                {loading ? 'Saving...' : 'Save Changes'}
+                                {loading ? t('saving') : t('save_changes')}
                             </button>
                             <button
                                 onClick={handleCancel}
                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--cancel`}
                                 disabled={loading}
                             >
-                                Cancel
+                                {t('cancel')}
                             </button>
                         </>
                     )}
@@ -940,12 +942,12 @@ const CounselorProfile = () => {
                 <div className={`${COUNSELOR_PROFILE_CLASS}__left-column`}>
                     {/* Contact Information */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Contact Information</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('contact_info')}</h3>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__contact-info`}>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__contact-item`}>
                                 <span className={`${COUNSELOR_PROFILE_CLASS}__contact-icon`}>📧</span>
                                 <div style={{ flex: 1 }}>
-                                    <label>Email</label>
+                                    <label>{t('email')}</label>
                                     {isEditing ? (
                                         <>
                                             <div className="otp-field-row">
@@ -1011,7 +1013,7 @@ const CounselorProfile = () => {
                             <div className={`${COUNSELOR_PROFILE_CLASS}__contact-item`}>
                                 <span className={`${COUNSELOR_PROFILE_CLASS}__contact-icon`}>📱</span>
                                 <div style={{ flex: 1 }}>
-                                    <label>Phone</label>
+                                    <label>{t('phone')}</label>
                                     {isEditing ? (
                                         <>
                                             <div className="otp-field-row">
@@ -1077,7 +1079,7 @@ const CounselorProfile = () => {
                             <div className={`${COUNSELOR_PROFILE_CLASS}__contact-item`}>
                                 <span className={`${COUNSELOR_PROFILE_CLASS}__contact-icon`}>📍</span>
                                 <div>
-                                    <label>Location</label>
+                                    <label>{t('location')}</label>
                                     {isEditing ? (
                                         <input
                                             type="text"
@@ -1095,10 +1097,10 @@ const CounselorProfile = () => {
 
                     {/* Personal Information */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Personal Information</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('personal_info')}</h3>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__personal-info`}>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
-                                <label>Age:</label>
+                                <label>{t('age')}:</label>
                                 {isEditing ? (
                                     <input
                                         type="number"
@@ -1111,24 +1113,24 @@ const CounselorProfile = () => {
                                 )}
                             </div>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
-                                <label>Gender:</label>
+                                <label>{t('gender')}:</label>
                                 {isEditing ? (
                                     <select
                                         value={editedData.gender || ''}
                                         onChange={(e) => handleInputChange('gender', e.target.value)}
                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
                                     >
-                                        <option value="">Select Gender</option>
-                                        <option value="male">Male</option>
-                                        <option value="female">Female</option>
-                                        <option value="other">Other</option>
+                                        <option value="">{t('select_gender')}</option>
+                                        <option value="male">{t('male')}</option>
+                                        <option value="female">{t('female')}</option>
+                                        <option value="other">{t('other')}</option>
                                     </select>
                                 ) : (
                                     <p>{counselor?.gender ? counselor.gender.charAt(0).toUpperCase() + counselor.gender.slice(1) : 'Not specified'}</p>
                                 )}
                             </div>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
-                                <label>Blood Group:</label>
+                                <label>{t('blood_group')}:</label>
                                 {isEditing ? (
                                     <input
                                         type="text"
@@ -1143,7 +1145,7 @@ const CounselorProfile = () => {
                             </div>
                             {counselor?.dateOfBirth && (
                                 <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
-                                    <label>Date of Birth:</label>
+                                    <label>{t('date_of_birth')}:</label>
                                     <p>{formatDate(counselor.dateOfBirth)}</p>
                                 </div>
                             )}
@@ -1152,7 +1154,7 @@ const CounselorProfile = () => {
 
                     {/* Address */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Address</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('address')}</h3>
                         {isEditing ? (
                             <div className={`${COUNSELOR_PROFILE_CLASS}__address-form`}>
                                 <input
@@ -1209,7 +1211,7 @@ const CounselorProfile = () => {
                                 </p>
                                 {counselor.address?.country && <p>{counselor.address.country}</p>}
                                 {!counselor.address?.line1 && !counselor.address?.city && (
-                                    <p>No address provided</p>
+                                    <p>{t('no_address')}</p>
                                 )}
                             </div>
                         )}
@@ -1217,7 +1219,7 @@ const CounselorProfile = () => {
 
                     {/* Education */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Education</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('education')}</h3>
                         {isEditing ? (
                             <textarea
                                 value={editedData.education || ''}
@@ -1233,7 +1235,7 @@ const CounselorProfile = () => {
 
                     {/* Experience */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Experience</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('experience')}</h3>
                         {isEditing ? (
                             <input
                                 type="number"
@@ -1248,7 +1250,7 @@ const CounselorProfile = () => {
 
                     {/* Consultation Mode */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Consultation Mode</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('consultation_mode')}</h3>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__consultation-section`}>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__consultation-list`}>
                                 {editedData?.consultationMode?.map((mode, index) => (
@@ -1286,7 +1288,7 @@ const CounselorProfile = () => {
                                         className={`${COUNSELOR_PROFILE_CLASS}__add-btn`}
                                         disabled={!newConsultationMode}
                                     >
-                                        + Add
+                                        + {t('add')}
                                     </button>
                                 </div>
                             )}
@@ -1295,7 +1297,7 @@ const CounselorProfile = () => {
 
                     {/* Languages */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Languages</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('language')}</h3>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__languages-section`}>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__languages-list`}>
                                 {editedData?.languages?.map((lang, index) => (
@@ -1330,7 +1332,7 @@ const CounselorProfile = () => {
                                         onClick={handleAddLanguage}
                                         className={`${COUNSELOR_PROFILE_CLASS}__add-btn`}
                                     >
-                                        + Add
+                                        + {t('add')}
                                     </button>
                                 </div>
                             )}
@@ -1342,7 +1344,7 @@ const CounselorProfile = () => {
                 <div className={`${COUNSELOR_PROFILE_CLASS}__right-column`}>
                     {/* Bio */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Professional Bio</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('about_me')}</h3>
                         {isEditing ? (
                             <textarea
                                 value={editedData.aboutMe || ''}
@@ -1358,7 +1360,7 @@ const CounselorProfile = () => {
 
                     {/* Licenses & Certifications with Document Upload */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
-                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Licenses & Certifications</h3>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('certifications')}</h3>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__certifications-section`}>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__certifications-list`}>
                                 {editedData?.certifications?.map((cert) => (

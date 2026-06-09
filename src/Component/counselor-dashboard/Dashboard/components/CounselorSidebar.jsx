@@ -1,5 +1,7 @@
 import React from "react";
 import { FaUserCircle, FaSignOutAlt } from "react-icons/fa";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
+import { LanguageSelector } from "../../../common/LanguageSelector";
 
 export default function CounselorSidebar({
   counselorData,
@@ -8,6 +10,7 @@ export default function CounselorSidebar({
   handleTabChange,
   setShowLogoutConfirm,
 }) {
+  const { t, lang, setLang } = useCounselorTranslation();
   return (
     <aside className="couns-sidebar">
       <div className="couns-sidebar-header">
@@ -37,19 +40,19 @@ export default function CounselorSidebar({
 
           <div className="couns-extra-info">
             <p>
-              <strong>Specialization:</strong>{" "}
-              {counselorData?.specialization || "Not specified"}
+              <strong>{t('specialization')}:</strong>{" "}
+              {counselorData?.specialization || t('not_specified')}
             </p>
             <p>
-              <strong>Email:</strong> {counselorData?.email || "Not specified"}
+              <strong>{t('email')}:</strong> {counselorData?.email || t('not_specified')}
             </p>
             <p>
-              <strong>Phone:</strong>{" "}
-              {counselorData?.phoneNumber || "Not specified"}
+              <strong>{t('phone')}:</strong>{" "}
+              {counselorData?.phoneNumber || t('not_specified')}
             </p>
             <p>
-              <strong>Experience:</strong>{" "}
-              {counselorData?.experience || "0 years"}
+              <strong>{t('experience')}:</strong>{" "}
+              {counselorData?.experience || `0 ${t('years')}`}
             </p>
           </div>
         </div>
@@ -77,9 +80,12 @@ export default function CounselorSidebar({
           <span className="couns-nav-icon">
             <FaSignOutAlt />
           </span>
-          <span className="couns-nav-label">Logout</span>
+          <span className="couns-nav-label">{t('logout')}</span>
         </button>
       </nav>
+      <div style={{ padding: '12px 16px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+        <LanguageSelector lang={lang} setLang={setLang} t={t} />
+      </div>
     </aside>
   );
 }

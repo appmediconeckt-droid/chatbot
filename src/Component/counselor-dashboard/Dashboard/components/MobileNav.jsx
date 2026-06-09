@@ -7,6 +7,8 @@ import {
   FaStar,
   FaUserCircle,
 } from "react-icons/fa";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
+import { LanguageSelector } from "../../../common/LanguageSelector";
 
 export function MobileHeader({ showMobileMenu, setShowMobileMenu }) {
   return (
@@ -29,6 +31,7 @@ export function MobileMenuOverlay({
   setShowLogoutConfirm,
   setShowMobileMenu,
 }) {
+  const { t, lang, setLang } = useCounselorTranslation();
   return (
     <div className="couns-mobile-menu-overlay">
       <div className="couns-mobile-menu">
@@ -58,8 +61,8 @@ export function MobileMenuOverlay({
             <h3>{counselorData?.name || "Counselor"}</h3>
 
             <p>
-              <strong>Specialization:</strong>{" "}
-              {counselorData?.specialization || "Not specified"}
+              <strong>{t('specialization')}:</strong>{" "}
+              {counselorData?.specialization || t('not_specified')}
             </p>
 
             <div className="couns-rating-badge">
@@ -69,16 +72,19 @@ export function MobileMenuOverlay({
 
             <div className="couns-extra-info">
               <p>
-                <strong>Email:</strong> {counselorData?.email || "Not specified"}
+                <strong>{t('email')}:</strong> {counselorData?.email || t('not_specified')}
               </p>
               <p>
-                <strong>Phone:</strong>{" "}
-                {counselorData?.phoneNumber || "Not specified"}
+                <strong>{t('phone')}:</strong>{" "}
+                {counselorData?.phoneNumber || t('not_specified')}
               </p>
               <p>
-                <strong>Experience:</strong>{" "}
-                {counselorData?.experience || "0 years"}
+                <strong>{t('experience')}:</strong>{" "}
+                {counselorData?.experience || `0 ${t('years')}`}
               </p>
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <LanguageSelector lang={lang} setLang={setLang} t={t} />
             </div>
           </div>
         </div>
@@ -109,7 +115,7 @@ export function MobileMenuOverlay({
             <span className="couns-mobile-nav-icon">
               <FaSignOutAlt />
             </span>
-            <span className="couns-mobile-nav-label">Logout</span>
+            <span className="couns-mobile-nav-label">{t('logout')}</span>
             <FaArrowRight className="couns-mobile-nav-arrow" />
           </button>
         </nav>

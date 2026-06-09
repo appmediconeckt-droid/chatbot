@@ -4,6 +4,8 @@ import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
 import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
 import "./AccountSettings.css";
+import { useUserTranslation, useCounselorTranslation } from "../../i18n/LanguageContext";
+import { LanguageSelector } from "../common/LanguageSelector";
 
 const emptyAccount = {
   name: "",
@@ -16,13 +18,16 @@ const emptyAccount = {
 };
 
 const AccountSettings = ({ role = "user", onOpenProfile }) => {
+  const isCounselor = role === "counsellor" || role === "counselor";
+  const userT = useUserTranslation();
+  const counselorT = useCounselorTranslation();
+  const { t, lang, setLang } = isCounselor ? counselorT : userT;
   const [account, setAccount] = useState(emptyAccount);
   const [loading, setLoading] = useState(true);
   const [locationLoading, setLocationLoading] = useState(false);
   const [notice, setNotice] = useState({ type: "", message: "" });
 
-  const isCounselor = role === "counsellor" || role === "counselor";
-  const title = isCounselor ? "Counselor Settings" : "Settings";
+  const title = isCounselor ? t('counselor_settings') : t('settings_title');
 
   const authHeaders = () => {
     const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
@@ -120,7 +125,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
   if (loading) {
     return (
       <section className="account-settings">
-        <div className="account-settings__loading">Loading settings...</div>
+        <div className="account-settings__loading">{t('loading_settings')}</div>
       </section>
     );
   }
@@ -130,13 +135,18 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
       <div className="account-settings__header">
         <div>
           <h1>{title}</h1>
-          <p>Manage login security, location, and account preferences.</p>
+          <p>{t('manage_account')}</p>
         </div>
-        {onOpenProfile && (
-          <button type="button" onClick={onOpenProfile}>
-            Edit Profile
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{ background: '#4f46e5', borderRadius: 20, padding: '2px' }}>
+            <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
+          </div>
+          {onOpenProfile && (
+            <button type="button" onClick={onOpenProfile}>
+              {t('edit_profile')}
+            </button>
+          )}
+        </div>
       </div>
 
       {notice.message && (
@@ -147,44 +157,41 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
       <div className="account-settings__grid">
         <div className="account-settings__panel">
-          <h2>Account</h2>
+          <h2>{t('account')}</h2>
           <dl className="account-settings__details">
             <div>
-              <dt>Name</dt>
-              <dd>{account.name || "Not added"}</dd>
+              <dt>{t('name')}</dt>
+              <dd>{account.name || t('not_added')}</dd>
             </div>
             <div>
-              <dt>Email</dt>
-              <dd>{account.email || "Not added"}</dd>
+              <dt>{t('email')}</dt>
+              <dd>{account.email || t('not_added')}</dd>
             </div>
             <div>
-              <dt>Phone</dt>
-              <dd>{account.phone || "Not added"}</dd>
+              <dt>{t('phone')}</dt>
+              <dd>{account.phone || t('not_added')}</dd>
             </div>
             <div>
-              <dt>Login</dt>
+              <dt>{t('login')}</dt>
               <dd>{account.authProvider === "google" ? "Google" : "Email password"}</dd>
             </div>
             <div>
-              <dt>Password</dt>
-              <dd>{account.hasPassword ? "Added" : "Not added"}</dd>
+              <dt>{t('password')}</dt>
+              <dd>{account.hasPassword ? t('password_added') : t('not_added')}</dd>
             </div>
           </dl>
         </div>
 
         <div className="account-settings__panel">
-          <h2>Location</h2>
-          <p>
-            Refresh your location so appointments, safety checks, and counselor
-            access use your current details.
-          </p>
+          <h2>{t('location')}</h2>
+          <p>{t('location_desc')}</p>
           <button
             type="button"
             className="account-settings__primary"
             onClick={handleLocationRefresh}
             disabled={locationLoading}
           >
-            {locationLoading ? "Updating..." : "Update Location"}
+            {locationLoading ? t('updating') : t('update_location')}
           </button>
         </div>
       </div>

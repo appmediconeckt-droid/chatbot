@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import { useUserTranslation } from "../../../../i18n/LanguageContext";
 
 const MyAppointments = () => {
+  const { t } = useUserTranslation();
   const [appointments, setAppointments] = useState([]);
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -153,7 +155,7 @@ const MyAppointments = () => {
         <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
           <div>
             <h1 className="text-[32px] font-[700] leading-[40px] tracking-[-0.02em] text-[#0b1c30]">
-              My Appointments
+              {t('my_appointments')}
             </h1>
             <p className="text-[#464554] text-[16px] mt-1">
               Manage your upcoming and past medical consultations
@@ -165,13 +167,13 @@ const MyAppointments = () => {
               onClick={() => setActiveTab("Upcoming")}
               className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Upcoming" ? "bg-white shadow-sm text-[#4648d4]" : "text-[#464554] hover:text-[#0b1c30]"}`}
             >
-              Upcoming
+              {t('upcoming')}
             </button>
             <button
               onClick={() => setActiveTab("Past")}
               className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Past" ? "bg-white shadow-sm text-[#4648d4]" : "text-[#464554] hover:text-[#0b1c30]"}`}
             >
-              Past
+              {t('past')}
             </button>
           </div>
         </header>
@@ -184,9 +186,9 @@ const MyAppointments = () => {
             className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-[#0b1c30] font-medium shadow-sm focus:outline-none"
             style={{ minWidth: 160 }}
           >
-            <option value="All">All Statuses</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
+            <option value="All">{t('all_statuses')}</option>
+            <option value="Pending">{t('pending')}</option>
+            <option value="Confirmed">{t('accepted')}</option>
           </select>
         </div>
 
@@ -270,7 +272,7 @@ const MyAppointments = () => {
                         <span className="material-symbols-outlined text-sm">
                           visibility
                         </span>
-                        View Details
+                        {t('view_details')}
                       </button>
                       {/* Appointment Details Modal */}
                       {showModal && selectedApt && (
@@ -323,10 +325,10 @@ const MyAppointments = () => {
                                 color: "#0b1c30",
                               }}
                             >
-                              Appointment Details
+                              {t('appointment_details')}
                             </h2>
                             <div style={{ marginBottom: 12 }}>
-                              <strong>Date:</strong>{" "}
+                              <strong>{t('date')}:</strong>{" "}
                               {new Date(selectedApt.date).toLocaleDateString(
                                 "en-US",
                                 {
@@ -337,14 +339,14 @@ const MyAppointments = () => {
                               )}
                             </div>
                             <div style={{ marginBottom: 12 }}>
-                              <strong>Time:</strong>{" "}
+                              <strong>{t('time')}:</strong>{" "}
                               {new Date(selectedApt.date).toLocaleTimeString(
                                 [],
                                 { hour: "2-digit", minute: "2-digit" },
                               )}
                             </div>
                             <div style={{ marginBottom: 12 }}>
-                              <strong>Reason:</strong>{" "}
+                              <strong>{t('reason')}:</strong>{" "}
                               {selectedApt.notes || "N/A"}
                             </div>
                             {/* Add more fields as needed */}
@@ -371,7 +373,7 @@ const MyAppointments = () => {
               onClick={handleBookNewClick}
               className="bg-white text-[#4648d4] px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-50 transition-colors active:scale-95"
             >
-              Book New Appointment
+              {t('book_new_appointment')}
             </button>
           </div>
           <div className="absolute right-[-10%] top-[-50%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>

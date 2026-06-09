@@ -36,11 +36,13 @@ import {
   MobileMenuOverlay,
   MobileBottomNav,
 } from "./components/MobileNav";
+import { useCounselorTranslation } from "../../../i18n/LanguageContext";
 import AppointmentsTab from "./components/AppointmentsTab";
 import RequestModal from "./components/RequestModal";
 import LogoutModal from "./components/LogoutModal";
 
 export default function CounselorDashboard() {
+  const { t } = useCounselorTranslation();
   const [activeTab, setActiveTab] = useState("messages");
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -178,18 +180,13 @@ export default function CounselorDashboard() {
   }
 
   const navItems = [
-    {
-      id: "messages",
-      icon: <FaComments />,
-      label: "Messages",
-      badge: pendingRequests.length,
-    },
-    { id: "appointments", icon: <FaCalendarAlt />, label: "Appointments" },
-    { id: "sessions", icon: <FaVideo />, label: "Sessions", badge: 0 },
-    { id: "patients", icon: <FaUsers />, label: "Patients", badge: 0 },
-    { id: "earnings", icon: <FaMoneyBillWave />, label: "Earnings", badge: 0 },
-    { id: "profile", icon: <FaUser />, label: "Profile", badge: 0 },
-    { id: "settings", icon: <FaCog />, label: "Settings", badge: 0 },
+    { id: "messages", icon: <FaComments />, label: t('messages'), badge: pendingRequests.length },
+    { id: "appointments", icon: <FaCalendarAlt />, label: t('appointments') },
+    { id: "sessions", icon: <FaVideo />, label: t('sessions'), badge: 0 },
+    { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
+    { id: "earnings", icon: <FaMoneyBillWave />, label: t('earnings'), badge: 0 },
+    { id: "profile", icon: <FaUser />, label: t('profile'), badge: 0 },
+    { id: "settings", icon: <FaCog />, label: t('settings'), badge: 0 },
   ];
 
   const handleTabChange = (tabId) => {
