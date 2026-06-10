@@ -255,10 +255,10 @@ const ChatPopup = ({
             </div>
             <div>
               <h3>MediConeckt AI</h3>
-              <p className="ud-chat-status">
+              {/* <p className="ud-chat-status">
                 <span className="ud-status-dot" />
                 Online • Always here
-              </p>
+              </p> */}
             </div>
           </div>
           <div className="ud-chat-header-actions">
@@ -1128,9 +1128,9 @@ export default function UserDashboard() {
   };
 
   const allMenuItems = [
-    { id: "Chat", icon: <FaCommentDots />, label: t('ai_chat') },
-    { id: "Live Chat", icon: <FaUserMd />, label: t('find_counselor') },
-    { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('my_appointments') },
+    { id: "Chat", icon: <FaCommentDots />, label: t('chat') },
+    { id: "Live Chat", icon: <FaUserMd />, label: t('counselor') },
+    { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
     { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
