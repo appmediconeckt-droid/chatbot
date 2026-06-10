@@ -1,7 +1,8 @@
 // ChatBox.jsx - Fully Responsive Chat Interface with Proper Scroll Behavior
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
-import { Link, useParams, useLocation } from "react-router-dom";
+import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
@@ -9,11 +10,14 @@ import socketService from "../../../../services/socketService";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
+import { translateMessage } from "../../../../services/messageTranslationService";
 
 const ChatBox = () => {
-  const { t } = useUserTranslation();
+  const { t, lang } = useUserTranslation();
   const { id: counselorId } = useParams();
   const location = useLocation();
+  const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const { chatId, counselor: initialCounselor, user: initialUser } = location.state || {};
 
   const [currentChat, setCurrentChat] = useState(null);
@@ -56,6 +60,8 @@ const ChatBox = () => {
   const [chatStatus, setChatStatus] = useState(null);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
   const [blockedPopup, setBlockedPopup] = useState({ show: false, reason: "" });
+  const [originalMessages, setOriginalMessages] = useState([]);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -70,6 +76,12 @@ const ChatBox = () => {
   const prevScrollHeightRef = useRef(0);
   const isUserScrollingRef = useRef(false);
   const isInitialLoadRef = useRef(true);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const getCurrentUser = () => {
     const storedUserData = localStorage.getItem("userData") || localStorage.getItem("user");
@@ -504,6 +516,7 @@ const ChatBox = () => {
           isRead: msg.isRead,
           status: "sent",
         }));
+        setOriginalMessages(transformedMessages);
         setMessages(transformedMessages);
         if (currentChat) {
           setCurrentChat((prev) => ({ ...prev, messages: transformedMessages, chatStatus: response.data.chatStatus }));
@@ -566,6 +579,7 @@ const ChatBox = () => {
       status: "sending",
       isTemporary: true,
     };
+    setOriginalMessages((prev) => [...prev, tempUserMessage]);
     setMessages((prev) => [...prev, tempUserMessage]);
     setNewMessage("");
     focusMessageInput();
@@ -574,6 +588,25 @@ const ChatBox = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     try {
       const sentMsg = await sendMessageToAPI({ messageContent: messageText });
+      setOriginalMessages((prev) => {
+        const withoutTemp = prev.filter((m) => !m.isTemporary);
+        if (!sentMsg) return withoutTemp;
+        const alreadyHas = withoutTemp.some((m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId);
+        if (alreadyHas) return withoutTemp;
+        return [...withoutTemp, {
+          id: sentMsg.id || sentMsg._id,
+          messageId: sentMsg.messageId,
+          text: sentMsg.content,
+          sender: "user",
+          senderRole: "user",
+          time: new Date(sentMsg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          fullTime: sentMsg.createdAt,
+          contentType: sentMsg.contentType,
+          isRead: sentMsg.isRead,
+          status: "sent",
+        }];
+      });
+
       setMessages((prev) => {
         const withoutTemp = prev.filter((m) => !m.isTemporary);
         if (!sentMsg) return withoutTemp;
@@ -612,6 +645,7 @@ const ChatBox = () => {
           isError: true,
           status: "error",
         };
+        setOriginalMessages((prev) => [...prev, errorMessage]);
         setMessages((prev) => [...prev, errorMessage]);
       }
     } finally {
@@ -777,6 +811,12 @@ const ChatBox = () => {
         isRead: messageData.isRead,
         status: "sent",
       };
+      setOriginalMessages((prev) => {
+        const isDuplicate = prev.some((msg) => msg.messageId && messageData.messageId && msg.messageId === messageData.messageId);
+        if (isDuplicate) return prev;
+        return [...prev, transformedMessage];
+      });
+
       setMessages((prev) => {
         const isDuplicate = prev.some((msg) => msg.messageId && messageData.messageId && msg.messageId === messageData.messageId);
         if (isDuplicate) return prev;
@@ -881,11 +921,72 @@ const ChatBox = () => {
     return () => clearInterval(interval);
   }, [currentChat]);
 
+  // Translate messages when language changes
+  useEffect(() => {
+    if (!lang || lang === 'en') {
+      setIsTranslating(false);
+      setMessages(originalMessages);
+      return;
+    }
+
+    if (!originalMessages || originalMessages.length === 0) {
+      setIsTranslating(false);
+      return;
+    }
+
+    console.log('🌐 Starting translation to language:', lang, 'Messages count:', originalMessages.length);
+
+    const translateMessages = async () => {
+      setIsTranslating(true);
+      try {
+        console.log('📝 Translating', originalMessages.length, 'messages...');
+
+        const translatedMsgs = await Promise.all(
+          originalMessages.map(async (msg) => {
+            // Skip user messages and empty messages
+            if (!msg.text || msg.sender === 'user') {
+              return msg;
+            }
+
+            try {
+              console.log('  → Translating:', msg.text.slice(0, 40) + '...');
+              const translatedText = await translateMessage(msg.text, lang);
+
+              if (translatedText && translatedText !== msg.text) {
+                console.log('    ✓ Result:', translatedText.slice(0, 40) + '...');
+                return { ...msg, text: translatedText };
+              }
+              return msg;
+            } catch (error) {
+              console.error('Error translating individual message:', error);
+              return msg;
+            }
+          })
+        );
+
+        console.log('✅ Translation complete! Updating UI with', translatedMsgs.length, 'messages');
+        setMessages(translatedMsgs);
+      } catch (error) {
+        console.error('❌ Error translating messages:', error);
+        setMessages(originalMessages);
+      } finally {
+        setIsTranslating(false);
+      }
+    };
+
+    translateMessages();
+  }, [lang, originalMessages]);
+
   const handleKeyDown = (e) => { if (e.key === "Enter" && !e.shiftKey && !isSending) { e.preventDefault(); handleSendMessage(); focusMessageInput(); } };
   const handleSendButtonClick = (e) => { e.preventDefault(); handleSendMessage(); focusMessageInput(); };
   const addEmoji = (emoji) => { setNewMessage((prev) => prev + emoji); focusMessageInput(); };
   const emojis = ["😊", "😂", "🥰", "😎", "😢", "😡", "👍", "👋", "❤️", "🎉", "🙏", "💪"];
-  const optionsMenuItems = [{ id: 1, label: "Refresh Messages", icon: "🔄" }, { id: 2, label: "Clear Chat", icon: "🗑️" }, { id: 3, label: "Report Issue", icon: "⚠️" }, { id: 4, label: "Chat Details", icon: "📋" }];
+  const optionsMenuItems = useMemo(() => [
+    { id: 1, label: t('refresh_messages'), icon: "🔄" },
+    { id: 2, label: t('clear_chat'), icon: "🗑️" },
+    { id: 3, label: t('report_issue'), icon: "⚠️" },
+    { id: 4, label: t('chat_details'), icon: "📋" }
+  ], [lang]);
   const handleFileAttach = () => { if (isSending) return; fileInputRef.current?.click(); };
   const handlePhotoCapture = () => { if (isSending) return; cameraInputRef.current?.click(); };
   const handleFileSelected = async (e) => {
@@ -945,7 +1046,11 @@ const ChatBox = () => {
       <div className="chatBoxMain">
         <header className="chatBoxHeader">
           <div className="chatBoxHeaderLeft">
-            <Link to="/user-dashboard" className="chatBackBtn" aria-label="Go back">←</Link>
+            {isMobile && (
+              <button onClick={() => navigate(-1)} className="chatMobileHeaderBack" aria-label="Go back" title="Go back">
+                <FaArrowLeft />
+              </button>
+            )}
             <div className="chatUserDetails">
               <div className="chatProfilePic" aria-label="Counselor profile picture">
                 {renderProfileAvatar(currentCounselor, "md")}
@@ -962,11 +1067,11 @@ const ChatBox = () => {
           <div className="chatBoxHeaderRight">
             <button className={`chatActionBtn chatVideoBtn ${isInitiatingCall ? "disabled" : ""}`} onClick={handleVideoCall} disabled={isInitiatingCall} aria-label="Video call">
               <span className="chatBtnIcon" aria-hidden="true">{isInitiatingCall ? "⏳" : "📹"}</span>
-              <span className="chatBtnTooltip">Video Call</span>
+              <span className="chatBtnTooltip">{t('video_call_tooltip')}</span>
             </button>
             <button className={`chatActionBtn chatAudioBtn ${isInitiatingCall ? "disabled" : ""}`} onClick={handleVoiceCall} disabled={isInitiatingCall} aria-label="Voice call">
               <span className="chatBtnIcon" aria-hidden="true">{isInitiatingCall ? "⏳" : "📞"}</span>
-              <span className="chatBtnTooltip">Voice Call</span>
+              <span className="chatBtnTooltip">{t('voice_call_tooltip')}</span>
             </button>
             <div className="chatMoreOptions" ref={optionsRef}>
               <button className="chatActionBtn" onClick={() => setShowOptions(!showOptions)} aria-label="More options" aria-expanded={showOptions}>

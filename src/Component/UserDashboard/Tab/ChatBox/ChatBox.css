@@ -67,6 +67,7 @@
   min-height: 5rem;
   flex-shrink: 0;
   z-index: 10;
+  position: relative;
 }
 
 .chatBoxHeaderLeft {
@@ -93,6 +94,35 @@
 }
 
 .chatBackBtn:active { transform: scale(0.95); }
+
+.chatMobileHeaderBack {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 3px 12px rgba(102, 126, 234, 0.35), 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.chatMobileHeaderBack:hover {
+  transform: scale(1.08);
+  box-shadow: 0 5px 18px rgba(102, 126, 234, 0.4), 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.chatMobileHeaderBack:active {
+  transform: scale(0.95);
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.2);
+}
 
 .chatUserDetails {
   display: flex;

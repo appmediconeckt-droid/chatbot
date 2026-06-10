@@ -14,6 +14,7 @@ import {
   FaCheckCircle,
   FaSpinner,
   FaTimes,
+  FaArrowLeft,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
@@ -26,6 +27,7 @@ import LocationGate from "./LocationGate";
   
 const CounselorSignup = () => {
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const [isLogin, setIsLogin] = useState(true);
   const [slideAnim, setSlideAnim] = useState("");
   const [formData, setFormData] = useState({
@@ -135,6 +137,12 @@ const CounselorSignup = () => {
   };
   const location = useLocation();
   const roleFromState = location.state?.role;
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   useEffect(() => {
     if (roleFromState) {
@@ -1404,6 +1412,17 @@ const CounselorSignup = () => {
 
       {showEmailOtpModal && <EmailOtpModal />}
       {showPhoneOtpModal && <PhoneOtpModal />}
+
+      {isMobile && (
+        <button
+          onClick={() => navigate(-1)}
+          className="cs-mobile-header-back"
+          aria-label="Go back"
+          title="Go back"
+        >
+          <FaArrowLeft />
+        </button>
+      )}
 
       <div className="cs-container">
         <div className="cs-brand">

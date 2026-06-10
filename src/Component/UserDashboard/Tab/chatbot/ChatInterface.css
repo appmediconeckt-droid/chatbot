@@ -9,6 +9,39 @@
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  position: relative;
+}
+
+/* Mobile Back Button - In Header */
+.chatInterfaceBackBtn {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 24px;
+  color: #4f46e5;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  line-height: 1;
+  margin-right: 8px;
+}
+
+.chatInterfaceBackBtn:hover {
+  background-color: rgba(79, 70, 229, 0.1);
+  transform: translateX(-2px);
+}
+
+.chatInterfaceBackBtn:active {
+  transform: translateX(-4px);
+}
+
+@media (max-width: 768px) {
+  .chatInterfaceBackBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 /* Loading Container - Perfectly Centered */
@@ -39,6 +72,9 @@
   border-bottom: 1px solid #eef2f6;
   background: white;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .counselorListTitle {
@@ -55,6 +91,7 @@
 .counselorSearchBox {
   position: relative;
   width: 100%;
+  flex: 1;
 }
 
 .counselorSearchInput {
@@ -731,13 +768,14 @@
   .chatAppContainer {
     height: 100vh;
   }
-  
+
   .counselorSidebar {
     height: 100vh;
   }
-  
+
   .counselorSidebarHeader {
-    padding: 16px;
+    padding: 12px 16px;
+    gap: 8px;
   }
   
   .counselorListTitle {

@@ -1117,24 +1117,15 @@ export default function UserDashboard() {
     setShowProfileMenu(false);
   };
 
-  const handleSupportClick = (type) => {
-    vibrate(40);
-    alert(`Opening ${type} section`);
-  };
-
-  const handlePrivacyAction = (action) => {
-    vibrate(30);
-    alert(`Opening ${action} settings`);
-  };
 
   const allMenuItems = [
-    { id: "Chat", icon: <FaCommentDots />, label: t('chat') },
-    { id: "Live Chat", icon: <FaUserMd />, label: t('counselor') },
+    { id: "Chat", icon: <FaCommentDots />, label: t('ai_chat') },
+    { id: "Live Chat", icon: <FaUserMd />, label: t('find_counselor') },
     { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
-    { id: "help", icon: <FaQuestionCircle />, label: "Help & Support" },
-    { id: "privacy", icon: <FaLock />, label: "Privacy" },
+    { id: "help", icon: <FaQuestionCircle />, label: t('help_support') },
+    { id: "privacy", icon: <FaLock />, label: t('privacy') },
     { id: "settings", icon: <FaCog />, label: t('settings') },
   ];
 
@@ -1589,9 +1580,7 @@ export default function UserDashboard() {
                 ))}
               </div>
               <div className="ud-sidebar-actions">
-                <div style={{ padding: '8px 12px 4px' }}>
-                  <LanguageSelector lang={lang} setLang={setLang} t={t} />
-                </div>
+                <LanguageSelector lang={lang} setLang={setLang} t={t} sidebar />
                 <button
                   className="ud-sidebar-item ud-profile-action"
                   onClick={handleProfileClick}
@@ -1618,10 +1607,9 @@ export default function UserDashboard() {
         <div className={`ud-dashboard-content ${isMobile ? "ud-mobile" : ""}`}>
           <div className="ud-content-scrollable">
             {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
-            {active === "Counselor" && (
+            {active === "Live Chat" && (
               <CounselorRequestChat initialSearch={targetCounselor} />
             )}
-            {active === "Live Chat" && <LiveChatSupport />}
             {active === "MyAppointments" && <MyAppointments />}
             {active === "Wallet" && <WalletDashboard userData={userData} />}
             {active === "Video" && (
@@ -1655,7 +1643,7 @@ export default function UserDashboard() {
           onReset={async () => {
             if (isLoading) return;
             const ok = window.confirm(
-              "Start a fresh chat? Your previous messages will be cleared.",
+              `${t('start_conversation')} ${t('no_messages')}?`,
             );
             if (!ok) return;
             setIsLoading(true);
@@ -1701,7 +1689,7 @@ export default function UserDashboard() {
             <span className="ud-nav-icon">
               <FaEllipsisH />
             </span>
-            <span className="ud-nav-label">More</span>
+            <span className="ud-nav-label">{t('all')}</span>
           </button>
         </nav>
       )}
@@ -1734,6 +1722,9 @@ export default function UserDashboard() {
                   </button>
                 ))}
                 <div className="ud-more-actions">
+                  <div style={{ padding: '8px 12px' }}>
+                    <LanguageSelector lang={lang} setLang={setLang} t={t} />
+                  </div>
                   <button
                     className="ud-more-action-btn ud-logout-btn"
                     onClick={() => {
@@ -1743,7 +1734,7 @@ export default function UserDashboard() {
                     }}
                   >
                     <FaSignOutAlt className="ud-action-icon" />
-                    <span>Logout</span>
+                    <span>{t('logout')}</span>
                   </button>
                 </div>
               </div>

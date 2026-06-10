@@ -445,11 +445,16 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
     try {
       setIsLoading(true);
+
+      // Convert datetime-local to ISO string for backend (IST timezone)
+      const appointmentDate = new Date(bookingDate);
+      const isoDate = appointmentDate.toISOString();
+
       const res = await axios.post(
         `${API_BASE_URL}/api/appointments`,
         {
           counselorId: selectedCounselorForRequest.id,
-          date: bookingDate,
+          date: isoDate,
           notes: bookingNotes,
         },
         {

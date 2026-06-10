@@ -1,20 +1,67 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { SUPPORTED_LANGUAGES } from '../../i18n/LanguageContext';
 
-export function LanguageSelector({ lang, setLang, t, compact = false }) {
+export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = false }) {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
   const current = SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
 
   useEffect(() => {
-    const onOutside = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const onOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+    };
     document.addEventListener('mousedown', onOutside);
     return () => document.removeEventListener('mousedown', onOutside);
   }, []);
 
+  if (sidebar) {
+    return (
+      <div ref={ref} style={{ position: 'relative', width: '100%' }}>
+        <button
+          type="button"
+          onClick={() => setOpen((o) => !o)}
+          className={`ud-sidebar-item ud-lang-trigger${open ? ' ud-lang-trigger--open' : ''}`}
+          title={t ? t('select_language') : 'Select Language'}
+          aria-haspopup="listbox"
+          aria-expanded={open}
+        >
+          <span className="ud-sidebar-icon" style={{ fontSize: 18 }}>🌐</span>
+          <span className="ud-sidebar-text" style={{ flex: 1 }}>{current.label}</span>
+          <span className="ud-lang-chevron">
+            {open ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
+          </span>
+        </button>
+
+        {open && (
+          <div className="ud-lang-dropdown" role="listbox">
+            <div className="ud-lang-dropdown-header">
+              {t ? t('select_language') : 'Select Language'}
+            </div>
+            {SUPPORTED_LANGUAGES.map((l) => (
+              <button
+                key={l.code}
+                type="button"
+                role="option"
+                aria-selected={l.code === lang}
+                onClick={() => { setLang(l.code); setOpen(false); }}
+                className={`ud-lang-option${l.code === lang ? ' ud-lang-option--active' : ''}`}
+              >
+                <span className="ud-lang-check">{l.code === lang ? '✓' : ''}</span>
+                {l.label}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Default inline variant (used in chat footer, mobile modal, etc.)
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
         title={t ? t('select_language') : 'Select Language'}
         style={{
@@ -40,6 +87,7 @@ export function LanguageSelector({ lang, setLang, t, compact = false }) {
           {SUPPORTED_LANGUAGES.map((l) => (
             <button
               key={l.code}
+              type="button"
               onClick={() => { setLang(l.code); setOpen(false); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,

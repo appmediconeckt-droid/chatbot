@@ -189,6 +189,37 @@
   color: #8e54e9;
 }
 
+.cs-mobile-header-back {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: white;
+  border: 2px solid #4776e6;
+  color: #4776e6;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(71, 118, 230, 0.15);
+}
+
+.cs-mobile-header-back:hover {
+  background: #4776e6;
+  color: white;
+  box-shadow: 0 4px 16px rgba(71, 118, 230, 0.3);
+  transform: translateX(-2px);
+}
+
+.cs-mobile-header-back:active {
+  transform: translateX(-2px) scale(0.95);
+}
+
 /* ===== SLIDER CONTAINER - SMOOTH LEFT/RIGHT SLIDE ===== */
 .cs-slider-container {
   position: relative;

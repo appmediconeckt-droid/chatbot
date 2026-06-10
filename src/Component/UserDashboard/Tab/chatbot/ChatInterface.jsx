@@ -1,16 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft } from 'react-icons/fa';
 import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
+import { translateMessage } from '../../../../services/messageTranslationService';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
-    const { t } = useUserTranslation();
+    const { t, lang } = useUserTranslation();
+    const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
 
     // State for counselors and chats
     const [counselors, setCounselors] = useState([]);
+    const [originalCounselors, setOriginalCounselors] = useState([]);
     const [loading, setLoading] = useState(true);
     const [initialLoading, setInitialLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -23,6 +27,7 @@ const ChatInterface = ({ setActiveTab }) => {
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [counselorToDelete, setCounselorToDelete] = useState(null);
     const [error, setError] = useState(null);
+    const [isTranslating, setIsTranslating] = useState(false);
 
     // Refs for long press
     const longPressTimer = useRef(null);
@@ -120,14 +125,13 @@ const ChatInterface = ({ setActiveTab }) => {
             const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
             if (diffMins < 1) return t('just_now');
-            if (diffHours < 1) return `${diffMins} minutes ago`;
-            if (diffHours === 1) return '1 hour ago';
-            if (diffHours < 24) return `${diffHours} hours ago`;
+            if (diffHours < 1) return `${diffMins} ${t('min_ago')}`;
+            if (diffHours < 24) return `${diffHours} ${t('hour_ago')}`;
             if (diffDays === 1) return t('yesterday');
-            if (diffDays < 7) return `${diffDays} days ago`;
+            if (diffDays < 7) return `${diffDays} ${t('day_ago')}`;
             return lastSeenTime.toLocaleDateString();
         } catch (error) {
-            return 'Recently';
+            return t('offline');
         }
     };
 
@@ -166,11 +170,11 @@ const ChatInterface = ({ setActiveTab }) => {
                     // Transform API data to counselor list format
                     const counselorList = chatsArray.map(chat => {
                     const otherParty = chat.otherParty || {};
-                    const lastMessage = chat.lastMessage?.content || 'No messages yet';
+                    const lastMessage = chat.lastMessage?.content || t('no_messages');
                     const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
 
                     // Get the specialization as string
-                    let specialization = 'Counselor';
+                    let specialization = t('counselor');
                     if (otherParty.specialization) {
                         if (Array.isArray(otherParty.specialization) && otherParty.specialization.length > 0) {
                             specialization = otherParty.specialization[0];
@@ -181,10 +185,9 @@ const ChatInterface = ({ setActiveTab }) => {
 
                     return {
                         id: otherParty.id || chat.chatId,
-                        name: otherParty.name || 'Unknown Counselor',
+                        name: otherParty.name || t('unknown_counselor'),
                         lastMessage: lastMessage,
                         lastMessageTime: lastMessageTime,
-                        time: formatTime(lastMessageTime),
                         fullDateTime: formatFullDateTime(lastMessageTime),
                         unread: chat.unreadCount || 0,
                         online: otherParty.isOnline || false,
@@ -211,6 +214,7 @@ const ChatInterface = ({ setActiveTab }) => {
                 });
 
                     console.log('Transformed counselor list:', counselorList);
+                    setOriginalCounselors(counselorList);
                     setCounselors(counselorList);
 
                     // Also save to localStorage for offline access
@@ -239,7 +243,7 @@ const ChatInterface = ({ setActiveTab }) => {
                             const lastMessage = chat.lastMessage?.content || 'No messages yet';
                             const lastMessageTime = chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
 
-                            let specialization = 'Counselor';
+                            let specialization = t('counselor');
                             if (otherParty.specialization) {
                                 if (Array.isArray(otherParty.specialization) && otherParty.specialization.length > 0) {
                                     specialization = otherParty.specialization[0];
@@ -250,10 +254,9 @@ const ChatInterface = ({ setActiveTab }) => {
 
                             return {
                                 id: otherParty.id || chat.chatId,
-                                name: otherParty.name || 'Unknown Counselor',
+                                name: otherParty.name || t('unknown_counselor'),
                                 lastMessage: lastMessage,
                                 lastMessageTime: lastMessageTime,
-                                time: formatTime(lastMessageTime),
                                 fullDateTime: formatFullDateTime(lastMessageTime),
                                 unread: chat.unreadCount || 0,
                                 online: otherParty.isOnline || false,
@@ -278,6 +281,7 @@ const ChatInterface = ({ setActiveTab }) => {
                             return timeB - timeA;
                         });
 
+                        setOriginalCounselors(counselorList);
                         setCounselors(counselorList);
                     }
                 }
@@ -374,6 +378,44 @@ const ChatInterface = ({ setActiveTab }) => {
             window.removeEventListener('storage', handleStorageChange);
         };
     }, [fetchChats]);
+
+    // Translate counselor list messages when language changes
+    useEffect(() => {
+        if (!lang || lang === 'en' || !originalCounselors || originalCounselors.length === 0) {
+            console.log('Translation skipped in ChatInterface: lang =', lang, 'counselors =', originalCounselors?.length);
+            return;
+        }
+
+        console.log('🌐 Starting counselor messages translation to:', lang);
+
+        const translateCounselors = async () => {
+            setIsTranslating(true);
+            try {
+                const translatedCounselors = await Promise.all(
+                    originalCounselors.map(async (counselor) => {
+                        if (!counselor.lastMessage) return counselor;
+                        try {
+                            const translatedMessage = await translateMessage(counselor.lastMessage, lang);
+                            console.log('Counselor message translated:', counselor.lastMessage.slice(0, 30), '→', translatedMessage.slice(0, 30));
+                            return { ...counselor, lastMessage: translatedMessage };
+                        } catch (error) {
+                            console.error('Error translating counselor message:', error);
+                            return counselor;
+                        }
+                    })
+                );
+                console.log('✅ Counselor messages translated, updating UI...');
+                setCounselors(translatedCounselors);
+            } catch (error) {
+                console.error('Error translating counselors:', error);
+                setCounselors(originalCounselors);
+            } finally {
+                setIsTranslating(false);
+            }
+        };
+
+        translateCounselors();
+    }, [lang, originalCounselors]);
 
     // Handle counselor selection
     const handleCounselorSelect = useCallback(async (counselor) => {
@@ -576,6 +618,11 @@ const ChatInterface = ({ setActiveTab }) => {
         <div className="chatAppContainer">
             <div className="counselorSidebar">
                 <div className="counselorSidebarHeader">
+                    {isMobile && (
+                        <button onClick={() => navigate(-1)} className="chatInterfaceBackBtn" aria-label="Go back" title="Go back">
+                            <FaArrowLeft />
+                        </button>
+                    )}
                     <div className="counselorSearchBox">
                         <input
                             type="text"
@@ -630,7 +677,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                         <div className="counselorNameRow">
                                             <h3 className="counselorName">{counselor.name}</h3>
                                             <span className="counselorTime" title={counselor.fullDateTime}>
-                                                {counselor.time}
+                                                {formatTime(counselor.lastMessageTime)}
                                             </span>
                                         </div>
 
@@ -644,16 +691,16 @@ const ChatInterface = ({ setActiveTab }) => {
                                         <div className="counselorMetaInfo">
                                             <span className="counselorSpecialization">{counselor.specialization}</span>
                                             {counselor.status === 'accepted' && (
-                                                <span className="counselorStatusBadge accepted">✓ Accepted</span>
+                                                <span className="counselorStatusBadge accepted">{t('accepted_status')}</span>
                                             )}
                                             {counselor.isExpired && (
-                                                <span className="counselorStatusBadge expired">⌛ Expired</span>
+                                                <span className="counselorStatusBadge expired">{t('expired_status')}</span>
                                             )}
                                         </div>
 
                                         {!counselor.online && counselor.lastSeen && (
                                             <div className="counselorLastSeen">
-                                                Last seen: {formatLastSeen(counselor.lastSeen)}
+                                                {t('last_seen')}: {formatLastSeen(counselor.lastSeen)}
                                             </div>
                                         )}
                                     </div>
@@ -667,9 +714,9 @@ const ChatInterface = ({ setActiveTab }) => {
                         <div className="no-chats-message">
                             {searchTerm ? (
                                 <>
-                                    <p>No counselors found matching "{searchTerm}"</p>
+                                    <p>{t('search')} "{searchTerm}"</p>
                                     <button onClick={() => setSearchTerm('')} className="start-chat-link">
-                                        Clear search
+                                        {t('clear_search')}
                                     </button>
                                 </>
                             ) : (
@@ -705,10 +752,10 @@ const ChatInterface = ({ setActiveTab }) => {
                                 {contextMenu.counselor.name}
                             </span>
                             <span className="context-menu-status">
-                                {contextMenu.counselor.online ? '🟢 Online' : '⚫ Offline'}
+                                {contextMenu.counselor.online ? `🟢 ${t('online')}` : `⚫ ${t('offline')}`}
                             </span>
                             <span className="context-menu-time">
-                                Last message: {contextMenu.counselor.fullDateTime}
+                                {t('last_message')}: {contextMenu.counselor.fullDateTime}
                             </span>
                         </div>
                     </div>
@@ -721,21 +768,21 @@ const ChatInterface = ({ setActiveTab }) => {
                             }}
                         >
                             <span className="context-menu-icon">✓</span>
-                            <span className="context-menu-text">Mark as Read</span>
+                            <span className="context-menu-text">{t('mark_as_read')}</span>
                         </button>
                         <button
                             className="context-menu-item delete"
                             onClick={() => handleDeleteChat(contextMenu.counselor)}
                         >
                             <span className="context-menu-icon">🗑️</span>
-                            <span className="context-menu-text">Delete Chat</span>
+                            <span className="context-menu-text">{t('delete_chat')}</span>
                         </button>
                         <button
                             className="context-menu-item"
                             onClick={closeContextMenu}
                         >
                             <span className="context-menu-icon">✕</span>
-                            <span className="context-menu-text">Cancel</span>
+                            <span className="context-menu-text">{t('cancel')}</span>
                         </button>
                     </div>
                 </div>
@@ -746,7 +793,7 @@ const ChatInterface = ({ setActiveTab }) => {
                 <div className="modal-overlay" onClick={() => setShowDeleteConfirm(false)}>
                     <div className="modal-container" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h3 className="modal-title">Delete Chat</h3>
+                            <h3 className="modal-title">{t('delete_chat')}</h3>
                         </div>
                         <div className="modal-body">
                             <div className="delete-counselor-info">
@@ -758,10 +805,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                     <span className="delete-specialization">{counselorToDelete.specialization}</span>
                                 </div>
                             </div>
-                            <p>Are you sure you want to delete this chat?</p>
-                            <p className="delete-warning">
-                                ⚠️ This action cannot be undone. All messages will be permanently deleted.
-                            </p>
+                            <p>{t('delete_chat')}?</p>
                             {counselorToDelete.fullDateTime && (
                                 <p className="chat-time-info">
                                     Last message: {counselorToDelete.fullDateTime}
@@ -773,13 +817,13 @@ const ChatInterface = ({ setActiveTab }) => {
                                 className="btn-secondary"
                                 onClick={() => setShowDeleteConfirm(false)}
                             >
-                                Cancel
+                                {t('cancel')}
                             </button>
                             <button
                                 className="btn-danger"
                                 onClick={confirmDeleteChat}
                             >
-                                Delete Chat
+                                {t('delete_chat')}
                             </button>
                         </div>
                     </div>

@@ -19,12 +19,24 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [redirectCountdown, setRedirectCountdown] = useState(0);
 
   useEffect(() => {
     if (typeof hasPassword === "boolean") {
       setMode(hasPassword ? "change" : "set");
     }
   }, [hasPassword]);
+
+  // Countdown effect for redirect
+  useEffect(() => {
+    if (redirectCountdown <= 0) return;
+
+    const timer = setTimeout(() => {
+      setRedirectCountdown(redirectCountdown - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [redirectCountdown]);
 
   const authHeaders = () => {
     const token =
@@ -61,17 +73,40 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
 
     setLoading(true);
     try {
+      console.log('📧 Sending OTP to:', normalizedEmail);
       const response = await axios.post(`${API_BASE_URL}/api/auth/generateOtp`, {
         email: normalizedEmail,
       });
+      console.log('✅ OTP Response:', response.data);
       if (response.data?.success) {
         setOtpSent(true);
-        setMessage(response.data.message || "OTP sent to your email.");
+        setMessage(response.data.message || "OTP sent to your email. Check your inbox (and spam folder).");
       } else {
         throw new Error(response.data?.message || "Failed to send OTP.");
       }
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to send OTP.");
+      console.error('❌ OTP Error Details:', {
+        status: err.response?.status,
+        data: err.response?.data,
+        message: err.message,
+        fullResponse: err.response
+      });
+
+      const errorMsg = err.response?.data?.message || err.message || "Failed to send OTP.";
+      const statusCode = err.response?.status;
+
+      if (statusCode === 500) {
+        const details = err.response?.data?.error || err.response?.data?.details || '';
+        setError(`Server error (500): ${errorMsg}${details ? ` - ${details}` : ''}. Please check backend logs or contact support.`);
+      } else if (statusCode === 400) {
+        setError(`Invalid request: ${errorMsg}`);
+      } else if (statusCode === 404) {
+        setError(`Email not found: ${errorMsg}`);
+      } else if (statusCode === 401) {
+        setError(`Unauthorized: ${errorMsg}`);
+      } else {
+        setError(errorMsg || "An error occurred. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -106,9 +141,10 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
       );
 
       if (response.data?.success) {
-        setMessage(response.data.message || "Password set successfully.");
+        setMessage("✅ Password set successfully! Redirecting in 2 seconds...");
         setForm(initialForm);
         setOtpSent(false);
+        setRedirectCountdown(2);
         onPasswordUpdated?.({ hasPassword: true, requiresLogin: true });
       } else {
         throw new Error(response.data?.message || "Failed to set password.");
@@ -143,6 +179,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
 
     setLoading(true);
     try {
+      console.log('🔐 Changing password...');
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/changePassword`,
         {
@@ -152,17 +189,30 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
         { headers: authHeaders() },
       );
 
+      console.log('✅ Password change response:', response.data);
       if (response.data?.success) {
-        setMessage(response.data.message || "Password changed successfully.");
+        setMessage("✅ Password changed successfully! Redirecting in 2 seconds...");
         setForm(initialForm);
+        setRedirectCountdown(2);
         onPasswordUpdated?.({ hasPassword: true, requiresLogin: true });
       } else {
         throw new Error(response.data?.message || "Failed to change password.");
       }
     } catch (err) {
-      const msg =
-        err.response?.data?.message || err.message || "Failed to change password.";
-      setError(msg);
+      console.error('❌ Password change error:', err.response?.data || err.message);
+      const statusCode = err.response?.status;
+      const msg = err.response?.data?.message || err.message || "Failed to change password.";
+
+      if (statusCode === 500) {
+        setError(`Server error (500): ${msg}. Please contact support.`);
+      } else if (statusCode === 401) {
+        setError('Incorrect current password. Please try again.');
+      } else if (statusCode === 400) {
+        setError(`Invalid request: ${msg}`);
+      } else {
+        setError(msg);
+      }
+
       if (/no password set/i.test(msg)) {
         setMode("set");
       }

@@ -8,10 +8,13 @@ import socketService from "../../../../services/socketService";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
+import { translateMessage } from "../../../../services/messageTranslationService";
 
 const SMSInput = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, lang } = useCounselorTranslation();
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -43,10 +46,12 @@ const SMSInput = () => {
 
   // Message states
   const [messages, setMessages] = useState([]);
+  const [originalMessages, setOriginalMessages] = useState([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
 
   const handleSessionExpired = () => {
     localStorage.clear();
@@ -240,6 +245,7 @@ const SMSInput = () => {
             status: "sent",
           }),
         );
+        setOriginalMessages(transformedMessages);
         setMessages(transformedMessages);
         saveMessagesToLocalStorage(transformedMessages);
       }
@@ -281,7 +287,10 @@ const SMSInput = () => {
       const savedChats = JSON.parse(localStorage.getItem("smsChats") || "[]");
       const chatIdToLoad = getChatIdForAPI();
       const savedChat = savedChats.find((chat) => chat.chatId === chatIdToLoad);
-      if (savedChat && savedChat.messages) setMessages(savedChat.messages);
+      if (savedChat && savedChat.messages) {
+        setOriginalMessages(savedChat.messages);
+        setMessages(savedChat.messages);
+      }
     } catch (error) {}
   };
 
@@ -969,6 +978,14 @@ const SMSInput = () => {
         isRead: messageData.isRead,
         status: "sent",
       };
+      setOriginalMessages((prev) => {
+        const isDuplicate = prev.some(
+          (msg) => msg.messageId && messageData.messageId && msg.messageId === messageData.messageId,
+        );
+        if (isDuplicate) return prev;
+        return [...prev, transformedMessage];
+      });
+
       setMessages((prev) => {
         const isDuplicate = prev.some(
           (msg) => msg.messageId && messageData.messageId && msg.messageId === messageData.messageId,
@@ -1046,6 +1063,46 @@ const SMSInput = () => {
       chatSocketRef.current = null;
     };
   }, [chatId, selectedUser, COUNSELOR_ID, USER_ID]);
+
+  // Translate messages when language changes
+  useEffect(() => {
+    if (!lang || lang === 'en' || !originalMessages || originalMessages.length === 0) {
+      console.log('Translation skipped in SMSInput: lang =', lang, 'messages =', originalMessages?.length);
+      return;
+    }
+
+    console.log('🌐 Starting message translation to:', lang);
+
+    const translateMessages = async () => {
+      setIsTranslating(true);
+      try {
+        const translatedMsgs = await Promise.all(
+          originalMessages.map(async (msg) => {
+            if (!msg.text || msg.sender === 'me') {
+              return msg; // Don't translate own messages
+            }
+            try {
+              const translatedText = await translateMessage(msg.text, lang);
+              console.log('Message translated:', msg.text.slice(0, 30), '→', translatedText.slice(0, 30));
+              return { ...msg, text: translatedText };
+            } catch (error) {
+              console.error('Error translating individual message:', error);
+              return msg;
+            }
+          })
+        );
+        console.log('✅ All messages translated, updating UI...');
+        setMessages(translatedMsgs);
+      } catch (error) {
+        console.error('Error translating messages:', error);
+        setMessages(originalMessages);
+      } finally {
+        setIsTranslating(false);
+      }
+    };
+
+    translateMessages();
+  }, [lang, originalMessages]);
 
   const renderMessageStatus = (message) => {
     if (message.sender !== "me") return null;

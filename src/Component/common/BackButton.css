@@ -1,0 +1,54 @@
+/* Back Button - Mobile Only */
+.back-button {
+  display: none; /* Hidden by default (desktop) */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 28px;
+  color: #4f46e5; /* Primary color */
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  line-height: 1;
+  z-index: 100;
+}
+
+.back-button:hover {
+  background-color: rgba(79, 70, 229, 0.1);
+  transform: translateX(-2px);
+}
+
+.back-button:active {
+  transform: translateX(-4px);
+}
+
+.back-button-icon {
+  display: inline-block;
+  font-weight: bold;
+  font-family: Arial, sans-serif;
+}
+
+/* Mobile View - Show back button below 768px */
+@media (max-width: 768px) {
+  .back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Extra mobile optimization - below 640px */
+@media (max-width: 640px) {
+  .back-button {
+    padding: 6px 10px;
+    font-size: 24px;
+  }
+}
+
+/* Very small screens - below 480px */
+@media (max-width: 480px) {
+  .back-button {
+    padding: 5px 8px;
+    font-size: 22px;
+  }
+}

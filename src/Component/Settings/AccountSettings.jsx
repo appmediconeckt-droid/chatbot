@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
 import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
@@ -18,6 +19,7 @@ const emptyAccount = {
 };
 
 const AccountSettings = ({ role = "user", onOpenProfile }) => {
+  const navigate = useNavigate();
   const isCounselor = role === "counsellor" || role === "counselor";
   const userT = useUserTranslation();
   const counselorT = useCounselorTranslation();
@@ -111,15 +113,28 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
     }
   };
 
-  const handlePasswordUpdated = ({ hasPassword } = {}) => {
+  const handlePasswordUpdated = ({ hasPassword, requiresLogin } = {}) => {
     setAccount((prev) => ({
       ...prev,
       hasPassword: typeof hasPassword === "boolean" ? hasPassword : true,
     }));
-    setNotice({
-      type: "success",
-      message: "Password updated. Please log in again if your session ends.",
-    });
+
+    // If password was just set/changed, redirect to role-based dashboard after 2 seconds
+    if (requiresLogin) {
+      setTimeout(() => {
+        console.log('🔄 Redirecting to role-based dashboard...');
+        navigate(isCounselor ? '/counselor-dashboard' : '/user-dashboard');
+      }, 2000);
+      setNotice({
+        type: "success",
+        message: "Password updated successfully. Redirecting...",
+      });
+    } else {
+      setNotice({
+        type: "success",
+        message: "Password updated successfully.",
+      });
+    }
   };
 
   if (loading) {
@@ -138,9 +153,11 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
           <p>{t('manage_account')}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          <div style={{ background: '#4f46e5', borderRadius: 20, padding: '2px' }}>
-            <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
-          </div>
+          {isCounselor && (
+            <div style={{ background: '#4f46e5', borderRadius: 20, padding: '2px' }}>
+              <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
+            </div>
+          )}
           {onOpenProfile && (
             <button type="button" onClick={onOpenProfile}>
               {t('edit_profile')}

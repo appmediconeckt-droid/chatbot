@@ -4,6 +4,7 @@ import "./Messagesou.css";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
+import { translateMessage } from "../../../../services/messageTranslationService";
 import {
   getAnonymousParticipantId,
   getAnonymousUserAvatar,
@@ -14,12 +15,14 @@ import {
  * Displays anonymous name and gender-based avatar icons (no photos)
  */
 const SMSList = () => {
-  const { t } = useCounselorTranslation();
+  const { t, lang } = useCounselorTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState([]);
+  const [originalUsers, setOriginalUsers] = useState([]);
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isTranslating, setIsTranslating] = useState(false);
   const navigate = useNavigate();
 
   const handleSessionExpired = useCallback(() => {
@@ -211,6 +214,7 @@ const SMSList = () => {
           return bTime - aTime;
         });
 
+        setOriginalUsers(transformedUsers);
         setUsers(transformedUsers);
         setLoading(false);
       } catch (err) {
@@ -255,6 +259,44 @@ const SMSList = () => {
       socketService.off("connect_error", onConnectError);
     };
   }, []);
+
+  // Translate user messages when language changes
+  useEffect(() => {
+    if (!lang || lang === 'en' || !originalUsers || originalUsers.length === 0) {
+      console.log('Translation skipped in Messagesou: lang =', lang, 'users =', originalUsers?.length);
+      return;
+    }
+
+    console.log('🌐 Starting user messages translation to:', lang);
+
+    const translateUsers = async () => {
+      setIsTranslating(true);
+      try {
+        const translatedUsers = await Promise.all(
+          originalUsers.map(async (user) => {
+            if (!user.lastMessage) return user;
+            try {
+              const translatedMessage = await translateMessage(user.lastMessage, lang);
+              console.log('User message translated:', user.lastMessage.slice(0, 30), '→', translatedMessage.slice(0, 30));
+              return { ...user, lastMessage: translatedMessage };
+            } catch (error) {
+              console.error('Error translating user message:', error);
+              return user;
+            }
+          })
+        );
+        console.log('✅ User messages translated, updating UI...');
+        setUsers(translatedUsers);
+      } catch (error) {
+        console.error('Error translating users:', error);
+        setUsers(originalUsers);
+      } finally {
+        setIsTranslating(false);
+      }
+    };
+
+    translateUsers();
+  }, [lang, originalUsers]);
 
   // Filter users based on the displayed (anonymous) name
   const filteredUsers = users.filter(

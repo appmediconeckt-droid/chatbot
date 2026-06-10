@@ -302,6 +302,37 @@
   cursor: not-allowed;
 }
 
+.us-mobile-header-back {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: white;
+  border: 2px solid #667eea;
+  color: #667eea;
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 12px rgba(102, 126, 234, 0.15);
+}
+
+.us-mobile-header-back:hover {
+  background: #667eea;
+  color: white;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  transform: translateX(-2px);
+}
+
+.us-mobile-header-back:active {
+  transform: translateX(-2px) scale(0.95);
+}
+
 /* ===== FORM FIELDS ===== */
 .us-field {
   display: flex;

@@ -24,22 +24,18 @@ const getProfilePhotoUrl = (profilePhoto) => {
   return profilePhoto.url || null;
 };
 
-const formatLastSeen = (lastSeen) => {
-  if (!lastSeen) return "Offline";
-
-  const diffMs = Date.now() - new Date(lastSeen).getTime();
-  const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
-
-  if (diffMinutes < 60) return `Last seen ${diffMinutes}m ago`;
-
-  const diffHours = Math.floor(diffMinutes / 60);
-  if (diffHours < 24) return `Last seen ${diffHours}h ago`;
-
-  return `Last seen ${Math.floor(diffHours / 24)}d ago`;
-};
-
 const CounselorTable = () => {
-  const { t } = useUserTranslation();
+  const { t, lang } = useUserTranslation();
+
+  const formatLastSeen = (lastSeen) => {
+    if (!lastSeen) return t('offline');
+    const diffMs = Date.now() - new Date(lastSeen).getTime();
+    const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
+    if (diffMinutes < 60) return `${t('last_seen')} ${diffMinutes} ${t('min_ago')}`;
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `${t('last_seen')} ${diffHours} ${t('hour_ago')}`;
+    return `${t('last_seen')} ${Math.floor(diffHours / 24)} ${t('day_ago')}`;
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("online");
@@ -205,38 +201,36 @@ const CounselorTable = () => {
 
       <div className="sort-bar">
         <div className="sort-left">
-          <span className="sort-label">Sort by:</span>
+          <span className="sort-label">{t('sort_by')}:</span>
           <button
             className={`sort-btn ${sortBy === "online" ? "active" : ""}`}
             onClick={() => setSortBy("online")}
           >
-            Online
+            {t('online')}
           </button>
           <button
             className={`sort-btn ${sortBy === "name" ? "active" : ""}`}
             onClick={() => setSortBy("name")}
           >
-            Name
+            {t('name')}
           </button>
           <button
             className={`sort-btn ${sortBy === "rating" ? "active" : ""}`}
             onClick={() => setSortBy("rating")}
           >
-            Rating
+            {t('rating')}
           </button>
           <button
             className={`sort-btn ${sortBy === "experience" ? "active" : ""}`}
             onClick={() => setSortBy("experience")}
           >
-            Experience
+            {t('experience')}
           </button>
         </div>
         <div className="result-count">
           {isLoading
-            ? "Loading counselors..."
-            : `${sortedCounselors.length} ${
-                sortedCounselors.length === 1 ? "counselor" : "counselors"
-              } found`}
+            ? t('loading')
+            : `${sortedCounselors.length} ${t('counselors_found')}`}
         </div>
       </div>
 
@@ -295,22 +289,22 @@ const CounselorTable = () => {
 
                 <div className="stats-grid">
                   <div className="stat-item">
-                    <span className="stat-label">Rating</span>
+                    <span className="stat-label">{t('rating')}</span>
                     <span className="stat-value">
                       <span className="star">★</span> {counselor.rating || 0}
                     </span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Experience</span>
-                    <span className="stat-value">{counselor.experience || 0} yrs</span>
+                    <span className="stat-label">{t('experience')}</span>
+                    <span className="stat-value">{counselor.experience || 0} {t('yrs')}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Sessions</span>
+                    <span className="stat-label">{t('sessions_label')}</span>
                     <span className="stat-value">{counselor.totalSessions || 0}</span>
                   </div>
                   <div className="stat-item">
-                    <span className="stat-label">Location</span>
-                    <span className="stat-value">{counselor.location || "Online"}</span>
+                    <span className="stat-label">{t('location')}</span>
+                    <span className="stat-value">{counselor.location || t('online')}</span>
                   </div>
                 </div>
 

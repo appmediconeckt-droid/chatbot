@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 
 const MyAppointments = () => {
+  const navigate = useNavigate();
   const { t } = useUserTranslation();
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const [appointments, setAppointments] = useState([]);
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -153,6 +157,11 @@ const MyAppointments = () => {
       <main className="flex-1 p-4 sm:p-8 min-w-0">
         {/* Header */}
         <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+          {isMobile && (
+            <button onClick={() => navigate(-1)} className="myAppointmentsBackBtn" aria-label="Go back" title="Go back">
+              <FaArrowLeft />
+            </button>
+          )}
           <div>
             <h1 className="text-[32px] font-[700] leading-[40px] tracking-[-0.02em] text-[#0b1c30]">
               {t('my_appointments')}
