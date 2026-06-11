@@ -1502,10 +1502,7 @@ export default function UserDashboard() {
       {isMobile && (
         <div className="ud-mobile-header">
           <div className="ud-mobile-header-left">
-            <div className="ud-mobile-header-branding">
-              <h2 className="ud-mobile-logo">MediChat</h2>
-              <p className="ud-mobile-tagline">{t('chat_desc').split(',')[0]}</p>
-            </div>
+            <h2 className="ud-mobile-logo">MediChat</h2>
           </div>
           <div className="ud-mobile-header-center">
             <div style={{ width: '100%', maxWidth: '140px' }}>
@@ -1604,7 +1601,7 @@ export default function UserDashboard() {
                   </div>
                   <div className="ud-profile-info">
                     <h3 className="ud-sidebar-name" title={userData.name}>
-                      {userData.name || "Welcome"}
+                      {userData.name}
                     </h3>
                     {userData.email && (
                       <p className="ud-sidebar-meta" title={userData.email}>

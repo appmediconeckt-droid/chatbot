@@ -479,44 +479,27 @@
     left: 0;
     right: 0;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 12px 14px;
+    padding: 14px 16px;
     z-index: 1000;
-    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.25);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 12px;
   }
 
   .ud-mobile-header-left {
     display: flex;
     align-items: center;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .ud-mobile-header-branding {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+    justify-content: flex-start;
     min-width: 0;
   }
 
   .ud-mobile-logo {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 800;
     color: white;
     margin: 0;
     letter-spacing: -0.5px;
-  }
-
-  .ud-mobile-tagline {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.85);
-    margin: 0;
-    font-weight: 400;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .ud-mobile-header-center {
