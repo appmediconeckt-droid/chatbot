@@ -47,7 +47,7 @@ const WalletDashboard = ({ userData }) => {
     const handlePayment = async (e) => {
         e.preventDefault();
         if (!amount || amount <= 0) {
-            alert(t('amount') + ': Please enter a valid amount');
+            alert(t('invalid_amount'));
             return;
         }
 
@@ -61,7 +61,7 @@ const WalletDashboard = ({ userData }) => {
                 amount: orderData.amount,
                 currency: "INR",
                 name: "Mediconeckt Wallet",
-                description: "Add funds to your healthcare wallet",
+                description: t('professional_dashboard'),
                 order_id: orderData.order_id,
                 handler: async function (response) {
                     // 2. Verify payment on server
@@ -73,13 +73,13 @@ const WalletDashboard = ({ userData }) => {
                         });
 
                         if (verifyRes.data.success) {
-                            alert(t('payment_success'));
+                            alert(t('funds_added'));
                             setAmount('');
                             fetchWalletData();
                         }
                     } catch (err) {
                         console.error('Verification failed:', err);
-                        alert(t('payment_failed'));
+                        alert(t('payment_failed_verification'));
                     }
                 },
                 prefill: {
@@ -94,12 +94,12 @@ const WalletDashboard = ({ userData }) => {
 
             const rzp1 = new window.Razorpay(options);
             rzp1.on('payment.failed', function (response) {
-                alert('Payment failed: ' + response.error.description);
+                alert(t('payment_error_description'));
             });
             rzp1.open();
         } catch (error) {
             console.error('Payment initialization failed:', error);
-            alert('Could not initiate payment. Please try again.');
+            alert(t('payment_error_description'));
         } finally {
             setLoading(false);
         }
@@ -131,8 +131,8 @@ const WalletDashboard = ({ userData }) => {
     return (
         <div className="flex-1 p-4 md:p-6 max-w-6xl mx-auto w-full font-manrope bg-[#f8f9ff] text-[#0b1c30]">
             <header className={styles.mbXl}>
-                <h1 className={`${styles.headlineLg} text-[#0b1c30]`}>{t('wallet')}</h1>
-                <p className={`${styles.bodyMd} text-[#464554]`}>{t('transaction_history')}</p>
+                <h1 className={`${styles.headlineLg} text-[#0b1c30]`}>{t('wallet_overview')}</h1>
+                <p className={`${styles.bodyMd} text-[#464554]`}>{t('transaction_history_full')}</p>
             </header>
 
             {/* Top Row: Balance and Spending Summary */}
@@ -176,22 +176,22 @@ const WalletDashboard = ({ userData }) => {
                     </div>
 
                     <div className="relative z-10 flex gap-4 mt-4">
-                        <button 
+                        <button
                             onClick={() => document.getElementById('amount-input')?.focus()}
                             className="flex items-center gap-2 bg-white text-[#6063ee] px-6 py-2.5 rounded-xl font-bold text-sm shadow-lg hover:bg-slate-50 transition-all active:scale-95"
                         >
                             <span className="material-symbols-outlined text-lg">add_circle</span>
-                            Add Funds
+                            {t('add_funds_button')}
                         </button>
                         <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-white/20 transition-all active:scale-95">
-                            View Perks
+                            {t('view_history')}
                         </button>
                     </div>
                 </div>
 
                 {/* Monthly Spending Summary */}
                 <div className="bg-white rounded-[20px] p-6 border border-slate-200 shadow-[0px_4px_15px_rgba(0,0,0,0.03)]">
-                    <h3 className={`${styles.headlineSm} text-[#0b1c30] mb-5`}>Spending Summary</h3>
+                    <h3 className={`${styles.headlineSm} text-[#0b1c30] mb-5`}>{t('spending_summary')}</h3>
                     <div className="space-y-5">
                         {spendingSummary.breakdown.length > 0 ? (
                             spendingSummary.breakdown.map((item, index) => (
@@ -201,18 +201,18 @@ const WalletDashboard = ({ userData }) => {
                                         <span className={`${styles.labelMd} text-[#0b1c30] font-[600]`}>₹{item.amount.toFixed(2)}</span>
                                     </div>
                                     <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
-                                        <div 
-                                            className={`${index === 0 ? 'bg-[#4648d4]' : 'bg-[#39b8fd]'} h-full transition-all duration-500`} 
+                                        <div
+                                            className={`${index === 0 ? 'bg-[#4648d4]' : 'bg-[#39b8fd]'} h-full transition-all duration-500`}
                                             style={{ width: `${item.percentage}%` }}
                                         ></div>
                                     </div>
                                 </div>
                             ))
                         ) : (
-                            <p className={`${styles.bodyMd} text-slate-400 text-center py-4`}>No spending recorded this month.</p>
+                            <p className={`${styles.bodyMd} text-slate-400 text-center py-4`}>{t('no_spending_recorded')}</p>
                         )}
                         <div className="pt-4 border-t border-slate-100">
-                            <p className={`${styles.labelSm} text-[#464554] mb-0.5`}>Total Spent this month</p>
+                            <p className={`${styles.labelSm} text-[#464554] mb-0.5`}>{t('total_spent_this_month')}</p>
                             <p className={`${styles.headlineSm} text-[#0b1c30]`}>₹{spendingSummary.total.toFixed(2)}</p>
                         </div>
                     </div>
@@ -223,10 +223,10 @@ const WalletDashboard = ({ userData }) => {
             <div className={`grid grid-cols-1 lg:grid-cols-12 ${styles.gapLg} lg:items-stretch`}>
                 {/* Left Column: Add Money */}
                 <section className="lg:col-span-5 bg-white rounded-[20px] p-6 border border-slate-200 shadow-[0px_4px_15px_rgba(0,0,0,0.03)] flex flex-col">
-                    <h3 className={`${styles.headlineSm} text-[#0b1c30] mb-5`}>Add Money to Wallet</h3>
+                    <h3 className={`${styles.headlineSm} text-[#0b1c30] mb-5`}>{t('add_money')}</h3>
                     <form className="space-y-5 flex-1 flex flex-col justify-between" onSubmit={handlePayment}>
                         <div>
-                            <label className={`${styles.labelMd} text-[#0b1c30] mb-1.5 block`}>Enter Amount</label>
+                            <label className={`${styles.labelMd} text-[#0b1c30] mb-1.5 block`}>{t('amount')}</label>
                             <div className="relative">
                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#464554] font-bold">₹</span>
                                 <input 
@@ -241,19 +241,19 @@ const WalletDashboard = ({ userData }) => {
                             </div>
                         </div>
                         <div>
-                            <label className={`${styles.labelMd} text-[#0b1c30] mb-3 block`}>Payment Method</label>
+                            <label className={`${styles.labelMd} text-[#0b1c30] mb-3 block`}>{t('payment_method')}</label>
                             <div className="grid grid-cols-2 gap-2.5">
                                 {[
-                                    { id: 'visa', label: 'Visa', icon: 'credit_card' },
-                                    { id: 'upi', label: 'UPI', icon: 'payments' },
-                                    { id: 'bank', label: 'Net Banking', icon: 'account_balance' },
-                                    { id: 'mastercard', label: 'Mastercard', icon: 'wallet' }
+                                    { id: 'visa', labelKey: 'visa', icon: 'credit_card' },
+                                    { id: 'upi', labelKey: 'upi', icon: 'payments' },
+                                    { id: 'bank', labelKey: 'netbanking', icon: 'account_balance' },
+                                    { id: 'mastercard', labelKey: 'mastercard', icon: 'wallet' }
                                 ].map((method) => (
                                     <label key={method.id} className="cursor-pointer group">
-                                        <input 
-                                            className="hidden peer" 
-                                            name="payment" 
-                                            type="radio" 
+                                        <input
+                                            className="hidden peer"
+                                            name="payment"
+                                            type="radio"
                                             checked={paymentMethod === method.id}
                                             onChange={() => setPaymentMethod(method.id)}
                                         />
@@ -262,19 +262,19 @@ const WalletDashboard = ({ userData }) => {
                                                 {method.icon}
                                             </span>
                                             <span className={`${styles.labelSm} transition-colors ${paymentMethod === method.id ? 'text-[#4648d4]' : 'text-[#464554]'}`}>
-                                                {method.label}
+                                                {t(method.labelKey)}
                                             </span>
                                         </div>
                                     </label>
                                 ))}
                             </div>
                         </div>
-                        <button 
+                        <button
                             disabled={loading}
-                            className="w-full bg-[#4648d4] text-white py-3.5 rounded-[10px] font-bold text-[14px] shadow-lg shadow-indigo-100 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed" 
+                            className="w-full bg-[#4648d4] text-white py-3.5 rounded-[10px] font-bold text-[14px] shadow-lg shadow-indigo-100 hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                             type="submit"
                         >
-                            {loading ? 'Processing...' : 'Confirm and Add Funds'}
+                            {loading ? t('sending') : t('confirm_add_funds')}
                         </button>
                     </form>
                 </section>
@@ -282,17 +282,17 @@ const WalletDashboard = ({ userData }) => {
                 {/* Right Column: Transaction History with Pagination */}
                 <section className="lg:col-span-7 bg-white rounded-[20px] border border-slate-200 shadow-[0px_4px_15px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col max-h-[550px]">
                     <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className={`${styles.headlineSm} text-[#0b1c30]`}>Transaction History</h3>
-                        <button className={`${styles.labelMd} text-[#4648d4] hover:underline`}>Download Report</button>
+                        <h3 className={`${styles.headlineSm} text-[#0b1c30]`}>{t('transaction_history')}</h3>
+                        <button className={`${styles.labelMd} text-[#4648d4] hover:underline`}>{t('download_report')}</button>
                     </div>
                     <div className="overflow-y-auto overflow-x-auto flex-1">
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 border-b border-slate-100 sticky top-0">
                                 <tr>
-                                    <th className={`px-6 py-3 ${styles.labelSm} text-[#464554]`}>DATE</th>
-                                    <th className={`px-4 py-3 ${styles.labelSm} text-[#464554]`}>DESCRIPTION</th>
-                                    <th className={`px-4 py-3 ${styles.labelSm} text-[#464554]`}>STATUS</th>
-                                    <th className={`px-6 py-3 ${styles.labelSm} text-[#464554] text-right`}>AMOUNT</th>
+                                    <th className={`px-6 py-3 ${styles.labelSm} text-[#464554]`}>{t('date')}</th>
+                                    <th className={`px-4 py-3 ${styles.labelSm} text-[#464554]`}>{t('description')}</th>
+                                    <th className={`px-4 py-3 ${styles.labelSm} text-[#464554]`}>{t('status')}</th>
+                                    <th className={`px-6 py-3 ${styles.labelSm} text-[#464554] text-right`}>{t('amount')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
@@ -302,7 +302,7 @@ const WalletDashboard = ({ userData }) => {
                                             <td className={`px-6 py-4 ${styles.labelMd} text-[#464554]`}>{new Date(tx.createdAt).toLocaleDateString()}</td>
                                             <td className="px-4 py-4">
                                                 <p className={`${styles.labelMd} text-[#0b1c30] font-[600]`}>{tx.description}</p>
-                                                <p className="text-[11px] text-[#464554]">{tx.razorpayPaymentId || 'ID Pending'}</p>
+                                                <p className="text-[11px] text-[#464554]">{tx.razorpayPaymentId || t('id_pending')}</p>
                                             </td>
                                             <td className="px-4 py-4">
                                                 <span className={`px-2 py-0.5 ${tx.status === 'pending' ? 'bg-indigo-50 text-[#4648d4]' : (tx.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')} text-[9px] font-bold uppercase rounded-md tracking-wider`}>
@@ -316,7 +316,7 @@ const WalletDashboard = ({ userData }) => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan="4" className="px-6 py-10 text-center text-[#464554] opacity-50">No transactions found</td>
+                                        <td colSpan="4" className="px-6 py-10 text-center text-[#464554] opacity-50">{t('no_transactions')}</td>
                                     </tr>
                                 )}
                             </tbody>

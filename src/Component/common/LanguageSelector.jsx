@@ -7,6 +7,11 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
   const ref = useRef(null);
   const current = SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
 
+  const handleLanguageChange = (langCode) => {
+    console.log('🌐 Language Changed:', langCode);
+    setLang(langCode);
+  };
+
   useEffect(() => {
     const onOutside = (e) => {
       if (ref.current && !ref.current.contains(e.target)) setOpen(false);
@@ -44,7 +49,7 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
                 type="button"
                 role="option"
                 aria-selected={l.code === lang}
-                onClick={() => { setLang(l.code); setOpen(false); }}
+                onClick={() => { handleLanguageChange(l.code); setOpen(false); }}
                 className={`ud-lang-option${l.code === lang ? ' ud-lang-option--active' : ''}`}
               >
                 <span className="ud-lang-check">{l.code === lang ? '✓' : ''}</span>
@@ -88,7 +93,7 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
             <button
               key={l.code}
               type="button"
-              onClick={() => { setLang(l.code); setOpen(false); }}
+              onClick={() => { handleLanguageChange(l.code); setOpen(false); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 width: '100%', padding: '9px 14px',

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../axiosConfig";
 import "./PasswordChangePage.css";
+import { useUserTranslation, useCounselorTranslation } from "../../i18n/LanguageContext";
 
 const initialForm = {
   otp: "",
@@ -12,7 +13,12 @@ const initialForm = {
   confirmNewPassword: "",
 };
 
-const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
+const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated, role = "user" }) => {
+  const isCounselor = role === "counsellor" || role === "counselor";
+  const userT = useUserTranslation();
+  const counselorT = useCounselorTranslation();
+  const { t } = isCounselor ? counselorT : userT;
+
   const [mode, setMode] = useState(hasPassword ? "change" : "set");
   const [form, setForm] = useState(initialForm);
   const [otpSent, setOtpSent] = useState(false);
@@ -67,7 +73,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
   const handleSendOtp = async () => {
     clearStatus();
     if (!normalizedEmail) {
-      setError("Email is required before setting a password.");
+      setError(t('email_required_password'));
       return;
     }
 
@@ -80,9 +86,9 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
       console.log('✅ OTP Response:', response.data);
       if (response.data?.success) {
         setOtpSent(true);
-        setMessage(response.data.message || "OTP sent to your email. Check your inbox (and spam folder).");
+        setMessage(response.data.message || t('otp_sent_check_email'));
       } else {
-        throw new Error(response.data?.message || "Failed to send OTP.");
+        throw new Error(response.data?.message || t('otp_send_failed'));
       }
     } catch (err) {
       console.error('❌ OTP Error Details:', {
@@ -92,20 +98,20 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
         fullResponse: err.response
       });
 
-      const errorMsg = err.response?.data?.message || err.message || "Failed to send OTP.";
+      const errorMsg = err.response?.data?.message || err.message || t('otp_send_failed');
       const statusCode = err.response?.status;
 
       if (statusCode === 500) {
         const details = err.response?.data?.error || err.response?.data?.details || '';
-        setError(`Server error (500): ${errorMsg}${details ? ` - ${details}` : ''}. Please check backend logs or contact support.`);
+        setError(`${t('server_error')}: ${errorMsg}${details ? ` - ${details}` : ''}. ${t('contact_support')}`);
       } else if (statusCode === 400) {
-        setError(`Invalid request: ${errorMsg}`);
+        setError(`${t('invalid_request')}: ${errorMsg}`);
       } else if (statusCode === 404) {
-        setError(`Email not found: ${errorMsg}`);
+        setError(`${t('email_not_found')}: ${errorMsg}`);
       } else if (statusCode === 401) {
-        setError(`Unauthorized: ${errorMsg}`);
+        setError(`${t('unauthorized')}: ${errorMsg}`);
       } else {
-        setError(errorMsg || "An error occurred. Please try again.");
+        setError(errorMsg || t('error_try_again'));
       }
     } finally {
       setLoading(false);
@@ -117,15 +123,15 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
     clearStatus();
 
     if (!passwordIsValid(form.password)) {
-      setError("Password must be at least 6 characters.");
+      setError(t('password_min_6_chars'));
       return;
     }
     if (form.password !== form.confirmPassword) {
-      setError("Passwords do not match.");
+      setError(t('passwords_do_not_match'));
       return;
     }
     if (!form.otp || form.otp.length !== 6) {
-      setError("Enter the 6-digit OTP sent to your email.");
+      setError(t('enter_6_digit_otp'));
       return;
     }
 
@@ -141,16 +147,16 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
       );
 
       if (response.data?.success) {
-        setMessage("✅ Password set successfully! Redirecting in 2 seconds...");
+        setMessage(`✅ ${t('password_set_success')} ${t('redirecting_in')} 2 ${t('seconds')}`);
         setForm(initialForm);
         setOtpSent(false);
         setRedirectCountdown(2);
         onPasswordUpdated?.({ hasPassword: true, requiresLogin: true });
       } else {
-        throw new Error(response.data?.message || "Failed to set password.");
+        throw new Error(response.data?.message || t('password_set_failed'));
       }
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || "Failed to set password.";
+      const msg = err.response?.data?.message || err.message || t('password_set_failed');
       setError(msg);
       if (/already has a password|password already set/i.test(msg)) {
         setMode("change");
@@ -165,15 +171,15 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
     clearStatus();
 
     if (!form.oldPassword) {
-      setError("Enter your current password.");
+      setError(t('enter_current_password'));
       return;
     }
     if (!passwordIsValid(form.newPassword)) {
-      setError("New password must be at least 6 characters.");
+      setError(t('new_password_min_6_chars'));
       return;
     }
     if (form.newPassword !== form.confirmNewPassword) {
-      setError("New passwords do not match.");
+      setError(t('new_passwords_do_not_match'));
       return;
     }
 
@@ -191,24 +197,24 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
 
       console.log('✅ Password change response:', response.data);
       if (response.data?.success) {
-        setMessage("✅ Password changed successfully! Redirecting in 2 seconds...");
+        setMessage(`✅ ${t('password_changed_success')} ${t('redirecting_in')} 2 ${t('seconds')}`);
         setForm(initialForm);
         setRedirectCountdown(2);
         onPasswordUpdated?.({ hasPassword: true, requiresLogin: true });
       } else {
-        throw new Error(response.data?.message || "Failed to change password.");
+        throw new Error(response.data?.message || t('password_change_failed'));
       }
     } catch (err) {
       console.error('❌ Password change error:', err.response?.data || err.message);
       const statusCode = err.response?.status;
-      const msg = err.response?.data?.message || err.message || "Failed to change password.";
+      const msg = err.response?.data?.message || err.message || t('password_change_failed');
 
       if (statusCode === 500) {
-        setError(`Server error (500): ${msg}. Please contact support.`);
+        setError(`${t('server_error')}: ${msg}. ${t('contact_support')}`);
       } else if (statusCode === 401) {
-        setError('Incorrect current password. Please try again.');
+        setError(t('incorrect_current_password'));
       } else if (statusCode === 400) {
-        setError(`Invalid request: ${msg}`);
+        setError(`${t('invalid_request')}: ${msg}`);
       } else {
         setError(msg);
       }
@@ -225,11 +231,11 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
     <section className="password-security-panel">
       <div className="password-security-panel__header">
         <div>
-          <h2>Password Security</h2>
+          <h2>{t('password_security')}</h2>
           <p>
             {mode === "set"
-              ? "Add or reset your password using email OTP."
-              : "Change your account password."}
+              ? t('add_reset_password_otp')
+              : t('change_account_password')}
           </p>
         </div>
         <div className="password-security-panel__switch">
@@ -241,7 +247,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
               clearStatus();
             }}
           >
-            Add
+            {t('add_button')}
           </button>
           <button
             type="button"
@@ -251,7 +257,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
               clearStatus();
             }}
           >
-            Change
+            {t('change_button')}
           </button>
         </div>
       </div>
@@ -261,7 +267,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
           <div className="password-security-panel__otp-row">
             <input type="email" value={normalizedEmail} readOnly />
             <button type="button" onClick={handleSendOtp} disabled={loading || !normalizedEmail}>
-              {otpSent ? "Resend OTP" : "Send OTP"}
+              {otpSent ? t('resend_otp') : t('send_otp')}
             </button>
           </div>
           {otpSent && (
@@ -272,7 +278,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
               name="otp"
               value={form.otp}
               onChange={handleChange}
-              placeholder="Enter 6-digit OTP"
+              placeholder={t('enter_6_digit_otp')}
             />
           )}
           <div className="password-security-panel__grid">
@@ -281,7 +287,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
               name="password"
               value={form.password}
               onChange={handleChange}
-              placeholder="New password"
+              placeholder={t('new_password')}
               autoComplete="new-password"
             />
             <input
@@ -289,12 +295,12 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
               name="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
-              placeholder="Confirm password"
+              placeholder={t('confirm_password')}
               autoComplete="new-password"
             />
           </div>
           <button type="submit" className="password-security-panel__primary" disabled={loading}>
-            {loading ? "Saving..." : "Save Password"}
+            {loading ? t('saving') : t('save_password')}
           </button>
         </form>
       ) : (
@@ -304,7 +310,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
             name="oldPassword"
             value={form.oldPassword}
             onChange={handleChange}
-            placeholder="Current password"
+            placeholder={t('current_password')}
             autoComplete="current-password"
           />
           <div className="password-security-panel__grid">
@@ -313,7 +319,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
               name="newPassword"
               value={form.newPassword}
               onChange={handleChange}
-              placeholder="New password"
+              placeholder={t('new_password')}
               autoComplete="new-password"
             />
             <input
@@ -321,12 +327,12 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated }) => {
               name="confirmNewPassword"
               value={form.confirmNewPassword}
               onChange={handleChange}
-              placeholder="Confirm new password"
+              placeholder={t('confirm_new_password')}
               autoComplete="new-password"
             />
           </div>
           <button type="submit" className="password-security-panel__primary" disabled={loading}>
-            {loading ? "Updating..." : "Change Password"}
+            {loading ? t('updating') : t('change_password_button')}
           </button>
         </form>
       )}

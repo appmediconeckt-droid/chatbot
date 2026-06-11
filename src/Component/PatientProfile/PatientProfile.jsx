@@ -3,12 +3,14 @@ import axios from "axios";
 import "./PatientProfile.css";
 import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
+import { useUserTranslation } from "../../i18n/LanguageContext";
 import AvatarGenerator from "./AvatarGenerator";
 import AvatarBuilder from "./AvatarBuilder";
 
 
 
 const PatientProfile = () => {
+  const { t } = useUserTranslation();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -759,17 +761,17 @@ const PatientProfile = () => {
         <div className="profile-info">
           <h1>{patientData.personalInfo.name}</h1>
           <p className="patient-id">
-            Patient ID: {patientData.personalInfo.id}
+            {t('patient_id')}: {patientData.personalInfo.id}
           </p>
           <div className="badge-group">
             <span className="badge">
-              {patientData.personalInfo.bloodGroup || "Blood Group"}
+              {patientData.personalInfo.bloodGroup || t('blood_group_label')}
             </span>
             <span className="badge">
-              {patientData.personalInfo.age || "--"} years
+              {patientData.personalInfo.age || "--"} {t('years_label')}
             </span>
             <span className="badge">
-              {patientData.personalInfo.gender || "Gender"}
+              {patientData.personalInfo.gender || t('gender_label')}
             </span>
           </div>
         </div>
@@ -783,10 +785,10 @@ const PatientProfile = () => {
           >
             {isUpdatingLocation ? (
               <>
-                <span className="btn-location-spinner" /> Updating…
+                <span className="btn-location-spinner" /> {t('updating')}
               </>
             ) : (
-              <>📍 Update Location</>
+              <>📍 {t('update_location_btn')}</>
             )}
           </button>
           <button
@@ -794,7 +796,7 @@ const PatientProfile = () => {
             onClick={openEditModal}
             disabled={isSaving}
           >
-            ✏️ Edit Profile
+            ✏️ {t('edit_profile_btn')}
           </button>
         </div>
       </div>
@@ -804,35 +806,35 @@ const PatientProfile = () => {
         {/* Personal Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>Personal Information</h2>
+            <h2>{t('personal_information')}</h2>
           </div>
           <div className="info-grid">
             <div className="info-item">
-              <label>Full Name</label>
+              <label>{t('full_name_label')}</label>
               <span>{patientData.personalInfo.name}</span>
             </div>
             <div className="info-item">
-              <label>Anonymous Name</label>
+              <label>{t('anonymous_name_label')}</label>
               <span>
                 {patientData.personalInfo.anonymous
                   ? patientData.personalInfo.anonymous
-                  : "Not specified"}
+                  : t('not_specified')}
               </span>
             </div>
             <div className="info-item">
-              <label>Date of Birth</label>
+              <label>{t('date_of_birth_label')}</label>
               <span>{formatDate(patientData.personalInfo.dateOfBirth)}</span>
             </div>
             <div className="info-item">
-              <label>Gender</label>
-              <span>{patientData.personalInfo.gender || "Not specified"}</span>
+              <label>{t('gender_label')}</label>
+              <span>{patientData.personalInfo.gender || t('not_specified')}</span>
             </div>
             <div className="info-item">
-              <label>Email</label>
+              <label>{t('email_label')}</label>
               <span>{patientData.personalInfo.email}</span>
             </div>
             <div className="info-item">
-              <label>Phone</label>
+              <label>{t('phone_label')}</label>
               <span>{patientData.personalInfo.phone}</span>
             </div>
           </div>
@@ -841,11 +843,11 @@ const PatientProfile = () => {
         {/* Address */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>Address</h2>
+            <h2>{t('address_label')}</h2>
           </div>
           <div className="address-display">
             <p>
-              {patientData.personalInfo.address?.line1 || "No address provided"}
+              {patientData.personalInfo.address?.line1 || t('no_address_provided')}
             </p>
             {patientData.personalInfo.address?.line2 && (
               <p>{patientData.personalInfo.address.line2}</p>
@@ -867,14 +869,14 @@ const PatientProfile = () => {
         {/* Emergency Contact */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>Emergency Contact</h2>
+            <h2>{t('emergency_contact')}</h2>
           </div>
           <div className="emergency-display">
             <div className="emergency-icon">🆘</div>
             <div className="emergency-details">
               <h3>
                 {patientData.personalInfo.emergencyContact?.name ||
-                  "Not specified"}
+                  t('not_specified')}
               </h3>
               <p>{patientData.personalInfo.emergencyContact?.relation}</p>
               <p className="phone">
@@ -887,24 +889,24 @@ const PatientProfile = () => {
         {/* Medical Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>Medical Information</h2>
+            <h2>{t('medical_information')}</h2>
           </div>
           <div className="medical-grid">
             <div className="vital-stats">
-              <h3>Vital Stats</h3>
+              <h3>{t('vital_stats')}</h3>
               <div className="vital-row">
-                <span>Height:</span>
+                <span>{t('height_label')}</span>
                 <strong>{patientData.medicalInfo?.height || "--"} cm</strong>
               </div>
               <div className="vital-row">
-                <span>Weight:</span>
+                <span>{t('weight_label')}</span>
                 <strong>{patientData.medicalInfo?.weight || "--"} kg</strong>
               </div>
             </div>
             <div className="conditions-list">
               {patientData.medicalInfo?.allergies?.length > 0 && (
                 <div>
-                  <h4>Allergies</h4>
+                  <h4>{t('allergies_label')}</h4>
                   <div className="tags">
                     {patientData.medicalInfo.allergies.map((a, i) => (
                       <span key={i} className="tag">
@@ -916,7 +918,7 @@ const PatientProfile = () => {
               )}
               {patientData.medicalInfo?.chronicConditions?.length > 0 && (
                 <div>
-                  <h4>Chronic Conditions</h4>
+                  <h4>{t('chronic_conditions_label')}</h4>
                   <div className="tags">
                     {patientData.medicalInfo.chronicConditions.map((c, i) => (
                       <span key={i} className="tag">
@@ -928,7 +930,7 @@ const PatientProfile = () => {
               )}
               {patientData.medicalInfo?.currentMedications?.length > 0 && (
                 <div>
-                  <h4>Current Medications</h4>
+                  <h4>{t('current_medications_label')}</h4>
                   <div className="tags">
                     {patientData.medicalInfo.currentMedications.map((m, i) => (
                       <span key={i} className="tag">
@@ -950,7 +952,7 @@ const PatientProfile = () => {
         {/* Insurance Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>Insurance Information</h2>
+            <h2>{t('insurance_information')}</h2>
           </div>
           {patientData.insuranceInfo?.provider ? (
             <div className="insurance-display">
@@ -999,7 +1001,7 @@ const PatientProfile = () => {
         <div className="modal-overlay" onClick={handleCancelEdit}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Edit Profile</h3>
+              <h3>{t('edit_profile_btn')}</h3>
               <button className="close-modal" onClick={handleCancelEdit}>
                 ×
               </button>

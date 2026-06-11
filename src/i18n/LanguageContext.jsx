@@ -50,11 +50,13 @@ function makeT(lang) {
 export function useUserTranslation() {
   const ctx = useContext(LanguageContext);
   if (!ctx) throw new Error('useUserTranslation must be used within LanguageProvider');
+  console.log('🔄 User Translation Updated:', ctx.userLang);
   return { t: makeT(ctx.userLang), lang: ctx.userLang, setLang: ctx.setUserLang };
 }
 
 export function useCounselorTranslation() {
   const ctx = useContext(LanguageContext);
   if (!ctx) throw new Error('useCounselorTranslation must be used within LanguageProvider');
+  console.log('🔄 Counselor Translation Updated:', ctx.counselorLang);
   return { t: makeT(ctx.counselorLang), lang: ctx.counselorLang, setLang: ctx.setCounselorLang };
 }

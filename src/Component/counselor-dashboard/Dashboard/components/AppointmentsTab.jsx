@@ -7,6 +7,7 @@ import {
   FaVideo,
 } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 
 export default function AppointmentsTab({
   appointments,
@@ -16,6 +17,7 @@ export default function AppointmentsTab({
   handleUpdateAppointmentStatus,
   handleInitiateVideoCall,
 }) {
+  const { t } = useCounselorTranslation();
   const getAppointmentDisplay = (appointment) =>
     getAnonymousUserDisplay({
       ...appointment,
@@ -28,7 +30,7 @@ export default function AppointmentsTab({
         {/* Left Column: Manage Appointments */}
         <div className="stitch-apt-left">
           <div className="stitch-apt-header">
-            <h2>Manage Appointments</h2>
+            <h2>{t('manage_appointments')}</h2>
             <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <div className="stitch-date-filter">
                 <FaCalendarAlt style={{ color: "#4648d4", fontSize: "14px" }} />
@@ -50,7 +52,7 @@ export default function AppointmentsTab({
                 )}
               </div>
               <button type="button" onClick={handleViewAllRequests}>
-                View all requests <FaArrowRight style={{ marginLeft: "4px" }} />
+                {t('view_all_requests')} <FaArrowRight style={{ marginLeft: "4px" }} />
               </button>
             </div>
           </div>
@@ -58,7 +60,7 @@ export default function AppointmentsTab({
           <div className="stitch-apt-grid">
             {appointments.length === 0 ? (
               <div className="stitch-empty-state-couns">
-                No pending appointment requests.
+                {t('no_pending_appointments')}
               </div>
             ) : (
               appointments.map((apt) => {
@@ -87,7 +89,7 @@ export default function AppointmentsTab({
                           <h3>{anonymousUser.name}</h3>
                           <div className="stitch-apt-tag">
                             <FaBrain />
-                            INITIAL CONSULTATION
+                            {t('initial_consultation').toUpperCase()}
                           </div>
                         </div>
                       </div>
@@ -114,7 +116,7 @@ export default function AppointmentsTab({
                       )}
 
                       <div className="stitch-apt-time">
-                        <span className="stitch-apt-time-label">Requested:</span>
+                        <span className="stitch-apt-time-label">{t('requested')}</span>
                         <span className="stitch-apt-time-value">
                           {new Date(apt.date).toLocaleDateString("en-US", {
                             weekday: "short",
@@ -133,7 +135,7 @@ export default function AppointmentsTab({
                             handleUpdateAppointmentStatus(apt._id, "confirmed")
                           }
                         >
-                          Accept
+                          {t('accept')}
                         </button>
                         <button
                           className="stitch-btn-reject"
@@ -141,7 +143,7 @@ export default function AppointmentsTab({
                             handleUpdateAppointmentStatus(apt._id, "canceled")
                           }
                         >
-                          Reject
+                          {t('reject')}
                         </button>
                       </div>
                     )}
@@ -156,7 +158,7 @@ export default function AppointmentsTab({
         <div className="stitch-apt-right">
           <div className="stitch-schedule-section">
             <div className="stitch-section-header">
-              <h3>Appointments Timeline</h3>
+              <h3>{t('appointments_timeline')}</h3>
               <span className="stitch-date-badge">
                 {new Date()
                   .toLocaleDateString("en-US", {
@@ -180,7 +182,7 @@ export default function AppointmentsTab({
                     fontSize: "14px",
                   }}
                 >
-                  No confirmed appointments yet.
+                  {t('no_confirmed_appointments')}
                 </div>
               ) : (
                 appointments
@@ -232,7 +234,7 @@ export default function AppointmentsTab({
                                 })}
                               </span>
                             )}
-                            Initial Consultation
+                            {t('initial_consultation')}
                           </div>
                         </div>
                         <div

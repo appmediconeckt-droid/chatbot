@@ -110,12 +110,12 @@ const MyAppointments = () => {
     e.preventDefault();
 
     if (!selectedCounselorId) {
-      alert("Please select a counselor");
+      alert(t('please_select_counselor'));
       return;
     }
 
     if (!bookingDate) {
-      alert("Please select a date and time");
+      alert(t('please_select_date_time'));
       return;
     }
 
@@ -136,7 +136,7 @@ const MyAppointments = () => {
         },
       );
 
-      alert("Appointment booked successfully! The counselor has been notified.");
+      alert(t('appointment_booked_success'));
       setShowBookingModal(false);
       resetBookingForm();
       fetchAppointments();
@@ -167,7 +167,7 @@ const MyAppointments = () => {
               {t('my_appointments')}
             </h1>
             <p className="text-[#464554] text-[16px] mt-1">
-              Manage your upcoming and past medical consultations
+              {t('manage_consultations')}
             </p>
           </div>
           {/* Tab Toggle */}
@@ -214,7 +214,7 @@ const MyAppointments = () => {
                   calendar_today
                 </span>
                 <p className="text-[#464554] text-sm">
-                  No {activeTab.toLowerCase()} appointments found.
+                  {t('no_appointments_found').replace('{tab}', activeTab.toLowerCase())}
                 </p>
               </div>
             ) : (
@@ -249,7 +249,7 @@ const MyAppointments = () => {
                             stethoscope
                           </span>
                           {apt.counselor?.specialization ||
-                            "Medical Specialist"}
+                            t('medical_specialist')}
                         </p>
                       </div>
                       <div className="text-left sm:text-right shrink-0">
@@ -373,10 +373,9 @@ const MyAppointments = () => {
         {/* Promo Banner */}
         <section className="relative overflow-hidden rounded-2xl bg-[#4648d4] p-8 text-white">
           <div className="relative z-10 md:w-2/3">
-            <h2 className="text-2xl font-[600] mb-2">Need a checkup?</h2>
+            <h2 className="text-2xl font-[600] mb-2">{t('need_checkup')}</h2>
             <p className="opacity-90 mb-6 text-[16px]">
-              Schedule your annual physical exam and stay on top of your health
-              goals. Integrated lab results and insurance tracking included.
+              {t('checkup_description')}
             </p>
             <button
               onClick={handleBookNewClick}
@@ -404,10 +403,10 @@ const MyAppointments = () => {
               <div className="flex items-start justify-between gap-4 mb-5">
                 <div>
                   <h2 className="text-2xl font-bold text-[#0b1c30]">
-                    Book New Appointment
+                    {t('book_new_appointment_modal')}
                   </h2>
                   <p className="text-sm text-slate-500 mt-1">
-                    Choose a counselor and schedule without leaving this page.
+                    {t('choose_counselor_text')}
                   </p>
                 </div>
                 <button
@@ -422,7 +421,7 @@ const MyAppointments = () => {
               <form onSubmit={handleConfirmBooking} className="space-y-4">
                 <div>
                   <label className="block text-sm font-bold text-[#0b1c30] mb-2">
-                    Counselor
+                    {t('counselor_label')}
                   </label>
                   <select
                     value={selectedCounselorId}
@@ -430,7 +429,7 @@ const MyAppointments = () => {
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
                     required
                   >
-                    <option value="">Select counselor</option>
+                    <option value="">{t('select_counselor')}</option>
                     {counselors.map((counselor) => (
                       <option
                         key={counselor._id || counselor.id}
@@ -447,7 +446,7 @@ const MyAppointments = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-[#0b1c30] mb-2">
-                    Date and Time
+                    {t('date_and_time')}
                   </label>
                   <input
                     type="datetime-local"
@@ -460,19 +459,19 @@ const MyAppointments = () => {
 
                 <div>
                   <label className="block text-sm font-bold text-[#0b1c30] mb-2">
-                    Clinical Notes / Reason
+                    {t('clinical_notes_reason')}
                   </label>
                   <textarea
                     value={bookingNotes}
                     onChange={(e) => setBookingNotes(e.target.value)}
-                    placeholder="Share what you'd like to discuss..."
+                    placeholder={t('share_to_discuss')}
                     className="min-h-[110px] w-full rounded-xl border border-slate-200 px-4 py-3 text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
                     required
                   />
                 </div>
 
                 <div className="rounded-xl bg-indigo-50 p-4 text-sm text-[#4648d4]">
-                  Appointment will be sent to the counselor for confirmation.
+                  {t('appointment_confirmation')}
                 </div>
 
                 <button
@@ -480,7 +479,7 @@ const MyAppointments = () => {
                   disabled={bookingLoading}
                   className="w-full rounded-xl bg-[#4648d4] px-5 py-3 font-bold text-white transition-colors hover:bg-[#3839b8] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {bookingLoading ? "Booking..." : "Confirm Appointment"}
+                  {bookingLoading ? t('booking_button') : t('confirm_appointment')}
                 </button>
               </form>
             </div>
@@ -501,7 +500,7 @@ const MyAppointments = () => {
               margin: 0,
             }}
           >
-            Appointment Schedule
+            {t('appointment_schedule')}
           </h3>
           <span
             style={{
@@ -546,7 +545,7 @@ const MyAppointments = () => {
                 fontSize: "14px",
               }}
             >
-              No upcoming appointments.
+              {t('no_upcoming_appointments')}
             </div>
           ) : (
             upcomingApts
@@ -656,7 +655,7 @@ const MyAppointments = () => {
                             })}
                           </span>
                         )}
-                        Initial Consultation
+                        {t('initial_consultation')}
                       </div>
                     </div>
                     {/* Icon - only active if confirmed */}
@@ -664,8 +663,8 @@ const MyAppointments = () => {
                       className="material-symbols-outlined"
                       title={
                         apt.status === "confirmed"
-                          ? "Join Video Call"
-                          : "Available after doctor confirms"
+                          ? t('join_video_call')
+                          : t('available_after_confirmation')
                       }
                       style={{
                         color:

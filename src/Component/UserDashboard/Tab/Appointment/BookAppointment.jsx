@@ -46,6 +46,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
     localStorage.getItem("token") || localStorage.getItem("accessToken");
 
   const handleCounselorClick = (counselor) => {
+    if (!counselor.online && !counselor.available) {
+      alert(t('counselor_unavailable'), `${counselor.name} ${t('not_available_now')}`);
+      return;
+    }
     setSelectedCounselorForRequest(counselor);
     setShowUserModal(true);
   };
@@ -377,7 +381,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       addNotification(
         "error",
         "Counselor Unavailable",
-        `${counselor.name} is currently not available. Please try later.`,
+        `${counselor.name} ${t('not_available_now')}`,
         counselor.id,
       );
       return;
@@ -399,7 +403,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       const counselorId = selectedCounselorForRequest?.id;
 
       if (!counselorId) {
-        alert("❌ Counselor not selected");
+        alert(t('counselor_not_selected'));
         return;
       }
 
@@ -417,7 +421,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       );
 
       console.log("✅ Chat Started:", res.data);
-      alert("✅ Chat request sent successfully!");
+      alert(t('chat_request_sent'));
       setShowUserModal(false);
     } catch (error) {
       console.error("❌ Error:", error);
@@ -429,7 +433,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
         setShowUserModal(false);
         setBlockedPopup({ show: true, reason: serverError });
       } else {
-        alert(serverError || "You are already connected on chat here.");
+        alert(serverError || t('chat_already_connected'));
       }
     } finally {
       setIsLoading(false);
@@ -439,7 +443,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   const handleConfirmBooking = async (e) => {
     e.preventDefault();
     if (!bookingDate) {
-      alert("Please select a date and time");
+      alert(t('please_select_date_time'));
       return;
     }
 
@@ -466,13 +470,13 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       );
 
       console.log("✅ Appointment Booked:", res.data);
-      alert("✅ Appointment booked successfully! The counselor has been notified.");
+      alert(t('appointment_booked_success'));
       setShowBookingModal(false);
       setBookingDate("");
       setBookingNotes("");
     } catch (error) {
       console.error("❌ Error booking appointment:", error);
-      alert(error?.response?.data?.message || "Failed to book appointment");
+      alert(error?.response?.data?.message || t('appointment_booking_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -590,9 +594,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       <div className="main-content-unique">
         {/* Counselors Grid */}
         <div className="counselors-section-unique">
-          <h1 className="page-title-unique">Online Counselors</h1>
+          <h1 className="page-title-unique">{t('online_counselors')}</h1>
           <p className="page-subtitle-unique">
-            Click 'Chat Now' to send a request
+            {t('click_chat_now_request')}
           </p>
 
           {/* Search Bar Section */}
@@ -757,7 +761,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                 </div>
 
                 <div className="counselor-response-unique">
-                  ⚡ Avg response: {counselor.responseTime}
+                  ⚡ {t('avg_response')} {counselor.responseTime}
                 </div>
 
                 <div className="card-actions-unique">
@@ -766,13 +770,13 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                     disabled={!counselor.available}
                     className={`chat-now-btn-unique ${!counselor.available ? "disabled" : ""}`}
                   >
-                    {counselor.available ? "💬 Chat Now" : "🔴 Unavailable"}
+                    {counselor.available ? `💬 ${t('chat_now')}` : `🔴 ${t('unavailable')}`}
                   </button>
                   <button
                     onClick={() => handleBookAppointment(counselor)}
                     className="book-apt-btn-unique"
                   >
-                    📅 Book
+                    📅 {t('book')}
                   </button>
                 </div>
               </div>
@@ -832,7 +836,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                       handleChatNow(counselor);
                     }}
                   >
-                    Chat
+                    {t('chat_now')}
                   </button>
                   <button
                     className="row-book-btn-unique"
@@ -841,7 +845,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                       handleBookAppointment(counselor);
                     }}
                   >
-                    Book
+                    {t('book')}
                   </button>
                 </div>
                 </div>

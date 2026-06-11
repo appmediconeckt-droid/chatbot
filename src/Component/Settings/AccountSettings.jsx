@@ -217,6 +217,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         email={account.email}
         hasPassword={account.hasPassword}
         onPasswordUpdated={handlePasswordUpdated}
+        role={role}
       />
     </section>
   );
