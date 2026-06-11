@@ -1119,8 +1119,8 @@ export default function UserDashboard() {
 
 
   const allMenuItems = [
-    { id: "Chat", icon: <FaCommentDots />, label: t('ai_chat') },
-    { id: "Live Chat", icon: <FaUserMd />, label: t('find_counselor') },
+    { id: "Chat", icon: <FaCommentDots />, label: t('chat') },
+    { id: "Live Chat", icon: <FaUserMd />, label: t('counselor') },
     { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
@@ -1149,37 +1149,37 @@ export default function UserDashboard() {
   const supportOptions = [
     {
       icon: <FaCommentDots />,
-      title: "AI chat",
-      text: "Ask health-related questions, continue your chat history, and start again when you want a fresh conversation.",
-      action: "Open Chat",
+      title: t('chat'),
+      text: t('chat_desc') || "Ask health-related questions, continue your chat history, and start again when you want a fresh conversation.",
+      action: t('open_chat'),
       onClick: () => handleMenuItemClick("Chat"),
     },
     {
       icon: <FaUserMd />,
-      title: "Find a counselor",
-      text: "Search counselors, view details, and request chat or appointment support from the counselor section.",
-      action: "Find Counselor",
+      title: t('counselor'),
+      text: t('counselor_desc') || "Search counselors, view details, and request chat or appointment support from the counselor section.",
+      action: t('view_counselor'),
       onClick: () => handleMenuItemClick("Counselor"),
     },
     {
       icon: <FaCalendarAlt />,
-      title: "Appointments",
-      text: "View booked sessions, appointment status, and counselor responses from one place.",
-      action: "My Appointments",
+      title: t('appointments'),
+      text: t('appointments_desc'),
+      action: t('my_appointments'),
       onClick: () => handleMenuItemClick("MyAppointments"),
     },
     {
       icon: <FaVideo />,
-      title: "Calls and sessions",
-      text: "Check your call history and join accepted video or voice sessions from the dashboard.",
-      action: "Call History",
+      title: t('calls_sessions'),
+      text: t('calls_sessions_desc'),
+      action: t('call_history'),
       onClick: () => handleMenuItemClick("Video"),
     },
     {
       icon: <FaWallet />,
-      title: "Wallet and payments",
-      text: "Review your wallet balance, payment activity, and payment support details.",
-      action: "Open Wallet",
+      title: t('wallet_payments'),
+      text: t('wallet_payments_desc'),
+      action: t('open_wallet'),
       onClick: () => handleMenuItemClick("Wallet"),
     },
   ];
@@ -1285,10 +1285,9 @@ export default function UserDashboard() {
           <FaQuestionCircle />
         </span>
         <div>
-          <h2 className="ud-section-title">Help & Support</h2>
+          <h2 className="ud-section-title">{t('help_support')}</h2>
           <p>
-            Quick help for your user account, chat, counselor requests,
-            appointments, calls, wallet, profile, privacy, and settings.
+            {t('help_desc')}
           </p>
         </div>
       </div>
@@ -1313,39 +1312,52 @@ export default function UserDashboard() {
         <article className="ud-role-help-card">
           <div className="ud-role-help-title">
             <FaUser />
-            <h3>Important User Help</h3>
+            <h3>{t('important_help')}</h3>
           </div>
           <ul>
-            {userHelpItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
+            <li>{t('profile_help')}</li>
+            <li>{t('verification_help')}</li>
+            <li>{t('appointments_help')}</li>
+            <li>{t('calls_help')}</li>
+            <li>{t('payments_help')}</li>
+            <li>{t('security_help')}</li>
+            <li>{t('emergency_help')}</li>
           </ul>
         </article>
       </div>
 
       <div className="ud-issue-grid">
-        {commonIssueItems.map((item) => (
-          <article className="ud-issue-card" key={item.title}>
-            <h3>{item.title}</h3>
-            <p>{item.text}</p>
-          </article>
-        ))}
+        <article className="ud-issue-card">
+          <h3>{t('profile_not_updating')}</h3>
+          <p>{t('profile_not_updating_desc')}</p>
+        </article>
+        <article className="ud-issue-card">
+          <h3>{t('call_not_connecting')}</h3>
+          <p>{t('call_not_connecting_desc')}</p>
+        </article>
+        <article className="ud-issue-card">
+          <h3>{t('appointment_not_visible')}</h3>
+          <p>{t('appointment_not_visible_desc')}</p>
+        </article>
+        <article className="ud-issue-card">
+          <h3>{t('payment_issue')}</h3>
+          <p>{t('payment_issue_desc')}</p>
+        </article>
       </div>
 
       <div className="ud-support-strip">
         <div>
-          <h3>Need account help?</h3>
+          <h3>{t('need_help')}</h3>
           <p>
-            Check your profile and settings first. For urgent care or emergency
-            issues, contact local emergency services directly.
+            {t('need_help_desc')}
           </p>
         </div>
         <div className="ud-support-strip-actions">
           <button type="button" className="ud-privacy-btn" onClick={handleProfileClick}>
-            My Profile
+            {t('my_profile')}
           </button>
           <button type="button" className="ud-privacy-btn" onClick={handleSettingsClick}>
-            Settings
+            {t('settings')}
           </button>
         </div>
       </div>
@@ -1359,60 +1371,93 @@ export default function UserDashboard() {
           <FaLock />
         </span>
         <div>
-          <h2 className="ud-section-title">Privacy</h2>
+          <h2 className="ud-section-title">{t('privacy')}</h2>
           <p>
-            Review the important privacy points for your user account, health
-            profile, chat, appointments, calls, security, and permissions.
+            {t('privacy_desc')}
           </p>
         </div>
       </div>
 
       <div className="ud-privacy-highlight-row">
-        {privacyHighlights.map((item) => (
-          <article className="ud-privacy-highlight" key={item.label}>
-            <span>{item.icon}</span>
-            <div>
-              <p>{item.label}</p>
-              <strong>{item.value}</strong>
-            </div>
-          </article>
-        ))}
+        <article className="ud-privacy-highlight">
+          <span><FaCheckCircle /></span>
+          <div>
+            <p>{t('otp_protected')}</p>
+            <strong>{t('email_phone')}</strong>
+          </div>
+        </article>
+        <article className="ud-privacy-highlight">
+          <span><FaCog /></span>
+          <div>
+            <p>{t('manage_from')}</p>
+            <strong>{t('profile_settings')}</strong>
+          </div>
+        </article>
+        <article className="ud-privacy-highlight">
+          <span><FaLock /></span>
+          <div>
+            <p>{t('sensitive_areas')}</p>
+            <strong>{t('health_chat_calls')}</strong>
+          </div>
+        </article>
       </div>
 
       <div className="ud-privacy-content">
-        {privacyItems.map((item) => (
-          <article className="ud-privacy-option" key={item.title}>
-            <span className="ud-privacy-option-icon">{item.icon}</span>
-            <h3>{item.title}</h3>
-            <p>{item.text}</p>
-          </article>
-        ))}
+        <article className="ud-privacy-option">
+          <span className="ud-privacy-option-icon"><FaUser /></span>
+          <h3>{t('profile_data')}</h3>
+          <p>{t('profile_data_desc')}</p>
+        </article>
+        <article className="ud-privacy-option">
+          <span className="ud-privacy-option-icon"><FaCommentDots /></span>
+          <h3>{t('chat_appointment_data')}</h3>
+          <p>{t('chat_appointment_data_desc')}</p>
+        </article>
+        <article className="ud-privacy-option">
+          <span className="ud-privacy-option-icon"><FaLock /></span>
+          <h3>{t('security_data')}</h3>
+          <p>{t('security_data_desc')}</p>
+        </article>
+        <article className="ud-privacy-option">
+          <span className="ud-privacy-option-icon"><FaCog /></span>
+          <h3>{t('location_data')}</h3>
+          <p>{t('location_data_desc')}</p>
+        </article>
       </div>
 
       <div className="ud-privacy-content">
-        {visibilityItems.map((item) => (
-          <article className="ud-privacy-option ud-privacy-option-soft" key={item.title}>
-            <h3>{item.title}</h3>
-            <p>{item.text}</p>
-          </article>
-        ))}
+        <article className="ud-privacy-option ud-privacy-option-soft">
+          <h3>{t('visible_to_you')}</h3>
+          <p>{t('visible_to_you_desc')}</p>
+        </article>
+        <article className="ud-privacy-option ud-privacy-option-soft">
+          <h3>{t('shared_for_care')}</h3>
+          <p>{t('shared_for_care_desc')}</p>
+        </article>
+        <article className="ud-privacy-option ud-privacy-option-soft">
+          <h3>{t('protected_changes')}</h3>
+          <p>{t('protected_changes_desc')}</p>
+        </article>
       </div>
 
       <div className="ud-privacy-policy-panel">
-        <h3>Important privacy checklist</h3>
+        <h3>{t('privacy_checklist')}</h3>
         <ul>
-          {privacyChecklist.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
+          <li>{t('privacy_checklist_1')}</li>
+          <li>{t('privacy_checklist_2')}</li>
+          <li>{t('privacy_checklist_3')}</li>
+          <li>{t('privacy_checklist_4')}</li>
+          <li>{t('privacy_checklist_5')}</li>
+          <li>{t('privacy_checklist_6')}</li>
         </ul>
       </div>
 
       <div className="ud-privacy-actions">
         <button type="button" className="ud-privacy-btn" onClick={handleProfileClick}>
-          Manage Profile Data
+          {t('manage_profile_data')}
         </button>
         <button type="button" className="ud-privacy-btn" onClick={handleSettingsClick}>
-          Security Settings
+          {t('security_settings')}
         </button>
       </div>
     </section>

@@ -988,7 +988,7 @@ const ChatBox = () => {
     { id: 4, label: t('chat_details'), icon: "📋" }
   ], [lang]);
   const handleFileAttach = () => { if (isSending) return; fileInputRef.current?.click(); };
-  const handlePhotoCapture = () => { if (isSending) return; cameraInputRef.current?.click(); };
+  
   const handleFileSelected = async (e) => {
     const file = e.target.files?.[0];
     if (!file || isSending) return;
@@ -1158,9 +1158,6 @@ const ChatBox = () => {
             <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="chatHiddenFileInput" onChange={handleFileSelected} style={{ display: "none" }} />
             <button className="chatAttachBtn" onClick={handleFileAttach} disabled={isSending} aria-label="Attach file">
               <span className="attachIcon" aria-hidden="true">📎</span>
-            </button>
-            <button className="chatCameraBtn" onClick={handlePhotoCapture} disabled={isSending} aria-label="Take photo">
-              <span className="cameraIcon" aria-hidden="true">📷</span>
             </button>
             <div className="chatInputWrapper">
               <input ref={messageInputRef} id="messageInput" type="text" value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder={`Message ${counselorName}...`} className="chatTextInput" autoComplete="off" enterKeyHint="send" aria-label="Message input" />

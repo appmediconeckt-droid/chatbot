@@ -98,8 +98,8 @@ const RoleSelector = () => {
 
       <div className="h8k1-bottom-actions">
         <span className="w2p3-action-pill">⚡ both paths</span>
-        <span className="w2p3-action-pill">🕊️ uniuce</span>
-        <span className="w2p3-action-pill">❔ help</span>
+        <span className="w2p3-action-pill">🧠 Mental Health Guide</span>
+        <span className="w2p3-action-pill">❓ help</span>
       </div>
     </div>
   );

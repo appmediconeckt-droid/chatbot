@@ -3,13 +3,15 @@ import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
 
 const WalletDashboard = ({ userData }) => {
-    const { t } = useUserTranslation();
+    const { t, lang } = useUserTranslation();
     const [amount, setAmount] = useState('');
     const [paymentMethod, setPaymentMethod] = useState('upi');
     const [balance, setBalance] = useState(0);
     const [transactions, setTransactions] = useState([]);
     const [spendingSummary, setSpendingSummary] = useState({ total: 0, breakdown: [] });
     const [loading, setLoading] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const transactionsPerPage = 5;
 
     useEffect(() => {
         fetchWalletData();
@@ -25,12 +27,18 @@ const WalletDashboard = ({ userData }) => {
         }
     }, []);
 
+    // Reset to first page when language changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [lang]);
+
     const fetchWalletData = async () => {
         try {
             const response = await axiosInstance.get('/api/wallet/data');
             setBalance(response.data.balance);
             setTransactions(response.data.transactions);
             setSpendingSummary(response.data.spendingSummary || { total: 0, breakdown: [] });
+            setCurrentPage(1);
         } catch (error) {
             console.error('Error fetching wallet data:', error);
         }
@@ -96,6 +104,12 @@ const WalletDashboard = ({ userData }) => {
             setLoading(false);
         }
     };
+
+    // Pagination logic
+    const indexOfLastTx = currentPage * transactionsPerPage;
+    const indexOfFirstTx = indexOfLastTx - transactionsPerPage;
+    const currentTransactions = transactions.slice(indexOfFirstTx, indexOfLastTx);
+    const totalPages = Math.ceil(transactions.length / transactionsPerPage);
 
     // Mapped custom classes to Tailwind arbitrary values based on the Stitch config (Reduced sizes)
     const styles = {
@@ -265,15 +279,15 @@ const WalletDashboard = ({ userData }) => {
                     </form>
                 </section>
 
-                {/* Right Column: Transaction History */}
-                <section className="lg:col-span-7 bg-white rounded-[20px] border border-slate-200 shadow-[0px_4px_15px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col">
+                {/* Right Column: Transaction History with Pagination */}
+                <section className="lg:col-span-7 bg-white rounded-[20px] border border-slate-200 shadow-[0px_4px_15px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col max-h-[550px]">
                     <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                         <h3 className={`${styles.headlineSm} text-[#0b1c30]`}>Transaction History</h3>
                         <button className={`${styles.labelMd} text-[#4648d4] hover:underline`}>Download Report</button>
                     </div>
-                    <div className="overflow-x-auto flex-1">
+                    <div className="overflow-y-auto overflow-x-auto flex-1">
                         <table className="w-full text-left">
-                            <thead className="bg-slate-50 border-b border-slate-100">
+                            <thead className="bg-slate-50 border-b border-slate-100 sticky top-0">
                                 <tr>
                                     <th className={`px-6 py-3 ${styles.labelSm} text-[#464554]`}>DATE</th>
                                     <th className={`px-4 py-3 ${styles.labelSm} text-[#464554]`}>DESCRIPTION</th>
@@ -282,8 +296,8 @@ const WalletDashboard = ({ userData }) => {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {transactions.length > 0 ? (
-                                    transactions.map((tx) => (
+                                {currentTransactions.length > 0 ? (
+                                    currentTransactions.map((tx) => (
                                         <tr key={tx._id} className="hover:bg-slate-50/50 transition-colors">
                                             <td className={`px-6 py-4 ${styles.labelMd} text-[#464554]`}>{new Date(tx.createdAt).toLocaleDateString()}</td>
                                             <td className="px-4 py-4">
@@ -308,7 +322,67 @@ const WalletDashboard = ({ userData }) => {
                             </tbody>
                         </table>
                     </div>
-                    <div className="p-4 bg-slate-50 text-center">
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                        <div className="flex justify-center items-center gap-3 py-3 border-t border-slate-100 bg-white">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 disabled:opacity-40 text-sm font-medium hover:bg-slate-200 transition-all disabled:cursor-not-allowed"
+                            >
+                                Previous
+                            </button>
+                            <div className="flex gap-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+                                    
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={`w-8 h-8 rounded-md text-sm font-medium transition-all ${
+                                                currentPage === pageNum
+                                                    ? 'bg-[#4648d4] text-white'
+                                                    : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                                            }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                                {totalPages > 5 && currentPage < totalPages - 2 && (
+                                    <>
+                                        <span className="w-8 h-8 flex items-center justify-center text-slate-400">...</span>
+                                        <button
+                                            onClick={() => setCurrentPage(totalPages)}
+                                            className="w-8 h-8 rounded-md text-sm font-medium bg-slate-100 text-slate-700 hover:bg-slate-200 transition-all"
+                                        >
+                                            {totalPages}
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 disabled:opacity-40 text-sm font-medium hover:bg-slate-200 transition-all disabled:cursor-not-allowed"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="p-4 bg-slate-50 text-center border-t border-slate-100">
                         <button className={`group ${styles.labelMd} text-[#4648d4] font-[600] flex items-center justify-center mx-auto transition-all hover:gap-2`}>
                             View All Transactions
                             <span className="material-symbols-outlined text-[16px]">chevron_right</span>
