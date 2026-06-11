@@ -1502,12 +1502,21 @@ export default function UserDashboard() {
       {isMobile && (
         <div className="ud-mobile-header">
           <div className="ud-mobile-header-left">
-            <h2 className="ud-mobile-logo">MChat</h2>
+            <div className="ud-mobile-header-branding">
+              <h2 className="ud-mobile-logo">MediChat</h2>
+              <p className="ud-mobile-tagline">{t('chat_desc').split(',')[0]}</p>
+            </div>
+          </div>
+          <div className="ud-mobile-header-center">
+            <div style={{ width: '100%', maxWidth: '140px' }}>
+              <LanguageSelector lang={lang} setLang={setLang} t={t} compact={true} />
+            </div>
           </div>
           <div className="ud-mobile-header-right">
             <button
               className="ud-mobile-profile-btn"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
+              title={userData.name}
             >
               {userData.profilePhoto ? (
                 <img

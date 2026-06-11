@@ -64,21 +64,39 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
 
   // Default inline variant (used in chat footer, mobile modal, etc.)
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
+    <div ref={ref} style={{ position: 'relative', display: 'inline-block', width: '100%' }}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         title={t ? t('select_language') : 'Select Language'}
         style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: compact ? '4px 8px' : '6px 12px',
-          borderRadius: 20, border: '1px solid rgba(255,255,255,0.3)',
-          background: 'rgba(255,255,255,0.12)', color: 'inherit',
-          cursor: 'pointer', fontSize: compact ? 12 : 13, fontWeight: 500,
+          display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'center',
+          padding: compact ? '6px 10px' : '6px 12px',
+          borderRadius: compact ? 18 : 20,
+          border: `1.5px solid ${compact ? 'rgba(255,255,255,0.4)' : 'rgba(255,255,255,0.3)'}`,
+          background: compact ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.12)',
+          color: 'inherit',
+          cursor: 'pointer',
+          fontSize: compact ? 11 : 13,
+          fontWeight: 600,
           whiteSpace: 'nowrap',
+          transition: 'all 0.3s ease',
+          width: compact ? '100%' : 'auto',
+        }}
+        onMouseEnter={(e) => {
+          if (compact) {
+            e.target.style.background = 'rgba(255,255,255,0.25)';
+            e.target.style.borderColor = 'rgba(255,255,255,0.6)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (compact) {
+            e.target.style.background = 'rgba(255,255,255,0.18)';
+            e.target.style.borderColor = 'rgba(255,255,255,0.4)';
+          }
         }}
       >
-        <span style={{ fontSize: 16 }}>🌐</span>
+        <span style={{ fontSize: compact ? 14 : 16 }}>🌐</span>
         <span>{compact ? current.code.toUpperCase() : current.label}</span>
       </button>
 
