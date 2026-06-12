@@ -505,6 +505,11 @@ export default function UserDashboard() {
   const vibrate = useVibration();
   const { startRinging, stopRinging } = useRingtone();
 
+  // Log language changes for debugging
+  useEffect(() => {
+    console.log('📝 Current user language:', lang);
+  }, [lang]);
+
   // Ringtone Control
   useEffect(() => {
     if (showCallModal) {
@@ -1502,18 +1507,12 @@ export default function UserDashboard() {
       {isMobile && (
         <div className="ud-mobile-header">
           <div className="ud-mobile-header-left">
-            <h2 className="ud-mobile-logo">MediChat</h2>
-          </div>
-          <div className="ud-mobile-header-center">
-            <div style={{ width: '100%', maxWidth: '140px' }}>
-              <LanguageSelector lang={lang} setLang={setLang} t={t} compact={true} />
-            </div>
+            <h2 className="ud-mobile-logo">MChat</h2>
           </div>
           <div className="ud-mobile-header-right">
             <button
               className="ud-mobile-profile-btn"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
-              title={userData.name}
             >
               {userData.profilePhoto ? (
                 <img
@@ -1601,7 +1600,7 @@ export default function UserDashboard() {
                   </div>
                   <div className="ud-profile-info">
                     <h3 className="ud-sidebar-name" title={userData.name}>
-                      {userData.name}
+                      {userData.name || "Welcome"}
                     </h3>
                     {userData.email && (
                       <p className="ud-sidebar-meta" title={userData.email}>
