@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
+import html2pdf from 'html2pdf.js';
 
 const WalletDashboard = ({ userData }) => {
     const { t, lang } = useUserTranslation();
@@ -138,6 +139,7 @@ const WalletDashboard = ({ userData }) => {
             // Use html2pdf to convert to PDF
             const element = document.createElement('div');
             element.innerHTML = htmlContent;
+            document.body.appendChild(element);
 
             const opt = {
                 margin: 10,
@@ -147,9 +149,11 @@ const WalletDashboard = ({ userData }) => {
                 jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
             };
 
-            // Import html2pdf dynamically
-            const html2pdf = (await import('html2pdf.js')).default;
-            html2pdf().set(opt).from(element).save();
+            // Generate and save PDF
+            await html2pdf().set(opt).from(element).save();
+
+            // Clean up
+            document.body.removeChild(element);
 
         } catch (error) {
             console.error('Error downloading report:', error);
