@@ -48,22 +48,109 @@ const WalletDashboard = ({ userData }) => {
     const handleDownloadReport = async () => {
         setDownloadLoading(true);
         try {
-            const response = await axiosInstance.get(`/api/wallet/download-report?lang=${lang}`, {
-                responseType: 'blob',
-                headers: {
-                    'Accept': 'application/pdf'
-                }
-            });
+            // Generate HTML report
+            const totalCredit = transactions.filter(tx => tx.type === 'credit').reduce((acc, tx) => acc + tx.amount, 0);
+            const totalDebit = transactions.filter(tx => tx.type === 'debit').reduce((acc, tx) => acc + tx.amount, 0);
 
-            // Create blob and download
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `wallet-report-${new Date().toISOString().split('T')[0]}.pdf`);
-            document.body.appendChild(link);
-            link.click();
-            link.parentNode.removeChild(link);
-            window.URL.revokeObjectURL(url);
+            const htmlContent = `
+                <div style="font-family: Arial, sans-serif; padding: 40px; background: white;">
+                    <h1 style="text-align: center; color: #667eea; margin-bottom: 10px;">${t('wallet_overview')}</h1>
+                    <p style="text-align: center; color: #666; margin-bottom: 30px;">
+                        ${t('transaction_history_full')} | ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+                    </p>
+
+                    <hr style="border: 2px solid #667eea; margin-bottom: 30px;">
+
+                    <h3 style="color: #0b1c30; margin-top: 20px; margin-bottom: 10px;">📋 ${t('wallet_overview')}</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <tr style="background: #f8f9ff;">
+                            <td style="padding: 10px; border: 1px solid #ddd;">${t('name')}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${userData.name || 'N/A'}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${t('email_label')}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${userData.email || 'N/A'}</td>
+                        </tr>
+                        <tr style="background: #f8f9ff;">
+                            <td style="padding: 10px; border: 1px solid #ddd;">${t('phone_label')}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd;">${userData.phone || 'N/A'}</td>
+                        </tr>
+                        <tr style="background: #667eea; color: white;">
+                            <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${t('current_balance')}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">₹${balance.toFixed(2)}</td>
+                        </tr>
+                    </table>
+
+                    <h3 style="color: #0b1c30; margin-top: 20px; margin-bottom: 10px;">📊 ${t('spending_summary')}</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <tr style="background: #f8f9ff;">
+                            <td style="padding: 10px; border: 1px solid #ddd;">${t('add_funds_button')}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right; color: #059669; font-weight: bold;">₹${totalCredit.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;">Debits</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right; color: #dc2626; font-weight: bold;">₹${totalDebit.toFixed(2)}</td>
+                        </tr>
+                        <tr style="background: #f0f4ff;">
+                            <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">Net Balance</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: right; color: #667eea; font-weight: bold;">₹${(totalCredit - totalDebit).toFixed(2)}</td>
+                        </tr>
+                    </table>
+
+                    <h3 style="color: #0b1c30; margin-top: 20px; margin-bottom: 10px;">💳 ${t('transaction_history')}</h3>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                        <thead>
+                            <tr style="background: #667eea; color: white;">
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">${t('date')}</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">${t('type')}</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">${t('description')}</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: center;">${t('status')}</th>
+                                <th style="padding: 12px; border: 1px solid #ddd; text-align: right;">${t('amount')}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${transactions.map((tx, idx) => `
+                                <tr style="background: ${idx % 2 === 0 ? '#f8f9ff' : 'white'};">
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${new Date(tx.createdAt).toLocaleDateString()}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd; color: ${tx.type === 'credit' ? '#059669' : '#dc2626'}; font-weight: bold;">
+                                        ${tx.type === 'credit' ? t('add_funds_button') : 'Debit'}
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid #ddd;">${tx.description || 'Transaction'}</td>
+                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center; color: ${tx.status === 'completed' ? '#059669' : '#f59e0b'}; font-weight: bold;">
+                                        ${tx.status === 'completed' ? '✓ Done' : '⏳ Pending'}
+                                    </td>
+                                    <td style="padding: 10px; border: 1px solid #ddd; text-align: right; font-weight: bold;">₹${tx.amount.toFixed(2)}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+
+                    <hr style="border: 1px solid #ddd; margin: 30px 0;">
+                    <p style="text-align: center; color: #999; font-size: 12px;">
+                        This is an automatically generated wallet report. For queries, please contact support.
+                    </p>
+                    <p style="text-align: center; color: #999; font-size: 12px;">
+                        Report ID: ${new Date().getTime()}
+                    </p>
+                </div>
+            `;
+
+            // Use html2pdf to convert to PDF
+            const element = document.createElement('div');
+            element.innerHTML = htmlContent;
+
+            const opt = {
+                margin: 10,
+                filename: `wallet-report-${new Date().toISOString().split('T')[0]}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+            };
+
+            // Import html2pdf dynamically
+            const html2pdf = (await import('html2pdf.js')).default;
+            html2pdf().set(opt).from(element).save();
+
         } catch (error) {
             console.error('Error downloading report:', error);
             alert(t('error_try_again') || 'Failed to download report. Please try again.');
