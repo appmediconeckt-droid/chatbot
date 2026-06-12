@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://chatbot-backend-production-ea76.up.railway.app";
+const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://ggr8bl1d-5001.inc1.devtunnels.ms/";
 console.log(envApiBaseUrl);
 if (!envApiBaseUrl) {
   throw new Error(

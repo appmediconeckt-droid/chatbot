@@ -48,7 +48,7 @@ const WalletDashboard = ({ userData }) => {
     const handleDownloadReport = async () => {
         setDownloadLoading(true);
         try {
-            const response = await axiosInstance.get('/api/wallet/download-report', {
+            const response = await axiosInstance.get(`/api/wallet/download-report?lang=${lang}`, {
                 responseType: 'blob',
                 headers: {
                     'Accept': 'application/pdf'
