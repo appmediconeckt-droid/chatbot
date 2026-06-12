@@ -10,6 +10,7 @@ const WalletDashboard = ({ userData }) => {
     const [transactions, setTransactions] = useState([]);
     const [spendingSummary, setSpendingSummary] = useState({ total: 0, breakdown: [] });
     const [loading, setLoading] = useState(false);
+    const [downloadLoading, setDownloadLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const transactionsPerPage = 5;
 
@@ -41,6 +42,33 @@ const WalletDashboard = ({ userData }) => {
             setCurrentPage(1);
         } catch (error) {
             console.error('Error fetching wallet data:', error);
+        }
+    };
+
+    const handleDownloadReport = async () => {
+        setDownloadLoading(true);
+        try {
+            const response = await axiosInstance.get('/api/wallet/download-report', {
+                responseType: 'blob',
+                headers: {
+                    'Accept': 'application/pdf'
+                }
+            });
+
+            // Create blob and download
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `wallet-report-${new Date().toISOString().split('T')[0]}.pdf`);
+            document.body.appendChild(link);
+            link.click();
+            link.parentNode.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Error downloading report:', error);
+            alert(t('error_try_again') || 'Failed to download report. Please try again.');
+        } finally {
+            setDownloadLoading(false);
         }
     };
 
@@ -283,7 +311,13 @@ const WalletDashboard = ({ userData }) => {
                 <section className="lg:col-span-7 bg-white rounded-[20px] border border-slate-200 shadow-[0px_4px_15px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col max-h-[550px]">
                     <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
                         <h3 className={`${styles.headlineSm} text-[#0b1c30]`}>{t('transaction_history')}</h3>
-                        <button className={`${styles.labelMd} text-[#4648d4] hover:underline`}>{t('download_report')}</button>
+                        <button
+                            onClick={handleDownloadReport}
+                            disabled={downloadLoading}
+                            className={`${styles.labelMd} ${downloadLoading ? 'opacity-50 cursor-not-allowed' : 'hover:underline'} text-[#4648d4] transition-all`}
+                        >
+                            {downloadLoading ? `${t('updating')}...` : t('download_report')}
+                        </button>
                     </div>
                     <div className="overflow-y-auto overflow-x-auto flex-1">
                         <table className="w-full text-left">
