@@ -1669,8 +1669,8 @@ export default function UserDashboard() {
             {active === "settings" && (
               <AccountSettings role="user" onOpenProfile={handleProfileClick} />
             )}
-            {active === "help" && renderHelpSupport()}
-            {active === "privacy" && renderPrivacyCenter()}
+            {active === "help" && <div key={`help-${lang}`}>{renderHelpSupport()}</div>}
+            {active === "privacy" && <div key={`privacy-${lang}`}>{renderPrivacyCenter()}</div>}
           </div>
         </div>
       </div>
