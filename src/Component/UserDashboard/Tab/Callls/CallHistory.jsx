@@ -451,18 +451,21 @@ const CallHistory = ({ currentUser }) => {
                 >
                   {/* Profile Picture */}
                   <div className="call-avatar">
-                    {call.profilePic && (call.profilePic.startsWith('http') || call.profilePic.startsWith('/')) ? (
+                    {call.profilePic && typeof call.profilePic === 'string' && (call.profilePic.startsWith('http') || call.profilePic.startsWith('/')) ? (
                       <img
                         src={call.profilePic}
                         alt={call.name}
                         className="call-avatar-img"
                         onError={(e) => {
                           e.target.style.display = 'none';
-                          e.target.parentElement.querySelector('.call-avatar-emoji')?.style.display = 'flex';
+                          const emojiSpan = e.target.parentElement?.querySelector('.call-avatar-emoji');
+                          if (emojiSpan) emojiSpan.style.display = 'flex';
                         }}
                       />
                     ) : null}
-                    <span className="call-avatar-emoji">{call.profilePic || "👨‍⚕️"}</span>
+                    {!call.profilePic || !call.profilePic.startsWith('http') ? (
+                      <span className="call-avatar-emoji">{call.profilePic || "👨‍⚕️"}</span>
+                    ) : null}
                   </div>
 
                   {/* Call Info */}
