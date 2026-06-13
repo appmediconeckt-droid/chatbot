@@ -1,0 +1,261 @@
+/* Language Selector Trigger Button */
+.lang-selector-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.lang-selector-trigger:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.lang-selector-trigger:active {
+  transform: scale(0.98);
+}
+
+/* Language Selector Modal */
+.lang-selector-modal {
+  position: fixed;
+  width: 280px;
+  max-height: clamp(350px, 65vh, 500px);
+  background: #FFFFFF;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(15, 23, 42, 0.2);
+  border: 1px solid #E2E8F0;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.2s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Header */
+.lang-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px;
+  background: #F8FAFF;
+  border-bottom: 1px solid #E2E8F0;
+  border-radius: 16px 16px 0 0;
+}
+
+.lang-modal-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.lang-modal-icon-wrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #EEF2FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.lang-modal-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0F172A;
+  letter-spacing: 0.3px;
+}
+
+.lang-modal-subtitle {
+  font-size: 12px;
+  color: #64748B;
+  margin-top: 2px;
+}
+
+.lang-modal-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #F1F5F9;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: #64748B;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.lang-modal-close:hover {
+  background: #E2E8F0;
+  color: #1E293B;
+}
+
+/* Divider */
+.lang-modal-divider {
+  height: 1px;
+  background: #E2E8F0;
+}
+
+/* Scrollable List */
+.lang-modal-list {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+}
+
+.lang-modal-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.lang-modal-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.lang-modal-list::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 3px;
+}
+
+.lang-modal-list::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+/* Language Item */
+.lang-modal-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 11px 12px;
+  border: none;
+  border-left: 3px solid transparent;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  gap: 10px;
+  text-align: left;
+  position: relative;
+}
+
+.lang-modal-item:hover {
+  background: #F8FAFF;
+}
+
+.lang-modal-item--active {
+  background: #F0F4FF;
+}
+
+.lang-modal-active-bar {
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  border-radius: 2px;
+}
+
+/* Badge */
+.lang-modal-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* Labels */
+.lang-modal-labels {
+  flex: 1;
+  min-width: 0;
+}
+
+.lang-modal-native {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 18px;
+  transition: color 0.2s ease;
+}
+
+/* Checkmark */
+.lang-modal-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.lang-modal-check-empty {
+  width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  border: 1.5px solid #E2E8F0;
+  flex-shrink: 0;
+}
+
+/* Footer */
+.lang-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  background: #FFFFFF;
+  border-top: 1px solid #E2E8F0;
+  border-radius: 0 0 16px 16px;
+}
+
+.lang-modal-footer-pill {
+  width: 32px;
+  height: 4px;
+  border-radius: 2px;
+  background: #E2E8F0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .lang-selector-modal {
+    width: clamp(240px, 90vw, 320px);
+    max-height: clamp(300px, 55vh, 450px);
+  }
+
+  .lang-modal-item {
+    padding: 10px 11px;
+  }
+
+  .lang-modal-badge {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+}

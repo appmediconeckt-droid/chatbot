@@ -1,41 +1,43 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { SUPPORTED_LANGUAGES } from '../../i18n/LanguageContext';
+import './LanguageSelector.css';
+
+const LANG_ACCENT = {
+  en: '#3B82F6', hi: '#F97316', mr: '#8B5CF6', ta: '#10B981',
+  pa: '#F59E0B', bn: '#EC4899', gu: '#06B6D4', kn: '#EF4444',
+  ml: '#6366F1', te: '#0EA5E9', ur: '#14B8A6', zh: '#EC4899',
+  es: '#0EA5E9', fr: '#06B6D4', ar: '#F97316', pt: '#14B8A6',
+  ru: '#8B5CF6', ja: '#EF4444', de: '#10B981', ko: '#F59E0B',
+  th: '#EC4899', ne: '#06B6D4', 'de-CH': '#3B82F6',
+};
 
 export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = false }) {
   const [open, setOpen] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState('bottom'); // 'bottom' or 'top'
+  const [dropdownPos, setDropdownPos] = useState('bottom');
   const ref = useRef(null);
   const dropdownRef = useRef(null);
   const current = SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
 
   const handleLanguageChange = (langCode) => {
-    console.log('🌐 Language Changed:', langCode);
-    console.log('Current lang before change:', lang);
     setLang(langCode);
-    console.log('Language change triggered for:', langCode);
   };
 
-  // Detect viewport boundaries and adjust dropdown position
   useEffect(() => {
     if (!open || !ref.current || !dropdownRef.current) return;
-
     const button = ref.current.querySelector('button');
     if (!button) return;
 
     const buttonRect = button.getBoundingClientRect();
-    const dropdownHeight = dropdownRef.current.offsetHeight || 300;
+    const dropdownHeight = dropdownRef.current.offsetHeight || 400;
     const viewportHeight = window.innerHeight;
     const spaceBelow = viewportHeight - buttonRect.bottom;
     const spaceAbove = buttonRect.top;
 
-    // Check if there's enough space below
     if (spaceBelow < dropdownHeight + 20) {
-      // Not enough space below, try above
       if (spaceAbove > dropdownHeight + 20) {
         setDropdownPos('top');
       } else {
-        // Not enough space above either, use bottom but with scroll
         setDropdownPos('bottom');
       }
     } else {
@@ -93,21 +95,14 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
     );
   }
 
-  // Default inline variant (used in chat footer, mobile modal, etc.)
+  // Beautiful popup version (used in chat footer, mobile modal, settings)
   return (
     <div ref={ref} style={{ position: 'relative', display: 'inline-block' }}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         title={t ? t('select_language') : 'Select Language'}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: compact ? '4px 8px' : '6px 12px',
-          borderRadius: 20, border: '1px solid rgba(255,255,255,0.3)',
-          background: 'rgba(255,255,255,0.12)', color: 'inherit',
-          cursor: 'pointer', fontSize: compact ? 12 : 13, fontWeight: 500,
-          whiteSpace: 'nowrap',
-        }}
+        className="lang-selector-trigger"
       >
         <span style={{ fontSize: 16 }}>🌐</span>
         <span>{compact ? current.code.toUpperCase() : current.label}</span>
@@ -116,41 +111,74 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
       {open && (
         <div
           ref={dropdownRef}
+          className={`lang-selector-modal lang-selector-modal--${dropdownPos}`}
           style={{
-            position: 'fixed',
-            ...(dropdownPos === 'bottom'
-              ? { top: (ref.current?.getBoundingClientRect()?.bottom || 0) + 6 }
-              : { bottom: window.innerHeight - (ref.current?.getBoundingClientRect()?.top || 0) + 6 }),
-            left: Math.min(window.innerWidth - 210, Math.max(8, (ref.current?.getBoundingClientRect()?.left || 0))),
-            minWidth: 'clamp(140px, 85vw, 200px)',
-            maxHeight: 'clamp(180px, 50vh, 320px)',
-            overflowY: 'auto',
-            background: '#fff',
-            borderRadius: 10,
-            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
-            border: '1px solid #e5e7eb',
-            zIndex: 10000,
+            top: dropdownPos === 'bottom' ? (ref.current?.getBoundingClientRect()?.bottom || 0) + 8 : 'auto',
+            bottom: dropdownPos === 'top' ? window.innerHeight - (ref.current?.getBoundingClientRect()?.top || 0) + 8 : 'auto',
+            left: Math.min(window.innerWidth - 260, Math.max(8, (ref.current?.getBoundingClientRect()?.left || 0))),
           }}
         >
-          {SUPPORTED_LANGUAGES.map((l) => (
-            <button
-              key={l.code}
-              type="button"
-              onClick={() => { handleLanguageChange(l.code); setOpen(false); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                width: '100%', padding: '7px 11px',
-                border: 'none', background: l.code === lang ? '#f0f4ff' : 'transparent',
-                cursor: 'pointer', fontSize: 12, textAlign: 'left',
-                color: l.code === lang ? '#4f46e5' : '#1e293b',
-                fontWeight: l.code === lang ? 600 : 400,
-              }}
-            >
-              {l.code === lang && <span style={{ color: '#4f46e5', fontSize: 10 }}>✓</span>}
-              {l.code !== lang && <span style={{ width: 10, display: 'inline-block' }} />}
-              {l.label}
-            </button>
-          ))}
+          {/* Header */}
+          <div className="lang-modal-header">
+            <div className="lang-modal-header-left">
+              <div className="lang-modal-icon-wrap">🌐</div>
+              <div>
+                <div className="lang-modal-title">{t ? t('select_language') : 'Select Language'}</div>
+                <div className="lang-modal-subtitle">Choose your preferred language</div>
+              </div>
+            </div>
+            <button className="lang-modal-close" onClick={() => setOpen(false)}>✕</button>
+          </div>
+
+          {/* Divider */}
+          <div className="lang-modal-divider" />
+
+          {/* Scrollable List */}
+          <div className="lang-modal-list">
+            {SUPPORTED_LANGUAGES.map((l) => {
+              const isActive = l.code === lang;
+              const accent = LANG_ACCENT[l.code] || '#3B82F6';
+              const initial = l.label.charAt(0).toUpperCase();
+
+              return (
+                <button
+                  key={l.code}
+                  type="button"
+                  className={`lang-modal-item ${isActive ? 'lang-modal-item--active' : ''}`}
+                  onClick={() => { handleLanguageChange(l.code); setOpen(false); }}
+                  style={{
+                    borderLeftColor: isActive ? accent : 'transparent',
+                  }}
+                >
+                  {isActive && <div className="lang-modal-active-bar" style={{ backgroundColor: accent }} />}
+
+                  <div className="lang-modal-badge" style={{
+                    backgroundColor: accent + '20',
+                    borderColor: accent + '40',
+                  }}>
+                    <span style={{ color: accent, fontWeight: 700 }}>{initial}</span>
+                  </div>
+
+                  <div className="lang-modal-labels">
+                    <div className="lang-modal-native" style={{ color: isActive ? accent : '#1E293B' }}>
+                      {l.label}
+                    </div>
+                  </div>
+
+                  {isActive ? (
+                    <div className="lang-modal-check" style={{ backgroundColor: accent }}>✓</div>
+                  ) : (
+                    <div className="lang-modal-check-empty" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Footer */}
+          <div className="lang-modal-footer">
+            <div className="lang-modal-footer-pill" />
+          </div>
         </div>
       )}
     </div>
