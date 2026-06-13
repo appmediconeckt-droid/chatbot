@@ -1543,7 +1543,7 @@ export default function UserDashboard() {
                 ))}
               </div>
               <div className="ud-sidebar-actions">
-                <LanguageSelector lang={lang} setLang={setLang} t={t} sidebar />
+                <LanguageSelector lang={lang} setLang={setLang} t={t} />
                 <button
                   className="ud-sidebar-item ud-profile-action"
                   onClick={handleProfileClick}

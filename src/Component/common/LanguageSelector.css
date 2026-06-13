@@ -2,26 +2,42 @@
 .lang-selector-trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.12);
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
   color: inherit;
   cursor: pointer;
   font-size: 13px;
   font-weight: 500;
   white-space: nowrap;
   transition: all 0.2s ease;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .lang-selector-trigger:hover {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
 }
 
 .lang-selector-trigger:active {
   transform: scale(0.98);
+}
+
+/* In sidebar context */
+.ud-sidebar-actions .lang-selector-trigger {
+  border: 1px solid #e2e8f0;
+  background: #f8faff;
+  color: #1e293b;
+  width: 100%;
+}
+
+.ud-sidebar-actions .lang-selector-trigger:hover {
+  background: #f0f4ff;
+  border-color: #cbd5e1;
 }
 
 /* Language Selector Modal */
