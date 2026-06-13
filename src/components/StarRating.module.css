@@ -1,0 +1,39 @@
+.row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+}
+
+.starBtn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: transform 0.1s ease;
+}
+
+.starBtn:hover {
+  transform: scale(1.15);
+}
+
+.filled {
+  color: #f5a623;
+}
+
+.empty {
+  color: #d8dee6;
+}
+
+.value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #526071;
+  white-space: nowrap;
+}

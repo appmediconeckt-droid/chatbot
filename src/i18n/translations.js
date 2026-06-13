@@ -2481,4 +2481,26 @@ export const translations = {
     error_load_counselors: "مشیروں کو لوڈ نہیں کر سکتے",
     chat_request_sent: "چیٹ کی درخواست کامیابی سے بھیجی گئی!",
   },
+
+  // Thai
+  th: {
+    loading: "กำลังโหลด...", save: "บันทึก", cancel: "ยกเลิก", edit: "แก้ไข",
+    delete: "ลบ", submit: "ส่ง", send: "ส่ง", back: "ย้อนกลับ",
+    retry: "ลองอีกครั้ง", online: "ออนไลน์", offline: "ออฟไลน์", yes: "ใช่", no: "ไม่",
+    search: "ค้นหา", not_specified: "ไม่ระบุ", close: "ปิด",
+    accept: "ยอมรับ", decline: "ปฏิเสธ", logout: "ออกจากระบบ", settings: "การตั้งค่า",
+    profile: "โปรไฟล์", not_added: "ไม่ได้เพิ่ม", language: "ภาษา",
+    select_language: "เลือกภาษา", change_language: "เปลี่ยนภาษาแอป", messages: "ข้อความ", appointments: "นัดหมาย",
+    sessions: "เซสชั่น", patients: "ผู้ป่วย", earnings: "รายได้", wallet: "กระเป๋า",
+    chat: "แชท", counselor: "ที่ปรึกษา", ai_chat: "AI แชท", find_counselor: "ค้นหาที่ปรึกษา",
+    my_appointments: "นัดหมายของฉัน", call_history: "ประวัติการโทร", home: "หน้าแรก", my_profile: "โปรไฟล์ของฉัน",
+    type_message: "พิมพ์ข้อความ...", message: "ข้อความ", sending: "กำลังส่ง...",
+    no_messages: "ยังไม่มีข้อความ", start_conversation: "เริ่มการสนทนาโดยส่งข้อความ",
+    email: "อีเมล", phone: "โทรศัพท์", book_appointment: "จองนัดหมาย",
+    start_chat: "เริ่มแชท", video_call: "วิดีโอคอล", voice_call: "สายเสียง",
+    missed: "ไม่เจอ", no_calls: "ไม่พบสายที่เข้ามา",
+    help_desc: "ความช่วยเหลืออย่างรวดเร็วสำหรับบัญชี แชท คำขอที่ปรึกษา นัดหมาย สาย กระเป๋า โปรไฟล์ ความเป็นส่วนตัว และการตั้งค่า",
+    error_load_counselors: "ไม่สามารถโหลดที่ปรึกษาได้",
+    chat_request_sent: "ส่งคำขอแชทสำเร็จแล้ว!",
+  },
 };

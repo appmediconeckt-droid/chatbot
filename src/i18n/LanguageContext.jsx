@@ -18,6 +18,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'ru', label: 'Русский (Russian)', region: 'world' },
   { code: 'ja', label: '日本語 (Japanese)', region: 'world' },
   { code: 'de', label: 'Deutsch (German)', region: 'world' },
+  { code: 'th', label: 'ไทย (Thai)', region: 'world' },
 
   // Indian Languages
   { code: 'ta', label: 'தமிழ் (Tamil)', region: 'indian' },

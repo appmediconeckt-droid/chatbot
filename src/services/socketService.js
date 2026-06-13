@@ -85,7 +85,7 @@ class SocketService {
       }
 
       const socket = io(API_BASE_URL, {
-        transports: ['polling'],
+        transports: ['websocket', 'polling'],
         auth: { token },
         reconnection: true,
         reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,

@@ -3,6 +3,7 @@ import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import "./CounselorDirectory.css";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
+import StarRating from "../../../../components/StarRating";
 
 const getInitials = (name = "Counselor") =>
   name
@@ -76,6 +77,7 @@ const CounselorTable = () => {
 
     const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
       if (!mounted) return;
+      console.log(`[Presence] ${userId} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
       setCounselorsData((prev) =>
         prev.map((counselor) =>
           String(counselor._id || counselor.id) === String(userId)
@@ -291,7 +293,16 @@ const CounselorTable = () => {
                   <div className="stat-item">
                     <span className="stat-label">{t('rating')}</span>
                     <span className="stat-value">
-                      <span className="star">★</span> {counselor.rating || 0}
+                      {counselor.ratingCount > 0 ? (
+                        <StarRating
+                          rating={counselor.rating}
+                          count={counselor.ratingCount}
+                          size={14}
+                          showValue={true}
+                        />
+                      ) : (
+                        <span style={{ color: "#2c50cd", fontSize: 12 }}>✨ New</span>
+                      )}
                     </span>
                   </div>
                   <div className="stat-item">

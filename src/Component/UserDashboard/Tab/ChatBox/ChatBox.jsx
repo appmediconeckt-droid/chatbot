@@ -11,6 +11,8 @@ import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import { translateMessage } from "../../../../services/messageTranslationService";
+import RatingModal from "../../../../components/RatingModal";
+import ratingService from "../../../../services/ratingService";
 
 const ChatBox = () => {
   const { t, lang } = useUserTranslation();
@@ -62,6 +64,13 @@ const ChatBox = () => {
   const [blockedPopup, setBlockedPopup] = useState({ show: false, reason: "" });
   const [originalMessages, setOriginalMessages] = useState([]);
   const [isTranslating, setIsTranslating] = useState(false);
+
+  // ─── Counselor rating ──────────────────────────────────────────────────────
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [ratingTarget, setRatingTarget] = useState(null);
+  const ratingPromptedRef = useRef(false);
+  const sessionChatIdRef = useRef(chatId || null);
 
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -128,10 +137,124 @@ const ChatBox = () => {
     setTimeout(() => input.focus({ preventScroll: true }), 50);
   }, []);
 
+  // ─── Rating flow ──────────────────────────────────────────────────────────
+  const triggerRatingPrompt = useCallback(async () => {
+    if (ratingPromptedRef.current) return;
+    const counselorIdResolved = resolveCounselorId();
+    if (!counselorIdResolved) return;
+    ratingPromptedRef.current = true;
+    const target = {
+      counselorId: counselorIdResolved,
+      counselorName: currentCounselor?.name || "Counselor",
+      counselorPhoto: getProfilePhotoUrl(currentCounselor),
+      chatId: getChatIdForAPI(),
+    };
+    setRatingTarget(target);
+    setShowRatingModal(true);
+    await ratingService.savePendingRating(target);
+  }, [currentCounselor]);
+
+  // Show rating popup when user navigates away from chat
+  const handleBackClick = async () => {
+    const counselorIdResolved = resolveCounselorId();
+    const apiChatId = getChatIdForAPI();
+
+    // Check if user has already rated THIS COUNSELOR (not just this session)
+    const alreadyRatedCounselor = await ratingService.isAlreadyRated(counselorIdResolved);
+    if (alreadyRatedCounselor || ratingPromptedRef.current) {
+      // Already rated this counselor, just navigate back
+      navigate(-1);
+      return;
+    }
+
+    // Check if there's a pending rating for this session
+    const allPending = await ratingService.getAllPendingRatings();
+    const hasPendingRating = allPending.some(r => r.chatId === apiChatId);
+
+    if (hasPendingRating && !ratingPromptedRef.current) {
+      // Still need to rate this session, show popup
+      ratingPromptedRef.current = true;
+      const target = {
+        counselorId: counselorIdResolved,
+        counselorName: currentCounselor?.name || "Counselor",
+        counselorPhoto: getProfilePhotoUrl(currentCounselor),
+        chatId: apiChatId,
+      };
+      setRatingTarget(target);
+      setShowRatingModal(true);
+      return; // Don't navigate away yet
+    }
+
+    // No pending rating, navigate back
+    navigate(-1);
+  };
+
+  // In-app 24h re-prompt on mount
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const due = await ratingService.getDuePendingRating();
+      if (!cancelled && due && !ratingPromptedRef.current) {
+        ratingPromptedRef.current = true;
+        setRatingTarget(due);
+        setShowRatingModal(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Save current chat to pending on mount so back button knows it needs rating
+  useEffect(() => {
+    const counselorIdResolved = resolveCounselorId();
+    const apiChatId = getChatIdForAPI();
+    if (counselorIdResolved && apiChatId) {
+      ratingService.savePendingRating({
+        counselorId: counselorIdResolved,
+        counselorName: currentCounselor?.name || "Counselor",
+        counselorPhoto: getProfilePhotoUrl(currentCounselor),
+        chatId: apiChatId,
+      });
+    }
+  }, []);
+
+  const handleSubmitRating = async ({ stars, comment }) => {
+    if (!ratingTarget) return;
+    setRatingSubmitting(true);
+    try {
+      await ratingService.submitRating({
+        counselorId: ratingTarget.counselorId,
+        stars,
+        comment,
+        chatId: ratingTarget.chatId,
+      });
+      setShowRatingModal(false);
+      alert("Thank you! Your rating helps others find the right counselor.");
+    } catch (e) {
+      console.log("submitRating failed:", e?.message);
+      alert("Couldn't submit. Please try again in a moment.");
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
+
+  const handleDismissRating = () => {
+    setShowRatingModal(false);
+    // Reset the ref so popup will show again on next visit (until they submit)
+    ratingPromptedRef.current = false;
+    navigate(-1);
+  };
+
   const getChatIdForAPI = () => {
     if (chatId) return chatId;
     if (currentChat?.chatId) return currentChat.chatId;
-    return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (!sessionChatIdRef.current) {
+      const stableUserId = getCurrentUser()?.id || "user";
+      const stableCounselorId = counselorId || "counselor";
+      sessionChatIdRef.current = `chat_${stableUserId}_${stableCounselorId}`.replace(/\s+/g, "_");
+    }
+    return sessionChatIdRef.current;
   };
 
   const handleAcceptCall = async (callId) => {
@@ -863,6 +986,7 @@ const ChatBox = () => {
     const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
       const counselorId = resolveCounselorId();
       if (String(userId) === String(counselorId)) {
+        console.log(`[Chat Presence] Counselor ${userId} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
         setCurrentCounselor((prev) =>
           prev ? { ...prev, online: Boolean(isOnline), lastSeen } : prev,
         );
@@ -1046,11 +1170,9 @@ const ChatBox = () => {
       <div className="chatBoxMain">
         <header className="chatBoxHeader">
           <div className="chatBoxHeaderLeft">
-            {isMobile && (
-              <button onClick={() => navigate(-1)} className="chatMobileHeaderBack" aria-label="Go back" title="Go back">
-                <FaArrowLeft />
-              </button>
-            )}
+            <button onClick={handleBackClick} className={isMobile ? "chatMobileHeaderBack" : "chatDesktopHeaderBack"} aria-label="Go back" title="Go back">
+              <FaArrowLeft />
+            </button>
             <div className="chatUserDetails">
               <div className="chatProfilePic" aria-label="Counselor profile picture">
                 {renderProfileAvatar(currentCounselor, "md")}
@@ -1180,6 +1302,16 @@ const ChatBox = () => {
         callMode={selectedCall?.callType || selectedCall?.type || "video"}
         currentUser={currentUser}
         onEndCall={handleEndCall}
+      />
+
+      {/* Rate-your-counselor popup, shown after a session ends */}
+      <RatingModal
+        visible={showRatingModal}
+        counselorName={ratingTarget?.counselorName || currentCounselor?.name}
+        counselorPhoto={ratingTarget?.counselorPhoto || getProfilePhotoUrl(currentCounselor)}
+        submitting={ratingSubmitting}
+        onSubmit={handleSubmitRating}
+        onDismiss={handleDismissRating}
       />
 
       {/* Professional Incoming Call Modal */}
