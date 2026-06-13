@@ -86,10 +86,11 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
 
       {open && (
         <div style={{
-          position: 'absolute', bottom: 'calc(100% + 6px)', left: 0,
-          minWidth: 160, background: '#fff', borderRadius: 12,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-          border: '1px solid #e5e7eb', zIndex: 9999, overflow: 'hidden',
+          position: 'absolute', top: 'calc(100% + 8px)', left: 0,
+          minWidth: 200, maxHeight: '300px', overflowY: 'auto',
+          background: '#fff', borderRadius: 12,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+          border: '1px solid #e5e7eb', zIndex: 10000, overflow: 'hidden',
         }}>
           {SUPPORTED_LANGUAGES.map((l) => (
             <button

@@ -211,6 +211,17 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             {locationLoading ? t('updating') : t('update_location')}
           </button>
         </div>
+
+        <div className="account-settings__panel">
+          <h2>🌐 {t('language')}</h2>
+          <p>{t('change_language')}</p>
+          <div style={{ margin: '15px 0' }}>
+            <LanguageSelector lang={lang} setLang={setLang} t={t} />
+          </div>
+          <small style={{ color: '#666', display: 'block', marginTop: '10px' }}>
+            {t('select_language')}: {lang.toUpperCase()}
+          </small>
+        </div>
       </div>
 
       <PasswordChangePage
