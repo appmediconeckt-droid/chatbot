@@ -110,22 +110,32 @@
 }
 
 .lang-modal-close {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   background: #F1F5F9;
   border: none;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 18px;
   color: #64748B;
   font-weight: 600;
   transition: all 0.2s ease;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
 }
 
 .lang-modal-close:hover {
   background: #E2E8F0;
   color: #1E293B;
+  transform: scale(1.05);
+}
+
+.lang-modal-close:active {
+  transform: scale(0.95);
 }
 
 /* Divider */
