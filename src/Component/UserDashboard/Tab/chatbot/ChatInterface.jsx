@@ -5,7 +5,7 @@ import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
-import { LanguageSelector } from '../../common/LanguageSelector';
+import { LanguageSelector } from '../../../common/LanguageSelector';
 import { translateMessage } from '../../../../services/messageTranslationService';
 
 const ChatInterface = ({ setActiveTab }) => {
