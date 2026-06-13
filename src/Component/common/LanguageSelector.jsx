@@ -4,7 +4,9 @@ import { SUPPORTED_LANGUAGES } from '../../i18n/LanguageContext';
 
 export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = false }) {
   const [open, setOpen] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState('bottom'); // 'bottom' or 'top'
   const ref = useRef(null);
+  const dropdownRef = useRef(null);
   const current = SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
 
   const handleLanguageChange = (langCode) => {
@@ -13,6 +15,33 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
     setLang(langCode);
     console.log('Language change triggered for:', langCode);
   };
+
+  // Detect viewport boundaries and adjust dropdown position
+  useEffect(() => {
+    if (!open || !ref.current || !dropdownRef.current) return;
+
+    const button = ref.current.querySelector('button');
+    if (!button) return;
+
+    const buttonRect = button.getBoundingClientRect();
+    const dropdownHeight = dropdownRef.current.offsetHeight || 300;
+    const viewportHeight = window.innerHeight;
+    const spaceBelow = viewportHeight - buttonRect.bottom;
+    const spaceAbove = buttonRect.top;
+
+    // Check if there's enough space below
+    if (spaceBelow < dropdownHeight + 20) {
+      // Not enough space below, try above
+      if (spaceAbove > dropdownHeight + 20) {
+        setDropdownPos('top');
+      } else {
+        // Not enough space above either, use bottom but with scroll
+        setDropdownPos('bottom');
+      }
+    } else {
+      setDropdownPos('bottom');
+    }
+  }, [open]);
 
   useEffect(() => {
     const onOutside = (e) => {
@@ -85,13 +114,24 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
       </button>
 
       {open && (
-        <div style={{
-          position: 'absolute', top: 'calc(100% + 8px)', left: 0,
-          minWidth: 200, maxHeight: '300px', overflowY: 'auto',
-          background: '#fff', borderRadius: 12,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-          border: '1px solid #e5e7eb', zIndex: 10000, overflow: 'hidden',
-        }}>
+        <div
+          ref={dropdownRef}
+          style={{
+            position: 'fixed',
+            ...(dropdownPos === 'bottom'
+              ? { top: (ref.current?.getBoundingClientRect()?.bottom || 0) + 8 }
+              : { bottom: window.innerHeight - (ref.current?.getBoundingClientRect()?.top || 0) + 8 }),
+            left: Math.max(8, (ref.current?.getBoundingClientRect()?.left || 0)),
+            minWidth: 'clamp(160px, 90vw, 240px)',
+            maxHeight: 'clamp(200px, 60vh, 400px)',
+            overflowY: 'auto',
+            background: '#fff',
+            borderRadius: 12,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            border: '1px solid #e5e7eb',
+            zIndex: 10000,
+          }}
+        >
           {SUPPORTED_LANGUAGES.map((l) => (
             <button
               key={l.code}

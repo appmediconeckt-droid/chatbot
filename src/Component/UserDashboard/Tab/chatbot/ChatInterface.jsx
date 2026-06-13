@@ -5,11 +5,12 @@ import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
+import { LanguageSelector } from '../../common/LanguageSelector';
 import { translateMessage } from '../../../../services/messageTranslationService';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
-    const { t, lang } = useUserTranslation();
+    const { t, lang, setLang } = useUserTranslation();
     const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
 
     // State for counselors and chats
@@ -632,6 +633,9 @@ const ChatInterface = ({ setActiveTab }) => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         <span className="counselorSearchIcon">🔍</span>
+                    </div>
+                    <div style={{ padding: '0 8px' }}>
+                        <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
                     </div>
                 </div>
 
