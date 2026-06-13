@@ -2547,4 +2547,26 @@ export const translations = {
     error_load_counselors: "सल्लाहकारहरू लोड गर्न सक्दैन",
     chat_request_sent: "च्याट अनुरोध सफलतापूर्वक पठाइएको!",
   },
+
+  // Korean
+  ko: {
+    loading: "로딩 중...", save: "저장", cancel: "취소", edit: "편집",
+    delete: "삭제", submit: "제출", send: "전송", back: "뒤로",
+    retry: "다시 시도", online: "온라인", offline: "오프라인", yes: "예", no: "아니오",
+    search: "검색", not_specified: "지정되지 않음", close: "닫기",
+    accept: "수락", decline: "거절", logout: "로그아웃", settings: "설정",
+    profile: "프로필", not_added: "추가되지 않음", language: "언어",
+    select_language: "언어 선택", change_language: "앱 언어 변경", messages: "메시지", appointments: "약속",
+    sessions: "세션", patients: "환자", earnings: "수익", wallet: "지갑",
+    chat: "채팅", counselor: "상담사", ai_chat: "AI 채팅", find_counselor: "상담사 찾기",
+    my_appointments: "내 약속", call_history: "통화 기록", home: "홈", my_profile: "내 프로필",
+    type_message: "메시지를 입력하세요...", message: "메시지", sending: "전송 중...",
+    no_messages: "메시지가 없습니다", start_conversation: "메시지를 전송하여 대화를 시작하세요",
+    email: "이메일", phone: "전화", book_appointment: "약속 예약",
+    start_chat: "채팅 시작", video_call: "화상 통화", voice_call: "음성 통화",
+    missed: "놓친", no_calls: "통화 기록이 없습니다",
+    help_desc: "계정, 채팅, 상담사 요청, 약속, 통화, 지갑, 프로필, 개인정보 보호 및 설정에 대한 빠른 도움말",
+    error_load_counselors: "상담사를 로드할 수 없습니다",
+    chat_request_sent: "채팅 요청이 성공적으로 전송되었습니다!",
+  },
 };

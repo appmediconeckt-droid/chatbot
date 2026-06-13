@@ -20,6 +20,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'de', label: 'Deutsch (German)', region: 'world' },
   { code: 'de-CH', label: 'Deutsch - Schweiz (German - Switzerland)', region: 'world' },
   { code: 'th', label: 'ไทย (Thai)', region: 'world' },
+  { code: 'ko', label: '한국어 (Korean)', region: 'world' },
 
   // Indian & South Asian Languages
   { code: 'ta', label: 'தமிழ் (Tamil)', region: 'indian' },
