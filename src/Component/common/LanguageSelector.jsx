@@ -119,15 +119,15 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
           style={{
             position: 'fixed',
             ...(dropdownPos === 'bottom'
-              ? { top: (ref.current?.getBoundingClientRect()?.bottom || 0) + 8 }
-              : { bottom: window.innerHeight - (ref.current?.getBoundingClientRect()?.top || 0) + 8 }),
-            left: Math.max(8, (ref.current?.getBoundingClientRect()?.left || 0)),
-            minWidth: 'clamp(160px, 90vw, 240px)',
-            maxHeight: 'clamp(200px, 60vh, 400px)',
+              ? { top: (ref.current?.getBoundingClientRect()?.bottom || 0) + 6 }
+              : { bottom: window.innerHeight - (ref.current?.getBoundingClientRect()?.top || 0) + 6 }),
+            left: Math.min(window.innerWidth - 210, Math.max(8, (ref.current?.getBoundingClientRect()?.left || 0))),
+            minWidth: 'clamp(140px, 85vw, 200px)',
+            maxHeight: 'clamp(180px, 50vh, 320px)',
             overflowY: 'auto',
             background: '#fff',
-            borderRadius: 12,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            borderRadius: 10,
+            boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
             border: '1px solid #e5e7eb',
             zIndex: 10000,
           }}
@@ -138,16 +138,16 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
               type="button"
               onClick={() => { handleLanguageChange(l.code); setOpen(false); }}
               style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                width: '100%', padding: '9px 14px',
+                display: 'flex', alignItems: 'center', gap: 6,
+                width: '100%', padding: '7px 11px',
                 border: 'none', background: l.code === lang ? '#f0f4ff' : 'transparent',
-                cursor: 'pointer', fontSize: 13, textAlign: 'left',
+                cursor: 'pointer', fontSize: 12, textAlign: 'left',
                 color: l.code === lang ? '#4f46e5' : '#1e293b',
                 fontWeight: l.code === lang ? 600 : 400,
               }}
             >
-              {l.code === lang && <span style={{ color: '#4f46e5', fontSize: 11 }}>✓</span>}
-              {l.code !== lang && <span style={{ width: 11, display: 'inline-block' }} />}
+              {l.code === lang && <span style={{ color: '#4f46e5', fontSize: 10 }}>✓</span>}
+              {l.code !== lang && <span style={{ width: 10, display: 'inline-block' }} />}
               {l.label}
             </button>
           ))}
