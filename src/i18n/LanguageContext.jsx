@@ -9,29 +9,29 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'en', label: 'English', region: 'priority' },
   { code: 'hi', label: 'हिन्दी (Hindi)', region: 'priority' },
 
-  // World Languages
-  { code: 'zh', label: '中文 (Chinese)', region: 'world' },
-  { code: 'es', label: 'Español (Spanish)', region: 'world' },
-  { code: 'fr', label: 'Français (French)', region: 'world' },
+  // World Languages (Alphabetical)
   { code: 'ar', label: 'العربية (Arabic)', region: 'world' },
-  { code: 'pt', label: 'Português (Portuguese)', region: 'world' },
-  { code: 'ru', label: 'Русский (Russian)', region: 'world' },
-  { code: 'ja', label: '日本語 (Japanese)', region: 'world' },
+  { code: 'zh', label: '中文 (Chinese)', region: 'world' },
+  { code: 'fr', label: 'Français (French)', region: 'world' },
   { code: 'de', label: 'Deutsch (German)', region: 'world' },
   { code: 'de-CH', label: 'Deutsch - Schweiz (German - Switzerland)', region: 'world' },
-  { code: 'th', label: 'ไทย (Thai)', region: 'world' },
+  { code: 'ja', label: '日本語 (Japanese)', region: 'world' },
   { code: 'ko', label: '한국어 (Korean)', region: 'world' },
+  { code: 'pt', label: 'Português (Portuguese)', region: 'world' },
+  { code: 'ru', label: 'Русский (Russian)', region: 'world' },
+  { code: 'es', label: 'Español (Spanish)', region: 'world' },
+  { code: 'th', label: 'ไทย (Thai)', region: 'world' },
 
-  // Indian & South Asian Languages
-  { code: 'ta', label: 'தமிழ் (Tamil)', region: 'indian' },
-  { code: 'te', label: 'తెలుగు (Telugu)', region: 'indian' },
-  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)', region: 'indian' },
-  { code: 'ml', label: 'മലയാളം (Malayalam)', region: 'indian' },
+  // Indian & South Asian Languages (Alphabetical)
   { code: 'bn', label: 'বাংলা (Bengali)', region: 'indian' },
   { code: 'gu', label: 'ગુજરાતી (Gujarati)', region: 'indian' },
+  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)', region: 'indian' },
+  { code: 'ml', label: 'മലയാളം (Malayalam)', region: 'indian' },
   { code: 'mr', label: 'मराठी (Marathi)', region: 'indian' },
-  { code: 'ur', label: 'اردو (Urdu)', region: 'indian' },
   { code: 'ne', label: 'नेपाली (Nepali)', region: 'indian' },
+  { code: 'ta', label: 'தமிழ் (Tamil)', region: 'indian' },
+  { code: 'te', label: 'తెలుగు (Telugu)', region: 'indian' },
+  { code: 'ur', label: 'اردو (Urdu)', region: 'indian' },
 ];
 
 const LanguageContext = createContext(null);
