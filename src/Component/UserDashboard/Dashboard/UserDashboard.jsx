@@ -1190,96 +1190,96 @@ export default function UserDashboard() {
   ];
 
   const userHelpItems = [
-    "Profile: update your name, photo, contact details, date of birth, gender, blood group, address, emergency contact, medical info, insurance info, and location.",
-    "Verification: email and phone changes need OTP before saving, so your account cannot be changed silently.",
-    "Appointments: check request status, upcoming sessions, and previous appointment details from My Appointments.",
-    "Calls: use Call History to review video or voice sessions and reconnect from the correct dashboard area.",
-    "Payments: use Wallet for balance, payment activity, and payment-related support information.",
-    "Account security: use Settings for password, login security, and location permission controls.",
-    "Emergency note: this app is not an emergency service. For urgent danger or medical emergency, contact local emergency services immediately.",
+    t('profile_help'),
+    t('verification_help'),
+    t('appointments_help'),
+    t('calls_help'),
+    t('payments_help'),
+    t('security_help'),
+    t('emergency_help'),
   ];
 
   const commonIssueItems = [
     {
-      title: "Profile not updating",
-      text: "Check required fields, verify changed email or phone with OTP, then save again.",
+      title: t('profile_not_updating'),
+      text: t('profile_not_updating_desc'),
     },
     {
-      title: "Call not connecting",
-      text: "Allow camera and microphone permission, keep the dashboard open, and check your internet connection.",
+      title: t('call_not_connecting'),
+      text: t('call_not_connecting_desc'),
     },
     {
-      title: "Appointment not visible",
-      text: "Refresh My Appointments and confirm you are logged in with the same user account.",
+      title: t('appointment_not_visible'),
+      text: t('appointment_not_visible_desc'),
     },
     {
-      title: "Payment issue",
-      text: "Open Wallet and review recent activity before contacting support with payment details.",
+      title: t('payment_issue'),
+      text: t('payment_issue_desc'),
     },
   ];
 
   const privacyItems = [
     {
       icon: <FaUser />,
-      title: "Profile data",
-      text: "Name, photo, age, gender, blood group, contact details, address, emergency contact, medical info, and insurance info are used to show your profile and support care workflows.",
+      title: t('profile_data'),
+      text: t('profile_data_desc'),
     },
     {
       icon: <FaCommentDots />,
-      title: "Chat and appointment data",
-      text: "AI chat, counselor requests, appointments, and call history help the app keep your support and session history available inside your account.",
+      title: t('chat_appointment_data'),
+      text: t('chat_appointment_data_desc'),
     },
     {
       icon: <FaLock />,
-      title: "Security data",
-      text: "Tokens, password status, OTP verification, and login details are used to protect account access and sensitive profile changes.",
+      title: t('security_data'),
+      text: t('security_data_desc'),
     },
     {
       icon: <FaCog />,
-      title: "Location data",
-      text: "Location is requested for profile context, matching, and manual updates. You can manage browser location permission from Settings or your browser.",
+      title: t('location_data'),
+      text: t('location_data_desc'),
     },
   ];
 
   const privacyHighlights = [
     {
-      label: "OTP protected",
-      value: "Email and phone",
+      label: t('otp_protected'),
+      value: t('email_phone'),
       icon: <FaCheckCircle />,
     },
     {
-      label: "Manage from",
-      value: "Profile and Settings",
+      label: t('manage_from'),
+      value: t('profile_settings'),
       icon: <FaCog />,
     },
     {
-      label: "Sensitive areas",
-      value: "Health, chat, calls",
+      label: t('sensitive_areas'),
+      value: t('health_chat_calls'),
       icon: <FaLock />,
     },
   ];
 
   const privacyChecklist = [
-    "Keep your phone and email up to date so OTP verification and account recovery work properly.",
-    "Update medical, allergy, medication, and emergency contact details only with accurate information.",
-    "Use Logout on shared devices so the next person cannot open your dashboard.",
-    "Review browser camera, microphone, and location permissions if calls or location updates are not working.",
-    "Only share information in chat or appointments that you are comfortable using for care support.",
-    "Use Delete Account carefully because account removal can affect profile, appointment, chat, wallet, and session history.",
+    t('privacy_checklist_1'),
+    t('privacy_checklist_2'),
+    t('privacy_checklist_3'),
+    t('privacy_checklist_4'),
+    t('privacy_checklist_5'),
+    t('privacy_checklist_6'),
   ];
 
   const visibilityItems = [
     {
-      title: "Visible to you",
-      text: "Your profile, wallet, appointment records, chat history, settings, and call history in the user dashboard.",
+      title: t('visible_to_you'),
+      text: t('visible_to_you_desc'),
     },
     {
-      title: "Shared for care",
-      text: "Relevant profile, request, appointment, and session details may be available to the counselor involved in your support.",
+      title: t('shared_for_care'),
+      text: t('shared_for_care_desc'),
     },
     {
-      title: "Protected changes",
-      text: "Email and phone updates require OTP verification before they become active on your profile.",
+      title: t('protected_changes'),
+      text: t('protected_changes_desc'),
     },
   ];
 
