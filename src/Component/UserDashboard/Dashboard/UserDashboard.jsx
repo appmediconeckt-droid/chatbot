@@ -461,10 +461,16 @@ const LANG_TO_VOICE = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 
 
 export default function UserDashboard() {
   const { t, lang, setLang } = useUserTranslation();
+  const [, setLanguageUpdate] = useState(0);
   const [active, setActive] = useState("Chat");
   const [chatOpen, setChatOpen] = useState(false);
   const [targetCounselor, setTargetCounselor] = useState("");
   const [newMessage, setNewMessage] = useState("");
+
+  // Force re-render when language changes
+  useEffect(() => {
+    setLanguageUpdate(prev => prev + 1);
+  }, [lang]);
 
   const handleAIContactClick = (name) => {
     setTargetCounselor(name);
@@ -1189,99 +1195,6 @@ export default function UserDashboard() {
     },
   ];
 
-  const userHelpItems = [
-    t('profile_help'),
-    t('verification_help'),
-    t('appointments_help'),
-    t('calls_help'),
-    t('payments_help'),
-    t('security_help'),
-    t('emergency_help'),
-  ];
-
-  const commonIssueItems = [
-    {
-      title: t('profile_not_updating'),
-      text: t('profile_not_updating_desc'),
-    },
-    {
-      title: t('call_not_connecting'),
-      text: t('call_not_connecting_desc'),
-    },
-    {
-      title: t('appointment_not_visible'),
-      text: t('appointment_not_visible_desc'),
-    },
-    {
-      title: t('payment_issue'),
-      text: t('payment_issue_desc'),
-    },
-  ];
-
-  const privacyItems = [
-    {
-      icon: <FaUser />,
-      title: t('profile_data'),
-      text: t('profile_data_desc'),
-    },
-    {
-      icon: <FaCommentDots />,
-      title: t('chat_appointment_data'),
-      text: t('chat_appointment_data_desc'),
-    },
-    {
-      icon: <FaLock />,
-      title: t('security_data'),
-      text: t('security_data_desc'),
-    },
-    {
-      icon: <FaCog />,
-      title: t('location_data'),
-      text: t('location_data_desc'),
-    },
-  ];
-
-  const privacyHighlights = [
-    {
-      label: t('otp_protected'),
-      value: t('email_phone'),
-      icon: <FaCheckCircle />,
-    },
-    {
-      label: t('manage_from'),
-      value: t('profile_settings'),
-      icon: <FaCog />,
-    },
-    {
-      label: t('sensitive_areas'),
-      value: t('health_chat_calls'),
-      icon: <FaLock />,
-    },
-  ];
-
-  const privacyChecklist = [
-    t('privacy_checklist_1'),
-    t('privacy_checklist_2'),
-    t('privacy_checklist_3'),
-    t('privacy_checklist_4'),
-    t('privacy_checklist_5'),
-    t('privacy_checklist_6'),
-  ];
-
-  const visibilityItems = [
-    {
-      title: t('visible_to_you'),
-      text: t('visible_to_you_desc'),
-    },
-    {
-      title: t('shared_for_care'),
-      text: t('shared_for_care_desc'),
-    },
-    {
-      title: t('protected_changes'),
-      text: t('protected_changes_desc'),
-    },
-  ];
 
   const renderHelpSupport = () => (
     <section className="ud-content-section ud-info-page">
