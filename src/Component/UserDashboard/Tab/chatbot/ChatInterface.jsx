@@ -5,7 +5,6 @@ import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
-import { LanguageSelector } from '../../../common/LanguageSelector';
 import { translateMessage } from '../../../../services/messageTranslationService';
 
 const ChatInterface = ({ setActiveTab }) => {
@@ -633,9 +632,6 @@ const ChatInterface = ({ setActiveTab }) => {
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         <span className="counselorSearchIcon">🔍</span>
-                    </div>
-                    <div style={{ padding: '0 8px' }}>
-                        <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
                     </div>
                 </div>
 
