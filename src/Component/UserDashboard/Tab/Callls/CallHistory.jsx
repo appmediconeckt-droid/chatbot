@@ -107,6 +107,16 @@ const CallHistory = ({ currentUser }) => {
     currentUser?.role || localStorage.getItem("userRole") || "user",
   );
 
+  const getProfilePhotoUrl = (profilePhoto) => {
+    if (!profilePhoto) return null;
+    if (typeof profilePhoto === "string") return profilePhoto;
+    if (profilePhoto.url) return profilePhoto.url;
+    if (profilePhoto.publicId) {
+      return `https://res.cloudinary.com/dfll8lwos/image/upload/${profilePhoto.publicId}`;
+    }
+    return null;
+  };
+
   const fetchCounselorProfile = useCallback(async (counselorId, token) => {
     if (!counselorId) return null;
     try {
@@ -116,7 +126,13 @@ const CallHistory = ({ currentUser }) => {
           headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         },
       );
-      return response.data?.counsellor || response.data || null;
+      const counselor = response.data?.counsellor;
+      if (!counselor) return null;
+
+      return {
+        ...counselor,
+        profilePhoto: getProfilePhotoUrl(counselor.profilePhoto),
+      };
     } catch (error) {
       console.warn(`Failed to fetch counselor profile for ${counselorId}:`, error);
       return null;
@@ -174,7 +190,7 @@ const CallHistory = ({ currentUser }) => {
             id: call.id || `${timestamp || "call"}_${index}`,
             callId: call.id,
             roomId: call.roomId,
-            name: counselorProfile?.displayName || counselorProfile?.fullName || readableName,
+            name: counselorProfile?.fullName || counselorProfile?.name || readableName,
             type: normalizedType,
             status: missed ? "missed" : direction,
             rawStatus: String(call.status || "").toLowerCase(),
@@ -264,8 +280,8 @@ const CallHistory = ({ currentUser }) => {
           callId: response.data.callId,
           roomId: response.data.roomId,
           name:
-            counselorProfile?.displayName ||
             counselorProfile?.fullName ||
+            counselorProfile?.name ||
             receiverData.displayName ||
             receiverData.fullName ||
             callEntry?.name ||
