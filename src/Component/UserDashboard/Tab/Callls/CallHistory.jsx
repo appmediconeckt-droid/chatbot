@@ -107,6 +107,22 @@ const CallHistory = ({ currentUser }) => {
     currentUser?.role || localStorage.getItem("userRole") || "user",
   );
 
+  const fetchCounselorProfile = useCallback(async (counselorId, token) => {
+    if (!counselorId) return null;
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/auth/counsellors/${counselorId}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+      return response.data?.counsellor || response.data || null;
+    } catch (error) {
+      console.warn(`Failed to fetch counselor profile for ${counselorId}:`, error);
+      return null;
+    }
+  }, []);
+
   const fetchCallHistory = useCallback(async () => {
     if (!currentUserId) {
       setCallsData([]);
@@ -133,44 +149,58 @@ const CallHistory = ({ currentUser }) => {
         ? response.data.history
         : [];
 
-      const normalizedCalls = historyItems.map((call, index) => {
-        const timestamp = call.timestamp || call.createdAt;
-        const dateValue = timestamp ? new Date(timestamp) : null;
-        const normalizedType = normalizeCallType(call.type);
-        const direction = getCallDirection(call);
-        const missed = isMissedCall(call);
-        const readableName =
-          call.with || call.withName || call.withDisplayName || "Participant";
+      const normalizedCalls = await Promise.all(
+        historyItems.map(async (call, index) => {
+          const timestamp = call.timestamp || call.createdAt;
+          const dateValue = timestamp ? new Date(timestamp) : null;
+          const normalizedType = normalizeCallType(call.type);
+          const direction = getCallDirection(call);
+          const missed = isMissedCall(call);
+          const readableName =
+            call.with || call.withName || call.withDisplayName || "Participant";
 
-        return {
-          id: call.id || `${timestamp || "call"}_${index}`,
-          callId: call.id,
-          roomId: call.roomId,
-          name: readableName,
-          type: normalizedType,
-          status: missed ? "missed" : direction,
-          rawStatus: String(call.status || "").toLowerCase(),
-          date: formatDateLabel(timestamp),
-          time:
-            dateValue && !Number.isNaN(dateValue.getTime())
-              ? dateValue.toLocaleTimeString([], {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "--:--",
-          duration:
-            Number(call.duration) > 0
-              ? formatCallDuration(call.duration)
-              : null,
-          profilePic: "👨‍⚕️",
-          missed,
-          counterPartyId: call.withId,
-          counterPartyType: normalizeRole(call.withType),
-          role: call.role,
-          timestamp,
-          apiCallData: call,
-        };
-      });
+          let profilePic = "👨‍⚕️";
+          let counselorProfile = null;
+
+          // Fetch counselor profile if this is a call with a counselor
+          if (normalizeRole(call.withType) === "counsellor" && call.withId) {
+            counselorProfile = await fetchCounselorProfile(call.withId, token);
+            if (counselorProfile) {
+              profilePic = counselorProfile.profilePhoto || "👨‍⚕️";
+            }
+          }
+
+          return {
+            id: call.id || `${timestamp || "call"}_${index}`,
+            callId: call.id,
+            roomId: call.roomId,
+            name: counselorProfile?.displayName || counselorProfile?.fullName || readableName,
+            type: normalizedType,
+            status: missed ? "missed" : direction,
+            rawStatus: String(call.status || "").toLowerCase(),
+            date: formatDateLabel(timestamp),
+            time:
+              dateValue && !Number.isNaN(dateValue.getTime())
+                ? dateValue.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "--:--",
+            duration:
+              Number(call.duration) > 0
+                ? formatCallDuration(call.duration)
+                : null,
+            profilePic,
+            missed,
+            counterPartyId: call.withId,
+            counterPartyType: normalizeRole(call.withType),
+            role: call.role,
+            timestamp,
+            apiCallData: call,
+            counselorProfile,
+          };
+        }),
+      );
 
       setCallsData(normalizedCalls);
     } catch (error) {
@@ -183,7 +213,7 @@ const CallHistory = ({ currentUser }) => {
     } finally {
       setIsLoadingCalls(false);
     }
-  }, [currentUserId]);
+  }, [currentUserId, fetchCounselorProfile]);
 
   useEffect(() => {
     void fetchCallHistory();
@@ -227,19 +257,22 @@ const CallHistory = ({ currentUser }) => {
 
         const callData = response.data.callData || {};
         const receiverData = callData.receiver || {};
+        const counselorProfile = callEntry?.counselorProfile;
 
         setSelectedCall({
           id: callData.id || response.data.callId,
           callId: response.data.callId,
           roomId: response.data.roomId,
           name:
+            counselorProfile?.displayName ||
+            counselorProfile?.fullName ||
             receiverData.displayName ||
             receiverData.fullName ||
             callEntry?.name ||
             "Participant",
           type: resolvedCallMode,
           callType: resolvedCallMode,
-          profilePic: receiverData.profilePhoto || "👨‍⚕️",
+          profilePic: counselorProfile?.profilePhoto || receiverData.profilePhoto || "👨‍⚕️",
           status: response.data.status || "ringing",
           apiCallData: callData,
           initiator: callData.initiator,
@@ -418,7 +451,18 @@ const CallHistory = ({ currentUser }) => {
                 >
                   {/* Profile Picture */}
                   <div className="call-avatar">
-                    <span className="call-avatar-emoji">{call.profilePic}</span>
+                    {call.profilePic && (call.profilePic.startsWith('http') || call.profilePic.startsWith('/')) ? (
+                      <img
+                        src={call.profilePic}
+                        alt={call.name}
+                        className="call-avatar-img"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.querySelector('.call-avatar-emoji')?.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <span className="call-avatar-emoji">{call.profilePic || "👨‍⚕️"}</span>
                   </div>
 
                   {/* Call Info */}
