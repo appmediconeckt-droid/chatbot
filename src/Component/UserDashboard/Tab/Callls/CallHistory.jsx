@@ -463,7 +463,7 @@ const CallHistory = ({ currentUser }) => {
                         }}
                       />
                     ) : null}
-                    {!call.profilePic || !call.profilePic.startsWith('http') ? (
+                    {!call.profilePic || (typeof call.profilePic === 'string' && !call.profilePic.startsWith('http') && !call.profilePic.startsWith('/')) ? (
                       <span className="call-avatar-emoji">{call.profilePic || "👨‍⚕️"}</span>
                     ) : null}
                   </div>
