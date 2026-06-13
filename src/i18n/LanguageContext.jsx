@@ -18,9 +18,10 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'ru', label: 'Русский (Russian)', region: 'world' },
   { code: 'ja', label: '日本語 (Japanese)', region: 'world' },
   { code: 'de', label: 'Deutsch (German)', region: 'world' },
+  { code: 'de-CH', label: 'Deutsch - Schweiz (German - Switzerland)', region: 'world' },
   { code: 'th', label: 'ไทย (Thai)', region: 'world' },
 
-  // Indian Languages
+  // Indian & South Asian Languages
   { code: 'ta', label: 'தமிழ் (Tamil)', region: 'indian' },
   { code: 'te', label: 'తెలుగు (Telugu)', region: 'indian' },
   { code: 'kn', label: 'ಕನ್ನಡ (Kannada)', region: 'indian' },
@@ -29,6 +30,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'gu', label: 'ગુજરાતી (Gujarati)', region: 'indian' },
   { code: 'mr', label: 'मराठी (Marathi)', region: 'indian' },
   { code: 'ur', label: 'اردو (Urdu)', region: 'indian' },
+  { code: 'ne', label: 'नेपाली (Nepali)', region: 'indian' },
 ];
 
 const LanguageContext = createContext(null);
