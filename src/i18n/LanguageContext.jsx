@@ -5,15 +5,29 @@ const USER_LANG_KEY = 'userLang';
 const COUNSELOR_LANG_KEY = 'counselorLang';
 
 export const SUPPORTED_LANGUAGES = [
-  { code: 'en', label: 'English' },
-  { code: 'hi', label: 'हिन्दी' },
-  { code: 'ta', label: 'தமிழ்' },
-  { code: 'te', label: 'తెలుగు' },
-  { code: 'kn', label: 'ಕನ್ನಡ' },
-  { code: 'ml', label: 'മലയാളം' },
-  { code: 'bn', label: 'বাংলা' },
-  { code: 'gu', label: 'ગુજરાતી' },
-  { code: 'mr', label: 'मराठी' },
+  // Priority Languages
+  { code: 'en', label: 'English', region: 'priority' },
+  { code: 'hi', label: 'हिन्दी (Hindi)', region: 'priority' },
+
+  // World Languages
+  { code: 'zh', label: '中文 (Chinese)', region: 'world' },
+  { code: 'es', label: 'Español (Spanish)', region: 'world' },
+  { code: 'fr', label: 'Français (French)', region: 'world' },
+  { code: 'ar', label: 'العربية (Arabic)', region: 'world' },
+  { code: 'pt', label: 'Português (Portuguese)', region: 'world' },
+  { code: 'ru', label: 'Русский (Russian)', region: 'world' },
+  { code: 'ja', label: '日本語 (Japanese)', region: 'world' },
+  { code: 'de', label: 'Deutsch (German)', region: 'world' },
+
+  // Indian Languages
+  { code: 'ta', label: 'தமிழ் (Tamil)', region: 'indian' },
+  { code: 'te', label: 'తెలుగు (Telugu)', region: 'indian' },
+  { code: 'kn', label: 'ಕನ್ನಡ (Kannada)', region: 'indian' },
+  { code: 'ml', label: 'മലയാളം (Malayalam)', region: 'indian' },
+  { code: 'bn', label: 'বাংলা (Bengali)', region: 'indian' },
+  { code: 'gu', label: 'ગુજરાતી (Gujarati)', region: 'indian' },
+  { code: 'mr', label: 'मराठी (Marathi)', region: 'indian' },
+  { code: 'ur', label: 'اردو (Urdu)', region: 'indian' },
 ];
 
 const LanguageContext = createContext(null);
