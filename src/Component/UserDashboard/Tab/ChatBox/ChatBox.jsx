@@ -860,7 +860,7 @@ const ChatBox = () => {
   // Clear all messages in the chat
   const handleClearChat = async () => {
     const confirmed = window.confirm(
-      t('confirm_clear_chat') || 'Are you sure? This will delete all messages in this chat.'
+      t('confirm_clear_chat') || 'Are you sure? This will delete all messages in this chat. You can start a new conversation after.'
     );
     if (!confirmed) return;
 
@@ -890,18 +890,38 @@ const ChatBox = () => {
 
       // Clear messages in UI
       setMessages([]);
+      setNewMessage('');
 
-      // Update localStorage
+      // Reset chat status to allow new messages
+      setChatStatus(null);
+
+      // Update localStorage - reset chat to active state
       const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
       const updatedChats = savedChats.map((c) => {
         if (c.id === currentChat?.id || c.id === chatId) {
-          return { ...c, messages: [], unread: 0 };
+          return {
+            ...c,
+            messages: [],
+            unread: 0,
+            status: 'active', // ✅ Reset to active so new messages work
+            lastMessage: null,
+            lastMessageAt: null
+          };
         }
         return c;
       });
       localStorage.setItem('activeChats', JSON.stringify(updatedChats));
 
-      alert(t('chat_cleared') || 'Chat cleared successfully');
+      // Update currentChat state
+      setCurrentChat(prev => prev ? {
+        ...prev,
+        messages: [],
+        status: 'active',
+        lastMessage: null,
+        lastMessageAt: null
+      } : null);
+
+      alert(t('chat_cleared_restart') || 'Chat cleared! You can now start a new conversation.');
     } catch (error) {
       console.error('❌ Error clearing chat:', error);
       const errorMsg = error.response?.data?.error || error.message || 'Failed to clear chat';
