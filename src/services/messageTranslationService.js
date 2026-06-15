@@ -51,7 +51,6 @@ const translateWithMyMemory = async (text, targetLang) => {
     if (data?.responseStatus === 200 && data?.responseData?.translatedText) {
       const translated = data.responseData.translatedText;
       if (translated && translated.toLowerCase() !== text.toLowerCase()) {
-        console.log('✓ MyMemory:', text.slice(0, 25), '→', translated.slice(0, 25));
         return translated;
       }
     }
@@ -92,7 +91,6 @@ const translateWithGoogle = async (text, targetLang) => {
         .join('');
 
       if (translated && translated.toLowerCase() !== text.toLowerCase()) {
-        console.log('✓ Google:', text.slice(0, 25), '→', translated.slice(0, 25));
         return translated;
       }
     }
@@ -115,19 +113,15 @@ export const translateMessage = async (text, targetLang) => {
 
   // Return cached translation
   if (cache[cacheKey]) {
-    console.log('📦 Cached:', text.slice(0, 25));
     return cache[cacheKey];
   }
 
   try {
-    console.log(`🔄 Translating to ${targetLang}:`, text.slice(0, 40));
-
     // Try MyMemory first (more reliable)
     let translated = await translateWithMyMemory(text, targetLang);
 
     // If MyMemory fails, try Google
     if (!translated) {
-      console.log('⚠️ MyMemory failed, trying Google...');
       translated = await translateWithGoogle(text, targetLang);
     }
 
@@ -149,5 +143,4 @@ export const translateMessage = async (text, targetLang) => {
 
 export const clearTranslationCache = () => {
   localStorage.removeItem(TRANSLATION_CACHE_KEY);
-  console.log('✅ Translation cache cleared');
 };

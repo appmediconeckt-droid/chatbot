@@ -293,8 +293,6 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
         { headers: { Authorization: `Bearer ${token}` } },
       );
 
-      console.log("Waiting calls response:", response.data);
-
       const callsList =
         response.data.pendingRequests ||
         response.data.waitingCalls ||

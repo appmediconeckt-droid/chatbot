@@ -48,7 +48,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
     if (!accountId) {
       setNotice({
         type: "error",
-        message: "Account ID not found. Please log in again.",
+        message: t('account_id_not_found'),
       });
       setLoading(false);
       return;
@@ -63,7 +63,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
       const data = isCounselor ? response.data?.counsellor : response.data?.user;
 
       if (!response.data?.success || !data) {
-        throw new Error(response.data?.message || "Failed to load settings.");
+        throw new Error(response.data?.message || t('failed_load_settings'));
       }
 
       setAccount({
@@ -85,7 +85,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         message:
           err.response?.data?.message ||
           err.message ||
-          "Failed to load account settings.",
+          t('failed_load_account_settings'),
       });
     } finally {
       setLoading(false);
@@ -102,11 +102,11 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
     setNotice({ type: "", message: "" });
     try {
       await captureAndSendLocation("manual");
-      setNotice({ type: "success", message: "Location updated successfully." });
+      setNotice({ type: "success", message: t('location_updated_success') });
     } catch (err) {
       setNotice({
         type: "error",
-        message: err.message || "Failed to update location.",
+        message: err.message || t('failed_update_location'),
       });
     } finally {
       setLocationLoading(false);
@@ -127,12 +127,12 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
       }, 2000);
       setNotice({
         type: "success",
-        message: "Password updated successfully. Redirecting...",
+        message: t('password_updated_redirecting'),
       });
     } else {
       setNotice({
         type: "success",
-        message: "Password updated successfully.",
+        message: t('password_updated_success'),
       });
     }
   };

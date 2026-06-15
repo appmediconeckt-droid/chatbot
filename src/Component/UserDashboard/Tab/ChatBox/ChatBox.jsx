@@ -837,6 +837,81 @@ const ChatBox = () => {
   const handleVoiceCall = () => initiateStreamCall("audio");
   const handleCloseModal = () => { setIsVideoModalOpen(false); setSelectedCall(null); setCallError(null); };
 
+  // Handle menu item clicks
+  const handleMenuItemClick = async (item) => {
+    switch (item.id) {
+      case 1: // Refresh Messages
+        fetchMessagesFromAPI();
+        break;
+      case 2: // Clear Chat
+        handleClearChat();
+        break;
+      case 3: // Report Issue
+        alert(t('feature_coming_soon') || 'Feature coming soon');
+        break;
+      case 4: // Chat Details
+        alert(t('feature_coming_soon') || 'Feature coming soon');
+        break;
+      default:
+        alert(`${item.label} clicked`);
+    }
+  };
+
+  // Clear all messages in the chat
+  const handleClearChat = async () => {
+    const confirmed = window.confirm(
+      t('confirm_clear_chat') || 'Are you sure? This will delete all messages in this chat.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsSending(true);
+      const chatIdToUse = currentChat?._id || currentChat?.id || chatId;
+
+      if (!chatIdToUse) {
+        alert(t('error_chat_id_not_found') || 'Error: Chat ID not found');
+        return;
+      }
+
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+
+      // Call backend API to clear chat
+      const response = await axios.delete(
+        `${API_BASE_URL}/api/chat/clear/${chatIdToUse}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      console.log('✅ Chat cleared successfully:', response.data);
+
+      // Clear messages in UI
+      setMessages([]);
+
+      // Update localStorage
+      const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
+      const updatedChats = savedChats.map((c) => {
+        if (c.id === currentChat?.id || c.id === chatId) {
+          return { ...c, messages: [], unread: 0 };
+        }
+        return c;
+      });
+      localStorage.setItem('activeChats', JSON.stringify(updatedChats));
+
+      alert(t('chat_cleared') || 'Chat cleared successfully');
+    } catch (error) {
+      console.error('❌ Error clearing chat:', error);
+      const errorMsg = error.response?.data?.error || error.message || 'Failed to clear chat';
+      alert(t('error_clear_chat') || `Error: ${errorMsg}`);
+    } finally {
+      setIsSending(false);
+      setShowOptions(false);
+    }
+  };
+
   useEffect(() => {
     const initializeChat = async () => {
       try {
@@ -1202,7 +1277,7 @@ const ChatBox = () => {
               {showOptions && (
                 <div className="chatDropdownMenu" role="menu">
                   {optionsMenuItems.map((item) => (
-                    <button key={item.id} className="chatDropdownItem" onClick={() => { setShowOptions(false); if (item.label === "Clear Chat") setMessages([]); else if (item.label === "Refresh Messages") fetchMessagesFromAPI(); else alert(`${item.label} clicked`); }} role="menuitem">
+                    <button key={item.id} className="chatDropdownItem" onClick={() => { setShowOptions(false); handleMenuItemClick(item); }} role="menuitem">
                       <span className="chatDropdownIcon" aria-hidden="true">{item.icon}</span>
                       <span className="chatDropdownText">{item.label}</span>
                     </button>

@@ -32,11 +32,10 @@ const SMSList = () => {
       replace: true,
       state: {
         reason: "session-expired",
-        message:
-          "You were logged out because your account was used on another device.",
+        message: t('session_expired_message') || "You were logged out because your account was used on another device.",
       },
     });
-  }, [navigate]);
+  }, [navigate, t]);
 
   const getInitials = (name) => {
     if (!name) return "US";
@@ -183,7 +182,7 @@ const SMSList = () => {
             gender: anonymousUser.gender,
             avatar: anonymousUser.avatar,
             avatarUrl: anonymousUser.avatarUrl,
-            lastMessage: chat.lastMessage?.content || "No messages yet",
+            lastMessage: chat.lastMessage?.content || t('no_messages'),
             time: formatTime(lastMessageTime),
             fullDateTime: formatFullDateTime(lastMessageTime),
             lastActivityAt: lastMessageTime,
@@ -225,7 +224,7 @@ const SMSList = () => {
     };
 
     fetchChats();
-  }, [handleSessionExpired]);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -263,11 +262,8 @@ const SMSList = () => {
   // Translate user messages when language changes
   useEffect(() => {
     if (!lang || lang === 'en' || !originalUsers || originalUsers.length === 0) {
-      console.log('Translation skipped in Messagesou: lang =', lang, 'users =', originalUsers?.length);
       return;
     }
-
-    console.log('🌐 Starting user messages translation to:', lang);
 
     const translateUsers = async () => {
       setIsTranslating(true);
@@ -277,7 +273,6 @@ const SMSList = () => {
             if (!user.lastMessage) return user;
             try {
               const translatedMessage = await translateMessage(user.lastMessage, lang);
-              console.log('User message translated:', user.lastMessage.slice(0, 30), '→', translatedMessage.slice(0, 30));
               return { ...user, lastMessage: translatedMessage };
             } catch (error) {
               console.error('Error translating user message:', error);
@@ -285,7 +280,6 @@ const SMSList = () => {
             }
           })
         );
-        console.log('✅ User messages translated, updating UI...');
         setUsers(translatedUsers);
       } catch (error) {
         console.error('Error translating users:', error);
@@ -342,7 +336,7 @@ const SMSList = () => {
       <div className="smslist-container">
         <div className="smslist-error">
           <span className="error-icon">⚠️</span>
-          <h4>Error loading chats</h4>
+          <h4>{t('error_load_chats') || 'Error loading chats'}</h4>
           <p>{error}</p>
           <button
             onClick={() => window.location.reload()}

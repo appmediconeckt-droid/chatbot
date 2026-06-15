@@ -802,6 +802,38 @@ export default function UserDashboard() {
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Load chat history from backend on mount
+  useEffect(() => {
+    const loadChatHistory = async () => {
+      try {
+        const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+        const response = await fetch(`${API_BASE_URL}/api/ai-chat/history`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && Array.isArray(data.history) && data.history.length > 0) {
+            const loadedMessages = data.history.map((msg, index) => ({
+              id: Date.now() + index,
+              text: msg.content,
+              sender: msg.role === 'user' ? 'user' : 'ai',
+              quickReplies: null,
+            }));
+            setChatMessages(loadedMessages);
+            if (data.sessionId) {
+              setAiSessionId(data.sessionId);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[UserDashboard] Failed to load chat history:', err.message);
+      }
+    };
+
+    loadChatHistory();
+  }, []);
+
   useEffect(() => {
     if (chatBodyRef.current)
       chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
@@ -906,7 +938,7 @@ export default function UserDashboard() {
       console.error("AI Chat error:", error);
       const errorMessage = {
         id: Date.now() + 1,
-        text: "I'm sorry, I'm having trouble connecting to the medical server. Please try again later.",
+        text: t('server_connection_error'),
         sender: "ai",
       };
       setChatMessages((prev) => [...prev, errorMessage]);
@@ -1150,8 +1182,8 @@ export default function UserDashboard() {
       console.error("Error rendering CounselorTable:", error);
       return (
         <div className="ud-error-container">
-          <h3>Unable to load counselor directory</h3>
-          <p>Please try again later or contact support.</p>
+          <h3>{t('unable_load_counselor_dir')}</h3>
+          <p>{t('please_try_again_contact_support')}</p>
         </div>
       );
     }
@@ -1513,7 +1545,7 @@ export default function UserDashboard() {
                   </div>
                   <div className="ud-profile-info">
                     <h3 className="ud-sidebar-name" title={userData.name}>
-                      {userData.name || "Welcome"}
+                      {userData.name || t('welcome')}
                     </h3>
                     {userData.email && (
                       <p className="ud-sidebar-meta" title={userData.email}>

@@ -1067,11 +1067,8 @@ const SMSInput = () => {
   // Translate messages when language changes
   useEffect(() => {
     if (!lang || lang === 'en' || !originalMessages || originalMessages.length === 0) {
-      console.log('Translation skipped in SMSInput: lang =', lang, 'messages =', originalMessages?.length);
       return;
     }
-
-    console.log('🌐 Starting message translation to:', lang);
 
     const translateMessages = async () => {
       setIsTranslating(true);
@@ -1083,7 +1080,6 @@ const SMSInput = () => {
             }
             try {
               const translatedText = await translateMessage(msg.text, lang);
-              console.log('Message translated:', msg.text.slice(0, 30), '→', translatedText.slice(0, 30));
               return { ...msg, text: translatedText };
             } catch (error) {
               console.error('Error translating individual message:', error);
@@ -1091,7 +1087,6 @@ const SMSInput = () => {
             }
           })
         );
-        console.log('✅ All messages translated, updating UI...');
         setMessages(translatedMsgs);
       } catch (error) {
         console.error('Error translating messages:', error);

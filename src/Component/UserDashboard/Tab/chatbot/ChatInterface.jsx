@@ -382,11 +382,8 @@ const ChatInterface = ({ setActiveTab }) => {
     // Translate counselor list messages when language changes
     useEffect(() => {
         if (!lang || lang === 'en' || !originalCounselors || originalCounselors.length === 0) {
-            console.log('Translation skipped in ChatInterface: lang =', lang, 'counselors =', originalCounselors?.length);
             return;
         }
-
-        console.log('🌐 Starting counselor messages translation to:', lang);
 
         const translateCounselors = async () => {
             setIsTranslating(true);
@@ -396,7 +393,6 @@ const ChatInterface = ({ setActiveTab }) => {
                         if (!counselor.lastMessage) return counselor;
                         try {
                             const translatedMessage = await translateMessage(counselor.lastMessage, lang);
-                            console.log('Counselor message translated:', counselor.lastMessage.slice(0, 30), '→', translatedMessage.slice(0, 30));
                             return { ...counselor, lastMessage: translatedMessage };
                         } catch (error) {
                             console.error('Error translating counselor message:', error);
@@ -404,7 +400,6 @@ const ChatInterface = ({ setActiveTab }) => {
                         }
                     })
                 );
-                console.log('✅ Counselor messages translated, updating UI...');
                 setCounselors(translatedCounselors);
             } catch (error) {
                 console.error('Error translating counselors:', error);
