@@ -7,6 +7,23 @@ const RoleSelector = () => {
   const [selectedRole, setSelectedRole] = useState(null);
   const navigate = useNavigate();
 
+  const clearExistingSession = () => {
+    [
+      "accessToken",
+      "token",
+      "refreshToken",
+      "isAuthenticated",
+      "userRole",
+      "userType",
+      "userEmail",
+      "userData",
+      "userId",
+      "counsellorId",
+      "counselorId",
+      "isVerified",
+    ].forEach((key) => localStorage.removeItem(key));
+  };
+
   useEffect(() => {
     const token =
       localStorage.getItem("accessToken") || localStorage.getItem("token");
@@ -21,11 +38,7 @@ const RoleSelector = () => {
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
 
-    // Clear old roles
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("userType");
-
-    // Save only one role
+    clearExistingSession();
     localStorage.setItem("role", role);
 
     console.log(role + " selected");

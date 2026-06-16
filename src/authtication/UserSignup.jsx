@@ -411,14 +411,7 @@ const UserSignup = () => {
 
     localStorage.setItem("isAuthenticated", "true");
     localStorage.setItem("userType", "user");
-    // Store user role if provided in response
-    const role =
-      data?.role ||
-      data?.user?.role ||
-      (data?.user?.role ? data.user.role : null);
-    if (role) {
-      localStorage.setItem("userRole", role);
-    }
+    localStorage.setItem("userRole", "user");
     // Store tokens from response if present
     if (data?.accessToken) {
       localStorage.setItem("accessToken", data.accessToken);
@@ -557,14 +550,10 @@ const UserSignup = () => {
         if (token) {
           localStorage.setItem("isAuthenticated", "true");
           localStorage.setItem("userType", "user");
+          localStorage.setItem("userRole", "user");
           localStorage.setItem("userEmail", formData.email);
           localStorage.setItem("token", token);
           localStorage.setItem("accessToken", token);
-          // Store role from response if present
-          const signupRole = response.data?.role || response.data?.user?.role;
-          if (signupRole) {
-            localStorage.setItem("userRole", signupRole);
-          }
         }
 
         if (response.data.user?._id) {

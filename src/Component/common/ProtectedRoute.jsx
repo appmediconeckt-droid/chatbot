@@ -3,7 +3,7 @@ import { Navigate } from 'react-router-dom';
 
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
-  const userRole = localStorage.getItem('userRole');
+  const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
   if (!token || !isAuthenticated) {
@@ -11,9 +11,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/role-selector" replace />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(userRole)) {
+  const normalizedAllowedRoles = allowedRoles?.map((role) => role.toLowerCase());
+
+  if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(userRole)) {
     // Logged in but wrong role, redirect to appropriate dashboard
-    const isCounselor = userRole?.toLowerCase() === 'counselor' || userRole?.toLowerCase() === 'counsellor';
+    const isCounselor = userRole === 'counselor' || userRole === 'counsellor';
     
     if (isCounselor) {
       return <Navigate to="/counselor-dashboard" replace />;
