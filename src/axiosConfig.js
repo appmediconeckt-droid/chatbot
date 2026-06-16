@@ -1,7 +1,6 @@
 import axios from "axios";
 
 const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://chatbot-backend-production-ea76.up.railway.app";
-console.log(envApiBaseUrl);
 if (!envApiBaseUrl) {
   throw new Error(
     "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",
@@ -60,8 +59,6 @@ axiosInstance.interceptors.response.use(
 
     // ✅ ONLY handle 401
     if (error.response?.status === 401 && !originalRequest._retry) {
-      console.log("🔥 Interceptor triggered");
-
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
@@ -77,7 +74,6 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        console.log("🔄 Calling refresh-token API");
         const storedRefreshToken = localStorage.getItem("refreshToken");
 
         const response = await axios.post(
@@ -106,8 +102,6 @@ axiosInstance.interceptors.response.use(
 
         return axiosInstance(originalRequest);
       } catch (refreshError) {
-        console.log("❌ Refresh failed");
-
         processQueue(refreshError, null);
 
         localStorage.removeItem("accessToken");

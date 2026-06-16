@@ -20,6 +20,19 @@
   pointer-events: none;
 }
 
+.g-auth-missing-btn {
+  width: 100%;
+  max-width: 360px;
+  min-height: 44px;
+  border: 1px solid #dadce0;
+  border-radius: 4px;
+  background: #ffffff;
+  color: #5f6368;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: not-allowed;
+}
+
 /* Make the library's iframe button stretch full width up to a sane max,
    so it lines up with the form's primary submit button. */
 .g-auth-wrap > div {

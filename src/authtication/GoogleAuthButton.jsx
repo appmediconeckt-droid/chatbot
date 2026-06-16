@@ -21,6 +21,7 @@ const GoogleAuthButton = ({
   gateDriven = false,
 }) => {
   const [busy, setBusy] = useState(false);
+  const hasGoogleClientId = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
 
   // text overrides — "mode" prop is the friendly API; we map it to the
   // library's enum.
@@ -115,6 +116,16 @@ const GoogleAuthButton = ({
     }
   };
 
+  if (!hasGoogleClientId) {
+    return (
+      <div className="g-auth-wrap g-auth-wrap-disabled">
+        <button type="button" className="g-auth-missing-btn" disabled>
+          Google sign-in unavailable
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div
       className={`g-auth-wrap ${disabled ? "g-auth-wrap-disabled" : ""} ${busy ? "g-auth-wrap-busy" : ""}`}
@@ -127,10 +138,6 @@ const GoogleAuthButton = ({
         theme="outline"
         size="large"
         width="320"
-        // Account-chooser flow: One Tap card auto-prompts already-logged-in
-        // Gmail users so they skip the email/password entry entirely
-        // (Render-style). Manual click on the button still opens the chooser.
-        useOneTap
         auto_select={false}
         context="use"
         logo_alignment="left"

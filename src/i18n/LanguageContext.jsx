@@ -125,27 +125,23 @@ export function LanguageProvider({ children }) {
   const [userLang, setUserLangState] = useState(() => {
     const saved = localStorage.getItem(USER_LANG_KEY);
     const normalized = normalizeLanguageCode(saved);
-    console.log(`[LanguageContext] Initialized userLang: ${saved} → ${normalized}`);
     return normalized;
   });
 
   const [counselorLang, setCounselorLangState] = useState(() => {
     const saved = localStorage.getItem(COUNSELOR_LANG_KEY);
     const normalized = normalizeLanguageCode(saved);
-    console.log(`[LanguageContext] Initialized counselorLang: ${saved} → ${normalized}`);
     return normalized;
   });
 
   const setUserLang = useCallback((lang) => {
     const normalized = normalizeLanguageCode(lang);
-    console.log(`[LanguageContext] 🌐 Changing userLang to: ${lang} → ${normalized}`);
     localStorage.setItem(USER_LANG_KEY, normalized);
     setUserLangState(normalized);
   }, []);
 
   const setCounselorLang = useCallback((lang) => {
     const normalized = normalizeLanguageCode(lang);
-    console.log(`[LanguageContext] 🌐 Changing counselorLang to: ${lang} → ${normalized}`);
     localStorage.setItem(COUNSELOR_LANG_KEY, normalized);
     setCounselorLangState(normalized);
   }, []);
@@ -158,7 +154,7 @@ export function LanguageProvider({ children }) {
 }
 
 function makeT(lang) {
-  return (key) => translations[lang]?.[key] ?? translations.en?.[key] ?? key;
+  return (key) => translations[lang]?.[key] ?? translations['en-US']?.[key] ?? key;
 }
 
 export function useUserTranslation() {
