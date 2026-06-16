@@ -600,17 +600,20 @@
 /* ===== OTP MODAL ===== */
 .us-otp-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   z-index: 2000;
-  animation: usFadeIn 1.3s ease;
+  animation: usFadeIn 0.18s ease;
 }
 
 @keyframes usFadeIn {
@@ -629,8 +632,9 @@
   border-radius: 24px;
   width: 90%;
   max-width: 420px;
+  max-height: calc(100dvh - 40px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-  animation: usSlideUp 1.3s ease;
+  animation: usSlideUp 0.18s ease;
   position: relative;
   overflow: hidden;
 }
@@ -704,8 +708,8 @@
 }
 
 .us-otp-close {
-  background: none;
-  border: none;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
   width: 36px;
   height: 36px;
   display: flex;
@@ -715,12 +719,40 @@
   border-radius: 50%;
   font-size: 20px;
   transition: all 0.2s;
-  color: #666;
+  color: #111827;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  position: relative;
+  z-index: 2;
 }
 
-.us-otp-close:hover {
-  background: #f0f0f0;
-  color: #333;
+.us-otp-close svg {
+  display: none;
+}
+
+.us-otp-close::before {
+  content: "\00d7";
+  color: #111827;
+  display: block;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.us-otp-close:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+.us-otp-close:hover:not(:disabled)::before {
+  color: #0f172a;
+}
+
+.us-otp-close:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .us-otp-body {

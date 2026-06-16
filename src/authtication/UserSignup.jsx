@@ -942,8 +942,8 @@ const UserSignup = () => {
         </div>
       )}
 
-      {showEmailOtpModal && <EmailOtpModal />}
-      {showPhoneOtpModal && <PhoneOtpModal />}
+      {showEmailOtpModal && EmailOtpModal()}
+      {showPhoneOtpModal && PhoneOtpModal()}
 
       {isMobile && (
         <button
