@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft, FaPhoneAlt, FaSpinner, FaVideo } from "react-icons/fa";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
@@ -1296,11 +1296,11 @@ const ChatBox = () => {
           </div>
           <div className="chatBoxHeaderRight">
             <button className={`chatActionBtn chatVideoBtn ${isInitiatingCall ? "disabled" : ""}`} onClick={handleVideoCall} disabled={isInitiatingCall} aria-label="Video call">
-              <span className="chatBtnIcon" aria-hidden="true">{isInitiatingCall ? "⏳" : "📹"}</span>
+              <span className="chatBtnIcon" aria-hidden="true">{isInitiatingCall ? <FaSpinner className="spinning" /> : <FaVideo />}</span>
               <span className="chatBtnTooltip">{t('video_call_tooltip')}</span>
             </button>
             <button className={`chatActionBtn chatAudioBtn ${isInitiatingCall ? "disabled" : ""}`} onClick={handleVoiceCall} disabled={isInitiatingCall} aria-label="Voice call">
-              <span className="chatBtnIcon" aria-hidden="true">{isInitiatingCall ? "⏳" : "📞"}</span>
+              <span className="chatBtnIcon" aria-hidden="true">{isInitiatingCall ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}</span>
               <span className="chatBtnTooltip">{t('voice_call_tooltip')}</span>
             </button>
             <div className="chatMoreOptions" ref={optionsRef}>

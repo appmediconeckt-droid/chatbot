@@ -186,7 +186,7 @@
 .chatBoxHeaderRight {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.35rem;
   position: relative;
 }
 
@@ -206,10 +206,38 @@
 }
 
 .chatActionBtn:active { transform: scale(0.95); }
-.chatVideoBtn:active { background: linear-gradient(145deg, #6366f1, #8b5cf6); color: white; }
-.chatAudioBtn:active { background: linear-gradient(145deg, #10b981, #059669); color: white; }
+.chatVideoBtn,
+.chatAudioBtn {
+  width: 2.25rem;
+  height: 2.25rem;
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  padding: 0;
+}
 
-.chatBtnIcon { font-size: 1.25rem; }
+.chatVideoBtn { color: #6366f1; }
+.chatAudioBtn { color: #10b981; }
+
+.chatVideoBtn:hover,
+.chatVideoBtn:active,
+.chatAudioBtn:hover,
+.chatAudioBtn:active {
+  background: transparent;
+}
+
+.chatBtnIcon {
+  font-size: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatBtnIcon svg {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
 
 .chatBtnTooltip {
   position: absolute;
@@ -747,6 +775,11 @@
     touch-action: manipulation;
     min-height: 44px;
     min-width: 44px;
+  }
+  .chatBoxHeaderRight .chatVideoBtn,
+  .chatBoxHeaderRight .chatAudioBtn {
+    min-height: 2.25rem;
+    min-width: 2.25rem;
   }
   .chatTextInput { font-size: 16px; }
   .chatBtnTooltip { display: none; }
