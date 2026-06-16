@@ -1120,10 +1120,10 @@ const CounselorProfile = () => {
                                         onChange={(e) => handleInputChange('gender', e.target.value)}
                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
                                     >
-                                        <option value="">{t('select_gender')}</option>
-                                        <option value="male">{t('male')}</option>
-                                        <option value="female">{t('female')}</option>
-                                        <option value="other">{t('other')}</option>
+                                        <option value="">{t('profile.selectGender')}</option>
+                                        <option value="male">{t('profile.male')}</option>
+                                        <option value="female">{t('profile.female')}</option>
+                                        <option value="other">{t('profile.other')}</option>
                                     </select>
                                 ) : (
                                     <p>{counselor?.gender ? counselor.gender.charAt(0).toUpperCase() + counselor.gender.slice(1) : 'Not specified'}</p>

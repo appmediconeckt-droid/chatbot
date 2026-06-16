@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import "./CounselorDirectory.css";
@@ -27,6 +28,23 @@ const getProfilePhotoUrl = (profilePhoto) => {
 
 const CounselorTable = () => {
   const { t, lang } = useUserTranslation();
+  const navigate = useNavigate();
+
+  const handleBookAppointment = (counselor) => {
+    const counselorData = {
+      id: counselor._id || counselor.id,
+      name: counselor.fullName || counselor.name,
+      specialization: counselor.specialization,
+      profilePhoto: counselor.profilePhoto,
+      rating: counselor.rating,
+      experience: counselor.experience,
+      isOnline: counselor.isOnline,
+      lastSeen: counselor.lastSeen,
+    };
+    navigate("/dashboard/appointment", {
+      state: { selectedCounselor: counselorData },
+    });
+  };
 
   const formatLastSeen = (lastSeen) => {
     if (!lastSeen) return t('offline');
@@ -327,7 +345,12 @@ const CounselorTable = () => {
                       </span>
                     ))}
                   </div>
-                  <button className="book-btn">{t('book_appointment')}</button>
+                  <button
+                    className="book-btn"
+                    onClick={() => handleBookAppointment(counselor)}
+                  >
+                    {t('book_appointment')}
+                  </button>
                 </div>
               </div>
             );

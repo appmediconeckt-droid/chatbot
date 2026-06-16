@@ -421,17 +421,40 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       );
 
       console.log("✅ Chat Started:", res.data);
-      alert(t('chat_request_sent'));
-      setShowUserModal(false);
+
+      // Navigate to chat if chat details are in response
+      if (res.data?.chat?.id || res.data?.chatId) {
+        const chatId = res.data.chat?.id || res.data.chatId;
+        setShowUserModal(false);
+        navigate(`/dashboard/chat/${selectedCounselorForRequest?.id}`, {
+          state: {
+            chatId: chatId,
+            counselor: selectedCounselorForRequest,
+          },
+        });
+      } else {
+        alert(t('chat_request_sent'));
+        setShowUserModal(false);
+      }
     } catch (error) {
       console.error("❌ Error:", error);
       const status = error?.response?.status;
       const serverError = error?.response?.data?.error || error?.response?.data?.message || "";
+      const existingChatId = error?.response?.data?.chatId;
       const isBlocked = status === 403 && /restricted|blocked|unavailable/i.test(serverError);
 
       if (isBlocked) {
         setShowUserModal(false);
         setBlockedPopup({ show: true, reason: serverError });
+      } else if (status === 400 && existingChatId) {
+        // Chat already exists - navigate to it instead of showing error
+        setShowUserModal(false);
+        navigate(`/dashboard/chat/${selectedCounselorForRequest?.id}`, {
+          state: {
+            chatId: existingChatId,
+            counselor: selectedCounselorForRequest,
+          },
+        });
       } else {
         alert(serverError || t('chat_already_connected'));
       }

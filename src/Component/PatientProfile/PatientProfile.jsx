@@ -761,17 +761,17 @@ const PatientProfile = () => {
         <div className="profile-info">
           <h1>{patientData.personalInfo.name}</h1>
           <p className="patient-id">
-            {t('patient_id')}: {patientData.personalInfo.id}
+            {t('profile.patientId')}: {patientData.personalInfo.id}
           </p>
           <div className="badge-group">
             <span className="badge">
-              {patientData.personalInfo.bloodGroup || t('blood_group_label')}
+              {patientData.personalInfo.bloodGroup || t('profile.bloodGroup')}
             </span>
             <span className="badge">
-              {patientData.personalInfo.age || "--"} {t('years_label')}
+              {patientData.personalInfo.age || "--"} {t('profile.years')}
             </span>
             <span className="badge">
-              {patientData.personalInfo.gender || t('gender_label')}
+              {patientData.personalInfo.gender || t('profile.gender')}
             </span>
           </div>
         </div>
@@ -785,10 +785,10 @@ const PatientProfile = () => {
           >
             {isUpdatingLocation ? (
               <>
-                <span className="btn-location-spinner" /> {t('updating')}
+                <span className="btn-location-spinner" /> {t('profile.updating')}
               </>
             ) : (
-              <>📍 {t('update_location_btn')}</>
+              <>📍 {t('profile.updateLocation')}</>
             )}
           </button>
           <button
@@ -796,7 +796,7 @@ const PatientProfile = () => {
             onClick={openEditModal}
             disabled={isSaving}
           >
-            ✏️ {t('edit_profile_btn')}
+            ✏️ {t('profile.editProfile')}
           </button>
         </div>
       </div>
@@ -806,35 +806,35 @@ const PatientProfile = () => {
         {/* Personal Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('personal_information')}</h2>
+            <h2>{t('profile.personalInformation')}</h2>
           </div>
           <div className="info-grid">
             <div className="info-item">
-              <label>{t('full_name_label')}</label>
+              <label>{t('profile.fullName')}</label>
               <span>{patientData.personalInfo.name}</span>
             </div>
             <div className="info-item">
-              <label>{t('anonymous_name_label')}</label>
+              <label>{t('profile.anonymousName')}</label>
               <span>
                 {patientData.personalInfo.anonymous
                   ? patientData.personalInfo.anonymous
-                  : t('not_specified')}
+                  : t('profile.notSpecified')}
               </span>
             </div>
             <div className="info-item">
-              <label>{t('date_of_birth_label')}</label>
+              <label>{t('profile.dateOfBirth')}</label>
               <span>{formatDate(patientData.personalInfo.dateOfBirth)}</span>
             </div>
             <div className="info-item">
-              <label>{t('gender_label')}</label>
-              <span>{patientData.personalInfo.gender || t('not_specified')}</span>
+              <label>{t('profile.gender')}</label>
+              <span>{patientData.personalInfo.gender || t('profile.notSpecified')}</span>
             </div>
             <div className="info-item">
-              <label>{t('email_label')}</label>
+              <label>{t('profile.email')}</label>
               <span>{patientData.personalInfo.email}</span>
             </div>
             <div className="info-item">
-              <label>{t('phone_label')}</label>
+              <label>{t('profile.phone')}</label>
               <span>{patientData.personalInfo.phone}</span>
             </div>
           </div>
@@ -843,11 +843,11 @@ const PatientProfile = () => {
         {/* Address */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('address_label')}</h2>
+            <h2>{t('profile.address')}</h2>
           </div>
           <div className="address-display">
             <p>
-              {patientData.personalInfo.address?.line1 || t('no_address_provided')}
+              {patientData.personalInfo.address?.line1 || t('profile.noAddressProvided')}
             </p>
             {patientData.personalInfo.address?.line2 && (
               <p>{patientData.personalInfo.address.line2}</p>
@@ -869,14 +869,14 @@ const PatientProfile = () => {
         {/* Emergency Contact */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('emergency_contact')}</h2>
+            <h2>{t('profile.emergencyContact')}</h2>
           </div>
           <div className="emergency-display">
             <div className="emergency-icon">🆘</div>
             <div className="emergency-details">
               <h3>
                 {patientData.personalInfo.emergencyContact?.name ||
-                  t('not_specified')}
+                  t('profile.notSpecified')}
               </h3>
               <p>{patientData.personalInfo.emergencyContact?.relation}</p>
               <p className="phone">
@@ -889,24 +889,24 @@ const PatientProfile = () => {
         {/* Medical Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('medical_information')}</h2>
+            <h2>{t('profile.medicalInformation')}</h2>
           </div>
           <div className="medical-grid">
             <div className="vital-stats">
-              <h3>{t('vital_stats')}</h3>
+              <h3>{t('profile.vitalStats')}</h3>
               <div className="vital-row">
-                <span>{t('height_label')}</span>
+                <span>{t('profile.height')}</span>
                 <strong>{patientData.medicalInfo?.height || "--"} cm</strong>
               </div>
               <div className="vital-row">
-                <span>{t('weight_label')}</span>
+                <span>{t('profile.weight')}</span>
                 <strong>{patientData.medicalInfo?.weight || "--"} kg</strong>
               </div>
             </div>
             <div className="conditions-list">
               {patientData.medicalInfo?.allergies?.length > 0 && (
                 <div>
-                  <h4>{t('allergies_label')}</h4>
+                  <h4>{t('profile.allergies')}</h4>
                   <div className="tags">
                     {patientData.medicalInfo.allergies.map((a, i) => (
                       <span key={i} className="tag">
@@ -918,7 +918,7 @@ const PatientProfile = () => {
               )}
               {patientData.medicalInfo?.chronicConditions?.length > 0 && (
                 <div>
-                  <h4>{t('chronic_conditions_label')}</h4>
+                  <h4>{t('profile.chronicConditions')}</h4>
                   <div className="tags">
                     {patientData.medicalInfo.chronicConditions.map((c, i) => (
                       <span key={i} className="tag">
@@ -930,7 +930,7 @@ const PatientProfile = () => {
               )}
               {patientData.medicalInfo?.currentMedications?.length > 0 && (
                 <div>
-                  <h4>{t('current_medications_label')}</h4>
+                  <h4>{t('profile.currentMedications')}</h4>
                   <div className="tags">
                     {patientData.medicalInfo.currentMedications.map((m, i) => (
                       <span key={i} className="tag">
@@ -952,7 +952,7 @@ const PatientProfile = () => {
         {/* Insurance Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('insurance_information')}</h2>
+            <h2>{t('profile.insuranceInformation')}</h2>
           </div>
           {patientData.insuranceInfo?.provider ? (
             <div className="insurance-display">
@@ -1001,7 +1001,7 @@ const PatientProfile = () => {
         <div className="modal-overlay" onClick={handleCancelEdit}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{t('edit_profile_btn')}</h3>
+              <h3>{t('profile.editProfile')}</h3>
               <button className="close-modal" onClick={handleCancelEdit}>
                 ×
               </button>
