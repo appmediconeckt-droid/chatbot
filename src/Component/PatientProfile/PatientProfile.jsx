@@ -4,7 +4,6 @@ import "./PatientProfile.css";
 import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
 import { useUserTranslation } from "../../i18n/LanguageContext";
-import AvatarGenerator from "./AvatarGenerator";
 import AvatarBuilder from "./AvatarBuilder";
 
 
@@ -16,7 +15,8 @@ const PatientProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [profileImage, setProfileImage] = useState(null);
   const [profileImageFile, setProfileImageFile] = useState(null);
-  const [showAvatarGen, setShowAvatarGen] = useState(false);
+  const [profileImageRemoved, setProfileImageRemoved] = useState(false);
+  const [selectedAvatarPayload, setSelectedAvatarPayload] = useState(null);
   const [showAvatarBuilder, setShowAvatarBuilder] = useState(false);
   const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
   const [showNotification, setShowNotification] = useState({
@@ -173,6 +173,19 @@ const PatientProfile = () => {
   }, []);
 
   const getProfilePhotoUrl = (userData) => {
+    if (
+      userData.avatar &&
+      userData.avatar.type !== "uploaded" &&
+      typeof userData.avatar.url === "string" &&
+      userData.avatar.url
+    ) {
+      return userData.avatar.url;
+    }
+
+    if (userData.avatar?.type === "uploaded") {
+      return "";
+    }
+
     if (userData.profilePhoto) {
       if (
         typeof userData.profilePhoto === "object" &&
@@ -494,6 +507,8 @@ const PatientProfile = () => {
     initializeEditForm(patientData);
     setProfileImage(null);
     setProfileImageFile(null);
+    setProfileImageRemoved(false);
+    setSelectedAvatarPayload(null);
     setIsEditing(true);
   };
 
@@ -504,38 +519,36 @@ const PatientProfile = () => {
     }, 3000);
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        showNotificationMessage("File size should be less than 5MB", "error");
-        return;
-      }
-      if (!file.type.startsWith("image/")) {
-        showNotificationMessage("Please upload an image file", "error");
-        return;
-      }
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfileImage(reader.result);
-        setProfileImageFile(file);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleRemoveImage = () => {
     setProfileImage(null);
     setProfileImageFile(null);
+    setProfileImageRemoved(true);
+    setSelectedAvatarPayload(null);
     showNotificationMessage(
       "Profile picture will be removed on save",
       "success",
     );
   };
 
-  const handleAvatarSelect = (avatarUrl) => {
+  const handleAvatarSelect = (avatar) => {
+    const avatarUrl = typeof avatar === "string" ? avatar : avatar?.url || avatar?.avatarUrl;
+    if (!avatarUrl) return;
+
     setProfileImage(avatarUrl);
     setProfileImageFile(null); // URL-based avatar, no file upload needed
+    setProfileImageRemoved(false);
+    setSelectedAvatarPayload(
+      typeof avatar === "string"
+        ? {
+            avatarUrl,
+            avatarType: "preset",
+          }
+        : {
+            ...avatar,
+            avatarUrl,
+            avatarType: avatar.avatarType || "builder",
+          },
+    );
   };
 
   const handleSaveProfile = async () => {
@@ -606,11 +619,25 @@ const PatientProfile = () => {
         profileImage.startsWith("http")
       ) {
         // Avatar URL from generator — store directly without file upload
-        formData.append("avatarUrl", profileImage);
-      } else if (
-        profileImage === null &&
-        patientData.personalInfo.profilePhoto
-      ) {
+        const avatarPayload = selectedAvatarPayload || {
+          avatarUrl: profileImage,
+          avatarType: "preset",
+        };
+        formData.append("avatarUrl", avatarPayload.avatarUrl || profileImage);
+        formData.append("avatarType", avatarPayload.avatarType || "preset");
+        if (avatarPayload.avatarSeed) {
+          formData.append("avatarSeed", avatarPayload.avatarSeed);
+        }
+        if (avatarPayload.avatarBackgroundColor) {
+          formData.append("avatarBackgroundColor", avatarPayload.avatarBackgroundColor);
+        }
+        if (avatarPayload.avatarTextColor) {
+          formData.append("avatarTextColor", avatarPayload.avatarTextColor);
+        }
+        if (avatarPayload.avatarBuilder) {
+          formData.append("avatarBuilder", JSON.stringify(avatarPayload.avatarBuilder));
+        }
+      } else if (profileImageRemoved) {
         formData.append("removeProfilePhoto", "true");
       }
 
@@ -622,6 +649,8 @@ const PatientProfile = () => {
         setIsEditing(false);
         setProfileImage(null);
         setProfileImageFile(null);
+        setProfileImageRemoved(false);
+        setSelectedAvatarPayload(null);
       } else {
         showNotificationMessage(
           response.data.message || "Failed to update profile",
@@ -644,27 +673,8 @@ const PatientProfile = () => {
     initializeEditForm(patientData);
     setProfileImage(null);
     setProfileImageFile(null);
-  };
-
-  const handlePasswordUpdated = ({ hasPassword, requiresLogin } = {}) => {
-    setPatientData((prev) => ({
-      ...prev,
-      security: {
-        ...prev.security,
-        hasPassword: Boolean(hasPassword),
-      },
-    }));
-
-    if (requiresLogin) {
-      showNotificationMessage("Password updated. Please login again.", "success");
-      setTimeout(() => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("token");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("isAuthenticated");
-        window.location.replace("/user-signup");
-      }, 1400);
-    }
+    setProfileImageRemoved(false);
+    setSelectedAvatarPayload(null);
   };
 
   const handleEditFormChange = (e) => {
@@ -1012,7 +1022,7 @@ const PatientProfile = () => {
                 <h4>Profile Picture</h4>
                 <div className="profile-picture-edit">
                   <div className="avatar-preview">
-                    {profileImage || patientData.personalInfo.profilePhoto ? (
+                    {!profileImageRemoved && (profileImage || patientData.personalInfo.profilePhoto) ? (
                       <img
                         src={
                           profileImage || patientData.personalInfo.profilePhoto
@@ -1037,7 +1047,7 @@ const PatientProfile = () => {
                     >
                       ✨ Create Avatar
                     </button>
-                    {(profileImage || patientData.personalInfo.profilePhoto) && (
+                    {!profileImageRemoved && (profileImage || patientData.personalInfo.profilePhoto) && (
                       <button
                         type="button"
                         className="remove-btn"

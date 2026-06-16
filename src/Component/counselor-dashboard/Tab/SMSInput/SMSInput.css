@@ -139,7 +139,7 @@
   width: 44px;
   height: 44px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 14px;
+  border-radius: 25px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -207,49 +207,62 @@
 /* Call Buttons */
 .smsinput-call-buttons {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 20px;
   flex-shrink: 0;
 }
 
-.call-btn {
-  width: 40px;
-  height: 40px;
+.sms-call-btn {
+  width: 34px;
+  height: 34px;
   border: none;
   border-radius: 50%;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: none;
+  min-width: 0;
+  min-height: 0;
 }
 
 @media (max-width: 480px) {
-  .call-btn {
-    width: 38px;
-    height: 38px;
+  .sms-call-btn {
+    width: 34px;
+    height: 34px;
   }
 }
 
-.call-btn .call-icon {
+.sms-call-btn .call-icon {
   font-size: 1.2rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.call-btn.voice {
-  background: #eef2ff;
+.sms-call-btn .call-icon svg {
+  width: 1em;
+  height: 1em;
+  display: block;
+}
+
+.sms-voice-call-btn {
   color: var(--primary);
 }
 
-.call-btn.video {
-  background: var(--primary);
-  color: white;
+.sms-video-call-btn {
+  color: var(--primary);
 }
 
-.call-btn:active {
+.sms-call-btn:active {
   transform: scale(0.92);
 }
 
-.call-btn.loading {
+.sms-call-btn.loading {
   opacity: 0.7;
   cursor: wait;
 }

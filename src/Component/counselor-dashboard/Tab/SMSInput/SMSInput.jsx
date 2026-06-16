@@ -2,6 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { FaPhoneAlt, FaSpinner, FaVideo } from "react-icons/fa";
 import "./SMSInput.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
@@ -181,6 +182,17 @@ const SMSInput = () => {
         selectedUser?.email ||
         selectedUser?.user?.email ||
         selectedUser?.otherParty?.email,
+      avatar:
+        selectedUser?.avatar ||
+        selectedUser?.user?.avatar ||
+        selectedUser?.otherParty?.avatar,
+      avatarUrl:
+        selectedUser?.avatarUrl ||
+        selectedUser?.anonymousAvatarUrl ||
+        selectedUser?.user?.avatarUrl ||
+        selectedUser?.user?.anonymousAvatarUrl ||
+        selectedUser?.otherParty?.avatarUrl ||
+        selectedUser?.otherParty?.anonymousAvatarUrl,
     };
   };
 
@@ -195,12 +207,6 @@ const SMSInput = () => {
       lastSeen: selectedUser?.lastSeen || null,
     });
   }, [selectedUser]);
-
-  const getAvatarByGender = (gender) => {
-    if (gender === "male") return "👨";
-    if (gender === "female") return "👩";
-    return "👤";
-  };
 
   const getChatIdForAPI = () => {
     if (chatId) return chatId;
@@ -509,7 +515,7 @@ const SMSInput = () => {
           name: selectedUser.name || USER_NAME,
           type: normalizedMode,
           callType: normalizedMode,
-          profilePic: getAvatarByGender(selectedUser.gender),
+          profilePic: getUserAvatarUrl() || getUserAvatarIcon(),
           phoneNumber: selectedUser.phone || selectedUser.phoneNumber,
           status: response.data.status || "ringing",
           date: "Today",
@@ -882,6 +888,15 @@ const SMSInput = () => {
     if (gender === "female") return "👩";
     return "👤";
   };
+  const getUserAvatarIcon = () =>
+    userDetails.avatar || getAvatarIcon(userDetails.gender);
+
+  const getUserAvatarUrl = () => {
+    if (typeof userDetails.avatarUrl === "string" && userDetails.avatarUrl.trim()) {
+      return userDetails.avatarUrl.trim();
+    }
+    return null;
+  };
   // Handle scroll events to detect if user is near bottom
   const handleScroll = useCallback(() => {
     if (!messagesContainerRef.current) return;
@@ -1151,9 +1166,15 @@ const SMSInput = () => {
           </button>
           <div className="smsinput-user-info">
             <div className="smsinput-user-avatar">
-              <span className="avatar-icon">
-                {getAvatarIcon(userDetails.gender)}
-              </span>
+              {getUserAvatarUrl() ? (
+                <img
+                  src={getUserAvatarUrl()}
+                  alt={USER_NAME}
+                  className="smsinput-user-avatar-img"
+                />
+              ) : (
+                <span className="avatar-icon">{getUserAvatarIcon()}</span>
+              )}
               <span
                 className={`status-dot ${remoteStatusClass}`}
               ></span>
@@ -1165,20 +1186,26 @@ const SMSInput = () => {
         </div>
         <div className="smsinput-call-buttons">
           <button
-            className={`call-btn voice ${isInitiatingCall ? "loading" : ""}`}
+            className={`sms-call-btn sms-voice-call-btn ${isInitiatingCall ? "loading" : ""}`}
             onClick={handleVoiceCall}
             disabled={isInitiatingCall}
             title="Voice call"
+            aria-label="Voice call"
           >
-            <span className="call-icon">{isInitiatingCall ? "⏳" : "📞"}</span>
+            <span className="call-icon" aria-hidden="true">
+              {isInitiatingCall ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
+            </span>
           </button>
           <button
-            className={`call-btn video ${isInitiatingCall ? "loading" : ""}`}
+            className={`sms-call-btn sms-video-call-btn ${isInitiatingCall ? "loading" : ""}`}
             onClick={handleVideoCall}
             disabled={isInitiatingCall}
             title="Video call"
+            aria-label="Video call"
           >
-            <span className="call-icon">{isInitiatingCall ? "⏳" : "📹"}</span>
+            <span className="call-icon" aria-hidden="true">
+              {isInitiatingCall ? <FaSpinner className="spinning" /> : <FaVideo />}
+            </span>
           </button>
         </div>
       </div>

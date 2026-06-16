@@ -1,10 +1,10 @@
-import React, { useState, useMemo, useRef, useCallback } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import "./AvatarBuilder.css";
 
 // ─── DiceBear v7 avataaars — verified correct params from schema.json ─────────
 // All option params are passed as repeated query params: key[]=value
 // Probability params control visibility: 0 = hidden, 100 = always shown
-const BASE = "https://api.dicebear.com/7.x/avataaars/svg";
+const BASE = "https://api.dicebear.com/7.x/avataaars/png";
 
 // Correct skin color hex values (from DiceBear schema defaults)
 const SKIN_COLORS = [
@@ -183,9 +183,24 @@ const DEFAULT = {
 };
 
 // ─── Build correct DiceBear URL ──────────────────────────────────────────────
-function buildUrl(opts) {
+function buildUrl(opts, userName = "user") {
+  const stableSeed = encodeURIComponent(
+    [
+      userName || "user",
+      opts.skinColor,
+      opts.top,
+      opts.hairColor,
+      opts.eyes,
+      opts.eyebrows,
+      opts.mouth,
+      opts.facialHair,
+      opts.accessories,
+      opts.clothing,
+      opts.clothesColor,
+    ].join("-"),
+  );
   const params = [
-    `seed=avatar-${opts.skinColor}`,
+    `seed=${stableSeed}`,
     `skinColor[]=${opts.skinColor}`,
     `top[]=${opts.top}`,
     `hairColor[]=${opts.hairColor}`,
@@ -296,7 +311,7 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
   const imgRef    = useRef(null);
 
   const set = (key, val) => setOpts(prev => ({ ...prev, [key]: val }));
-  const avatarUrl = useMemo(() => buildUrl(opts), [opts]);
+  const avatarUrl = useMemo(() => buildUrl(opts, userName), [opts, userName]);
 
   // ── Camera ──────────────────────────────────────────────────
   const startCamera = async () => {
@@ -316,7 +331,7 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
         }
       }, 50);
       setCameraActive(true);
-    } catch (err) {
+    } catch {
       setCameraError("Camera access denied. Please allow camera permission and try again.");
     }
   };
@@ -390,7 +405,28 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
   };
 
   const handleUse = () => {
-    onSelect(avatarUrl);
+    onSelect({
+      url: avatarUrl,
+      avatarType: "builder",
+      avatarUrl,
+      avatarSeed: `${userName || "user"}-${opts.skinColor}-${opts.top}`,
+      avatarBackgroundColor: "#B6E3F4",
+      avatarTextColor: "#FFFFFF",
+      avatarBuilder: {
+        skinColor: opts.skinColor,
+        hair: opts.top,
+        hairColor: opts.hairColor,
+        eyes: opts.eyes,
+        eyebrows: opts.eyebrows,
+        mouth: opts.mouth,
+        beard: opts.facialHair,
+        beardColor: opts.facialHairColor,
+        accessory: opts.accessories,
+        clothes: opts.clothing,
+        shirtColor: opts.clothesColor,
+        source: capturedSrc ? "selfie-analysis" : "manual-builder",
+      },
+    });
     stopCamera();
     onClose();
   };

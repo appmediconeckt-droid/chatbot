@@ -4,6 +4,7 @@ import {
   FaPhoneSlash,
   FaSpinner,
   FaUserCircle,
+  FaVideo,
 } from "react-icons/fa";
 import "./IncomingCallModal.css";
 import { getAnonymousUserDisplay } from "../../../utils/anonymousUser";
@@ -162,7 +163,17 @@ const IncomingCallModal = ({
 
           <h3 className="ucm-name">{displayName}</h3>
           <p className="ucm-type">
-            {normalizedCallType === "video" ? "📹 Video Call" : "📞 Voice Call"}
+            {normalizedCallType === "video" ? (
+              <>
+                <FaVideo aria-hidden="true" />
+                <span>Video Call</span>
+              </>
+            ) : (
+              <>
+                <FaPhoneAlt aria-hidden="true" />
+                <span>Voice Call</span>
+              </>
+            )}
           </p>
           {requestedTime && (
             <p className="ucm-time">Received at {requestedTime}</p>
