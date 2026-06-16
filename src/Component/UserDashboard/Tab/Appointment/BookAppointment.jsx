@@ -5,6 +5,7 @@ import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import axios from "axios";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
+import { getPresence } from "../../../../utils/presence";
 
 const CounselorRequestChat = ({ initialSearch = "" }) => {
   const navigate = useNavigate();
@@ -265,32 +266,36 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
         const data = await response.json();
 
         if (data.success) {
-          const formattedCounselors = data.counsellors.map((c, index) => ({
-            id: c._id,
-            name: c.fullName,
-            specialization: c.specialization?.join(" , ") || "General",
-            experience: `${c.experience || 0} years`,
-            rating: c.rating || 4.5,
-            online: Boolean(c.isOnline),
-            available: c.isActive,
-            lastSeen: c.lastSeen || null,
-            avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
-            avatarType: getProfilePhotoUrl(c) ? "image" : "text",
-            expertise: c.specialization || [],
-            responseTime: "< 10 seconds",
-            profilePhoto: c.profilePhoto,
-            email: c.email,
-            phone: c.phoneNumber,
-            location: c.location,
-            languages: c.languages || [],
-            aboutMe: c.aboutMe,
-            qualification: c.qualification,
-            education: c.education,
-            certifications: c.certifications || [],
-            consultationMode: c.consultationMode || [],
-            totalSessions: c.totalSessions || 0,
-            activeClients: c.activeClients || 0,
-          }));
+          const formattedCounselors = data.counsellors.map((c, index) => {
+            const presence = getPresence(c);
+            return {
+              id: c._id,
+              name: c.fullName,
+              specialization: c.specialization?.join(" , ") || "General",
+              experience: `${c.experience || 0} years`,
+              rating: c.rating || 4.5,
+              online: presence.isOnline,
+              isOnline: presence.isOnline,
+              available: c.isActive,
+              lastSeen: presence.lastSeen,
+              avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
+              avatarType: getProfilePhotoUrl(c) ? "image" : "text",
+              expertise: c.specialization || [],
+              responseTime: "< 10 seconds",
+              profilePhoto: c.profilePhoto,
+              email: c.email,
+              phone: c.phoneNumber,
+              location: c.location,
+              languages: c.languages || [],
+              aboutMe: c.aboutMe,
+              qualification: c.qualification,
+              education: c.education,
+              certifications: c.certifications || [],
+              consultationMode: c.consultationMode || [],
+              totalSessions: c.totalSessions || 0,
+              activeClients: c.activeClients || 0,
+            };
+          });
 
           setCounselors(formattedCounselors);
           setFilteredCounselors(formattedCounselors);
@@ -310,12 +315,18 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   useEffect(() => {
     let mounted = true;
 
-    const updatePresence = ({ userId, isOnline, lastSeen }) => {
+    const updatePresence = (payload = {}) => {
       if (!mounted) return;
+      const presence = getPresence(payload);
       const applyPresence = (list) =>
         list.map((counselor) =>
-          String(counselor.id) === String(userId)
-            ? { ...counselor, online: Boolean(isOnline), lastSeen }
+          String(counselor.id) === String(payload.userId)
+            ? {
+                ...counselor,
+                online: presence.isOnline,
+                isOnline: presence.isOnline,
+                lastSeen: presence.lastSeen,
+              }
             : counselor,
         );
       setCounselors(applyPresence);
@@ -421,17 +432,40 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       );
 
       console.log("✅ Chat Started:", res.data);
-      alert(t('chat_request_sent'));
-      setShowUserModal(false);
+
+      // Navigate to chat if chat details are in response
+      if (res.data?.chat?.id || res.data?.chatId) {
+        const chatId = res.data.chat?.id || res.data.chatId;
+        setShowUserModal(false);
+        navigate("/user-dashboard", {
+          state: {
+            chatId: chatId,
+            counselor: selectedCounselorForRequest,
+          },
+        });
+      } else {
+        alert(t('chat_request_sent'));
+        setShowUserModal(false);
+      }
     } catch (error) {
       console.error("❌ Error:", error);
       const status = error?.response?.status;
       const serverError = error?.response?.data?.error || error?.response?.data?.message || "";
+      const existingChatId = error?.response?.data?.chatId;
       const isBlocked = status === 403 && /restricted|blocked|unavailable/i.test(serverError);
 
       if (isBlocked) {
         setShowUserModal(false);
         setBlockedPopup({ show: true, reason: serverError });
+      } else if (status === 400 && existingChatId) {
+        // Chat already exists - navigate to it instead of showing error
+        setShowUserModal(false);
+        navigate("/user-dashboard", {
+          state: {
+            chatId: existingChatId,
+            counselor: selectedCounselorForRequest,
+          },
+        });
       } else {
         alert(serverError || t('chat_already_connected'));
       }
@@ -521,8 +555,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
   // Navigate to chat interface
   const goToChat = (chat) => {
-    navigate(`/chat/${chat.counselorId}`, {
+    navigate("/chat", {
       state: {
+        chatId: chat.chatId || chat.id,
         chatData: chat,
         counselor: chat.counselor,
         user: chat.user,

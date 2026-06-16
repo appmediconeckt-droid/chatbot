@@ -80,6 +80,14 @@ function App() {
             }
           />
           <Route
+            path="/chat"
+            element={
+              <ProtectedRoute allowedRoles={["user", "counsellor", "counselor"]}>
+                <ChatBox />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/counselor-directory"
             element={
               <ProtectedRoute allowedRoles={["user"]}>

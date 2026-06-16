@@ -13,6 +13,7 @@ import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import { translateMessage } from "../../../../services/messageTranslationService";
 import RatingModal from "../../../../components/RatingModal";
 import ratingService from "../../../../services/ratingService";
+import { getPresence } from "../../../../utils/presence";
 
 const ChatBox = () => {
   const { t, lang } = useUserTranslation();
@@ -936,7 +937,10 @@ const ChatBox = () => {
     const initializeChat = async () => {
       try {
         const savedChats = JSON.parse(localStorage.getItem("activeChats") || "[]");
-        let chat = savedChats.find((c) => c.id === chatId) || savedChats.find((c) => c.counselorId === counselorId);
+        const stateCounselorId = initialCounselor?.id || initialCounselor?._id;
+        let chat =
+          savedChats.find((c) => c.chatId === chatId || c.id === chatId) ||
+          savedChats.find((c) => c.counselorId === (counselorId || stateCounselorId));
         if (chat) {
           setCurrentChat(chat);
           if (chat.counselor) setCurrentCounselor(chat.counselor);
@@ -948,7 +952,7 @@ const ChatBox = () => {
           const newChat = {
             id: Date.now(),
             chatId: chatId || `chat_${Date.now()}`,
-            counselorId: counselorId,
+            counselorId: counselorId || stateCounselorId,
             counselor: initialCounselor,
             user: initialUser || { name: "User", email: "user@example.com" },
             messages: [],
@@ -1078,12 +1082,20 @@ const ChatBox = () => {
     };
 
     // Real-time presence updates for the counsellor we're chatting with.
-    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
+    const onPresenceUpdate = (payload = {}) => {
       const counselorId = resolveCounselorId();
-      if (String(userId) === String(counselorId)) {
-        console.log(`[Chat Presence] Counselor ${userId} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
+      const presence = getPresence(payload);
+      if (String(payload.userId) === String(counselorId)) {
+        console.log(`[Chat Presence] Counselor ${payload.userId} is now ${presence.isOnline ? 'ONLINE' : 'OFFLINE'}`);
         setCurrentCounselor((prev) =>
-          prev ? { ...prev, online: Boolean(isOnline), lastSeen } : prev,
+          prev
+            ? {
+                ...prev,
+                online: presence.isOnline,
+                isOnline: presence.isOnline,
+                lastSeen: presence.lastSeen,
+              }
+            : prev,
         );
       }
     };
@@ -1258,7 +1270,8 @@ const ChatBox = () => {
   };
 
   const counselorName = currentCounselor?.name || "Counselor";
-  const counselorOnline = currentCounselor?.online || false;
+  const counselorPresence = getPresence(currentCounselor);
+  const counselorOnline = counselorPresence.isOnline;
 
   return (
     <div className="chatContainerFull">

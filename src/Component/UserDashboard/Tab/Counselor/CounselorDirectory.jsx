@@ -1,9 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import "./CounselorDirectory.css";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import StarRating from "../../../../components/StarRating";
+import { getPresence } from "../../../../utils/presence";
 
 const getInitials = (name = "Counselor") =>
   name
@@ -27,6 +29,23 @@ const getProfilePhotoUrl = (profilePhoto) => {
 
 const CounselorTable = () => {
   const { t, lang } = useUserTranslation();
+  const navigate = useNavigate();
+
+  const handleBookAppointment = (counselor) => {
+    const counselorData = {
+      id: counselor._id || counselor.id,
+      name: counselor.fullName || counselor.name,
+      specialization: counselor.specialization,
+      profilePhoto: counselor.profilePhoto,
+      rating: counselor.rating,
+      experience: counselor.experience,
+      isOnline: counselor.isOnline,
+      lastSeen: counselor.lastSeen,
+    };
+    navigate("/dashboard/appointment", {
+      state: { selectedCounselor: counselorData },
+    });
+  };
 
   const formatLastSeen = (lastSeen) => {
     if (!lastSeen) return t('offline');
@@ -53,8 +72,19 @@ const CounselorTable = () => {
         setError("");
 
         const response = await axiosInstance.get("/api/auth/counsellors");
-        const counselors =
-          response.data?.counsellors || response.data?.counselors || [];
+        const counselors = (
+          response.data?.counsellors ||
+          response.data?.counselors ||
+          []
+        ).map((counselor) => {
+          const presence = getPresence(counselor);
+          return {
+            ...counselor,
+            isOnline: presence.isOnline,
+            online: presence.isOnline,
+            lastSeen: presence.lastSeen,
+          };
+        });
 
         if (isMounted) setCounselorsData(counselors);
       } catch (err) {
@@ -75,13 +105,17 @@ const CounselorTable = () => {
   useEffect(() => {
     let mounted = true;
 
-    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
+    const onPresenceUpdate = (payload = {}) => {
       if (!mounted) return;
+      const presence = getPresence(payload);
+      const userId = payload.userId;
+      const isOnline = presence.isOnline;
+      const lastSeen = presence.lastSeen;
       console.log(`[Presence] ${userId} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
       setCounselorsData((prev) =>
         prev.map((counselor) =>
           String(counselor._id || counselor.id) === String(userId)
-            ? { ...counselor, isOnline, lastSeen }
+            ? { ...counselor, isOnline, online: isOnline, lastSeen }
             : counselor,
         ),
       );
@@ -327,7 +361,12 @@ const CounselorTable = () => {
                       </span>
                     ))}
                   </div>
-                  <button className="book-btn">{t('book_appointment')}</button>
+                  <button
+                    className="book-btn"
+                    onClick={() => handleBookAppointment(counselor)}
+                  >
+                    {t('book_appointment')}
+                  </button>
                 </div>
               </div>
             );

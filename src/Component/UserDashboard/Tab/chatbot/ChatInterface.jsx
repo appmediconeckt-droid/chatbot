@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
 import { translateMessage } from '../../../../services/messageTranslationService';
+import { getPresence } from '../../../../utils/presence';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
@@ -183,6 +184,8 @@ const ChatInterface = ({ setActiveTab }) => {
                         }
                     }
 
+                    const presence = getPresence(otherParty);
+
                     return {
                         id: otherParty.id || chat.chatId,
                         name: otherParty.name || t('unknown_counselor'),
@@ -190,8 +193,9 @@ const ChatInterface = ({ setActiveTab }) => {
                         lastMessageTime: lastMessageTime,
                         fullDateTime: formatFullDateTime(lastMessageTime),
                         unread: chat.unreadCount || 0,
-                        online: otherParty.isOnline || false,
-                        lastSeen: otherParty.lastSeen || null,
+                        online: presence.isOnline,
+                        isOnline: presence.isOnline,
+                        lastSeen: presence.lastSeen,
                         avatar: otherParty.avatar || null,
                         avatarType: 'image',
                         specialization: specialization,
@@ -252,6 +256,8 @@ const ChatInterface = ({ setActiveTab }) => {
                                 }
                             }
 
+                            const presence = getPresence(otherParty);
+
                             return {
                                 id: otherParty.id || chat.chatId,
                                 name: otherParty.name || t('unknown_counselor'),
@@ -259,8 +265,9 @@ const ChatInterface = ({ setActiveTab }) => {
                                 lastMessageTime: lastMessageTime,
                                 fullDateTime: formatFullDateTime(lastMessageTime),
                                 unread: chat.unreadCount || 0,
-                                online: otherParty.isOnline || false,
-                                lastSeen: otherParty.lastSeen || null,
+                                online: presence.isOnline,
+                                isOnline: presence.isOnline,
+                                lastSeen: presence.lastSeen,
                                 avatar: otherParty.avatar || null,
                                 avatarType: 'image',
                                 specialization: specialization,
@@ -420,7 +427,7 @@ const ChatInterface = ({ setActiveTab }) => {
         await markChatAsRead(counselor.id);
 
         // Navigate to chat box
-        navigate(`/chat/${counselor.id}`, {
+        navigate("/chat", {
             state: {
                 chatId: counselor.chatId,
                 counselor: {

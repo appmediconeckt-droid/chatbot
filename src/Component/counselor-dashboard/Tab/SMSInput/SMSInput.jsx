@@ -10,6 +10,7 @@ import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { translateMessage } from "../../../../services/messageTranslationService";
+import { getPresence } from "../../../../utils/presence";
 
 const SMSInput = () => {
   const location = useLocation();
@@ -79,9 +80,10 @@ const SMSInput = () => {
   // Get selected user from navigation state
   const selectedUser = location.state?.selectedUser;
   const chatId = location.state?.chatId;
+  const selectedUserPresence = getPresence(selectedUser || {});
   const [remotePresence, setRemotePresence] = useState({
-    isOnline: Boolean(selectedUser?.isOnline || selectedUser?.online),
-    lastSeen: selectedUser?.lastSeen || null,
+    isOnline: selectedUserPresence.isOnline,
+    lastSeen: selectedUserPresence.lastSeen,
   });
 
   const getCurrentCounselor = () => {
@@ -190,9 +192,10 @@ const SMSInput = () => {
   const remoteStatusClass = remotePresence.isOnline ? "online" : "offline";
 
   useEffect(() => {
+    const presence = getPresence(selectedUser || {});
     setRemotePresence({
-      isOnline: Boolean(selectedUser?.isOnline || selectedUser?.online),
-      lastSeen: selectedUser?.lastSeen || null,
+      isOnline: presence.isOnline,
+      lastSeen: presence.lastSeen,
     });
   }, [selectedUser]);
 
@@ -1005,9 +1008,13 @@ const SMSInput = () => {
       setMessages((prev) => prev.map((msg) => msg.sender === "me" ? { ...msg, isRead: true } : msg));
     };
 
-    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
-      if (!mounted || String(userId) !== String(USER_ID)) return;
-      setRemotePresence({ isOnline: Boolean(isOnline), lastSeen: lastSeen || null });
+    const onPresenceUpdate = (payload = {}) => {
+      if (!mounted || String(payload.userId) !== String(USER_ID)) return;
+      const presence = getPresence(payload);
+      setRemotePresence({
+        isOnline: presence.isOnline,
+        lastSeen: presence.lastSeen,
+      });
     };
 
     const onCallRejected = (payload) => {
@@ -1160,6 +1167,9 @@ const SMSInput = () => {
             </div>
             <div className="smsinput-user-details">
               <h3>{USER_NAME}</h3>
+              <p className="smsinput-user-status">
+                {remotePresence.isOnline ? t('online') : t('offline')}
+              </p>
             </div>
           </div>
         </div>

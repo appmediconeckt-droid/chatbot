@@ -10,6 +10,7 @@ import {
   getAnonymousUserAvatar,
   getAnonymousUserDisplay,
 } from "../../../../utils/anonymousUser";
+import { getPresence } from "../../../../utils/presence";
 /**
  * SMSList Component - Fetches and displays users/patients list from API
  * Displays anonymous name and gender-based avatar icons (no photos)
@@ -147,6 +148,7 @@ const SMSList = () => {
           const actualUserId =
             getAnonymousParticipantId({ ...otherParty, userId: chat.userId }) ||
             chat.userId;
+          const presence = getPresence(otherParty);
           const safeOtherParty = {
             id: actualUserId,
             _id: actualUserId,
@@ -155,8 +157,9 @@ const SMSList = () => {
             gender: anonymousUser.gender,
             avatar: anonymousUser.avatar,
             avatarUrl: anonymousUser.avatarUrl,
-            isOnline: Boolean(otherParty.isOnline),
-            lastSeen: otherParty.lastSeen || null,
+            isOnline: presence.isOnline,
+            online: presence.isOnline,
+            lastSeen: presence.lastSeen,
           };
 
           const lastMessageTime =
@@ -188,8 +191,9 @@ const SMSList = () => {
             lastActivityAt: lastMessageTime,
             unread: chat.unreadCount || 0,
             status: chatStatus,
-            online: Boolean(otherParty.isOnline),
-            lastSeen: otherParty.lastSeen || null,
+            online: presence.isOnline,
+            isOnline: presence.isOnline,
+            lastSeen: presence.lastSeen,
             phone: "Not available",
             email: "Not available",
             specialization,
@@ -229,12 +233,18 @@ const SMSList = () => {
   useEffect(() => {
     let mounted = true;
 
-    const onPresenceUpdate = ({ userId, isOnline, lastSeen }) => {
+    const onPresenceUpdate = (payload = {}) => {
       if (!mounted) return;
+      const presence = getPresence(payload);
       setUsers((prev) =>
         prev.map((user) =>
-          String(user.receiverId || user._id) === String(userId)
-            ? { ...user, online: Boolean(isOnline), lastSeen }
+          String(user.receiverId || user._id) === String(payload.userId)
+            ? {
+                ...user,
+                online: presence.isOnline,
+                isOnline: presence.isOnline,
+                lastSeen: presence.lastSeen,
+              }
             : user,
         ),
       );
