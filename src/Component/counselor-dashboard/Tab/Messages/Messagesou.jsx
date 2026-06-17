@@ -4,7 +4,6 @@ import "./Messagesou.css";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
-import { translateMessage } from "../../../../services/messageTranslationService";
 import {
   getAnonymousParticipantId,
   getAnonymousUserAvatar,

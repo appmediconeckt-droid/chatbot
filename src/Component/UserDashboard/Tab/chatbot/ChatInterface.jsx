@@ -5,7 +5,6 @@ import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
-import { translateMessage } from '../../../../services/messageTranslationService';
 import { getPresence } from '../../../../utils/presence';
 
 const ChatInterface = ({ setActiveTab }) => {
@@ -393,31 +392,12 @@ const ChatInterface = ({ setActiveTab }) => {
         }
 
         const translateCounselors = async () => {
-            setIsTranslating(true);
-            try {
-                const translatedCounselors = await Promise.all(
-                    originalCounselors.map(async (counselor) => {
-                        if (!counselor.lastMessage) return counselor;
-                        try {
-                            const translatedMessage = await translateMessage(counselor.lastMessage, lang);
-                            return { ...counselor, lastMessage: translatedMessage };
-                        } catch (error) {
-                            console.error('Error translating counselor message:', error);
-                            return counselor;
-                        }
-                    })
-                );
-                setCounselors(translatedCounselors);
-            } catch (error) {
-                console.error('Error translating counselors:', error);
-                setCounselors(originalCounselors);
-            } finally {
-                setIsTranslating(false);
-            }
         };
 
-        translateCounselors();
-    }, [lang, originalCounselors]);
+        if (originalCounselors.length > 0) {
+            setCounselors(originalCounselors);
+        }
+    }, [originalCounselors]);
 
     // Handle counselor selection
     const handleCounselorSelect = useCallback(async (counselor) => {

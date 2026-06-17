@@ -15,13 +15,20 @@ const LANG_ACCENT = {
 export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = false }) {
   const [open, setOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState('bottom');
+  const [searchQuery, setSearchQuery] = useState('');
   const ref = useRef(null);
   const dropdownRef = useRef(null);
   const current = SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
 
   const handleLanguageChange = (langCode) => {
     setLang(langCode);
+    setSearchQuery('');
   };
+
+  const filteredLanguages = SUPPORTED_LANGUAGES.filter((l) =>
+    l.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    l.code.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     if (!open || !ref.current || !dropdownRef.current) return;
@@ -76,7 +83,22 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
             <div className="ud-lang-dropdown-header">
               {t ? t('select_language') : 'Select Language'}
             </div>
-            {SUPPORTED_LANGUAGES.map((l) => (
+            <input
+              type="text"
+              placeholder="Search language..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px 12px',
+                marginBottom: '8px',
+                borderRadius: '6px',
+                border: '1px solid #e0e0e0',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+              }}
+            />
+            {filteredLanguages.map((l) => (
               <button
                 key={l.code}
                 type="button"
@@ -133,46 +155,72 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
           {/* Divider */}
           <div className="lang-modal-divider" />
 
+          {/* Search Bar */}
+          <div style={{ padding: '12px', borderBottom: '1px solid #e0e0e0' }}>
+            <input
+              type="text"
+              placeholder="🔍 Search language..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                borderRadius: '8px',
+                border: '1px solid #e0e0e0',
+                fontSize: '14px',
+                boxSizing: 'border-box',
+                fontFamily: 'inherit',
+              }}
+              autoFocus
+            />
+          </div>
+
           {/* Scrollable List */}
           <div className="lang-modal-list">
-            {SUPPORTED_LANGUAGES.map((l) => {
+            {filteredLanguages.length === 0 ? (
+              <div style={{ padding: '20px', textAlign: 'center', color: '#999' }}>
+                No languages found
+              </div>
+            ) : (
+              filteredLanguages.map((l) => {
               const isActive = l.code === lang;
               const accent = LANG_ACCENT[l.code] || '#3B82F6';
               const initial = l.label.charAt(0).toUpperCase();
 
-              return (
-                <button
-                  key={l.code}
-                  type="button"
-                  className={`lang-modal-item ${isActive ? 'lang-modal-item--active' : ''}`}
-                  onClick={() => { handleLanguageChange(l.code); setOpen(false); }}
-                  style={{
-                    borderLeftColor: isActive ? accent : 'transparent',
-                  }}
-                >
-                  {isActive && <div className="lang-modal-active-bar" style={{ backgroundColor: accent }} />}
+                return (
+                  <button
+                    key={l.code}
+                    type="button"
+                    className={`lang-modal-item ${isActive ? 'lang-modal-item--active' : ''}`}
+                    onClick={() => { handleLanguageChange(l.code); setOpen(false); }}
+                    style={{
+                      borderLeftColor: isActive ? accent : 'transparent',
+                    }}
+                  >
+                    {isActive && <div className="lang-modal-active-bar" style={{ backgroundColor: accent }} />}
 
-                  <div className="lang-modal-badge" style={{
-                    backgroundColor: accent + '20',
-                    borderColor: accent + '40',
-                  }}>
-                    <span style={{ color: accent, fontWeight: 700 }}>{initial}</span>
-                  </div>
-
-                  <div className="lang-modal-labels">
-                    <div className="lang-modal-native" style={{ color: isActive ? accent : '#1E293B' }}>
-                      {l.label}
+                    <div className="lang-modal-badge" style={{
+                      backgroundColor: accent + '20',
+                      borderColor: accent + '40',
+                    }}>
+                      <span style={{ color: accent, fontWeight: 700 }}>{initial}</span>
                     </div>
-                  </div>
 
-                  {isActive ? (
-                    <div className="lang-modal-check" style={{ backgroundColor: accent }}>✓</div>
-                  ) : (
-                    <div className="lang-modal-check-empty" />
-                  )}
-                </button>
-              );
-            })}
+                    <div className="lang-modal-labels">
+                      <div className="lang-modal-native" style={{ color: isActive ? accent : '#1E293B' }}>
+                        {l.label}
+                      </div>
+                    </div>
+
+                    {isActive ? (
+                      <div className="lang-modal-check" style={{ backgroundColor: accent }}>✓</div>
+                    ) : (
+                      <div className="lang-modal-check-empty" />
+                    )}
+                  </button>
+                );
+              })
+            )}
           </div>
 
           {/* Footer */}

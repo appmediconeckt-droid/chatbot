@@ -9,14 +9,15 @@ import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
-import { useUserTranslation } from "../../../../i18n/LanguageContext";
-import { translateMessage } from "../../../../services/messageTranslationService";
+import { useUserTranslation, useUserApiTranslation } from "../../../../i18n/LanguageContext";
 import RatingModal from "../../../../components/RatingModal";
 import ratingService from "../../../../services/ratingService";
 import { getPresence } from "../../../../utils/presence";
+import TranslatedMessage from "../../../common/TranslatedMessage";
 
 const ChatBox = () => {
   const { t, lang } = useUserTranslation();
+  const { translate } = useUserApiTranslation();
   const { id: counselorId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
@@ -1346,15 +1347,15 @@ const ChatBox = () => {
                       <>
                         <img src={message.attachmentUrl} alt={message.attachmentName || "Shared image"} className="chatMsgImage" />
                         <a href={message.attachmentUrl} target="_blank" rel="noreferrer" className="chatMsgAttachmentLink">{message.attachmentName || "Open image"}</a>
-                        {message.text && <p className="chatMsgText">{message.text}</p>}
+                        {message.text && <TranslatedMessage text={message.text} translate={translate} lang={lang} />}
                       </>
                     ) : message.contentType === "FILE" && message.attachmentUrl ? (
                       <>
                         <a href={message.attachmentUrl} target="_blank" rel="noreferrer" className="chatMsgAttachmentLink">{message.attachmentName || message.text || "Open attachment"}</a>
-                        {message.text && <p className="chatMsgText">{message.text}</p>}
+                        {message.text && <TranslatedMessage text={message.text} translate={translate} lang={lang} />}
                       </>
                     ) : (
-                      <p className="chatMsgText">{message.text}</p>
+                      <TranslatedMessage text={message.text} translate={translate} lang={lang}  />
                     )}
                     <div className="chatMsgFooter">
                       <time className="chatMsgTimestamp">{message.time}</time>
