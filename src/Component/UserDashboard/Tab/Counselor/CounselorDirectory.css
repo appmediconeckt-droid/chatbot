@@ -430,6 +430,42 @@
   border: 1px solid #c8daff;
 }
 
+.card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.chat-now-btn {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 40px;
+  padding: 0.5rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 6px 14px -8px #1d4ed8;
+  white-space: nowrap;
+}
+
+.chat-now-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+  transform: scale(1.02);
+  box-shadow: 0 8px 16px -6px #1d4ed8;
+}
+
+.chat-now-btn:disabled {
+  background: #cbd5e1;
+  color: #64748b;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  opacity: 0.7;
+}
+
 .book-btn {
   background: #1a3f6e;
   color: white;
@@ -591,6 +627,12 @@
   .language {
     background: #263d5e;
     color: #c2d6ff;
+  }
+
+  .chat-now-btn:disabled,
+  .chat-now-btn.disabled {
+    background: #334155;
+    color: #94a3b8;
   }
   
   .stats-grid {
