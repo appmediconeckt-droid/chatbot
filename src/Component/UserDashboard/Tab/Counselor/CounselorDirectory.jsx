@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
+import axiosInstance from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import "./CounselorDirectory.css";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
@@ -27,9 +27,13 @@ const getProfilePhotoUrl = (profilePhoto) => {
   return profilePhoto.url || null;
 };
 
+const isCounselorOnline = (counselor) =>
+  Boolean(counselor?.isOnline || counselor?.online);
+
 const CounselorTable = () => {
-  const { t, lang } = useUserTranslation();
+  const { t } = useUserTranslation();
   const navigate = useNavigate();
+  const [startingChatId, setStartingChatId] = useState(null);
 
   const handleBookAppointment = (counselor) => {
     const counselorData = {
@@ -45,6 +49,53 @@ const CounselorTable = () => {
     navigate("/dashboard/appointment", {
       state: { selectedCounselor: counselorData },
     });
+  };
+
+  const handleChatNow = async (counselor) => {
+    const counselorId = counselor._id || counselor.id;
+
+    if (!isCounselorOnline(counselor)) {
+      return;
+    }
+
+    try {
+      setStartingChatId(counselorId);
+
+      const response = await axiosInstance.post("/api/chat/start", {
+        counselorId,
+      });
+      const chatId = response.data?.chat?.id || response.data?.chatId;
+
+      navigate(`/chat/${counselorId}`, {
+        state: {
+          chatId,
+          counselor: {
+            id: counselorId,
+            name: counselor.fullName || counselor.name,
+            specialization: counselor.specialization,
+            profilePhoto: counselor.profilePhoto,
+            isOnline: counselor.isOnline,
+            lastSeen: counselor.lastSeen,
+          },
+        },
+      });
+    } catch (err) {
+      const status = err?.response?.status;
+      const existingChatId = err?.response?.data?.chatId;
+      const serverMessage =
+        err?.response?.data?.error || err?.response?.data?.message || "";
+
+      if (status === 400 && existingChatId) {
+        navigate(`/chat/${counselorId}`, {
+          state: { chatId: existingChatId, counselor },
+        });
+        return;
+      }
+
+      alert(serverMessage || t('chat_already_connected'));
+    } finally {
+      setStartingChatId(null);
+    }
   };
 
   const formatLastSeen = (lastSeen) => {
@@ -100,7 +151,7 @@ const CounselorTable = () => {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     let mounted = true;
@@ -280,6 +331,8 @@ const CounselorTable = () => {
             const specializations = normalizeArray(counselor.specialization);
             const languages = normalizeArray(counselor.languages);
             const profilePhotoUrl = getProfilePhotoUrl(counselor.profilePhoto);
+            const online = isCounselorOnline(counselor);
+            const isStartingChat = String(startingChatId) === String(id);
 
             return (
               <div key={id} className="counselor-card">
@@ -292,9 +345,9 @@ const CounselorTable = () => {
                     )}
                     <span
                       className={`presence-dot ${
-                        counselor.isOnline ? "online" : "offline"
+                        online ? "online" : "offline"
                       }`}
-                      title={counselor.isOnline ? "Online" : formatLastSeen(counselor.lastSeen)}
+                      title={online ? t('online') : formatLastSeen(counselor.lastSeen)}
                     />
                   </div>
                   <div className="counselor-basic">
@@ -305,10 +358,10 @@ const CounselorTable = () => {
                   </div>
                   <div
                     className={`availability-badge ${
-                      counselor.isOnline ? "now" : ""
+                      online ? "now" : ""
                     }`}
                   >
-                    {counselor.isOnline ? t('online') : formatLastSeen(counselor.lastSeen)}
+                    {online ? t('online') : formatLastSeen(counselor.lastSeen)}
                   </div>
                 </div>
 
@@ -361,12 +414,22 @@ const CounselorTable = () => {
                       </span>
                     ))}
                   </div>
-                  <button
-                    className="book-btn"
-                    onClick={() => handleBookAppointment(counselor)}
-                  >
-                    {t('book_appointment')}
-                  </button>
+                  <div className="card-actions">
+                    <button
+                      className={`chat-now-btn ${!online ? "disabled" : ""}`}
+                      onClick={() => handleChatNow(counselor)}
+                      disabled={!online || isStartingChat}
+                      title={!online ? formatLastSeen(counselor.lastSeen) : t('chat_now')}
+                    >
+                      {online ? t('chat_now') : t('unavailable')}
+                    </button>
+                    <button
+                      className="book-btn"
+                      onClick={() => handleBookAppointment(counselor)}
+                    >
+                      {t('book_appointment')}
+                    </button>
+                  </div>
                 </div>
               </div>
             );
