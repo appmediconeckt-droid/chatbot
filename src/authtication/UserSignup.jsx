@@ -152,65 +152,69 @@ const UserSignup = () => {
     return newErrors;
   };
 
-  const handleForgotPassword = async () => {
-    const emailFromForm = String(formData.email || "")
-      .trim()
-      .toLowerCase();
-    const promptedEmail = emailFromForm
-      ? ""
-      : window.prompt("Enter your registered email:", "") || "";
-    const normalizedEmail = String(emailFromForm || promptedEmail)
-      .trim()
-      .toLowerCase();
+  // const handleForgotPassword = async () => {
+  //   const emailFromForm = String(formData.email || "")
+  //     .trim()
+  //     .toLowerCase();
+  //   const promptedEmail = emailFromForm
+  //     ? ""
+  //     : window.prompt("Enter your registered email:", "") || "";
+  //   const normalizedEmail = String(emailFromForm || promptedEmail)
+  //     .trim()
+  //     .toLowerCase();
 
-    if (!normalizedEmail) {
-      showNotification("Please enter your registered email", "error");
-      return;
-    }
+  //   if (!normalizedEmail) {
+  //     showNotification("Please enter your registered email", "error");
+  //     return;
+  //   }
 
-    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
-      showNotification("Please enter a valid email address", "error");
-      return;
-    }
+  //   if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
+  //     showNotification("Please enter a valid email address", "error");
+  //     return;
+  //   }
 
-    try {
-      setIsLoading(true);
-      const endpoints = ["forgot-password", "forgotPassword"];
-      let sent = false;
+  //   try {
+  //     setIsLoading(true);
+  //     const endpoints = ["forgot-password", "forgotPassword"];
+  //     let sent = false;
 
-      for (const endpoint of endpoints) {
-        try {
-          await axios.post(
-            `${API_BASE_URL}/api/auth/${endpoint}`,
-            { email: normalizedEmail },
-            { withCredentials: true },
-          );
-          sent = true;
-          break;
-        } catch (error) {
-          if (error?.response?.status !== 404) {
-            throw error;
-          }
-        }
-      }
+  //     for (const endpoint of endpoints) {
+  //       try {
+  //         await axios.post(
+  //           `${API_BASE_URL}/api/auth/${endpoint}`,
+  //           { email: normalizedEmail },
+  //           { withCredentials: true },
+  //         );
+  //         sent = true;
+  //         break;
+  //       } catch (error) {
+  //         if (error?.response?.status !== 404) {
+  //           throw error;
+  //         }
+  //       }
+  //     }
 
-      if (!sent) {
-        throw new Error("Unable to reach forgot password API");
-      }
+  //     if (!sent) {
+  //       throw new Error("Unable to reach forgot password API");
+  //     }
 
-      setFormData((prev) => ({ ...prev, email: normalizedEmail }));
-      showNotification("Reset link sent to your email", "success");
-    } catch (error) {
-      const message =
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to send reset link right now";
-      showNotification(message, "error");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  //     setFormData((prev) => ({ ...prev, email: normalizedEmail }));
+  //     showNotification("Reset link sent to your email", "success");
+  //   } catch (error) {
+  //     const message =
+  //       error?.response?.data?.message ||
+  //       error?.message ||
+  //       "Unable to send reset link right now";
+  //     showNotification(message, "error");
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
+
+  const handleForgotPassword = () => {
+  navigate("/forgot-password");
+};
   const validateSignup = () => {
     const newErrors = {};
 
@@ -644,31 +648,42 @@ const UserSignup = () => {
     setIsLoading(false);
   };
 
-  const handleVerify = async () => {
-    try {
-      setIsVerifying(true);
-      setVerifySuccess(false);
-      const verifyResponse = await axios.post(
-        `${API_BASE_URL}/api/auth/logout-other-devices`,
-        { email: formData.email },
-        { withCredentials: true },
-      );
-      if (verifyResponse.data?.success) {
-        setVerifySuccess(true);
-        setOtpSentForLogin(true);
-        showNotification("OTP sent successfully! Check your email.", "success");
-      }
-    } catch (error) {
-      console.error("Verification error:", error);
-      const errorMessage =
-        error.response?.data?.message ||
-        "Failed to send OTP. Please try again.";
-      setApiError(errorMessage);
-      showNotification(errorMessage, "error");
-    } finally {
-      setIsVerifying(false);
+  // In UserSignup.js, update the handleVerify function:
+
+const handleVerify = async () => {
+  try {
+    setIsVerifying(true);
+    setVerifySuccess(false);
+    
+    // First, send the OTP and logout other devices
+    const verifyResponse = await axios.post(
+      `${API_BASE_URL}/api/auth/logout-other-devices`,
+      { email: formData.email },
+      { withCredentials: true },
+    );
+    
+    if (verifyResponse.data?.success) {
+      // Store email in localStorage for the OTP page to use
+      localStorage.setItem("userEmail", formData.email);
+      
+      // Navigate to OTP verification page
+      navigate("/verify-login-otp", { 
+        state: { 
+          email: formData.email 
+        } 
+      });
     }
-  };
+  } catch (error) {
+    console.error("Verification error:", error);
+    const errorMessage =
+      error.response?.data?.message ||
+      "Failed to send OTP. Please try again.";
+    setApiError(errorMessage);
+    showNotification(errorMessage, "error");
+  } finally {
+    setIsVerifying(false);
+  }
+};
 
   const handleVerifyLoginOtp = async () => {
     if (!loginOtp || loginOtp.length !== 6) {
