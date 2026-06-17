@@ -789,3 +789,112 @@
     transition: none !important;
   }
 }
+
+/* Call Message Styles */
+.call-message-wrapper {
+  margin: 8px 0;
+}
+
+.call-message-wrapper .message-bubble {
+  background: #f0f4ff !important;
+  border: 1px solid #d4e0ff;
+  border-radius: 12px;
+  padding: 10px 16px;
+  max-width: 85%;
+}
+
+.call-message-wrapper.sent .message-bubble {
+  background: #e8f5e9 !important;
+  border-color: #a5d6a7;
+}
+
+.call-message-wrapper.received .message-bubble {
+  background: #f3e5f5 !important;
+  border-color: #ce93d8;
+}
+
+.call-message-wrapper .call-message-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.call-message-wrapper .call-message-icon {
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.call-message-wrapper .call-message-text {
+  font-size: 14px;
+  color: #333;
+}
+
+.call-message-wrapper .message-footer {
+  margin-top: 4px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* Missed Call Styles */
+.call-message-wrapper .missed-call {
+  background: #ffebee !important;
+  border-color: #ef9a9a;
+}
+
+.call-message-wrapper .missed-call .call-message-text {
+  color: #c62828;
+}
+
+/* Completed Call Styles */
+.call-message-wrapper .completed-call {
+  background: #e8f5e9 !important;
+  border-color: #a5d6a7;
+}
+
+.call-message-wrapper .completed-call .call-message-text {
+  color: #2e7d32;
+}
+
+/* Ongoing Call Styles */
+.call-message-wrapper .ongoing-call {
+  background: #fff3e0 !important;
+  border-color: #ffcc80;
+  animation: pulse-border 2s infinite;
+}
+
+.call-message-wrapper .ongoing-call .call-message-text {
+  color: #e65100;
+}
+
+@keyframes pulse-border {
+  0% { border-color: #ffcc80; }
+  50% { border-color: #ff9800; }
+  100% { border-color: #ffcc80; }
+}
+
+/* Loading call history */
+.sms-loading-call-history {
+  text-align: center;
+  padding: 10px;
+  color: #666;
+  font-size: 12px;
+}
+
+/* Redial button in call history item */
+.call-history-redial-btn {
+  background: none;
+  border: 1px solid #4a6cf7;
+  color: #4a6cf7;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.call-history-redial-btn:hover {
+  background: #4a6cf7;
+  color: white;
+}
