@@ -11,10 +11,21 @@ const UserDashboard = lazy(
 const ChatBox = lazy(
   () => import("./Component/UserDashboard/Tab/ChatBox/ChatBox"),
 );
-// const Login = lazy(() => import("./authtication/Login"));
 const RoleSelector = lazy(() => import("./authtication/RoleSelector"));
 const CounselorSignup = lazy(() => import("./authtication/CounselorSignup"));
 const UserSignup = lazy(() => import("./authtication/UserSignup"));
+
+// Add .jsx extension explicitly
+const ForgotPassword = lazy(() => import("./authtication/ForgotPassword.jsx"));
+const ForgotPasswordOTP = lazy(
+  () => import("./authtication/ForgotPasswordOTP.jsx"),
+);
+const ResetPassword = lazy(() => import("./authtication/ResetPassword.jsx"));
+
+// FIX: Change from .js to .jsx (the file is named LoginOtpVerification.jsx)
+const LoginOtpVerification = lazy(
+  () => import("./authtication/LoginOtpVerification.jsx"),
+);
 
 const CounselorDashboard = lazy(
   () => import("./Component/counselor-dashboard/Dashboard/dashboard"),
@@ -32,7 +43,6 @@ function App() {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  // Check screen size on mount and resize
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth <= 768;
@@ -56,11 +66,17 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Leanding />} />
-          {/* <Route path="/login" element={<Login />} /> */}
           <Route path="/role-selector" element={<RoleSelector />} />
           <Route path="/otp-verification" element={<OTPVerification />} />
           <Route path="/user-signup" element={<UserSignup />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/forgot-password-otp" element={<ForgotPasswordOTP />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/counselor-signup" element={<CounselorSignup />} />
+          <Route
+            path="/verify-login-otp"
+            element={<LoginOtpVerification />}
+          />
 
           {/* User Protected Routes */}
           <Route
