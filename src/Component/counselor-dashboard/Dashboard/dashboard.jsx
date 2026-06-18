@@ -546,7 +546,7 @@ export default function CounselorDashboard() {
     { id: "messages", icon: <FaComments />, label: t('messages'), badge: pendingRequests.length },
     { id: "appointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "sessions", icon: <FaVideo />, label: t('sessions'), badge: 0 },
-    { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
+    // { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
     { id: "earnings", icon: <FaMoneyBillWave />, label: t('earnings'), badge: 0 },
     { id: "profile", icon: <FaUser />, label: t('profile'), badge: 0 },
     { id: "settings", icon: <FaCog />, label: t('settings'), badge: 0 },
@@ -661,13 +661,13 @@ export default function CounselorDashboard() {
   />
 )}
 
-        {activeTab === "patients" && (
+        {/* {activeTab === "patients" && (
           <div className="couns-tab-content">
             <div className="couns-work-in-progress">
               The remaining work is currently in progress.
             </div>
           </div>
-        )}
+        )} */}
 
         {activeTab === "earnings" && (
           <div className="couns-tab-content">
@@ -701,14 +701,15 @@ export default function CounselorDashboard() {
         )}
       </div>
 
-      <RequestModal
+      {/* Disabled - using notification bell in Messages tab instead */}
+      {/* <RequestModal
         showRequestModal={showRequestModal}
         currentRequest={currentRequest}
         modalCountdown={modalCountdown}
         loadingRequests={loadingRequests}
         handleAcceptRequest={handleAcceptRequest}
         handleRejectRequest={handleRejectRequest}
-      />
+      /> */}
 
       <LogoutModal
         showLogoutConfirm={showLogoutConfirm}

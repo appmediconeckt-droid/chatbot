@@ -10,6 +10,9 @@ import {
   getAnonymousUserDisplay,
 } from "../../../../utils/anonymousUser";
 import { getPresence } from "../../../../utils/presence";
+import NotificationBell from "./NotificationBell";
+import PendingRequestsModal from "./PendingRequestsModal";
+import { translateMessage } from "../../../../services/messageTranslationService";
 /**
  * SMSList Component - Fetches and displays users/patients list from API
  * Displays anonymous name and gender-based avatar icons (no photos)
@@ -23,6 +26,9 @@ const SMSList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [showPendingModal, setShowPendingModal] = useState(false);
+  const [loadingRequests, setLoadingRequests] = useState(false);
   const navigate = useNavigate();
 
   const handleSessionExpired = useCallback(() => {
@@ -112,121 +118,151 @@ const SMSList = () => {
     });
   };
 
+  // Fetch pending requests
+  const fetchPendingRequests = useCallback(async () => {
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/chat/pending-requests`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPendingRequests(data.requests || []);
+      }
+    } catch (err) {
+      console.error("Error fetching pending requests:", err);
+    }
+  }, []);
+
   // Fetch chats from API
-  useEffect(() => {
-    const fetchChats = async () => {
-      const token =
-        localStorage.getItem("token") || localStorage.getItem("accessToken");
-      if (!token) {
+  const fetchChats = useCallback(async () => {
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) {
+      handleSessionExpired();
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_BASE_URL}/api/chat/chats`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.status === 401) {
         handleSessionExpired();
         return;
       }
-      try {
-        setLoading(true);
-        const response = await fetch(`${API_BASE_URL}/api/chat/chats`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
 
-        if (response.status === 401) {
-          handleSessionExpired();
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // Transform API data to match component structure
-        const transformedUsers = (data.chats || []).map((chat) => {
-          const otherParty = chat.otherParty || {};
-          const anonymousUser = getAnonymousUserDisplay(otherParty);
-          const actualUserId =
-            getAnonymousParticipantId({ ...otherParty, userId: chat.userId }) ||
-            chat.userId;
-          const presence = getPresence(otherParty);
-          const safeOtherParty = {
-            id: actualUserId,
-            _id: actualUserId,
-            userId: actualUserId,
-            anonymous: anonymousUser.name,
-            gender: anonymousUser.gender,
-            avatar: anonymousUser.avatar,
-            avatarUrl: anonymousUser.avatarUrl,
-            isOnline: presence.isOnline,
-            online: presence.isOnline,
-            lastSeen: presence.lastSeen,
-          };
-
-          const lastMessageTime =
-            chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
-          const chatStatus = String(chat.status || "pending").toLowerCase();
-          let specialization = "Patient";
-          if (
-            Array.isArray(otherParty.specialization) &&
-            otherParty.specialization[0]
-          ) {
-            specialization = otherParty.specialization[0];
-          } else if (typeof otherParty.specialization === "string") {
-            specialization = otherParty.specialization;
-          }
-
-          return {
-            id: chat.chatId,
-            _id: actualUserId,
-            receiverId: actualUserId,
-            user: safeOtherParty,
-            chatId: chat.chatId,
-            name: anonymousUser.name,
-            gender: anonymousUser.gender,
-            avatar: anonymousUser.avatar,
-            avatarUrl: anonymousUser.avatarUrl,
-            lastMessage: chat.lastMessage?.content || t('no_messages'),
-            time: formatTime(lastMessageTime),
-            fullDateTime: formatFullDateTime(lastMessageTime),
-            lastActivityAt: lastMessageTime,
-            unread: chat.unreadCount || 0,
-            status: chatStatus,
-            online: presence.isOnline,
-            isOnline: presence.isOnline,
-            lastSeen: presence.lastSeen,
-            phone: "Not available",
-            email: "Not available",
-            specialization,
-            rating: otherParty.rating,
-            isExpired: chat.isExpired,
-            expiresAt: chat.expiresAt,
-            startedAt: chat.startedAt,
-            acceptedAt: chat.acceptedAt,
-            rejectedAt: chat.rejectedAt,
-            cancelledAt: chat.cancelledAt,
-          };
-        });
-
-        transformedUsers.sort((a, b) => {
-          const aTime = a.lastActivityAt
-            ? new Date(a.lastActivityAt).getTime()
-            : 0;
-          const bTime = b.lastActivityAt
-            ? new Date(b.lastActivityAt).getTime()
-            : 0;
-          return bTime - aTime;
-        });
-
-        setOriginalUsers(transformedUsers);
-        setUsers(transformedUsers);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching chats:", err);
-        setError(err.message);
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
 
+      const data = await response.json();
+
+      // Transform API data to match component structure
+      const transformedUsers = (data.chats || []).map((chat) => {
+        const otherParty = chat.otherParty || {};
+        const anonymousUser = getAnonymousUserDisplay(otherParty);
+        const actualUserId =
+          getAnonymousParticipantId({ ...otherParty, userId: chat.userId }) ||
+          chat.userId;
+        const presence = getPresence(otherParty);
+        const safeOtherParty = {
+          id: actualUserId,
+          _id: actualUserId,
+          userId: actualUserId,
+          anonymous: anonymousUser.name,
+          gender: anonymousUser.gender,
+          avatar: anonymousUser.avatar,
+          avatarUrl: anonymousUser.avatarUrl,
+          isOnline: presence.isOnline,
+          online: presence.isOnline,
+          lastSeen: presence.lastSeen,
+        };
+
+        const lastMessageTime =
+          chat.lastMessage?.createdAt || chat.updatedAt || chat.startedAt;
+        const chatStatus = String(chat.status || "pending").toLowerCase();
+        let specialization = "Patient";
+        if (
+          Array.isArray(otherParty.specialization) &&
+          otherParty.specialization[0]
+        ) {
+          specialization = otherParty.specialization[0];
+        } else if (typeof otherParty.specialization === "string") {
+          specialization = otherParty.specialization;
+        }
+
+        return {
+          id: chat.chatId,
+          _id: actualUserId,
+          receiverId: actualUserId,
+          user: safeOtherParty,
+          chatId: chat.chatId,
+          name: anonymousUser.name,
+          gender: anonymousUser.gender,
+          avatar: anonymousUser.avatar,
+          avatarUrl: anonymousUser.avatarUrl,
+          lastMessage: chat.lastMessage?.content || "No messages",
+          time: formatTime(lastMessageTime),
+          fullDateTime: formatFullDateTime(lastMessageTime),
+          lastActivityAt: lastMessageTime,
+          unread: chat.unreadCount || 0,
+          status: chatStatus,
+          online: presence.isOnline,
+          isOnline: presence.isOnline,
+          lastSeen: presence.lastSeen,
+          phone: "Not available",
+          email: "Not available",
+          specialization,
+          rating: otherParty.rating,
+          isExpired: chat.isExpired,
+          expiresAt: chat.expiresAt,
+          startedAt: chat.startedAt,
+          acceptedAt: chat.acceptedAt,
+          rejectedAt: chat.rejectedAt,
+          cancelledAt: chat.cancelledAt,
+        };
+      });
+
+      transformedUsers.sort((a, b) => {
+        const aTime = a.lastActivityAt
+          ? new Date(a.lastActivityAt).getTime()
+          : 0;
+        const bTime = b.lastActivityAt
+          ? new Date(b.lastActivityAt).getTime()
+          : 0;
+        return bTime - aTime;
+      });
+
+      setOriginalUsers(transformedUsers);
+      setUsers(transformedUsers);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching chats:", err);
+      setError(err.message);
+      setLoading(false);
+    }
+  }, [handleSessionExpired]);
+
+  useEffect(() => {
     fetchChats();
+    fetchPendingRequests();
+
+    // Set up polling for pending requests (every 5 seconds)
+    const pollInterval = setInterval(() => {
+      fetchPendingRequests();
+    }, 5000);
+
+    return () => clearInterval(pollInterval);
   }, []);
 
   useEffect(() => {
@@ -319,6 +355,65 @@ const SMSList = () => {
     });
   };
 
+  const handleAcceptRequest = async (requestId) => {
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setLoadingRequests(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/chat/accept/${requestId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        // Remove accepted request from pending
+        setPendingRequests((prev) =>
+          prev.filter((req) => req.id !== requestId)
+        );
+        // Refresh chats
+        fetchChats();
+      }
+    } catch (err) {
+      console.error("Error accepting request:", err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) return;
+
+    setLoadingRequests(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/chat/reject/${requestId}`, {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reason: "Not available" }),
+      });
+
+      if (response.ok) {
+        // Remove rejected request from pending
+        setPendingRequests((prev) =>
+          prev.filter((req) => req.id !== requestId)
+        );
+      }
+    } catch (err) {
+      console.error("Error rejecting request:", err);
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
   const totalUnread = users.reduce((acc, user) => acc + user.unread, 0);
 
   const getStatusBadgeText = (status) => {
@@ -366,10 +461,26 @@ const SMSList = () => {
           <h2>Messages</h2>
           <span className="smslist-total">{users.length} conversations</span>
         </div>
-        {totalUnread > 0 && (
-          <span className="smslist-unread-badge">{totalUnread} unread</span>
-        )}
+        <div className="smslist-header-actions">
+          <NotificationBell
+            pendingCount={pendingRequests.length}
+            onClick={() => setShowPendingModal(true)}
+          />
+          {totalUnread > 0 && (
+            <span className="smslist-unread-badge">{totalUnread} unread</span>
+          )}
+        </div>
       </div>
+
+      {/* Pending Requests Modal */}
+      <PendingRequestsModal
+        isOpen={showPendingModal}
+        requests={pendingRequests}
+        onClose={() => setShowPendingModal(false)}
+        onAccept={handleAcceptRequest}
+        onReject={handleRejectRequest}
+        loading={loadingRequests}
+      />
 
       {/* Search Bar */}
       <div className="smslist-search">

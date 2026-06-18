@@ -30,6 +30,12 @@
   flex-wrap: wrap;
 }
 
+.smslist-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
 .smslist-title-section {
   display: flex;
   align-items: center;

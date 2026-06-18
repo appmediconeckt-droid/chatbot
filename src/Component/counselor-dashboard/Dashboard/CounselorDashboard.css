@@ -55,7 +55,7 @@ body {
 }
 
 .couns-sidebar-header {
-  padding: 2rem 1.5rem;
+  padding: 1.5rem 1rem;
   border-bottom: 1px solid var(--couns-border);
 }
 
@@ -70,7 +70,8 @@ body {
   height: 80px;
   border-radius: 50%;
   object-fit: cover;
-  margin-bottom: 1rem;
+  margin-left: 100px;
+
 }
 
 .couns-counselor-profile h3 {
@@ -78,6 +79,7 @@ body {
   font-weight: 600;
   margin-bottom: 0.25rem;
   word-break: break-word;
+  margin-left: 80px ;
 }
 
 .couns-counselor-profile p {
