@@ -1220,7 +1220,7 @@ const SMSInput = () => {
               ></span>
             </div>
             <div className="smsinput-user-details">
-              <h3>User</h3>
+              <h3>{USER_NAME}</h3>
               <p className="smsinput-user-status">
                 {remotePresence.isOnline ? t('online') : t('offline')}
               </p>

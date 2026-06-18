@@ -89,6 +89,12 @@ const isMissedCall = (call) => {
   return status === "missed" || status === "rejected" || status === "cancelled";
 };
 
+const getAvatarIcon = (gender) => {
+  if (gender === "male") return "👨";
+  if (gender === "female") return "👩";
+  return "👤";
+};
+
 const CallHistory = ({ currentUser }) => {
   const { t } = useUserTranslation();
   const [activeFilter, setActiveFilter] = useState("all");
@@ -196,7 +202,7 @@ const CallHistory = ({ currentUser }) => {
           const missed = isMissedCall(call);
           const counterPartyType = normalizeRole(call.withType);
 
-          let profilePic = "👨‍⚕️";
+          let profilePic = "👤";
           let counterPartyProfile = null;
           // Anonymous names instead of real names
           let displayName = counterPartyType === "counsellor" ? "Counselor" : "User";
@@ -206,12 +212,14 @@ const CallHistory = ({ currentUser }) => {
             if (counterPartyType === "counsellor") {
               counterPartyProfile = await fetchCounselorProfile(call.withId, token);
               if (counterPartyProfile) {
-                profilePic = counterPartyProfile.profilePhoto || "👨‍⚕️";
+                // Use profile photo if available, else use gender-based emoji
+                profilePic = counterPartyProfile.profilePhoto || getAvatarIcon(counterPartyProfile.gender);
               }
             } else if (counterPartyType === "user") {
               counterPartyProfile = await fetchUserProfile(call.withId, token);
               if (counterPartyProfile) {
-                profilePic = counterPartyProfile.profilePhoto || "👤";
+                // Use profile photo if available, else use gender-based emoji
+                profilePic = counterPartyProfile.profilePhoto || getAvatarIcon(counterPartyProfile.gender);
               }
             }
           }
@@ -315,7 +323,7 @@ const CallHistory = ({ currentUser }) => {
           name: anonymousName,
           type: resolvedCallMode,
           callType: resolvedCallMode,
-          profilePic: counterPartyProfile?.profilePhoto || receiverData.profilePhoto || (counterPartyType === "counsellor" ? "👨‍⚕️" : "👤"),
+          profilePic: counterPartyProfile?.profilePhoto || receiverData.profilePhoto || getAvatarIcon(counterPartyProfile?.gender || receiverData?.gender),
           status: response.data.status || "ringing",
           apiCallData: callData,
           initiator: callData.initiator,
