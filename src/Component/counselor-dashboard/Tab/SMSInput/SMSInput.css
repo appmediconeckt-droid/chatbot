@@ -487,8 +487,32 @@
   box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
-.attach-btn,
 .camera-btn {
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 50%;
+  color: #3b82f6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.camera-btn:hover {
+  background: #dbeafe;
+  border-color: #1e40af;
+  color: #1e40af;
+}
+
+.camera-btn:active {
+  transform: scale(0.9);
+  background: #bfdbfe;
+}
+
+.attach-btn {
   background: none;
   border: none;
   font-size: 1.2rem;
@@ -501,8 +525,7 @@
   justify-content: center;
 }
 
-.attach-btn:active,
-.camera-btn:active {
+.attach-btn:active {
   transform: scale(0.9);
 }
 

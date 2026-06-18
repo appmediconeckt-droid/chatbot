@@ -2,9 +2,10 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaPhoneAlt, FaSpinner, FaVideo } from "react-icons/fa";
+import { FaArrowLeft, FaPhoneAlt, FaSpinner, FaVideo, FaCamera } from "react-icons/fa";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
+import PhotoPreviewModal from "../../../common/PhotoPreviewModal/PhotoPreviewModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import useRingtone from "../../../../hooks/useRingtone";
@@ -71,6 +72,8 @@ const ChatBox = () => {
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const [ratingTarget, setRatingTarget] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoSending, setPhotoSending] = useState(false);
   const ratingPromptedRef = useRef(false);
   const sessionChatIdRef = useRef(chatId || null);
 
@@ -1220,23 +1223,57 @@ const ChatBox = () => {
     { id: 4, label: t('chat_details'), icon: "📋" }
   ], [lang]);
   const handleFileAttach = () => { if (isSending) return; fileInputRef.current?.click(); };
+
+  const handleCameraClick = () => {
+    if (isSending) return;
+    cameraInputRef.current?.click();
+  };
+
+  const handleSendPhoto = async () => {
+    if (!photoPreview) return;
+    setPhotoSending(true);
+    try {
+      const base64Data = photoPreview.split(",")[1];
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: "image/jpeg" });
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
+      await sendMessageToAPI({ file });
+      setPhotoPreview(null);
+    } finally {
+      setPhotoSending(false);
+    }
+  };
   
   const handleFileSelected = async (e) => {
     const file = e.target.files?.[0];
     if (!file || isSending) return;
-    const tempFileMessage = { id: `temp_file_${Date.now()}`, text: file.name, sender: "user", senderRole: "user", time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE", status: "sending", isTemporary: true };
-    setMessages((prev) => [...prev, tempFileMessage]);
-    setIsSending(true);
-    try {
-      await sendMessageToAPI({ file });
-      setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
-    } catch (error) {
-      console.error("Error sending file:", error);
-      setMessages((prev) => prev.map((msg) => msg.id === tempFileMessage.id ? { ...msg, status: "error", error: "Failed to send file" } : msg));
-    } finally {
-      setIsSending(false);
-      e.target.value = "";
+
+    if (e.target === cameraInputRef.current) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhotoPreview(event.target?.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const tempFileMessage = { id: `temp_file_${Date.now()}`, text: file.name, sender: "user", senderRole: "user", time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE", status: "sending", isTemporary: true };
+      setMessages((prev) => [...prev, tempFileMessage]);
+      setIsSending(true);
+      try {
+        await sendMessageToAPI({ file });
+        setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+      } catch (error) {
+        console.error("Error sending file:", error);
+        setMessages((prev) => prev.map((msg) => msg.id === tempFileMessage.id ? { ...msg, status: "error", error: "Failed to send file" } : msg));
+      } finally {
+        setIsSending(false);
+        e.target.value = "";
+      }
     }
+    e.target.value = "";
   };
   const handleInputChange = (e) => { setNewMessage(e.target.value); setIsTyping(e.target.value.trim() !== ""); if (e.target.value.trim() !== "") handleTypingIndicator(); };
 
@@ -1386,7 +1423,10 @@ const ChatBox = () => {
         <footer className="chatInputArea">
           <div className="chatInputGroup">
             <input ref={fileInputRef} type="file" className="chatHiddenFileInput" onChange={handleFileSelected} style={{ display: "none" }} />
-            <input ref={cameraInputRef} type="file" accept="image/*" capture="environment" className="chatHiddenFileInput" onChange={handleFileSelected} style={{ display: "none" }} />
+            <input ref={cameraInputRef} type="file" capture="environment" className="chatHiddenFileInput" onChange={handleFileSelected} style={{ display: "none" }} />
+            <button className="chatCameraBtn" onClick={handleCameraClick} disabled={isSending} aria-label="Take photo or select from gallery">
+              <span className="cameraIcon" aria-hidden="true">📷</span>
+            </button>
             <button className="chatAttachBtn" onClick={handleFileAttach} disabled={isSending} aria-label="Attach file">
               <span className="attachIcon" aria-hidden="true">📎</span>
             </button>
@@ -1402,6 +1442,15 @@ const ChatBox = () => {
           </div>
         </footer>
       </div>
+
+      {/* Photo Preview Modal */}
+      <PhotoPreviewModal
+        isOpen={!!photoPreview}
+        photoSrc={photoPreview}
+        onSend={handleSendPhoto}
+        onCancel={() => setPhotoPreview(null)}
+        loading={photoSending}
+      />
 
       {/* Call Modals */}
       <VideoCallModal

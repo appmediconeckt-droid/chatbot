@@ -2,11 +2,12 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaPhoneAlt, FaSpinner, FaVideo } from "react-icons/fa";
+import { FaPhoneAlt, FaSpinner, FaVideo, FaCamera } from "react-icons/fa";
 import "./SMSInput.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
+import PhotoPreviewModal from "../../../common/PhotoPreviewModal/PhotoPreviewModal";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 import { useCounselorTranslation, useCounselorApiTranslation } from "../../../../i18n/LanguageContext";
@@ -55,6 +56,8 @@ const SMSInput = () => {
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoSending, setPhotoSending] = useState(false);
 
   const handleSessionExpired = () => {
     localStorage.clear();
@@ -439,38 +442,67 @@ const SMSInput = () => {
     cameraInputRef.current?.click();
   };
 
+  const handleSendPhoto = async () => {
+    if (!photoPreview) return;
+    setPhotoSending(true);
+    try {
+      const base64Data = photoPreview.split(",")[1];
+      const binaryString = atob(base64Data);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: "image/jpeg" });
+      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
+      await sendMessageToAPI({ file });
+      setPhotoPreview(null);
+    } finally {
+      setPhotoSending(false);
+    }
+  };
+
   const handleFileSelected = async (e) => {
     const file = e.target.files?.[0];
     if (!file || isSending || !selectedUser) return;
-    const tempFileMessage = {
-      id: `temp_file_${Date.now()}`,
-      text: file.name,
-      sender: "me",
-      senderRole: "counsellor",
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE",
-      status: "sending",
-      isTemporary: true,
-    };
-    setMessages((prev) => [...prev, tempFileMessage]);
-    setIsSending(true);
-    try {
-      await sendMessageToAPI({ file });
-      setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
-    } catch (err) {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.id === tempFileMessage.id ? { ...msg, status: "error" } : msg,
-        ),
-      );
-      setError("Failed to send file");
-    } finally {
-      setIsSending(false);
-      e.target.value = "";
+
+    if (e.target === cameraInputRef.current) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPhotoPreview(event.target?.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      const tempFileMessage = {
+        id: `temp_file_${Date.now()}`,
+        text: file.name,
+        sender: "me",
+        senderRole: "counsellor",
+        time: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+        contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE",
+        status: "sending",
+        isTemporary: true,
+      };
+      setMessages((prev) => [...prev, tempFileMessage]);
+      setIsSending(true);
+      try {
+        await sendMessageToAPI({ file });
+        setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+      } catch (err) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === tempFileMessage.id ? { ...msg, status: "error" } : msg
+          )
+        );
+        setError("Failed to send file");
+      } finally {
+        setIsSending(false);
+        e.target.value = "";
+      }
     }
+    e.target.value = "";
   };
 
   const initiateStreamCall = async (requestedCallType = "video") => {
@@ -1328,7 +1360,6 @@ const SMSInput = () => {
           <input
             ref={cameraInputRef}
             type="file"
-            accept="image/*"
             capture="environment"
             style={{ display: "none" }}
             onChange={handleFileSelected}
@@ -1392,6 +1423,15 @@ const SMSInput = () => {
         onAccept={handleJoinIncomingCall}
         onReject={handleRejectIncomingCall}
         fallbackName="Anonymous User"
+      />
+
+      {/* Photo Preview Modal */}
+      <PhotoPreviewModal
+        isOpen={!!photoPreview}
+        photoSrc={photoPreview}
+        onSend={handleSendPhoto}
+        onCancel={() => setPhotoPreview(null)}
+        loading={photoSending}
       />
     </div>
   );
