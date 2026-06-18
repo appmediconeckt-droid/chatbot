@@ -2890,3 +2890,270 @@ button:focus {
   background: #e2e8f0;
   color: #0f172a;
 }
+
+
+/* Add to CounselorDashboard.css */
+
+/* Sessions Tab Styles */
+.stitch-session-layout {
+  padding: 24px;
+  background: #f8fafc;
+  min-height: 100vh;
+}
+
+.stitch-session-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.stitch-session-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.stitch-session-header-left h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+}
+
+.stitch-session-count {
+  background: #4648d4;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stitch-session-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.stitch-session-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.stitch-session-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.stitch-session-card-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.stitch-session-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #eef2ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: #4648d4;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.stitch-session-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stitch-session-info h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 4px 0;
+}
+
+.stitch-session-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.stitch-session-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 12px;
+  text-transform: uppercase;
+}
+
+.stitch-session-status.today {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.stitch-session-status.upcoming {
+  background: #dbeafe;
+  color: #2563eb;
+}
+
+.stitch-session-status.past {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+.stitch-session-type {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 10px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  color: #475569;
+  text-transform: uppercase;
+}
+
+.stitch-session-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.stitch-session-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+.stitch-session-detail-icon {
+  color: #4648d4;
+  font-size: 14px;
+}
+
+.stitch-session-notes {
+  margin: 12px 0;
+  padding: 12px;
+  background: #fef3c7;
+  border-left: 3px solid #f59e0b;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #92400e;
+  font-style: italic;
+}
+
+.stitch-session-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.stitch-btn-start-call {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #4648d4;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stitch-btn-start-call:hover {
+  background: #3537b8;
+  transform: translateY(-1px);
+}
+
+.stitch-btn-reschedule {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.stitch-btn-reschedule:hover {
+  background: #e2e8f0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stitch-session-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stitch-session-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .stitch-session-actions {
+    flex-direction: column;
+  }
+}
+
+/* Add to CounselorDashboard.css */
+.stitch-session-today-badge {
+  background: #dcfce7;
+  color: #16a34a;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Update session count style */
+.stitch-session-count {
+  background: #4648d4;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Update header for mobile */
+@media (max-width: 768px) {
+  .stitch-session-header-left {
+    flex-wrap: wrap;
+  }
+  
+  .stitch-session-today-badge {
+    font-size: 11px;
+    padding: 2px 10px;
+  }
+}

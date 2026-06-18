@@ -1,0 +1,33 @@
+.chatMsgText {
+  margin: 0;
+  padding: 0;
+  word-wrap: break-word;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.translating-indicator {
+  display: inline-block;
+  font-size: 0.85em;
+  opacity: 0.7;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.message-text {
+  margin: 0;
+  padding: 0;
+  word-wrap: break-word;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

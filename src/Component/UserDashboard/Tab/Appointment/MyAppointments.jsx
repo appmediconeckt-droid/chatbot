@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
-
+import './MyAppointments.css'; // Import the CSS file for styling
 const MyAppointments = () => {
   const navigate = useNavigate();
   const { t } = useUserTranslation();

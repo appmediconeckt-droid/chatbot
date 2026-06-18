@@ -9,14 +9,15 @@ import socketService from "../../../../services/socketService";
 import VideoCallModal from "../../../UserDashboard/Tab/CallModal/VideoCallModal";
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
-import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
-import { translateMessage } from "../../../../services/messageTranslationService";
+import { useCounselorTranslation, useCounselorApiTranslation } from "../../../../i18n/LanguageContext";
 import { getPresence } from "../../../../utils/presence";
+import TranslatedMessage from "../../../common/TranslatedMessage";
 
 const SMSInput = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, lang } = useCounselorTranslation();
+  const { translate } = useCounselorApiTranslation();
   const [message, setMessage] = useState("");
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -1276,7 +1277,7 @@ const SMSInput = () => {
                     >
                       {msg.attachmentName || "Open image"}
                     </a>
-                    {msg.text && <p className="message-text">{msg.text}</p>}
+                    {msg.text && <div className="message-text"><TranslatedMessage text={msg.text} translate={translate} lang={lang} /></div>}
                   </>
                 ) : msg.contentType === "FILE" && msg.attachmentUrl ? (
                   <>
@@ -1288,10 +1289,10 @@ const SMSInput = () => {
                     >
                       {msg.attachmentName || msg.text || "Open attachment"}
                     </a>
-                    {msg.text && <p className="message-text">{msg.text}</p>}
+                    {msg.text && <div className="message-text"><TranslatedMessage text={msg.text} translate={translate} lang={lang} /></div>}
                   </>
                 ) : (
-                  <p className="message-text">{msg.text}</p>
+                  <div className="message-text"><TranslatedMessage text={msg.text} translate={translate} lang={lang}  /></div>
                 )}
                 <div className="message-footer">
                   <span className="message-time">{msg.time}</span>
