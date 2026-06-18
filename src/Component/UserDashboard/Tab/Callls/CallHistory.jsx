@@ -213,15 +213,25 @@ const CallHistory = ({ currentUser }) => {
           }
 
           // Convert to anonymous user - SAME AS MESSAGESOU
-          const anonymousUser = getAnonymousUserDisplay(counterPartyProfile);
+          const dataForAnonymous = {
+            ...counterPartyProfile,
+            _id: call.withId,
+            userId: call.withId,
+            id: call.withId,
+          };
+
+          const anonymousUser = getAnonymousUserDisplay(dataForAnonymous);
+
+          console.log("DEBUG - counterPartyProfile:", counterPartyProfile);
+          console.log("DEBUG - anonymousUser result:", anonymousUser);
 
           const displayUser = {
             ...counterPartyProfile,
-            userId: getAnonymousParticipantId(counterPartyProfile),
-            name: anonymousUser.name,
-            avatar: anonymousUser.avatar,
-            avatarUrl: anonymousUser.avatarUrl,
-            gender: anonymousUser.gender,
+            userId: getAnonymousParticipantId(dataForAnonymous),
+            name: anonymousUser.name || "User",
+            avatar: anonymousUser.avatar || "👤",
+            avatarUrl: anonymousUser.avatarUrl || null,
+            gender: anonymousUser.gender || "other",
           };
 
           return {
@@ -247,7 +257,7 @@ const CallHistory = ({ currentUser }) => {
               Number(call.duration) > 0
                 ? formatCallDuration(call.duration)
                 : null,
-            profilePic: displayUser.avatarUrl || displayUser.avatar,
+            profilePic: displayUser.avatar || "👤",
             missed,
             counterPartyId: call.withId,
             counterPartyType: normalizeRole(call.withType),
@@ -317,14 +327,21 @@ const CallHistory = ({ currentUser }) => {
         const counterPartyProfile = callEntry?.counterPartyProfile;
 
         // Convert to anonymous user - SAME AS MESSAGESOU
-        const anonymousUser = getAnonymousUserDisplay(counterPartyProfile || receiverData);
+        const dataForAnonymous = {
+          ...(counterPartyProfile || receiverData),
+          _id: receiverId,
+          userId: receiverId,
+          id: receiverId,
+        };
+
+        const anonymousUser = getAnonymousUserDisplay(dataForAnonymous);
 
         const displayUser = {
           ...counterPartyProfile,
-          name: anonymousUser.name,
-          avatar: anonymousUser.avatar,
-          avatarUrl: anonymousUser.avatarUrl,
-          gender: anonymousUser.gender,
+          name: anonymousUser.name || "User",
+          avatar: anonymousUser.avatar || "👤",
+          avatarUrl: anonymousUser.avatarUrl || null,
+          gender: anonymousUser.gender || "other",
         };
 
         setSelectedCall({
@@ -511,23 +528,9 @@ const CallHistory = ({ currentUser }) => {
                   tabIndex={0}
                   onKeyPress={(e) => e.key === "Enter" && openCallModal(call)}
                 >
-                  {/* Profile Picture */}
+                  {/* Profile Picture - Anonymous Avatar Only */}
                   <div className="call-avatar">
-                    {call.profilePic && typeof call.profilePic === 'string' && (call.profilePic.startsWith('http') || call.profilePic.startsWith('/')) ? (
-                      <img
-                        src={call.profilePic}
-                        alt={call.name}
-                        className="call-avatar-img"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          const emojiSpan = e.target.parentElement?.querySelector('.call-avatar-emoji');
-                          if (emojiSpan) emojiSpan.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    {!call.profilePic || (typeof call.profilePic === 'string' && !call.profilePic.startsWith('http') && !call.profilePic.startsWith('/')) ? (
-                      <span className="call-avatar-emoji">{call.profilePic || "👨‍⚕️"}</span>
-                    ) : null}
+                    <span className="call-avatar-emoji">{call.avatar || call.profilePic || "👤"}</span>
                   </div>
 
                   {/* Call Info */}
