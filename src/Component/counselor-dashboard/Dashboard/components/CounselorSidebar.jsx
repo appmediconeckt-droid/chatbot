@@ -64,20 +64,6 @@ export default function CounselorSidebar({
                   <span>{counselorData.phoneNumber}</span>
                 </p>
               )}
-
-              {/* Specialization */}
-              {counselorData?.specialization && (
-                <p className="couns-sidebar-meta" title={counselorData.specialization}>
-                  <strong>{t('specialization')}:</strong> {counselorData.specialization}
-                </p>
-              )}
-
-              {/* Experience */}
-              {counselorData?.experience && (
-                <p className="couns-sidebar-meta">
-                  <strong>{t('experience')}:</strong> {counselorData.experience}
-                </p>
-              )}
             </div>
           </div>
         </div>
