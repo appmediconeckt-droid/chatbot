@@ -43,13 +43,13 @@ export default function CounselorSidebar({
               <strong>{t('specialization')}:</strong>{" "}
               {counselorData?.specialization || t('not_specified')}
             </p>
-            <p>
+            {/* <p>
               <strong>{t('email')}:</strong> {counselorData?.email || t('not_specified')}
             </p>
             <p>
               <strong>{t('phone')}:</strong>{" "}
               {counselorData?.phoneNumber || t('not_specified')}
-            </p>
+            </p> */}
             <p>
               <strong>{t('experience')}:</strong>{" "}
               {counselorData?.experience || `0 ${t('years')}`}
