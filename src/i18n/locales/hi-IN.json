@@ -443,5 +443,17 @@
   "welcome": "स्वागत है",
   "years": "साल",
   "yesterday": "कल",
-  "yrs": "वर्ष"
+  "yrs": "वर्ष",
+  "confirmed_sessions": "पुष्टि किए गए सत्र",
+  "showing_for": "के लिए दिखा रहे हैं",
+  "no_sessions_for_date": "इस तारीख के लिए कोई सत्र नहीं",
+  "no_confirmed_sessions": "कोई पुष्टि किए गए सत्र नहीं",
+  "today": "आज",
+  "session_duration": "अवधि",
+  "minutes": "मिनट",
+  "start_video_call": "वीडियो कॉल शुरू करें",
+  "reschedule": "पुनर्निर्धारित करें",
+  "no_appointments_for_date": "इस तारीख के लिए कोई अपॉइंटमेंट नहीं",
+  "no_confirmed_appointments_for_date": "इस तारीख के लिए कोई पुष्टि किए गए अपॉइंटमेंट नहीं"
+ 
 }

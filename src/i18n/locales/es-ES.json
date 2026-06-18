@@ -443,5 +443,17 @@
   "welcome": "Bienvenido",
   "years": "Años",
   "yesterday": "Ayer",
-  "yrs": "Años"
+  "yrs": "Años",
+  "confirmed_sessions": "Sesiones Confirmadas",
+  "showing_for": "Mostrando para",
+  "no_sessions_for_date": "No hay sesiones para",
+  "no_confirmed_sessions": "No hay sesiones confirmadas",
+  "today": "Hoy",
+  "session_duration": "Duración",
+  "minutes": "minutos",
+  "start_video_call": "Iniciar Videollamada",
+  "reschedule": "Reprogramar",
+  "no_appointments_for_date": "No hay citas para",
+  "no_confirmed_appointments_for_date": "No hay citas confirmadas para"
+ 
 }
