@@ -374,6 +374,7 @@ import { API_BASE_URL } from "../../../axiosConfig";
 import Dashboard from "../Tab/CounselorDashboard/Dashboardcou";
 import Messagesou from "../Tab/Messages/Messagesou";
 import CounselorProfile from "../Tab/Profile-Con/CounselorProfile";
+import CallHistory from "../../UserDashboard/Tab/Callls/CallHistory";
 import VideoCallModal from "../../UserDashboard/Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
 import LocationNoticeToast from "../../common/LocationNoticeToast";
@@ -546,6 +547,7 @@ export default function CounselorDashboard() {
     { id: "messages", icon: <FaComments />, label: t('messages'), badge: pendingRequests.length },
     { id: "appointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "sessions", icon: <FaVideo />, label: t('sessions'), badge: 0 },
+    { id: "call_history", icon: <FaVideo />, label: t('call_history'), badge: 0 },
     // { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
     { id: "earnings", icon: <FaMoneyBillWave />, label: t('earnings'), badge: 0 },
     { id: "profile", icon: <FaUser />, label: t('profile'), badge: 0 },
@@ -660,6 +662,12 @@ export default function CounselorDashboard() {
     handleInitiateVideoCall={handleInitiateVideoCall}
   />
 )}
+
+        {activeTab === "call_history" && (
+          <div className="couns-tab-content">
+            <CallHistory currentUser={{ id: localStorage.getItem("counsellorId"), role: "counsellor" }} />
+          </div>
+        )}
 
         {/* {activeTab === "patients" && (
           <div className="couns-tab-content">
