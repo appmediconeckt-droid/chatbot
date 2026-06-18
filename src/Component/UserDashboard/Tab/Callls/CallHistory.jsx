@@ -5,6 +5,10 @@ import "./CallHistory.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
+import {
+  getAnonymousUserAvatar,
+  getAnonymousUserDisplay,
+} from "../../../../utils/anonymousUser";
 
 const normalizeRole = (role) => {
   const normalized = String(role || "")
@@ -139,6 +143,28 @@ const CallHistory = ({ currentUser }) => {
     }
   }, []);
 
+  const fetchUserProfile = useCallback(async (userId, token) => {
+    if (!userId) return null;
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/auth/users/${userId}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+      const user = response.data?.user || response.data;
+      if (!user) return null;
+
+      return {
+        ...user,
+        profilePhoto: getProfilePhotoUrl(user.profilePhoto),
+      };
+    } catch (error) {
+      console.warn(`Failed to fetch user profile for ${userId}:`, error);
+      return null;
+    }
+  }, []);
+
   const fetchCallHistory = useCallback(async () => {
     if (!currentUserId) {
       setCallsData([]);
@@ -172,25 +198,34 @@ const CallHistory = ({ currentUser }) => {
           const normalizedType = normalizeCallType(call.type);
           const direction = getCallDirection(call);
           const missed = isMissedCall(call);
-          const readableName =
-            call.with || call.withName || call.withDisplayName || "Participant";
+          const counterPartyType = normalizeRole(call.withType);
 
-          let profilePic = "👨‍⚕️";
-          let counselorProfile = null;
+          let counterPartyProfile = null;
 
-          // Fetch counselor profile if this is a call with a counselor
-          if (normalizeRole(call.withType) === "counsellor" && call.withId) {
-            counselorProfile = await fetchCounselorProfile(call.withId, token);
-            if (counselorProfile) {
-              profilePic = counselorProfile.profilePhoto || "👨‍⚕️";
+          // Fetch profile to get avatar/photo
+          if (call.withId) {
+            if (counterPartyType === "counsellor") {
+              counterPartyProfile = await fetchCounselorProfile(call.withId, token);
+            } else if (counterPartyType === "user") {
+              counterPartyProfile = await fetchUserProfile(call.withId, token);
             }
           }
+
+          // Anonymous display - SAME AS MESSAGESOU (getAnonymousUserDisplay).
+          // Name = generated anonymous name; avatar = gender-based emoji.
+          // Avatar uses emoji only (never avatarUrl) so the real photo never leaks.
+          const anonymousUser = getAnonymousUserDisplay(counterPartyProfile);
+          const anonymousName = anonymousUser.name;
+          const anonymousAvatar =
+            anonymousUser.avatar || getAnonymousUserAvatar(counterPartyProfile);
 
           return {
             id: call.id || `${timestamp || "call"}_${index}`,
             callId: call.id,
             roomId: call.roomId,
-            name: counselorProfile?.fullName || counselorProfile?.name || readableName,
+            name: anonymousName,
+            avatar: anonymousAvatar,
+            gender: anonymousUser.gender,
             type: normalizedType,
             status: missed ? "missed" : direction,
             rawStatus: String(call.status || "").toLowerCase(),
@@ -206,14 +241,13 @@ const CallHistory = ({ currentUser }) => {
               Number(call.duration) > 0
                 ? formatCallDuration(call.duration)
                 : null,
-            profilePic,
+            profilePic: anonymousAvatar,
             missed,
             counterPartyId: call.withId,
-            counterPartyType: normalizeRole(call.withType),
+            counterPartyType,
             role: call.role,
             timestamp,
             apiCallData: call,
-            counselorProfile,
           };
         }),
       );
@@ -229,7 +263,7 @@ const CallHistory = ({ currentUser }) => {
     } finally {
       setIsLoadingCalls(false);
     }
-  }, [currentUserId, fetchCounselorProfile]);
+  }, [currentUserId, fetchCounselorProfile, fetchUserProfile]);
 
   useEffect(() => {
     void fetchCallHistory();
@@ -272,23 +306,19 @@ const CallHistory = ({ currentUser }) => {
         }
 
         const callData = response.data.callData || {};
-        const receiverData = callData.receiver || {};
-        const counselorProfile = callEntry?.counselorProfile;
+
+        // Anonymous display - reuse the anonymous name/avatar from the list entry.
+        const anonymousName = callEntry?.name || "Anonymous User";
+        const anonymousAvatar = callEntry?.avatar || "👤";
 
         setSelectedCall({
           id: callData.id || response.data.callId,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name:
-            counselorProfile?.fullName ||
-            counselorProfile?.name ||
-            receiverData.displayName ||
-            receiverData.fullName ||
-            callEntry?.name ||
-            "Participant",
+          name: anonymousName,
           type: resolvedCallMode,
           callType: resolvedCallMode,
-          profilePic: counselorProfile?.profilePhoto || receiverData.profilePhoto || "👨‍⚕️",
+          profilePic: anonymousAvatar,
           status: response.data.status || "ringing",
           apiCallData: callData,
           initiator: callData.initiator,
@@ -465,23 +495,9 @@ const CallHistory = ({ currentUser }) => {
                   tabIndex={0}
                   onKeyPress={(e) => e.key === "Enter" && openCallModal(call)}
                 >
-                  {/* Profile Picture */}
+                  {/* Profile Picture - Anonymous Avatar Only */}
                   <div className="call-avatar">
-                    {call.profilePic && typeof call.profilePic === 'string' && (call.profilePic.startsWith('http') || call.profilePic.startsWith('/')) ? (
-                      <img
-                        src={call.profilePic}
-                        alt={call.name}
-                        className="call-avatar-img"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          const emojiSpan = e.target.parentElement?.querySelector('.call-avatar-emoji');
-                          if (emojiSpan) emojiSpan.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    {!call.profilePic || (typeof call.profilePic === 'string' && !call.profilePic.startsWith('http') && !call.profilePic.startsWith('/')) ? (
-                      <span className="call-avatar-emoji">{call.profilePic || "👨‍⚕️"}</span>
-                    ) : null}
+                    <span className="call-avatar-emoji">{call.avatar || call.profilePic || "👤"}</span>
                   </div>
 
                   {/* Call Info */}
