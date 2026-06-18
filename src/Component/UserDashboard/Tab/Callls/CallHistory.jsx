@@ -139,6 +139,28 @@ const CallHistory = ({ currentUser }) => {
     }
   }, []);
 
+  const fetchUserProfile = useCallback(async (userId, token) => {
+    if (!userId) return null;
+    try {
+      const response = await axios.get(
+        `${API_BASE_URL}/api/auth/users/${userId}`,
+        {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        },
+      );
+      const user = response.data?.user || response.data;
+      if (!user) return null;
+
+      return {
+        ...user,
+        profilePhoto: getProfilePhotoUrl(user.profilePhoto),
+      };
+    } catch (error) {
+      console.warn(`Failed to fetch user profile for ${userId}:`, error);
+      return null;
+    }
+  }, []);
+
   const fetchCallHistory = useCallback(async () => {
     if (!currentUserId) {
       setCallsData([]);
@@ -173,16 +195,26 @@ const CallHistory = ({ currentUser }) => {
           const direction = getCallDirection(call);
           const missed = isMissedCall(call);
           const readableName =
-            call.with || call.withName || call.withDisplayName || "Participant";
+            call.with || call.withName || call.withDisplayName || call.withEmail || "Unknown";
 
           let profilePic = "👨‍⚕️";
-          let counselorProfile = null;
+          let counterPartyProfile = null;
+          let displayName = readableName;
 
-          // Fetch counselor profile if this is a call with a counselor
-          if (normalizeRole(call.withType) === "counsellor" && call.withId) {
-            counselorProfile = await fetchCounselorProfile(call.withId, token);
-            if (counselorProfile) {
-              profilePic = counselorProfile.profilePhoto || "👨‍⚕️";
+          // Fetch profile based on counterparty type
+          if (call.withId) {
+            if (normalizeRole(call.withType) === "counsellor") {
+              counterPartyProfile = await fetchCounselorProfile(call.withId, token);
+              if (counterPartyProfile) {
+                profilePic = counterPartyProfile.profilePhoto || "👨‍⚕️";
+                displayName = counterPartyProfile.fullName || counterPartyProfile.name || readableName;
+              }
+            } else if (normalizeRole(call.withType) === "user") {
+              counterPartyProfile = await fetchUserProfile(call.withId, token);
+              if (counterPartyProfile) {
+                profilePic = counterPartyProfile.profilePhoto || "👤";
+                displayName = counterPartyProfile.fullName || counterPartyProfile.name || counterPartyProfile.displayName || readableName;
+              }
             }
           }
 
@@ -190,7 +222,7 @@ const CallHistory = ({ currentUser }) => {
             id: call.id || `${timestamp || "call"}_${index}`,
             callId: call.id,
             roomId: call.roomId,
-            name: counselorProfile?.fullName || counselorProfile?.name || readableName,
+            name: displayName,
             type: normalizedType,
             status: missed ? "missed" : direction,
             rawStatus: String(call.status || "").toLowerCase(),
@@ -213,7 +245,7 @@ const CallHistory = ({ currentUser }) => {
             role: call.role,
             timestamp,
             apiCallData: call,
-            counselorProfile,
+            counterPartyProfile,
           };
         }),
       );
@@ -229,7 +261,7 @@ const CallHistory = ({ currentUser }) => {
     } finally {
       setIsLoadingCalls(false);
     }
-  }, [currentUserId, fetchCounselorProfile]);
+  }, [currentUserId, fetchCounselorProfile, fetchUserProfile]);
 
   useEffect(() => {
     void fetchCallHistory();
@@ -273,22 +305,23 @@ const CallHistory = ({ currentUser }) => {
 
         const callData = response.data.callData || {};
         const receiverData = callData.receiver || {};
-        const counselorProfile = callEntry?.counselorProfile;
+        const counterPartyProfile = callEntry?.counterPartyProfile;
 
         setSelectedCall({
           id: callData.id || response.data.callId,
           callId: response.data.callId,
           roomId: response.data.roomId,
           name:
-            counselorProfile?.fullName ||
-            counselorProfile?.name ||
+            counterPartyProfile?.fullName ||
+            counterPartyProfile?.name ||
             receiverData.displayName ||
             receiverData.fullName ||
+            receiverData.name ||
             callEntry?.name ||
-            "Participant",
+            "User",
           type: resolvedCallMode,
           callType: resolvedCallMode,
-          profilePic: counselorProfile?.profilePhoto || receiverData.profilePhoto || "👨‍⚕️",
+          profilePic: counterPartyProfile?.profilePhoto || receiverData.profilePhoto || (callEntry?.counterPartyType === "counsellor" ? "👨‍⚕️" : "👤"),
           status: response.data.status || "ringing",
           apiCallData: callData,
           initiator: callData.initiator,
