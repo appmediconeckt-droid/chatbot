@@ -334,14 +334,15 @@ export default function CounselorDashboard() {
         )}
       </div>
 
-      <RequestModal
+      {/* Disabled - using notification bell in Messages tab instead */}
+      {/* <RequestModal
         showRequestModal={showRequestModal}
         currentRequest={currentRequest}
         modalCountdown={modalCountdown}
         loadingRequests={loadingRequests}
         handleAcceptRequest={handleAcceptRequest}
         handleRejectRequest={handleRejectRequest}
-      />
+      /> */}
 
       <LogoutModal
         showLogoutConfirm={showLogoutConfirm}
