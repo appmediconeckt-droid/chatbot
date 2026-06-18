@@ -5,6 +5,10 @@ import "./CallHistory.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
+import {
+  getAnonymousUserAvatar,
+  getAnonymousUserAvatarUrl,
+} from "../../../../utils/anonymousUser";
 
 const normalizeRole = (role) => {
   const normalized = String(role || "")
@@ -87,12 +91,6 @@ const isMissedCall = (call) => {
     .trim()
     .toLowerCase();
   return status === "missed" || status === "rejected" || status === "cancelled";
-};
-
-const getAvatarIcon = (gender) => {
-  if (gender === "male") return "👨";
-  if (gender === "female") return "👩";
-  return "👤";
 };
 
 const CallHistory = ({ currentUser }) => {
@@ -202,27 +200,25 @@ const CallHistory = ({ currentUser }) => {
           const missed = isMissedCall(call);
           const counterPartyType = normalizeRole(call.withType);
 
-          let profilePic = "👤";
           let counterPartyProfile = null;
           // Anonymous names instead of real names
           let displayName = counterPartyType === "counsellor" ? "Counselor" : "User";
 
-          // Fetch profile to get avatar/photo
+          // Fetch profile to get avatar/photo - Same logic as chat interface
           if (call.withId) {
             if (counterPartyType === "counsellor") {
               counterPartyProfile = await fetchCounselorProfile(call.withId, token);
-              if (counterPartyProfile) {
-                // Use profile photo if available, else use gender-based emoji
-                profilePic = counterPartyProfile.profilePhoto || getAvatarIcon(counterPartyProfile.gender);
-              }
             } else if (counterPartyType === "user") {
               counterPartyProfile = await fetchUserProfile(call.withId, token);
-              if (counterPartyProfile) {
-                // Use profile photo if available, else use gender-based emoji
-                profilePic = counterPartyProfile.profilePhoto || getAvatarIcon(counterPartyProfile.gender);
-              }
             }
           }
+
+          // Get avatar using same logic as chat interface
+          // Priority: avatarUrl (image) → avatar emoji (gender-based) → default
+          const profilePic = counterPartyProfile?.avatarUrl ||
+                            counterPartyProfile?.profilePhoto ||
+                            getAnonymousUserAvatar(counterPartyProfile) ||
+                            "👤";
 
           return {
             id: call.id || `${timestamp || "call"}_${index}`,
@@ -316,6 +312,13 @@ const CallHistory = ({ currentUser }) => {
         // Use anonymous name
         const anonymousName = counterPartyType === "counsellor" ? "Counselor" : "User";
 
+        // Get avatar using same logic as chat interface
+        const profilePic = counterPartyProfile?.avatarUrl ||
+                          counterPartyProfile?.profilePhoto ||
+                          receiverData?.profilePhoto ||
+                          getAnonymousUserAvatar(counterPartyProfile || receiverData) ||
+                          "👤";
+
         setSelectedCall({
           id: callData.id || response.data.callId,
           callId: response.data.callId,
@@ -323,7 +326,7 @@ const CallHistory = ({ currentUser }) => {
           name: anonymousName,
           type: resolvedCallMode,
           callType: resolvedCallMode,
-          profilePic: counterPartyProfile?.profilePhoto || receiverData.profilePhoto || getAvatarIcon(counterPartyProfile?.gender || receiverData?.gender),
+          profilePic: profilePic,
           status: response.data.status || "ringing",
           apiCallData: callData,
           initiator: callData.initiator,
