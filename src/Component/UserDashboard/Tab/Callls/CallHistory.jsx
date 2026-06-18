@@ -5,7 +5,10 @@ import "./CallHistory.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
-import { getAnonymousUserAvatar } from "../../../../utils/anonymousUser";
+import {
+  getAnonymousUserAvatar,
+  getAnonymousUserDisplay,
+} from "../../../../utils/anonymousUser";
 
 const normalizeRole = (role) => {
   const normalized = String(role || "")
@@ -208,10 +211,13 @@ const CallHistory = ({ currentUser }) => {
             }
           }
 
-          // Anonymous display: name from role, avatar (emoji) from gender only.
-          // Never use real name or real profile photo.
-          const anonymousName = counterPartyType === "counsellor" ? "Counselor" : "User";
-          const anonymousAvatar = getAnonymousUserAvatar(counterPartyProfile);
+          // Anonymous display - SAME AS MESSAGESOU (getAnonymousUserDisplay).
+          // Name = generated anonymous name; avatar = gender-based emoji.
+          // Avatar uses emoji only (never avatarUrl) so the real photo never leaks.
+          const anonymousUser = getAnonymousUserDisplay(counterPartyProfile);
+          const anonymousName = anonymousUser.name;
+          const anonymousAvatar =
+            anonymousUser.avatar || getAnonymousUserAvatar(counterPartyProfile);
 
           return {
             id: call.id || `${timestamp || "call"}_${index}`,
@@ -219,7 +225,7 @@ const CallHistory = ({ currentUser }) => {
             roomId: call.roomId,
             name: anonymousName,
             avatar: anonymousAvatar,
-            gender: counterPartyProfile?.gender || "other",
+            gender: anonymousUser.gender,
             type: normalizedType,
             status: missed ? "missed" : direction,
             rawStatus: String(call.status || "").toLowerCase(),
@@ -301,8 +307,8 @@ const CallHistory = ({ currentUser }) => {
 
         const callData = response.data.callData || {};
 
-        // Anonymous display: name from role, avatar (emoji) from gender only.
-        const anonymousName = receiverType === "counsellor" ? "Counselor" : "User";
+        // Anonymous display - reuse the anonymous name/avatar from the list entry.
+        const anonymousName = callEntry?.name || "Anonymous User";
         const anonymousAvatar = callEntry?.avatar || "👤";
 
         setSelectedCall({
