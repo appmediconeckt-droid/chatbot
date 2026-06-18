@@ -518,8 +518,30 @@
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-.chatAttachBtn,
 .chatCameraBtn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 2px solid #3b82f6;
+  background: #eff6ff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3b82f6;
+  font-size: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.chatCameraBtn:hover {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #1e40af;
+}
+
+.chatCameraBtn:active { background: #bfdbfe; transform: scale(0.95); }
+
+.chatAttachBtn {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 50%;
@@ -529,11 +551,23 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #64748b;
+  color: #475569;
   font-size: 1.25rem;
+  transition: all 0.2s ease;
 }
-.chatAttachBtn:active { background: #e2e8f0; transform: rotate(15deg); }
-.chatCameraBtn:active { background: #e2e8f0; transform: scale(0.95); }
+
+.chatAttachBtn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.chatAttachBtn:active { background: #cbd5e1; transform: rotate(15deg); }
+
+.attachIcon,
+.cameraIcon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
 
 .chatInputWrapper {
   flex: 1;
