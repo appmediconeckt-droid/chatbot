@@ -5,11 +5,7 @@ import "./CallHistory.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
-import {
-  getAnonymousParticipantId,
-  getAnonymousUserAvatar,
-  getAnonymousUserDisplay,
-} from "../../../../utils/anonymousUser";
+import { getAnonymousUserAvatar } from "../../../../utils/anonymousUser";
 
 const normalizeRole = (role) => {
   const normalized = String(role || "")
@@ -212,36 +208,18 @@ const CallHistory = ({ currentUser }) => {
             }
           }
 
-          // Convert to anonymous user - SAME AS MESSAGESOU
-          const dataForAnonymous = {
-            ...counterPartyProfile,
-            _id: call.withId,
-            userId: call.withId,
-            id: call.withId,
-          };
-
-          const anonymousUser = getAnonymousUserDisplay(dataForAnonymous);
-
-          console.log("DEBUG - counterPartyProfile:", counterPartyProfile);
-          console.log("DEBUG - anonymousUser result:", anonymousUser);
-
-          const displayUser = {
-            ...counterPartyProfile,
-            userId: getAnonymousParticipantId(dataForAnonymous),
-            name: anonymousUser.name || "User",
-            avatar: anonymousUser.avatar || "👤",
-            avatarUrl: anonymousUser.avatarUrl || null,
-            gender: anonymousUser.gender || "other",
-          };
+          // Anonymous display: name from role, avatar (emoji) from gender only.
+          // Never use real name or real profile photo.
+          const anonymousName = counterPartyType === "counsellor" ? "Counselor" : "User";
+          const anonymousAvatar = getAnonymousUserAvatar(counterPartyProfile);
 
           return {
             id: call.id || `${timestamp || "call"}_${index}`,
             callId: call.id,
             roomId: call.roomId,
-            name: displayUser.name,
-            avatar: displayUser.avatar,
-            avatarUrl: displayUser.avatarUrl,
-            gender: displayUser.gender,
+            name: anonymousName,
+            avatar: anonymousAvatar,
+            gender: counterPartyProfile?.gender || "other",
             type: normalizedType,
             status: missed ? "missed" : direction,
             rawStatus: String(call.status || "").toLowerCase(),
@@ -257,14 +235,13 @@ const CallHistory = ({ currentUser }) => {
               Number(call.duration) > 0
                 ? formatCallDuration(call.duration)
                 : null,
-            profilePic: displayUser.avatar || "👤",
+            profilePic: anonymousAvatar,
             missed,
             counterPartyId: call.withId,
-            counterPartyType: normalizeRole(call.withType),
+            counterPartyType,
             role: call.role,
             timestamp,
             apiCallData: call,
-            counterPartyProfile: displayUser,
           };
         }),
       );
@@ -323,35 +300,19 @@ const CallHistory = ({ currentUser }) => {
         }
 
         const callData = response.data.callData || {};
-        const receiverData = callData.receiver || {};
-        const counterPartyProfile = callEntry?.counterPartyProfile;
 
-        // Convert to anonymous user - SAME AS MESSAGESOU
-        const dataForAnonymous = {
-          ...(counterPartyProfile || receiverData),
-          _id: receiverId,
-          userId: receiverId,
-          id: receiverId,
-        };
-
-        const anonymousUser = getAnonymousUserDisplay(dataForAnonymous);
-
-        const displayUser = {
-          ...counterPartyProfile,
-          name: anonymousUser.name || "User",
-          avatar: anonymousUser.avatar || "👤",
-          avatarUrl: anonymousUser.avatarUrl || null,
-          gender: anonymousUser.gender || "other",
-        };
+        // Anonymous display: name from role, avatar (emoji) from gender only.
+        const anonymousName = receiverType === "counsellor" ? "Counselor" : "User";
+        const anonymousAvatar = callEntry?.avatar || "👤";
 
         setSelectedCall({
           id: callData.id || response.data.callId,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name: displayUser.name,
+          name: anonymousName,
           type: resolvedCallMode,
           callType: resolvedCallMode,
-          profilePic: displayUser.avatarUrl || displayUser.avatar,
+          profilePic: anonymousAvatar,
           status: response.data.status || "ringing",
           apiCallData: callData,
           initiator: callData.initiator,
