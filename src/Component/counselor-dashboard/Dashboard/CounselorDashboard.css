@@ -120,17 +120,17 @@ body {
 
 /* Sidebar Navigation */
 .couns-sidebar-nav {
-  padding: 1.5rem;
+  padding: 1rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  /* gap: 0.5rem; */
 }
 
 .couns-nav-item {
   display: flex;
   align-items: center;
   gap: 1rem;
-  padding: 0.8rem 1rem;
+  padding: 0.5rem 0.8rem;
   background: none;
   border: none;
   border-radius: 10px;
@@ -183,7 +183,7 @@ body {
 
 .couns-nav-item.logout {
   color: var(--couns-danger);
-  margin-top: 1rem;
+  /* margin-top: 1rem; */
 }
 
 .couns-nav-item.logout:hover {
