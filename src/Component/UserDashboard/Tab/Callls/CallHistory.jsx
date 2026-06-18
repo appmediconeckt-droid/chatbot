@@ -194,26 +194,24 @@ const CallHistory = ({ currentUser }) => {
           const normalizedType = normalizeCallType(call.type);
           const direction = getCallDirection(call);
           const missed = isMissedCall(call);
-          const readableName =
-            call.with || call.withName || call.withDisplayName || call.withEmail || "Unknown";
+          const counterPartyType = normalizeRole(call.withType);
 
           let profilePic = "👨‍⚕️";
           let counterPartyProfile = null;
-          let displayName = readableName;
+          // Anonymous names instead of real names
+          let displayName = counterPartyType === "counsellor" ? "Counselor" : "User";
 
-          // Fetch profile based on counterparty type
+          // Fetch profile to get avatar/photo
           if (call.withId) {
-            if (normalizeRole(call.withType) === "counsellor") {
+            if (counterPartyType === "counsellor") {
               counterPartyProfile = await fetchCounselorProfile(call.withId, token);
               if (counterPartyProfile) {
                 profilePic = counterPartyProfile.profilePhoto || "👨‍⚕️";
-                displayName = counterPartyProfile.fullName || counterPartyProfile.name || readableName;
               }
-            } else if (normalizeRole(call.withType) === "user") {
+            } else if (counterPartyType === "user") {
               counterPartyProfile = await fetchUserProfile(call.withId, token);
               if (counterPartyProfile) {
                 profilePic = counterPartyProfile.profilePhoto || "👤";
-                displayName = counterPartyProfile.fullName || counterPartyProfile.name || counterPartyProfile.displayName || readableName;
               }
             }
           }
@@ -306,22 +304,18 @@ const CallHistory = ({ currentUser }) => {
         const callData = response.data.callData || {};
         const receiverData = callData.receiver || {};
         const counterPartyProfile = callEntry?.counterPartyProfile;
+        const counterPartyType = callEntry?.counterPartyType || "user";
+        // Use anonymous name
+        const anonymousName = counterPartyType === "counsellor" ? "Counselor" : "User";
 
         setSelectedCall({
           id: callData.id || response.data.callId,
           callId: response.data.callId,
           roomId: response.data.roomId,
-          name:
-            counterPartyProfile?.fullName ||
-            counterPartyProfile?.name ||
-            receiverData.displayName ||
-            receiverData.fullName ||
-            receiverData.name ||
-            callEntry?.name ||
-            "User",
+          name: anonymousName,
           type: resolvedCallMode,
           callType: resolvedCallMode,
-          profilePic: counterPartyProfile?.profilePhoto || receiverData.profilePhoto || (callEntry?.counterPartyType === "counsellor" ? "👨‍⚕️" : "👤"),
+          profilePic: counterPartyProfile?.profilePhoto || receiverData.profilePhoto || (counterPartyType === "counsellor" ? "👨‍⚕️" : "👤"),
           status: response.data.status || "ringing",
           apiCallData: callData,
           initiator: callData.initiator,
