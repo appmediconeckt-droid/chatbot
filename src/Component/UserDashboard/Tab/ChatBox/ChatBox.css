@@ -495,9 +495,9 @@
 
 /* Input Area */
 .chatInputArea {
-  padding: 1rem 2rem;
-  border-top: 1px solid #eef2f6;
-  background: #fafbfc;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #e2e8f0;
+  background: #ffffff;
   flex-shrink: 0;
 }
 
@@ -519,18 +519,20 @@
 }
 
 .chatCameraBtn {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
-  border: 2px solid #3b82f6;
-  background: #eff6ff;
+  background: transparent;
+  border: none;
+  color: #64748b;
+  font-size: 1.25rem;
+  padding: 0.5rem;
   cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #3b82f6;
-  font-size: 1.25rem;
-  transition: all 0.2s ease;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
 }
 
 .chatCameraBtn:hover {
@@ -542,18 +544,20 @@
 .chatCameraBtn:active { background: #bfdbfe; transform: scale(0.95); }
 
 .chatAttachBtn {
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 50%;
+   background: transparent;
   border: none;
-  background: transparent;
+  color: #64748b;
+  font-size: 1.25rem;
+  padding: 0.5rem;
   cursor: pointer;
+  border-radius: 50%;
+  transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #475569;
-  font-size: 1.25rem;
-  transition: all 0.2s ease;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
 }
 
 .chatAttachBtn:hover {
@@ -570,26 +574,49 @@
 }
 
 .chatInputWrapper {
-  flex: 1;
+ flex: 1;
   position: relative;
+  display: flex;
+  align-items: center;
+  background: transparent;
+}
+
+
+.chatInputWrapper::before,
+.chatInputWrapper::after {
+  display: none;
 }
 
 .chatTextInput {
   width: 100%;
   padding: 0.75rem 3rem 0.75rem 1rem;
   border: none;
-  border-radius: 2rem;
-  font-size: 0.9375rem;
   background: transparent;
+  font-size: 0.9375rem;
   color: #0f172a;
   outline: none;
   font-family: inherit;
+  /* ✅ Remove any extra shadows or borders */
+  box-shadow: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.chatTextInput:focus {
+  outline: none;
+  box-shadow: none;
+  border: none;
+}
+
+
+.chatInputWrapper input:not(:first-child) {
+  display: none;
 }
 
 .chatTextInput::placeholder { color: #94a3b8; }
 
 .chatEmojiBtn {
-  position: absolute;
+ position: absolute;
   right: 0.5rem;
   top: 50%;
   transform: translateY(-50%);
@@ -604,6 +631,7 @@
   justify-content: center;
   color: #64748b;
   font-size: 1.25rem;
+  z-index: 2;
 }
 .chatEmojiBtn:active { background: #e2e8f0; transform: translateY(-50%) scale(1.1); }
 
@@ -620,6 +648,7 @@
   justify-content: center;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-size: 1.25rem;
+  flex-shrink: 0;
 }
 .chatSendBtn:active:not(:disabled) { transform: scale(0.95); }
 .chatSendBtn:disabled { opacity: 0.5; cursor: not-allowed; background: #94a3b8; }
@@ -635,6 +664,29 @@
   width: 100%;
   min-height: 100%;
   text-align: center;
+}
+
+
+.chatAttachBtn:hover:not(:disabled),
+.chatCameraBtn:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  transform: scale(1.05);
+}
+
+.chatAttachBtn:disabled,
+.chatCameraBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.chatHiddenFileInput {
+  display: none !important;
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
 }
 .chatLoadingMessages p {
   color: #475569;
@@ -824,5 +876,185 @@
   *, .call-modal, .incoming-call-modal, .chatEmojiBox, .chatActionBtn {
     animation: none !important;
     transition: none !important;
+  }
+}
+/* Camera Preview Overlay */
+/* Camera Preview Overlay */
+.camera-preview-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 99999;
+  padding: 16px;
+  animation: cameraFadeIn 0.3s ease;
+}
+
+@keyframes cameraFadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.camera-preview-content {
+  background: #1a1a1a;
+  border-radius: 20px;
+  padding: 20px;
+  max-width: 95vw;
+  max-height: 95vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+  position: relative;
+}
+
+.camera-video-wrapper {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  width: 100%;
+  max-width: 640px;
+}
+
+.camera-preview-video {
+  width: 100%;
+  max-height: 70vh;
+  display: block;
+  transform: scaleX(-1);
+  object-fit: cover;
+  background: #000;
+}
+
+/* Camera Guide Frame */
+.camera-guide-frame {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.camera-guide-corners {
+  position: absolute;
+  top: 20%;
+  left: 10%;
+  right: 10%;
+  bottom: 20%;
+}
+
+.corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+}
+
+.corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+.corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+.corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+.corner.br { bottom: 0; right: 0; border-left: none; border-top: none; }
+
+.camera-preview-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.camera-capture-btn {
+  background: linear-gradient(135deg, #4CAF50, #45a049);
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 140px;
+  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+}
+
+.camera-capture-btn:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(76, 175, 80, 0.5);
+}
+
+.camera-capture-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.camera-capture-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.camera-close-btn {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+  border: none;
+  padding: 14px 40px;
+  border-radius: 50px;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 140px;
+  box-shadow: 0 4px 15px rgba(244, 67, 54, 0.4);
+}
+
+.camera-close-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 25px rgba(244, 67, 54, 0.5);
+}
+
+.camera-close-btn:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .camera-preview-content {
+    padding: 12px;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 0;
+  }
+  
+  .camera-preview-video {
+    max-height: 55vh;
+  }
+  
+  .camera-capture-btn,
+  .camera-close-btn {
+    padding: 16px 30px;
+    font-size: 16px;
+    min-width: 120px;
+  }
+  
+  .camera-preview-actions {
+    gap: 12px;
+  }
+  
+  .camera-guide-corners {
+    top: 15%;
+    left: 5%;
+    right: 5%;
+    bottom: 15%;
+  }
+  
+  .corner {
+    width: 20px;
+    height: 20px;
   }
 }

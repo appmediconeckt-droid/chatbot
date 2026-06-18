@@ -68,6 +68,11 @@ const ChatBox = () => {
   const [originalMessages, setOriginalMessages] = useState([]);
   const [isTranslating, setIsTranslating] = useState(false);
 
+
+  const [showCameraPreview, setShowCameraPreview] = useState(false);
+const [cameraStream, setCameraStream] = useState(null);
+const videoRef = useRef(null);
+
   // ─── Counselor rating ──────────────────────────────────────────────────────
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
@@ -404,6 +409,78 @@ const ChatBox = () => {
       return false;
     }
   };
+
+// ─── Translation Functions ──────────────────────────────────────────────
+const translateMessage = useCallback(async (text, targetLang) => {
+  if (!text || !targetLang || targetLang === 'en') return text;
+  
+  try {
+    // Using your existing translate function from useUserApiTranslation
+    const translated = await translate(text, targetLang);
+    return translated || text;
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text;
+  }
+}, [translate]);
+
+// Translate messages when language changes
+useEffect(() => {
+  if (!lang || lang === 'en') {
+    setIsTranslating(false);
+    setMessages(originalMessages);
+    return;
+  }
+
+  if (!originalMessages || originalMessages.length === 0) {
+    setIsTranslating(false);
+    return;
+  }
+
+  console.log('🌐 Starting translation to language:', lang, 'Messages count:', originalMessages.length);
+
+  const translateMessages = async () => {
+    setIsTranslating(true);
+    try {
+      console.log('📝 Translating', originalMessages.length, 'messages...');
+
+      const translatedMsgs = await Promise.all(
+        originalMessages.map(async (msg) => {
+          // Skip user messages and empty messages
+          if (!msg.text || msg.sender === 'user') {
+            return msg;
+          }
+
+          try {
+            console.log('  → Translating:', msg.text.slice(0, 40) + '...');
+            const translatedText = await translateMessage(msg.text, lang);
+
+            if (translatedText && translatedText !== msg.text) {
+              console.log('    ✓ Result:', translatedText.slice(0, 40) + '...');
+              return { ...msg, text: translatedText };
+            }
+            return msg;
+          } catch (error) {
+            console.error('Error translating individual message:', error);
+            return msg;
+          }
+        })
+      );
+
+      console.log('✅ Translation complete! Updating UI with', translatedMsgs.length, 'messages');
+      setMessages(translatedMsgs);
+    } catch (error) {
+      console.error('❌ Error translating messages:', error);
+      setMessages(originalMessages);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  translateMessages();
+}, [lang, originalMessages, translateMessage]);
+
+
 
   const handleEndCall = async (callId) => {
     try {
@@ -1224,58 +1301,252 @@ const ChatBox = () => {
   ], [lang]);
   const handleFileAttach = () => { if (isSending) return; fileInputRef.current?.click(); };
 
-  const handleCameraClick = () => {
-    if (isSending) return;
-    cameraInputRef.current?.click();
-  };
+  // const handleCameraClick = () => {
+  //   if (isSending) return;
+  //   cameraInputRef.current?.click();
+  // };
 
-  const handleSendPhoto = async () => {
-    if (!photoPreview) return;
-    setPhotoSending(true);
-    try {
-      const base64Data = photoPreview.split(",")[1];
-      const binaryString = atob(base64Data);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
+ // ─── Camera Functions ──────────────────────────────────────────────────────
+const handleCameraClick = () => {
+  if (isSending) return;
+  
+  const hasCamera = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+  
+  if (!hasCamera) {
+    alert('Camera is not supported on this device. Please use the attachment option to share images.');
+    return;
+  }
+  
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  
+  if (isMobile) {
+    // On mobile, use the file input with capture
+    cameraInputRef.current?.click();
+  } else {
+    // On desktop, use getUserMedia API for camera access
+    openDesktopCamera();
+  }
+};
+
+const openDesktopCamera = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      video: { 
+        facingMode: 'user',
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      } 
+    });
+    
+    setCameraStream(stream);
+    setShowCameraPreview(true);
+    
+    // ✅ IMPORTANT: Set video source after state update
+    setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.play().catch(err => console.error('Video play error:', err));
       }
-      const blob = new Blob([bytes], { type: "image/jpeg" });
-      const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
-      await sendMessageToAPI({ file });
-      setPhotoPreview(null);
-    } finally {
-      setPhotoSending(false);
+    }, 100);
+    
+  } catch (error) {
+    console.error('Error accessing camera:', error);
+    if (error.name === 'NotAllowedError') {
+      alert('Camera access was denied. Please allow camera access in your browser settings.');
+    } else if (error.name === 'NotFoundError') {
+      alert('No camera found on this device. Please use the attachment option.');
+    } else {
+      alert('Failed to access camera. Please use the attachment option instead.');
     }
+  }
+};
+
+const capturePhoto = () => {
+  const video = videoRef.current;
+  if (!video) {
+    alert('Camera not ready. Please try again.');
+    return;
+  }
+  
+  // ✅ Check if video has valid dimensions
+  if (video.videoWidth === 0 || video.videoHeight === 0) {
+    alert('Camera not ready. Please wait a moment and try again.');
+    return;
+  }
+  
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+  
+  const context = canvas.getContext('2d');
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  // ✅ Show preview instead of directly sending
+  const imageDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+  setPhotoPreview(imageDataUrl);
+  
+  // ✅ Close camera preview
+  closeCamera();
+};
+
+const closeCamera = () => {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(track => track.stop());
+    setCameraStream(null);
+  }
+  setShowCameraPreview(false);
+};
+
+// ✅ Updated renderCameraPreview with better video handling
+const renderCameraPreview = () => {
+  if (!showCameraPreview) return null;
+  
+  return (
+    <div className="camera-preview-overlay" onClick={closeCamera}>
+      <div className="camera-preview-content" onClick={(e) => e.stopPropagation()}>
+        <div className="camera-video-wrapper">
+          <video 
+            ref={videoRef} 
+            autoPlay 
+            playsInline
+            muted
+            className="camera-preview-video"
+          />
+          <div className="camera-guide-frame">
+            <div className="camera-guide-corners">
+              <span className="corner tl"></span>
+              <span className="corner tr"></span>
+              <span className="corner bl"></span>
+              <span className="corner br"></span>
+            </div>
+          </div>
+        </div>
+        <div className="camera-preview-actions">
+          <button 
+            className="camera-capture-btn"
+            onClick={capturePhoto}
+            disabled={photoSending}
+          >
+            {photoSending ? '⏳ Sending...' : '📸 Capture'}
+          </button>
+          <button 
+            className="camera-close-btn"
+            onClick={closeCamera}
+          >
+            ✕ Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ✅ Updated handleSendPhoto - sends photo after preview
+const handleSendPhoto = async () => {
+  if (!photoPreview) return;
+  setPhotoSending(true);
+  try {
+    const base64Data = photoPreview.split(",")[1];
+    const binaryString = atob(base64Data);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    const blob = new Blob([bytes], { type: "image/jpeg" });
+    const file = new File([blob], `photo_${Date.now()}.jpg`, { type: "image/jpeg" });
+    await sendMessageToAPI({ file });
+    setPhotoPreview(null);
+    // ✅ Show success message
+    // Optional: Show toast notification
+  } catch (error) {
+    console.error('Error sending photo:', error);
+    alert('Failed to send photo. Please try again.');
+  } finally {
+    setPhotoSending(false);
+  }
+};
+
+const handleFileSelected = async (e) => {
+  const file = e.target.files?.[0];
+  if (!file || isSending) return;
+
+  // For camera capture on mobile
+  if (e.target === cameraInputRef.current) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setPhotoPreview(event.target?.result);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ""; // Reset input
+    return;
+  }
+
+  // For regular file attachment
+  const tempFileMessage = {
+    id: `temp_file_${Date.now()}`,
+    text: file.name,
+    sender: "user",
+    senderRole: "user",
+    time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE",
+    status: "sending",
+    isTemporary: true
   };
   
-  const handleFileSelected = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file || isSending) return;
-
-    if (e.target === cameraInputRef.current) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setPhotoPreview(event.target?.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      const tempFileMessage = { id: `temp_file_${Date.now()}`, text: file.name, sender: "user", senderRole: "user", time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE", status: "sending", isTemporary: true };
-      setMessages((prev) => [...prev, tempFileMessage]);
-      setIsSending(true);
-      try {
-        await sendMessageToAPI({ file });
-        setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
-      } catch (error) {
-        console.error("Error sending file:", error);
-        setMessages((prev) => prev.map((msg) => msg.id === tempFileMessage.id ? { ...msg, status: "error", error: "Failed to send file" } : msg));
-      } finally {
-        setIsSending(false);
-        e.target.value = "";
-      }
-    }
+  setMessages((prev) => [...prev, tempFileMessage]);
+  setIsSending(true);
+  
+  try {
+    await sendMessageToAPI({ file });
+    setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+  } catch (error) {
+    console.error("Error sending file:", error);
+    setMessages((prev) => prev.map((msg) => 
+      msg.id === tempFileMessage.id 
+        ? { ...msg, status: "error", error: "Failed to send file" } 
+        : msg
+    ));
+  } finally {
+    setIsSending(false);
     e.target.value = "";
-  };
+  }
+};
+
+
+
+ 
+  
+  // const handleFileSelected = async (e) => {
+  //   const file = e.target.files?.[0];
+  //   if (!file || isSending) return;
+
+  //   if (e.target === cameraInputRef.current) {
+  //     const reader = new FileReader();
+  //     reader.onload = (event) => {
+  //       setPhotoPreview(event.target?.result);
+  //     };
+  //     reader.readAsDataURL(file);
+  //   } else {
+  //     const tempFileMessage = { id: `temp_file_${Date.now()}`, text: file.name, sender: "user", senderRole: "user", time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }), contentType: file.type.startsWith("image/") ? "IMAGE" : "FILE", status: "sending", isTemporary: true };
+  //     setMessages((prev) => [...prev, tempFileMessage]);
+  //     setIsSending(true);
+  //     try {
+  //       await sendMessageToAPI({ file });
+  //       setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
+  //     } catch (error) {
+  //       console.error("Error sending file:", error);
+  //       setMessages((prev) => prev.map((msg) => msg.id === tempFileMessage.id ? { ...msg, status: "error", error: "Failed to send file" } : msg));
+  //     } finally {
+  //       setIsSending(false);
+  //       e.target.value = "";
+  //     }
+  //   }
+  //   e.target.value = "";
+  // };
   const handleInputChange = (e) => { setNewMessage(e.target.value); setIsTyping(e.target.value.trim() !== ""); if (e.target.value.trim() !== "") handleTypingIndicator(); };
+
+ 
+
 
   const renderProfileAvatar = (counselor, size = "md") => {
     if (!counselor) return <div className={`chat-profile-initials-${size}`}>?</div>;
@@ -1420,37 +1691,96 @@ const ChatBox = () => {
           </div>
         )}
 
-        <footer className="chatInputArea">
-          <div className="chatInputGroup">
-            <input ref={fileInputRef} type="file" className="chatHiddenFileInput" onChange={handleFileSelected} style={{ display: "none" }} />
-            <input ref={cameraInputRef} type="file" capture="environment" className="chatHiddenFileInput" onChange={handleFileSelected} style={{ display: "none" }} />
-            <button className="chatCameraBtn" onClick={handleCameraClick} disabled={isSending} aria-label="Take photo or select from gallery">
-              <span className="cameraIcon" aria-hidden="true">📷</span>
-            </button>
-            <button className="chatAttachBtn" onClick={handleFileAttach} disabled={isSending} aria-label="Attach file">
-              <span className="attachIcon" aria-hidden="true">📎</span>
-            </button>
-            <div className="chatInputWrapper">
-              <input ref={messageInputRef} id="messageInput" type="text" value={newMessage} onChange={handleInputChange} onKeyDown={handleKeyDown} placeholder={`Message ${counselorName}...`} className="chatTextInput" autoComplete="off" enterKeyHint="send" aria-label="Message input" />
-              <button className="chatEmojiBtn" onClick={() => setShowEmojiPicker(!showEmojiPicker)} aria-label="Open emoji picker">
-                <span className="emojiIcon" aria-hidden="true">😊</span>
-              </button>
-            </div>
-            <button onMouseDown={(e) => e.preventDefault()} onClick={handleSendButtonClick} disabled={!newMessage.trim() || isSending} className="chatSendBtn" aria-label="Send message">
-              <span className="sendIcon" aria-hidden="true">{isSending ? "⏳" : "➤"}</span>
-            </button>
-          </div>
-        </footer>
+      <footer className="chatInputArea">
+  <div className="chatInputGroup">
+    {/* Hidden file inputs */}
+    <input 
+      ref={fileInputRef} 
+      type="file" 
+      className="chatHiddenFileInput" 
+      onChange={handleFileSelected} 
+      style={{ display: "none" }} 
+    />
+    <input 
+      ref={cameraInputRef} 
+      type="file" 
+      accept="image/*"
+      capture="environment"
+      className="chatHiddenFileInput" 
+      onChange={handleFileSelected} 
+      style={{ display: "none" }} 
+    />
+    
+    {/* Attachment Button */}
+    <button 
+      className="chatAttachBtn" 
+      onClick={handleFileAttach} 
+      disabled={isSending} 
+      aria-label="Attach file"
+    >
+      <span className="attachIcon" aria-hidden="true">📎</span>
+    </button>
+    
+    {/* Camera Button */}
+    <button 
+      className="chatCameraBtn" 
+      onClick={handleCameraClick} 
+      disabled={isSending} 
+      aria-label="Take photo"
+    >
+      <FaCamera className="camera-icon" />
+    </button>
+    
+    {/* ✅ Only ONE input wrapper */}
+    <div className="chatInputWrapper">
+      <input 
+        ref={messageInputRef} 
+        id="messageInput" 
+        type="text" 
+        value={newMessage} 
+        onChange={handleInputChange} 
+        onKeyDown={handleKeyDown} 
+        placeholder={`Message ${counselorName}...`} 
+        className="chatTextInput" 
+        autoComplete="off" 
+        enterKeyHint="send" 
+        aria-label="Message input" 
+      />
+      <button 
+        className="chatEmojiBtn" 
+        onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
+        aria-label="Open emoji picker"
+      >
+        <span className="emojiIcon" aria-hidden="true">😊</span>
+      </button>
+    </div>
+    
+    {/* Send Button */}
+    <button 
+      onMouseDown={(e) => e.preventDefault()} 
+      onClick={handleSendButtonClick} 
+      disabled={!newMessage.trim() || isSending} 
+      className="chatSendBtn" 
+      aria-label="Send message"
+    >
+      <span className="sendIcon" aria-hidden="true">
+        {isSending ? "⏳" : "➤"}
+      </span>
+    </button>
+  </div>
+</footer>
       </div>
 
+{renderCameraPreview()}
+
       {/* Photo Preview Modal */}
-      <PhotoPreviewModal
-        isOpen={!!photoPreview}
-        photoSrc={photoPreview}
-        onSend={handleSendPhoto}
-        onCancel={() => setPhotoPreview(null)}
-        loading={photoSending}
-      />
+       <PhotoPreviewModal
+      isOpen={!!photoPreview}
+      photoSrc={photoPreview}
+      onSend={handleSendPhoto}
+      onCancel={() => setPhotoPreview(null)}
+      loading={photoSending}
+    />
 
       {/* Call Modals */}
       <VideoCallModal
