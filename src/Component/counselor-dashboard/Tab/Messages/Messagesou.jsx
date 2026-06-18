@@ -340,8 +340,9 @@ const SMSList = () => {
   // Filter users based on the displayed (anonymous) name
   const filteredUsers = users.filter(
     (user) =>
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.specialization.toLowerCase().includes(searchTerm.toLowerCase()),
+      "user".toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.email && user.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.phone && user.phone.toLowerCase().includes(searchTerm.toLowerCase())),
   );
 
   const handleUserClick = (user) => {
@@ -532,7 +533,7 @@ const SMSList = () => {
               {/* User Info */}
               <div className="smslist-user-info">
                 <div className="smslist-user-row">
-                  <h4>{user.name}</h4>
+                  <h4>User</h4>
                   <span className="smslist-time" title={user.fullDateTime}>
                     {user.time}
                   </span>
@@ -546,9 +547,6 @@ const SMSList = () => {
                 </div>
 
                 <div className="smslist-user-details">
-                  <span className="user-specialization">
-                    {user.specialization}
-                  </span>
                   <span className={`user-status status-${user.status}`}>
                     {getStatusBadgeText(user.status)}
                   </span>
