@@ -59,6 +59,10 @@ const SMSInput = () => {
   const [photoSending, setPhotoSending] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState(null);
   const [openMessageMenuId, setOpenMessageMenuId] = useState(null);
+  // Live desktop camera (getUserMedia), same flow as user-side ChatBox.
+  const [cameraStream, setCameraStream] = useState(null);
+  const [showCameraPreview, setShowCameraPreview] = useState(false);
+  const videoRef = useRef(null);
 
   const handleSessionExpired = () => {
     localStorage.clear();
@@ -532,9 +536,141 @@ const SMSInput = () => {
     fileInputRef.current?.click();
   };
 
-  const handlePhotoCaptureClick = () => {
+  // ─── Camera Functions (exact same logic as user-side ChatBox) ──────────────
+  const handleCameraClick = () => {
     if (isSending) return;
-    cameraInputRef.current?.click();
+
+    const hasCamera =
+      navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+
+    if (!hasCamera) {
+      alert(
+        "Camera is not supported on this device. Please use the attachment option to share images."
+      );
+      return;
+    }
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      // On mobile, use the file input with capture
+      cameraInputRef.current?.click();
+    } else {
+      // On desktop, use getUserMedia API for live camera access
+      openDesktopCamera();
+    }
+  };
+
+  const openDesktopCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 },
+        },
+      });
+
+      setCameraStream(stream);
+      setShowCameraPreview(true);
+
+      // Set video source after the overlay mounts.
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current
+            .play()
+            .catch((err) => console.error("Video play error:", err));
+        }
+      }, 100);
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      if (error.name === "NotAllowedError") {
+        alert(
+          "Camera access was denied. Please allow camera access in your browser settings."
+        );
+      } else if (error.name === "NotFoundError") {
+        alert("No camera found on this device. Please use the attachment option.");
+      } else {
+        alert("Failed to access camera. Please use the attachment option instead.");
+      }
+    }
+  };
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    if (!video) {
+      alert("Camera not ready. Please try again.");
+      return;
+    }
+
+    if (video.videoWidth === 0 || video.videoHeight === 0) {
+      alert("Camera not ready. Please wait a moment and try again.");
+      return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth || 1280;
+    canvas.height = video.videoHeight || 720;
+
+    const context = canvas.getContext("2d");
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageDataUrl = canvas.toDataURL("image/jpeg", 0.9);
+    setPhotoPreview(imageDataUrl);
+
+    closeCamera();
+  };
+
+  const closeCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach((track) => track.stop());
+      setCameraStream(null);
+    }
+    setShowCameraPreview(false);
+  };
+
+  const renderCameraPreview = () => {
+    if (!showCameraPreview) return null;
+
+    return (
+      <div className="camera-preview-overlay" onClick={closeCamera}>
+        <div
+          className="camera-preview-content"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="camera-video-wrapper">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="camera-preview-video"
+            />
+            <div className="camera-guide-frame">
+              <div className="camera-guide-corners">
+                <span className="corner tl"></span>
+                <span className="corner tr"></span>
+                <span className="corner bl"></span>
+                <span className="corner br"></span>
+              </div>
+            </div>
+          </div>
+          <div className="camera-preview-actions">
+            <button
+              className="camera-capture-btn"
+              onClick={capturePhoto}
+              disabled={photoSending}
+            >
+              {photoSending ? "⏳ Sending..." : "📸 Capture"}
+            </button>
+            <button className="camera-close-btn" onClick={closeCamera}>
+              ✕ Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   const handleSendPhoto = async () => {
@@ -1462,7 +1598,7 @@ const SMSInput = () => {
             className="camera-btn"
             title="Take photo"
             disabled={isSending}
-            onClick={handlePhotoCaptureClick}
+            onClick={handleCameraClick}
           >
             📷
           </button>
@@ -1508,6 +1644,9 @@ const SMSInput = () => {
         onReject={handleRejectIncomingCall}
         fallbackName="Anonymous User"
       />
+
+      {/* Live desktop camera preview overlay */}
+      {renderCameraPreview()}
 
       {/* Photo Preview Modal */}
       <PhotoPreviewModal
