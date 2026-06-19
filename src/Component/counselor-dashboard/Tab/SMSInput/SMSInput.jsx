@@ -55,7 +55,6 @@ const SMSInput = () => {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState(null);
   const [chatStatus, setChatStatus] = useState(null);
-  const [isTranslating, setIsTranslating] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoSending, setPhotoSending] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState(null);
@@ -1216,41 +1215,6 @@ const SMSInput = () => {
       chatSocketRef.current = null;
     };
   }, [chatId, selectedUser, COUNSELOR_ID, USER_ID]);
-
-  // Translate messages when language changes
-  useEffect(() => {
-    if (!lang || lang === 'en' || !originalMessages || originalMessages.length === 0) {
-      return;
-    }
-
-    const translateMessages = async () => {
-      setIsTranslating(true);
-      try {
-        const translatedMsgs = await Promise.all(
-          originalMessages.map(async (msg) => {
-            if (!msg.text || msg.sender === 'me') {
-              return msg; // Don't translate own messages
-            }
-            try {
-              const translatedText = await translateMessage(msg.text, lang);
-              return { ...msg, text: translatedText };
-            } catch (error) {
-              console.error('Error translating individual message:', error);
-              return msg;
-            }
-          })
-        );
-        setMessages(translatedMsgs);
-      } catch (error) {
-        console.error('Error translating messages:', error);
-        setMessages(originalMessages);
-      } finally {
-        setIsTranslating(false);
-      }
-    };
-
-    translateMessages();
-  }, [lang, originalMessages]);
 
   const renderMessageStatus = (message) => {
     if (message.sender !== "me") return null;

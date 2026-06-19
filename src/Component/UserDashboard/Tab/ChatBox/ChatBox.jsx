@@ -412,17 +412,8 @@ const videoRef = useRef(null);
 
 // ─── Translation Functions ──────────────────────────────────────────────
 const translateMessage = useCallback(async (text, targetLang) => {
-  if (!text || !targetLang || targetLang === 'en') return text;
-  
-  try {
-    // Using your existing translate function from useUserApiTranslation
-    const translated = await translate(text, targetLang);
-    return translated || text;
-  } catch (error) {
-    console.error('Translation error:', error);
-    return text;
-  }
-}, [translate]);
+  return text;
+}, []);
 
 // Translate messages when language changes
 useEffect(() => {

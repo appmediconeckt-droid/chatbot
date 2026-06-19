@@ -11,11 +11,6 @@ const TranslatedMessage = ({ text, translate, lang }) => {
       return;
     }
 
-    if (lang === 'en-US') {
-      setDisplayText(text);
-      return;
-    }
-
     console.log(`🔄 Translating "${text.substring(0, 30)}..." to ${lang}`);
     setIsTranslating(true);
 

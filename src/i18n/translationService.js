@@ -25,7 +25,7 @@ class TranslationService {
     }
   }
 
-  getCacheKey(text, targetLang, sourceLang = 'en-US') {
+  getCacheKey(text, targetLang, sourceLang = 'auto') {
     const hash = this.simpleHash(text);
     return `${CACHE_PREFIX}${sourceLang}_${targetLang}_${hash}`;
   }
@@ -40,9 +40,9 @@ class TranslationService {
     return Math.abs(hash).toString(36);
   }
 
-  async translate(text, targetLang, sourceLang = 'en-US') {
+  async translate(text, targetLang, sourceLang = 'auto') {
     if (!text || !text.trim()) return text;
-    if (targetLang === 'en-US' || targetLang === sourceLang) return text;
+    if (sourceLang !== 'auto' && targetLang === sourceLang) return text;
 
     const cacheKey = this.getCacheKey(text, targetLang, sourceLang);
 
@@ -82,7 +82,7 @@ class TranslationService {
       const res = await axios.post(`${API_BASE_URL}/translate/text`, {
         text,
         to: targetLang,
-        from: sourceLang,
+        ...(sourceLang && sourceLang !== 'auto' ? { from: sourceLang } : {}),
       });
 
       const translated = res.data?.translatedText || res.data?.text || text;
@@ -119,7 +119,7 @@ class TranslationService {
     }
   }
 
-  async translateBatch(texts, targetLang, sourceLang = 'en-US') {
+  async translateBatch(texts, targetLang, sourceLang = 'auto') {
     const results = await Promise.all(
       texts.map(text => this.translate(text, targetLang, sourceLang))
     );

@@ -162,8 +162,7 @@ export function useUserApiTranslation() {
   if (!ctx) throw new Error('useUserApiTranslation must be used within LanguageProvider');
 
   const translate = useCallback(async (text) => {
-    if (ctx.userLang === 'en-US') return text;
-    return translationService.translate(text, ctx.userLang, 'en-US');
+    return translationService.translate(text, ctx.userLang);
   }, [ctx.userLang]);
 
   return {
@@ -178,8 +177,7 @@ export function useCounselorApiTranslation() {
   if (!ctx) throw new Error('useCounselorApiTranslation must be used within LanguageProvider');
 
   const translate = useCallback(async (text) => {
-    if (ctx.counselorLang === 'en-US') return text;
-    return translationService.translate(text, ctx.counselorLang, 'en-US');
+    return translationService.translate(text, ctx.counselorLang);
   }, [ctx.counselorLang]);
 
   return {
