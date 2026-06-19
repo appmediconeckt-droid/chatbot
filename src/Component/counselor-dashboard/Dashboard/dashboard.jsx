@@ -397,6 +397,7 @@ import AppointmentsTab from "./components/AppointmentsTab";
 import RequestModal from "./components/RequestModal";
 import LogoutModal from "./components/LogoutModal";
 import SessionsTab from "./components/SessionsTab";
+import CounselorSkeleton from "./components/CounselorSkeleton";
 
 
 export default function CounselorDashboard() {
@@ -425,6 +426,7 @@ export default function CounselorDashboard() {
   clearDateFilter,
   clearSessionDateFilter, // ✅ New
   handleUpdateAppointmentStatus,
+  loading: appointmentsLoading,
 } = useAppointments(activeTab);
 
   const {
@@ -536,11 +538,7 @@ export default function CounselorDashboard() {
   }, []);
 
   if (loading) {
-    return (
-      <div className="couns-loading">
-        <div className="couns-loading-spinner"></div>
-      </div>
-    );
+    return <CounselorSkeleton />;
   }
 
   const navItems = [
@@ -650,6 +648,7 @@ export default function CounselorDashboard() {
             handleViewAllRequests={handleViewAllRequests}
             handleUpdateAppointmentStatus={handleUpdateAppointmentStatus}
             handleInitiateVideoCall={handleInitiateVideoCall}
+            loading={appointmentsLoading}
           />
         )}
 
@@ -660,6 +659,7 @@ export default function CounselorDashboard() {
     setSessionSelectedDate={setSessionSelectedDate}
     clearSessionDateFilter={clearSessionDateFilter}
     handleInitiateVideoCall={handleInitiateVideoCall}
+    loading={appointmentsLoading}
   />
 )}
 

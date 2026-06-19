@@ -44,7 +44,9 @@ export default function useCounsellorData() {
             : data.specialization,
           experience: `${data.experience || 0} years`,
           patients: 0,
-          rating: data.rating || 4.5,
+          // Real average rating + count computed by the backend from user ratings.
+          rating: Math.round((data.rating || 0) * 10) / 10,
+          ratingCount: data.ratingCount || 0,
           email: data.email,
           phoneNumber: data.phoneNumber,
           license: "N/A",

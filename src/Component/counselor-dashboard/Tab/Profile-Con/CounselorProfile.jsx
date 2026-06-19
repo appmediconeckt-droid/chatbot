@@ -173,6 +173,7 @@ const CounselorProfile = () => {
                     certifications: Array.isArray(userData.certifications) ? userData.certifications : [],
                     aboutMe: userData.aboutMe || userData.bio || '',
                     rating: userData.rating || 0,
+                    ratingCount: userData.ratingCount || 0,
                     totalSessions: userData.totalSessions || 0,
                     activeClients: userData.activeClients || 0,
                     qualification: userData.qualification || '',
@@ -864,9 +865,14 @@ const CounselorProfile = () => {
                     <div className={`${COUNSELOR_PROFILE_CLASS}__stats`}>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__stat`}>
                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-value`}>
-                                {counselor?.rating || 0} ★
+                                {(Math.round((counselor?.rating || 0) * 10) / 10).toFixed(1)} ★
                             </span>
-                            <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>{t('rating')}</span>
+                            <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>
+                                {t('rating')}
+                                {counselor?.ratingCount > 0
+                                    ? ` (${counselor.ratingCount})`
+                                    : ''}
+                            </span>
                         </div>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__stat`}>
                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-value`}>

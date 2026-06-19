@@ -1141,6 +1141,135 @@ body {
   to { transform: rotate(360deg); }
 }
 
+/* ── Skeleton / shimmer loading ──────────────────────────────────────────── */
+.couns-skeleton {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: #f7f8fc;
+}
+
+.couns-skel-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.06);
+  border-radius: 8px;
+}
+
+.couns-skel-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.45) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: counsShimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes counsShimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* Sidebar skeleton */
+.couns-skel-sidebar {
+  width: var(--couns-sidebar-width);
+  flex-shrink: 0;
+  background: #fff;
+  border-right: 1px solid var(--couns-border);
+  padding: 1.5rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.couns-skel-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid var(--couns-border);
+}
+
+.couns-skel-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+}
+
+.couns-skel-line {
+  height: 12px;
+  border-radius: 6px;
+}
+
+.couns-skel-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.couns-skel-nav-item {
+  height: 40px;
+  border-radius: 10px;
+}
+
+/* Main content skeleton */
+.couns-skel-main {
+  flex: 1;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+.couns-skel-header {
+  height: 32px;
+  width: 240px;
+  max-width: 60%;
+  border-radius: 8px;
+}
+
+.couns-skel-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.couns-skel-card {
+  height: 110px;
+  border-radius: 12px;
+}
+
+.couns-skel-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+.couns-skel-row {
+  height: 64px;
+  border-radius: 12px;
+}
+
+@media (max-width: 768px) {
+  .couns-skel-sidebar {
+    display: none;
+  }
+  .couns-skel-main {
+    padding: 1.25rem 1rem;
+  }
+  .couns-skel-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Animations */
 @keyframes counsSlideIn {
   from {

@@ -13,6 +13,7 @@ import { getPresence } from "../../../../utils/presence";
 import NotificationBell from "./NotificationBell";
 import PendingRequestsModal from "./PendingRequestsModal";
 import { translateMessage } from "../../../../services/messageTranslationService";
+import { ChatListSkeleton } from "../../../common/Skeletons/Skeletons";
 /**
  * SMSList Component - Fetches and displays users/patients list from API
  * Displays anonymous name and gender-based avatar icons (no photos)
@@ -427,10 +428,24 @@ const SMSList = () => {
   if (loading) {
     return (
       <div className="smslist-container">
-        <div className="smslist-loading">
-          <div className="loading-spinner"></div>
-          <p>{t('loading')}</p>
+        {/* Header (static) */}
+        <div className="smslist-header">
+          <div className="smslist-title-section">
+            <h2>Messages</h2>
+            <span className="smslist-total">&nbsp;</span>
+          </div>
+          <div className="smslist-header-actions">
+            <NotificationBell pendingCount={0} onClick={() => {}} />
+          </div>
         </div>
+
+        {/* Search Bar (static) */}
+        <div className="smslist-search">
+          <input type="text" placeholder={t('search_chats')} disabled />
+        </div>
+
+        {/* Conversation rows skeleton — matches smslist-user-item layout */}
+        <ChatListSkeleton rows={8} />
       </div>
     );
   }

@@ -288,6 +288,7 @@ import {
 } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
+import { CardSkeleton } from "../../../common/Skeletons/Skeletons";
 
 export default function AppointmentsTab({
  appointments,
@@ -297,6 +298,7 @@ export default function AppointmentsTab({
   handleViewAllRequests,
   handleUpdateAppointmentStatus,
   handleInitiateVideoCall,
+  loading = false,
 }) {
   const { t } = useCounselorTranslation();
   const getAppointmentDisplay = (appointment) =>
@@ -349,6 +351,14 @@ export default function AppointmentsTab({
       day: 'numeric'
     });
   };
+
+if (loading) {
+    return (
+      <div className="couns-tab-content-stitch">
+        <CardSkeleton cards={6} />
+      </div>
+    );
+  }
 
 return (
     <div className="couns-tab-content-stitch">

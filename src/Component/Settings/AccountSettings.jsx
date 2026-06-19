@@ -153,13 +153,12 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
           <p>{t('manage_account')}</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-          {isCounselor && (
-            <div style={{ background: '#4f46e5', borderRadius: 20, padding: '2px' }}>
-              <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
-            </div>
-          )}
           {onOpenProfile && (
-            <button type="button" onClick={onOpenProfile}>
+            <button
+              type="button"
+              className="account-settings__edit-btn"
+              onClick={onOpenProfile}
+            >
               {t('edit_profile')}
             </button>
           )}
@@ -212,16 +211,18 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
           </button>
         </div>
 
-        <div className="account-settings__panel">
-          <h2>🌐 {t('language')}</h2>
-          <p>{t('change_language')}</p>
-          <div style={{ margin: '15px 0' }}>
-            <LanguageSelector lang={lang} setLang={setLang} t={t} />
+        {!isCounselor && (
+          <div className="account-settings__panel">
+            <h2>🌐 {t('language')}</h2>
+            <p>{t('change_language')}</p>
+            <div style={{ margin: '15px 0' }}>
+              <LanguageSelector lang={lang} setLang={setLang} t={t} />
+            </div>
+            <small style={{ color: '#666', display: 'block', marginTop: '10px' }}>
+              {t('select_language')}: {lang.toUpperCase()}
+            </small>
           </div>
-          <small style={{ color: '#666', display: 'block', marginTop: '10px' }}>
-            {t('select_language')}: {lang.toUpperCase()}
-          </small>
-        </div>
+        )}
       </div>
 
       <PasswordChangePage

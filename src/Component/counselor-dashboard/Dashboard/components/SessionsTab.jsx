@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
+import { CardSkeleton } from "../../../common/Skeletons/Skeletons";
 
 export default function SessionsTab({
   sessionAppointments,
@@ -16,6 +17,7 @@ export default function SessionsTab({
   setSessionSelectedDate,
   clearSessionDateFilter,
   handleInitiateVideoCall,
+  loading = false,
 }) {
   const { t } = useCounselorTranslation();
 
@@ -94,6 +96,14 @@ export default function SessionsTab({
       year: 'numeric'
     });
   };
+
+  if (loading) {
+    return (
+      <div className="couns-tab-content-stitch">
+        <CardSkeleton cards={6} />
+      </div>
+    );
+  }
 
   return (
     <div className="couns-tab-content-stitch">

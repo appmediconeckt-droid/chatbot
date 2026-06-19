@@ -52,6 +52,7 @@ import LocationNoticeToast from "../../common/LocationNoticeToast";
 import AccountSettings from "../../Settings/AccountSettings";
 import { useUserTranslation } from "../../../i18n/LanguageContext";
 import { LanguageSelector } from "../../common/LanguageSelector";
+import RatingPrompt from "../../../components/RatingPrompt";
 
 const VOICE_LANGUAGES = [
   { label: 'English (India)', code: 'en-IN' },
@@ -1416,6 +1417,7 @@ export default function UserDashboard() {
   return (
     <div className="user-dashboard">
       <LocationNoticeToast />
+      <RatingPrompt triggerKey={active} />
       <IncomingCallModal
         isOpen={showCallModal}
         onClose={() => {
