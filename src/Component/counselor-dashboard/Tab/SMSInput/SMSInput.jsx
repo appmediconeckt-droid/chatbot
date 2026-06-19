@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaPhoneAlt, FaSpinner, FaVideo, FaCamera } from "react-icons/fa";
+import { FaChevronDown, FaPhoneAlt, FaSpinner, FaVideo, FaCamera } from "react-icons/fa";
 import "./SMSInput.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
@@ -58,6 +58,8 @@ const SMSInput = () => {
   const [isTranslating, setIsTranslating] = useState(false);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoSending, setPhotoSending] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState(null);
+  const [openMessageMenuId, setOpenMessageMenuId] = useState(null);
 
   const handleSessionExpired = () => {
     localStorage.clear();
@@ -216,15 +218,31 @@ const SMSInput = () => {
   }, [selectedUser]);
 
   const getChatIdForAPI = () => {
-    if (chatId) return chatId;
-    if (selectedUser && USER_ID) return `chat_${USER_ID}_${COUNSELOR_ID}`;
-    return `chat_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const candidateChatId =
+      chatId ||
+      selectedUser?.chatId ||
+      selectedUser?.chat_id ||
+      selectedUser?.chat?.chatId ||
+      selectedUser?.chat?._id ||
+      selectedUser?.chat?.id;
+    if (candidateChatId) return candidateChatId;
+
+    const possibleId = selectedUser?.id || selectedUser?._id;
+    if (typeof possibleId === "string" && possibleId.startsWith("chat_")) {
+      return possibleId;
+    }
+
+    return null;
   };
 
   const fetchMessagesFromAPI = async () => {
     if (!selectedUser) return;
     try {
       const apiChatId = getChatIdForAPI();
+      if (!apiChatId) {
+        setError("Chat ID not found");
+        return;
+      }
       const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       setIsLoadingMessages(true);
       setError(null);
@@ -241,7 +259,8 @@ const SMSInput = () => {
         if (response.data.chatStatus) setChatStatus(response.data.chatStatus);
         const transformedMessages = response.data.messages.map(
           (msg, index) => ({
-            id: msg.id || index,
+            id: msg._id || msg.id || msg.messageId || index,
+            _id: msg._id || msg.id,
             messageId: msg.messageId,
             text: msg.content,
             sender: msg.senderRole === "counsellor" ? "me" : "user",
@@ -310,6 +329,9 @@ const SMSInput = () => {
   const sendMessageToAPI = async ({ messageContent = "", file = null }) => {
     try {
       const apiChatId = getChatIdForAPI();
+      if (!apiChatId) {
+        throw new Error("Chat ID not found");
+      }
       const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       let response;
       if (file) {
@@ -344,6 +366,79 @@ const SMSInput = () => {
         handleSessionExpired();
       }
       throw error;
+    }
+  };
+
+  const getMessageIdentifier = (msg) => msg?._id || msg?.id || msg?.messageId;
+
+  const removeMessageFromState = (messageToDelete) => {
+    const targetId = getMessageIdentifier(messageToDelete);
+    const isSameMessage = (msg) => {
+      const currentId = getMessageIdentifier(msg);
+      return currentId && targetId && String(currentId) === String(targetId);
+    };
+
+    setMessages((prev) => prev.filter((msg) => !isSameMessage(msg)));
+    setOriginalMessages((prev) => {
+      const updatedMessages = prev.filter((msg) => !isSameMessage(msg));
+      saveMessagesToLocalStorage(updatedMessages);
+      return updatedMessages;
+    });
+  };
+
+  const toggleMessageMenu = (msg) => {
+    const messageId = getMessageIdentifier(msg);
+    if (!messageId) return;
+    setOpenMessageMenuId((currentId) =>
+      String(currentId) === String(messageId) ? null : messageId,
+    );
+  };
+
+  const handleDeleteMessage = async (messageToDelete) => {
+    if (!selectedUser || isSending) return;
+
+    const messageId = getMessageIdentifier(messageToDelete);
+    if (!messageId || String(messageId).startsWith("temp_")) {
+      alert("This message cannot be deleted yet.");
+      return;
+    }
+
+    const confirmed = window.confirm("Are you sure you want to delete this message?");
+    if (!confirmed) return;
+
+    try {
+      setDeletingMessageId(messageId);
+      setOpenMessageMenuId(null);
+      setError(null);
+
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : "",
+      };
+      const encodedMessageId = encodeURIComponent(messageId);
+
+      await axios.delete(`${API_BASE_URL}/api/chat/message/${encodedMessageId}`, {
+        headers,
+      });
+
+      removeMessageFromState(messageToDelete);
+    } catch (error) {
+      console.error("Error deleting message:", error);
+      if (error?.response?.status === 401) {
+        handleSessionExpired();
+        return;
+      }
+      const errorMsg =
+        error.response?.data?.error ||
+        error.response?.data?.message ||
+        error.message ||
+        "Failed to delete message";
+      alert(errorMsg);
+    } finally {
+      setDeletingMessageId(null);
+      focusMessageInput();
     }
   };
 
@@ -384,7 +479,8 @@ const SMSInput = () => {
         return [
           ...withoutTemp,
           {
-            id: sentMsg.id || sentMsg._id,
+            id: sentMsg._id || sentMsg.id || sentMsg.messageId,
+            _id: sentMsg._id || sentMsg.id,
             messageId: sentMsg.messageId,
             text: sentMsg.content,
             sender: "me",
@@ -1002,7 +1098,8 @@ const SMSInput = () => {
           return [
             ...withoutTemp,
             {
-              id: messageData.id || messageData.messageId,
+              id: messageData._id || messageData.id || messageData.messageId,
+              _id: messageData._id || messageData.id,
               messageId: messageData.messageId,
               text: messageData.content,
               sender: "me",
@@ -1018,7 +1115,8 @@ const SMSInput = () => {
         return;
       }
       const transformedMessage = {
-        id: messageData.id || messageData.messageId,
+        id: messageData._id || messageData.id || messageData.messageId,
+        _id: messageData._id || messageData.id,
         messageId: messageData.messageId,
         text: messageData.content,
         sender: "user",
@@ -1294,6 +1392,28 @@ const SMSInput = () => {
               className={`smsinput-message ${msg.sender === "me" ? "sent" : "received"}`}
             >
               <div className="message-bubble">
+                <button
+                  type="button"
+                  className="sms-message-menu-btn"
+                  onClick={() => toggleMessageMenu(msg)}
+                  disabled={String(deletingMessageId) === String(getMessageIdentifier(msg))}
+                  title="Message options"
+                  aria-label="Message options"
+                >
+                  <FaChevronDown />
+                </button>
+                {String(openMessageMenuId) === String(getMessageIdentifier(msg)) && (
+                  <div className="sms-message-options-menu">
+                    <button
+                      type="button"
+                      className="sms-message-options-item delete"
+                      onClick={() => handleDeleteMessage(msg)}
+                      disabled={String(deletingMessageId) === String(getMessageIdentifier(msg))}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                )}
                 {msg.contentType === "IMAGE" && msg.attachmentUrl ? (
                   <>
                     <img
