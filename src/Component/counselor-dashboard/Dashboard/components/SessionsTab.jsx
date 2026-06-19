@@ -25,8 +25,8 @@ export default function SessionsTab({
   const translate = (key, fallback) => {
     try {
       const result = t(key);
-      return result || fallback;
-    } catch (error) {
+      return result && result !== key ? result : fallback;
+    } catch {
       return fallback;
     }
   };

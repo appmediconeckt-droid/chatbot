@@ -1530,3 +1530,61 @@
   font-size: 12px;
   color: #dc2626;
 }
+
+/* Consistent counselor settings button theme */
+.counselor-profile-container {
+  --counselor-settings-btn-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --counselor-settings-btn-bg-hover: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  --counselor-settings-btn-shadow: 0 8px 18px rgba(102, 126, 234, 0.28);
+}
+
+.counselor-profile-container__btn,
+.counselor-profile-container__btn--edit,
+.counselor-profile-container__btn--save,
+.counselor-profile-container__btn--cancel,
+.counselor-profile-container__btn--location,
+.counselor-profile-container__upload-photo-btn,
+.counselor-profile-container__remove-photo-btn,
+.counselor-profile-container__add-btn,
+.counselor-profile-container__remove-btn,
+.counselor-profile-container__remove-spec-btn,
+.counselor-profile-container__remove-cert-btn,
+.counselor-profile-container__remove-document-btn,
+.counselor-profile-container__upload-btn,
+.counselor-profile-container__add-cert-btn,
+.otp-verify-btn,
+.otp-confirm-btn {
+  background: var(--counselor-settings-btn-bg) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+  box-shadow: var(--counselor-settings-btn-shadow);
+}
+
+.counselor-profile-container__btn:hover:not(:disabled),
+.counselor-profile-container__btn--edit:hover:not(:disabled),
+.counselor-profile-container__btn--save:hover:not(:disabled),
+.counselor-profile-container__btn--cancel:hover:not(:disabled),
+.counselor-profile-container__btn--location:hover:not(:disabled),
+.counselor-profile-container__upload-photo-btn:hover,
+.counselor-profile-container__remove-photo-btn:hover,
+.counselor-profile-container__add-btn:hover:not(:disabled),
+.counselor-profile-container__remove-btn:hover,
+.counselor-profile-container__remove-spec-btn:hover,
+.counselor-profile-container__remove-cert-btn:hover,
+.counselor-profile-container__remove-document-btn:hover,
+.counselor-profile-container__upload-btn:hover,
+.counselor-profile-container__add-cert-btn:hover:not(:disabled),
+.otp-verify-btn:hover:not(:disabled),
+.otp-confirm-btn:hover:not(:disabled) {
+  background: var(--counselor-settings-btn-bg-hover) !important;
+}
+
+.counselor-profile-container__btn:disabled,
+.counselor-profile-container__add-btn:disabled,
+.counselor-profile-container__add-cert-btn:disabled,
+.otp-verify-btn:disabled,
+.otp-confirm-btn:disabled {
+  background: #cbd5e1 !important;
+  color: #ffffff !important;
+  box-shadow: none;
+}
