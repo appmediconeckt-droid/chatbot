@@ -960,20 +960,20 @@ const handleVerify = async () => {
       {showEmailOtpModal && EmailOtpModal()}
       {showPhoneOtpModal && PhoneOtpModal()}
 
-      {isMobile && (
-        <button
-          onClick={() => navigate(-1)}
-          className="us-mobile-header-back"
-          aria-label="Go back"
-          title="Go back"
-        >
-          <FaArrowLeft />
-        </button>
-      )}
-
       <div
         className={`us-container ${isLogin ? "us-login-layout" : "us-signup-layout"}`}
       >
+        {isMobile && (
+          <button
+            onClick={() => navigate(-1)}
+            className="us-mobile-header-back"
+            aria-label="Go back"
+            title="Go back"
+          >
+            <FaArrowLeft />
+          </button>
+        )}
+
         <div className="us-brand">
           <div className="us-brand-content">
             <div className="us-logo">

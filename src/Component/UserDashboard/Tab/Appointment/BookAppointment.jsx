@@ -1171,6 +1171,10 @@ import { getPresence } from "../../../../utils/presence";
 const CounselorRequestChat = ({ initialSearch = "" }) => {
   const navigate = useNavigate();
   const { t } = useUserTranslation();
+  const tr = (key, fallback) => {
+    const value = t(key);
+    return value && value !== key ? value : fallback;
+  };
 
   // State for counselors list
   const [counselors, setCounselors] = useState([]);
@@ -1193,6 +1197,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   // State for chat requests status
   const [pendingRequests, setPendingRequests] = useState({}); // { counselorId: true }
   const [acceptedChats, setAcceptedChats] = useState({}); // { counselorId: chatId }
+  const [rejectedRequests, setRejectedRequests] = useState({}); // { counselorId: true }
 
   // Search state
   const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -1223,25 +1228,55 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       
       const data = response.data || {};
       
-      // Track pending requests and accepted chats
+      // Accepted chats must keep the card in Book Now state permanently.
+      // If no accepted chat exists, use the latest request status for pending/rejected.
       const pending = {};
       const accepted = {};
+      const rejected = {};
+      const latestByCounselor = new Map();
       
       if (data.chats && Array.isArray(data.chats)) {
         data.chats.forEach(chat => {
           const counselorId = chat.counselorId || chat.counselor?._id || chat.counselor?.id;
           if (counselorId) {
-            if (chat.status === 'pending') {
-              pending[counselorId] = true;
-            } else if (chat.status === 'accepted' || chat.status === 'active') {
-              accepted[counselorId] = chat.id || chat._id || chat.chatId;
+            const status = String(chat.status || "").toLowerCase();
+
+            if (status === "accepted" || status === "active") {
+              accepted[counselorId] = chat.chatId || chat.id || chat._id;
+              return;
+            }
+
+            const currentTime = new Date(
+              chat.updatedAt || chat.createdAt || chat.timestamp || chat.startedAt || 0,
+            ).getTime();
+            const previous = latestByCounselor.get(counselorId);
+
+            if (!previous || currentTime >= previous.time) {
+              latestByCounselor.set(counselorId, { chat, time: currentTime });
             }
           }
         });
       }
+
+      latestByCounselor.forEach(({ chat }, counselorId) => {
+        if (accepted[counselorId]) {
+          return;
+        }
+
+        const status = String(chat.status || "").toLowerCase();
+
+        if (status === "pending") {
+          pending[counselorId] = true;
+        } else if (status === "accepted" || status === "active") {
+          accepted[counselorId] = chat.chatId || chat.id || chat._id;
+        } else if (["rejected", "declined", "cancelled", "canceled"].includes(status)) {
+          rejected[counselorId] = true;
+        }
+      });
       
       setPendingRequests(pending);
       setAcceptedChats(accepted);
+      setRejectedRequests(rejected);
     } catch (error) {
       console.error("Failed to fetch chat status:", error);
     }
@@ -1474,18 +1509,19 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
         const data = await response.json();
 
         if (data.success) {
-          const formattedCounselors = data.counsellors.map((c, index) => {
-            const presence = getPresence(c);
+          const formattedCounselors = data.counsellors.map((c) => {
+            const isOnline = c.isOnline === true && c.isLoggedIn === true;
             return {
               id: c._id,
               name: c.fullName,
               specialization: c.specialization?.join(" , ") || "General",
               experience: `${c.experience || 0} years`,
               rating: c.rating || 4.5,
-              online: presence.isOnline,
-              isOnline: presence.isOnline,
+              online: isOnline,
+              isOnline,
+              isLoggedIn: c.isLoggedIn === true,
               available: c.isActive,
-              lastSeen: presence.lastSeen,
+              lastSeen: c.lastSeen || null,
               avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
               avatarType: getProfilePhotoUrl(c) ? "image" : "text",
               expertise: c.specialization || [],
@@ -1526,17 +1562,33 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
     const updatePresence = (payload = {}) => {
       if (!mounted) return;
       const presence = getPresence(payload);
+      const presenceUserId =
+        payload.userId ||
+        payload.counselorId ||
+        payload.counsellorId ||
+        payload.id ||
+        payload._id ||
+        payload.user?._id ||
+        payload.user?.id;
       const applyPresence = (list) =>
-        list.map((counselor) =>
-          String(counselor.id) === String(payload.userId)
-            ? {
-                ...counselor,
-                online: presence.isOnline,
-                isOnline: presence.isOnline,
-                lastSeen: presence.lastSeen,
-              }
-            : counselor,
-        );
+        list.map((counselor) => {
+          if (String(counselor.id) !== String(presenceUserId)) {
+            return counselor;
+          }
+
+          const isLoggedIn = presence.hasLoginStatus
+            ? presence.isLoggedIn
+            : counselor.isLoggedIn;
+          const isOnline = presence.isOnline === true && isLoggedIn === true;
+
+          return {
+            ...counselor,
+            online: isOnline,
+            isOnline,
+            isLoggedIn,
+            lastSeen: presence.lastSeen,
+          };
+        });
       setCounselors(applyPresence);
       setFilteredCounselors(applyPresence);
     };
@@ -1553,6 +1605,11 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           delete newPending[counselorId];
           return newPending;
         });
+        setRejectedRequests(prev => {
+          const newRejected = { ...prev };
+          delete newRejected[counselorId];
+          return newRejected;
+        });
         setAcceptedChats(prev => ({ ...prev, [counselorId]: chatId }));
         
         // Show notification
@@ -1566,6 +1623,29 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       }
     };
 
+    const onChatRejected = (data = {}) => {
+      if (!mounted) return;
+      const counselorId =
+        data.counselorId ||
+        data.counsellorId ||
+        data.counselor?._id ||
+        data.counselor?.id;
+
+      if (counselorId) {
+        setPendingRequests(prev => {
+          const newPending = { ...prev };
+          delete newPending[counselorId];
+          return newPending;
+        });
+        setAcceptedChats(prev => {
+          const newAccepted = { ...prev };
+          delete newAccepted[counselorId];
+          return newAccepted;
+        });
+        setRejectedRequests(prev => ({ ...prev, [counselorId]: true }));
+      }
+    };
+
     const onConnectError = (err) => {
       console.error("Appointment presence socket error:", err.message);
     };
@@ -1574,6 +1654,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       if (!mounted) return;
       socket.on("presence-update", updatePresence);
       socket.on("chat-accepted", onChatAccepted);
+      socket.on("chat-rejected", onChatRejected);
+      socket.on("chat-declined", onChatRejected);
+      socket.on("chat-cancelled", onChatRejected);
       socket.on("connect_error", onConnectError);
     }).catch((err) => {
       console.error("[BookAppointment] Socket connect failed:", err.message);
@@ -1583,6 +1666,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       mounted = false;
       socketService.off("presence-update", updatePresence);
       socketService.off("chat-accepted", onChatAccepted);
+      socketService.off("chat-rejected", onChatRejected);
+      socketService.off("chat-declined", onChatRejected);
+      socketService.off("chat-cancelled", onChatRejected);
       socketService.off("connect_error", onConnectError);
     };
   }, []);
@@ -1627,20 +1713,26 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
     const isOnline = counselor.online || counselor.isOnline;
     const isPending = pendingRequests[counselorId];
     const isAccepted = !!acceptedChats[counselorId];
-    
     if (!isOnline || !counselor.available) {
-      return { text: t('unavailable'), disabled: true, className: "disabled" };
+      const text = tr("unavailable", "Unavailable");
+      return { text, title: text, disabled: true, className: "disabled" };
     }
     
     if (isAccepted) {
-      return { text: t('chat_now'), disabled: false, className: "active" };
+      const text = tr("book_now", "Book Now");
+      return { text, title: text, disabled: false, className: "active" };
     }
     
     if (isPending) {
-      return { text: t('request_sent'), disabled: true, className: "pending" };
+      const text = tr("request_sent", tr("chat_request_sent", "Request Sent"));
+      return { text, title: text, disabled: true, className: "pending" };
     }
     
-    return { text: t('send_chat_request'), disabled: false, className: "" };
+    const text = tr(
+      "send_chat_request",
+      tr("counselor.messageCounselor", "Send Chat Request"),
+    );
+    return { text, title: text, disabled: false, className: "" };
   };
 
   // Handle Chat Now click
@@ -1649,10 +1741,19 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
     // Check if chat is already accepted
     if (acceptedChats[counselorId]) {
-      navigate("/user-dashboard", {
+      navigate("/chat", {
         state: {
           chatId: acceptedChats[counselorId],
-          counselor: counselor,
+          counselor: {
+            id: counselor.id,
+            name: counselor.name,
+            specialization: counselor.specialization,
+            online: counselor.online,
+            lastSeen: counselor.lastSeen,
+            avatar: counselor.avatar,
+            profilePhoto: counselor.profilePhoto,
+            avatarType: counselor.avatarType,
+          },
         },
       });
       return;
@@ -1716,6 +1817,16 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       if (status === 'pending') {
         // Request sent, update pending requests
         setPendingRequests(prev => ({ ...prev, [counselorId]: true }));
+        setRejectedRequests(prev => {
+          const newRejected = { ...prev };
+          delete newRejected[counselorId];
+          return newRejected;
+        });
+        setAcceptedChats(prev => {
+          const newAccepted = { ...prev };
+          delete newAccepted[counselorId];
+          return newAccepted;
+        });
         setShowUserModal(false);
         alert(t('chat_request_sent'));
         addNotification(
@@ -1727,6 +1838,16 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       } else if (status === 'accepted' || status === 'active') {
         // Chat already accepted, navigate directly
         setAcceptedChats(prev => ({ ...prev, [counselorId]: chatId }));
+        setPendingRequests(prev => {
+          const newPending = { ...prev };
+          delete newPending[counselorId];
+          return newPending;
+        });
+        setRejectedRequests(prev => {
+          const newRejected = { ...prev };
+          delete newRejected[counselorId];
+          return newRejected;
+        });
         setShowUserModal(false);
         navigate("/user-dashboard", {
           state: {
@@ -1760,6 +1881,16 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       } else if (status === 400 && existingChatId) {
         // Chat already exists - navigate to it
         setAcceptedChats(prev => ({ ...prev, [selectedCounselorForRequest.id]: existingChatId }));
+        setPendingRequests(prev => {
+          const newPending = { ...prev };
+          delete newPending[selectedCounselorForRequest.id];
+          return newPending;
+        });
+        setRejectedRequests(prev => {
+          const newRejected = { ...prev };
+          delete newRejected[selectedCounselorForRequest.id];
+          return newRejected;
+        });
         setShowUserModal(false);
         navigate("/user-dashboard", {
           state: {
@@ -2070,7 +2201,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                         className={`status-dot-unique ${counselor.online ? "online" : "offline"}`}
                       ></span>
                       <span className="status-text-unique">
-                        {counselor.online ? "Online" : "Offline"}
+                        {counselor.online
+                          ? tr("online", "Online")
+                          : tr("offline", "Offline")}
                       </span>
                     </div>
                   </div>
@@ -2099,19 +2232,12 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                     </span>
                   </div>
 
-                  <div className="counselor-response-unique">
-                    ⚡ {t('avg_response')} {counselor.responseTime}
-                  </div>
-
                   <div className="card-actions-unique">
                     <button
                       onClick={() => handleChatNow(counselor)}
                       disabled={buttonState.disabled}
                       className={`chat-now-btn-unique ${buttonState.className}`}
-                      title={buttonState.disabled ? 
-                        (counselor.online ? t('request_sent') : t('unavailable')) : 
-                        t('chat_now')
-                      }
+                      title={buttonState.title}
                     >
                       {buttonState.text}
                     </button>
@@ -2213,7 +2339,12 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header-unique">
-              <h2>Start Chat with {selectedCounselorForRequest?.name}</h2>
+              <h2>
+                {tr("start_chat", "Start Chat")}{" "}
+                {selectedCounselorForRequest?.name
+                  ? `${tr("with", "with")} ${selectedCounselorForRequest.name}`
+                  : ""}
+              </h2>
               <button
                 className="modal-close-unique"
                 onClick={() => setShowUserModal(false)}
@@ -2289,10 +2420,6 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
               <div className="modal-info-unique">
                 <p>⏳ Your request will be sent to the counselor</p>
                 <p>✅ You'll be notified when they accept</p>
-                <p>
-                  💬 Average response time:{" "}
-                  {selectedCounselorForRequest?.responseTime}
-                </p>
                 <p className="privacy-note-unique">
                   🔒 You are chatting anonymously. Your real identity is
                   protected.
@@ -2304,7 +2431,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                 className="modal-submit-btn-unique"
                 disabled={isLoading || !userAnonymous}
               >
-                {isLoading ? "Loading..." : "Send Chat Request"}
+                {isLoading
+                  ? tr("loading", "Loading...")
+                  : tr("send_chat_request", tr("counselor.messageCounselor", "Send Chat Request"))}
               </button>
             </form>
           </div>

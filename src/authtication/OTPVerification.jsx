@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../axiosConfig';
 import { updateVerificationStatus, setUserEmail, getAccessToken } from './authUtils';
@@ -173,6 +174,15 @@ const OTPVerification = () => {
   return (
     <div className="otp-container">
       <div className="otp-card">
+        <button
+          type="button"
+          className="otp-page-back-btn"
+          onClick={() => navigate('/user-signup')}
+          aria-label="Go back"
+        >
+          <FaArrowLeft />
+          <span>Back</span>
+        </button>
 
         <h2>{step === 'email' ? 'Login with Email' : 'Verify OTP'}</h2>
 

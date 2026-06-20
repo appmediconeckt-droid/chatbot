@@ -31,8 +31,25 @@ export const getPresence = (source = {}) => {
     status === "online" ||
     status === "active_now";
 
+  // `isLoggedIn` is a separate server flag from online availability.  Keep
+  // track of whether it was actually supplied so socket updates that only
+  // contain isOnline do not overwrite the current login state.
+  const loginCandidates = [
+    source.isLoggedIn,
+    source.is_logged_in,
+    nested.isLoggedIn,
+    nested.is_logged_in,
+  ];
+  const hasLoginStatus = loginCandidates.some(
+    (value) => value !== undefined && value !== null,
+  );
+
   return {
     isOnline,
+    isLoggedIn: hasLoginStatus
+      ? loginCandidates.some(normalizeOnlineValue)
+      : isOnline,
+    hasLoginStatus,
     lastSeen:
       source.lastSeen ||
       source.last_seen ||

@@ -58,13 +58,13 @@ const ForgotPassword = () => {
     <div className="fp-wrapper">
       <div className="fp-container">
         {/* Back Button */}
-        <button 
+        {/* <button 
           className="fp-back-btn"
           onClick={() => navigate("/user-signup")}
           aria-label="Go back"
         >
           <FaArrowLeft />
-        </button>
+        </button> */}
 
         {/* Logo */}
         <div className="fp-logo">

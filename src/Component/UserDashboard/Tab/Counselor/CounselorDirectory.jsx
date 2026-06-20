@@ -28,7 +28,7 @@ const getProfilePhotoUrl = (profilePhoto) => {
 };
 
 const isCounselorOnline = (counselor) =>
-  Boolean(counselor?.isOnline || counselor?.online);
+  counselor?.isOnline === true && counselor?.isLoggedIn === true;
 
 const CounselorTable = () => {
   const { t } = useUserTranslation();
@@ -44,6 +44,7 @@ const CounselorTable = () => {
       rating: counselor.rating,
       experience: counselor.experience,
       isOnline: counselor.isOnline,
+      isLoggedIn: counselor.isLoggedIn,
       lastSeen: counselor.lastSeen,
     };
     navigate("/dashboard/appointment", {
@@ -75,6 +76,7 @@ const CounselorTable = () => {
             specialization: counselor.specialization,
             profilePhoto: counselor.profilePhoto,
             isOnline: counselor.isOnline,
+            isLoggedIn: counselor.isLoggedIn,
             lastSeen: counselor.lastSeen,
           },
         },
@@ -98,15 +100,6 @@ const CounselorTable = () => {
     }
   };
 
-  const formatLastSeen = (lastSeen) => {
-    if (!lastSeen) return t('offline');
-    const diffMs = Date.now() - new Date(lastSeen).getTime();
-    const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
-    if (diffMinutes < 60) return `${t('last_seen')} ${diffMinutes} ${t('min_ago')}`;
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${t('last_seen')} ${diffHours} ${t('hour_ago')}`;
-    return `${t('last_seen')} ${Math.floor(diffHours / 24)} ${t('day_ago')}`;
-  };
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [sortBy, setSortBy] = useState("online");
@@ -128,12 +121,12 @@ const CounselorTable = () => {
           response.data?.counselors ||
           []
         ).map((counselor) => {
-          const presence = getPresence(counselor);
           return {
             ...counselor,
-            isOnline: presence.isOnline,
-            online: presence.isOnline,
-            lastSeen: presence.lastSeen,
+            // A counselor is available only when both API flags are true.
+            // Do not infer this state from lastSeen / last-login time.
+            isOnline: counselor.isOnline === true,
+            isLoggedIn: counselor.isLoggedIn === true,
           };
         });
 
@@ -161,12 +154,22 @@ const CounselorTable = () => {
       const presence = getPresence(payload);
       const userId = payload.userId;
       const isOnline = presence.isOnline;
+      const isLoggedIn = presence.isLoggedIn;
+      const hasLoginStatus = presence.hasLoginStatus;
       const lastSeen = presence.lastSeen;
       console.log(`[Presence] ${userId} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
       setCounselorsData((prev) =>
         prev.map((counselor) =>
           String(counselor._id || counselor.id) === String(userId)
-            ? { ...counselor, isOnline, online: isOnline, lastSeen }
+            ? {
+                ...counselor,
+                isOnline,
+                online: isOnline,
+                isLoggedIn: hasLoginStatus
+                  ? isLoggedIn
+                  : counselor.isLoggedIn,
+                lastSeen,
+              }
             : counselor,
         ),
       );
@@ -347,7 +350,7 @@ const CounselorTable = () => {
                       className={`presence-dot ${
                         online ? "online" : "offline"
                       }`}
-                      title={online ? t('online') : formatLastSeen(counselor.lastSeen)}
+                      title={online ? t('online') : t('offline')}
                     />
                   </div>
                   <div className="counselor-basic">
@@ -361,7 +364,7 @@ const CounselorTable = () => {
                       online ? "now" : ""
                     }`}
                   >
-                    {online ? t('online') : formatLastSeen(counselor.lastSeen)}
+                    {online ? t('online') : t('offline')}
                   </div>
                 </div>
 
@@ -419,7 +422,7 @@ const CounselorTable = () => {
                       className={`chat-now-btn ${!online ? "disabled" : ""}`}
                       onClick={() => handleChatNow(counselor)}
                       disabled={!online || isStartingChat}
-                      title={!online ? formatLastSeen(counselor.lastSeen) : t('chat_now')}
+                      title={online ? t('chat_now') : t('offline')}
                     >
                       {online ? t('chat_now') : t('unavailable')}
                     </button>

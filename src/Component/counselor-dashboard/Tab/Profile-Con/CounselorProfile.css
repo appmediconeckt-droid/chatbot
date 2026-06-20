@@ -1588,3 +1588,156 @@
   color: #ffffff !important;
   box-shadow: none;
 }
+
+/* Mobile profile layout polish */
+@media (max-width: 768px) {
+  .counselor-profile-container {
+    width: 100%;
+    padding: 14px;
+    min-height: auto;
+    overflow-x: hidden;
+  }
+
+  .counselor-profile-container__header {
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border-radius: 16px;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+  }
+
+  .counselor-profile-container__avatar-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .counselor-profile-container__profile-photo-container {
+    width: 112px;
+    height: 112px;
+    margin: 0 auto 0.85rem;
+  }
+
+  .counselor-profile-container__profile-photo,
+  .counselor-profile-container__avatar {
+    width: 112px;
+    height: 112px;
+  }
+
+  .counselor-profile-container__header-info {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .counselor-profile-container__name,
+  .counselor-profile-container__specialization,
+  .counselor-profile-container__unique-code-value {
+    overflow-wrap: anywhere;
+  }
+
+  .counselor-profile-container__name {
+    font-size: 1.45rem;
+    line-height: 1.25;
+  }
+
+  .counselor-profile-container__specialization {
+    font-size: 0.95rem;
+  }
+
+  .counselor-profile-container__stats {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .counselor-profile-container__stat {
+    min-width: 0;
+    padding: 0.65rem 0.35rem;
+    border-radius: 12px;
+    background: #f8fafc;
+  }
+
+  .counselor-profile-container__stat-value {
+    font-size: 1.15rem;
+  }
+
+  .counselor-profile-container__stat-label {
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+
+  .counselor-profile-container__actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .counselor-profile-container__btn,
+  .counselor-profile-container__btn--edit,
+  .counselor-profile-container__btn--save,
+  .counselor-profile-container__btn--cancel,
+  .counselor-profile-container__btn--location {
+    width: 100%;
+    justify-content: center;
+    min-height: 42px;
+  }
+
+  .counselor-profile-container__content {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .counselor-profile-container__card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 14px;
+  }
+
+  .counselor-profile-container__contact-item,
+  .counselor-profile-container__info-row {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .counselor-profile-container__add-section,
+  .counselor-profile-container__add-spec-section,
+  .counselor-profile-container__specialization-input,
+  .otp-field-row,
+  .otp-input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .counselor-profile-container__input,
+  .otp-field-row input,
+  .otp-input-row input,
+  .otp-verify-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .counselor-profile-container {
+    padding: 10px;
+  }
+
+  .counselor-profile-container__header {
+    padding: 1rem;
+  }
+
+  .counselor-profile-container__profile-photo-container,
+  .counselor-profile-container__profile-photo,
+  .counselor-profile-container__avatar {
+    width: 96px;
+    height: 96px;
+  }
+
+  .counselor-profile-container__stats {
+    grid-template-columns: 1fr;
+  }
+}

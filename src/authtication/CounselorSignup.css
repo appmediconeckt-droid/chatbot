@@ -33,6 +33,7 @@
   display: grid;
   grid-template-columns: 1fr 1.2fr;
   overflow: hidden;
+  position: relative;
 }
 
 /* ===== BRAND SECTION ===== */
@@ -190,15 +191,18 @@
 }
 
 .cs-mobile-header-back {
-  position: fixed;
-  top: 20px;
-  left: 20px;
-  z-index: 1000;
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  z-index: 1200;
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
   border-radius: 12px;
-  background: white;
-  border: 2px solid #4776e6;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
   color: #4776e6;
   font-size: 20px;
   cursor: pointer;
@@ -206,7 +210,13 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 12px rgba(71, 118, 230, 0.15);
+  box-shadow: 0 6px 18px rgba(71, 118, 230, 0.22);
+}
+
+.cs-mobile-header-back svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
 }
 
 .cs-mobile-header-back:hover {
@@ -861,7 +871,7 @@
   }
 
   .cs-form-section {
-    padding: 30px;
+    padding: 76px 30px 30px;
   }
 
   .cs-grid {
@@ -880,7 +890,7 @@
   }
 
   .cs-form-section {
-    padding: 25px 20px;
+    padding: 72px 20px 25px;
   }
 
   .cs-form-header h2 {
@@ -889,8 +899,18 @@
 }
 
 @media (max-width: 480px) {
+  .cs-mobile-header-back {
+    top: 14px;
+    left: 14px;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 10px;
+  }
+
   .cs-form-section {
-    padding: 20px 15px;
+    padding: 66px 15px 20px;
   }
 
   .cs-form-header h2 {

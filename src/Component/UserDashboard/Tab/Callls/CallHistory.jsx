@@ -159,60 +159,6 @@ const CallHistory = ({ currentUser }) => {
     currentUser?.role || localStorage.getItem("userRole") || "user",
   );
 
-  const getProfilePhotoUrl = (profilePhoto) => {
-    if (!profilePhoto) return null;
-    if (typeof profilePhoto === "string") return profilePhoto;
-    if (profilePhoto.url) return profilePhoto.url;
-    if (profilePhoto.publicId) {
-      return `https://res.cloudinary.com/dfll8lwos/image/upload/${profilePhoto.publicId}`;
-    }
-    return null;
-  };
-
-  const fetchCounselorProfile = useCallback(async (counselorId, token) => {
-    if (!counselorId) return null;
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/auth/counsellors/${counselorId}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        },
-      );
-      const counselor = response.data?.counsellor;
-      if (!counselor) return null;
-
-      return {
-        ...counselor,
-        profilePhoto: getProfilePhotoUrl(counselor.profilePhoto),
-      };
-    } catch (error) {
-      console.warn(`Failed to fetch counselor profile for ${counselorId}:`, error);
-      return null;
-    }
-  }, []);
-
-  const fetchUserProfile = useCallback(async (userId, token) => {
-    if (!userId) return null;
-    try {
-      const response = await axios.get(
-        `${API_BASE_URL}/api/auth/users/${userId}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        },
-      );
-      const user = response.data?.user || response.data;
-      if (!user) return null;
-
-      return {
-        ...user,
-        profilePhoto: getProfilePhotoUrl(user.profilePhoto),
-      };
-    } catch (error) {
-      console.warn(`Failed to fetch user profile for ${userId}:`, error);
-      return null;
-    }
-  }, []);
-
   const fetchCallHistory = useCallback(async () => {
     if (!currentUserId) {
       setCallsData([]);
@@ -239,8 +185,7 @@ const CallHistory = ({ currentUser }) => {
         ? response.data.history
         : [];
 
-      const normalizedCalls = await Promise.all(
-        historyItems.map(async (call, index) => {
+      const normalizedCalls = historyItems.map((call, index) => {
           const timestamp = call.timestamp || call.createdAt;
           const dateValue = timestamp ? new Date(timestamp) : null;
           const normalizedType = normalizeCallType(call.type);
@@ -249,23 +194,11 @@ const CallHistory = ({ currentUser }) => {
           const counterPartyType = normalizeRole(call.withType);
           const apiParticipant = getApiParticipantDisplay(call, currentUserType);
 
-          let counterPartyProfile = null;
-
-          // Fetch profile to get avatar/photo
-          if (call.withId) {
-            if (counterPartyType === "counsellor") {
-              counterPartyProfile = await fetchCounselorProfile(call.withId, token);
-            } else if (counterPartyType === "user") {
-              counterPartyProfile = await fetchUserProfile(call.withId, token);
-            }
-          }
-
           const counterPartySource = {
             ...call,
             ...(typeof call.with === "object" && call.with ? call.with : {}),
             ...(call.otherParty || {}),
             ...(call.counterParty || {}),
-            ...(counterPartyProfile || {}),
             anonymousName: apiParticipant.anonymousName,
             anonymous: apiParticipant.anonymousName,
             displayName: apiParticipant.displayName,
@@ -275,18 +208,15 @@ const CallHistory = ({ currentUser }) => {
             user: {
               ...(call.user || {}),
               ...(call.withUser || {}),
-              ...(counterPartyType === "user" ? counterPartyProfile || {} : {}),
             },
             patient: {
               ...(call.patient || {}),
               ...(call.withPatient || {}),
-              ...(counterPartyType === "user" ? counterPartyProfile || {} : {}),
             },
             otherParty: {
               ...(call.otherParty || {}),
               ...(typeof call.with === "object" && call.with ? call.with : {}),
               ...(call.counterParty || {}),
-              ...(counterPartyProfile || {}),
               anonymousName: apiParticipant.anonymousName,
               anonymous: apiParticipant.anonymousName,
               displayName: apiParticipant.displayName,
@@ -339,8 +269,7 @@ const CallHistory = ({ currentUser }) => {
             timestamp,
             apiCallData: call,
           };
-        }),
-      );
+      });
 
       setCallsData(normalizedCalls);
     } catch (error) {
@@ -353,7 +282,7 @@ const CallHistory = ({ currentUser }) => {
     } finally {
       setIsLoadingCalls(false);
     }
-  }, [currentUserId, currentUserType, fetchCounselorProfile, fetchUserProfile]);
+  }, [currentUserId, currentUserType]);
 
   useEffect(() => {
     void fetchCallHistory();

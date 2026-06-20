@@ -141,8 +141,29 @@ export function LanguageProvider({ children }) {
   );
 }
 
+const TRANSLATION_KEY_ALIASES = {
+  send_chat_request: ["send_chat_request", "counselor.messageCounselor"],
+  request_sent: ["request_sent", "chat_request_sent"],
+};
+
 function makeT(lang) {
-  return (key) => translations[lang]?.[key] ?? translations['en-US']?.[key] ?? key;
+  return (key) => {
+    const lookupKeys = TRANSLATION_KEY_ALIASES[key] || [key];
+
+    for (const lookupKey of lookupKeys) {
+      if (translations[lang]?.[lookupKey]) {
+        return translations[lang][lookupKey];
+      }
+    }
+
+    for (const lookupKey of lookupKeys) {
+      if (translations["en-US"]?.[lookupKey]) {
+        return translations["en-US"][lookupKey];
+      }
+    }
+
+    return key;
+  };
 }
 
 export function useUserTranslation() {

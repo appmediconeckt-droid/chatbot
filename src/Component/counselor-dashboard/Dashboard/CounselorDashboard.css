@@ -383,6 +383,79 @@ body {
   box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
 }
 
+.couns-mobile-menu .couns-sidebar-header {
+  padding: 1rem;
+}
+
+.couns-mobile-menu .couns-counselor-profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+.couns-mobile-menu .couns-profile-avatar-img,
+.couns-mobile-menu .couns-profile-avatar,
+.couns-mobile-menu .couns-profile-avatar-fallback {
+  width: 76px;
+  height: 76px;
+  min-width: 76px;
+  border-radius: 50%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  background: #eef2ff;
+  color: #6366f1;
+  border: 3px solid #ffffff;
+  box-shadow: 0 3px 10px rgba(15, 23, 42, 0.12);
+}
+
+.couns-mobile-menu .couns-profile-avatar,
+.couns-mobile-menu .couns-profile-avatar-fallback {
+  padding: 6px;
+}
+
+.couns-mobile-menu .couns-counselor-profile h3,
+.couns-mobile-menu .couns-counselor-profile p {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.couns-mobile-menu .couns-counselor-profile h3 {
+  margin: 0.75rem 0 0.3rem;
+  font-size: 1rem;
+  line-height: 1.25;
+  color: #1f2937;
+}
+
+.couns-mobile-menu .couns-counselor-profile p {
+  margin: 0.2rem 0;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #64748b;
+}
+
+.couns-mobile-menu .couns-rating-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin-top: 0.5rem;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.couns-mobile-menu .couns-extra-info {
+  width: 100%;
+  margin-top: 0.6rem;
+}
+
 .couns-mobile-nav {
   padding: 1rem;
 }
@@ -528,7 +601,7 @@ body {
 
 /* Tab Content */
 .couns-tab-content {
-  padding: 1rem 0;
+  /* padding: 1rem 0; */
   width: 100%;
   box-sizing: border-box;
 }
@@ -1542,6 +1615,26 @@ body {
 
   .couns-mobile-menu {
     width: 100%;
+  }
+
+  .couns-mobile-menu .couns-profile-avatar-img,
+  .couns-mobile-menu .couns-profile-avatar,
+  .couns-mobile-menu .couns-profile-avatar-fallback {
+    width: 64px;
+    height: 64px;
+    min-width: 64px;
+  }
+
+  .couns-mobile-menu .couns-sidebar-header {
+    padding: 0.85rem;
+  }
+
+  .couns-mobile-menu .couns-counselor-profile h3 {
+    font-size: 0.95rem;
+  }
+
+  .couns-mobile-menu .couns-counselor-profile p {
+    font-size: 0.72rem;
   }
 
   .couns-coming-soon {
@@ -3470,5 +3563,265 @@ button:focus {
   .stitch-session-today-badge {
     font-size: 11px;
     padding: 2px 10px;
+  }
+}
+
+/* Appointment and session mobile layout */
+@media (max-width: 768px) {
+  .couns-tab-content-stitch {
+    padding: 16px;
+    min-height: calc(100vh - 72px);
+    overflow-x: hidden;
+  }
+
+  .stitch-apt-layout,
+  .stitch-session-layout {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .stitch-apt-layout {
+    gap: 20px;
+  }
+
+  .stitch-session-layout {
+    padding: 0;
+    background: transparent;
+  }
+
+  .stitch-apt-left,
+  .stitch-apt-right,
+  .stitch-session-info,
+  .stitch-schedule-details {
+    min-width: 0;
+  }
+
+  .stitch-apt-header,
+  .stitch-session-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stitch-apt-header > div,
+  .stitch-session-header-left {
+    align-items: stretch !important;
+    flex-direction: column;
+    gap: 10px !important;
+    width: 100%;
+  }
+
+  .stitch-apt-header h2,
+  .stitch-section-header h3,
+  .stitch-session-header-left h2 {
+    font-size: 20px;
+    line-height: 1.25;
+  }
+
+  .stitch-apt-header button,
+  .stitch-date-filter,
+  .stitch-date-input,
+  .stitch-session-count,
+  .stitch-session-today-badge {
+    width: 100%;
+  }
+
+  .stitch-apt-header button {
+    justify-content: center;
+    padding: 10px 12px;
+    background: #eef2ff;
+    border-radius: 10px;
+  }
+
+  .stitch-date-filter {
+    justify-content: space-between;
+    min-width: 0;
+  }
+
+  .stitch-date-input {
+    min-width: 0;
+  }
+
+  .stitch-session-count,
+  .stitch-session-today-badge {
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+  }
+
+  .stitch-apt-grid,
+  .stitch-session-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .stitch-apt-card,
+  .stitch-session-card,
+  .stitch-schedule-list {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .stitch-apt-card,
+  .stitch-session-card {
+    padding: 14px;
+  }
+
+  .stitch-apt-card-top,
+  .stitch-session-card-header {
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .stitch-apt-avatar {
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+  }
+
+  .stitch-apt-info h3,
+  .stitch-session-info h3,
+  .stitch-schedule-name,
+  .stitch-schedule-type {
+    overflow-wrap: anywhere;
+  }
+
+  .stitch-apt-info h3 {
+    padding-right: 78px;
+    font-size: 17px;
+  }
+
+  .stitch-apt-tag,
+  .stitch-session-type,
+  .stitch-session-status {
+    line-height: 1.35;
+  }
+
+  .stitch-apt-time {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 12px;
+  }
+
+  .stitch-apt-actions,
+  .stitch-session-actions {
+    flex-direction: column;
+  }
+
+  .stitch-btn-accept,
+  .stitch-btn-reject,
+  .stitch-btn-start-call,
+  .stitch-btn-reschedule {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .stitch-section-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .stitch-date-badge {
+    width: fit-content;
+  }
+
+  .stitch-schedule-item {
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .stitch-schedule-time {
+    width: 44px;
+    flex: 0 0 44px;
+  }
+
+  .stitch-schedule-line {
+    flex: 0 0 4px;
+  }
+
+  .stitch-empty-state-couns {
+    padding: 32px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .couns-tab-content-stitch {
+    padding: 12px;
+  }
+
+  .stitch-apt-header h2,
+  .stitch-section-header h3,
+  .stitch-session-header-left h2 {
+    font-size: 18px;
+  }
+
+  .stitch-apt-card,
+  .stitch-session-card {
+    border-radius: 10px;
+    padding: 12px;
+  }
+
+  .stitch-apt-card-top,
+  .stitch-session-card-header {
+    gap: 10px;
+  }
+
+  .stitch-session-avatar {
+    width: 42px;
+    height: 42px;
+  }
+
+  .stitch-apt-avatar {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .stitch-apt-info h3,
+  .stitch-session-info h3 {
+    font-size: 16px;
+  }
+
+  .status-badge-stitch {
+    top: 12px;
+    right: 12px;
+    max-width: 90px;
+    text-align: center;
+  }
+
+  .stitch-session-details,
+  .stitch-session-notes {
+    padding: 10px;
+  }
+
+  .stitch-session-detail-item {
+    align-items: flex-start;
+    line-height: 1.4;
+  }
+
+  .stitch-schedule-item {
+    align-items: flex-start;
+  }
+}
+
+/* Keep every mobile tab clear of the fixed top menu */
+@media (max-width: 768px) {
+  .couns-mobile-header {
+    box-sizing: border-box;
+    min-height: 64px;
+  }
+
+  .couns-main-content,
+  .couns-main-content.mobile {
+    padding-top: 84px;
+  }
+}
+
+@media (max-width: 480px) {
+  .couns-main-content,
+  .couns-main-content.mobile {
+    padding-top: 80px;
   }
 }

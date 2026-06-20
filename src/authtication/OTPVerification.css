@@ -5,6 +5,7 @@
   min-height: 100vh;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .otp-card {
@@ -229,6 +230,29 @@
   box-shadow: 0 10px 30px rgba(0,0,0,0.15);
   text-align: center;
   animation: fadeIn 0.4s ease;
+  box-sizing: border-box;
+}
+
+.otp-page-back-btn {
+  width: auto;
+  min-width: 44px;
+  height: 40px;
+  padding: 0 14px;
+  margin: 0 0 18px;
+  border: 1px solid rgba(102, 126, 234, 0.22);
+  border-radius: 999px;
+  background: #f8faff;
+  color: #667eea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.otp-page-back-btn:hover {
+  background: #eef2ff;
 }
 
 /* Header */
@@ -358,5 +382,41 @@
     width: 40px;
     height: 45px;
     font-size: 16px;
+  }
+}
+
+.otp-card .otp-page-back-btn {
+  width: auto;
+  min-width: 44px;
+  height: 40px;
+  padding: 0 14px;
+  margin-top: 0;
+  margin-bottom: 18px;
+  border: 1px solid rgba(102, 126, 234, 0.22);
+  border-radius: 999px;
+  background: #f8faff;
+  color: #667eea;
+  display: inline-flex;
+  gap: 8px;
+}
+
+@media (max-width: 480px) {
+  .otp-container {
+    align-items: flex-start;
+    padding: calc(env(safe-area-inset-top, 0px) + 14px) 12px 18px;
+  }
+
+  .otp-card {
+    padding: 24px 18px;
+  }
+
+  .otp-input-group {
+    gap: 6px;
+  }
+
+  .otp-input-group input {
+    width: 42px;
+    height: 48px;
+    font-size: 17px;
   }
 }

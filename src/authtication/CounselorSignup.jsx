@@ -2891,18 +2891,18 @@ const CounselorSignup = () => {
       {showEmailOtpModal && <EmailOtpModal />}
       {showPhoneOtpModal && <PhoneOtpModal />}
 
-      {isMobile && (
-        <button
-          onClick={() => navigate(-1)}
-          className="cs-mobile-header-back"
-          aria-label="Go back"
-          title="Go back"
-        >
-          <FaArrowLeft />
-        </button>
-      )}
-
       <div className="cs-container">
+        {isMobile && (
+          <button
+            onClick={() => navigate(-1)}
+            className="cs-mobile-header-back"
+            aria-label="Go back"
+            title="Go back"
+          >
+            <FaArrowLeft />
+          </button>
+        )}
+
         <div className="cs-brand">
           <div className="cs-brand-content">
             <div className="cs-logo">
