@@ -173,19 +173,9 @@ const PatientProfile = () => {
   }, []);
 
   const getProfilePhotoUrl = (userData) => {
-    if (
-      userData.avatar &&
-      userData.avatar.type !== "uploaded" &&
-      typeof userData.avatar.url === "string" &&
-      userData.avatar.url
-    ) {
-      return userData.avatar.url;
-    }
-
-    if (userData.avatar?.type === "uploaded") {
-      return "";
-    }
-
+    // profilePhoto is the authoritative, latest saved image. The sidebar
+    // already uses it; checking avatar first made the profile page show an
+    // older generated avatar after a new photo had been saved.
     if (userData.profilePhoto) {
       if (
         typeof userData.profilePhoto === "object" &&
@@ -197,6 +187,16 @@ const PatientProfile = () => {
         return userData.profilePhoto;
       }
     }
+
+    if (
+      userData.avatar &&
+      userData.avatar.type !== "uploaded" &&
+      typeof userData.avatar.url === "string" &&
+      userData.avatar.url
+    ) {
+      return userData.avatar.url;
+    }
+
     return "";
   };
 
@@ -530,12 +530,26 @@ const PatientProfile = () => {
     );
   };
 
-  const handleAvatarSelect = (avatar) => {
+  const handleAvatarSelect = async (avatar) => {
     const avatarUrl = typeof avatar === "string" ? avatar : avatar?.url || avatar?.avatarUrl;
     if (!avatarUrl) return;
 
     setProfileImage(avatarUrl);
-    setProfileImageFile(null); // URL-based avatar, no file upload needed
+    if (avatarUrl.startsWith("data:image/")) {
+      // GPT Image returns base64 image data. Turn it into a file so the normal
+      // profile-photo upload path stores it permanently instead of losing it on save.
+      try {
+        const imageResponse = await fetch(avatarUrl);
+        const imageBlob = await imageResponse.blob();
+        setProfileImageFile(new File([imageBlob], "ai-avatar.png", { type: imageBlob.type || "image/png" }));
+      } catch (error) {
+        console.error("Unable to prepare generated avatar for upload:", error);
+        showNotificationMessage("Avatar was generated but could not be prepared for saving. Please try again.", "error");
+        return;
+      }
+    } else {
+      setProfileImageFile(null); // URL-based avatar, no file upload needed
+    }
     setProfileImageRemoved(false);
     setSelectedAvatarPayload(
       typeof avatar === "string"
@@ -547,8 +561,9 @@ const PatientProfile = () => {
             ...avatar,
             avatarUrl,
             avatarType: avatar.avatarType || "builder",
-          },
+        },
     );
+    showNotificationMessage("Avatar selected. Click Save Changes to update your profile.", "success");
   };
 
   const handleSaveProfile = async () => {
@@ -1008,15 +1023,15 @@ const PatientProfile = () => {
 
       {/* Edit Modal */}
       {isEditing && (
-        <div className="modal-overlay" onClick={handleCancelEdit}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
+        <div className="patient-profile-modal-overlay" onClick={handleCancelEdit}>
+          <div className="patient-profile-modal-container" onClick={(e) => e.stopPropagation()}>
+            <div className="patient-profile-modal-header">
               <h3>{t('profile.editProfile')}</h3>
               <button className="close-modal" onClick={handleCancelEdit}>
                 ×
               </button>
             </div>
-            <div className="modal-body">
+            <div className="patient-profile-modal-body">
               {/* Profile Picture */}
               <div className="form-section">
                 <h4>Profile Picture</h4>
@@ -1534,7 +1549,7 @@ const PatientProfile = () => {
                 </div>
               </div>
             </div>
-            <div className="modal-footer">
+            <div className="patient-profile-modal-footer">
               <button
                 className="btn-secondary"
                 onClick={handleCancelEdit}
@@ -1566,6 +1581,7 @@ const PatientProfile = () => {
           userName={editFormData.name || patientData.personalInfo.name}
           onSelect={handleAvatarSelect}
           onClose={() => setShowAvatarBuilder(false)}
+          autoStartCamera
         />
       )}
     </div>

@@ -539,7 +539,7 @@
 }
 
 /* Modal Styles */
-.modal-overlay {
+.patient-profile-modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -550,11 +550,12 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  /* Dashboard navigation and floating controls use high z-index values. */
+  z-index: 10050;
   padding: 20px;
 }
 
-.modal-container {
+.patient-profile-modal-container {
   background: white;
   border-radius: 32px;
   width: 100%;
@@ -576,7 +577,7 @@
   }
 }
 
-.modal-header {
+.patient-profile-modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -588,7 +589,7 @@
   z-index: 10;
 }
 
-.modal-header h3 {
+.patient-profile-modal-header h3 {
   font-size: 22px;
   color: #1e293b;
 }
@@ -613,7 +614,7 @@
   color: #ef4444;
 }
 
-.modal-body {
+.patient-profile-modal-body {
   padding: 28px;
 }
 
@@ -758,7 +759,7 @@
   transform: translateY(-1px);
 }
 
-.modal-footer {
+.patient-profile-modal-footer {
   display: flex;
   justify-content: flex-end;
   gap: 16px;
@@ -800,11 +801,11 @@
     gap: 12px;
   }
   
-  .modal-container {
+  .patient-profile-modal-container {
     max-width: 95%;
   }
   
-  .modal-body {
+  .patient-profile-modal-body {
     padding: 20px;
   }
   
@@ -840,7 +841,7 @@
     padding: 18px;
   }
   
-  .modal-header h3 {
+  .patient-profile-modal-header h3 {
     font-size: 18px;
   }
   

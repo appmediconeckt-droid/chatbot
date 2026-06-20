@@ -165,6 +165,9 @@
 .counselor-profile-container__actions {
   display: flex;
   gap: 1rem;
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .counselor-profile-container__btn {

@@ -455,7 +455,7 @@ function analyzePhoto(imageElement) {
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
-const AvatarBuilder = ({ userName, onSelect, onClose }) => {
+const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false }) => {
   const [opts, setOpts]             = useState({ ...DEFAULT });
   const [activeTab, setActiveTab]   = useState("skin");
   const [phase, setPhase]           = useState("capture"); // "capture" | "result"
@@ -466,6 +466,8 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
   const [cameraLoading, setCameraLoading] = useState(false);
   const [selectedAvatarPayload, setSelectedAvatarPayload] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
+  const [isApplyingCustomization, setIsApplyingCustomization] = useState(false);
+  const [previewLoadFailed, setPreviewLoadFailed] = useState(false);
 
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
@@ -474,6 +476,12 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
 
   const set = (key, val) => setOpts(prev => ({ ...prev, [key]: val }));
   const avatarUrl = useMemo(() => buildUrl(opts, userName), [opts, userName]);
+  const isAiAvatar = ["ai-generated", "generated"].includes(selectedAvatarPayload?.avatarType);
+  const previewUrl = isAiAvatar ? selectedAvatarPayload?.avatarUrl : avatarUrl;
+
+  useEffect(() => {
+    setPreviewLoadFailed(false);
+  }, [previewUrl]);
 
   // ── Camera ──────────────────────────────────────────────────
   const startCamera = async () => {
@@ -481,8 +489,15 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
     setCameraError(null);
     setCameraLoading(true);
     try {
+      if (!window.isSecureContext) {
+        setCameraError("Camera access requires HTTPS or localhost. Please open the secure site URL.");
+        setCameraLoading(false);
+        return;
+      }
+
       // Check if browser supports getUserMedia
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraLoading(false);
         setCameraError("❌ Your browser doesn't support camera access. Try Chrome, Firefox, Safari, or Edge.");
         return;
       }
@@ -490,7 +505,7 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
       console.log("🔍 Requesting camera access...");
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode: { ideal: "user" },
           width: { ideal: 640 },
           height: { ideal: 480 },
           aspectRatio: { ideal: 4 / 3 }
@@ -578,6 +593,18 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
     setCameraActive(false);
   };
 
+  // The Create Avatar action is a user click, so request the camera as soon as
+  // this builder opens. The visible Open Camera button remains available for
+  // retrying after a permission denial.
+  useEffect(() => {
+    if (!autoStartCamera) return undefined;
+
+    const timer = window.setTimeout(() => startCamera(), 0);
+    return () => window.clearTimeout(timer);
+    // Run once when the builder opens; startCamera uses the initial component state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const runAnalysis = async (src) => {
     console.log("🔍 Starting analysis...");
     setAnalyzing(true);
@@ -601,7 +628,7 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
         console.log("✅ Face detected, sending to backend...");
         // Call backend for OpenAI analysis and avatar generation
         try {
-          console.log("📤 Sending photo to backend for AI analysis...");
+          console.log("📤 Sending photo to backend for  analysis...");
           const response = await fetch(`${API_BASE_URL}/api/avatar/analyze-and-generate`, {
             method: "POST",
             headers: {
@@ -622,11 +649,11 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
 
           // Set avatar from OpenAI generation
           if (result.avatarUrl) {
-            console.log("📸 Setting AI-generated avatar");
+            console.log("📸 Setting generated avatar");
             setProfileImage(result.avatarUrl);
             setSelectedAvatarPayload({
               url: result.avatarUrl,
-              avatarType: "ai-generated",
+              avatarType: "generated",
               avatarUrl: result.avatarUrl,
               analysis: result.analysis,
             });
@@ -635,7 +662,7 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
           }
 
           // Update avatar options based on analysis
-          const analysis = result.analysis;
+          const analysis = result.analysis || {};
           let defaults = { ...DEFAULT };
 
           if (analysis.gender === "male") {
@@ -743,17 +770,53 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
 
   const handleRetake = () => {
     setCapturedSrc(null);
+    setCameraError(null);
+    setSelectedAvatarPayload(null);
+    setProfileImage(null);
     setPhase("capture");
     setOpts({ ...DEFAULT });
   };
 
-  const handleUse = () => {
+  const applyAiCustomization = async () => {
+    if (selectedAvatarPayload?.avatarType !== "ai-generated" || !selectedAvatarPayload.avatarUrl) return;
+
+    setIsApplyingCustomization(true);
+    setCameraError(null);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/avatar/customize`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify({ avatarBase64: selectedAvatarPayload.avatarUrl, customization: opts }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.avatarUrl) {
+        throw new Error(result.message || "Unable to apply avatar changes");
+      }
+
+      setProfileImage(result.avatarUrl);
+      setSelectedAvatarPayload((current) => ({
+        ...current,
+        url: result.avatarUrl,
+        avatarUrl: result.avatarUrl,
+      }));
+    } catch (error) {
+      console.error("AI avatar customization error:", error);
+      setCameraError(error.message || "Unable to apply avatar changes");
+    } finally {
+      setIsApplyingCustomization(false);
+    }
+  };
+
+  const handleUse = async () => {
     // If this is an AI-generated avatar, use that directly
-    if (selectedAvatarPayload?.avatarType === "ai-generated") {
-      onSelect(selectedAvatarPayload);
+    if (isAiAvatar) {
+      await onSelect(selectedAvatarPayload);
     } else {
       // Otherwise use the cartoon avatar builder
-      onSelect({
+      await onSelect({
         url: avatarUrl,
         avatarType: "builder",
         avatarUrl,
@@ -808,20 +871,20 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
       <div className={`ab-modal ${cameraActive ? "camera-active" : ""}`} onClick={e => e.stopPropagation()}>
 
         <div className="ab-header">
-          <h4>{phase === "capture" && !cameraActive ? "Take Your Photo" : phase === "capture" && cameraActive ? "Take Selfie" : "Your AI Avatar"}</h4>
+          <h4>{phase === "capture" && !cameraActive ? "Take Your Photo" : phase === "capture" && cameraActive ? "Take Selfie" : "Your  Avatar"}</h4>
           <button className="ab-close" onClick={handleClose}>×</button>
         </div>
 
         {/* ── Phase 1: Capture ── */}
         {phase === "capture" && (
           <div className="ab-capture-phase">
-            {!cameraActive && !capturedSrc && (
+            {!cameraActive && (!capturedSrc || cameraError) && (
               <div className="ab-capture-intro">
                 <div className="ab-capture-icon">✨</div>
-                <p className="ab-capture-title">Create your AI Avatar</p>
+                <p className="ab-capture-title">Create your Avatar</p>
                 <p className="ab-capture-desc">
                   📸 Take a clear selfie or upload a photo with your face visible.
-                  We'll generate a professional AI avatar that matches your appearance.
+                  We'll generate a professional avatar that matches your appearance.
                   Make sure your face is clearly visible in good lighting.
                 </p>
                 {cameraError && <p className="ab-error">{cameraError}</p>}
@@ -907,29 +970,34 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
                 </div>
               )}
               <div className="ab-preview-ring">
-                {selectedAvatarPayload?.avatarType === "ai-generated" && selectedAvatarPayload?.avatarUrl ? (
+                {previewLoadFailed ? (
+                  <div className="ab-preview-fallback" aria-label="Avatar preview unavailable">
+                    {isAiAvatar ? "AI" : (userName || "U").slice(0, 1).toUpperCase()}
+                  </div>
+                ) : isAiAvatar && previewUrl ? (
                   <img
-                    src={selectedAvatarPayload.avatarUrl}
+                    src={previewUrl}
                     alt="AI Avatar"
                     className="ab-preview-img"
                     style={{ display: "block" }}
                     onError={() => {
-                      console.error("❌ AI avatar failed to load - showing cartoon fallback");
+                      setPreviewLoadFailed(true);
+                      console.error("❌ avatar failed to load - showing cartoon fallback");
                     }}
                     onLoad={() => {
-                      console.log("✅ AI avatar loaded successfully");
+                      console.log("✅  avatar loaded successfully");
                     }}
                   />
-                ) : avatarUrl ? (
+                ) : previewUrl ? (
                   <img
-                    key={avatarUrl}
-                    src={avatarUrl}
+                    key={previewUrl}
+                    src={previewUrl}
                     alt="Avatar"
                     className="ab-preview-img"
                     style={{ display: "block" }}
                     onError={() => {
                       console.error("❌ Cartoon avatar failed to load");
-                      setCameraError("Avatar failed to load. Please try again.");
+                      setPreviewLoadFailed(true);
                     }}
                     onLoad={() => {
                       console.log("✅ Cartoon avatar loaded");
@@ -951,16 +1019,22 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
                 )}
               </div>
             </div>
+            {isApplyingCustomization && (
+              <div className="ab-customizing" role="status" aria-live="polite">
+                <div className="ab-spinner" />
+                <span>Applying your avatar changes...</span>
+              </div>
+            )}
             {cameraError ? (
               <p className="ab-error" style={{ marginTop: "10px" }}>
                 {cameraError}
               </p>
             ) : (
               <p className="ab-result-hint">
-                {selectedAvatarPayload?.avatarType === "ai-generated"
-                  ? "🤖 AI-Generated Avatar - Your face analyzed by OpenAI. Perfect match!"
+                {isAiAvatar
+                  ? "🤖 Generated Avatar - Your face analyzed by OpenAI. Perfect match!"
                   : selectedAvatarPayload?.avatarUrl
-                    ? "✨ AI Avatar generated! Customize features below ↓"
+                    ? "✨ Avatar generated! Customize features below ↓"
                     : "⏳ Avatar generating..."}
               </p>
             )}
@@ -1105,6 +1179,11 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
 
             {/* Footer */}
             <div className="ab-footer">
+              {isAiAvatar && (
+                <button className="ab-apply-btn" onClick={applyAiCustomization} disabled={isApplyingCustomization}>
+                  {isApplyingCustomization ? "Applying..." : "Apply Changes"}
+                </button>
+              )}
               <button className="ab-reset-btn" onClick={handleRetake}>↩ Retake</button>
               <button className="ab-cancel-btn" onClick={handleClose}>Cancel</button>
               <button className="ab-use-btn" onClick={handleUse}>✨ Use Avatar</button>

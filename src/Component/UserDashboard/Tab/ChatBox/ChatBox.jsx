@@ -61,6 +61,7 @@ const ChatBox = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [remoteIsTyping, setRemoteIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [deletingMessageId, setDeletingMessageId] = useState(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [chatStatus, setChatStatus] = useState(null);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
@@ -1005,6 +1006,29 @@ useEffect(() => {
     }
   };
 
+  const handleDeleteMessage = async (message) => {
+    const messageId = message?.id || message?._id || message?.messageId;
+    if (!messageId || String(messageId).startsWith("temp_")) return;
+    if (!window.confirm("Delete this message and its attachment?")) return;
+
+    try {
+      setDeletingMessageId(String(messageId));
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+      await axios.delete(`${API_BASE_URL}/api/chat/message/${encodeURIComponent(messageId)}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const matchesDeletedMessage = (item) =>
+        [item.id, item._id, item.messageId].map(String).includes(String(messageId));
+      setMessages((current) => current.filter((item) => !matchesDeletedMessage(item)));
+      setOriginalMessages((current) => current.filter((item) => !matchesDeletedMessage(item)));
+    } catch (error) {
+      console.error("Error deleting chat message:", error);
+      alert(error.response?.data?.error || error.response?.data?.message || "Failed to delete message");
+    } finally {
+      setDeletingMessageId(null);
+    }
+  };
+
   useEffect(() => {
     const initializeChat = async () => {
       try {
@@ -1548,15 +1572,54 @@ const handleFileSelected = async (e) => {
     return <div className={`chat-profile-initials-${size}`}>{getInitials(counselor.name || "Counselor")}</div>;
   };
 
-  const renderMessageStatus = (message) => {
-    if (message.sender !== "user") return null;
-    switch (message.status) {
-      case "sending": return <span className="message-status sending">⌛ Sending...</span>;
-      case "sent": return <span className="message-status sent">✓ Sent</span>;
-      case "error": return <span className="message-status error">⚠️ Failed</span>;
-      default: return null;
-    }
-  };
+// ✅ UPDATED renderMessageStatus - Delete icon ADD karo
+const renderMessageStatus = (message) => {
+  if (message.sender !== "user") return null;
+  
+  // Status badge
+  let statusBadge = null;
+  switch (message.status) {
+    case "sending": 
+      statusBadge = <span className="message-status sending">⌛ Sending...</span>;
+      break;
+    case "sent": 
+      statusBadge = <span className="message-status sent">✓ Sent</span>;
+      break;
+    case "error": 
+      statusBadge = <span className="message-status error">⚠️ Failed</span>;
+      break;
+    default: 
+      statusBadge = null;
+  }
+
+  // ✅ DELETE ICON - Sirf user messages ke liye, jo send ho chuke hain
+  const showDeleteIcon = message.sender === "user" && 
+                        !message.isTemporary && 
+                        message.status !== "error" &&
+                        message.status !== "sending";
+
+  return (
+    <div className="message-status-container">
+      {statusBadge}
+      {showDeleteIcon && (
+        <button
+          type="button"
+          className="message-delete-btn"
+          onClick={() => handleDeleteMessage(message)} // ✅ Existing function call
+          disabled={String(deletingMessageId) === String(message.id || message._id || message.messageId)}
+          aria-label="Delete message"
+          title="Delete message"
+        >
+          {String(deletingMessageId) === String(message.id || message._id || message.messageId) ? (
+            <span className="delete-loading">⌛</span>
+          ) : (
+            <span className="delete-icon">🗑️</span>
+          )}
+        </button>
+      )}
+    </div>
+  );
+};
 
   const renderChatStatusBanner = () => {
     if (!chatStatus) return null;
@@ -1659,6 +1722,18 @@ const handleFileSelected = async (e) => {
                     <div className="chatMsgFooter">
                       <time className="chatMsgTimestamp">{message.time}</time>
                       {renderMessageStatus(message)}
+                      {(message.contentType === "IMAGE" || message.contentType === "FILE") && (
+                        <button
+                          type="button"
+                          className="chatMsgDeleteBtn"
+                          onClick={() => handleDeleteMessage(message)}
+                          disabled={String(deletingMessageId) === String(message.id || message._id || message.messageId)}
+                          aria-label="Delete attachment"
+                          title="Delete attachment"
+                        >
+                          {String(deletingMessageId) === String(message.id || message._id || message.messageId) ? "Deleting..." : "Delete"}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </article>
