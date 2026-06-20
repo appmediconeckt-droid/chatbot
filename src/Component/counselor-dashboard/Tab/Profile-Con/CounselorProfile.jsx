@@ -8,6 +8,8 @@ import { useCounselorTranslation } from '../../../../i18n/LanguageContext';
 // Unique class name prefix to avoid conflicts
 const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
 
+const ACTIVE_CHAT_STATUSES = new Set(['active', 'accepted', 'ongoing']);
+
 const CounselorProfile = () => {
    const { t } = useCounselorTranslation();
    const [loading, setLoading] = useState(false);
@@ -112,6 +114,59 @@ const CounselorProfile = () => {
         fetchCounselorProfile();
     }, []);
 
+    const countActiveClients = (chats = []) => {
+        const activeClientIds = new Set();
+
+        chats.forEach((chat) => {
+            const status = String(chat.status || '').toLowerCase();
+            if (!ACTIVE_CHAT_STATUSES.has(status) || chat.isExpired) return;
+
+            const clientId =
+                chat.userId ||
+                chat.otherParty?._id ||
+                chat.otherParty?.id ||
+                chat.otherParty?.userId ||
+                chat.patientId ||
+                chat.clientId ||
+                chat.chatId;
+
+            if (clientId) activeClientIds.add(String(clientId));
+        });
+
+        return activeClientIds.size;
+    };
+
+    const fetchCounselorStats = async (token) => {
+        const headers = { Authorization: `Bearer ${token}` };
+        const stats = {};
+
+        try {
+            const appointmentsResponse = await axios.get(`${API_BASE_URL}/api/appointments`, {
+                headers
+            });
+            const appointments = Array.isArray(appointmentsResponse.data)
+                ? appointmentsResponse.data
+                : appointmentsResponse.data?.appointments || [];
+            stats.totalSessions = appointments.filter(
+                (appointment) => String(appointment.status || '').toLowerCase() === 'confirmed'
+            ).length;
+        } catch (err) {
+            console.log('Unable to refresh counselor session count:', err?.message);
+        }
+
+        try {
+            const chatsResponse = await axios.get(`${API_BASE_URL}/api/chat/chats`, {
+                headers
+            });
+            const chats = chatsResponse.data?.chats || [];
+            stats.activeClients = countActiveClients(chats);
+        } catch (err) {
+            console.log('Unable to refresh active client count:', err?.message);
+        }
+
+        return stats;
+    };
+
     // GET API - Fetch counselor profile (FIXED)
     const fetchCounselorProfile = async () => {
         try {
@@ -155,6 +210,8 @@ const CounselorProfile = () => {
                     }
                 }
 
+                const liveStats = await fetchCounselorStats(token);
+
                 // Transform API data to match component structure
                 const formattedData = {
                     _id: userData._id,
@@ -174,8 +231,8 @@ const CounselorProfile = () => {
                     aboutMe: userData.aboutMe || userData.bio || '',
                     rating: userData.rating || 0,
                     ratingCount: userData.ratingCount || 0,
-                    totalSessions: userData.totalSessions || 0,
-                    activeClients: userData.activeClients || 0,
+                    totalSessions: liveStats.totalSessions ?? userData.totalSessions ?? 0,
+                    activeClients: liveStats.activeClients ?? userData.activeClients ?? 0,
                     qualification: userData.qualification || '',
                     consultationMode: Array.isArray(userData.consultationMode) ? userData.consultationMode : [],
                     isActive: userData.isActive || true,
@@ -869,9 +926,6 @@ const CounselorProfile = () => {
                             </span>
                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>
                                 {t('rating')}
-                                {counselor?.ratingCount > 0
-                                    ? ` (${counselor.ratingCount})`
-                                    : ''}
                             </span>
                         </div>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__stat`}>

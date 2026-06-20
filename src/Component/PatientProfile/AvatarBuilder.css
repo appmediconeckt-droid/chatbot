@@ -61,7 +61,16 @@
 .ab-capture-icon { font-size: 56px; line-height: 1; }
 .ab-capture-title { font-size: 18px; font-weight: 700; color: #1a1a2e; margin: 0; }
 .ab-capture-desc  { font-size: 14px; color: #64748b; margin: 0; max-width: 320px; line-height: 1.6; }
-.ab-error         { font-size: 13px; color: #ef4444; font-weight: 500; margin: 0; }
+.ab-error         {
+  font-size: 13px;
+  color: #ef4444;
+  font-weight: 600;
+  margin: 8px 0 0 0;
+  padding: 10px 14px;
+  background: #fee2e2;
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
+}
 
 .ab-capture-btns  { display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; justify-content: center; }
 

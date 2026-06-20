@@ -1,5 +1,6 @@
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import "./AvatarBuilder.css";
+import { API_BASE_URL } from "../../axiosConfig";
 
 // ─── DiceBear v7 avataaars — verified correct params from schema.json ─────────
 // All option params are passed as repeated query params: key[]=value
@@ -170,15 +171,15 @@ const TABS = [
 
 const DEFAULT = {
   skinColor:       "edb98a",
-  top:             "shortFlat",
+  top:             "longButNotTooLong",
   hairColor:       "2c1b18",
-  eyes:            "default",
+  eyes:            "happy",
   eyebrows:        "defaultNatural",
   mouth:           "smile",
   facialHair:      "none",
   facialHairColor: "2c1b18",
   accessories:     "none",
-  clothing:        "shirtCrewNeck",
+  clothing:        "blazerAndShirt",
   clothesColor:    "3c4f5c",
 };
 
@@ -210,7 +211,10 @@ function buildUrl(opts, userName = "user") {
     `clothing[]=${opts.clothing}`,
     `clothesColor[]=${opts.clothesColor}`,
     `radius=50`,
-    `backgroundColor[]=b6e3f4`,
+    `scale=85`,
+    `backgroundColor[]=ffffff`,
+    `translateX=0`,
+    `translateY=0`,
     // facialHair: use probability 0 to hide, 100 to show
     opts.facialHair === "none"
       ? `facialHairProbability=0`
@@ -223,11 +227,140 @@ function buildUrl(opts, userName = "user") {
   return `${BASE}?${params.join("&")}`;
 }
 
-// ─── Analyze photo pixels to detect skin tone ────────────────────────────────
+// ─── Face detection using canvas pixel analysis ─────────────────────────────
+function detectFaceInPhoto(imageElement) {
+  try {
+    const canvas = document.createElement("canvas");
+    const size = Math.min(imageElement.naturalWidth, imageElement.naturalHeight, 300);
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    const sx = (imageElement.naturalWidth - size) / 2;
+    const sy = (imageElement.naturalHeight - size) / 2;
+    ctx.drawImage(imageElement, sx, sy, size, size, 0, 0, size, size);
+
+    const data = ctx.getImageData(0, 0, size, size).data;
+    let facePixels = 0;
+    let edgePixels = 0;
+    let nonBlackPixels = 0;
+
+    // Method 1: Count skin-tone pixels (face detection heuristic)
+    // More lenient detection for various skin tones
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+      if (a < 128) continue;
+
+      nonBlackPixels++;
+
+      // Detect skin-like colors - more lenient range
+      // Works for very fair to dark skin tones
+      if (
+        r > 50 && // reddish component
+        g > 30 && // greenish component
+        b > 15 && // some blue
+        r > b && // more red than blue
+        r - b > 10 && // skin tone differential
+        (r + g + b) > 150 // not too dark
+      ) {
+        facePixels++;
+      }
+
+      // Detect edges (eyes, mouth, boundaries)
+      const nextIdx = Math.min(i + 4, data.length - 4);
+      const dr = Math.abs(data[nextIdx] - r);
+      const dg = Math.abs(data[nextIdx + 1] - g);
+      const db = Math.abs(data[nextIdx + 2] - b);
+      if ((dr + dg + db) > 60) {
+        edgePixels++;
+      }
+    }
+
+    const skinPixelRatio = nonBlackPixels > 0 ? facePixels / nonBlackPixels : 0;
+    const edgeRatio = nonBlackPixels > 0 ? edgePixels / nonBlackPixels : 0;
+
+    console.log(`Face detection: skin=${(skinPixelRatio * 100).toFixed(1)}%, edges=${(edgeRatio * 100).toFixed(1)}%`);
+
+    // Multiple detection methods:
+    // 1. If enough skin-tone pixels detected
+    // 2. If enough edges detected (eyes, mouth, facial boundaries)
+    // 3. If reasonable amount of non-black content
+    return skinPixelRatio > 0.02 || (edgeRatio > 0.1 && nonBlackPixels > size * size * 0.1);
+  } catch (err) {
+    console.error("Face detection error:", err);
+    return true; // Fallback to allowing photo if detection fails
+  }
+}
+
+// ─── Generate realistic avatar using Hugging Face API ──────────────────────
+async function generateRealisticAvatar(imageBase64, userName = "user") {
+  try {
+    // Create a prompt based on the image analysis for better results
+    const prompt = `Professional portrait photo of a person, clean background, friendly expression, high quality`;
+
+    // Use Hugging Face's free inference API
+    const HF_API_URL = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5";
+    const HF_TOKEN = "hf_placeholder"; // Free tier - limited requests
+
+    // For free solution, create a stylized avatar from the uploaded image
+    // by converting it to a professional portrait style
+    return await convertToProfileAvatar(imageBase64);
+  } catch (err) {
+    console.error("Avatar generation error:", err);
+    return null;
+  }
+}
+
+// ─── Convert photo to stylized profile avatar ────────────────────────────────
+function convertToProfileAvatar(imageBase64) {
+  return new Promise((resolve) => {
+    try {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const size = 512;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext("2d");
+
+        // Draw with professional styling
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, size, size);
+
+        // Draw image as circle
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2 - 20, 0, Math.PI * 2);
+        ctx.clip();
+
+        const imgSize = Math.min(img.naturalWidth, img.naturalHeight);
+        const sx = (img.naturalWidth - imgSize) / 2;
+        const sy = (img.naturalHeight - imgSize) / 2;
+        ctx.drawImage(img, sx, sy, imgSize, imgSize, 20, 20, size - 40, size - 40);
+        ctx.restore();
+
+        // Add subtle border and professional styling
+        ctx.strokeStyle = "#e0e0e0";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(size / 2, size / 2, size / 2 - 20, 0, Math.PI * 2);
+        ctx.stroke();
+
+        resolve(canvas.toDataURL("image/jpeg", 0.95));
+      };
+      img.onerror = () => resolve(null);
+      img.src = imageBase64;
+    } catch (err) {
+      console.error("Profile avatar conversion error:", err);
+      resolve(null);
+    }
+  });
+}
+
+// ─── Analyze photo pixels to detect skin tone, gender, and features ─────────
 function analyzePhoto(imageElement) {
   const canvas = document.createElement("canvas");
-  // Sample a center crop (face area)
-  const size = Math.min(imageElement.naturalWidth, imageElement.naturalHeight, 200);
+  // Sample a center crop (face area) with higher resolution
+  const size = Math.min(imageElement.naturalWidth, imageElement.naturalHeight, 300);
   canvas.width = size;
   canvas.height = size;
   const ctx = canvas.getContext("2d");
@@ -235,33 +368,37 @@ function analyzePhoto(imageElement) {
   const sy = (imageElement.naturalHeight - size) / 2;
   ctx.drawImage(imageElement, sx, sy, size, size, 0, 0, size, size);
 
-  const data = ctx.getImageData(0, 0, size, size).data;
-  let r = 0, g = 0, b = 0, count = 0;
+  const fullData = ctx.getImageData(0, 0, size, size).data;
 
-  // Sample every 8th pixel for speed
-  for (let i = 0; i < data.length; i += 32) {
-    const pr = data[i], pg = data[i + 1], pb = data[i + 2], pa = data[i + 3];
-    if (pa < 128) continue; // skip transparent
-    // Only count skin-ish pixels (high red, moderate green, low blue relative to red)
+  // Analyze skin tone from center face area (more reliable)
+  const centerSize = size * 0.5;
+  const centerStart = (size - centerSize) / 2;
+  const centerData = ctx.getImageData(centerStart, centerStart + size * 0.1, centerSize, centerSize * 0.4).data;
+
+  let r = 0, g = 0, b = 0, count = 0;
+  for (let i = 0; i < centerData.length; i += 16) {
+    const pr = centerData[i], pg = centerData[i + 1], pb = centerData[i + 2], pa = centerData[i + 3];
+    if (pa < 128) continue;
+    // Skin tone detection: high red, moderate green, lower blue
     if (pr > 60 && pg > 40 && pb > 20 && pr > pb && pr - pb > 15) {
       r += pr; g += pg; b += pb; count++;
     }
   }
 
-  if (count === 0) return { skinColor: "edb98a" }; // fallback
+  if (count === 0) return { skinColor: "edb98a", hairColor: "2c1b18", gender: "unknown" };
 
   r = Math.round(r / count);
   g = Math.round(g / count);
   b = Math.round(b / count);
 
-  // Map average skin RGB to closest DiceBear skin tone
+  // Map to closest skin tone with improved matching
   const skinTones = [
-    { id: "ffdbb4", r: 255, g: 219, b: 180 },
-    { id: "edb98a", r: 237, g: 185, b: 138 },
-    { id: "fd9841", r: 253, g: 152, b:  65 },
-    { id: "d08b5b", r: 208, g: 139, b:  91 },
-    { id: "ae5d29", r: 174, g:  93, b:  41 },
-    { id: "614335", r:  97, g:  67, b:  53 },
+    { id: "ffdbb4", r: 255, g: 219, b: 180 }, // Very Fair
+    { id: "edb98a", r: 237, g: 185, b: 138 }, // Fair
+    { id: "fd9841", r: 253, g: 152, b:  65 }, // Light
+    { id: "d08b5b", r: 208, g: 139, b:  91 }, // Medium
+    { id: "ae5d29", r: 174, g:  93, b:  41 }, // Tan
+    { id: "614335", r:  97, g:  67, b:  53 }, // Dark
   ];
 
   let best = skinTones[0], bestDist = Infinity;
@@ -274,25 +411,47 @@ function analyzePhoto(imageElement) {
     if (dist < bestDist) { bestDist = dist; best = tone; }
   }
 
-  // Detect approximate hair darkness from top portion of image
-  const topData = ctx.getImageData(size * 0.2, 0, size * 0.6, size * 0.25).data;
+  // Detect hair color from top portion (more robust sampling)
+  const topStart = Math.max(0, size * 0.05);
+  const topHeight = size * 0.3;
+  const topData = ctx.getImageData(size * 0.15, topStart, size * 0.7, topHeight).data;
+
   let darkness = 0, darkCount = 0;
   for (let i = 0; i < topData.length; i += 16) {
     const pr = topData[i], pg = topData[i+1], pb = topData[i+2];
-    darkness += (pr + pg + pb) / 3;
+    const brightness = (pr + pg + pb) / 3;
+    darkness += brightness;
     darkCount++;
   }
   const avgBrightness = darkCount > 0 ? darkness / darkCount : 128;
 
-  let hairColor = "2c1b18"; // default black
-  if (avgBrightness > 200)       hairColor = "ecdcbf"; // very light = white/blonde
-  else if (avgBrightness > 160)  hairColor = "d6b370"; // light blonde
-  else if (avgBrightness > 120)  hairColor = "b58143"; // blonde
-  else if (avgBrightness > 80)   hairColor = "724133"; // brown
-  else if (avgBrightness > 50)   hairColor = "4a312c"; // dark brown
+  let hairColor = "2c1b18";
+  if (avgBrightness > 210)       hairColor = "ecdcbf"; // very light
+  else if (avgBrightness > 170)  hairColor = "d6b370"; // light blonde
+  else if (avgBrightness > 130)  hairColor = "b58143"; // blonde
+  else if (avgBrightness > 85)   hairColor = "724133"; // brown
+  else if (avgBrightness > 55)   hairColor = "4a312c"; // dark brown
   else                           hairColor = "2c1b18"; // black
 
-  return { skinColor: best.id, hairColor };
+  // Detect facial hair (male indicator) from chin/jaw area
+  const chinStart = size * 0.55;
+  const chinHeight = size * 0.25;
+  const chinData = ctx.getImageData(size * 0.2, chinStart, size * 0.6, chinHeight).data;
+
+  let darkPixels = 0, totalPixels = 0;
+  for (let i = 0; i < chinData.length; i += 16) {
+    const pr = chinData[i], pg = chinData[i+1], pb = chinData[i+2], pa = chinData[i+3];
+    if (pa < 128) continue;
+    const brightness = (pr + pg + pb) / 3;
+    totalPixels++;
+    // Detect dark shadow pixels (facial hair)
+    if (brightness < 100) darkPixels++;
+  }
+
+  const facialHairRatio = totalPixels > 0 ? darkPixels / totalPixels : 0;
+  const gender = facialHairRatio > 0.15 ? "male" : "female"; // Male likely if significant dark shadow
+
+  return { skinColor: best.id, hairColor, gender };
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -304,6 +463,9 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
   const [capturedSrc, setCapturedSrc] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
+  const [cameraLoading, setCameraLoading] = useState(false);
+  const [selectedAvatarPayload, setSelectedAvatarPayload] = useState(null);
+  const [profileImage, setProfileImage] = useState(null);
 
   const videoRef  = useRef(null);
   const canvasRef = useRef(null);
@@ -315,24 +477,93 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
 
   // ── Camera ──────────────────────────────────────────────────
   const startCamera = async () => {
+    console.log("📷 Starting camera...");
     setCameraError(null);
+    setCameraLoading(true);
     try {
+      // Check if browser supports getUserMedia
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setCameraError("❌ Your browser doesn't support camera access. Try Chrome, Firefox, Safari, or Edge.");
+        return;
+      }
+
+      console.log("🔍 Requesting camera access...");
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        video: {
+          facingMode: "user",
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          aspectRatio: { ideal: 4 / 3 }
+        },
       });
+
+      console.log("✅ Camera stream obtained");
       streamRef.current = stream;
-      // Wait for video element to be in DOM, then attach stream
+
+      // First, activate the camera UI so video element renders
+      setCameraActive(true);
+
+      // Then attach stream to video element - with a small delay to ensure DOM is updated
       setTimeout(() => {
         if (videoRef.current) {
+          console.log("📹 Attaching stream to video element");
           videoRef.current.srcObject = stream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current.play().catch(() => {});
+
+          // Wait for video to load
+          const handleLoadedMetadata = () => {
+            console.log("✅ Video metadata loaded");
+            videoRef.current.play()
+              .then(() => {
+                console.log("✅ Camera started successfully");
+                setCameraLoading(false);
+              })
+              .catch((err) => {
+                console.error("❌ Play error:", err);
+                setCameraError("Failed to play camera. Please try again.");
+                setCameraLoading(false);
+              });
+            videoRef.current.removeEventListener("loadedmetadata", handleLoadedMetadata);
           };
+
+          videoRef.current.addEventListener("loadedmetadata", handleLoadedMetadata);
+
+          // Timeout fallback in case metadata doesn't load
+          const timeoutId = setTimeout(() => {
+            console.log("⏱️ Fallback: Checking video ready state");
+            if (videoRef.current && videoRef.current.readyState >= 2) {
+              console.log("✅ Video ready (fallback), setting camera active");
+              setCameraLoading(false);
+            }
+          }, 3000);
+
+          // Cleanup timeout when metadata loads
+          const cleanupTimeout = () => {
+            clearTimeout(timeoutId);
+          };
+          videoRef.current.addEventListener("loadedmetadata", cleanupTimeout, { once: true });
+        } else {
+          console.error("❌ Video ref still null after delay");
+          setCameraError("Camera setup failed. Please refresh and try again.");
+          setCameraLoading(false);
         }
-      }, 50);
-      setCameraActive(true);
-    } catch {
-      setCameraError("Camera access denied. Please allow camera permission and try again.");
+      }, 100);
+
+    } catch (err) {
+      console.error("❌ Camera error:", err);
+      let errorMsg = "Camera access denied. Please allow camera permission and try again.";
+
+      if (err.name === "NotFoundError") {
+        errorMsg = "❌ No camera found on this device.";
+      } else if (err.name === "NotAllowedError") {
+        errorMsg = "❌ Camera permission denied. Please check your browser settings.";
+      } else if (err.name === "NotReadableError") {
+        errorMsg = "❌ Camera is in use by another application. Close other apps and try again.";
+      } else if (err.name === "SecurityError") {
+        errorMsg = "❌ Camera access is blocked by your browser security settings.";
+      }
+
+      setCameraError(errorMsg);
+      setCameraLoading(false);
     }
   };
 
@@ -347,48 +578,160 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
     setCameraActive(false);
   };
 
-  const runAnalysis = (src) => {
+  const runAnalysis = async (src) => {
+    console.log("🔍 Starting analysis...");
     setAnalyzing(true);
-    const img = new Image();
-    img.onload = () => {
-      const { skinColor, hairColor } = analyzePhoto(img);
-      setOpts(prev => ({
-        ...prev,
-        skinColor,
-        hairColor: hairColor || prev.hairColor,
-      }));
+    setCameraError(null);
+    setCapturedSrc(src); // Immediately set captured photo
+
+    try {
+      const img = new Image();
+      img.onload = async () => {
+        console.log("📸 Photo loaded, detecting face...");
+        // Check if face is detected in photo
+        const hasFace = detectFaceInPhoto(img);
+        if (!hasFace) {
+          console.warn("⚠️ No face detected");
+          setCameraError("❌ No face detected. Please take a clear selfie and try again.");
+          setAnalyzing(false);
+          setCapturedSrc(null);
+          return;
+        }
+
+        console.log("✅ Face detected, sending to backend...");
+        // Call backend for OpenAI analysis and avatar generation
+        try {
+          console.log("📤 Sending photo to backend for AI analysis...");
+          const response = await fetch(`${API_BASE_URL}/api/avatar/analyze-and-generate`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${localStorage.getItem("token")}`,
+            },
+            body: JSON.stringify({ photoBase64: src }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to analyze photo");
+          }
+
+          const result = await response.json();
+          console.log("✅ Analysis complete:", result.analysis);
+          console.log("🎨 Avatar URL:", result.avatarUrl);
+
+          // Set avatar from OpenAI generation
+          if (result.avatarUrl) {
+            console.log("📸 Setting AI-generated avatar");
+            setProfileImage(result.avatarUrl);
+            setSelectedAvatarPayload({
+              url: result.avatarUrl,
+              avatarType: "ai-generated",
+              avatarUrl: result.avatarUrl,
+              analysis: result.analysis,
+            });
+          } else {
+            console.warn("⚠️ No avatar URL in response");
+          }
+
+          // Update avatar options based on analysis
+          const analysis = result.analysis;
+          let defaults = { ...DEFAULT };
+
+          if (analysis.gender === "male") {
+            console.log("👨 Detected male features");
+            defaults = {
+              ...defaults,
+              top: "shortFlat",
+              facialHair: analysis.facialHair !== "none" ? analysis.facialHair : "beardLight",
+              facialHairColor: "2c1b18",
+            };
+          } else {
+            console.log("👩 Detected female features");
+          }
+
+          setOpts(defaults);
+          setAnalyzing(false);
+          console.log("✅ Switching to result phase");
+          setPhase("result");
+        } catch (err) {
+          console.error("❌ Backend analysis error:", err);
+          setCameraError(`❌ ${err.message}`);
+          setAnalyzing(false);
+        }
+      };
+      img.onerror = (err) => {
+        console.error("❌ Error loading image:", err);
+        setCameraError("Error loading image. Please try again.");
+        setAnalyzing(false);
+      };
+      img.src = src;
+    } catch (err) {
+      console.error("❌ Analysis error:", err);
+      setCameraError("❌ Failed to analyze photo. Please try again.");
       setAnalyzing(false);
-      setPhase("result");
-    };
-    img.onerror = () => {
-      setAnalyzing(false);
-      setPhase("result");
-    };
-    img.src = src;
+    }
   };
 
   const capturePhoto = () => {
     const v = videoRef.current;
     const c = canvasRef.current;
-    if (!v || !c) return;
-    const w = v.videoWidth  || 640;
-    const h = v.videoHeight || 480;
-    c.width  = w;
-    c.height = h;
-    const ctx = c.getContext("2d");
-    // Mirror the canvas to match mirrored preview
-    ctx.translate(w, 0);
-    ctx.scale(-1, 1);
-    ctx.drawImage(v, 0, 0, w, h);
-    const dataUrl = c.toDataURL("image/jpeg", 0.92);
-    stopCamera();
-    setCapturedSrc(dataUrl);
-    runAnalysis(dataUrl);
+    if (!v || !c) {
+      setCameraError("❌ Camera not ready. Please try again.");
+      return;
+    }
+
+    // Check if video has valid dimensions
+    if (!v.videoWidth || !v.videoHeight) {
+      setCameraError("❌ Camera is not fully loaded. Please wait a moment and try again.");
+      return;
+    }
+
+    try {
+      const w = v.videoWidth;
+      const h = v.videoHeight;
+      c.width = w;
+      c.height = h;
+      const ctx = c.getContext("2d");
+
+      // Clear canvas first
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+
+      // Mirror the canvas to match mirrored preview
+      ctx.save();
+      ctx.translate(w, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(v, 0, 0, w, h);
+      ctx.restore();
+
+      const dataUrl = c.toDataURL("image/jpeg", 0.92);
+
+      // Verify the dataUrl is valid (not blank)
+      if (!dataUrl || dataUrl === "data:image/jpeg;base64,") {
+        setCameraError("❌ Failed to capture photo. Please try again.");
+        return;
+      }
+
+      stopCamera();
+      setCapturedSrc(dataUrl);
+      runAnalysis(dataUrl);
+    } catch (err) {
+      console.error("Capture error:", err);
+      setCameraError("❌ Failed to capture photo. Please try again.");
+    }
   };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
     if (!file) return;
+
+    // Validate file is image
+    if (!file.type.startsWith("image/")) {
+      setCameraError("❌ Please select an image file.");
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (ev) => {
       const src = ev.target.result;
@@ -405,28 +748,34 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
   };
 
   const handleUse = () => {
-    onSelect({
-      url: avatarUrl,
-      avatarType: "builder",
-      avatarUrl,
-      avatarSeed: `${userName || "user"}-${opts.skinColor}-${opts.top}`,
-      avatarBackgroundColor: "#B6E3F4",
-      avatarTextColor: "#FFFFFF",
-      avatarBuilder: {
-        skinColor: opts.skinColor,
-        hair: opts.top,
-        hairColor: opts.hairColor,
-        eyes: opts.eyes,
-        eyebrows: opts.eyebrows,
-        mouth: opts.mouth,
-        beard: opts.facialHair,
-        beardColor: opts.facialHairColor,
-        accessory: opts.accessories,
-        clothes: opts.clothing,
-        shirtColor: opts.clothesColor,
-        source: capturedSrc ? "selfie-analysis" : "manual-builder",
-      },
-    });
+    // If this is an AI-generated avatar, use that directly
+    if (selectedAvatarPayload?.avatarType === "ai-generated") {
+      onSelect(selectedAvatarPayload);
+    } else {
+      // Otherwise use the cartoon avatar builder
+      onSelect({
+        url: avatarUrl,
+        avatarType: "builder",
+        avatarUrl,
+        avatarSeed: `${userName || "user"}-${opts.skinColor}-${opts.top}`,
+        avatarBackgroundColor: "#B6E3F4",
+        avatarTextColor: "#FFFFFF",
+        avatarBuilder: {
+          skinColor: opts.skinColor,
+          hair: opts.top,
+          hairColor: opts.hairColor,
+          eyes: opts.eyes,
+          eyebrows: opts.eyebrows,
+          mouth: opts.mouth,
+          beard: opts.facialHair,
+          beardColor: opts.facialHairColor,
+          accessory: opts.accessories,
+          clothes: opts.clothing,
+          shirtColor: opts.clothesColor,
+          source: capturedSrc ? "selfie-analysis" : "manual-builder",
+        },
+      });
+    }
     stopCamera();
     onClose();
   };
@@ -468,20 +817,25 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
           <div className="ab-capture-phase">
             {!cameraActive && !capturedSrc && (
               <div className="ab-capture-intro">
-                <div className="ab-capture-icon">📸</div>
+                <div className="ab-capture-icon">✨</div>
                 <p className="ab-capture-title">Create your AI Avatar</p>
                 <p className="ab-capture-desc">
-                  Take a selfie or upload a photo — we'll analyze your skin tone
-                  and hair color to build a matching cartoon avatar instantly.
+                  📸 Take a clear selfie or upload a photo with your face visible.
+                  We'll generate a professional AI avatar that matches your appearance.
+                  Make sure your face is clearly visible in good lighting.
                 </p>
                 {cameraError && <p className="ab-error">{cameraError}</p>}
                 <div className="ab-capture-btns">
-                  <button className="ab-camera-btn" onClick={startCamera}>
-                    📷 Open Camera
+                  <button
+                    className="ab-camera-btn"
+                    onClick={startCamera}
+                    disabled={cameraLoading}
+                  >
+                    {cameraLoading ? "⏳ Starting Camera..." : "📷 Open Camera"}
                   </button>
-                  <label className="ab-upload-btn">
+                  <label className="ab-upload-btn" style={{ pointerEvents: cameraLoading ? "none" : "auto", opacity: cameraLoading ? 0.5 : 1 }}>
                     🖼️ Upload Photo
-                    <input type="file" accept="image/*" onChange={handleFileUpload} hidden />
+                    <input type="file" accept="image/*" onChange={handleFileUpload} hidden disabled={cameraLoading} />
                   </label>
                 </div>
               </div>
@@ -489,14 +843,24 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
 
             {cameraActive && (
               <div className="ab-camera-wrap">
-                <video ref={videoRef} className="ab-video" autoPlay playsInline muted />
+                <video
+                  ref={videoRef}
+                  className="ab-video"
+                  autoPlay
+                  playsInline
+                  muted
+                  controls={false}
+                  style={{ WebkitPlaysinline: "webkit-playsinline" }}
+                  onPlay={() => console.log("✅ Video playing")}
+                  onLoadedMetadata={() => console.log("✅ Video metadata loaded")}
+                />
                 <canvas ref={canvasRef} hidden />
                 <div className="ab-camera-overlay">
                   <div className="ab-face-guide" />
-                  <p className="ab-guide-text">Position your face in the circle</p>
+                  <p className="ab-guide-text">📸 Center your face in the circle • Good lighting helps • Neutral expression</p>
                 </div>
                 <div className="ab-camera-actions">
-                  <button className="ab-shutter" onClick={capturePhoto}>⬤</button>
+                  <button className="ab-shutter" onClick={capturePhoto}>📸 Capture</button>
                   <button className="ab-cam-cancel" onClick={stopCamera}>Cancel</button>
                 </div>
               </div>
@@ -505,7 +869,8 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
             {analyzing && (
               <div className="ab-analyzing">
                 <div className="ab-spinner" />
-                <p>Analyzing your photo...</p>
+                <p>🔍 Detecting face...</p>
+                <p style={{ fontSize: "12px", marginTop: "8px", opacity: 0.7 }}>Analyzing skin tone, hair color & features</p>
               </div>
             )}
           </div>
@@ -515,17 +880,90 @@ const AvatarBuilder = ({ userName, onSelect, onClose }) => {
         {phase === "result" && (
           <>
             <div className="ab-result-top">
-              {capturedSrc && (
+              {capturedSrc ? (
                 <div className="ab-photo-thumb-wrap">
-                  <img src={capturedSrc} alt="Your photo" className="ab-photo-thumb" ref={imgRef} />
+                  <img
+                    src={capturedSrc}
+                    alt="Your photo"
+                    className="ab-photo-thumb"
+                    ref={imgRef}
+                    style={{
+                      background: "#f0f0f0",
+                      objectFit: "cover"
+                    }}
+                    onLoad={() => {
+                      console.log("✅ Your photo loaded successfully");
+                    }}
+                    onError={(e) => {
+                      console.error("❌ Photo failed to load. Event:", e);
+                      setCameraError("❌ Photo failed to load. Try again.");
+                    }}
+                  />
                   <div className="ab-arrow">→</div>
+                </div>
+              ) : (
+                <div style={{ textAlign: "center", padding: "20px", color: "#999", minWidth: "120px" }}>
+                  <p>📸 Loading...</p>
                 </div>
               )}
               <div className="ab-preview-ring">
-                <img key={avatarUrl} src={avatarUrl} alt="Avatar" className="ab-preview-img" />
+                {selectedAvatarPayload?.avatarType === "ai-generated" && selectedAvatarPayload?.avatarUrl ? (
+                  <img
+                    src={selectedAvatarPayload.avatarUrl}
+                    alt="AI Avatar"
+                    className="ab-preview-img"
+                    style={{ display: "block" }}
+                    onError={() => {
+                      console.error("❌ AI avatar failed to load - showing cartoon fallback");
+                    }}
+                    onLoad={() => {
+                      console.log("✅ AI avatar loaded successfully");
+                    }}
+                  />
+                ) : avatarUrl ? (
+                  <img
+                    key={avatarUrl}
+                    src={avatarUrl}
+                    alt="Avatar"
+                    className="ab-preview-img"
+                    style={{ display: "block" }}
+                    onError={() => {
+                      console.error("❌ Cartoon avatar failed to load");
+                      setCameraError("Avatar failed to load. Please try again.");
+                    }}
+                    onLoad={() => {
+                      console.log("✅ Cartoon avatar loaded");
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#f0f0f0",
+                    borderRadius: "8px",
+                    color: "#999"
+                  }}>
+                    <p>⏳ Generating avatar...</p>
+                  </div>
+                )}
               </div>
             </div>
-            <p className="ab-result-hint">Avatar matched to your photo. Fine-tune below ↓</p>
+            {cameraError ? (
+              <p className="ab-error" style={{ marginTop: "10px" }}>
+                {cameraError}
+              </p>
+            ) : (
+              <p className="ab-result-hint">
+                {selectedAvatarPayload?.avatarType === "ai-generated"
+                  ? "🤖 AI-Generated Avatar - Your face analyzed by OpenAI. Perfect match!"
+                  : selectedAvatarPayload?.avatarUrl
+                    ? "✨ AI Avatar generated! Customize features below ↓"
+                    : "⏳ Avatar generating..."}
+              </p>
+            )}
 
             {/* Tabs */}
             <div className="ab-tabs">

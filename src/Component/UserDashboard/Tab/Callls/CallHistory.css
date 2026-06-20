@@ -591,18 +591,65 @@
 }
 
 /* Responsive Design */
-@media screen and (max-width: 500px) {
+/* Tablet (769px - 1024px) */
+@media screen and (min-width: 481px) and (max-width: 1024px) {
+  .call-header {
+    padding: 18px 20px 12px 20px;
+  }
+
+  .call-title {
+    font-size: 22px;
+  }
+
+  .call-search {
+    margin: 10px 16px 8px 16px;
+    padding: 9px 15px;
+  }
+
+  .call-filters {
+    padding: 4px 16px 14px 16px;
+  }
+
+  .call-filter-btn {
+    padding: 7px 20px;
+    font-size: 13px;
+  }
+
+  .calls-list {
+    padding: 0 16px 16px 16px;
+  }
+
+  .call-avatar {
+    width: 50px;
+    height: 50px;
+    margin-right: 14px;
+  }
+
+  .call-name {
+    max-width: 200px;
+    font-size: 15px;
+  }
+
+  .control-btn {
+    width: 52px;
+    height: 52px;
+    font-size: 22px;
+  }
+}
+
+/* Mobile (≤480px) */
+@media screen and (max-width: 480px) {
   .call-history-container {
     max-width: 100%;
     height: 100vh;
   }
 
   .call-header {
-    padding: 16px 16px 10px 16px;
+    padding: 14px 14px 10px 14px;
   }
 
   .call-title {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .call-search {
@@ -615,8 +662,8 @@
   }
 
   .call-filter-btn {
-    padding: 6px 18px;
-    font-size: 13px;
+    padding: 6px 16px;
+    font-size: 12px;
   }
 
   .calls-list {
@@ -624,76 +671,142 @@
   }
 
   .call-avatar {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
     margin-right: 12px;
   }
 
   .call-name {
-    max-width: 150px;
-    font-size: 15px;
+    max-width: 140px;
+    font-size: 14px;
+  }
+
+  .call-time {
+    font-size: 12px;
   }
 
   /* Video call responsive */
   .local-video {
-    width: 90px;
-    height: 120px;
+    width: 80px;
+    height: 110px;
   }
 
   .remote-avatar {
-    font-size: 80px;
+    font-size: 70px;
   }
 
   .video-placeholder h3 {
-    font-size: 22px;
+    font-size: 20px;
   }
 
   .caller-avatar-large {
-    width: 120px;
-    height: 120px;
-    font-size: 60px;
+    width: 110px;
+    height: 110px;
+    font-size: 55px;
   }
 
   .caller-info h2 {
-    font-size: 26px;
+    font-size: 24px;
   }
 
   .control-btn {
-    width: 50px;
-    height: 50px;
+    width: 48px;
+    height: 48px;
     font-size: 20px;
   }
 }
 
+/* Small Phone (≤360px) */
 @media screen and (max-width: 360px) {
+  .call-header {
+    padding: 12px 12px 8px 12px;
+  }
+
+  .call-title {
+    font-size: 18px;
+  }
+
+  .call-search {
+    margin: 6px 10px 4px 10px;
+    padding: 7px 12px;
+    font-size: 13px;
+  }
+
+  .call-search-icon {
+    font-size: 16px;
+    margin-right: 8px;
+  }
+
+  .call-filters {
+    padding: 2px 10px 10px 10px;
+    gap: 6px;
+  }
+
+  .call-filter-btn {
+    padding: 5px 14px;
+    font-size: 11px;
+  }
+
+  .calls-list {
+    padding: 0 10px 12px 10px;
+  }
+
   .call-name {
-    max-width: 120px;
+    max-width: 110px;
+    font-size: 13px;
   }
 
   .call-avatar {
-    width: 42px;
-    height: 42px;
+    width: 40px;
+    height: 40px;
     margin-right: 10px;
   }
 
   .call-avatar-emoji {
-    font-size: 22px;
+    font-size: 20px;
+  }
+
+  .call-time {
+    font-size: 11px;
+  }
+
+  .call-type-badge {
+    font-size: 10px;
+    padding: 2px 6px;
   }
 
   .local-video {
-    width: 70px;
-    height: 100px;
+    width: 65px;
+    height: 90px;
     bottom: 0px;
   }
 
   .control-btn {
-    width: 45px;
-    height: 45px;
+    width: 44px;
+    height: 44px;
     font-size: 18px;
   }
 
   .call-actions {
-    gap: 20px;
+    gap: 16px;
+  }
+
+  .caller-avatar-large {
+    width: 100px;
+    height: 100px;
+    font-size: 48px;
+  }
+
+  .caller-info h2 {
+    font-size: 20px;
+  }
+
+  .remote-avatar {
+    font-size: 60px;
+  }
+
+  .video-placeholder h3 {
+    font-size: 16px;
   }
 }
 

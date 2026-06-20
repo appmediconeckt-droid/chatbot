@@ -29,7 +29,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
   const [locationLoading, setLocationLoading] = useState(false);
   const [notice, setNotice] = useState({ type: "", message: "" });
 
-  const title = isCounselor ? t('counselor_settings') : t('settings_title');
+  const title = isCounselor ? t('counselor_settings') : t('settings');
 
   const authHeaders = () => {
     const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
@@ -146,13 +146,13 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
   }
 
   return (
-    <section className="account-settings">
+    <section className={`account-settings ${isCounselor ? "account-settings--counselor" : "account-settings--user"}`}>
       <div className="account-settings__header">
         <div>
           <h1>{title}</h1>
           <p>{t('manage_account')}</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+        <div className="account-settings__actions">
           {onOpenProfile && (
             <button
               type="button"
@@ -172,7 +172,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
       )}
 
       <div className="account-settings__grid">
-        <div className="account-settings__panel">
+        <div className={`account-settings__panel account-settings__panel--account ${!isCounselor ? "account-settings__panel--account-with-language" : ""}`}>
           <h2>{t('account')}</h2>
           <dl className="account-settings__details">
             <div>
@@ -187,18 +187,18 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
               <dt>{t('phone')}</dt>
               <dd>{account.phone || t('not_added')}</dd>
             </div>
-            <div>
+            {/* <div>
               <dt>{t('login')}</dt>
               <dd>{account.authProvider === "google" ? "Google" : "Email password"}</dd>
             </div>
             <div>
               <dt>{t('password')}</dt>
               <dd>{account.hasPassword ? t('password_added') : t('not_added')}</dd>
-            </div>
+            </div> */}
           </dl>
         </div>
 
-        <div className="account-settings__panel">
+        <div className="account-settings__panel account-settings__panel--location">
           <h2>{t('location')}</h2>
           <p>{t('location_desc')}</p>
           <button
@@ -211,18 +211,18 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
           </button>
         </div>
 
-        {!isCounselor && (
-          <div className="account-settings__panel">
+        {/* {!isCounselor && (
+          <div className="account-settings__panel account-settings__panel--language">
             <h2>🌐 {t('language')}</h2>
             <p>{t('change_language')}</p>
-            <div style={{ margin: '15px 0' }}>
+            <div className="account-settings__language-select">
               <LanguageSelector lang={lang} setLang={setLang} t={t} />
             </div>
-            <small style={{ color: '#666', display: 'block', marginTop: '10px' }}>
+            <small className="account-settings__language-note">
               {t('select_language')}: {lang.toUpperCase()}
             </small>
           </div>
-        )}
+        )} */}
       </div>
 
       <PasswordChangePage
