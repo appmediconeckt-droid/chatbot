@@ -1701,14 +1701,14 @@ const handleFileSelected = async (e) => {
       onChange={handleFileSelected} 
       style={{ display: "none" }} 
     />
-    <input 
-      ref={cameraInputRef} 
-      type="file" 
+    <input
+      ref={cameraInputRef}
+      type="file"
       accept="image/*"
-      capture="environment"
-      className="chatHiddenFileInput" 
-      onChange={handleFileSelected} 
-      style={{ display: "none" }} 
+      capture="user"
+      className="chatHiddenFileInput"
+      onChange={handleFileSelected}
+      style={{ display: "none" }}
     />
     
     {/* Attachment Button */}

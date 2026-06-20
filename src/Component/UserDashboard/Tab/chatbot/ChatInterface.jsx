@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
 import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
@@ -600,11 +599,6 @@ const ChatInterface = ({ setActiveTab }) => {
         <div className="chatAppContainer">
             <div className="counselorSidebar">
                 <div className="counselorSidebarHeader">
-                    {isMobile && (
-                        <button onClick={() => navigate(-1)} className="chatInterfaceBackBtn" aria-label="Go back" title="Go back">
-                            <FaArrowLeft />
-                        </button>
-                    )}
                     <div className="counselorSearchBox">
                         <input
                             type="text"

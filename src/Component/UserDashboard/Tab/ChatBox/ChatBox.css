@@ -73,7 +73,9 @@
 .chatBoxHeaderLeft {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .chatBackBtn {
@@ -83,7 +85,7 @@
   border: 1px solid #eef2f6;
   background: #f0f1f3;
   cursor: pointer;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -91,32 +93,33 @@
   color: #1e293b;
   font-size: 1.25rem;
   font-weight: 500;
+  flex-shrink: 0;
 }
 
 .chatBackBtn:active { transform: scale(0.95); }
 
 .chatMobileHeaderBack {
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  width: 42px;
-  height: 42px;
+  position: relative;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 3px 12px rgba(102, 126, 234, 0.35), 0 1px 4px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  flex-shrink: 0;
+  padding: 0;
 }
 
 .chatMobileHeaderBack:hover {
   transform: scale(1.08);
-  box-shadow: 0 5px 18px rgba(102, 126, 234, 0.4), 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 .chatMobileHeaderBack:active {
@@ -168,6 +171,10 @@
   font-weight: 600;
   color: #0f172a;
   line-height: 1.4;
+  max-width: 180px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chatProfileStatus {
@@ -385,10 +392,13 @@
 }
 
 .chatMsgTimestamp {
-  font-size: 0.6875rem;
-  opacity: 0.8;
+  font-size: 0.75rem;
+  opacity: 0.9;
+  font-weight: 500;
+  white-space: nowrap;
 }
 .chatMsgLeft .chatMsgTimestamp { color: #94a3b8; }
+.chatMsgRight .chatMsgTimestamp { color: #cbd5e1; }
 
 /* Message Status */
 .message-status { font-size: 0.6875rem; padding: 0.125rem 0.25rem; border-radius: 0.25rem; }
@@ -777,21 +787,25 @@
 
 /* Small Mobile (up to 374px) */
 @media screen and (max-width: 374px) {
-  .chatBoxHeader { padding: 0.75rem 1rem; min-height: 4.5rem; gap: 0.75rem; }
-  .chatBackBtn { width: 2.125rem; height: 2.125rem; font-size: 1rem; }
-  .chatUserDetails { gap: 0.5rem; flex: 1; min-width: 0; }
-  .chatProfilePic { width: 2.5rem; height: 2.5rem; }
-  .chatProfileName { font-size: 0.95rem; }
-  .chatProfileStatus { font-size: 0.7rem; }
-  .chatBoxHeaderRight { gap: 0.375rem; }
-  .chatActionBtn { width: 2.125rem; height: 2.125rem; }
-  .chatBtnIcon { font-size: 0.95rem; }
+  .chatBoxHeader { padding: 0.75rem 0.75rem; min-height: 4.2rem; gap: 0.4rem; }
+  .chatBoxHeaderLeft { gap: 0.5rem; flex: 1; }
+  .chatMobileHeaderBack { width: 35px; height: 35px; font-size: 14px; flex-shrink: 0; }
+  .chatUserDetails { gap: 0.35rem; }
+  .chatProfilePic { width: 2.2rem; height: 2.2rem; flex-shrink: 0; }
+  .chatProfileInfo { min-width: 0; }
+  .chatProfileName { font-size: 0.85rem; max-width: 100px; }
+  .chatProfileStatus { font-size: 0.6rem; }
+  .chatBoxHeaderRight { gap: 0.3rem; }
+  .chatActionBtn { width: 2rem; height: 2rem; }
+  .chatBtnIcon { font-size: 0.9rem; }
   .chatBtnTooltip { display: none; }
-  .chatMessagesArea { padding: 0.75rem 1rem; gap: 0.75rem; }
+  .chatMessagesArea { padding: 0.75rem 0.8rem; gap: 0.75rem; }
   .chatMsgBubble { max-width: 85%; }
   .chatMsgContent { padding: 0.625rem 0.875rem; }
   .chatMsgText { font-size: 0.85rem; }
-  .chatInputArea { padding: 0.75rem 1rem; }
+  .chatMsgFooter { gap: 0.3rem; margin-top: 0.25rem; }
+  .chatMsgTimestamp { font-size: 0.7rem; }
+  .chatInputArea { padding: 0.75rem 0.8rem; }
   .chatInputGroup { gap: 0.5rem; padding: 0.375rem 0.375rem 0.375rem 0.75rem; }
   .chatTextInput { padding: 0.5rem 2.25rem 0.5rem 0.75rem; font-size: 0.85rem; }
   .chatAttachBtn, .chatCameraBtn, .chatEmojiBtn, .chatSendBtn { width: 2rem; height: 2rem; font-size: 1rem; }
@@ -805,25 +819,38 @@
 
 /* Medium Mobile (375px - 424px) */
 @media screen and (min-width: 375px) and (max-width: 424px) {
-  .chatBoxHeader { padding: 0.75rem 1.25rem; }
-  .chatBackBtn { width: 2.25rem; height: 2.25rem; }
-  .chatProfilePic { width: 2.75rem; height: 2.75rem; }
-  .chatProfileName { font-size: 1rem; }
-  .chatActionBtn { width: 2.25rem; height: 2.25rem; }
+  .chatBoxHeader { padding: 0.75rem 1rem; min-height: 4.3rem; gap: 0.5rem; }
+  .chatBoxHeaderLeft { gap: 0.6rem; flex: 1; }
+  .chatMobileHeaderBack { width: 36px; height: 36px; font-size: 15px; flex-shrink: 0; }
+  .chatProfilePic { width: 2.3rem; height: 2.3rem; flex-shrink: 0; }
+  .chatProfileInfo { min-width: 0; }
+  .chatProfileName { font-size: 0.9rem; max-width: 120px; }
+  .chatProfileStatus { font-size: 0.65rem; }
+  .chatActionBtn { width: 2.1rem; height: 2.1rem; }
+  .chatBoxHeaderRight { gap: 0.3rem; }
   .chatMessagesArea { padding: 1rem 1.25rem; }
   .chatMsgBubble { max-width: 80%; }
+  .chatMsgFooter { gap: 0.4rem; }
+  .chatMsgTimestamp { font-size: 0.72rem; }
   .chatInputArea { padding: 0.75rem 1.25rem; }
   .chatEmojiBox { max-width: 280px; bottom: 5rem; }
 }
 
 /* Large Mobile (425px - 767px) */
 @media screen and (min-width: 425px) and (max-width: 767px) {
-  .chatBoxHeader { padding: 0.875rem 1.5rem; }
-  .chatBackBtn { width: 2.5rem; height: 2.5rem; }
-  .chatProfilePic { width: 3rem; height: 3rem; }
-  .chatActionBtn { width: 2.5rem; height: 2.5rem; }
+  .chatBoxHeader { padding: 0.875rem 1.25rem; min-height: 4.5rem; gap: 0.6rem; }
+  .chatBoxHeaderLeft { gap: 0.7rem; flex: 1; }
+  .chatMobileHeaderBack { width: 37px; height: 37px; font-size: 16px; flex-shrink: 0; }
+  .chatProfilePic { width: 2.6rem; height: 2.6rem; flex-shrink: 0; }
+  .chatProfileInfo { min-width: 0; }
+  .chatProfileName { font-size: 0.95rem; max-width: 150px; }
+  .chatProfileStatus { font-size: 0.7rem; }
+  .chatActionBtn { width: 2.2rem; height: 2.2rem; }
+  .chatBoxHeaderRight { gap: 0.4rem; }
   .chatMessagesArea { padding: 1.25rem 1.5rem; }
   .chatMsgBubble { max-width: 75%; }
+  .chatMsgFooter { gap: 0.5rem; }
+  .chatMsgTimestamp { font-size: 0.75rem; }
   .chatInputArea { padding: 0.875rem 1.5rem; }
   .chatEmojiBox { max-width: 300px; bottom: 5.5rem; right: 1.5rem; }
   .emojiBoxGrid { grid-template-columns: repeat(5, 1fr); }
@@ -841,17 +868,20 @@
 
 /* Landscape Mode */
 @media screen and (max-height: 600px) and (orientation: landscape) {
-  .chatBoxHeader { min-height: 3.5rem; padding: 0.5rem 1rem; }
-  .chatBackBtn { width: 2rem; height: 2rem; }
-  .chatProfilePic { width: 2.25rem; height: 2.25rem; }
-  .chatProfileName { font-size: 0.9rem; }
-  .chatActionBtn { width: 2rem; height: 2rem; }
-  .chatMessagesArea { padding: 0.5rem 1rem; gap: 0.5rem; max-height: calc(100vh - 8rem); }
+  .chatBoxHeader { min-height: 3.2rem; padding: 0.5rem 1rem; gap: 0.4rem; }
+  .chatBoxHeaderLeft { gap: 0.5rem; }
+  .chatMobileHeaderBack { width: 34px; height: 34px; font-size: 15px; }
+  .chatProfilePic { width: 2.1rem; height: 2.1rem; }
+  .chatProfileName { font-size: 0.85rem; }
+  .chatProfileStatus { font-size: 0.65rem; }
+  .chatActionBtn { width: 1.875rem; height: 1.875rem; }
+  .chatBtnIcon { font-size: 0.875rem; }
+  .chatMessagesArea { padding: 0.5rem 1rem; gap: 0.5rem; max-height: calc(100vh - 7rem); }
   .chatMsgBubble { max-width: 80%; }
   .chatMsgContent { padding: 0.5rem 0.75rem; }
   .chatInputArea { padding: 0.5rem 1rem; }
-  .chatTextInput { padding: 0.375rem 2.25rem 0.375rem 0.75rem; font-size: 0.8rem; min-height: 2.25rem; }
-  .chatAttachBtn, .chatCameraBtn, .chatEmojiBtn, .chatSendBtn { width: 2rem; height: 2rem; font-size: 0.95rem; }
+  .chatTextInput { padding: 0.375rem 2.25rem 0.375rem 0.75rem; font-size: 0.8rem; min-height: 2.1rem; }
+  .chatAttachBtn, .chatCameraBtn, .chatEmojiBtn, .chatSendBtn { width: 1.875rem; height: 1.875rem; font-size: 0.9rem; }
   .chatEmojiBox { display: none; }
 }
 
