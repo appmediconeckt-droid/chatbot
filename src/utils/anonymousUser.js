@@ -32,6 +32,7 @@ const normalizeAvatarUrl = (value, allowAnyHttpUrl = false) => {
   if (typeof raw !== "string" || !raw.trim()) return "";
 
   const trimmed = raw.trim();
+  if (/^data:image\//i.test(trimmed)) return trimmed;
   if (!/^https?:\/\//i.test(trimmed)) return "";
 
   let parsed;
@@ -83,7 +84,7 @@ export const getAnonymousUserName = (
     ["profile", "anonymous"],
   ]);
 
-  return typeof value === "string" ? value : fallback;
+  return typeof value === "string" && value ? value : fallback;
 };
 
 export const getAnonymousUserGender = (source) => {
@@ -112,6 +113,51 @@ export const getAnonymousUserAvatar = (source) => {
 };
 
 export const getAnonymousUserAvatarUrl = (source) => {
+  const profileAvatarUrl = readFirstAvatarUrl(source, [
+    ["profilePhoto"],
+    ["profilePhoto", "url"],
+    ["profilePic"],
+    ["photoUrl"],
+    ["image"],
+    ["Image"],
+    ["avatar"],
+    ["avatar", "url"],
+    ["user", "profilePhoto"],
+    ["user", "profilePhoto", "url"],
+    ["user", "profilePic"],
+    ["user", "photoUrl"],
+    ["user", "image"],
+    ["user", "Image"],
+    ["user", "avatar"],
+    ["user", "avatar", "url"],
+    ["patient", "profilePhoto"],
+    ["patient", "profilePhoto", "url"],
+    ["patient", "profilePic"],
+    ["patient", "photoUrl"],
+    ["patient", "image"],
+    ["patient", "Image"],
+    ["patient", "avatar"],
+    ["patient", "avatar", "url"],
+    ["otherParty", "profilePhoto"],
+    ["otherParty", "profilePhoto", "url"],
+    ["otherParty", "profilePic"],
+    ["otherParty", "photoUrl"],
+    ["otherParty", "image"],
+    ["otherParty", "Image"],
+    ["otherParty", "avatar"],
+    ["otherParty", "avatar", "url"],
+    ["profile", "profilePhoto"],
+    ["profile", "profilePhoto", "url"],
+    ["profile", "profilePic"],
+    ["profile", "photoUrl"],
+    ["profile", "image"],
+    ["profile", "Image"],
+    ["profile", "avatar"],
+    ["profile", "avatar", "url"],
+  ], true);
+
+  if (profileAvatarUrl) return profileAvatarUrl;
+
   const explicitAvatarUrl = readFirstAvatarUrl(source, [
     ["anonymousAvatarUrl"],
     ["anonymousAvatar"],
@@ -142,12 +188,13 @@ export const getAnonymousUserAvatarUrl = (source) => {
     ["profile", "avatarUrl"],
     ["profile", "avatarImage"],
     ["profile", "Image"],
-  ]);
+  ], true);
 
   if (explicitAvatarUrl) return explicitAvatarUrl;
 
   return readFirstAvatarUrl(source, [
     ["avatar"],
+    ["avatar", "url"],
     ["Image"],
     ["profilePhoto"],
     ["profilePhoto", "url"],
@@ -155,25 +202,29 @@ export const getAnonymousUserAvatarUrl = (source) => {
     ["photoUrl"],
     ["image"],
     ["user", "avatar"],
+    ["user", "avatar", "url"],
     ["user", "Image"],
     ["user", "profilePhoto"],
     ["user", "profilePhoto", "url"],
     ["user", "profilePic"],
     ["patient", "avatar"],
+    ["patient", "avatar", "url"],
     ["patient", "Image"],
     ["patient", "profilePhoto"],
     ["patient", "profilePhoto", "url"],
     ["patient", "profilePic"],
     ["otherParty", "avatar"],
+    ["otherParty", "avatar", "url"],
     ["otherParty", "Image"],
     ["otherParty", "profilePhoto"],
     ["otherParty", "profilePhoto", "url"],
     ["otherParty", "profilePic"],
     ["profile", "avatar"],
+    ["profile", "avatar", "url"],
     ["profile", "Image"],
     ["profile", "profilePhoto"],
     ["profile", "profilePhoto", "url"],
-  ]);
+  ], true);
 };
 
 export const getAnonymousUserDisplay = (source) => ({

@@ -16,7 +16,12 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
   const [pollingInterval, setPollingInterval] = useState(null);
   const [isPolling, setIsPolling] = useState(true);
 
-  const handleInitiateVideoCall = async (apt) => {
+  const handleInitiateVideoCall = async (apt, requestedCallType = "video") => {
+    const normalizedCallType =
+      requestedCallType === "audio" || requestedCallType === "voice"
+        ? "audio"
+        : "video";
+    const modalCallType = normalizedCallType === "audio" ? "voice" : "video";
     const patientInfo = { ...apt, ...(apt.patient || apt.user || apt.client || {}) };
     const anonymousPatient = getAnonymousUserDisplay(patientInfo);
     const counselorId = getCounsellorId();
@@ -36,7 +41,7 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
           initiatorType: "counsellour",
           receiverId: userId,
           receiverType: "user",
-          callType: "video",
+          callType: normalizedCallType,
         },
         {
           headers: {
@@ -54,7 +59,8 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
           name: anonymousPatient.name,
           profilePic: anonymousPatient.avatarUrl || anonymousPatient.avatar,
           isIncoming: false,
-          callType: "video",
+          callType: modalCallType,
+          type: modalCallType,
           currentUserId: counselorId,
           currentUserType: "counsellour",
           apiCallData: response.data.callData,

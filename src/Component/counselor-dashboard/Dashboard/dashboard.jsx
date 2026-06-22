@@ -370,6 +370,10 @@ import useVibration from "../../../hooks/useVibration";
 import useRingtone from "../../../hooks/useRingtone";
 import axios from "axios";
 import { API_BASE_URL } from "../../../axiosConfig";
+import {
+  getAnonymousParticipantId,
+  getAnonymousUserDisplay,
+} from "../../../utils/anonymousUser";
 
 import Dashboard from "../Tab/CounselorDashboard/Dashboardcou";
 import Messagesou from "../Tab/Messages/Messagesou";
@@ -565,6 +569,116 @@ export default function CounselorDashboard() {
     clearDateFilter(); // ✅ Clear filter and fetch all appointments
   };
 
+  const getAppointmentPatientInfo = (appointment) => ({
+    ...(appointment || {}),
+    ...(appointment?.patient || appointment?.user || appointment?.client || {}),
+  });
+
+  const getDirectAppointmentChatId = (appointment) =>
+    appointment?.chatId ||
+    appointment?.chat_id ||
+    appointment?.conversationId ||
+    appointment?.conversation_id ||
+    appointment?.chat?.chatId ||
+    appointment?.chat?._id ||
+    appointment?.chat?.id;
+
+  const findAppointmentChat = async (appointment, patientId) => {
+    const directChatId = getDirectAppointmentChatId(appointment);
+    if (directChatId) {
+      return { chatId: directChatId, chat: appointment?.chat || null };
+    }
+
+    const token = getAuthToken();
+    if (!token || !patientId) return { chatId: null, chat: null };
+
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/chat/chats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const chats = Array.isArray(response.data?.chats)
+        ? response.data.chats
+        : [];
+      const matchedChat = chats.find((chat) => {
+        const otherParty = chat.otherParty || chat.user || chat.patient || {};
+        const candidates = [
+          chat.userId,
+          chat.receiverId,
+          otherParty._id,
+          otherParty.id,
+          otherParty.userId,
+          otherParty.user_id,
+        ].filter(Boolean);
+        return candidates.some((id) => String(id) === String(patientId));
+      });
+
+      return {
+        chatId: matchedChat?.chatId || matchedChat?.id || matchedChat?._id || null,
+        chat: matchedChat || null,
+      };
+    } catch (error) {
+      console.error("Unable to resolve appointment chat:", error);
+      return { chatId: null, chat: null };
+    }
+  };
+
+  const handleOpenAppointmentChat = async (appointment) => {
+    const patientInfo = getAppointmentPatientInfo(appointment);
+    const patientId = getAnonymousParticipantId(patientInfo);
+
+    if (!patientId) {
+      alert("Missing patient information.");
+      return;
+    }
+
+    const { chatId, chat } = await findAppointmentChat(appointment, patientId);
+    if (!chatId) {
+      alert("Chat is not available for this appointment yet.");
+      return;
+    }
+
+    const anonymousPatient = getAnonymousUserDisplay({
+      ...patientInfo,
+      ...(chat?.otherParty || {}),
+    });
+    const selectedUser = {
+      id: chatId,
+      _id: patientId,
+      receiverId: patientId,
+      userId: patientId,
+      chatId,
+      name: anonymousPatient.name,
+      anonymous: anonymousPatient.name,
+      gender: anonymousPatient.gender,
+      avatar: anonymousPatient.avatar,
+      avatarUrl: anonymousPatient.avatarUrl,
+      status: chat?.status || "accepted",
+      online: chat?.otherParty?.isOnline || chat?.otherParty?.online,
+      isOnline: chat?.otherParty?.isOnline || chat?.otherParty?.online,
+      lastSeen: chat?.otherParty?.lastSeen,
+      phone: "Not available",
+      email: "Not available",
+      appointmentId: appointment?._id,
+      user: {
+        id: patientId,
+        _id: patientId,
+        userId: patientId,
+        anonymous: anonymousPatient.name,
+        gender: anonymousPatient.gender,
+        avatar: anonymousPatient.avatar,
+        avatarUrl: anonymousPatient.avatarUrl,
+      },
+    };
+
+    navigate("/sms-input", {
+      state: {
+        selectedUser,
+        chatId,
+        chatData: selectedUser,
+      },
+    });
+  };
+
   return (
     <div className="couns-dashboard">
       <LocationNoticeToast />
@@ -661,6 +775,10 @@ export default function CounselorDashboard() {
     setSessionSelectedDate={setSessionSelectedDate}
     clearSessionDateFilter={clearSessionDateFilter}
     handleInitiateVideoCall={handleInitiateVideoCall}
+    handleInitiateVoiceCall={(appointment) =>
+      handleInitiateVideoCall(appointment, "audio")
+    }
+    handleOpenAppointmentChat={handleOpenAppointmentChat}
     loading={appointmentsLoading}
   />
 )}

@@ -3063,6 +3063,10 @@ button:focus {
   }
 }
 
+.stitch-apt-layout-cards-only {
+  grid-template-columns: 1fr;
+}
+
 /* Left Column */
 .stitch-apt-left {
   display: flex;
@@ -3661,51 +3665,63 @@ button:focus {
 
 .stitch-session-actions {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
   margin-top: 16px;
 }
 
-.stitch-btn-start-call {
-  flex: 1;
+.stitch-session-action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  font-size: 15px;
+  cursor: pointer;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    background 0.2s;
+}
+
+.stitch-session-action-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.14);
+}
+
+.stitch-session-action-btn:active {
+  transform: translateY(0);
+}
+
+.stitch-session-video-btn {
   background: #4648d4;
   color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
 }
 
-.stitch-btn-start-call:hover {
+.stitch-session-video-btn:hover {
   background: #3537b8;
-  transform: translateY(-1px);
 }
 
-.stitch-btn-reschedule {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-weight: 500;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
+.stitch-session-voice-btn {
+  background: #dcfce7;
+  color: #15803d;
 }
 
-.stitch-btn-reschedule:hover {
-  background: #e2e8f0;
+.stitch-session-voice-btn:hover {
+  background: #bbf7d0;
+}
+
+.stitch-session-chat-btn {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.stitch-session-chat-btn:hover {
+  background: #dbeafe;
 }
 
 /* Responsive */
@@ -3720,7 +3736,8 @@ button:focus {
   }
   
   .stitch-session-actions {
-    flex-direction: column;
+    justify-content: flex-start;
+    flex-direction: row;
   }
 }
 
@@ -3899,14 +3916,14 @@ button:focus {
 
   .stitch-apt-actions,
   .stitch-session-actions {
-    flex-direction: column;
+    flex-direction: row;
   }
 
   .stitch-btn-accept,
   .stitch-btn-reject,
   .stitch-btn-start-call,
-  .stitch-btn-reschedule {
-    width: 100%;
+  .stitch-btn-reschedule,
+  .stitch-session-action-btn {
     min-height: 42px;
   }
 

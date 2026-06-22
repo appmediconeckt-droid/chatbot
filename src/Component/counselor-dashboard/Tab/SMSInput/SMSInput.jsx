@@ -12,6 +12,7 @@ import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 import { useCounselorTranslation, useCounselorApiTranslation } from "../../../../i18n/LanguageContext";
 import { getPresence } from "../../../../utils/presence";
+import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import TranslatedMessage from "../../../common/TranslatedMessage";
 
 const SMSInput = () => {
@@ -172,6 +173,7 @@ const SMSInput = () => {
 
   const getUserDetails = () => {
     const id = getSelectedUserId();
+    const anonymousDisplay = getAnonymousUserDisplay(selectedUser || {});
     return {
       id,
       name:
@@ -194,16 +196,30 @@ const SMSInput = () => {
         selectedUser?.user?.email ||
         selectedUser?.otherParty?.email,
       avatar:
+        anonymousDisplay.avatar ||
         selectedUser?.avatar ||
         selectedUser?.user?.avatar ||
         selectedUser?.otherParty?.avatar,
       avatarUrl:
+        anonymousDisplay.avatarUrl ||
         selectedUser?.avatarUrl ||
         selectedUser?.anonymousAvatarUrl ||
+        selectedUser?.profilePhoto?.url ||
+        selectedUser?.profilePhoto ||
+        selectedUser?.profilePic ||
+        selectedUser?.avatarImage ||
         selectedUser?.user?.avatarUrl ||
         selectedUser?.user?.anonymousAvatarUrl ||
+        selectedUser?.user?.profilePhoto?.url ||
+        selectedUser?.user?.profilePhoto ||
+        selectedUser?.user?.profilePic ||
+        selectedUser?.user?.avatarImage ||
         selectedUser?.otherParty?.avatarUrl ||
-        selectedUser?.otherParty?.anonymousAvatarUrl,
+        selectedUser?.otherParty?.anonymousAvatarUrl ||
+        selectedUser?.otherParty?.profilePhoto?.url ||
+        selectedUser?.otherParty?.profilePhoto ||
+        selectedUser?.otherParty?.profilePic ||
+        selectedUser?.otherParty?.avatarImage,
     };
   };
 
@@ -880,6 +896,10 @@ const SMSInput = () => {
             ? detailedCall.receiver
             : detailedCall.initiator
           : null;
+        const remoteParticipantDisplay = getAnonymousUserDisplay({
+          ...incomingCallData,
+          ...(remoteParticipant || {}),
+        });
 
         const callDataForModal = {
           id: detailedCall?.id || resolvedCallId,
@@ -895,7 +915,9 @@ const SMSInput = () => {
           type: modalType,
           callType: modalType,
           profilePic:
-            remoteParticipant?.profilePhoto || incomingCallData.avatar,
+            remoteParticipantDisplay.avatarUrl ||
+            remoteParticipant?.profilePhoto ||
+            incomingCallData.avatar,
           phoneNumber:
             remoteParticipant?.phoneNumber || remoteParticipant?.phone || "",
           status: response.data.status || detailedCall?.status || "active",
@@ -1081,22 +1103,25 @@ const SMSInput = () => {
           }
 
           const fromData = waitingCall.from || {};
+          const anonymousCaller = getAnonymousUserDisplay({
+            ...waitingCall,
+            ...fromData,
+          });
           let displayName = "Anonymous User";
-          if (fromData.isAnonymous) displayName = fromData.isAnonymous;
+          if (anonymousCaller.name) displayName = anonymousCaller.name;
+          else if (fromData.isAnonymous) displayName = fromData.isAnonymous;
           else if (fromData.displayName) displayName = fromData.displayName;
           else if (fromData.fullName) displayName = fromData.fullName;
           else if (fromData.name) displayName = fromData.name;
-          let avatar = "👤";
-          if (fromData.gender === "female") avatar = "👩";
-          else if (fromData.gender === "male") avatar = "👨";
           setIncomingCallData({
             callId: waitingCall.callId || waitingCall.id || waitingCall._id,
             id: waitingCall.id || waitingCall.callId || waitingCall._id || "",
             _id: waitingCall._id || waitingCall.callId || waitingCall.id || "",
             roomId: waitingCall.roomId || waitingCall.callId || waitingCall.id,
             name: displayName,
-            avatar: avatar,
+            avatar: anonymousCaller.avatarUrl || anonymousCaller.avatar,
             callType: waitingCall.callType || "video",
+            from: fromData,
             requestMessage:
               waitingCall.requestMessage ||
               `Incoming ${waitingCall.callType || "video"} call...`,
