@@ -28,7 +28,9 @@ const getProfilePhotoUrl = (profilePhoto) => {
 };
 
 const isCounselorOnline = (counselor) =>
-  counselor?.isOnline === true && counselor?.isLoggedIn === true;
+  counselor?.presenceStatus === "online" ||
+  counselor?.hasActiveSession === true ||
+  (counselor?.isOnline === true && counselor?.isLoggedIn === true);
 
 const CounselorTable = () => {
   const { t } = useUserTranslation();
@@ -124,9 +126,18 @@ const CounselorTable = () => {
           return {
             ...counselor,
             // A counselor is available only when both API flags are true.
-            // Do not infer this state from lastSeen / last-login time.
-            isOnline: counselor.isOnline === true,
-            isLoggedIn: counselor.isLoggedIn === true,
+            // `presenceStatus` / `hasActiveSession` come from the backend's
+            // token-session check and remain stable during socket reconnects.
+            presenceStatus: counselor.presenceStatus || "offline",
+            hasActiveSession: counselor.hasActiveSession === true,
+            socketOnline: counselor.socketOnline === true,
+            isOnline:
+              counselor.presenceStatus === "online" ||
+              counselor.hasActiveSession === true ||
+              (counselor.isOnline === true && counselor.isLoggedIn === true),
+            isLoggedIn:
+              counselor.hasActiveSession === true ||
+              counselor.isLoggedIn === true,
           };
         });
 
@@ -153,23 +164,30 @@ const CounselorTable = () => {
       if (!mounted) return;
       const presence = getPresence(payload);
       const userId = payload.userId;
-      const isOnline = presence.isOnline;
+      const hasActiveSession = counselor =>
+        counselor.hasActiveSession === true ||
+        counselor.presenceStatus === "online";
       const isLoggedIn = presence.isLoggedIn;
       const hasLoginStatus = presence.hasLoginStatus;
       const lastSeen = presence.lastSeen;
-      console.log(`[Presence] ${userId} is now ${isOnline ? '🟢 ONLINE' : '⚫ OFFLINE'}`);
+      console.log(`[Presence] ${userId} socket is now ${presence.isOnline ? 'ONLINE' : 'OFFLINE'}`);
       setCounselorsData((prev) =>
         prev.map((counselor) =>
           String(counselor._id || counselor.id) === String(userId)
-            ? {
+            ? (() => {
+                const sessionOnline = hasActiveSession(counselor);
+                const isOnline = sessionOnline || presence.isOnline;
+                return {
                 ...counselor,
                 isOnline,
                 online: isOnline,
                 isLoggedIn: hasLoginStatus
                   ? isLoggedIn
                   : counselor.isLoggedIn,
+                socketOnline: presence.isOnline,
                 lastSeen,
-              }
+                };
+              })()
             : counselor,
         ),
       );

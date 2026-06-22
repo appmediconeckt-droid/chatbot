@@ -683,6 +683,7 @@ const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false })
           setPhase("result");
         } catch (err) {
           console.error("❌ Backend analysis error:", err);
+
           setCameraError(`❌ ${err.message}`);
           setAnalyzing(false);
         }

@@ -43,6 +43,7 @@ import PatientProfile from "../../PatientProfile/PatientProfile";
 
 import LiveChatSupport from "../Tab/Appointment/BookAppointment";
 import axios from "axios";
+import socketService from "../../../services/socketService";
 import CounselorTable from "../Tab/Counselor/CounselorDirectory";
 import VideoCallModal from "../Tab/CallModal/VideoCallModal";
 import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
@@ -1122,10 +1123,12 @@ export default function UserDashboard() {
       );
 
       console.log("Logout success:", response.data);
+      socketService.disconnect();
       localStorage.clear();
       navigate("/role-selector");
     } catch (error) {
       console.error("Logout error:", error?.response?.data || error.message);
+      socketService.disconnect();
       localStorage.clear();
       navigate("/role-selector");
     }

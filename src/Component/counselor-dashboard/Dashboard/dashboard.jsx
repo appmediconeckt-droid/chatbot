@@ -482,11 +482,13 @@ export default function CounselorDashboard() {
           },
         },
       );
+      socketService.disconnect();
       localStorage.clear();
       setShowLogoutConfirm(false);
       navigate("/role-selector");
     } catch (error) {
       console.error("Logout Error:", error);
+      socketService.disconnect();
       localStorage.clear();
       setShowLogoutConfirm(false);
       navigate("/role-selector");

@@ -1219,7 +1219,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   // Check chat status function
   const checkChatStatus = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/chat/status`, {
+      const response = await axios.get(`${API_BASE_URL}/api/chat/chat-statuses`, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -1228,8 +1228,8 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       
       const data = response.data || {};
       
-      // Accepted chats must keep the card in Book Now state permanently.
-      // If no accepted chat exists, use the latest request status for pending/rejected.
+      // A chat request must stay connected to its counselor card after this
+      // tab remounts. Both pending and accepted chats use the Chat Now button.
       const pending = {};
       const accepted = {};
       const rejected = {};
@@ -1241,7 +1241,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           if (counselorId) {
             const status = String(chat.status || "").toLowerCase();
 
-            if (status === "accepted" || status === "active") {
+            if (["pending", "accepted", "active"].includes(status)) {
               accepted[counselorId] = chat.chatId || chat.id || chat._id;
               return;
             }
@@ -1265,9 +1265,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
         const status = String(chat.status || "").toLowerCase();
 
-        if (status === "pending") {
-          pending[counselorId] = true;
-        } else if (status === "accepted" || status === "active") {
+        if (["pending", "accepted", "active"].includes(status)) {
           accepted[counselorId] = chat.chatId || chat.id || chat._id;
         } else if (["rejected", "declined", "cancelled", "canceled"].includes(status)) {
           rejected[counselorId] = true;
@@ -1510,7 +1508,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
         if (data.success) {
           const formattedCounselors = data.counsellors.map((c) => {
-            const isOnline = c.isOnline === true && c.isLoggedIn === true;
+            // Prefer the token-session presence returned by the backend. It
+            // remains online until logout, unlike a transient socket status.
+            const hasActiveSession = c.hasActiveSession === true || c.presenceStatus === "online";
+            const isOnline = hasActiveSession || (c.isOnline === true && c.isLoggedIn === true);
             return {
               id: c._id,
               name: c.fullName,
@@ -1519,7 +1520,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
               rating: c.rating || 4.5,
               online: isOnline,
               isOnline,
-              isLoggedIn: c.isLoggedIn === true,
+              isLoggedIn: hasActiveSession || c.isLoggedIn === true,
+              hasActiveSession,
+              presenceStatus: c.presenceStatus || (isOnline ? "online" : "offline"),
+              socketOnline: c.socketOnline === true,
               available: c.isActive,
               lastSeen: c.lastSeen || null,
               avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
@@ -1579,13 +1583,17 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           const isLoggedIn = presence.hasLoginStatus
             ? presence.isLoggedIn
             : counselor.isLoggedIn;
-          const isOnline = presence.isOnline === true && isLoggedIn === true;
+          const sessionOnline =
+            counselor.hasActiveSession === true ||
+            counselor.presenceStatus === "online";
+          const isOnline = sessionOnline || (presence.isOnline === true && isLoggedIn === true);
 
           return {
             ...counselor,
             online: isOnline,
             isOnline,
             isLoggedIn,
+            socketOnline: presence.isOnline === true,
             lastSeen: presence.lastSeen,
           };
         });
@@ -1719,7 +1727,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
     }
     
     if (isAccepted) {
-      const text = tr("book_now", "Book Now");
+      const text = tr("chat_now", "Chat Now");
       return { text, title: text, disabled: false, className: "active" };
     }
     
@@ -1815,17 +1823,19 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       const status = res.data?.chat?.status || res.data?.status;
 
       if (status === 'pending') {
-        // Request sent, update pending requests
-        setPendingRequests(prev => ({ ...prev, [counselorId]: true }));
+        // Keep Chat Now visible immediately and after a tab change. The
+        // request remains pending for the counselor, but the user is already
+        // connected to this chat.
+        setAcceptedChats(prev => ({ ...prev, [counselorId]: chatId }));
+        setPendingRequests(prev => {
+          const newPending = { ...prev };
+          delete newPending[counselorId];
+          return newPending;
+        });
         setRejectedRequests(prev => {
           const newRejected = { ...prev };
           delete newRejected[counselorId];
           return newRejected;
-        });
-        setAcceptedChats(prev => {
-          const newAccepted = { ...prev };
-          delete newAccepted[counselorId];
-          return newAccepted;
         });
         setShowUserModal(false);
         alert(t('chat_request_sent'));

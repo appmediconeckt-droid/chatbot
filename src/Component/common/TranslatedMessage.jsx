@@ -11,6 +11,14 @@ const TranslatedMessage = ({ text, translate, lang }) => {
       return;
     }
 
+    // en-US is the default language. Render English messages unchanged rather
+    // than calling a translation provider with an equivalent target language.
+    if (String(lang || '').toLowerCase().split('-')[0] === 'en') {
+      setDisplayText(text);
+      setIsTranslating(false);
+      return;
+    }
+
     console.log(`🔄 Translating "${text.substring(0, 30)}..." to ${lang}`);
     setIsTranslating(true);
 

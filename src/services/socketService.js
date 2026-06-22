@@ -7,7 +7,9 @@ import { io } from 'socket.io-client';
 import { API_BASE_URL } from '../axiosConfig';
 
 const CONNECTION_TIMEOUT_MS = 20_000;
-const MAX_RECONNECT_ATTEMPTS = 5;
+// Presence must survive temporary network changes. A valid login token stays
+// authenticated, so keep retrying until the user explicitly logs out.
+const MAX_RECONNECT_ATTEMPTS = Infinity;
 
 class SocketService {
   constructor() {
@@ -85,16 +87,27 @@ class SocketService {
       }
 
       const socket = io(API_BASE_URL, {
-        transports: ['websocket', 'polling'],
+        // The backend is configured for polling-only Socket.IO connections.
+        // Trying WebSocket first caused short disconnect/reconnect cycles and
+        // incorrectly flipped a logged-in user to Offline.
+        transports: ['polling'],
         auth: { token },
         reconnection: true,
         reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
         reconnectionDelay: 1000,
-        reconnectionDelayMax: 5000,
+        reconnectionDelayMax: 10000,
         timeout: CONNECTION_TIMEOUT_MS,
         path: '/socket.io/',
         forceNew: false,
         autoConnect: true,
+      });
+
+      // Read the latest access token before each reconnect attempt. This lets
+      // the same socket session recover cleanly after an Axios token refresh.
+      socket.io.on('reconnect_attempt', () => {
+        socket.auth = {
+          token: localStorage.getItem('accessToken') || localStorage.getItem('token'),
+        };
       });
 
       return new Promise((resolve, reject) => {

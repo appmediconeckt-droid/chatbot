@@ -77,7 +77,18 @@ class TranslationService {
 
   async translate(text, targetLang, sourceLang = 'auto') {
     if (!text || !text.trim()) return text;
-    if (sourceLang !== 'auto' && targetLang === sourceLang) return text;
+
+    // English is the default message language. Do not send an auto-detect to
+    // English request: some providers return their validation message instead
+    // of the original text when both languages are effectively English.
+    const targetLanguageCode = this.getShortLang(targetLang);
+    const sourceLanguageCode = this.getShortLang(sourceLang);
+    if (
+      targetLanguageCode === 'en' ||
+      (sourceLang !== 'auto' && targetLanguageCode === sourceLanguageCode)
+    ) {
+      return text;
+    }
 
     const cacheKey = this.getCacheKey(text, targetLang, sourceLang);
 
