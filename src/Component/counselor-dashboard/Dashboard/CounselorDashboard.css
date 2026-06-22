@@ -3063,6 +3063,10 @@ button:focus {
   }
 }
 
+.stitch-apt-layout-cards-only {
+  grid-template-columns: 1fr;
+}
+
 /* Left Column */
 .stitch-apt-left {
   display: flex;
