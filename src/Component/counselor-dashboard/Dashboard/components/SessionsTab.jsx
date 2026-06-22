@@ -2,6 +2,8 @@
 import React from "react";
 import {
   FaVideo,
+  FaPhoneAlt,
+  FaComments,
   FaClock,
   FaCalendarAlt,
   FaUser,
@@ -17,6 +19,8 @@ export default function SessionsTab({
   setSessionSelectedDate,
   clearSessionDateFilter,
   handleInitiateVideoCall,
+  handleInitiateVoiceCall,
+  handleOpenAppointmentChat,
   loading = false,
 }) {
   const { t } = useCounselorTranslation();
@@ -218,20 +222,31 @@ export default function SessionsTab({
 
                     <div className="stitch-session-actions">
                       <button
-                        className="stitch-btn-start-call"
+                        className="stitch-session-action-btn stitch-session-video-btn"
                         onClick={() => handleInitiateVideoCall(apt)}
+                        title={translate('start_video_call', 'Start Video Call')}
+                        aria-label={translate('start_video_call', 'Start Video Call')}
                       >
-                        <FaVideo />
-                        {translate('start_video_call', 'Start Video Call')}
+                        <FaVideo aria-hidden="true" />
                       </button>
                       <button
-                        className="stitch-btn-reschedule"
-                        onClick={() => {
-                          alert(translate('reschedule', 'Reschedule functionality coming soon!'));
-                        }}
+                        className="stitch-session-action-btn stitch-session-voice-btn"
+                        onClick={() =>
+                          (handleInitiateVoiceCall || ((appointment) =>
+                            handleInitiateVideoCall(appointment, "audio")))(apt)
+                        }
+                        title={translate('start_voice_call', 'Start Voice Call')}
+                        aria-label={translate('start_voice_call', 'Start Voice Call')}
                       >
-                        <FaClock />
-                        {translate('reschedule', 'Reschedule')}
+                        <FaPhoneAlt aria-hidden="true" />
+                      </button>
+                      <button
+                        className="stitch-session-action-btn stitch-session-chat-btn"
+                        onClick={() => handleOpenAppointmentChat?.(apt)}
+                        title={translate('open_chat', 'Open Chat')}
+                        aria-label={translate('open_chat', 'Open Chat')}
+                      >
+                        <FaComments aria-hidden="true" />
                       </button>
                     </div>
                   </div>
