@@ -449,6 +449,18 @@
 }
 .status-accepted { background: #e8f5e9; color: #2e7d32; }
 .status-pending { background: #fff3e0; color: #ed6c02; }
+
+/* WhatsApp-style separator for messages sent on a new calendar day. */
+.chatDateSeparator {
+  width: fit-content;
+  margin: 14px auto 10px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+}
 .status-ended { background: #ffebee; color: #d32f2f; }
 
 /* Call Error Banner */

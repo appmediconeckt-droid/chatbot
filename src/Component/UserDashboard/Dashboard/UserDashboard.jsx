@@ -461,6 +461,15 @@ const ChatButton = ({ onClick, unreadCount }) => (
 // Map i18n lang codes to VOICE_LANGUAGES codes
 const LANG_TO_VOICE = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', bn: 'bn-IN', gu: 'gu-IN', mr: 'mr-IN' };
 
+// The dashboard language is stored as a locale (for example, `hi-IN`), while
+// the AI chat accepts a speech/API locale. Keep unsupported locales intact so
+// every dashboard language can still be sent to the AI API.
+const getAiChatLanguage = (language) => {
+  const locale = String(language || 'en-IN');
+  const baseCode = locale.split('-')[0].toLowerCase();
+  return LANG_TO_VOICE[baseCode] || locale;
+};
+
 export default function UserDashboard() {
   const { t, lang, setLang } = useUserTranslation();
   const [, setLanguageUpdate] = useState(0);
@@ -795,7 +804,14 @@ export default function UserDashboard() {
   // hard-coded "Hello! I'm your AI assistant" suppressed the warm onboarding.
   const [chatMessages, setChatMessages] = useState([]);
   const [aiSessionId, setAiSessionId] = useState(null);
-  const [selectedLang, setSelectedLang] = useState(() => LANG_TO_VOICE[lang] || 'en-IN');
+  const [selectedLang, setSelectedLang] = useState(() => getAiChatLanguage(lang));
+
+  // Sync the AI chat with the language chosen anywhere on the user dashboard.
+  // The next AI response, microphone input, and text-to-speech all use this
+  // updated locale without requiring the user to change it again in the chat.
+  useEffect(() => {
+    setSelectedLang(getAiChatLanguage(lang));
+  }, [lang]);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -973,8 +989,7 @@ export default function UserDashboard() {
     if (isLoading) return;
     setSelectedLang(newLang);
     // sync with the global i18n context (strip -IN/-US suffix → base code)
-    const baseCode = newLang.split('-')[0];
-    setLang(baseCode);
+    setLang(newLang);
     setIsLoading(true);
     try {
       await axiosInstance.delete(`${API_BASE_URL}/api/ai-chat/my-history`);

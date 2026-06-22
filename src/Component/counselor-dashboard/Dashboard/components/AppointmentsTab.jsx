@@ -157,10 +157,16 @@ export default function AppointmentsTab({
                       )}
 
                       <div className="stitch-apt-time">
-                        <span className="stitch-apt-time-label">{t("requested")}</span>
+                        <span className="stitch-apt-time-label">Appointment Date</span>
                         <span className="stitch-apt-time-value">
                           {new Date(apt.date).toLocaleDateString("en-US", {
                             weekday: "short",
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                          {" • "}
+                          {new Date(apt.date).toLocaleTimeString([], {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}

@@ -1,4 +1,1595 @@
-import React, { useState, useEffect } from 'react';
+// import React, { useState, useEffect } from 'react';
+// import axios from 'axios';
+// import './CounselorProfile.css';
+// import { API_BASE_URL } from '../../../../axiosConfig';
+// import { captureAndSendLocation } from '../../../../authtication/locationHelper';
+// import { useCounselorTranslation } from '../../../../i18n/LanguageContext';
+
+// // Unique class name prefix to avoid conflicts
+// const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
+
+// const ACTIVE_CHAT_STATUSES = new Set(['active', 'accepted', 'ongoing']);
+
+// const CounselorProfile = () => {
+//    const { t } = useCounselorTranslation();
+//    const [loading, setLoading] = useState(false);
+//     const [error, setError] = useState('');
+//     const [successMessage, setSuccessMessage] = useState('');
+//     const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+
+//     // Profile-change OTP state — see PatientProfile.jsx for the shape rationale.
+//     const blankChange = {
+//       sending: false,
+//       sent: false,
+//       verifying: false,
+//       verified: false,
+//       verifiedValue: null,
+//       otp: "",
+//       error: "",
+//     };
+//     const [emailChange, setEmailChange] = useState(blankChange);
+//     const [phoneChange, setPhoneChange] = useState(blankChange);
+
+//     const handleUpdateLocation = async () => {
+//         setIsUpdatingLocation(true);
+//         setError('');
+//         setSuccessMessage('');
+//         try {
+//             await captureAndSendLocation('manual');
+//             setSuccessMessage('Location updated successfully');
+//             setTimeout(() => setSuccessMessage(''), 3000);
+//         } catch (err) {
+//             setError(err.message || 'Failed to update location');
+//             setTimeout(() => setError(''), 3000);
+//         } finally {
+//             setIsUpdatingLocation(false);
+//         }
+//     };
+
+//     // State for counselor data
+//     const [counselor, setCounselor] = useState({
+//         _id: '',
+//         uniqueCode: '',
+//         fullName: '',
+//         specialization: [],
+//         experience: 0,
+//         education: '',
+//         email: '',
+//         phoneNumber: '',
+//         location: '',
+//         languages: [],
+//         profilePhoto: null,
+//         profilePhotoUrl: '',
+//         certifications: [],
+//         aboutMe: '',
+//         rating: 0,
+//         totalSessions: 0,
+//         activeClients: 0,
+//         qualification: '',
+//         consultationMode: [],
+//         isActive: true,
+//         profileCompleted: false,
+//         age: null,
+//         gender: '',
+//         dateOfBirth: null,
+//         bloodGroup: '',
+//         address: {
+//             line1: '',
+//             line2: '',
+//             city: '',
+//             state: '',
+//             pincode: '',
+//             country: 'India'
+//         },
+//         emergencyContact: {
+//             name: '',
+//             relation: '',
+//             phone: ''
+//         },
+//         medicalInfo: {
+//             height: '',
+//             weight: '',
+//             allergies: [],
+//             chronicConditions: [],
+//             currentMedications: []
+//         }
+//     });
+
+//     const [isEditing, setIsEditing] = useState(false);
+//     const [editedData, setEditedData] = useState(counselor);
+//     const [newLanguage, setNewLanguage] = useState('');
+//     const [newSpecialization, setNewSpecialization] = useState('');
+//     const [newConsultationMode, setNewConsultationMode] = useState('');
+//     const [newCertification, setNewCertification] = useState({
+//         name: '',
+//         issueDate: '',
+//         expiryDate: '',
+//         issuedBy: '',
+//         document: null,
+//         documentName: ''
+//     });
+
+//     // Fetch profile data on component mount
+//     useEffect(() => {
+//         fetchCounselorProfile();
+//     }, []);
+
+//     const countActiveClients = (chats = []) => {
+//         const activeClientIds = new Set();
+
+//         chats.forEach((chat) => {
+//             const status = String(chat.status || '').toLowerCase();
+//             if (!ACTIVE_CHAT_STATUSES.has(status) || chat.isExpired) return;
+
+//             const clientId =
+//                 chat.userId ||
+//                 chat.otherParty?._id ||
+//                 chat.otherParty?.id ||
+//                 chat.otherParty?.userId ||
+//                 chat.patientId ||
+//                 chat.clientId ||
+//                 chat.chatId;
+
+//             if (clientId) activeClientIds.add(String(clientId));
+//         });
+
+//         return activeClientIds.size;
+//     };
+
+//     const fetchCounselorStats = async (token) => {
+//         const headers = { Authorization: `Bearer ${token}` };
+//         const stats = {};
+
+//         try {
+//             const appointmentsResponse = await axios.get(`${API_BASE_URL}/api/appointments`, {
+//                 headers
+//             });
+//             const appointments = Array.isArray(appointmentsResponse.data)
+//                 ? appointmentsResponse.data
+//                 : appointmentsResponse.data?.appointments || [];
+//             stats.totalSessions = appointments.filter(
+//                 (appointment) => String(appointment.status || '').toLowerCase() === 'confirmed'
+//             ).length;
+//         } catch (err) {
+//             console.log('Unable to refresh counselor session count:', err?.message);
+//         }
+
+//         try {
+//             const chatsResponse = await axios.get(`${API_BASE_URL}/api/chat/chats`, {
+//                 headers
+//             });
+//             const chats = chatsResponse.data?.chats || [];
+//             stats.activeClients = countActiveClients(chats);
+//         } catch (err) {
+//             console.log('Unable to refresh active client count:', err?.message);
+//         }
+
+//         return stats;
+//     };
+
+//     // GET API - Fetch counselor profile (FIXED)
+//     const fetchCounselorProfile = async () => {
+//         try {
+//             setLoading(true);
+//             setError('');
+
+//             const counsellorId = localStorage.getItem("counsellorId");
+//             const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+
+//             if (!counsellorId) {
+//                 setError('Counselor ID not found. Please login again.');
+//                 setLoading(false);
+//                 return;
+//             }
+
+//             console.log('Fetching profile for ID:', counsellorId);
+
+//             // GET request to fetch counselor data
+//             const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors/${counsellorId}`, {
+//                 headers: {
+//                     Authorization: `Bearer ${token}`
+//                 }
+//             });
+
+//             console.log('GET API Response:', response.data);
+
+//             // FIXED: The API returns data in 'counsellor' object
+//             if (response.data.success && response.data.counsellor) {
+//                 const userData = response.data.counsellor;
+
+//                 // FIXED: Extract profile photo URL correctly from nested object
+//                 let profilePhotoUrl = 'https://via.placeholder.com/150x150?text=Profile';
+//                 if (userData.profilePhoto) {
+//                     if (typeof userData.profilePhoto === 'string') {
+//                         profilePhotoUrl = userData.profilePhoto;
+//                     } else if (userData.profilePhoto.url) {
+//                         profilePhotoUrl = userData.profilePhoto.url;
+//                     } else if (userData.profilePhoto.publicId) {
+//                         // If using Cloudinary, construct the URL
+//                         profilePhotoUrl = userData.profilePhoto.url || `https://res.cloudinary.com/dfll8lwos/image/upload/${userData.profilePhoto.publicId}`;
+//                     }
+//                 }
+
+//                 const liveStats = await fetchCounselorStats(token);
+
+//                 // Transform API data to match component structure
+//                 const formattedData = {
+//                     _id: userData._id,
+//                     uniqueCode: userData.uniqueCode || `CNS-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+//                     fullName: userData.fullName || userData.name || '',
+//                     specialization: Array.isArray(userData.specialization) ? userData.specialization :
+//                         (userData.specialization ? [userData.specialization] : []),
+//                     experience: userData.experience || 0,
+//                     education: userData.education || '',
+//                     email: userData.email || '',
+//                     phoneNumber: userData.phoneNumber || userData.phone || '',
+//                     location: userData.location || '',
+//                     languages: Array.isArray(userData.languages) ? userData.languages : [],
+//                     profilePhoto: null,
+//                     profilePhotoUrl: profilePhotoUrl, // FIXED: Set the correct URL
+//                     certifications: Array.isArray(userData.certifications) ? userData.certifications : [],
+//                     aboutMe: userData.aboutMe || userData.bio || '',
+//                     rating: userData.rating || 0,
+//                     ratingCount: userData.ratingCount || 0,
+//                     totalSessions: liveStats.totalSessions ?? userData.totalSessions ?? 0,
+//                     activeClients: liveStats.activeClients ?? userData.activeClients ?? 0,
+//                     qualification: userData.qualification || '',
+//                     consultationMode: Array.isArray(userData.consultationMode) ? userData.consultationMode : [],
+//                     isActive: userData.isActive || true,
+//                     profileCompleted: userData.profileCompleted || false,
+//                     age: userData.age || null,
+//                     gender: userData.gender || '',
+//                     dateOfBirth: userData.dateOfBirth || null,
+//                     bloodGroup: userData.bloodGroup || '',
+//                     address: userData.address || {
+//                         line1: '',
+//                         line2: '',
+//                         city: '',
+//                         state: '',
+//                         pincode: '',
+//                         country: 'India'
+//                     },
+//                     emergencyContact: userData.emergencyContact || {
+//                         name: '',
+//                         relation: '',
+//                         phone: ''
+//                     },
+//                     medicalInfo: userData.medicalInfo || {
+//                         height: '',
+//                         weight: '',
+//                         allergies: [],
+//                         chronicConditions: [],
+//                         currentMedications: []
+//                     }
+//                 };
+
+//                 setCounselor(formattedData);
+//                 setEditedData(formattedData);
+//             } else {
+//                 setError(response.data.message || 'Failed to load profile data');
+//             }
+//         } catch (err) {
+//             console.error('Error fetching profile:', err);
+//             if (err.response) {
+//                 setError(err.response.data?.message || `Error: ${err.response.status} - ${err.response.statusText}`);
+//             } else if (err.request) {
+//                 setError('Network error. Please check your connection.');
+//             } else {
+//                 setError('Failed to load profile data. Please try again.');
+//             }
+//         } finally {
+//             setLoading(false);
+//         }
+//     };
+
+//     // PATCH/PUT API - Update counselor profile
+//     const updateCounselorProfile = async (formData) => {
+//         try {
+//             const counsellorId = localStorage.getItem("counsellorId");
+//             const token = localStorage.getItem('token');
+//             const refreshToken = localStorage.getItem('refreshToken');
+//             const accessToken = localStorage.getItem('accessToken') || localStorage.getItem('token');
+
+//             const response = await axios.patch(`${API_BASE_URL}/api/auth/update/${counsellorId}`, formData, {
+//                 refreshToken: refreshToken,
+//                 headers: {
+//                     Authorization: `Bearer ${accessToken}`,
+//                 }
+//             });
+
+//             return response;
+//         } catch (error) {
+//             throw error;
+//         }
+//     };
+
+//     const handleInputChange = (field, value) => {
+//         setEditedData(prev => ({
+//             ...prev,
+//             [field]: value
+//         }));
+//     };
+
+//     const handleNestedInputChange = (parentField, field, value) => {
+//         setEditedData(prev => ({
+//             ...prev,
+//             [parentField]: {
+//                 ...prev[parentField],
+//                 [field]: value
+//             }
+//         }));
+//     };
+
+//     // Profile Photo Handlers
+//     const handleProfilePhotoUpload = (file) => {
+//         if (file) {
+//             const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+//             if (!allowedTypes.includes(file.type)) {
+//                 setError('Only JPG, PNG, GIF, and WEBP images are allowed for profile photo.');
+//                 setTimeout(() => setError(''), 3000);
+//                 return;
+//             }
+//             if (file.size > 10 * 1024 * 1024) {
+//                 setError('Profile photo must be less than 10MB.');
+//                 setTimeout(() => setError(''), 3000);
+//                 return;
+//             }
+
+//             const photoUrl = URL.createObjectURL(file);
+//             setEditedData(prev => ({
+//                 ...prev,
+//                 profilePhoto: file,
+//                 profilePhotoUrl: photoUrl
+//             }));
+//         }
+//     };
+
+//     const handleRemoveProfilePhoto = () => {
+//         setEditedData(prev => ({
+//             ...prev,
+//             profilePhoto: null,
+//             profilePhotoUrl: 'https://via.placeholder.com/150x150?text=Profile'
+//         }));
+//     };
+
+//     // Language handlers
+//     const handleAddLanguage = () => {
+//         if (newLanguage.trim() && !editedData.languages.includes(newLanguage.trim())) {
+//             setEditedData(prev => ({
+//                 ...prev,
+//                 languages: [...prev.languages, newLanguage.trim()]
+//             }));
+//             setNewLanguage('');
+//         }
+//     };
+
+//     const handleRemoveLanguage = (languageToRemove) => {
+//         setEditedData(prev => ({
+//             ...prev,
+//             languages: prev.languages.filter(lang => lang !== languageToRemove)
+//         }));
+//     };
+
+//     // Specialization handlers
+//     const handleAddSpecialization = () => {
+//         if (newSpecialization.trim() && !editedData.specialization.includes(newSpecialization.trim())) {
+//             setEditedData(prev => ({
+//                 ...prev,
+//                 specialization: [...prev.specialization, newSpecialization.trim()]
+//             }));
+//             setNewSpecialization('');
+//         }
+//     };
+
+//     const handleRemoveSpecialization = (specToRemove) => {
+//         setEditedData(prev => ({
+//             ...prev,
+//             specialization: prev.specialization.filter(spec => spec !== specToRemove)
+//         }));
+//     };
+
+//     // Consultation Mode handlers
+//     const handleAddConsultationMode = () => {
+//         const modes = ['online', 'offline', 'both'];
+//         if (newConsultationMode && modes.includes(newConsultationMode) && !editedData.consultationMode.includes(newConsultationMode)) {
+//             setEditedData(prev => ({
+//                 ...prev,
+//                 consultationMode: [...prev.consultationMode, newConsultationMode]
+//             }));
+//             setNewConsultationMode('');
+//         }
+//     };
+
+//     const handleRemoveConsultationMode = (modeToRemove) => {
+//         setEditedData(prev => ({
+//             ...prev,
+//             consultationMode: prev.consultationMode.filter(mode => mode !== modeToRemove)
+//         }));
+//     };
+
+//     // Certification handlers
+//     const handleAddCertification = () => {
+//         if (newCertification.name.trim()) {
+//             const newCert = {
+//                 _id: `temp_${Date.now()}`,
+//                 name: newCertification.name,
+//                 document: newCertification.document,
+//                 documentName: newCertification.documentName,
+//                 documentUrl: newCertification.document ? URL.createObjectURL(newCertification.document) : '',
+//                 issueDate: newCertification.issueDate,
+//                 expiryDate: newCertification.expiryDate,
+//                 issuedBy: newCertification.issuedBy
+//             };
+
+//             setEditedData(prev => ({
+//                 ...prev,
+//                 certifications: [...prev.certifications, newCert]
+//             }));
+
+//             setNewCertification({
+//                 name: '',
+//                 issueDate: '',
+//                 expiryDate: '',
+//                 issuedBy: '',
+//                 document: null,
+//                 documentName: ''
+//             });
+//         }
+//     };
+
+//     const handleRemoveCertification = (certId) => {
+//         setEditedData(prev => ({
+//             ...prev,
+//             certifications: prev.certifications.filter(cert => cert._id !== certId)
+//         }));
+//     };
+
+//     const handleCertificationInputChange = (field, value) => {
+//         setNewCertification(prev => ({
+//             ...prev,
+//             [field]: value
+//         }));
+//     };
+
+//     const handleDocumentUpload = (certId, file) => {
+//         if (file) {
+//             const updatedCerts = editedData.certifications.map(cert => {
+//                 if (cert._id === certId) {
+//                     return {
+//                         ...cert,
+//                         document: file,
+//                         documentName: file.name,
+//                         documentUrl: URL.createObjectURL(file)
+//                     };
+//                 }
+//                 return cert;
+//             });
+
+//             setEditedData(prev => ({
+//                 ...prev,
+//                 certifications: updatedCerts
+//             }));
+//         }
+//     };
+
+//     const handleNewDocumentUpload = (file) => {
+//         if (file) {
+//             setNewCertification(prev => ({
+//                 ...prev,
+//                 document: file,
+//                 documentName: file.name
+//             }));
+//         }
+//     };
+
+//     const handleRemoveDocument = (certId) => {
+//         const updatedCerts = editedData.certifications.map(cert => {
+//             if (cert._id === certId) {
+//                 return {
+//                     ...cert,
+//                     document: null,
+//                     documentName: '',
+//                     documentUrl: ''
+//                 };
+//             }
+//             return cert;
+//         });
+
+//         setEditedData(prev => ({
+//             ...prev,
+//             certifications: updatedCerts
+//         }));
+//     };
+
+//     // ─── Profile-change OTP helpers (email + phone) ──────────────────
+//     const authHeaders = () => {
+//       const token =
+//         localStorage.getItem("accessToken") || localStorage.getItem("token");
+//       return token ? { Authorization: `Bearer ${token}` } : {};
+//     };
+
+//     const isEmailDirty = () =>
+//       String(editedData?.email || "").trim().toLowerCase() !==
+//       String(counselor?.email || "").trim().toLowerCase();
+//     const isPhoneDirty = () =>
+//       String(editedData?.phoneNumber || "").replace(/\D/g, "") !==
+//       String(counselor?.phoneNumber || "").replace(/\D/g, "");
+
+//     const emailReady =
+//       !isEmailDirty() ||
+//       (emailChange.verified &&
+//         emailChange.verifiedValue ===
+//           String(editedData?.email || "").trim().toLowerCase());
+//     const phoneReady =
+//       !isPhoneDirty() ||
+//       (phoneChange.verified &&
+//         phoneChange.verifiedValue ===
+//           String(editedData?.phoneNumber || "").replace(/\D/g, ""));
+
+//     const sendChangeOtp = async (field) => {
+//       const setState = field === "email" ? setEmailChange : setPhoneChange;
+//       const newValue =
+//         field === "email"
+//           ? String(editedData.email || "").trim().toLowerCase()
+//           : String(editedData.phoneNumber || "").replace(/\D/g, "");
+//       setState((s) => ({ ...s, sending: true, error: "" }));
+//       try {
+//         const res = await axios.post(
+//           `${API_BASE_URL}/api/auth/profile-change/send-otp`,
+//           { field, newValue },
+//           { headers: authHeaders() },
+//         );
+//         if (res.data?.success) {
+//           setState({
+//             sending: false,
+//             sent: true,
+//             verifying: false,
+//             verified: false,
+//             verifiedValue: null,
+//             otp: "",
+//             error: "",
+//           });
+//           setSuccessMessage(res.data.message || "OTP sent");
+//           setTimeout(() => setSuccessMessage(""), 3000);
+//         } else {
+//           throw new Error(res.data?.message || "Failed to send OTP");
+//         }
+//       } catch (err) {
+//         const msg = err.response?.data?.message || err.message;
+//         setState((s) => ({ ...s, sending: false, error: msg }));
+//         setError(msg);
+//       }
+//     };
+
+//     const verifyChangeOtp = async (field) => {
+//       const setState = field === "email" ? setEmailChange : setPhoneChange;
+//       const state = field === "email" ? emailChange : phoneChange;
+//       const newValue =
+//         field === "email"
+//           ? String(editedData.email || "").trim().toLowerCase()
+//           : String(editedData.phoneNumber || "").replace(/\D/g, "");
+//       if (!state.otp || state.otp.length < 4) {
+//         setState((s) => ({ ...s, error: "Enter the OTP first" }));
+//         return;
+//       }
+//       setState((s) => ({ ...s, verifying: true, error: "" }));
+//       try {
+//         const res = await axios.post(
+//           `${API_BASE_URL}/api/auth/profile-change/verify-otp`,
+//           { field, newValue, otp: state.otp },
+//           { headers: authHeaders() },
+//         );
+//         if (res.data?.success) {
+//           setState({
+//             sending: false,
+//             sent: false,
+//             verifying: false,
+//             verified: true,
+//             verifiedValue: newValue,
+//             otp: "",
+//             error: "",
+//           });
+//           setSuccessMessage(
+//             `${field === "email" ? "Email" : "Phone"} verified`,
+//           );
+//           setTimeout(() => setSuccessMessage(""), 3000);
+//         } else {
+//           throw new Error(res.data?.message || "Verification failed");
+//         }
+//       } catch (err) {
+//         const msg = err.response?.data?.message || err.message;
+//         setState((s) => ({ ...s, verifying: false, error: msg }));
+//         setError(msg);
+//       }
+//     };
+
+//     // Drop verified flag if user re-edits field.
+//     useEffect(() => {
+//       if (
+//         emailChange.verified &&
+//         emailChange.verifiedValue !==
+//           String(editedData?.email || "").trim().toLowerCase()
+//       ) {
+//         setEmailChange(blankChange);
+//       }
+//       // eslint-disable-next-line react-hooks/exhaustive-deps
+//     }, [editedData?.email]);
+
+//     useEffect(() => {
+//       if (
+//         phoneChange.verified &&
+//         phoneChange.verifiedValue !==
+//           String(editedData?.phoneNumber || "").replace(/\D/g, "")
+//       ) {
+//         setPhoneChange(blankChange);
+//       }
+//       // eslint-disable-next-line react-hooks/exhaustive-deps
+//     }, [editedData?.phoneNumber]);
+
+//     useEffect(() => {
+//       if (!isEditing) {
+//         setEmailChange(blankChange);
+//         setPhoneChange(blankChange);
+//       }
+//       // eslint-disable-next-line react-hooks/exhaustive-deps
+//     }, [isEditing]);
+
+//     const handleSave = async () => {
+//         try {
+//             setLoading(true);
+//             setError('');
+//             setSuccessMessage('');
+
+//             // Prepare form data for API
+//             const formData = new FormData();
+
+//             // Add basic fields
+//             formData.append('fullName', editedData.fullName);
+//             formData.append('email', editedData.email);
+//             formData.append('phoneNumber', editedData.phoneNumber);
+//             formData.append('qualification', editedData.qualification || editedData.education);
+//             formData.append('experience', editedData.experience.toString());
+//             formData.append('location', editedData.location);
+//             formData.append('aboutMe', editedData.aboutMe);
+//             formData.append('education', editedData.education);
+
+//             // Add age, gender, blood group
+//             if (editedData.age) formData.append('age', editedData.age.toString());
+//             if (editedData.gender) formData.append('gender', editedData.gender);
+//             if (editedData.bloodGroup) formData.append('bloodGroup', editedData.bloodGroup);
+
+//             // Add address fields
+//             if (editedData.address) {
+//                 formData.append('address[line1]', editedData.address.line1 || '');
+//                 formData.append('address[line2]', editedData.address.line2 || '');
+//                 formData.append('address[city]', editedData.address.city || '');
+//                 formData.append('address[state]', editedData.address.state || '');
+//                 formData.append('address[pincode]', editedData.address.pincode || '');
+//                 formData.append('address[country]', editedData.address.country || 'India');
+//             }
+
+//             // Add emergency contact
+//             if (editedData.emergencyContact) {
+//                 formData.append('emergencyContact[name]', editedData.emergencyContact.name || '');
+//                 formData.append('emergencyContact[relation]', editedData.emergencyContact.relation || '');
+//                 formData.append('emergencyContact[phone]', editedData.emergencyContact.phone || '');
+//             }
+
+//             // Add languages
+//             if (editedData.languages && editedData.languages.length > 0) {
+//                 editedData.languages.forEach((lang, index) => {
+//                     formData.append(`languages[${index}]`, lang);
+//                 });
+//             }
+
+//             // Add specialization
+//             if (editedData.specialization && editedData.specialization.length > 0) {
+//                 editedData.specialization.forEach((spec, index) => {
+//                     formData.append(`specialization[${index}]`, spec);
+//                 });
+//             }
+
+//             // Add consultation mode
+//             if (editedData.consultationMode && editedData.consultationMode.length > 0) {
+//                 editedData.consultationMode.forEach((mode, index) => {
+//                     formData.append(`consultationMode[${index}]`, mode);
+//                 });
+//             }
+
+//             // Add profile photo if changed
+//             if (editedData.profilePhoto instanceof File) {
+//                 formData.append('profilePhoto', editedData.profilePhoto);
+//             }
+
+//             // FIXED: Use nested field names for certifications
+//             // Add certifications with nested field names
+//             if (editedData.certifications && editedData.certifications.length > 0) {
+//                 editedData.certifications.forEach((cert, index) => {
+//                     // Add certification data
+//                     formData.append(`certifications[${index}][name]`, cert.name || '');
+//                     formData.append(`certifications[${index}][issuedBy]`, cert.issuedBy || '');
+
+//                     if (cert.issueDate) {
+//                         formData.append(`certifications[${index}][issueDate]`, cert.issueDate);
+//                     }
+//                     if (cert.expiryDate) {
+//                         formData.append(`certifications[${index}][expiryDate]`, cert.expiryDate);
+//                     }
+
+//                     // Keep existing _id if present
+//                     if (cert._id && !cert._id.toString().startsWith('temp_')) {
+//                         formData.append(`certifications[${index}][_id]`, cert._id);
+//                     }
+
+//                     // Keep existing document info
+//                     if (cert.documentUrl && !cert.document) {
+//                         formData.append(`certifications[${index}][documentUrl]`, cert.documentUrl);
+//                         formData.append(`certifications[${index}][documentName]`, cert.documentName || '');
+//                         if (cert.documentPublicId) {
+//                             formData.append(`certifications[${index}][documentPublicId]`, cert.documentPublicId);
+//                         }
+//                     }
+
+//                     // Add new document file
+//                     if (cert.document instanceof File) {
+//                         formData.append(`certifications[${index}][document]`, cert.document);
+//                         console.log(`Adding file for certification ${index}:`, cert.document.name);
+//                     }
+//                 });
+//             }
+
+//             // Call the update API
+//             const response = await updateCounselorProfile(formData);
+
+//             if (response.data.success) {
+//                 setSuccessMessage('Profile updated successfully!');
+//                 await fetchCounselorProfile();
+//                 setIsEditing(false);
+
+//                 setTimeout(() => {
+//                     setSuccessMessage('');
+//                 }, 3000);
+//             } else {
+//                 setError(response.data.message || 'Failed to update profile');
+//             }
+//         } catch (err) {
+//             console.error('Error updating profile:', err);
+//             console.error('Error details:', err.response?.data);
+//             setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile');
+
+//             setTimeout(() => {
+//                 setError('');
+//             }, 3000);
+//         } finally {
+//             setLoading(false);
+//         }
+//     };
+
+//     const handleCancel = () => {
+//         setEditedData(counselor);
+//         setNewLanguage('');
+//         setNewSpecialization('');
+//         setNewConsultationMode('');
+//         setNewCertification({
+//             name: '',
+//             issueDate: '',
+//             expiryDate: '',
+//             issuedBy: '',
+//             document: null,
+//             documentName: ''
+//         });
+//         setIsEditing(false);
+//         setError('');
+//         setSuccessMessage('');
+//     };
+
+//     const formatDate = (dateString) => {
+//         if (!dateString) return 'Not specified';
+//         return new Date(dateString).toLocaleDateString('en-US', {
+//             year: 'numeric',
+//             month: 'long',
+//             day: 'numeric'
+//         });
+//     };
+
+    
+
+//     return (
+//         <div className={COUNSELOR_PROFILE_CLASS}>
+//             {/* Success/Error Messages */}
+//             {successMessage && (
+//                 <div className={`${COUNSELOR_PROFILE_CLASS}__alert ${COUNSELOR_PROFILE_CLASS}__alert--success`}>
+//                     {successMessage}
+//                 </div>
+//             )}
+//             {error && (
+//                 <div className={`${COUNSELOR_PROFILE_CLASS}__alert ${COUNSELOR_PROFILE_CLASS}__alert--error`}>
+//                     {error}
+//                 </div>
+//             )}
+
+//             {/* Header Section */}
+//             <div className={`${COUNSELOR_PROFILE_CLASS}__header`}>
+//                 <div className={`${COUNSELOR_PROFILE_CLASS}__avatar-wrapper`}>
+//                     {/* Profile Photo - FIXED display */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__profile-photo-container`}>
+//                         {editedData?.profilePhotoUrl && editedData.profilePhotoUrl !== 'https://via.placeholder.com/150x150?text=Profile' ? (
+//                             <img
+//                                 src={editedData.profilePhotoUrl}
+//                                 alt={editedData.fullName || 'Profile'}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__profile-photo`}
+//                                 onError={(e) => {
+//                                     console.error('Image failed to load:', editedData.profilePhotoUrl);
+//                                     e.target.onerror = null;
+//                                     e.target.src = 'https://via.placeholder.com/150x150?text=Profile';
+//                                 }}
+//                             />
+//                         ) : (
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__avatar`}>
+//                                 {counselor?.fullName?.charAt(0) || 'C'}
+//                             </div>
+//                         )}
+
+//                         {isEditing && (
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__photo-edit-overlay`}>
+//                                 <input
+//                                     type="file"
+//                                     id="profile-photo-upload"
+//                                     accept="image/*"
+//                                     onChange={(e) => handleProfilePhotoUpload(e.target.files[0])}
+//                                     style={{ display: 'none' }}
+//                                 />
+//                                 <label
+//                                     htmlFor="profile-photo-upload"
+//                                     className={`${COUNSELOR_PROFILE_CLASS}__upload-photo-btn`}
+//                                     title="Upload Photo"
+//                                 >
+//                                     📷
+//                                 </label>
+//                                 {editedData.profilePhotoUrl !== 'https://via.placeholder.com/150x150?text=Profile' && (
+//                                     <button
+//                                         onClick={handleRemoveProfilePhoto}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__remove-photo-btn`}
+//                                         title="Remove Photo"
+//                                     >
+//                                         ✕
+//                                     </button>
+//                                 )}
+//                             </div>
+//                         )}
+//                     </div>
+
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__unique-code`}>
+//                         <span className={`${COUNSELOR_PROFILE_CLASS}__unique-code-label`}>
+//                             {t('counselor_code')}:
+//                         </span>
+//                         <span className={`${COUNSELOR_PROFILE_CLASS}__unique-code-value`}>
+//                             {counselor?.uniqueCode || t('not_assigned')}
+//                         </span>
+//                     </div>
+//                 </div>
+
+//                 <div className={`${COUNSELOR_PROFILE_CLASS}__header-info`}>
+//                     <h1 className={`${COUNSELOR_PROFILE_CLASS}__name`}>
+//                         {isEditing ? (
+//                             <input
+//                                 type="text"
+//                                 value={editedData.fullName || ''}
+//                                 onChange={(e) => handleInputChange('fullName', e.target.value)}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                             />
+//                         ) : (
+//                             counselor?.fullName
+//                         )}
+//                     </h1>
+//                     <p className={`${COUNSELOR_PROFILE_CLASS}__specialization`}>
+//                         {isEditing ? (
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__specialization-input`}>
+//                                 <div className={`${COUNSELOR_PROFILE_CLASS}__specialization-list`}>
+//                                     {editedData.specialization.map((spec, index) => (
+//                                         <span key={index} className={`${COUNSELOR_PROFILE_CLASS}__specialization-tag`}>
+//                                             {spec}
+//                                             <button
+//                                                 onClick={() => handleRemoveSpecialization(spec)}
+//                                                 className={`${COUNSELOR_PROFILE_CLASS}__remove-spec-btn`}
+//                                             >
+//                                                 ✕
+//                                             </button>
+//                                         </span>
+//                                     ))}
+//                                 </div>
+//                                 <div className={`${COUNSELOR_PROFILE_CLASS}__add-spec-section`}>
+//                                     <input
+//                                         type="text"
+//                                         value={newSpecialization}
+//                                         onChange={(e) => setNewSpecialization(e.target.value)}
+//                                         placeholder="Add new specialization..."
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                         onKeyPress={(e) => e.key === 'Enter' && handleAddSpecialization()}
+//                                     />
+//                                     <button
+//                                         onClick={handleAddSpecialization}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__add-btn`}
+//                                     >
+//                                         + {t('add')}
+//                                     </button>
+//                                 </div>
+//                             </div>
+//                         ) : (
+//                             counselor?.specialization?.join(', ') || 'Not specified'
+//                         )}
+//                     </p>
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__stats`}>
+//                         <div className={`${COUNSELOR_PROFILE_CLASS}__stat`}>
+//                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-value`}>
+//                                 {(Math.round((counselor?.rating || 0) * 10) / 10).toFixed(1)} ★
+//                             </span>
+//                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>
+//                                 {t('rating')}
+//                             </span>
+//                         </div>
+//                         <div className={`${COUNSELOR_PROFILE_CLASS}__stat`}>
+//                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-value`}>
+//                                 {counselor?.totalSessions || 0}
+//                             </span>
+//                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>{t('sessions')}</span>
+//                         </div>
+//                         <div className={`${COUNSELOR_PROFILE_CLASS}__stat`}>
+//                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-value`}>
+//                                 {counselor?.activeClients || 0}
+//                             </span>
+//                             <span className={`${COUNSELOR_PROFILE_CLASS}__stat-label`}>{t('active_clients')}</span>
+//                         </div>
+//                     </div>
+//                 </div>
+//                 <div className={`${COUNSELOR_PROFILE_CLASS}__actions`}>
+//                     {!isEditing ? (
+//                         <>
+//                             <button
+//                                 onClick={handleUpdateLocation}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--location`}
+//                                 disabled={loading || isUpdatingLocation}
+//                                 title="Send your current GPS coordinates to the server"
+//                             >
+//                                 {isUpdatingLocation ? (
+//                                     <>
+//                                         <span className={`${COUNSELOR_PROFILE_CLASS}__btn-spinner`} />
+//                                         {t('updating')}
+//                                     </>
+//                                 ) : (
+//                                     <>📍 {t('update_location')}</>
+//                                 )}
+//                             </button>
+//                             <button
+//                                 onClick={() => setIsEditing(true)}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--edit`}
+//                                 disabled={loading}
+//                             >
+//                                 {t('edit_profile')}
+//                             </button>
+//                         </>
+//                     ) : (
+//                         <>
+//                             <button
+//                                 onClick={handleSave}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--save`}
+//                                 disabled={loading || !emailReady || !phoneReady}
+//                                 title={
+//                                   !emailReady
+//                                     ? 'Verify your new email via OTP first'
+//                                     : !phoneReady
+//                                       ? 'Verify your new phone via OTP first'
+//                                       : ''
+//                                 }
+//                             >
+//                                 {loading ? t('saving') : t('save_changes')}
+//                             </button>
+//                             <button
+//                                 onClick={handleCancel}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--cancel`}
+//                                 disabled={loading}
+//                             >
+//                                 {t('cancel')}
+//                             </button>
+//                         </>
+//                     )}
+//                 </div>
+//             </div>
+
+//             {/* Main Content */}
+//             <div className={`${COUNSELOR_PROFILE_CLASS}__content`}>
+//                 {/* Left Column */}
+//                 <div className={`${COUNSELOR_PROFILE_CLASS}__left-column`}>
+//                     {/* Contact Information */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('contact_info')}</h3>
+//                         <div className={`${COUNSELOR_PROFILE_CLASS}__contact-info`}>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__contact-item`}>
+//                                 <span className={`${COUNSELOR_PROFILE_CLASS}__contact-icon`}>📧</span>
+//                                 <div style={{ flex: 1 }}>
+//                                     <label>{t('email')}</label>
+//                                     {isEditing ? (
+//                                         <>
+//                                             <div className="otp-field-row">
+//                                                 <input
+//                                                     type="email"
+//                                                     value={editedData.email || ''}
+//                                                     onChange={(e) => handleInputChange('email', e.target.value)}
+//                                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                                 />
+//                                                 {isEmailDirty() && !emailChange.verified && (
+//                                                     <button
+//                                                         type="button"
+//                                                         className="otp-verify-btn"
+//                                                         onClick={() => sendChangeOtp('email')}
+//                                                         disabled={emailChange.sending}
+//                                                     >
+//                                                         {emailChange.sending ? 'Sending…' : emailChange.sent ? 'Resend' : 'Verify'}
+//                                                     </button>
+//                                                 )}
+//                                                 {emailChange.verified && (
+//                                                     <span className="otp-verified-badge">✓ Verified</span>
+//                                                 )}
+//                                             </div>
+//                                             {isEmailDirty() && emailChange.sent && !emailChange.verified && (
+//                                                 <div className="otp-input-row">
+//                                                     <input
+//                                                         type="text"
+//                                                         inputMode="numeric"
+//                                                         maxLength={6}
+//                                                         placeholder="Enter 6-digit OTP"
+//                                                         value={emailChange.otp}
+//                                                         onChange={(e) =>
+//                                                             setEmailChange((s) => ({
+//                                                                 ...s,
+//                                                                 otp: e.target.value.replace(/\D/g, ''),
+//                                                             }))
+//                                                         }
+//                                                     />
+//                                                     <button
+//                                                         type="button"
+//                                                         className="otp-confirm-btn"
+//                                                         onClick={() => verifyChangeOtp('email')}
+//                                                         disabled={emailChange.verifying}
+//                                                     >
+//                                                         {emailChange.verifying ? 'Verifying…' : 'Confirm'}
+//                                                     </button>
+//                                                 </div>
+//                                             )}
+//                                             {emailChange.error && (
+//                                                 <div className="otp-error">{emailChange.error}</div>
+//                                             )}
+//                                             {isEmailDirty() && !emailChange.verified && !emailChange.sent && (
+//                                                 <div className="otp-hint">
+//                                                     OTP will be sent to the new email before saving.
+//                                                 </div>
+//                                             )}
+//                                         </>
+//                                     ) : (
+//                                         <p>{counselor?.email || 'Not specified'}</p>
+//                                     )}
+//                                 </div>
+//                             </div>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__contact-item`}>
+//                                 <span className={`${COUNSELOR_PROFILE_CLASS}__contact-icon`}>📱</span>
+//                                 <div style={{ flex: 1 }}>
+//                                     <label>{t('phone')}</label>
+//                                     {isEditing ? (
+//                                         <>
+//                                             <div className="otp-field-row">
+//                                                 <input
+//                                                     type="tel"
+//                                                     value={editedData.phoneNumber || ''}
+//                                                     onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+//                                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                                 />
+//                                                 {isPhoneDirty() && !phoneChange.verified && (
+//                                                     <button
+//                                                         type="button"
+//                                                         className="otp-verify-btn"
+//                                                         onClick={() => sendChangeOtp('phone')}
+//                                                         disabled={phoneChange.sending}
+//                                                     >
+//                                                         {phoneChange.sending ? 'Sending…' : phoneChange.sent ? 'Resend' : 'Verify'}
+//                                                     </button>
+//                                                 )}
+//                                                 {phoneChange.verified && (
+//                                                     <span className="otp-verified-badge">✓ Verified</span>
+//                                                 )}
+//                                             </div>
+//                                             {isPhoneDirty() && phoneChange.sent && !phoneChange.verified && (
+//                                                 <div className="otp-input-row">
+//                                                     <input
+//                                                         type="text"
+//                                                         inputMode="numeric"
+//                                                         maxLength={6}
+//                                                         placeholder="Enter 6-digit OTP"
+//                                                         value={phoneChange.otp}
+//                                                         onChange={(e) =>
+//                                                             setPhoneChange((s) => ({
+//                                                                 ...s,
+//                                                                 otp: e.target.value.replace(/\D/g, ''),
+//                                                             }))
+//                                                         }
+//                                                     />
+//                                                     <button
+//                                                         type="button"
+//                                                         className="otp-confirm-btn"
+//                                                         onClick={() => verifyChangeOtp('phone')}
+//                                                         disabled={phoneChange.verifying}
+//                                                     >
+//                                                         {phoneChange.verifying ? 'Verifying…' : 'Confirm'}
+//                                                     </button>
+//                                                 </div>
+//                                             )}
+//                                             {phoneChange.error && (
+//                                                 <div className="otp-error">{phoneChange.error}</div>
+//                                             )}
+//                                             {isPhoneDirty() && !phoneChange.verified && !phoneChange.sent && (
+//                                                 <div className="otp-hint">
+//                                                     OTP will be sent to the new phone via SMS.
+//                                                 </div>
+//                                             )}
+//                                         </>
+//                                     ) : (
+//                                         <p>{counselor?.phoneNumber || 'Not specified'}</p>
+//                                     )}
+//                                 </div>
+//                             </div>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__contact-item`}>
+//                                 <span className={`${COUNSELOR_PROFILE_CLASS}__contact-icon`}>📍</span>
+//                                 <div>
+//                                     <label>{t('location')}</label>
+//                                     {isEditing ? (
+//                                         <input
+//                                             type="text"
+//                                             value={editedData.location || ''}
+//                                             onChange={(e) => handleInputChange('location', e.target.value)}
+//                                             className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                         />
+//                                     ) : (
+//                                         <p>{counselor?.location || 'Not specified'}</p>
+//                                     )}
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     </div>
+
+//                     {/* Personal Information */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('personal_info')}</h3>
+//                         <div className={`${COUNSELOR_PROFILE_CLASS}__personal-info`}>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
+//                                 <label>{t('age')}:</label>
+//                                 {isEditing ? (
+//                                     <input
+//                                         type="number"
+//                                         value={editedData.age || ''}
+//                                         onChange={(e) => handleInputChange('age', parseInt(e.target.value))}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                     />
+//                                 ) : (
+//                                     <p>{counselor?.age || 'Not specified'}</p>
+//                                 )}
+//                             </div>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
+//                                 <label>{t('gender')}:</label>
+//                                 {isEditing ? (
+//                                     <select
+//                                         value={editedData.gender || ''}
+//                                         onChange={(e) => handleInputChange('gender', e.target.value)}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                     >
+//                                         <option value="">{t('profile.selectGender')}</option>
+//                                         <option value="male">{t('profile.male')}</option>
+//                                         <option value="female">{t('profile.female')}</option>
+//                                         <option value="other">{t('profile.other')}</option>
+//                                     </select>
+//                                 ) : (
+//                                     <p>{counselor?.gender ? counselor.gender.charAt(0).toUpperCase() + counselor.gender.slice(1) : 'Not specified'}</p>
+//                                 )}
+//                             </div>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
+//                                 <label>{t('blood_group')}:</label>
+//                                 {isEditing ? (
+//                                     <input
+//                                         type="text"
+//                                         value={editedData.bloodGroup || ''}
+//                                         onChange={(e) => handleInputChange('bloodGroup', e.target.value)}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                         placeholder="e.g., A+, B-, O+"
+//                                     />
+//                                 ) : (
+//                                     <p>{counselor?.bloodGroup || 'Not specified'}</p>
+//                                 )}
+//                             </div>
+//                             {counselor?.dateOfBirth && (
+//                                 <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
+//                                     <label>{t('date_of_birth')}:</label>
+//                                     <p>{formatDate(counselor.dateOfBirth)}</p>
+//                                 </div>
+//                             )}
+//                         </div>
+//                     </div>
+
+//                     {/* Address */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('address')}</h3>
+//                         {isEditing ? (
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__address-form`}>
+//                                 <input
+//                                     type="text"
+//                                     value={editedData.address?.line1 || ''}
+//                                     onChange={(e) => handleNestedInputChange('address', 'line1', e.target.value)}
+//                                     placeholder="Address Line 1"
+//                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                 />
+//                                 <input
+//                                     type="text"
+//                                     value={editedData.address?.line2 || ''}
+//                                     onChange={(e) => handleNestedInputChange('address', 'line2', e.target.value)}
+//                                     placeholder="Address Line 2"
+//                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                 />
+//                                 <input
+//                                     type="text"
+//                                     value={editedData.address?.city || ''}
+//                                     onChange={(e) => handleNestedInputChange('address', 'city', e.target.value)}
+//                                     placeholder="City"
+//                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                 />
+//                                 <input
+//                                     type="text"
+//                                     value={editedData.address?.state || ''}
+//                                     onChange={(e) => handleNestedInputChange('address', 'state', e.target.value)}
+//                                     placeholder="State"
+//                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                 />
+//                                 <input
+//                                     type="text"
+//                                     value={editedData.address?.pincode || ''}
+//                                     onChange={(e) => handleNestedInputChange('address', 'pincode', e.target.value)}
+//                                     placeholder="Pincode"
+//                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                 />
+//                                 <input
+//                                     type="text"
+//                                     value={editedData.address?.country || ''}
+//                                     onChange={(e) => handleNestedInputChange('address', 'country', e.target.value)}
+//                                     placeholder="Country"
+//                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                 />
+//                             </div>
+//                         ) : (
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__address-display`}>
+//                                 {counselor.address?.line1 && <p>{counselor.address.line1}</p>}
+//                                 {counselor.address?.line2 && <p>{counselor.address.line2}</p>}
+//                                 <p>
+//                                     {counselor.address?.city && `${counselor.address.city}, `}
+//                                     {counselor.address?.state && `${counselor.address.state} `}
+//                                     {counselor.address?.pincode && `- ${counselor.address.pincode}`}
+//                                 </p>
+//                                 {counselor.address?.country && <p>{counselor.address.country}</p>}
+//                                 {!counselor.address?.line1 && !counselor.address?.city && (
+//                                     <p>{t('no_address')}</p>
+//                                 )}
+//                             </div>
+//                         )}
+//                     </div>
+
+//                     {/* Education */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('education')}</h3>
+//                         {isEditing ? (
+//                             <textarea
+//                                 value={editedData.education || ''}
+//                                 onChange={(e) => handleInputChange('education', e.target.value)}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__textarea`}
+//                                 rows="3"
+//                                 placeholder="Enter your educational qualifications"
+//                             />
+//                         ) : (
+//                             <p>{counselor?.education || counselor?.qualification || 'Not specified'}</p>
+//                         )}
+//                     </div>
+
+//                     {/* Experience */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('experience')}</h3>
+//                         {isEditing ? (
+//                             <input
+//                                 type="number"
+//                                 value={editedData.experience || ''}
+//                                 onChange={(e) => handleInputChange('experience', parseInt(e.target.value))}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                             />
+//                         ) : (
+//                             <p>{counselor?.experience} years</p>
+//                         )}
+//                     </div>
+
+//                     {/* Consultation Mode */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('consultation_mode')}</h3>
+//                         <div className={`${COUNSELOR_PROFILE_CLASS}__consultation-section`}>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__consultation-list`}>
+//                                 {editedData?.consultationMode?.map((mode, index) => (
+//                                     <div key={index} className={`${COUNSELOR_PROFILE_CLASS}__consultation-item`}>
+//                                         <span className={`${COUNSELOR_PROFILE_CLASS}__consultation-tag`}>
+//                                             {mode.charAt(0).toUpperCase() + mode.slice(1)}
+//                                         </span>
+//                                         {isEditing && (
+//                                             <button
+//                                                 onClick={() => handleRemoveConsultationMode(mode)}
+//                                                 className={`${COUNSELOR_PROFILE_CLASS}__remove-btn`}
+//                                                 title="Remove mode"
+//                                             >
+//                                                 ✕
+//                                             </button>
+//                                         )}
+//                                     </div>
+//                                 ))}
+//                             </div>
+
+//                             {isEditing && (
+//                                 <div className={`${COUNSELOR_PROFILE_CLASS}__add-section`}>
+//                                     <select
+//                                         value={newConsultationMode}
+//                                         onChange={(e) => setNewConsultationMode(e.target.value)}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                     >
+//                                         <option value="">Select consultation mode...</option>
+//                                         <option value="online">Online</option>
+//                                         <option value="offline">Offline</option>
+//                                         <option value="both">Both</option>
+//                                     </select>
+//                                     <button
+//                                         onClick={handleAddConsultationMode}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__add-btn`}
+//                                         disabled={!newConsultationMode}
+//                                     >
+//                                         + {t('add')}
+//                                     </button>
+//                                 </div>
+//                             )}
+//                         </div>
+//                     </div>
+
+//                     {/* Languages */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('language')}</h3>
+//                         <div className={`${COUNSELOR_PROFILE_CLASS}__languages-section`}>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__languages-list`}>
+//                                 {editedData?.languages?.map((lang, index) => (
+//                                     <div key={index} className={`${COUNSELOR_PROFILE_CLASS}__language-item`}>
+//                                         <span className={`${COUNSELOR_PROFILE_CLASS}__language-tag`}>
+//                                             {lang}
+//                                         </span>
+//                                         {isEditing && (
+//                                             <button
+//                                                 onClick={() => handleRemoveLanguage(lang)}
+//                                                 className={`${COUNSELOR_PROFILE_CLASS}__remove-btn`}
+//                                                 title="Remove language"
+//                                             >
+//                                                 ✕
+//                                             </button>
+//                                         )}
+//                                     </div>
+//                                 ))}
+//                             </div>
+
+//                             {isEditing && (
+//                                 <div className={`${COUNSELOR_PROFILE_CLASS}__add-section`}>
+//                                     <input
+//                                         type="text"
+//                                         value={newLanguage}
+//                                         onChange={(e) => setNewLanguage(e.target.value)}
+//                                         placeholder="Add new language..."
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                         onKeyPress={(e) => e.key === 'Enter' && handleAddLanguage()}
+//                                     />
+//                                     <button
+//                                         onClick={handleAddLanguage}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__add-btn`}
+//                                     >
+//                                         + {t('add')}
+//                                     </button>
+//                                 </div>
+//                             )}
+//                         </div>
+//                     </div>
+//                 </div>
+
+//                 {/* Right Column */}
+//                 <div className={`${COUNSELOR_PROFILE_CLASS}__right-column`}>
+//                     {/* Bio */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('about_me')}</h3>
+//                         {isEditing ? (
+//                             <textarea
+//                                 value={editedData.aboutMe || ''}
+//                                 onChange={(e) => handleInputChange('aboutMe', e.target.value)}
+//                                 className={`${COUNSELOR_PROFILE_CLASS}__textarea`}
+//                                 rows="5"
+//                                 placeholder="Write about your professional background, expertise, and approach to counseling..."
+//                             />
+//                         ) : (
+//                             <p>{counselor?.aboutMe || 'No bio provided'}</p>
+//                         )}
+//                     </div>
+
+//                     {/* Licenses & Certifications with Document Upload */}
+//                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+//                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('certifications')}</h3>
+//                         <div className={`${COUNSELOR_PROFILE_CLASS}__certifications-section`}>
+//                             <div className={`${COUNSELOR_PROFILE_CLASS}__certifications-list`}>
+//                                 {editedData?.certifications?.map((cert) => (
+//                                     <div key={cert._id} className={`${COUNSELOR_PROFILE_CLASS}__certification-card`}>
+//                                         <div className={`${COUNSELOR_PROFILE_CLASS}__certification-header`}>
+//                                             <div className={`${COUNSELOR_PROFILE_CLASS}__certification-title`}>
+//                                                 <span className={`${COUNSELOR_PROFILE_CLASS}__certification-icon`}>📜</span>
+//                                                 <strong>{cert.name}</strong>
+//                                             </div>
+//                                             {isEditing && (
+//                                                 <button
+//                                                     onClick={() => handleRemoveCertification(cert._id)}
+//                                                     className={`${COUNSELOR_PROFILE_CLASS}__remove-cert-btn`}
+//                                                     title="Remove certification"
+//                                                 >
+//                                                     ✕
+//                                                 </button>
+//                                             )}
+//                                         </div>
+
+//                                         <div className={`${COUNSELOR_PROFILE_CLASS}__certification-details`}>
+//                                             <div className={`${COUNSELOR_PROFILE_CLASS}__certification-info`}>
+//                                                 <div>
+//                                                     <label>Issued By:</label>
+//                                                     <p>{cert.issuedBy || 'Not specified'}</p>
+//                                                 </div>
+//                                                 <div>
+//                                                     <label>Issue Date:</label>
+//                                                     <p>{cert.issueDate ? formatDate(cert.issueDate) : 'Not specified'}</p>
+//                                                 </div>
+//                                                 <div>
+//                                                     <label>Expiry Date:</label>
+//                                                     <p>{cert.expiryDate ? formatDate(cert.expiryDate) : 'Not specified'}</p>
+//                                                 </div>
+//                                             </div>
+
+//                                             <div className={`${COUNSELOR_PROFILE_CLASS}__document-section`}>
+//                                                 <label>Supporting Document:</label>
+//                                                 {cert.documentUrl || cert.document ? (
+//                                                     <div className={`${COUNSELOR_PROFILE_CLASS}__document-preview`}>
+//                                                         <a
+//                                                             href={cert.documentUrl || (cert.document instanceof File ? URL.createObjectURL(cert.document) : '#')}
+//                                                             target="_blank"
+//                                                             rel="noopener noreferrer"
+//                                                             className={`${COUNSELOR_PROFILE_CLASS}__document-link`}
+//                                                         >
+//                                                             📄 {cert.documentName || 'View Document'}
+//                                                         </a>
+//                                                         {isEditing && (
+//                                                             <button
+//                                                                 onClick={() => handleRemoveDocument(cert._id)}
+//                                                                 className={`${COUNSELOR_PROFILE_CLASS}__remove-document-btn`}
+//                                                             >
+//                                                                 Remove
+//                                                             </button>
+//                                                         )}
+//                                                     </div>
+//                                                 ) : (
+//                                                     <p className={`${COUNSELOR_PROFILE_CLASS}__no-document`}>
+//                                                         No document uploaded
+//                                                     </p>
+//                                                 )}
+
+//                                                 {isEditing && (
+//                                                     <div className={`${COUNSELOR_PROFILE_CLASS}__upload-section`}>
+//                                                         <input
+//                                                             type="file"
+//                                                             id={`document-${cert._id}`}
+//                                                             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+//                                                             onChange={(e) => handleDocumentUpload(cert._id, e.target.files[0])}
+//                                                             style={{ display: 'none' }}
+//                                                         />
+//                                                         <label
+//                                                             htmlFor={`document-${cert._id}`}
+//                                                             className={`${COUNSELOR_PROFILE_CLASS}__upload-btn`}
+//                                                         >
+//                                                             📁 Upload Document
+//                                                         </label>
+//                                                         <span className={`${COUNSELOR_PROFILE_CLASS}__upload-hint`}>
+//                                                             PDF, DOC, JPG (Max 5MB)
+//                                                         </span>
+//                                                     </div>
+//                                                 )}
+//                                             </div>
+//                                         </div>
+//                                     </div>
+//                                 ))}
+//                             </div>
+
+//                             {isEditing && (
+//                                 <div className={`${COUNSELOR_PROFILE_CLASS}__add-certification-form`}>
+//                                     <h4>Add New License/Certification</h4>
+//                                     <div className={`${COUNSELOR_PROFILE_CLASS}__form-group`}>
+//                                         <input
+//                                             type="text"
+//                                             value={newCertification.name}
+//                                             onChange={(e) => handleCertificationInputChange('name', e.target.value)}
+//                                             placeholder="Certification/License Name *"
+//                                             className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                         />
+//                                     </div>
+//                                     <div className={`${COUNSELOR_PROFILE_CLASS}__form-row`}>
+//                                         <div className={`${COUNSELOR_PROFILE_CLASS}__form-group`}>
+//                                             <input
+//                                                 type="text"
+//                                                 value={newCertification.issuedBy}
+//                                                 onChange={(e) => handleCertificationInputChange('issuedBy', e.target.value)}
+//                                                 placeholder="Issued By"
+//                                                 className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                             />
+//                                         </div>
+//                                         <div className={`${COUNSELOR_PROFILE_CLASS}__form-group`}>
+//                                             <input
+//                                                 type="date"
+//                                                 value={newCertification.issueDate}
+//                                                 onChange={(e) => handleCertificationInputChange('issueDate', e.target.value)}
+//                                                 className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                             />
+//                                         </div>
+//                                         <div className={`${COUNSELOR_PROFILE_CLASS}__form-group`}>
+//                                             <input
+//                                                 type="date"
+//                                                 value={newCertification.expiryDate}
+//                                                 onChange={(e) => handleCertificationInputChange('expiryDate', e.target.value)}
+//                                                 className={`${COUNSELOR_PROFILE_CLASS}__input`}
+//                                             />
+//                                         </div>
+//                                     </div>
+//                                     <div className={`${COUNSELOR_PROFILE_CLASS}__form-group`}>
+//                                         <input
+//                                             type="file"
+//                                             id="new-document"
+//                                             accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+//                                             onChange={(e) => handleNewDocumentUpload(e.target.files[0])}
+//                                             style={{ display: 'none' }}
+//                                         />
+//                                         <div className={`${COUNSELOR_PROFILE_CLASS}__document-upload-area`}>
+//                                             <label
+//                                                 htmlFor="new-document"
+//                                                 className={`${COUNSELOR_PROFILE_CLASS}__upload-area-label`}
+//                                             >
+//                                                 {newCertification.documentName ? (
+//                                                     <>📄 {newCertification.documentName}</>
+//                                                 ) : (
+//                                                     <>📁 Click to upload supporting document</>
+//                                                 )}
+//                                             </label>
+//                                         </div>
+//                                     </div>
+//                                     <button
+//                                         onClick={handleAddCertification}
+//                                         className={`${COUNSELOR_PROFILE_CLASS}__add-cert-btn`}
+//                                         disabled={!newCertification.name.trim()}
+//                                     >
+//                                         + Add Certification
+//                                     </button>
+//                                 </div>
+//                             )}
+//                         </div>
+//                     </div>
+//                 </div>
+//             </div>
+//         </div>
+//     );
+// };
+
+// export default CounselorProfile;
+
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './CounselorProfile.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
@@ -16,8 +1607,19 @@ const CounselorProfile = () => {
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const [isUpdatingLocation, setIsUpdatingLocation] = useState(false);
+    const [showPhotoModal, setShowPhotoModal] = useState(false);
+    const [cameraMode, setCameraMode] = useState(false);
+    const [cameraError, setCameraError] = useState('');
+    const [isCameraReady, setIsCameraReady] = useState(false);
 
-    // Profile-change OTP state — see PatientProfile.jsx for the shape rationale.
+    // Refs for file and camera
+    const fileInputRef = useRef(null);
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+    const streamRef = useRef(null);
+    const isMountedRef = useRef(true);
+
+    // Profile-change OTP state
     const blankChange = {
       sending: false,
       sent: false,
@@ -111,7 +1713,15 @@ const CounselorProfile = () => {
 
     // Fetch profile data on component mount
     useEffect(() => {
+        // React Strict Mode runs an effect cleanup once during development and
+        // mounts it again. Reset this ref on every real mount; otherwise the
+        // camera stream is acquired but never attached to the video element.
+        isMountedRef.current = true;
         fetchCounselorProfile();
+        return () => {
+            isMountedRef.current = false;
+            stopCamera();
+        };
     }, []);
 
     const countActiveClients = (chats = []) => {
@@ -167,7 +1777,7 @@ const CounselorProfile = () => {
         return stats;
     };
 
-    // GET API - Fetch counselor profile (FIXED)
+    // GET API - Fetch counselor profile
     const fetchCounselorProfile = async () => {
         try {
             setLoading(true);
@@ -182,22 +1792,15 @@ const CounselorProfile = () => {
                 return;
             }
 
-            console.log('Fetching profile for ID:', counsellorId);
-
-            // GET request to fetch counselor data
             const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors/${counsellorId}`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             });
 
-            console.log('GET API Response:', response.data);
-
-            // FIXED: The API returns data in 'counsellor' object
             if (response.data.success && response.data.counsellor) {
                 const userData = response.data.counsellor;
 
-                // FIXED: Extract profile photo URL correctly from nested object
                 let profilePhotoUrl = 'https://via.placeholder.com/150x150?text=Profile';
                 if (userData.profilePhoto) {
                     if (typeof userData.profilePhoto === 'string') {
@@ -205,14 +1808,12 @@ const CounselorProfile = () => {
                     } else if (userData.profilePhoto.url) {
                         profilePhotoUrl = userData.profilePhoto.url;
                     } else if (userData.profilePhoto.publicId) {
-                        // If using Cloudinary, construct the URL
                         profilePhotoUrl = userData.profilePhoto.url || `https://res.cloudinary.com/dfll8lwos/image/upload/${userData.profilePhoto.publicId}`;
                     }
                 }
 
                 const liveStats = await fetchCounselorStats(token);
 
-                // Transform API data to match component structure
                 const formattedData = {
                     _id: userData._id,
                     uniqueCode: userData.uniqueCode || `CNS-${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
@@ -226,7 +1827,7 @@ const CounselorProfile = () => {
                     location: userData.location || '',
                     languages: Array.isArray(userData.languages) ? userData.languages : [],
                     profilePhoto: null,
-                    profilePhotoUrl: profilePhotoUrl, // FIXED: Set the correct URL
+                    profilePhotoUrl: profilePhotoUrl,
                     certifications: Array.isArray(userData.certifications) ? userData.certifications : [],
                     aboutMe: userData.aboutMe || userData.bio || '',
                     rating: userData.rating || 0,
@@ -321,7 +1922,7 @@ const CounselorProfile = () => {
     };
 
     // Profile Photo Handlers
-    const handleProfilePhotoUpload = (file) => {
+    const handleProfilePhotoUpload = async (file) => {
         if (file) {
             const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
             if (!allowedTypes.includes(file.type)) {
@@ -335,12 +1936,202 @@ const CounselorProfile = () => {
                 return;
             }
 
-            const photoUrl = URL.createObjectURL(file);
-            setEditedData(prev => ({
-                ...prev,
-                profilePhoto: file,
-                profilePhotoUrl: photoUrl
-            }));
+            const localPreviewUrl = URL.createObjectURL(file);
+
+            try {
+                setLoading(true);
+                setError('');
+
+                // Save the actual File immediately. Previously this function
+                // only updated a blob preview in React state, so the picture
+                // disappeared after refresh unless the whole profile form was
+                // saved separately.
+                const photoFormData = new FormData();
+                photoFormData.append('profilePhoto', file, file.name);
+                const response = await updateCounselorProfile(photoFormData);
+
+                if (!response.data?.success) {
+                    throw new Error(response.data?.message || 'Failed to save profile photo');
+                }
+
+                const savedPhoto = response.data?.user?.profilePhoto;
+                const savedPhotoUrl =
+                    typeof savedPhoto === 'string'
+                        ? savedPhoto
+                        : savedPhoto?.url || localPreviewUrl;
+
+                setCounselor(prev => ({
+                    ...prev,
+                    profilePhoto: savedPhoto || null,
+                    profilePhotoUrl: savedPhotoUrl,
+                }));
+                setEditedData(prev => ({
+                    ...prev,
+                    // The file is already stored, so prevent a later profile
+                    // save from uploading it a second time.
+                    profilePhoto: null,
+                    profilePhotoUrl: savedPhotoUrl,
+                }));
+                setSuccessMessage('Profile photo saved successfully!');
+                setTimeout(() => setSuccessMessage(''), 3000);
+                closePhotoModal();
+            } catch (uploadError) {
+                URL.revokeObjectURL(localPreviewUrl);
+                console.error('Profile photo upload failed:', uploadError);
+                setError(
+                    uploadError.response?.data?.message ||
+                    uploadError.message ||
+                    'Failed to save profile photo. Please try again.',
+                );
+            } finally {
+                setLoading(false);
+            }
+        }
+    };
+
+    // Handle file upload from computer
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            handleProfilePhotoUpload(file);
+        }
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    // Stop camera function
+    const stopCamera = () => {
+        try {
+            if (streamRef.current) {
+                streamRef.current.getTracks().forEach(track => {
+                    track.stop();
+                });
+                streamRef.current = null;
+            }
+            if (videoRef.current) {
+                videoRef.current.srcObject = null;
+                videoRef.current.onloadedmetadata = null;
+            }
+            setIsCameraReady(false);
+        } catch (err) {
+            console.log('Error stopping camera:', err);
+        }
+    };
+
+    // Close photo modal
+    const closePhotoModal = () => {
+        stopCamera();
+        setCameraMode(false);
+        setCameraError('');
+        setShowPhotoModal(false);
+        setIsCameraReady(false);
+    };
+
+    // Start Camera - FIXED VERSION
+    const startCamera = async () => {
+        setCameraError('');
+        setCameraMode(true);
+        setIsCameraReady(false);
+        
+        // Small delay to ensure DOM is ready
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+        try {
+            // Stop any existing stream first
+            stopCamera();
+
+            const constraints = {
+                video: {
+                    facingMode: 'environment',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                },
+                audio: false
+            };
+
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            
+            if (!isMountedRef.current) {
+                stream.getTracks().forEach(track => track.stop());
+                return;
+            }
+            
+            streamRef.current = stream;
+            
+            // Get the video element
+            const videoElement = videoRef.current;
+            if (!videoElement) {
+                setCameraError('Video element not found');
+                setCameraMode(false);
+                return;
+            }
+
+            // Set the stream
+            videoElement.srcObject = stream;
+            
+            // Wait for video metadata. If it is already available, waiting for
+            // a new event would leave the modal stuck on "Starting camera...".
+            await new Promise((resolve, reject) => {
+                if (videoElement.readyState >= HTMLMediaElement.HAVE_METADATA) {
+                    resolve();
+                    return;
+                }
+
+                videoElement.onloadedmetadata = () => {
+                    resolve();
+                };
+                videoElement.onerror = () => {
+                    reject(new Error('Video loading error'));
+                };
+                // Timeout after 5 seconds
+                setTimeout(() => reject(new Error('Video loading timeout')), 5000);
+            });
+
+            // Play the video
+            await videoElement.play();
+            
+            if (isMountedRef.current) {
+                setIsCameraReady(true);
+                console.log('Camera is ready!');
+            }
+        } catch (err) {
+            console.error('Camera error:', err);
+            if (isMountedRef.current) {
+                setCameraError('Unable to access camera. Please check permissions.');
+                setCameraMode(false);
+                setIsCameraReady(false);
+                // Fallback to file upload
+                if (fileInputRef.current) {
+                    fileInputRef.current.click();
+                }
+            }
+        }
+    };
+
+    // Capture photo from camera
+    const capturePhoto = () => {
+        if (!isCameraReady) {
+            setCameraError('Camera is not ready yet. Please wait.');
+            return;
+        }
+
+        if (videoRef.current && canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            canvas.toBlob((blob) => {
+                if (blob && isMountedRef.current) {
+                    const file = new File([blob], `camera-photo-${Date.now()}.jpg`, { type: 'image/jpeg' });
+                    handleProfilePhotoUpload(file);
+                }
+            }, 'image/jpeg', 0.95);
         }
     };
 
@@ -350,6 +2141,9 @@ const CounselorProfile = () => {
             profilePhoto: null,
             profilePhotoUrl: 'https://via.placeholder.com/150x150?text=Profile'
         }));
+        setSuccessMessage('Profile photo removed');
+        setTimeout(() => setSuccessMessage(''), 3000);
+        closePhotoModal();
     };
 
     // Language handlers
@@ -501,7 +2295,7 @@ const CounselorProfile = () => {
         }));
     };
 
-    // ─── Profile-change OTP helpers (email + phone) ──────────────────
+    // Profile-change OTP helpers
     const authHeaders = () => {
       const token =
         localStorage.getItem("accessToken") || localStorage.getItem("token");
@@ -603,7 +2397,6 @@ const CounselorProfile = () => {
       }
     };
 
-    // Drop verified flag if user re-edits field.
     useEffect(() => {
       if (
         emailChange.verified &&
@@ -612,7 +2405,6 @@ const CounselorProfile = () => {
       ) {
         setEmailChange(blankChange);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editedData?.email]);
 
     useEffect(() => {
@@ -623,7 +2415,6 @@ const CounselorProfile = () => {
       ) {
         setPhoneChange(blankChange);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [editedData?.phoneNumber]);
 
     useEffect(() => {
@@ -631,7 +2422,6 @@ const CounselorProfile = () => {
         setEmailChange(blankChange);
         setPhoneChange(blankChange);
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isEditing]);
 
     const handleSave = async () => {
@@ -640,10 +2430,8 @@ const CounselorProfile = () => {
             setError('');
             setSuccessMessage('');
 
-            // Prepare form data for API
             const formData = new FormData();
 
-            // Add basic fields
             formData.append('fullName', editedData.fullName);
             formData.append('email', editedData.email);
             formData.append('phoneNumber', editedData.phoneNumber);
@@ -653,12 +2441,10 @@ const CounselorProfile = () => {
             formData.append('aboutMe', editedData.aboutMe);
             formData.append('education', editedData.education);
 
-            // Add age, gender, blood group
             if (editedData.age) formData.append('age', editedData.age.toString());
             if (editedData.gender) formData.append('gender', editedData.gender);
             if (editedData.bloodGroup) formData.append('bloodGroup', editedData.bloodGroup);
 
-            // Add address fields
             if (editedData.address) {
                 formData.append('address[line1]', editedData.address.line1 || '');
                 formData.append('address[line2]', editedData.address.line2 || '');
@@ -668,44 +2454,36 @@ const CounselorProfile = () => {
                 formData.append('address[country]', editedData.address.country || 'India');
             }
 
-            // Add emergency contact
             if (editedData.emergencyContact) {
                 formData.append('emergencyContact[name]', editedData.emergencyContact.name || '');
                 formData.append('emergencyContact[relation]', editedData.emergencyContact.relation || '');
                 formData.append('emergencyContact[phone]', editedData.emergencyContact.phone || '');
             }
 
-            // Add languages
             if (editedData.languages && editedData.languages.length > 0) {
                 editedData.languages.forEach((lang, index) => {
                     formData.append(`languages[${index}]`, lang);
                 });
             }
 
-            // Add specialization
             if (editedData.specialization && editedData.specialization.length > 0) {
                 editedData.specialization.forEach((spec, index) => {
                     formData.append(`specialization[${index}]`, spec);
                 });
             }
 
-            // Add consultation mode
             if (editedData.consultationMode && editedData.consultationMode.length > 0) {
                 editedData.consultationMode.forEach((mode, index) => {
                     formData.append(`consultationMode[${index}]`, mode);
                 });
             }
 
-            // Add profile photo if changed
             if (editedData.profilePhoto instanceof File) {
                 formData.append('profilePhoto', editedData.profilePhoto);
             }
 
-            // FIXED: Use nested field names for certifications
-            // Add certifications with nested field names
             if (editedData.certifications && editedData.certifications.length > 0) {
                 editedData.certifications.forEach((cert, index) => {
-                    // Add certification data
                     formData.append(`certifications[${index}][name]`, cert.name || '');
                     formData.append(`certifications[${index}][issuedBy]`, cert.issuedBy || '');
 
@@ -716,12 +2494,10 @@ const CounselorProfile = () => {
                         formData.append(`certifications[${index}][expiryDate]`, cert.expiryDate);
                     }
 
-                    // Keep existing _id if present
                     if (cert._id && !cert._id.toString().startsWith('temp_')) {
                         formData.append(`certifications[${index}][_id]`, cert._id);
                     }
 
-                    // Keep existing document info
                     if (cert.documentUrl && !cert.document) {
                         formData.append(`certifications[${index}][documentUrl]`, cert.documentUrl);
                         formData.append(`certifications[${index}][documentName]`, cert.documentName || '');
@@ -730,15 +2506,12 @@ const CounselorProfile = () => {
                         }
                     }
 
-                    // Add new document file
                     if (cert.document instanceof File) {
                         formData.append(`certifications[${index}][document]`, cert.document);
-                        console.log(`Adding file for certification ${index}:`, cert.document.name);
                     }
                 });
             }
 
-            // Call the update API
             const response = await updateCounselorProfile(formData);
 
             if (response.data.success) {
@@ -754,7 +2527,6 @@ const CounselorProfile = () => {
             }
         } catch (err) {
             console.error('Error updating profile:', err);
-            console.error('Error details:', err.response?.data);
             setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile');
 
             setTimeout(() => {
@@ -781,6 +2553,7 @@ const CounselorProfile = () => {
         setIsEditing(false);
         setError('');
         setSuccessMessage('');
+        closePhotoModal();
     };
 
     const formatDate = (dateString) => {
@@ -792,10 +2565,158 @@ const CounselorProfile = () => {
         });
     };
 
-    
+    // Single Photo Modal with Camera Support
+    const PhotoUploadModal = () => {
+        if (!showPhotoModal) return null;
+
+        return (
+            <div className={`${COUNSELOR_PROFILE_CLASS}__modal-overlay`} onClick={closePhotoModal}>
+                <div className={`${COUNSELOR_PROFILE_CLASS}__modal-content ${cameraMode ? COUNSELOR_PROFILE_CLASS + '__modal-content--camera' : ''}`} onClick={(e) => e.stopPropagation()}>
+                    <div className={`${COUNSELOR_PROFILE_CLASS}__modal-header`}>
+                        <h3>{cameraMode ? 'Take Photo' : 'Update Profile Photo'}</h3>
+                        <button 
+                            className={`${COUNSELOR_PROFILE_CLASS}__modal-close`}
+                            onClick={closePhotoModal}
+                        >
+                            ✕
+                        </button>
+                    </div>
+                    
+                    <div className={`${COUNSELOR_PROFILE_CLASS}__modal-body`}>
+                        {cameraMode ? (
+                            // Camera View
+                            <>
+                                {cameraError ? (
+                                    <div className={`${COUNSELOR_PROFILE_CLASS}__camera-error`}>
+                                        <p>{cameraError}</p>
+                                        <button
+                                            onClick={() => {
+                                                setCameraError('');
+                                                startCamera();
+                                            }}
+                                            className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--retry`}
+                                        >
+                                            Retry
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className={`${COUNSELOR_PROFILE_CLASS}__camera-container`}>
+                                            <video
+                                                ref={videoRef}
+                                                className={`${COUNSELOR_PROFILE_CLASS}__camera-video`}
+                                                autoPlay
+                                                playsInline
+                                                muted
+                                            />
+                                            <canvas ref={canvasRef} style={{ display: 'none' }} />
+                                            {!isCameraReady && (
+                                                <div className={`${COUNSELOR_PROFILE_CLASS}__camera-loading`}>
+                                                    <span>Starting camera...</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <div className={`${COUNSELOR_PROFILE_CLASS}__camera-actions`}>
+                                            <button
+                                                onClick={capturePhoto}
+                                                className={`${COUNSELOR_PROFILE_CLASS}__capture-btn`}
+                                                disabled={!isCameraReady}
+                                            >
+                                                <span className={`${COUNSELOR_PROFILE_CLASS}__capture-icon`}>📸</span>
+                                                Capture
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    stopCamera();
+                                                    setCameraMode(false);
+                                                    setCameraError('');
+                                                    setIsCameraReady(false);
+                                                }}
+                                                className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--cancel`}
+                                            >
+                                                Back
+                                            </button>
+                                        </div>
+                                    </>
+                                )}
+                            </>
+                        ) : (
+                            // Photo Options View
+                            <>
+                                <div className={`${COUNSELOR_PROFILE_CLASS}__modal-preview`}>
+                                    {editedData?.profilePhotoUrl && editedData.profilePhotoUrl !== 'https://via.placeholder.com/150x150?text=Profile' ? (
+                                        <img 
+                                            src={editedData.profilePhotoUrl} 
+                                            alt="Profile Preview" 
+                                            className={`${COUNSELOR_PROFILE_CLASS}__modal-preview-img`}
+                                        />
+                                    ) : (
+                                        <div className={`${COUNSELOR_PROFILE_CLASS}__modal-preview-placeholder`}>
+                                            <span>No Photo</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className={`${COUNSELOR_PROFILE_CLASS}__modal-options`}>
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className={`${COUNSELOR_PROFILE_CLASS}__modal-option-btn`}
+                                    >
+                                        <span className={`${COUNSELOR_PROFILE_CLASS}__modal-option-icon`}>📁</span>
+                                        <div>
+                                            <div className={`${COUNSELOR_PROFILE_CLASS}__modal-option-title`}>Upload from Computer</div>
+                                            <div className={`${COUNSELOR_PROFILE_CLASS}__modal-option-desc`}>Select an image from your device</div>
+                                        </div>
+                                    </button>
+
+                                    <button
+                                        onClick={startCamera}
+                                        className={`${COUNSELOR_PROFILE_CLASS}__modal-option-btn`}
+                                    >
+                                        <span className={`${COUNSELOR_PROFILE_CLASS}__modal-option-icon`}>📸</span>
+                                        <div>
+                                            <div className={`${COUNSELOR_PROFILE_CLASS}__modal-option-title`}>Take Photo with Camera</div>
+                                            <div className={`${COUNSELOR_PROFILE_CLASS}__modal-option-desc`}>Capture a new photo using your camera</div>
+                                        </div>
+                                    </button>
+
+                                    {editedData.profilePhotoUrl !== 'https://via.placeholder.com/150x150?text=Profile' && (
+                                        <button
+                                            onClick={handleRemoveProfilePhoto}
+                                            className={`${COUNSELOR_PROFILE_CLASS}__modal-option-btn ${COUNSELOR_PROFILE_CLASS}__modal-option-btn--danger`}
+                                        >
+                                            <span className={`${COUNSELOR_PROFILE_CLASS}__modal-option-icon`}>🗑️</span>
+                                            <div>
+                                                <div className={`${COUNSELOR_PROFILE_CLASS}__modal-option-title`}>Remove Photo</div>
+                                                <div className={`${COUNSELOR_PROFILE_CLASS}__modal-option-desc`}>Remove your current profile photo</div>
+                                            </div>
+                                        </button>
+                                    )}
+                                </div>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className={COUNSELOR_PROFILE_CLASS}>
+            {/* Hidden file input */}
+            <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+            />
+
+            {/* Single Photo Modal */}
+            {/* Call the local renderer directly. A nested component would be
+                remounted after camera state updates, clearing its stream. */}
+            {PhotoUploadModal()}
+
             {/* Success/Error Messages */}
             {successMessage && (
                 <div className={`${COUNSELOR_PROFILE_CLASS}__alert ${COUNSELOR_PROFILE_CLASS}__alert--success`}>
@@ -811,7 +2732,6 @@ const CounselorProfile = () => {
             {/* Header Section */}
             <div className={`${COUNSELOR_PROFILE_CLASS}__header`}>
                 <div className={`${COUNSELOR_PROFILE_CLASS}__avatar-wrapper`}>
-                    {/* Profile Photo - FIXED display */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__profile-photo-container`}>
                         {editedData?.profilePhotoUrl && editedData.profilePhotoUrl !== 'https://via.placeholder.com/150x150?text=Profile' ? (
                             <img
@@ -819,7 +2739,6 @@ const CounselorProfile = () => {
                                 alt={editedData.fullName || 'Profile'}
                                 className={`${COUNSELOR_PROFILE_CLASS}__profile-photo`}
                                 onError={(e) => {
-                                    console.error('Image failed to load:', editedData.profilePhotoUrl);
                                     e.target.onerror = null;
                                     e.target.src = 'https://via.placeholder.com/150x150?text=Profile';
                                 }}
@@ -831,30 +2750,14 @@ const CounselorProfile = () => {
                         )}
 
                         {isEditing && (
-                            <div className={`${COUNSELOR_PROFILE_CLASS}__photo-edit-overlay`}>
-                                <input
-                                    type="file"
-                                    id="profile-photo-upload"
-                                    accept="image/*"
-                                    onChange={(e) => handleProfilePhotoUpload(e.target.files[0])}
-                                    style={{ display: 'none' }}
-                                />
-                                <label
-                                    htmlFor="profile-photo-upload"
-                                    className={`${COUNSELOR_PROFILE_CLASS}__upload-photo-btn`}
-                                    title="Upload Photo"
-                                >
-                                    📷
-                                </label>
-                                {editedData.profilePhotoUrl !== 'https://via.placeholder.com/150x150?text=Profile' && (
-                                    <button
-                                        onClick={handleRemoveProfilePhoto}
-                                        className={`${COUNSELOR_PROFILE_CLASS}__remove-photo-btn`}
-                                        title="Remove Photo"
-                                    >
-                                        ✕
-                                    </button>
-                                )}
+                            <div 
+                                className={`${COUNSELOR_PROFILE_CLASS}__photo-edit-overlay`}
+                                onClick={() => setShowPhotoModal(true)}
+                            >
+                                <div className={`${COUNSELOR_PROFILE_CLASS}__edit-icon`}>
+                                    ✏️
+                                </div>
+                                <span className={`${COUNSELOR_PROFILE_CLASS}__edit-text`}>Change Photo</span>
                             </div>
                         )}
                     </div>
@@ -949,7 +2852,6 @@ const CounselorProfile = () => {
                                 onClick={handleUpdateLocation}
                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--location`}
                                 disabled={loading || isUpdatingLocation}
-                                title="Send your current GPS coordinates to the server"
                             >
                                 {isUpdatingLocation ? (
                                     <>
@@ -974,13 +2876,6 @@ const CounselorProfile = () => {
                                 onClick={handleSave}
                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--save`}
                                 disabled={loading || !emailReady || !phoneReady}
-                                title={
-                                  !emailReady
-                                    ? 'Verify your new email via OTP first'
-                                    : !phoneReady
-                                      ? 'Verify your new phone via OTP first'
-                                      : ''
-                                }
                             >
                                 {loading ? t('saving') : t('save_changes')}
                             </button>
@@ -996,9 +2891,8 @@ const CounselorProfile = () => {
                 </div>
             </div>
 
-            {/* Main Content */}
+            {/* Rest of the content remains same */}
             <div className={`${COUNSELOR_PROFILE_CLASS}__content`}>
-                {/* Left Column */}
                 <div className={`${COUNSELOR_PROFILE_CLASS}__left-column`}>
                     {/* Contact Information */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
@@ -1322,7 +3216,6 @@ const CounselorProfile = () => {
                                             <button
                                                 onClick={() => handleRemoveConsultationMode(mode)}
                                                 className={`${COUNSELOR_PROFILE_CLASS}__remove-btn`}
-                                                title="Remove mode"
                                             >
                                                 ✕
                                             </button>
@@ -1369,7 +3262,6 @@ const CounselorProfile = () => {
                                             <button
                                                 onClick={() => handleRemoveLanguage(lang)}
                                                 className={`${COUNSELOR_PROFILE_CLASS}__remove-btn`}
-                                                title="Remove language"
                                             >
                                                 ✕
                                             </button>
@@ -1418,7 +3310,7 @@ const CounselorProfile = () => {
                         )}
                     </div>
 
-                    {/* Licenses & Certifications with Document Upload */}
+                    {/* Licenses & Certifications */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('certifications')}</h3>
                         <div className={`${COUNSELOR_PROFILE_CLASS}__certifications-section`}>
@@ -1434,7 +3326,6 @@ const CounselorProfile = () => {
                                                 <button
                                                     onClick={() => handleRemoveCertification(cert._id)}
                                                     className={`${COUNSELOR_PROFILE_CLASS}__remove-cert-btn`}
-                                                    title="Remove certification"
                                                 >
                                                     ✕
                                                 </button>

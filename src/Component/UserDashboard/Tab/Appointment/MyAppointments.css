@@ -371,6 +371,8 @@
 .status-badge-stitch.confirmed {
   background-color: #E0F2FE;
   color: #0369A1;
+  top: 10px ;
+  margin-right: 10px;
 }
 
 .status-badge-stitch.pending {

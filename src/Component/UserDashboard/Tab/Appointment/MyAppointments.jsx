@@ -91,6 +91,26 @@ const MyAppointments = () => {
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(apt.counselor?.fullName || "C")}&background=e0e7ff&color=4648d4&bold=true`;
   };
 
+  const formatAppointmentDateTime = (date) => {
+    const appointmentDate = new Date(date);
+    if (Number.isNaN(appointmentDate.getTime())) {
+      return { date: "Date not available", time: "" };
+    }
+
+    return {
+      date: appointmentDate.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
+      time: appointmentDate.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+  };
+
   const resetBookingForm = () => {
     setSelectedCounselorId("");
     setBookingDate("");
@@ -209,8 +229,11 @@ const MyAppointments = () => {
                 </p>
               </div>
             ) : (
-              displayApts.map((apt) => (
-                <div
+              displayApts.map((apt) => {
+                const appointmentSchedule = formatAppointmentDateTime(apt.date);
+
+                return (
+                  <div
                   key={apt._id}
                   className="bg-white rounded-xl p-5 sm:p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col md:flex-row gap-4 sm:gap-6 items-start hover:shadow-md transition-shadow"
                 >
@@ -244,18 +267,15 @@ const MyAppointments = () => {
                         </p>
                       </div>
                       <div className="text-left sm:text-right shrink-0">
-                        <div className="text-[#4648d4] font-bold text-lg">
-                          {new Date(apt.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
+                        <div className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">
+                          Appointment Date
                         </div>
-                        <div className="text-slate-500 text-sm">
-                          {new Date(apt.date).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}{" "}
+                        <div className="text-[#4648d4] font-bold text-lg flex items-center gap-1 sm:justify-end">
+                          <span className="material-symbols-outlined text-lg">calendar_today</span>
+                          {appointmentSchedule.date}
+                        </div>
+                        <div className="text-slate-500 text-sm mt-1">
+                          {appointmentSchedule.time}
                         </div>
                       </div>
                     </div>
@@ -355,8 +375,9 @@ const MyAppointments = () => {
                       )}
                     </div>
                   </div>
-                </div>
-              ))
+                  </div>
+                );
+              })
             )}
           </div>
         )}
@@ -479,203 +500,7 @@ const MyAppointments = () => {
       </main>
 
       {/* ── Right Sidebar: Today's Schedule ── */}
-      <aside className="hidden xl:block w-[300px] shrink-0 bg-white border-l border-slate-200 p-6 min-h-screen">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h3
-            style={{
-              fontFamily: "'Manrope', sans-serif",
-              fontSize: "24px",
-              fontWeight: 600,
-              color: "#0b1c30",
-              margin: 0,
-            }}
-          >
-            {t('appointment_schedule')}
-          </h3>
-          <span
-            style={{
-              fontSize: "12px",
-              background: "#e0e7ff",
-              color: "#4f46e5",
-              padding: "4px 8px",
-              borderRadius: "4px",
-              fontWeight: "bold",
-            }}
-          >
-            {new Date()
-              .toLocaleDateString("en-US", {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })
-              .toUpperCase()}
-          </span>
-        </div>
-
-        {/* Schedule List */}
-        <div
-          style={{
-            background: "white",
-            borderRadius: "12px",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
-            border: "1px solid #f1f5f9",
-            display: "flex",
-            flexDirection: "column",
-            overflow: "hidden",
-            marginBottom: "16px",
-          }}
-        >
-          {upcomingApts.length === 0 ? (
-            <div
-              style={{
-                padding: "24px",
-                textAlign: "center",
-                color: "#64748b",
-                fontStyle: "italic",
-                fontSize: "14px",
-              }}
-            >
-              {t('no_upcoming_appointments')}
-            </div>
-          ) : (
-            upcomingApts
-              .sort((a, b) => new Date(a.date) - new Date(b.date))
-              .slice(0, 5)
-              .map((apt, index) => {
-                const dateObj = new Date(apt.date);
-                const timeParts = dateObj
-                  .toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                  .split(" ");
-                const timeStr = timeParts[0];
-                const ampm = timeParts[1];
-                const colors = [
-                  { bg: "#006591" },
-                  { bg: "#6063ee" },
-                  { bg: "#e2e8f0" },
-                ];
-                const color = colors[index % colors.length];
-                const isToday =
-                  dateObj.toDateString() === new Date().toDateString();
-
-                return (
-                  <div
-                    key={apt._id}
-                    style={{
-                      padding: "16px",
-                      display: "flex",
-                      gap: "16px",
-                      alignItems: "center",
-                      borderBottom: "1px solid #f8fafc",
-                      cursor: "pointer",
-                      transition: "background 0.2s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.background = "#f8fafc")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.background = "transparent")
-                    }
-                  >
-                    {/* Time Block */}
-                    <div
-                      style={{
-                        width: "48px",
-                        textAlign: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          color: "#0b1c30",
-                        }}
-                      >
-                        {timeStr}
-                      </div>
-                      <div
-                        style={{
-                          fontSize: "10px",
-                          color: "#94a3b8",
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {ampm}
-                      </div>
-                    </div>
-                    {/* Color Bar */}
-                    <div
-                      style={{
-                        width: "4px",
-                        height: "40px",
-                        borderRadius: "4px",
-                        background: color.bg,
-                        flexShrink: 0,
-                      }}
-                    ></div>
-                    {/* Details */}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div
-                        style={{
-                          fontSize: "14px",
-                          fontWeight: 500,
-                          color: "#0b1c30",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        Dr. {apt.counselor?.fullName || "Counselor"}
-                      </div>
-                      <div style={{ fontSize: "12px", color: "#64748b" }}>
-                        {!isToday && (
-                          <span
-                            style={{
-                              fontWeight: "600",
-                              color: "#4648d4",
-                              marginRight: "4px",
-                            }}
-                          >
-                            {dateObj.toLocaleDateString("en-US", {
-                              month: "short",
-                              day: "numeric",
-                            })}
-                          </span>
-                        )}
-                        {t('initial_consultation')}
-                      </div>
-                    </div>
-                    {/* Icon - only active if confirmed */}
-                    <span
-                      className="material-symbols-outlined"
-                      title={
-                        apt.status === "confirmed"
-                          ? t('join_video_call')
-                          : t('available_after_confirmation')
-                      }
-                      style={{
-                        color:
-                          apt.status === "confirmed" ? "#4648d4" : "#e2e8f0",
-                        fontSize: "20px",
-                        flexShrink: 0,
-                        cursor:
-                          apt.status === "confirmed"
-                            ? "pointer"
-                            : "not-allowed",
-                      }}
-                    >
-                      videocam
-                    </span>
-                  </div>
-                );
-              })
-          )}
-        </div>
-      </aside>
+      
     </div>
   );
 };

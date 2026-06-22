@@ -1016,6 +1016,16 @@
 }
 
 /* Loading call history */
+.sms-chat-date-separator {
+  width: fit-content;
+  margin: 14px auto 10px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+}
 .sms-loading-call-history {
   text-align: center;
   padding: 10px;
@@ -1212,4 +1222,89 @@
     right: 5%;
     bottom: 15%;
   }
+}
+/* SMSInput.css - Add these styles for WhatsApp-style call items */
+
+/* Call item styles */
+.smsinput-message .call-item {
+  cursor: default;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.smsinput-message .call-item .call-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.smsinput-message .call-item .call-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.smsinput-message .call-item .call-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.smsinput-message .call-item .call-direction {
+  font-weight: 500;
+  font-size: 14px;
+  color: #111b21;
+  display: block;
+}
+
+.smsinput-message .call-item .call-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  margin-top: 1px;
+}
+
+.smsinput-message .call-item .call-status .status-icon {
+  font-size: 12px;
+}
+
+.smsinput-message .call-item .message-time {
+  font-size: 11px;
+  color: #667781;
+  flex-shrink: 0;
+  align-self: flex-end;
+}
+
+/* Outgoing call bubbles - right side */
+.smsinput-message.sent .message-bubble.call-item {
+  background: #d9fdd3 !important;
+  border: 1px solid #25d366 !important;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+/* Incoming call bubbles - left side */
+.smsinput-message.received .message-bubble.call-item {
+  background: #ffffff !important;
+  border: 1px solid #e9edef !important;
+  margin-left: 0;
+  margin-right: auto;
+}
+
+/* Status colors */
+.call-status-completed {
+  color: #667781;
+}
+.call-status-missed {
+  color: #d32f2f;
+}
+.call-status-cancelled {
+  color: #667781;
+}
+.call-status-calling {
+  color: #f57c00;
+}
+.call-status-declined {
+  color: #667781;
+}
+.call-status-ended {
+  color: #667781;
 }
