@@ -9,7 +9,12 @@ import {
   getAnonymousUserAvatar,
   getAnonymousUserDisplay,
 } from "../../../../utils/anonymousUser";
-import { getPresence } from "../../../../utils/presence";
+import {
+  formatPresenceText,
+  getPresence,
+  getPresenceUserId,
+  resolveOfflineLastSeen,
+} from "../../../../utils/presence";
 import NotificationBell from "./NotificationBell";
 import PendingRequestsModal from "./PendingRequestsModal";
 import { translateMessage } from "../../../../services/messageTranslationService";
@@ -271,19 +276,33 @@ const SMSList = () => {
 
     const onPresenceUpdate = (payload = {}) => {
       if (!mounted) return;
+      const presenceUserId = getPresenceUserId(payload);
       const presence = getPresence(payload);
-      setUsers((prev) =>
-        prev.map((user) =>
-          String(user.receiverId || user._id) === String(payload.userId)
+      const applyPresence = (items) =>
+        items.map((user) =>
+          String(user.receiverId || user._id || user.userId) === String(presenceUserId)
             ? {
                 ...user,
                 online: presence.isOnline,
                 isOnline: presence.isOnline,
-                lastSeen: presence.lastSeen,
+                lastSeen: resolveOfflineLastSeen(presence, user.lastSeen),
+                user: user.user
+                  ? {
+                      ...user.user,
+                      online: presence.isOnline,
+                      isOnline: presence.isOnline,
+                      lastSeen: resolveOfflineLastSeen(
+                        presence,
+                        user.user.lastSeen || user.lastSeen,
+                      ),
+                    }
+                  : user.user,
               }
             : user,
-        ),
-      );
+        );
+
+      setUsers(applyPresence);
+      setOriginalUsers(applyPresence);
     };
 
     const onConnectError = (err) => {
@@ -563,6 +582,15 @@ const SMSList = () => {
                 <div className="smslist-user-details">
                   <span className="user-specialization">
                     {user.specialization}
+                  </span>
+                  <span className={`user-presence ${user.online ? "online" : "offline"}`}>
+                    {formatPresenceText(
+                      { isOnline: user.online, lastSeen: user.lastSeen },
+                      {
+                        onlineText: t('online') || "Online",
+                        offlineText: t('offline') || "Offline",
+                      },
+                    )}
                   </span>
                   <span className={`user-status status-${user.status}`}>
                     {getStatusBadgeText(user.status)}

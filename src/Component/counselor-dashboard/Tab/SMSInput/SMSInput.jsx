@@ -11,7 +11,12 @@ import PhotoPreviewModal from "../../../common/PhotoPreviewModal/PhotoPreviewMod
 import useRingtone from "../../../../hooks/useRingtone";
 import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallModal";
 import { useCounselorTranslation, useCounselorApiTranslation } from "../../../../i18n/LanguageContext";
-import { getPresence } from "../../../../utils/presence";
+import {
+  formatPresenceText,
+  getPresence,
+  getPresenceUserId,
+  resolveOfflineLastSeen,
+} from "../../../../utils/presence";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import TranslatedMessage from "../../../common/TranslatedMessage";
 
@@ -227,6 +232,10 @@ const SMSInput = () => {
   const USER_ID = userDetails.id;
   const USER_NAME = userDetails.name;
   const remoteStatusClass = remotePresence.isOnline ? "online" : "offline";
+  const remotePresenceText = formatPresenceText(remotePresence, {
+    onlineText: t('online') || "Online",
+    offlineText: t('offline') || "Offline",
+  });
 
   useEffect(() => {
     const presence = getPresence(selectedUser || {});
@@ -1315,12 +1324,13 @@ const SMSInput = () => {
     };
 
     const onPresenceUpdate = (payload = {}) => {
-      if (!mounted || String(payload.userId) !== String(USER_ID)) return;
+      const presenceUserId = getPresenceUserId(payload);
+      if (!mounted || String(presenceUserId) !== String(USER_ID)) return;
       const presence = getPresence(payload);
-      setRemotePresence({
+      setRemotePresence((prev) => ({
         isOnline: presence.isOnline,
-        lastSeen: presence.lastSeen,
-      });
+        lastSeen: resolveOfflineLastSeen(presence, prev.lastSeen),
+      }));
     };
 
     const onCallRejected = (payload) => {
@@ -1445,7 +1455,7 @@ const SMSInput = () => {
             <div className="smsinput-user-details">
               <h3>{USER_NAME}</h3>
               <p className="smsinput-user-status">
-                {remotePresence.isOnline ? t('online') : t('offline')}
+                {remotePresenceText}
               </p>
             </div>
           </div>

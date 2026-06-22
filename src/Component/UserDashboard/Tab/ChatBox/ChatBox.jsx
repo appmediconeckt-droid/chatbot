@@ -13,7 +13,12 @@ import IncomingCallModal from "../../../common/IncomingCallModal/IncomingCallMod
 import { useUserTranslation, useUserApiTranslation } from "../../../../i18n/LanguageContext";
 import RatingModal from "../../../../components/RatingModal";
 import ratingService from "../../../../services/ratingService";
-import { getPresence } from "../../../../utils/presence";
+import {
+  formatPresenceText,
+  getPresence,
+  getPresenceUserId,
+  resolveOfflineLastSeen,
+} from "../../../../utils/presence";
 import TranslatedMessage from "../../../common/TranslatedMessage";
 
 const ChatBox = () => {
@@ -33,7 +38,7 @@ const ChatBox = () => {
       id: counselorId || null,
       name: "Dr. Suresh Reddy",
       specialization: "Clinical Psychologist",
-      online: true,
+      online: false,
       avatar: null,
       avatarType: "text",
       profilePhoto: null,
@@ -1180,16 +1185,17 @@ useEffect(() => {
     // Real-time presence updates for the counsellor we're chatting with.
     const onPresenceUpdate = (payload = {}) => {
       const counselorId = resolveCounselorId();
+      const presenceUserId = getPresenceUserId(payload);
       const presence = getPresence(payload);
-      if (String(payload.userId) === String(counselorId)) {
-        console.log(`[Chat Presence] Counselor ${payload.userId} is now ${presence.isOnline ? 'ONLINE' : 'OFFLINE'}`);
+      if (String(presenceUserId) === String(counselorId)) {
+        console.log(`[Chat Presence] Counselor ${presenceUserId} is now ${presence.isOnline ? 'ONLINE' : 'OFFLINE'}`);
         setCurrentCounselor((prev) =>
           prev
             ? {
                 ...prev,
                 online: presence.isOnline,
                 isOnline: presence.isOnline,
-                lastSeen: presence.lastSeen,
+                lastSeen: resolveOfflineLastSeen(presence, prev.lastSeen),
               }
             : prev,
         );
@@ -1635,6 +1641,10 @@ const renderMessageStatus = (message) => {
   const counselorName = currentCounselor?.name || "Counselor";
   const counselorPresence = getPresence(currentCounselor);
   const counselorOnline = counselorPresence.isOnline;
+  const counselorPresenceText = formatPresenceText(counselorPresence, {
+    onlineText: t('online') || "Online",
+    offlineText: t('offline') || "Offline",
+  });
 
   return (
     <div className="chatContainerFull">
@@ -1652,7 +1662,7 @@ const renderMessageStatus = (message) => {
               <div className="chatProfileInfo">
                 <h2 className="chatProfileName">{counselorName}</h2>
                 <p className="chatProfileStatus">
-                  {remoteIsTyping ? <span className="chatTypingText" role="status">{t('typing')}</span> : <span className="chatStatusText">{counselorOnline ? t('online') : t('offline')}</span>}
+                  {remoteIsTyping ? <span className="chatTypingText" role="status">{t('typing')}</span> : <span className="chatStatusText">{counselorPresenceText}</span>}
                 </p>
               </div>
             </div>

@@ -5,7 +5,12 @@ import socketService from "../../../../services/socketService";
 import "./CounselorDirectory.css";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import StarRating from "../../../../components/StarRating";
-import { getPresence } from "../../../../utils/presence";
+import {
+  formatPresenceText,
+  getPresence,
+  getPresenceUserId,
+  resolveOfflineLastSeen,
+} from "../../../../utils/presence";
 
 const getInitials = (name = "Counselor") =>
   name
@@ -30,7 +35,9 @@ const getProfilePhotoUrl = (profilePhoto) => {
 const isCounselorOnline = (counselor) =>
   counselor?.presenceStatus === "online" ||
   counselor?.hasActiveSession === true ||
-  (counselor?.isOnline === true && counselor?.isLoggedIn === true);
+  counselor?.socketOnline === true ||
+  counselor?.online === true ||
+  counselor?.isOnline === true;
 
 const CounselorTable = () => {
   const { t } = useUserTranslation();
@@ -163,7 +170,7 @@ const CounselorTable = () => {
     const onPresenceUpdate = (payload = {}) => {
       if (!mounted) return;
       const presence = getPresence(payload);
-      const userId = payload.userId;
+      const userId = getPresenceUserId(payload);
       const hasActiveSession = counselor =>
         counselor.hasActiveSession === true ||
         counselor.presenceStatus === "online";
@@ -185,7 +192,10 @@ const CounselorTable = () => {
                   ? isLoggedIn
                   : counselor.isLoggedIn,
                 socketOnline: presence.isOnline,
-                lastSeen,
+                lastSeen: resolveOfflineLastSeen(
+                  { ...presence, lastSeen },
+                  counselor.lastSeen,
+                ),
                 };
               })()
             : counselor,
@@ -354,6 +364,13 @@ const CounselorTable = () => {
             const profilePhotoUrl = getProfilePhotoUrl(counselor.profilePhoto);
             const online = isCounselorOnline(counselor);
             const isStartingChat = String(startingChatId) === String(id);
+            const presenceText = formatPresenceText(
+              { isOnline: online, lastSeen: counselor.lastSeen },
+              {
+                onlineText: t('online') || "Online",
+                offlineText: t('offline') || "Offline",
+              },
+            );
 
             return (
               <div key={id} className="counselor-card">
@@ -376,13 +393,16 @@ const CounselorTable = () => {
                     <p className="counselor-specialization">
                       {specializations[0] || counselor.qualification || "Counselor"}
                     </p>
+                    <p className={`counselor-presence-text ${online ? "online" : "offline"}`}>
+                      {presenceText}
+                    </p>
                   </div>
                   <div
                     className={`availability-badge ${
                       online ? "now" : ""
                     }`}
                   >
-                    {online ? t('online') : t('offline')}
+                    {presenceText}
                   </div>
                 </div>
 
