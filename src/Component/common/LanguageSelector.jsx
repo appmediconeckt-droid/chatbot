@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaSearch } from 'react-icons/fa';
 import { SUPPORTED_LANGUAGES } from '../../i18n/LanguageContext';
 import './LanguageSelector.css';
 
@@ -83,21 +83,15 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
             <div className="ud-lang-dropdown-header">
               {t ? t('select_language') : 'Select Language'}
             </div>
-            <input
-              type="text"
-              placeholder="Search language..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px 12px',
-                marginBottom: '8px',
-                borderRadius: '6px',
-                border: '1px solid #e0e0e0',
-                fontSize: '14px',
-                boxSizing: 'border-box',
-              }}
-            />
+            <div className="ud-lang-search">
+              <FaSearch className="ud-lang-search-icon" aria-hidden="true" />
+              <input
+                type="text"
+                placeholder="Search language..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
             {filteredLanguages.map((l) => (
               <button
                 key={l.code}
@@ -156,21 +150,13 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
           <div className="lang-modal-divider" />
 
           {/* Search Bar */}
-          <div style={{ padding: '12px', borderBottom: '1px solid #e0e0e0' }}>
+          <div className="lang-modal-search">
+            <FaSearch className="lang-modal-search-icon" aria-hidden="true" />
             <input
               type="text"
-              placeholder="🔍 Search language..."
+              placeholder="Search language..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '10px 12px',
-                borderRadius: '8px',
-                border: '1px solid #e0e0e0',
-                fontSize: '14px',
-                boxSizing: 'border-box',
-                fontFamily: 'inherit',
-              }}
               autoFocus
             />
           </div>

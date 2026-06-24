@@ -121,8 +121,8 @@
 .us-otp-page-input {
   width: 100%;
   box-sizing: border-box;
-  padding: 16px 20px;
-  font-size: 32px;
+  padding: 12px 20px;
+  /* font-size: 32px; */
   text-align: center;
   letter-spacing: 10px;
   border: 3px solid #e0e0e0;
@@ -130,6 +130,7 @@
   transition: all 0.3s;
   font-family: monospace;
   background: #fafbfc;
+  margin-top: 8px;
 }
 
 .us-otp-page-input:focus {

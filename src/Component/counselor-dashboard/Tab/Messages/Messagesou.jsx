@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaSearch } from "react-icons/fa";
 import "./Messagesou.css";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { API_BASE_URL } from "../../../../axiosConfig";
@@ -460,6 +461,7 @@ const SMSList = () => {
 
         {/* Search Bar (static) */}
         <div className="smslist-search">
+          <FaSearch className="search-icon" aria-hidden="true" />
           <input type="text" placeholder={t('search_chats')} disabled />
         </div>
 
@@ -518,6 +520,7 @@ const SMSList = () => {
 
       {/* Search Bar */}
       <div className="smslist-search">
+        <FaSearch className="search-icon" aria-hidden="true" />
         <input
           type="text"
           placeholder={t('search_chats')}

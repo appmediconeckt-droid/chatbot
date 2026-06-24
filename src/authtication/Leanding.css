@@ -766,6 +766,24 @@ main {
   justify-content: center;
   font-size: 2rem;
   border: 3px solid rgba(255, 255, 255, 0.3);
+  overflow: hidden;
+  font-weight: 700;
+}
+
+.doctor-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.landing-doctors-state {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 2rem;
+  border: 1px dashed var(--gray-300);
+  border-radius: var(--radius-lg);
+  color: var(--text-light);
+  text-align: center;
 }
 
 .doctor-name {
@@ -1482,6 +1500,80 @@ main {
   gap: var(--spacing-sm);
  
   align-items: center;
+  flex-wrap: wrap;
+}
+
+.guest-chat-tts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.6rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid var(--primary-light, #c7d2fe);
+  border-radius: 999px;
+  background: #f8fbff;
+  color: var(--primary);
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.guest-chat-tts-btn:hover:not(:disabled),
+.guest-chat-tts-btn--playing {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--white);
+}
+
+.guest-chat-tts-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.guest-chat-language-select {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.guest-chat-limit-card {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid #f5c06b;
+  border-radius: var(--radius-md);
+  background: #fff8e8;
+  color: var(--dark);
+  text-align: center;
+}
+
+.guest-chat-limit-card span {
+  font-size: 0.9rem;
+}
+
+.guest-chat-signup-btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 40px;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: var(--white);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.guest-chat-signup-btn:hover {
+  background: var(--primary-dark);
+  color: var(--white);
 }
 
 .chat-popup-input input {
@@ -2013,4 +2105,40 @@ main {
   main {
     padding-top: 0;
   }
+}
+
+.guest-chat-mic-btn {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-md);
+  background: var(--white);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.guest-chat-mic-btn:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: #f0f8ff;
+}
+
+.guest-chat-mic-btn--recording {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: var(--white);
+  animation: guest-chat-mic-pulse 1s ease-in-out infinite;
+}
+
+.guest-chat-mic-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+@keyframes guest-chat-mic-pulse {
+  50% { transform: scale(1.06); }
 }

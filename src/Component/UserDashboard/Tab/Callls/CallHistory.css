@@ -330,6 +330,14 @@
   margin-left: 10px;
 }
 
+.call-action-icon {
+  display: block;
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
 .call-action-btn:hover {
   background: #667eea;
   color: white;

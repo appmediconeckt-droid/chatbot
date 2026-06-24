@@ -307,8 +307,9 @@
 .counselorNameRow {
   display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 6px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 4px;
 }
 
 .counselorName {
@@ -327,15 +328,31 @@
   color: #94a3b8;
   font-weight: 500;
   flex-shrink: 0;
-  margin-left: 8px;
+}
+
+.counselorHeaderMeta {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.counselorDetailsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
 }
 
 .counselorLastMessageRow {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   gap: 8px;
-  margin-bottom: 6px;
+  min-width: 0;
+  flex: 1;
 }
 
 .counselorLastMessage {
@@ -366,10 +383,20 @@
 .counselorMetaInfo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 4px;
-  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+  flex-shrink: 0;
 }
+
+
+/* .counselorTimeContainer{
+  display: flex;
+  justify-content:space-between;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 700px;
+} */
 
 .counselorSpecialization {
   font-size: 11px;
@@ -401,7 +428,6 @@
 .counselorLastSeen {
   font-size: 10px;
   color: #94a3b8;
-  margin-top: 4px;
   display: flex;
   align-items: center;
   gap: 4px;

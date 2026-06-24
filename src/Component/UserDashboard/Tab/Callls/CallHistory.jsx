@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { FaPhoneAlt, FaSearch, FaVideo } from "react-icons/fa";
 
 import "./CallHistory.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
@@ -397,8 +398,7 @@ const CallHistory = ({ currentUser }) => {
 
   // Get icon for call type
   const getCallIcon = (type) => {
-    if (type === "video") return "📹";
-    return "📞";
+    return type === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />;
   };
 
   // Get status icon
@@ -423,7 +423,7 @@ const CallHistory = ({ currentUser }) => {
 
         {/* Search Bar */}
         <div className="call-search">
-          <span className="call-search-icon">🔍</span>
+          <FaSearch className="call-search-icon" aria-hidden="true" />
           <input
             type="text"
             className="call-search-input"
@@ -551,7 +551,11 @@ const CallHistory = ({ currentUser }) => {
                     }}
                     aria-label={`Call ${call.name}`}
                   >
-                    {call.type === "video" ? "📹" : "📞"}
+                    {call.type === "video" ? (
+                      <FaVideo className="call-action-icon" aria-hidden="true" />
+                    ) : (
+                      <FaPhoneAlt className="call-action-icon" aria-hidden="true" />
+                    )}
                   </button>
                 </div>
               ))}
@@ -561,7 +565,7 @@ const CallHistory = ({ currentUser }) => {
         {/* No Results */}
         {!isLoadingCalls && filteredCalls.length === 0 && (
           <div className="call-no-results">
-            <span className="call-no-results-icon">📞</span>
+            <FaPhoneAlt className="call-no-results-icon" aria-hidden="true" />
             <p>{t('no_calls')}</p>
             <small>Try changing your search or filter</small>
           </div>

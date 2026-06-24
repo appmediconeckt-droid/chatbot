@@ -5,23 +5,92 @@ import './Leanding.css';
 import logo from '../image/Mediconect Logo-3.png';
 import { API_BASE_URL } from '../axiosConfig';
 import { Link } from 'react-router-dom';
+import { SUPPORTED_LANGUAGES, useUserTranslation } from '../i18n/LanguageContext';
+import { translationService } from '../i18n/translationService';
+
+const GUEST_CHAT_LIMIT_MS = 5 * 60 * 1000;
+
+const containsNativeScript = (text) => /[^\u0000-\u024f\u2000-\u206f]/u.test(text);
+
+const translateTypedMessage = async (text, targetLanguage) => {
+  const targetBaseLanguage = String(targetLanguage || 'en-US').split('-')[0].toLowerCase();
+
+  // Never alter text written with a language keyboard (Devanagari, Tamil,
+  // Arabic, Chinese, etc.). English-typed text is translated to the selected
+  // language, matching the behaviour used in the app's chat experience.
+  if (targetBaseLanguage === 'en' || containsNativeScript(text)) return text;
+
+  const translated = await translationService.translate(text, targetLanguage);
+  return translated || text;
+};
 
 const Leanding = () => {
+  const { lang, setLang } = useUserTranslation();
   const [chatOpen, setChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState([
-    { 
-      id: 1, 
-      text: "Namaste! I'm your AI assistant. Main aapki kaise madad kar sakta hoon? (How can I help you today?)", 
-      sender: 'ai' 
-    }
-  ]);
+  const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(lang);
+  const [guestChatStartedAt, setGuestChatStartedAt] = useState(null);
+  const [guestChatExpired, setGuestChatExpired] = useState(false);
   // Echo this back to the backend so guest turns thread into one session
   // instead of every message looking like a brand-new first turn.
   const [aiSessionId, setAiSessionId] = useState(null);
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setSelectedLanguage(lang);
+  }, [lang]);
+
+  // The UI cutoff is paired with API enforcement, so guests cannot extend
+  // the five-minute preview by changing client-side state.
+  useEffect(() => {
+    if (!chatOpen || !guestChatStartedAt || guestChatExpired) return undefined;
+    const remaining = GUEST_CHAT_LIMIT_MS - (Date.now() - guestChatStartedAt);
+    if (remaining <= 0) {
+      setGuestChatExpired(true);
+      return undefined;
+    }
+    const timeout = window.setTimeout(() => setGuestChatExpired(true), remaining);
+    return () => window.clearTimeout(timeout);
+  }, [chatOpen, guestChatStartedAt, guestChatExpired]);
+
+  // Let the API create the opening reply. This makes the first message follow
+  // the selected language too, instead of showing a fixed Hinglish greeting.
+  useEffect(() => {
+    if (!chatOpen || chatMessages.length > 0 || isLoading || guestChatExpired) return;
+
+    const startChat = async () => {
+      setIsLoading(true);
+      try {
+        const response = await sendMessageToAPI('hello');
+        if (response?.success && response?.data) {
+          if (response.data.sessionId) setAiSessionId(response.data.sessionId);
+          setChatMessages([{
+            id: Date.now(),
+            text: response.data.aiResponse || response.data.message,
+            sender: 'ai',
+            quickReplies: response.data.quickReplies || null,
+          }]);
+        }
+      } catch (error) {
+        console.error('Error starting guest chat:', error);
+        setChatMessages([{
+          id: Date.now(),
+          text: 'Hello! How can I help you today?',
+          sender: 'ai',
+        }]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void startChat();
+    // sendMessageToAPI is recreated on render; the state guards above make
+    // this effect safe and avoid restarting an existing conversation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatOpen, chatMessages.length, isLoading, guestChatExpired, selectedLanguage]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -52,6 +121,7 @@ const Leanding = () => {
           message: message,
           history: [], // Guest: server threads via sessionId, history is fallback
           sessionId: aiSessionId,
+          language: selectedLanguage,
         },
         {
           headers: {
@@ -72,16 +142,22 @@ const Leanding = () => {
   // Strips quickReplies off prior AI messages so old buttons can't fire twice.
   const sendChat = async (text) => {
     const trimmed = (text || '').trim();
-    if (!trimmed) return;
-    const userMessage = { id: Date.now(), text: trimmed, sender: 'user' };
+    if (!trimmed || guestChatExpired) return;
+    setIsLoading(true);
+    let outgoingText = trimmed;
+    try {
+      outgoingText = await translateTypedMessage(trimmed, selectedLanguage);
+    } catch (error) {
+      console.warn('Outgoing message translation failed:', error);
+    }
+    const userMessage = { id: Date.now(), text: outgoingText, sender: 'user' };
     setChatMessages(prev => [
       ...prev.map(m => (m.sender === 'ai' && m.quickReplies ? { ...m, quickReplies: null } : m)),
       userMessage,
     ]);
-    setIsLoading(true);
 
     try {
-      const response = await sendMessageToAPI(trimmed);
+      const response = await sendMessageToAPI(outgoingText);
 
       let aiResponseText = "I understand. Could you tell me more about how you're feeling?";
       let quickReplies = null;
@@ -113,6 +189,10 @@ const Leanding = () => {
 
       setChatMessages(prev => [...prev, aiMessage]);
     } catch (error) {
+      if (error.response?.data?.code === 'GUEST_CHAT_LIMIT_REACHED') {
+        setGuestChatExpired(true);
+        return;
+      }
       let errorMessageText = "I'm having trouble connecting. Please try again or call our crisis helpline at 9152987821 if you need immediate support.";
 
       if (error.response) {
@@ -156,6 +236,17 @@ const Leanding = () => {
     }
   };
 
+  const openGuestChat = () => {
+    if (!guestChatStartedAt) setGuestChatStartedAt(Date.now());
+    setChatOpen(true);
+  };
+
+  const handleLanguageChange = (event) => {
+    const nextLanguage = event.target.value;
+    setSelectedLanguage(nextLanguage);
+    setLang(nextLanguage);
+  };
+
   return (
     <div className="mediconeckt">
       <Header onLoginClick={() => navigate('/role-selector')} />
@@ -182,11 +273,14 @@ const Leanding = () => {
           onClose={() => setChatOpen(false)}
           chatBodyRef={chatBodyRef}
           sendQuickReply={sendQuickReply}
+          selectedLanguage={selectedLanguage}
+          onLanguageChange={handleLanguageChange}
+          guestChatExpired={guestChatExpired}
         />
       )}
       
       {/* Chat Button */}
-      {!chatOpen && <ChatButton onClick={() => setChatOpen(true)} />}
+      {!chatOpen && <ChatButton onClick={openGuestChat} />}
     </div>
   );
 };
@@ -493,7 +587,7 @@ const FeaturesSection = () => {
 
 // ========== DOCTORS SECTION ==========
 const DoctorsSection = () => {
-  const doctors = [
+  const doctorExamples = [
     {
       id: 1,
       name: "Dr. Anjali Mehta",
@@ -541,6 +635,55 @@ const DoctorsSection = () => {
     },
   ];
 
+  const [doctors, setDoctors] = useState([]);
+  const [isLoadingDoctors, setIsLoadingDoctors] = useState(true);
+  const [doctorLoadError, setDoctorLoadError] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadDoctors = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors`);
+        const counselorList = response.data?.counsellors || response.data?.counselors || [];
+
+        if (isMounted) {
+          setDoctors(counselorList);
+          setDoctorLoadError(false);
+        }
+      } catch (error) {
+        console.error('Unable to load doctors for landing page:', error);
+        if (isMounted) {
+          setDoctors([]);
+          setDoctorLoadError(true);
+        }
+      } finally {
+        if (isMounted) setIsLoadingDoctors(false);
+      }
+    };
+
+    void loadDoctors();
+    return () => { isMounted = false; };
+  }, []);
+
+  const asList = (value) => Array.isArray(value)
+    ? value.filter(Boolean)
+    : typeof value === 'string' && value.trim()
+      ? [value.trim()]
+      : [];
+
+  const getPhotoUrl = (profilePhoto) => typeof profilePhoto === 'string'
+    ? profilePhoto
+    : profilePhoto?.url || null;
+
+  const getInitials = (name) => String(name || 'Doctor')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase();
+
   return (
     <section className="section doctors" id="doctors">
       <div className="container">
@@ -551,57 +694,72 @@ const DoctorsSection = () => {
           </p>
         </div>
         <div className="doctors-grid">
-          {doctors.map(doctor => (
-            <div className="doctor-card" key={doctor.id}>
+          {isLoadingDoctors && <p className="landing-doctors-state">Loading doctors...</p>}
+          {doctorLoadError && <p className="landing-doctors-state">Doctors are unavailable right now. Please try again shortly.</p>}
+          {!isLoadingDoctors && !doctorLoadError && doctors.map((doctor) => {
+            const name = doctor.fullName || doctor.name || 'Mental Health Expert';
+            const specializations = asList(doctor.specialization);
+            const languages = asList(doctor.languages);
+            const photoUrl = getPhotoUrl(doctor.profilePhoto);
+            const consultationModes = asList(doctor.consultationMode);
+            const experience = Number(doctor.experience) || 0;
+            return (
+            <div className="doctor-card" key={doctor._id || doctor.id}>
               <div className="doctor-header">
-                <div className="doctor-image">{doctor.image}</div>
+                <div className="doctor-image">
+                  {photoUrl ? <img src={photoUrl} alt={name} /> : getInitials(name)}
+                </div>
                 <div>
-                  <h3 className="doctor-name">{doctor.name}</h3>
-                  <p className="doctor-specialization">{doctor.specialization}</p>
+                  <h3 className="doctor-name">{name}</h3>
+                  <p className="doctor-specialization">{specializations[0] || doctor.qualification || 'Counselor'}</p>
                   <div className="doctor-rating">
                     <i className="fas fa-star"></i>
-                    <span>{doctor.rating}</span>
-                    <span className="doctor-patients">({doctor.patients} patients)</span>
+                    <span>{Number(doctor.rating || 0).toFixed(1)}</span>
+                    <span className="doctor-patients">({doctor.totalSessions || 0} sessions)</span>
                   </div>
                 </div>
               </div>
               <div className="doctor-details">
                 <div className="doctor-detail">
                   <i className="fas fa-graduation-cap"></i>
-                  <span>{doctor.education}</span>
+                  <span>{doctor.qualification || 'Qualified mental health professional'}</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-briefcase"></i>
-                  <span>{doctor.experience} experience</span>
+                  <span>{experience} years experience</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-hospital"></i>
-                  <span>{doctor.hospital}</span>
+                  <span>{consultationModes.join(', ') || 'Online consultation available'}</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-map-marker-alt"></i>
-                  <span>{doctor.location}</span>
+                  <span>{doctor.location || 'India'}</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-clock"></i>
-                  <span>{doctor.availability}</span>
+                  <span>{doctor.isOnline ? 'Available now' : 'View availability after sign in'}</span>
                 </div>
                 <div className="doctor-languages">
-                  {doctor.languages.map((lang, idx) => (
+                  {languages.slice(0, 5).map((lang, idx) => (
                     <span key={idx} className="language-tag">{lang}</span>
                   ))}
                 </div>
               </div>
               <div className="doctor-actions">
-                <button className="btn btn-outline">
+                <Link to="/role-selector" className="btn btn-outline">
                   <i className="fas fa-calendar"></i> Book Appointment
-                </button>
-                <button className="btn btn-primary">
+                </Link>
+                <Link to="/role-selector" className="btn btn-primary">
                   <i className="fas fa-video"></i> Consult Online
-                </button>
+                </Link>
               </div>
             </div>
-          ))}
+          );
+          })}
+          {!isLoadingDoctors && !doctorLoadError && doctors.length === 0 && (
+            <p className="landing-doctors-state">No doctors are available yet.</p>
+          )}
         </div>
       </div>
     </section>
@@ -827,7 +985,96 @@ const ChatPopup = ({
   onClose,
   chatBodyRef,
   sendQuickReply,
-}) => (
+  selectedLanguage,
+  onLanguageChange,
+  guestChatExpired,
+}) => {
+  const [speakingId, setSpeakingId] = useState(null);
+  const [ttsLoadingId, setTtsLoadingId] = useState(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const audioRef = useRef(null);
+  const recognitionRef = useRef(null);
+
+  useEffect(() => () => {
+    audioRef.current?.pause();
+    recognitionRef.current?.stop();
+    window.speechSynthesis?.cancel();
+  }, []);
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      recognitionRef.current?.stop();
+      setIsRecording(false);
+      return;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('Voice input is not supported in this browser. Please use Chrome or Edge.');
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = selectedLanguage || 'en-IN';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+      if (transcript) setNewMessage(transcript);
+    };
+    recognition.onerror = () => setIsRecording(false);
+    recognition.onend = () => setIsRecording(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsRecording(true);
+  };
+
+  const speakMessage = async (messageId, text) => {
+    if (speakingId === messageId) {
+      audioRef.current?.pause();
+      window.speechSynthesis?.cancel();
+      setSpeakingId(null);
+      return;
+    }
+
+    audioRef.current?.pause();
+    window.speechSynthesis?.cancel();
+    setTtsLoadingId(messageId);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/ai-chat/tts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, lang: selectedLanguage }),
+      });
+      if (!response.ok) throw new Error('TTS service unavailable');
+
+      const url = URL.createObjectURL(await response.blob());
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      setSpeakingId(messageId);
+      await audio.play();
+      audio.onended = audio.onerror = () => {
+        setSpeakingId(null);
+        URL.revokeObjectURL(url);
+      };
+    } catch (error) {
+      // Browser speech is a reliable fallback when the server voice is
+      // temporarily unavailable, and uses the language selected in the chat.
+      if (window.speechSynthesis) {
+        const speech = new SpeechSynthesisUtterance(text);
+        speech.lang = selectedLanguage || 'en-IN';
+        speech.rate = 0.9;
+        speech.onstart = () => setSpeakingId(messageId);
+        speech.onend = speech.onerror = () => setSpeakingId(null);
+        window.speechSynthesis.speak(speech);
+      }
+    } finally {
+      setTtsLoadingId(null);
+    }
+  };
+
+  return (
   <div className="chat-popup">
     <div className="chat-popup-content">
       <div className="chat-popup-header">
@@ -863,6 +1110,19 @@ const ChatPopup = ({
                   {i < message.text.split('\n').length - 1 && <br />}
                 </React.Fragment>
               ))}
+              {message.sender === 'ai' && (
+                <button
+                  type="button"
+                  className={`guest-chat-tts-btn ${speakingId === message.id ? 'guest-chat-tts-btn--playing' : ''}`}
+                  onClick={() => speakMessage(message.id, message.text)}
+                  disabled={ttsLoadingId === message.id}
+                  title={speakingId === message.id ? 'Stop speaking' : 'Listen to response'}
+                  aria-label={speakingId === message.id ? 'Stop speaking' : 'Listen to response'}
+                >
+                  <i className={`fas ${ttsLoadingId === message.id ? 'fa-spinner fa-spin' : speakingId === message.id ? 'fa-stop' : 'fa-volume-up'}`} />
+                  <span>{speakingId === message.id ? 'Stop' : 'Listen'}</span>
+                </button>
+              )}
               {message.sender === 'ai' &&
                 Array.isArray(message.quickReplies) &&
                 message.quickReplies.length > 0 && (
@@ -872,7 +1132,7 @@ const ChatPopup = ({
                         key={qr}
                         type="button"
                         className="chat-quick-reply-btn"
-                        disabled={isLoading}
+                        disabled={isLoading || guestChatExpired}
                         onClick={() => sendQuickReply && sendQuickReply(qr)}
                       >
                         {qr}
@@ -903,22 +1163,53 @@ const ChatPopup = ({
             </div>
           </div>
         )}
+
+        {guestChatExpired && (
+          <div className="guest-chat-limit-card" role="status">
+            <strong>Your 5-minute free chat has ended.</strong>
+            <span>Sign up to continue talking with the AI assistant.</span>
+            <Link className="guest-chat-signup-btn" to="/user-signup">
+              Sign up to continue
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="chat-popup-input">
+        <select
+          className="guest-chat-language-select"
+          value={selectedLanguage}
+          onChange={onLanguageChange}
+          disabled={isLoading || guestChatExpired}
+          aria-label="Select chat language"
+        >
+          {SUPPORTED_LANGUAGES.map((language) => (
+            <option key={language.code} value={language.code}>{language.label}</option>
+          ))}
+        </select>
         <input
           type="text"
-          placeholder=" Type in English or Hindi..."
+          placeholder={isRecording ? 'Listening...' : 'Type your message...'}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={handleKeyPress}
-          disabled={isLoading}
+          disabled={isLoading || guestChatExpired || isRecording}
           aria-label="Chat message input"
         />
+        <button
+          type="button"
+          className={`guest-chat-mic-btn ${isRecording ? 'guest-chat-mic-btn--recording' : ''}`}
+          onClick={toggleRecording}
+          disabled={isLoading || guestChatExpired}
+          title={isRecording ? 'Stop listening' : 'Speak your message'}
+          aria-label={isRecording ? 'Stop voice input' : 'Start voice input'}
+        >
+          <i className={`fas ${isRecording ? 'fa-stop' : 'fa-microphone'}`} />
+        </button>
         <button 
           className="btn btn-primary send-btn"
           onClick={sendMessage}
-          disabled={isLoading || !newMessage.trim()}
+          disabled={isLoading || guestChatExpired || !newMessage.trim()}
           aria-label="Send message"
         >
           <i className="fas fa-paper-plane"></i>
@@ -926,7 +1217,8 @@ const ChatPopup = ({
       </div>
     </div>
   </div>
-);
+  );
+};
 
 // ========== CHAT BUTTON COMPONENT ==========
 const ChatButton = ({ onClick }) => (

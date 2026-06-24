@@ -144,6 +144,56 @@
   background: #E2E8F0;
 }
 
+.lang-modal-search {
+  position: relative;
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.lang-modal-search input {
+  width: 100%;
+  padding: 10px 12px 10px 38px;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.lang-modal-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 24px;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.ud-lang-search {
+  position: relative;
+  margin-bottom: 8px;
+}
+
+.ud-lang-search input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.ud-lang-search-icon {
+  position: absolute;
+  top: 50%;
+  left: 11px;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 13px;
+  pointer-events: none;
+}
+
 /* Scrollable List */
 .lang-modal-list {
   flex: 1;

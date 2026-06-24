@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
+import VideoCallModal from "../CallModal/VideoCallModal";
 import './MyAppointments.css'; // Import the CSS file for styling
 const MyAppointments = () => {
   const { t } = useUserTranslation();
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,6 +20,9 @@ const MyAppointments = () => {
   const [selectedCounselorId, setSelectedCounselorId] = useState("");
   const [bookingDate, setBookingDate] = useState("");
   const [bookingNotes, setBookingNotes] = useState("");
+  const [actionLoading, setActionLoading] = useState(null);
+  const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+  const [selectedCall, setSelectedCall] = useState(null);
 
   const token =
     localStorage.getItem("token") || localStorage.getItem("accessToken");
@@ -164,6 +170,94 @@ const MyAppointments = () => {
     }
   };
 
+  const getCounselorId = (apt) =>
+    apt?.counselor?._id || apt?.counselor?.id || apt?.counselorId;
+
+  const handleChat = async (apt) => {
+    const counselorId = getCounselorId(apt);
+    if (!counselorId) return alert("Counselor information is unavailable.");
+
+    try {
+      setActionLoading(`chat-${apt._id}`);
+      const response = await axios.post(
+        `${API_BASE_URL}/api/chat/start`,
+        { counselorId },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const chatId = response.data?.chat?.id || response.data?.chatId;
+      navigate(`/chat/${counselorId}`, {
+        state: { chatId, counselor: apt.counselor },
+      });
+    } catch (error) {
+      const existingChatId = error?.response?.data?.chatId;
+      if (existingChatId) {
+        navigate(`/chat/${counselorId}`, {
+          state: { chatId: existingChatId, counselor: apt.counselor },
+        });
+        return;
+      }
+      alert(error?.response?.data?.message || "Unable to start chat. Please try again.");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCall = async (apt, mode) => {
+    const counselorId = getCounselorId(apt);
+    const userId = localStorage.getItem("userId");
+    if (!counselorId || !userId) return alert("Call information is unavailable. Please login again.");
+
+    try {
+      setActionLoading(`${mode}-${apt._id}`);
+      const response = await axios.post(
+        `${API_BASE_URL}/api/video/calls/initiate`,
+        {
+          initiatorId: userId,
+          initiatorType: "user",
+          receiverId: counselorId,
+          receiverType: "counsellor",
+          callType: mode === "voice" ? "audio" : "video",
+        },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!response.data?.success) throw new Error(response.data?.message || "Call request failed");
+      const callData = response.data.callData || {};
+      setSelectedCall({
+        id: callData.id || response.data.callId,
+        callId: response.data.callId || callData.callId,
+        roomId: response.data.roomId || callData.roomId,
+        name: callData.receiver?.displayName || callData.receiver?.fullName || apt.counselor?.fullName || "Counselor",
+        type: mode,
+        callType: mode,
+        status: response.data.status || "pending",
+        profilePic: callData.receiver?.profilePhoto || apt.counselor?.profilePhoto?.url || apt.counselor?.profilePhoto || null,
+        apiCallData: callData,
+        initiator: callData.initiator,
+        receiver: callData.receiver,
+        currentUserId: userId,
+        currentUserType: "user",
+      });
+      setIsCallModalOpen(true);
+    } catch (error) {
+      alert(error?.response?.data?.message || `Unable to start ${mode} call. Please try again.`);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleEndCall = async (callId) => {
+    if (!callId) return;
+    try {
+      await axios.put(
+        `${API_BASE_URL}/api/video/calls/${callId}/end`,
+        { userId: localStorage.getItem("userId"), endedBy: "user" },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+    } catch (error) {
+      console.warn("Could not end appointment call:", error);
+    }
+  };
+
   return (
     <div
       className="flex w-full gap-0 bg-[#f8f9ff] min-h-screen"
@@ -294,6 +388,30 @@ const MyAppointments = () => {
                         </span>
                         {t('view_details')}
                       </button>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2 border border-emerald-200 text-emerald-700 rounded-lg text-sm font-[500] hover:bg-emerald-50 transition-colors disabled:opacity-50"
+                        onClick={() => handleChat(apt)}
+                        disabled={actionLoading === `chat-${apt._id}`}
+                      >
+                        <span className="material-symbols-outlined text-sm">chat</span>
+                        Chat
+                      </button>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2 border border-violet-200 text-violet-700 rounded-lg text-sm font-[500] hover:bg-violet-50 transition-colors disabled:opacity-50"
+                        onClick={() => handleCall(apt, "voice")}
+                        disabled={actionLoading === `voice-${apt._id}`}
+                      >
+                        <span className="material-symbols-outlined text-sm">call</span>
+                        Voice Call
+                      </button>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-[500] hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                        onClick={() => handleCall(apt, "video")}
+                        disabled={actionLoading === `video-${apt._id}`}
+                      >
+                        <span className="material-symbols-outlined text-sm">videocam</span>
+                        Video Call
+                      </button>
                       {/* Appointment Details Modal */}
                       {showModal && selectedApt && (
                         <div
@@ -381,6 +499,18 @@ const MyAppointments = () => {
             )}
           </div>
         )}
+
+        <VideoCallModal
+          isOpen={isCallModalOpen}
+          onClose={() => {
+            setIsCallModalOpen(false);
+            setSelectedCall(null);
+          }}
+          callData={selectedCall}
+          callMode={selectedCall?.callType || selectedCall?.type}
+          currentUser={{ id: localStorage.getItem("userId"), role: "user" }}
+          onEndCall={handleEndCall}
+        />
 
         {/* Promo Banner */}
         <section className="relative overflow-hidden rounded-2xl bg-[#4648d4] p-8 text-white">

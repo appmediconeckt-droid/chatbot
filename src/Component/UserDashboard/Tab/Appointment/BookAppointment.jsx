@@ -1161,6 +1161,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaMapMarkerAlt, FaSearch } from "react-icons/fa";
 import "./BookAppointment.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
@@ -2081,7 +2082,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
             <div className="search-container-unique">
               {/* Search by Name */}
               <div className="search-input-wrapper-unique">
-                <span className="search-icon-unique">🔍</span>
+                <FaSearch className="search-icon-unique" aria-hidden="true" />
                 <input
                   type="text"
                   className="search-input-unique"
@@ -2101,7 +2102,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
               {/* Search by Location */}
               <div className="location-input-wrapper-unique">
-                <span className="location-icon-unique">📍</span>
+                <FaMapMarkerAlt className="location-icon-unique" aria-hidden="true" />
                 <input
                   type="text"
                   className="location-input-unique"

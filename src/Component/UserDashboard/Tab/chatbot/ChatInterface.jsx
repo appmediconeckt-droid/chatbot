@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaSearch } from 'react-icons/fa';
 import './ChatInterface.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
@@ -607,7 +608,7 @@ const ChatInterface = ({ setActiveTab }) => {
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <span className="counselorSearchIcon">🔍</span>
+                        <FaSearch className="counselorSearchIcon" aria-hidden="true" />
                     </div>
                 </div>
 
@@ -652,33 +653,37 @@ const ChatInterface = ({ setActiveTab }) => {
                                     <div className="counselorInfo">
                                         <div className="counselorNameRow">
                                             <h3 className="counselorName">{counselor.name}</h3>
-                                            <span className="counselorTime" title={counselor.fullDateTime}>
-                                                {formatTime(counselor.lastMessageTime)}
-                                            </span>
-                                        </div>
-
-                                        <div className="counselorLastMessageRow">
-                                            <p className="counselorLastMessage">{counselor.lastMessage}</p>
-                                            {counselor.unread > 0 && (
-                                                <span className="counselorUnreadBadge">{counselor.unread}</span>
-                                            )}
-                                        </div>
-
-                                        <div className="counselorMetaInfo">
-                                            <span className="counselorSpecialization">{counselor.specialization}</span>
-                                            {counselor.status === 'accepted' && (
-                                                <span className="counselorStatusBadge accepted">{t('accepted_status')}</span>
-                                            )}
-                                            {counselor.isExpired && (
-                                                <span className="counselorStatusBadge expired">{t('expired_status')}</span>
-                                            )}
-                                        </div>
-
-                                        {!counselor.online && counselor.lastSeen && (
-                                            <div className="counselorLastSeen">
-                                                {t('last_seen')}: {formatLastSeen(counselor.lastSeen)}
+                                            <div className="counselorHeaderMeta">
+                                                {!counselor.online && counselor.lastSeen && (
+                                                    <span className="counselorLastSeen">
+                                                        {t('last_seen')}: {formatLastSeen(counselor.lastSeen)}
+                                                    </span>
+                                                )}
+                                                <span className="counselorTime" title={counselor.fullDateTime}>
+                                                    {formatTime(counselor.lastMessageTime)}
+                                                </span>
                                             </div>
-                                        )}
+                                        </div>
+
+                                        <div className="counselorDetailsRow">
+                                            <div className="counselorLastMessageRow">
+                                                <p className="counselorLastMessage">{counselor.lastMessage}</p>
+                                                {counselor.unread > 0 && (
+                                                    <span className="counselorUnreadBadge">{counselor.unread}</span>
+                                                )}
+                                            </div>
+
+                                            <div className="counselorMetaInfo">
+                                                <span className="counselorSpecialization">{counselor.specialization}</span>
+                                                {counselor.status === 'accepted' && (
+                                                    <span className="counselorStatusBadge accepted">{t('accepted_status')}</span>
+                                                )}
+                                                {counselor.isExpired && (
+                                                    <span className="counselorStatusBadge expired">{t('expired_status')}</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        
                                     </div>
                                 </div>
                             </div>

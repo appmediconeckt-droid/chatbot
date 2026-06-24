@@ -23,6 +23,7 @@ export const SUPPORTED_LANGUAGES = [
   { code: 'el-GR', label: 'Ελληνικά (Greek)', name: 'Ελληνικά' },
   { code: 'en-GB', label: 'English (UK)', name: 'English (UK)' },
   { code: 'en-IN', label: 'English (India)', name: 'English (India)' },
+  { code: 'es-ES', label: 'Español (Spanish)', name: 'Español' },
   { code: 'fa-IR', label: 'فارسی (Persian)', name: 'فارسی' },
   { code: 'fil-PH', label: 'Filipino', name: 'Filipino' },
   { code: 'fi-FI', label: 'Suomi (Finnish)', name: 'Suomi' },

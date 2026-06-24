@@ -5,7 +5,34 @@ import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
 import { useUserTranslation } from "../../i18n/LanguageContext";
 import AvatarBuilder from "./AvatarBuilder";
+import { FaEdit, FaLocationArrow } from "react-icons/fa";
 
+const calculateAge = (dateOfBirth) => {
+  if (!dateOfBirth) return "";
+
+  const [year, month, day] = String(dateOfBirth).split("-").map(Number);
+  const birthDate = new Date(year, month - 1, day);
+
+  if (
+    !year ||
+    !month ||
+    !day ||
+    birthDate.getFullYear() !== year ||
+    birthDate.getMonth() !== month - 1 ||
+    birthDate.getDate() !== day
+  ) {
+    return "";
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - year;
+  const hasHadBirthdayThisYear =
+    today.getMonth() > month - 1 ||
+    (today.getMonth() === month - 1 && today.getDate() >= day);
+
+  if (!hasHadBirthdayThisYear) age -= 1;
+  return age >= 0 ? age : "";
+};
 
 
 const PatientProfile = () => {
@@ -459,12 +486,13 @@ const PatientProfile = () => {
   }, [isEditing]);
 
   const initializeEditForm = (data) => {
+    const dateOfBirth = data.personalInfo.dateOfBirth || "";
     setEditFormData({
       name: data.personalInfo.name || "",
       anonymous: data.personalInfo.anonymous || "",
-      age: data.personalInfo.age || "",
+      age: calculateAge(dateOfBirth),
       gender: data.personalInfo.gender || "",
-      dateOfBirth: data.personalInfo.dateOfBirth || "",
+      dateOfBirth,
       bloodGroup: data.personalInfo.bloodGroup || "",
       email: data.personalInfo.email || "",
       phone: data.personalInfo.phone || "",
@@ -570,12 +598,13 @@ const PatientProfile = () => {
     try {
       setIsSaving(true);
       const formData = new FormData();
+      const calculatedAge = calculateAge(editFormData.dateOfBirth);
 
       formData.append("fullName", editFormData.name);
       formData.append("anonymous", editFormData.anonymous || "");
       formData.append("email", editFormData.email);
       formData.append("phoneNumber", editFormData.phone);
-      formData.append("age", editFormData.age.toString());
+      formData.append("age", String(calculatedAge));
       formData.append("gender", editFormData.gender);
       formData.append("bloodGroup", editFormData.bloodGroup);
       formData.append("dateOfBirth", editFormData.dateOfBirth);
@@ -694,6 +723,15 @@ const PatientProfile = () => {
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
+    if (name === "dateOfBirth") {
+      setEditFormData((prev) => ({
+        ...prev,
+        dateOfBirth: value,
+        age: calculateAge(value),
+      }));
+      return;
+    }
+
     if (name.includes(".")) {
       const [parent, child] = name.split(".");
       setEditFormData((prev) => ({
@@ -704,6 +742,13 @@ const PatientProfile = () => {
       setEditFormData((prev) => ({ ...prev, [name]: value }));
     }
   };
+
+  useEffect(() => {
+    const calculatedAge = calculateAge(editFormData.dateOfBirth);
+    setEditFormData((prev) =>
+      prev.age === calculatedAge ? prev : { ...prev, age: calculatedAge },
+    );
+  }, [editFormData.dateOfBirth]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "Not specified";
@@ -813,7 +858,9 @@ const PatientProfile = () => {
                 <span className="btn-location-spinner" /> {t('profile.updating')}
               </>
             ) : (
-              <>📍 {t('profile.updateLocation')}</>
+              <>
+                <FaLocationArrow aria-hidden="true" /> {t('profile.updateLocation')}
+              </>
             )}
           </button>
           <button
@@ -821,7 +868,7 @@ const PatientProfile = () => {
             onClick={openEditModal}
             disabled={isSaving}
           >
-            ✏️ {t('profile.editProfile')}
+            <FaEdit aria-hidden="true" /> {t('profile.editProfile')}
           </button>
         </div>
       </div>
@@ -1128,8 +1175,8 @@ const PatientProfile = () => {
                     <input
                       type="number"
                       name="age"
-                      value={editFormData.age}
-                      onChange={handleEditFormChange}
+                      value={calculateAge(editFormData.dateOfBirth)}
+                      readOnly
                     />
                   </div>
                 </div>

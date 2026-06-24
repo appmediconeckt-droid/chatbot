@@ -82,7 +82,6 @@ const ChatPopup = ({
   sendQuickReply,
   sendChat,
   selectedLang,
-  onLangChange,
 }) => {
   const [isRecording, setIsRecording] = React.useState(false);
   const [speakingId, setSpeakingId] = React.useState(null);
@@ -365,7 +364,7 @@ const ChatPopup = ({
           )}
         </div>
         <div className="ud-chat-popup-footer">
-          <div className="ud-lang-picker-wrap" style={{ position: 'relative' }}>
+          <div className="ud-lang-picker-wrap" hidden>
             <button
               type="button"
               className="ud-lang-btn"
@@ -804,14 +803,9 @@ export default function UserDashboard() {
   // hard-coded "Hello! I'm your AI assistant" suppressed the warm onboarding.
   const [chatMessages, setChatMessages] = useState([]);
   const [aiSessionId, setAiSessionId] = useState(null);
-  const [selectedLang, setSelectedLang] = useState(() => getAiChatLanguage(lang));
-
-  // Sync the AI chat with the language chosen anywhere on the user dashboard.
-  // The next AI response, microphone input, and text-to-speech all use this
-  // updated locale without requiring the user to change it again in the chat.
-  useEffect(() => {
-    setSelectedLang(getAiChatLanguage(lang));
-  }, [lang]);
+  // The AI chat always follows the language selected for the user dashboard.
+  // It deliberately has no separate language preference or selector.
+  const selectedLang = getAiChatLanguage(lang);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -1681,7 +1675,6 @@ export default function UserDashboard() {
           sendQuickReply={sendQuickReply}
           sendChat={sendChat}
           selectedLang={selectedLang}
-          onLangChange={handleLangChange}
         />
       )}
 
