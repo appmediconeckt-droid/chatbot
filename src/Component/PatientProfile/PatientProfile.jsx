@@ -1107,7 +1107,7 @@ const PatientProfile = () => {
                       style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", color: "#fff" }}
                       onClick={() => setShowAvatarBuilder(true)}
                     >
-                      ✨ Create Avatar
+                      Choose Avatar
                     </button>
                     {!profileImageRemoved && (profileImage || patientData.personalInfo.profilePhoto) && (
                       <button
@@ -1119,7 +1119,7 @@ const PatientProfile = () => {
                       </button>
                     )}
                   </div>
-                  <small>Take a selfie → AI generates your cartoon avatar</small>
+                  <small>Select a dummy avatar and click Save Changes to update your profile.</small>
                 </div>
               </div>
 
@@ -1628,7 +1628,6 @@ const PatientProfile = () => {
           userName={editFormData.name || patientData.personalInfo.name}
           onSelect={handleAvatarSelect}
           onClose={() => setShowAvatarBuilder(false)}
-          autoStartCamera
         />
       )}
     </div>

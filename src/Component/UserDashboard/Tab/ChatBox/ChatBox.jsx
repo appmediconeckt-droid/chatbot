@@ -4097,6 +4097,7 @@ const ChatBox = () => {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
   const [isInitiatingCall, setIsInitiatingCall] = useState(false);
+  const [initiatingCallType, setInitiatingCallType] = useState(null);
   const [callError, setCallError] = useState(null);
   const [showIncomingModal, setShowIncomingModal] = useState(false);
   const [incomingCallData, setIncomingCallData] = useState({
@@ -4961,6 +4962,7 @@ const ChatBox = () => {
       setCallError("Counselor information not available");
       return;
     }
+    setInitiatingCallType(normalizedMode);
     setIsInitiatingCall(true);
     setCallError(null);
     try {
@@ -5010,6 +5012,7 @@ const ChatBox = () => {
       setIsVideoModalOpen(false);
     } finally {
       setIsInitiatingCall(false);
+      setInitiatingCallType(null);
     }
   };
 
@@ -5962,11 +5965,11 @@ const ChatBox = () => {
           </div>
           <div className="chatBoxHeaderRight">
             <button className={`chatActionBtn chatVideoBtn ${isInitiatingCall ? "disabled" : ""}`} onClick={handleVideoCall} disabled={isInitiatingCall} aria-label="Video call">
-              <span className="chatBtnIcon" aria-hidden="true">{isInitiatingCall ? <FaSpinner className="spinning" /> : <FaVideo />}</span>
+              <span className="chatBtnIcon" aria-hidden="true">{initiatingCallType === "video" ? <FaSpinner className="spinning" /> : <FaVideo />}</span>
               <span className="chatBtnTooltip">{t('video_call_tooltip')}</span>
             </button>
             <button className={`chatActionBtn chatAudioBtn ${isInitiatingCall ? "disabled" : ""}`} onClick={handleVoiceCall} disabled={isInitiatingCall} aria-label="Voice call">
-              <span className="chatBtnIcon" aria-hidden="true">{isInitiatingCall ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}</span>
+              <span className="chatBtnIcon" aria-hidden="true">{initiatingCallType === "voice" ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}</span>
               <span className="chatBtnTooltip">{t('voice_call_tooltip')}</span>
             </button>
             <div className="chatMoreOptions" ref={optionsRef}>

@@ -31,7 +31,10 @@ import {
   FaStop,
   FaRedoAlt,
   FaVolumeUp,
+  FaVolumeMute,
   FaSpinner,
+  FaMicrophoneSlash,
+  FaPhoneSlash,
 } from "react-icons/fa";
 
 import ChatInterface from "../Tab/chatbot/ChatInterface";
@@ -87,7 +90,264 @@ const ChatPopup = ({
   const [speakingId, setSpeakingId] = React.useState(null);
   const [ttsLoadingId, setTtsLoadingId] = React.useState(null);
   const [showLangPicker, setShowLangPicker] = React.useState(false);
+  const [aiVoiceOpen, setAiVoiceOpen] = React.useState(false);
+  const [aiVoiceStatus, setAiVoiceStatus] = React.useState("idle");
+  const [aiVoiceTime, setAiVoiceTime] = React.useState(0);
+  const [aiVoiceMuted, setAiVoiceMuted] = React.useState(false);
+  const [aiVoiceSpeakerOn, setAiVoiceSpeakerOn] = React.useState(true);
+  const [aiVoiceError, setAiVoiceError] = React.useState(null);
+  const [aiVoiceTranscript, setAiVoiceTranscript] = React.useState([]);
   const recognitionRef = React.useRef(null);
+  const aiVoicePcRef = React.useRef(null);
+  const aiVoiceMicStreamRef = React.useRef(null);
+  const aiVoiceDataChannelRef = React.useRef(null);
+  const aiVoiceAudioRef = React.useRef(null);
+  const aiVoiceTimerRef = React.useRef(null);
+
+  const stopAiVoiceTimer = () => {
+    if (aiVoiceTimerRef.current) {
+      clearInterval(aiVoiceTimerRef.current);
+      aiVoiceTimerRef.current = null;
+    }
+  };
+
+  const startAiVoiceTimer = () => {
+    stopAiVoiceTimer();
+    aiVoiceTimerRef.current = setInterval(() => {
+      setAiVoiceTime((prev) => prev + 1);
+    }, 1000);
+  };
+
+  const cleanupAiVoiceCall = ({ closeModal = false, nextStatus = "ended" } = {}) => {
+    stopAiVoiceTimer();
+    aiVoiceDataChannelRef.current?.close?.();
+    aiVoicePcRef.current?.close?.();
+    aiVoiceMicStreamRef.current?.getTracks?.().forEach((track) => track.stop());
+
+    if (aiVoiceAudioRef.current) {
+      aiVoiceAudioRef.current.srcObject = null;
+      aiVoiceAudioRef.current.muted = false;
+    }
+
+    aiVoiceDataChannelRef.current = null;
+    aiVoicePcRef.current = null;
+    aiVoiceMicStreamRef.current = null;
+    setAiVoiceMuted(false);
+    setAiVoiceSpeakerOn(true);
+    setAiVoiceStatus(nextStatus);
+
+    if (closeModal) {
+      setAiVoiceOpen(false);
+      setAiVoiceStatus("idle");
+      setAiVoiceTime(0);
+    }
+  };
+
+  React.useEffect(() => {
+    return () => cleanupAiVoiceCall({ closeModal: true });
+  }, []);
+
+  const formatAiVoiceTime = (seconds) => {
+    const mins = Math.floor(seconds / 60).toString().padStart(2, "0");
+    const secs = (seconds % 60).toString().padStart(2, "0");
+    return `${mins}:${secs}`;
+  };
+
+  const getAiVoiceStatusText = () => {
+    switch (aiVoiceStatus) {
+      case "connecting":
+        return "Connecting...";
+      case "listening":
+        return aiVoiceMuted ? "Muted" : "Listening...";
+      case "speaking":
+        return "AI speaking...";
+      case "ended":
+        return "Call ended";
+      case "error":
+        return "Connection failed";
+      default:
+        return "Ready";
+    }
+  };
+
+  const appendAiVoiceTranscript = (role, text) => {
+    const cleanText = String(text || "").trim();
+    if (!cleanText) return;
+
+    setAiVoiceTranscript((prev) => [
+      ...prev.slice(-5),
+      {
+        id: `${role}_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        role,
+        text: cleanText,
+      },
+    ]);
+  };
+
+  const handleAiVoiceRealtimeEvent = (event) => {
+    const type = event?.type || "";
+
+    if (type === "input_audio_buffer.speech_started") {
+      setAiVoiceStatus("listening");
+      return;
+    }
+
+    if (type.startsWith("response.audio")) {
+      setAiVoiceStatus("speaking");
+    }
+
+    if (type === "response.audio_transcript.done") {
+      appendAiVoiceTranscript("ai", event.transcript);
+    }
+
+    if (type === "conversation.item.input_audio_transcription.completed") {
+      appendAiVoiceTranscript("you", event.transcript);
+    }
+
+    if (type === "response.done") {
+      setAiVoiceStatus("listening");
+    }
+
+    if (type === "error") {
+      setAiVoiceStatus("error");
+      setAiVoiceError(event.error?.message || "AI voice call error");
+    }
+  };
+
+  const waitForIceGathering = (pc) =>
+    new Promise((resolve) => {
+      if (pc.iceGatheringState === "complete") {
+        resolve();
+        return;
+      }
+
+      const timeoutId = setTimeout(resolve, 1500);
+      const handleIceGatheringStateChange = () => {
+        if (pc.iceGatheringState === "complete") {
+          clearTimeout(timeoutId);
+          pc.removeEventListener("icegatheringstatechange", handleIceGatheringStateChange);
+          resolve();
+        }
+      };
+
+      pc.addEventListener("icegatheringstatechange", handleIceGatheringStateChange);
+    });
+
+  const startAiVoiceCall = async () => {
+    if (aiVoicePcRef.current) return;
+
+    setAiVoiceOpen(true);
+    setAiVoiceStatus("connecting");
+    setAiVoiceError(null);
+    setAiVoiceTranscript([]);
+    setAiVoiceTime(0);
+    setAiVoiceMuted(false);
+    setAiVoiceSpeakerOn(true);
+
+    try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Your browser does not support microphone access.");
+      }
+
+      const pc = new RTCPeerConnection();
+      aiVoicePcRef.current = pc;
+
+      const audioEl = aiVoiceAudioRef.current || document.createElement("audio");
+      audioEl.autoplay = true;
+      audioEl.playsInline = true;
+      audioEl.muted = false;
+
+      pc.ontrack = (event) => {
+        audioEl.srcObject = event.streams[0];
+      };
+
+      pc.onconnectionstatechange = () => {
+        const state = pc.connectionState;
+        if (state === "connected") {
+          setAiVoiceStatus("listening");
+          startAiVoiceTimer();
+        } else if (state === "failed" || state === "disconnected") {
+          setAiVoiceStatus("error");
+          setAiVoiceError("AI voice connection disconnected.");
+        } else if (state === "closed") {
+          stopAiVoiceTimer();
+        }
+      };
+
+      const dataChannel = pc.createDataChannel("oai-events");
+      aiVoiceDataChannelRef.current = dataChannel;
+      dataChannel.onmessage = (messageEvent) => {
+        try {
+          handleAiVoiceRealtimeEvent(JSON.parse(messageEvent.data));
+        } catch (error) {
+          console.warn("Unable to parse AI realtime event:", error);
+        }
+      };
+      dataChannel.onopen = () => {
+        dataChannel.send(
+          JSON.stringify({
+            type: "response.create",
+            response: {
+              instructions:
+                "Greet the user briefly as MediConeckt AI Assistant and ask how they are feeling right now.",
+            },
+          }),
+        );
+      };
+
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      aiVoiceMicStreamRef.current = micStream;
+      micStream.getTracks().forEach((track) => pc.addTrack(track, micStream));
+
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      await waitForIceGathering(pc);
+
+      const localSdp = pc.localDescription?.sdp || offer.sdp || "";
+      if (!localSdp.includes("v=0")) {
+        throw new Error("Browser could not create a valid voice-call SDP offer.");
+      }
+
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const response = await fetch(`${API_BASE_URL}/api/ai/realtime/session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/sdp",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: localSdp,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || "AI voice session could not be started.");
+      }
+
+      const answerSdp = await response.text();
+      await pc.setRemoteDescription({ type: "answer", sdp: answerSdp });
+    } catch (error) {
+      console.error("AI voice call error:", error);
+      cleanupAiVoiceCall({ nextStatus: "error" });
+      setAiVoiceOpen(true);
+      setAiVoiceError(error.message || "AI voice call start nahi ho paya.");
+    }
+  };
+
+  const toggleAiVoiceMute = () => {
+    const nextMuted = !aiVoiceMuted;
+    aiVoiceMicStreamRef.current?.getAudioTracks?.().forEach((track) => {
+      track.enabled = !nextMuted;
+    });
+    setAiVoiceMuted(nextMuted);
+  };
+
+  const toggleAiVoiceSpeaker = () => {
+    const nextSpeakerOn = !aiVoiceSpeakerOn;
+    if (aiVoiceAudioRef.current) {
+      aiVoiceAudioRef.current.muted = !nextSpeakerOn;
+    }
+    setAiVoiceSpeakerOn(nextSpeakerOn);
+  };
   const audioRef = React.useRef(null);
   const sendChatRef = React.useRef(sendChat);
 
@@ -263,6 +523,20 @@ const ChatPopup = ({
             </div>
           </div>
           <div className="ud-chat-header-actions">
+            <button
+              type="button"
+              className="ud-chat-icon-btn ud-chat-voice-call-btn"
+              onClick={startAiVoiceCall}
+              disabled={aiVoiceStatus === "connecting" || (aiVoiceOpen && aiVoiceStatus !== "error")}
+              title="AI Voice Call"
+              aria-label="Start AI voice call"
+            >
+              {aiVoiceStatus === "connecting" ? (
+                <FaSpinner className="ud-tts-spinner" aria-hidden="true" />
+              ) : (
+                <FaPhone aria-hidden="true" />
+              )}
+            </button>
             {onReset && (
               <button
                 type="button"
@@ -363,6 +637,69 @@ const ChatPopup = ({
             </div>
           )}
         </div>
+        {aiVoiceOpen && (
+          <div className="ud-ai-call-overlay" role="dialog" aria-modal="true" aria-label="AI Voice Call">
+            <div className="ud-ai-call-modal">
+              <audio ref={aiVoiceAudioRef} autoPlay playsInline className="ud-ai-call-audio" />
+              <div className="ud-ai-call-avatar" aria-hidden="true">
+                {aiVoiceStatus === "connecting" ? (
+                  <FaSpinner className="ud-tts-spinner" />
+                ) : (
+                  <FaRobot />
+                )}
+              </div>
+              <h3>AI Assistant</h3>
+              <p className="ud-ai-call-status">{getAiVoiceStatusText()}</p>
+              <div className="ud-ai-call-timer">{formatAiVoiceTime(aiVoiceTime)}</div>
+
+              {aiVoiceError && (
+                <div className="ud-ai-call-error">{aiVoiceError}</div>
+              )}
+
+              {aiVoiceTranscript.length > 0 && (
+                <div className="ud-ai-call-transcript">
+                  {aiVoiceTranscript.map((item) => (
+                    <p key={item.id} className={item.role === "you" ? "is-user" : "is-ai"}>
+                      <strong>{item.role === "you" ? "You" : "AI"}:</strong> {item.text}
+                    </p>
+                  ))}
+                </div>
+              )}
+
+              <div className="ud-ai-call-controls">
+                <button
+                  type="button"
+                  className={`ud-ai-call-control ${aiVoiceMuted ? "is-active" : ""}`}
+                  onClick={toggleAiVoiceMute}
+                  disabled={aiVoiceStatus === "connecting" || aiVoiceStatus === "error"}
+                  title={aiVoiceMuted ? "Unmute" : "Mute"}
+                  aria-label={aiVoiceMuted ? "Unmute microphone" : "Mute microphone"}
+                >
+                  {aiVoiceMuted ? <FaMicrophoneSlash /> : <FaMicrophone />}
+                </button>
+                <button
+                  type="button"
+                  className={`ud-ai-call-control ${!aiVoiceSpeakerOn ? "is-active" : ""}`}
+                  onClick={toggleAiVoiceSpeaker}
+                  disabled={aiVoiceStatus === "connecting" || aiVoiceStatus === "error"}
+                  title={aiVoiceSpeakerOn ? "Speaker off" : "Speaker on"}
+                  aria-label={aiVoiceSpeakerOn ? "Turn speaker off" : "Turn speaker on"}
+                >
+                  {aiVoiceSpeakerOn ? <FaVolumeUp /> : <FaVolumeMute />}
+                </button>
+                <button
+                  type="button"
+                  className="ud-ai-call-control ud-ai-call-end"
+                  onClick={() => cleanupAiVoiceCall({ closeModal: true })}
+                  title="End call"
+                  aria-label="End AI voice call"
+                >
+                  <FaPhoneSlash />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="ud-chat-popup-footer">
           <div className="ud-lang-picker-wrap" hidden>
             <button
@@ -807,6 +1144,15 @@ export default function UserDashboard() {
   // It deliberately has no separate language preference or selector.
   const selectedLang = getAiChatLanguage(lang);
 
+  const getAiReplyFromResponse = (responseData) => {
+  return (
+    responseData?.reply ||
+    responseData?.data?.aiResponse ||
+    responseData?.aiResponse ||
+    ""
+  );
+};
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
     checkMobile();
@@ -867,22 +1213,25 @@ export default function UserDashboard() {
       setIsLoading(true);
        try {
         const response = await axiosInstance.post(
-          `${API_BASE_URL}/api/ai-chat/send-message`,
+          `${API_BASE_URL}/api/ai/message`,
           { message: "hi", history: [], language: selectedLang },
         );
-        if (response.data?.success) {
-          if (response.data.data?.sessionId) {
-            setAiSessionId(response.data.data.sessionId);
-          }
-          setChatMessages([
-            {
-              id: Date.now(),
-              text: response.data.data.aiResponse,
-              sender: "ai",
-              quickReplies: response.data.data.quickReplies || null,
-            },
-          ]);
-        }
+       if (response.data?.success) {
+  const aiReply = getAiReplyFromResponse(response.data);
+
+  if (response.data.data?.sessionId) {
+    setAiSessionId(response.data.data.sessionId);
+  }
+
+  setChatMessages([
+    {
+      id: Date.now(),
+      text: aiReply || "Hi! Main aapki kaise madad kar sakta hu?",
+      sender: "ai",
+      quickReplies: response.data.data?.quickReplies || null,
+    },
+  ]);
+}
       }catch (err) {
         console.warn("[AI-CHAT] kickoff failed:", err.message);
         setChatMessages([
@@ -904,61 +1253,80 @@ export default function UserDashboard() {
   // Single send pipeline used by both the text input and the mood quick-reply
   // buttons. Strips quickReplies from older AI messages so old buttons don't
   // re-trigger after the user has already responded.
-  const sendChat = async (text) => {
-    const trimmed = (text || "").trim();
-    if (!trimmed) return;
-    const userMessage = { id: Date.now(), text: trimmed, sender: "user" };
-    setChatMessages((prev) => [
-      ...prev.map((m) =>
-        m.sender === "ai" && m.quickReplies ? { ...m, quickReplies: null } : m,
-      ),
-      userMessage,
-    ]);
-    setIsLoading(true);
+ const sendChat = async (text) => {
+  const trimmed = (text || "").trim();
+  if (!trimmed) return;
 
-    try {
-      const history = chatMessages.slice(-10).map((msg) => ({
-        role: msg.sender === "user" ? "user" : "assistant",
-        content: msg.text,
-      }));
-
-      const response = await axiosInstance.post(
-        `${API_BASE_URL}/api/ai-chat/send-message`,
-        {
-          message: userMessage.text,
-          history: history,
-          sessionId: aiSessionId,
-          language: selectedLang,
-        },
-      );
-
-      if (response.data && response.data.success) {
-        if (response.data.data?.sessionId) {
-          setAiSessionId(response.data.data.sessionId);
-        }
-        const aiResponse = {
-          id: Date.now() + 1,
-          text: response.data.data.aiResponse,
-          sender: "ai",
-          quickReplies: response.data.data.quickReplies || null,
-        };
-        setChatMessages((prev) => [...prev, aiResponse]);
-      } else {
-        throw new Error("Invalid AI response");
-      }
-    } catch (error) {
-      console.error("AI Chat error:", error);
-      const errorMessage = {
-        id: Date.now() + 1,
-        text: t('server_connection_error'),
-        sender: "ai",
-      };
-      setChatMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-      if (!chatOpen) setUnreadCount((prev) => prev + 1);
-    }
+  const userMessage = {
+    id: Date.now(),
+    text: trimmed,
+    sender: "user",
   };
+
+  setChatMessages((prev) => [
+    ...prev.map((m) =>
+      m.sender === "ai" && m.quickReplies ? { ...m, quickReplies: null } : m
+    ),
+    userMessage,
+  ]);
+
+  setIsLoading(true);
+
+  try {
+    const response = await axiosInstance.post(
+      `${API_BASE_URL}/api/ai/message`,
+      {
+        message: userMessage.text,
+        language: selectedLang,
+      },
+      {
+        timeout: 180000,
+      }
+    );
+
+    console.log("AI response:", response.data);
+
+    if (response.data && response.data.success) {
+      const aiReply =
+        response.data.reply ||
+        response.data.data?.aiResponse ||
+        response.data.aiResponse ||
+        "";
+
+      if (!aiReply) {
+        throw new Error("AI reply missing in response");
+      }
+
+      if (response.data.data?.sessionId) {
+        setAiSessionId(response.data.data.sessionId);
+      }
+
+      const aiResponse = {
+        id: Date.now() + 1,
+        text: aiReply,
+        sender: "ai",
+        quickReplies: response.data.data?.quickReplies || null,
+      };
+
+      setChatMessages((prev) => [...prev, aiResponse]);
+    } else {
+      throw new Error(response.data?.message || "Invalid AI response");
+    }
+  } catch (error) {
+    console.error("AI Chat error:", error?.response?.data || error.message);
+
+    const errorMessage = {
+      id: Date.now() + 1,
+      text: "AI reply nahi aa paya. Please try again.",
+      sender: "ai",
+    };
+
+    setChatMessages((prev) => [...prev, errorMessage]);
+  } finally {
+    setIsLoading(false);
+    if (!chatOpen) setUnreadCount((prev) => prev + 1);
+  }
+};
 
   const sendMessage = async () => {
     if (!newMessage.trim()) return;
@@ -993,7 +1361,7 @@ export default function UserDashboard() {
     setChatMessages([]);
     try {
       const response = await axiosInstance.post(
-        `${API_BASE_URL}/api/ai-chat/send-message`,
+        `${API_BASE_URL}/api/ai/message`,
         { message: "hi", history: [], language: newLang },
       );
       if (response.data?.success) {

@@ -183,6 +183,98 @@ const DEFAULT = {
   clothesColor:    "3c4f5c",
 };
 
+const DUMMY_AVATARS = [
+  {
+    id: "calm-pro",
+    label: "Calm Pro",
+    opts: {
+      ...DEFAULT,
+      skinColor: "edb98a",
+      top: "shortRound",
+      hairColor: "2c1b18",
+      eyes: "happy",
+      mouth: "smile",
+      clothing: "blazerAndShirt",
+      clothesColor: "3c4f5c",
+    },
+  },
+  {
+    id: "warm-smile",
+    label: "Warm Smile",
+    opts: {
+      ...DEFAULT,
+      skinColor: "d08b5b",
+      top: "longButNotTooLong",
+      hairColor: "4a312c",
+      eyes: "default",
+      eyebrows: "defaultNatural",
+      mouth: "smile",
+      clothing: "shirtCrewNeck",
+      clothesColor: "5199e4",
+    },
+  },
+  {
+    id: "friendly-care",
+    label: "Friendly Care",
+    opts: {
+      ...DEFAULT,
+      skinColor: "ffdbb4",
+      top: "bob",
+      hairColor: "724133",
+      eyes: "happy",
+      mouth: "twinkle",
+      clothing: "hoodie",
+      clothesColor: "ffafb9",
+    },
+  },
+  {
+    id: "steady-guide",
+    label: "Steady Guide",
+    opts: {
+      ...DEFAULT,
+      skinColor: "ae5d29",
+      top: "shortFlat",
+      hairColor: "2c1b18",
+      eyes: "default",
+      mouth: "serious",
+      facialHair: "beardLight",
+      facialHairColor: "2c1b18",
+      clothing: "collarAndSweater",
+      clothesColor: "25557c",
+    },
+  },
+  {
+    id: "soft-focus",
+    label: "Soft Focus",
+    opts: {
+      ...DEFAULT,
+      skinColor: "fd9841",
+      top: "curly",
+      hairColor: "a55728",
+      eyes: "closed",
+      mouth: "smile",
+      accessories: "round",
+      clothing: "shirtScoopNeck",
+      clothesColor: "a7ffc4",
+    },
+  },
+  {
+    id: "bright-day",
+    label: "Bright Day",
+    opts: {
+      ...DEFAULT,
+      skinColor: "614335",
+      top: "fro",
+      hairColor: "2c1b18",
+      eyes: "happy",
+      eyebrows: "raisedExcitedNatural",
+      mouth: "smile",
+      clothing: "overall",
+      clothesColor: "ffdeb5",
+    },
+  },
+];
+
 // ─── Build correct DiceBear URL ──────────────────────────────────────────────
 function buildUrl(opts, userName = "user") {
   const stableSeed = encodeURIComponent(
@@ -455,15 +547,16 @@ function analyzePhoto(imageElement) {
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
-const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false }) => {
-  const [opts, setOpts]             = useState({ ...DEFAULT });
+const AvatarBuilder = ({ userName, onSelect, onClose }) => {
+  const [opts, setOpts]             = useState({ ...DUMMY_AVATARS[0].opts });
   const [activeTab, setActiveTab]   = useState("skin");
-  const [phase, setPhase]           = useState("capture"); // "capture" | "result"
+  const [phase, setPhase]           = useState("result"); // "capture" | "result"
   const [analyzing, setAnalyzing]   = useState(false);
   const [capturedSrc, setCapturedSrc] = useState(null);
   const [cameraError, setCameraError] = useState(null);
   const [cameraActive, setCameraActive] = useState(false);
   const [cameraLoading, setCameraLoading] = useState(false);
+  const [selectedPresetId, setSelectedPresetId] = useState(DUMMY_AVATARS[0].id);
   const [selectedAvatarPayload, setSelectedAvatarPayload] = useState(null);
   const [profileImage, setProfileImage] = useState(null);
   const [isApplyingCustomization, setIsApplyingCustomization] = useState(false);
@@ -593,17 +686,8 @@ const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false })
     setCameraActive(false);
   };
 
-  // The Create Avatar action is a user click, so request the camera as soon as
-  // this builder opens. The visible Open Camera button remains available for
-  // retrying after a permission denial.
-  useEffect(() => {
-    if (!autoStartCamera) return undefined;
-
-    const timer = window.setTimeout(() => startCamera(), 0);
-    return () => window.clearTimeout(timer);
-    // Run once when the builder opens; startCamera uses the initial component state.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Camera selfie avatar generation is temporarily disabled. Users currently
+  // choose from dummy avatars and can customize the selected avatar manually.
 
   const runAnalysis = async (src) => {
     console.log("🔍 Starting analysis...");
@@ -774,8 +858,9 @@ const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false })
     setCameraError(null);
     setSelectedAvatarPayload(null);
     setProfileImage(null);
-    setPhase("capture");
-    setOpts({ ...DEFAULT });
+    setPhase("result");
+    setSelectedPresetId(DUMMY_AVATARS[0].id);
+    setOpts({ ...DUMMY_AVATARS[0].opts });
   };
 
   const applyAiCustomization = async () => {
@@ -836,7 +921,8 @@ const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false })
           accessory: opts.accessories,
           clothes: opts.clothing,
           shirtColor: opts.clothesColor,
-          source: capturedSrc ? "selfie-analysis" : "manual-builder",
+          source: selectedPresetId ? "dummy-preset" : "manual-builder",
+          presetId: selectedPresetId,
         },
       });
     }
@@ -866,13 +952,23 @@ const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false })
     </button>
   );
 
+  const selectPresetAvatar = (preset) => {
+    setSelectedPresetId(preset.id);
+    setSelectedAvatarPayload(null);
+    setProfileImage(null);
+    setCapturedSrc(null);
+    setCameraError(null);
+    setPreviewLoadFailed(false);
+    setOpts({ ...preset.opts });
+  };
+
   // ── Render ───────────────────────────────────────────────────
   return (
     <div className="ab-overlay" onClick={handleClose}>
       <div className={`ab-modal ${cameraActive ? "camera-active" : ""}`} onClick={e => e.stopPropagation()}>
 
         <div className="ab-header">
-          <h4>{phase === "capture" && !cameraActive ? "Take Your Photo" : phase === "capture" && cameraActive ? "Take Selfie" : "Your  Avatar"}</h4>
+          <h4>{phase === "capture" && cameraActive ? "Take Selfie" : "Choose Avatar"}</h4>
           <button className="ab-close" onClick={handleClose}>×</button>
         </div>
 
@@ -944,11 +1040,11 @@ const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false })
         {phase === "result" && (
           <>
             <div className="ab-result-top">
-              {capturedSrc ? (
+              {(capturedSrc || avatarUrl) ? (
                 <div className="ab-photo-thumb-wrap">
                   <img
-                    src={capturedSrc}
-                    alt="Your photo"
+                    src={capturedSrc || avatarUrl}
+                    alt="Selected avatar"
                     className="ab-photo-thumb"
                     ref={imgRef}
                     style={{
@@ -1038,6 +1134,28 @@ const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false })
                     ? "✨ Avatar generated! Customize features below ↓"
                     : "⏳ Avatar generating..."}
               </p>
+            )}
+
+            {!capturedSrc && (
+              <div className="ab-preset-grid" aria-label="Dummy avatar choices">
+                {DUMMY_AVATARS.map((preset) => {
+                  const presetUrl = buildUrl(preset.opts, `${userName || "user"}-${preset.id}`);
+                  const selected = selectedPresetId === preset.id;
+
+                  return (
+                    <button
+                      type="button"
+                      key={preset.id}
+                      className={`ab-preset-card ${selected ? "selected" : ""}`}
+                      onClick={() => selectPresetAvatar(preset)}
+                      aria-pressed={selected}
+                    >
+                      <img src={presetUrl} alt="" className="ab-preset-img" />
+                      <span>{preset.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
             {/* Tabs */}
@@ -1185,7 +1303,7 @@ const AvatarBuilder = ({ userName, onSelect, onClose, autoStartCamera = false })
                   {isApplyingCustomization ? "Applying..." : "Apply Changes"}
                 </button>
               )}
-              <button className="ab-reset-btn" onClick={handleRetake}>↩ Retake</button>
+              <button className="ab-reset-btn" onClick={handleRetake}>Reset</button>
               <button className="ab-cancel-btn" onClick={handleClose}>Cancel</button>
               <button className="ab-use-btn" onClick={handleUse}>✨ Use Avatar</button>
             </div>

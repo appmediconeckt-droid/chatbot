@@ -3287,6 +3287,15 @@
   pointer-events: none;
 }
 
+.ud-chat-voice-call-btn {
+  color: #f8fafc;
+}
+
+.ud-chat-voice-call-btn:hover:not(:disabled) {
+  background: rgba(34, 197, 94, 0.32);
+  border-color: rgba(187, 247, 208, 0.56);
+}
+
 /* Reset gets a satisfying rotate on hover to hint at its purpose. */
 .ud-chat-icon-btn.ud-chat-reset-btn:hover:not(:disabled) svg {
   animation: ud-chat-reset-spin 0.55s ease;
@@ -3306,4 +3315,147 @@
 .ud-chat-icon-btn.ud-chat-close-btn:hover:not(:disabled) {
   background: rgba(255, 90, 90, 0.32);
   border-color: rgba(255, 120, 120, 0.55);
+}
+
+.ud-ai-call-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(8px);
+}
+
+.ud-ai-call-modal {
+  width: 100%;
+  max-width: 320px;
+  border-radius: 18px;
+  padding: 20px 16px 18px;
+  background: #0f172a;
+  color: #f8fafc;
+  box-shadow: 0 20px 70px rgba(2, 6, 23, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  text-align: center;
+}
+
+.ud-ai-call-audio {
+  display: none;
+}
+
+.ud-ai-call-avatar {
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  color: #4f46e5;
+  font-size: 34px;
+  box-shadow: 0 0 0 10px rgba(125, 211, 252, 0.12);
+}
+
+.ud-ai-call-modal h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.ud-ai-call-status {
+  margin: 5px 0 0;
+  color: #bae6fd;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.ud-ai-call-timer {
+  margin-top: 12px;
+  font-size: 28px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.ud-ai-call-error {
+  margin-top: 12px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  color: #fecaca;
+  background: rgba(248, 113, 113, 0.14);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.ud-ai-call-transcript {
+  max-height: 104px;
+  overflow: auto;
+  margin-top: 12px;
+  padding: 10px;
+  border-radius: 12px;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ud-ai-call-transcript p {
+  margin: 0 0 7px;
+  color: #dbeafe;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.ud-ai-call-transcript p:last-child {
+  margin-bottom: 0;
+}
+
+.ud-ai-call-transcript .is-user {
+  color: #bbf7d0;
+}
+
+.ud-ai-call-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.ud-ai-call-control {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: #f8fafc;
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, opacity 0.18s ease;
+}
+
+.ud-ai-call-control:hover:not(:disabled) {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.ud-ai-call-control:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ud-ai-call-control.is-active {
+  background: #f59e0b;
+  color: #111827;
+}
+
+.ud-ai-call-end {
+  background: #ef4444;
+  color: #fff;
+  border-color: #f87171;
+}
+
+.ud-ai-call-end:hover:not(:disabled) {
+  background: #dc2626;
 }
