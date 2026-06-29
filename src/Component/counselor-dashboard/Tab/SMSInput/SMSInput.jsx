@@ -3509,7 +3509,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaChevronDown, FaPhoneAlt, FaSpinner, FaVideo, FaCamera } from "react-icons/fa";
+import { FaPhoneAlt, FaSpinner, FaVideo, FaCamera } from "react-icons/fa";
 import "./SMSInput.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
@@ -3547,6 +3547,7 @@ const SMSInput = () => {
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
   const [isInitiatingCall, setIsInitiatingCall] = useState(false);
+  const [initiatingCallType, setInitiatingCallType] = useState(null);
   const [callError, setCallError] = useState(null);
 
   // Receiving Call States
@@ -3571,7 +3572,7 @@ const SMSInput = () => {
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoSending, setPhotoSending] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState(null);
-  const [openMessageMenuId, setOpenMessageMenuId] = useState(null);
+  const [deletingCallId, setDeletingCallId] = useState(null);
   const [cameraStream, setCameraStream] = useState(null);
   const [showCameraPreview, setShowCameraPreview] = useState(false);
   const videoRef = useRef(null);
@@ -3735,6 +3736,11 @@ const SMSInput = () => {
     return null;
   };
 
+  const normalizeCallType = (callType = "video") => {
+    const normalized = String(callType || "").toLowerCase();
+    return normalized === "audio" || normalized === "voice" ? "voice" : "video";
+  };
+
   const fetchCallHistory = useCallback(async () => {
     try {
       const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
@@ -3764,22 +3770,26 @@ const SMSInput = () => {
       if (callsData.length > 0) {
         const formattedCalls = callsData
           .filter((call) => String(call.withId || call.receiverId || call.peerId || call.receiver?.id || call.peer?.id) === String(userId))
-          .map((call) => ({
-            id: call.id || call._id || `call_${Date.now()}_${Math.random()}`,
-            callId: call.callId || call.id,
-            type: call.callType === "audio" ? "voice" : "video",
-            direction: call.role === "initiator" || call.initiator?.id === counselorId ? "outgoing" : "incoming",
-            status: call.status || "completed",
-            time: new Date(call.timestamp || call.createdAt || call.startedAt || call.updatedAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            fullTime: call.timestamp || call.createdAt || call.startedAt || call.updatedAt || new Date().toISOString(),
-            timestamp: call.timestamp || call.createdAt || call.startedAt || call.updatedAt || new Date().toISOString(),
-            duration: call.duration || 0,
-            isCall: true,
-            _original: call,
-          }));
+          .map((call) => {
+            const normalizedCallType = normalizeCallType(call.callType || call.type);
+
+            return {
+              id: call.id || call._id || `call_${Date.now()}_${Math.random()}`,
+              callId: call.callId || call.id,
+              type: normalizedCallType,
+              direction: call.role === "initiator" || call.initiator?.id === counselorId ? "outgoing" : "incoming",
+              status: call.status || "completed",
+              time: new Date(call.timestamp || call.createdAt || call.startedAt || call.updatedAt).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              fullTime: call.timestamp || call.createdAt || call.startedAt || call.updatedAt || new Date().toISOString(),
+              timestamp: call.timestamp || call.createdAt || call.startedAt || call.updatedAt || new Date().toISOString(),
+              duration: call.duration || 0,
+              isCall: true,
+              _original: call,
+            };
+          });
         setCallHistory(formattedCalls);
       } else {
         setCallHistory([]);
@@ -3943,14 +3953,6 @@ const SMSInput = () => {
     });
   };
 
-  const toggleMessageMenu = (msg) => {
-    const messageId = getMessageIdentifier(msg);
-    if (!messageId) return;
-    setOpenMessageMenuId((currentId) =>
-      String(currentId) === String(messageId) ? null : messageId,
-    );
-  };
-
   const handleDeleteMessage = async (messageToDelete) => {
     if (!selectedUser || isSending) return;
 
@@ -3965,7 +3967,6 @@ const SMSInput = () => {
 
     try {
       setDeletingMessageId(messageId);
-      setOpenMessageMenuId(null);
       setError(null);
 
       const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
@@ -4393,6 +4394,7 @@ const SMSInput = () => {
       return;
     }
     setIsInitiatingCall(true);
+    setInitiatingCallType(normalizedMode);
     setCallError(null);
     try {
       const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
@@ -4444,6 +4446,39 @@ const SMSInput = () => {
       setCallError(error.response?.data?.message || error.message || "Failed to initiate call");
     } finally {
       setIsInitiatingCall(false);
+      setInitiatingCallType(null);
+    }
+  };
+
+  const handleDeleteCall = async (call) => {
+    const callIdToDelete = call?.callId || call?.id || call?._id;
+    if (!callIdToDelete) {
+      alert("This call cannot be deleted yet.");
+      return;
+    }
+
+    const confirmed = window.confirm("Are you sure you want to delete this call history item?");
+    if (!confirmed) return;
+
+    try {
+      setDeletingCallId(String(callIdToDelete));
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+      await axios.delete(`${API_BASE_URL}/api/video/calls/${encodeURIComponent(callIdToDelete)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      const matchesDeletedCall = (item) =>
+        String(item.callId || item.id || item._id) === String(callIdToDelete);
+
+      setCallHistory((prev) => prev.filter((item) => !matchesDeletedCall(item)));
+    } catch (error) {
+      console.error("Error deleting call:", error);
+      const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || "Failed to delete call";
+      alert(errorMsg);
+    } finally {
+      setDeletingCallId(null);
+      focusMessageInput();
     }
   };
 
@@ -4899,13 +4934,25 @@ const SMSInput = () => {
       }));
     };
 
+    const closeCallUi = () => {
+      setIsVideoModalOpen(false);
+      setSelectedCall(null);
+      setShowIncomingModal(false);
+      setIncomingCallData({
+        name: "",
+        avatar: "👤",
+        callId: "",
+        roomId: "",
+        callType: "video",
+      });
+      stopRinging();
+    };
+
     const onCallRejected = (payload) => {
       if (!mounted) return;
       const declinedBy = payload?.by ? ` by ${payload.by}` : "";
       setCallError(`Call was declined${declinedBy}.`);
-      setIsVideoModalOpen(false);
-      setSelectedCall(null);
-      setShowIncomingModal(false);
+      closeCallUi();
       fetchCallHistory();
     };
 
@@ -4913,11 +4960,15 @@ const SMSInput = () => {
       if (!mounted) return;
       const normalizedStatus = String(status || "").toLowerCase();
       if (normalizedStatus === "rejected" || normalizedStatus === "ended" || normalizedStatus === "cancelled" || normalizedStatus === "canceled" || normalizedStatus === "expired") {
-        setIsVideoModalOpen(false);
-        setSelectedCall(null);
-        setShowIncomingModal(false);
+        closeCallUi();
         fetchCallHistory();
       }
+    };
+
+    const onCallTerminated = (payload = {}) => {
+      if (!mounted) return;
+      closeCallUi();
+      fetchCallHistory();
     };
 
     const onConnectError = (err) => {
@@ -4934,6 +4985,10 @@ const SMSInput = () => {
       socket.on("presence-update", onPresenceUpdate);
       socket.on("call_rejected", onCallRejected);
       socket.on("call-status-update", onCallStatusUpdate);
+      socket.on("call_ended", onCallTerminated);
+      socket.on("call-ended", onCallTerminated);
+      socket.on("call_cancelled", onCallTerminated);
+      socket.on("call_expired", onCallTerminated);
       socket.on("connect_error", onConnectError);
     }).catch((err) => {
       console.error("[SMSInput] Socket connect failed:", err.message);
@@ -4949,6 +5004,10 @@ const SMSInput = () => {
         socket.off("presence-update", onPresenceUpdate);
         socket.off("call_rejected", onCallRejected);
         socket.off("call-status-update", onCallStatusUpdate);
+        socket.off("call_ended", onCallTerminated);
+        socket.off("call-ended", onCallTerminated);
+        socket.off("call_cancelled", onCallTerminated);
+        socket.off("call_expired", onCallTerminated);
         socket.off("connect_error", onConnectError);
       }
       chatSocketRef.current = null;
@@ -4958,7 +5017,9 @@ const SMSInput = () => {
   // ─── Render Call Item ──────────────────────────────────────────────────
   const renderCallItem = (call) => {
     const isOutgoing = call.direction === "outgoing";
-    const callIcon = call.type === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />;
+    const callType = normalizeCallType(call.callType || call.type);
+    const callLabel = callType === "video" ? "Video" : "Voice";
+    const callIcon = callType === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />;
     
     let statusText = "";
     let statusIcon = "";
@@ -5034,7 +5095,7 @@ const SMSInput = () => {
             <span style={{ fontSize: "16px" }}>{callIcon}</span>
             <div className="call-info" style={{ flex: 1 }}>
               <div style={{ fontWeight: "500", fontSize: "14px", color: "#111b21" }}>
-                {isOutgoing ? "Outgoing" : "Incoming"} {call.type} call
+                {isOutgoing ? "Outgoing" : "Incoming"} {callLabel} call
               </div>
               <div style={{ 
                 display: "flex", 
@@ -5055,6 +5116,20 @@ const SMSInput = () => {
             }}>
               {call.time}
             </span>
+            <button
+              type="button"
+              className="sms-message-delete-btn"
+              onClick={() => handleDeleteCall(call)}
+              disabled={String(deletingCallId) === String(call.callId || call.id || call._id)}
+              title="Delete call"
+              aria-label="Delete call"
+            >
+              {String(deletingCallId) === String(call.callId || call.id || call._id) ? (
+                <span className="delete-loading">⌛</span>
+              ) : (
+                <span className="delete-icon">🗑️</span>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -5193,25 +5268,25 @@ const SMSInput = () => {
         </div>
         <div className="smsinput-call-buttons">
           <button
-            className={`sms-call-btn sms-voice-call-btn ${isInitiatingCall ? "loading" : ""}`}
+            className={`sms-call-btn sms-voice-call-btn ${initiatingCallType === "voice" ? "loading" : ""}`}
             onClick={handleVoiceCall}
             disabled={isInitiatingCall}
             title="Voice call"
             aria-label="Voice call"
           >
             <span className="call-icon" aria-hidden="true">
-              {isInitiatingCall ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
+              {initiatingCallType === "voice" ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
             </span>
           </button>
           <button
-            className={`sms-call-btn sms-video-call-btn ${isInitiatingCall ? "loading" : ""}`}
+            className={`sms-call-btn sms-video-call-btn ${initiatingCallType === "video" ? "loading" : ""}`}
             onClick={handleVideoCall}
             disabled={isInitiatingCall}
             title="Video call"
             aria-label="Video call"
           >
             <span className="call-icon" aria-hidden="true">
-              {isInitiatingCall ? <FaSpinner className="spinning" /> : <FaVideo />}
+              {initiatingCallType === "video" ? <FaSpinner className="spinning" /> : <FaVideo />}
             </span>
           </button>
         </div>
@@ -5257,38 +5332,28 @@ const SMSInput = () => {
               ) : (
                 <div className={`smsinput-message ${item.sender === "me" ? "sent" : "received"}`}>
                   <div className="message-bubble">
-                    {/* Menu button for sent messages */}
-                    {item.sender === "me" && !item.isTemporary && (
-                      <button
-                        type="button"
-                        className="sms-message-menu-btn"
-                        onClick={() => toggleMessageMenu(item)}
-                        disabled={String(deletingMessageId) === String(getMessageIdentifier(item))}
-                        title="Message options"
-                        aria-label="Message options"
-                      >
-                        <FaChevronDown />
-                      </button>
-                    )}
-                    {String(openMessageMenuId) === String(getMessageIdentifier(item)) && (
-                      <div className="sms-message-options-menu">
-                        <button
-                          type="button"
-                          className="sms-message-options-item delete"
-                          onClick={() => handleDeleteMessage(item)}
-                          disabled={String(deletingMessageId) === String(getMessageIdentifier(item))}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    )}
-                    
                     {/* Render message content based on type */}
                     {renderMessageContent(item)}
                     
                     <div className="message-footer">
                       <span className="message-time">{item.time}</span>
                       {renderMessageStatus(item)}
+                      {item.sender === "me" && !item.isTemporary && item.status !== "sending" && item.status !== "error" && (
+                        <button
+                          type="button"
+                          className="sms-message-delete-btn"
+                          onClick={() => handleDeleteMessage(item)}
+                          disabled={String(deletingMessageId) === String(getMessageIdentifier(item))}
+                          title="Delete message"
+                          aria-label="Delete message"
+                        >
+                          {String(deletingMessageId) === String(getMessageIdentifier(item)) ? (
+                            <span className="delete-loading">⌛</span>
+                          ) : (
+                            <span className="delete-icon">🗑️</span>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

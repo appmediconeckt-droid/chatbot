@@ -471,6 +471,12 @@
     transform: translateY(-1px);
   }
 
+  .ud-privacy-btn-secondary {
+    background: #ffffff;
+    color: #4f46e5;
+    border: 1px solid #c7d2fe;
+  }
+
   /* Mobile Header */
   .ud-mobile-header {
     display: none;
@@ -3242,8 +3248,8 @@
 }
 
 .ud-chat-icon-btn {
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3252,7 +3258,7 @@
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: 50%;
-  font-size: 14px;
+  font-size: 18px;
   line-height: 1;
   cursor: pointer;
   transition: background 0.18s ease, transform 0.18s ease,
@@ -3261,8 +3267,8 @@
 }
 
 .ud-chat-icon-btn svg {
-  width: 14px;
-  height: 14px;
+  width: 18px;
+  height: 18px;
   display: block;
 }
 
@@ -3331,9 +3337,9 @@
 
 .ud-ai-call-modal {
   width: 100%;
-  max-width: 320px;
-  border-radius: 18px;
-  padding: 20px 16px 18px;
+  max-width: 360px;
+  border-radius: 20px;
+  padding: 24px 18px 20px;
   background: #0f172a;
   color: #f8fafc;
   box-shadow: 0 20px 70px rgba(2, 6, 23, 0.42);
@@ -3346,22 +3352,22 @@
 }
 
 .ud-ai-call-avatar {
-  width: 82px;
-  height: 82px;
-  margin: 0 auto 14px;
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 16px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #e0f2fe;
   color: #4f46e5;
-  font-size: 34px;
+  font-size: 42px;
   box-shadow: 0 0 0 10px rgba(125, 211, 252, 0.12);
 }
 
 .ud-ai-call-modal h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 800;
 }
 
@@ -3422,8 +3428,8 @@
 }
 
 .ud-ai-call-control {
-  width: 46px;
-  height: 46px;
+  width: 58px;
+  height: 58px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.14);
   display: inline-flex;
@@ -3433,6 +3439,12 @@
   color: #f8fafc;
   cursor: pointer;
   transition: transform 0.18s ease, background 0.18s ease, opacity 0.18s ease;
+}
+
+.ud-ai-call-control svg {
+  width: 24px;
+  height: 24px;
+  display: block;
 }
 
 .ud-ai-call-control:hover:not(:disabled) {

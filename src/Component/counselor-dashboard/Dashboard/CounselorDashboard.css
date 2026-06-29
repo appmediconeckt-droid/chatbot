@@ -3041,6 +3041,7 @@ button:focus {
   border-radius: 16px;
   border: 2px dashed #e5e7eb;
   font-size: 1.125rem;
+  margin: 35px 20px;
 }
 
 /* Redesigned Appointments Tab (Full Layout Stitch Style) */

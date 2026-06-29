@@ -4116,6 +4116,7 @@ const ChatBox = () => {
   const [remoteIsTyping, setRemoteIsTyping] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [deletingMessageId, setDeletingMessageId] = useState(null);
+  const [deletingCallId, setDeletingCallId] = useState(null);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [chatStatus, setChatStatus] = useState(null);
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(true);
@@ -4346,6 +4347,11 @@ const ChatBox = () => {
     return sessionChatIdRef.current;
   };
 
+  const normalizeCallType = (callType = "video") => {
+    const normalized = String(callType || "").toLowerCase();
+    return normalized === "audio" || normalized === "voice" ? "voice" : "video";
+  };
+
   // ─── Fetch Call History ──────────────────────────────────────────────────
   const fetchCallHistory = useCallback(async () => {
     try {
@@ -4373,13 +4379,13 @@ const ChatBox = () => {
       if (matchingCalls.length > 0) {
         const formattedCalls = matchingCalls.map((call) => {
           const timestamp = new Date(call.timestamp);
-          const isVideo = String(call.type).toLowerCase() === "video";
+          const normalizedCallType = normalizeCallType(call.callType || call.type);
           const isOutgoing = call.role === "initiator";
           
           return {
             id: call.id || `${call.timestamp}-${call.type}`,
             callId: call.id || call.callId,
-            type: isVideo ? "video" : "voice",
+            type: normalizedCallType,
             direction: isOutgoing ? "outgoing" : "incoming",
             status: call.status || "completed",
             time: !isNaN(timestamp.getTime()) 
@@ -5131,6 +5137,34 @@ const ChatBox = () => {
     }
   };
 
+  const handleDeleteCall = async (call) => {
+    const callIdToDelete = call?.callId || call?.id || call?._id;
+    if (!callIdToDelete) {
+      alert("This call cannot be deleted yet.");
+      return;
+    }
+
+    if (!window.confirm("Delete this call history item?")) return;
+
+    try {
+      setDeletingCallId(String(callIdToDelete));
+      const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+      await axios.delete(`${API_BASE_URL}/api/video/calls/${encodeURIComponent(callIdToDelete)}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      const matchesDeletedCall = (item) =>
+        String(item.callId || item.id || item._id) === String(callIdToDelete);
+
+      setCallHistory((current) => current.filter((item) => !matchesDeletedCall(item)));
+    } catch (error) {
+      alert(error.response?.data?.error || error.response?.data?.message || "Failed to delete call");
+    } finally {
+      setDeletingCallId(null);
+    }
+  };
+
   // ─── Initialize Chat ──────────────────────────────────────────────────
   useEffect(() => {
     const initializeChat = async () => {
@@ -5256,13 +5290,25 @@ const ChatBox = () => {
       setMessages((prev) => prev.map((msg) => msg.sender === "user" ? { ...msg, isRead: true } : msg));
     };
 
+    const closeCallUi = () => {
+      setIsVideoModalOpen(false);
+      setSelectedCall(null);
+      setShowIncomingModal(false);
+      setIncomingCallData({
+        name: "",
+        image: null,
+        callId: "",
+        roomId: "",
+        callType: "video",
+      });
+      stopRinging();
+    };
+
     const onCallRejected = (payload) => {
       if (!mounted) return;
       const declinedBy = payload?.by ? ` by ${payload.by}` : "";
       setCallError(`Call was declined${declinedBy}.`);
-      setIsVideoModalOpen(false);
-      setSelectedCall(null);
-      setShowIncomingModal(false);
+      closeCallUi();
       fetchCallHistory();
     };
 
@@ -5270,11 +5316,15 @@ const ChatBox = () => {
       if (!mounted) return;
       const normalizedStatus = String(status || "").toLowerCase();
       if (normalizedStatus === "rejected" || normalizedStatus === "ended" || normalizedStatus === "cancelled" || normalizedStatus === "canceled" || normalizedStatus === "expired") {
-        setIsVideoModalOpen(false);
-        setSelectedCall(null);
-        setShowIncomingModal(false);
+        closeCallUi();
         fetchCallHistory();
       }
+    };
+
+    const onCallTerminated = (payload = {}) => {
+      if (!mounted) return;
+      closeCallUi();
+      fetchCallHistory();
     };
 
     const onChatStatusUpdate = ({ status }) => {
@@ -5315,6 +5365,10 @@ const ChatBox = () => {
       socket.on("messages-read", onMessagesRead);
       socket.on("call_rejected", onCallRejected);
       socket.on("call-status-update", onCallStatusUpdate);
+      socket.on("call_ended", onCallTerminated);
+      socket.on("call-ended", onCallTerminated);
+      socket.on("call_cancelled", onCallTerminated);
+      socket.on("call_expired", onCallTerminated);
       socket.on("chat-status-update", onChatStatusUpdate);
       socket.on("presence-update", onPresenceUpdate);
       socket.on("connect_error", onConnectError);
@@ -5331,6 +5385,10 @@ const ChatBox = () => {
         socket.off("messages-read", onMessagesRead);
         socket.off("call_rejected", onCallRejected);
         socket.off("call-status-update", onCallStatusUpdate);
+        socket.off("call_ended", onCallTerminated);
+        socket.off("call-ended", onCallTerminated);
+        socket.off("call_cancelled", onCallTerminated);
+        socket.off("call_expired", onCallTerminated);
         socket.off("chat-status-update", onChatStatusUpdate);
         socket.off("presence-update", onPresenceUpdate);
         socket.off("connect_error", onConnectError);
@@ -5357,7 +5415,9 @@ const ChatBox = () => {
   // ─── Render Call Item ──────────────────────────────────────────────────
   const renderCallItem = (call) => {
     const isOutgoing = call.direction === "outgoing";
-    const callIcon = call.type === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />;
+    const callType = normalizeCallType(call.callType || call.type);
+    const callLabel = callType === "video" ? "Video" : "Voice";
+    const callIcon = callType === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />;
     
     let statusText = "";
     let statusIcon = "";
@@ -5431,7 +5491,7 @@ const ChatBox = () => {
             <span style={{ fontSize: "16px" }}>{callIcon}</span>
             <div className="call-info" style={{ flex: 1 }}>
               <div style={{ fontWeight: "500", fontSize: "14px", color: "#111b21" }}>
-                {isOutgoing ? "Outgoing" : "Incoming"} {call.type} call
+                {isOutgoing ? "Outgoing" : "Incoming"} {callLabel} call
               </div>
               <div style={{ 
                 display: "flex", 
@@ -5452,6 +5512,20 @@ const ChatBox = () => {
             }}>
               {call.time}
             </span>
+            <button
+              type="button"
+              className="message-delete-btn"
+              onClick={() => handleDeleteCall(call)}
+              disabled={String(deletingCallId) === String(call.callId || call.id || call._id)}
+              aria-label="Delete call"
+              title="Delete call"
+            >
+              {String(deletingCallId) === String(call.callId || call.id || call._id) ? (
+                <span className="delete-loading">⌛</span>
+              ) : (
+                <span className="delete-icon">🗑️</span>
+              )}
+            </button>
           </div>
         </div>
       </article>

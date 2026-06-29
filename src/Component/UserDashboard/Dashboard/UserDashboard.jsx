@@ -159,6 +159,8 @@ const ChatPopup = ({
         return "Connecting...";
       case "listening":
         return aiVoiceMuted ? "Muted" : "Listening...";
+      case "thinking":
+        return "Thinking...";
       case "speaking":
         return "AI speaking...";
       case "ended":
@@ -184,11 +186,44 @@ const ChatPopup = ({
     ]);
   };
 
+  const configureAiVoiceTurnDetection = (dataChannel) => {
+    if (!dataChannel || dataChannel.readyState !== "open") return;
+
+    dataChannel.send(
+      JSON.stringify({
+        type: "session.update",
+        session: {
+          type: "realtime",
+          audio: {
+            input: {
+              transcription: {
+                model: "gpt-4o-mini-transcribe",
+              },
+              turn_detection: {
+                type: "server_vad",
+                threshold: 0.5,
+                prefix_padding_ms: 300,
+                silence_duration_ms: 500,
+                create_response: true,
+                interrupt_response: true,
+              },
+            },
+          },
+        },
+      })
+    );
+  };
+
   const handleAiVoiceRealtimeEvent = (event) => {
     const type = event?.type || "";
 
     if (type === "input_audio_buffer.speech_started") {
       setAiVoiceStatus("listening");
+      return;
+    }
+
+    if (type === "input_audio_buffer.speech_stopped") {
+      setAiVoiceStatus("thinking");
       return;
     }
 
@@ -284,15 +319,8 @@ const ChatPopup = ({
         }
       };
       dataChannel.onopen = () => {
-        dataChannel.send(
-          JSON.stringify({
-            type: "response.create",
-            response: {
-              instructions:
-                "Greet the user briefly as MediConeckt AI Assistant and ask how they are feeling right now.",
-            },
-          }),
-        );
+        configureAiVoiceTurnDetection(dataChannel);
+        setAiVoiceStatus("listening");
       };
 
       const micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -806,6 +834,8 @@ const getAiChatLanguage = (language) => {
   return LANG_TO_VOICE[baseCode] || locale;
 };
 
+const AI_CHAT_ENDPOINT = `${API_BASE_URL}/api/ai-chat/send-message`;
+
 export default function UserDashboard() {
   const { t, lang, setLang } = useUserTranslation();
   const [, setLanguageUpdate] = useState(0);
@@ -821,7 +851,7 @@ export default function UserDashboard() {
 
   const handleAIContactClick = (name) => {
     setTargetCounselor(name);
-    setActive("Counselor");
+    setActive("Live Chat");
     setChatOpen(false);
   };
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -1144,14 +1174,17 @@ export default function UserDashboard() {
   // It deliberately has no separate language preference or selector.
   const selectedLang = getAiChatLanguage(lang);
 
-  const getAiReplyFromResponse = (responseData) => {
-  return (
-    responseData?.reply ||
+  const getAiReplyFromResponse = (responseData) =>
     responseData?.data?.aiResponse ||
+    responseData?.reply ||
     responseData?.aiResponse ||
-    ""
-  );
-};
+    "";
+
+  const getAiQuickRepliesFromResponse = (responseData) =>
+    responseData?.data?.quickReplies || responseData?.quickReplies || null;
+
+  const getAiSessionIdFromResponse = (responseData) =>
+    responseData?.data?.sessionId || responseData?.sessionId || null;
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 768);
@@ -1212,15 +1245,17 @@ export default function UserDashboard() {
     const kickoff = async () => {
       setIsLoading(true);
        try {
-        const response = await axiosInstance.post(
-          `${API_BASE_URL}/api/ai/message`,
-          { message: "hi", history: [], language: selectedLang },
-        );
+        const response = await axiosInstance.post(AI_CHAT_ENDPOINT, {
+          message: "hi",
+          history: [],
+          language: selectedLang,
+        });
        if (response.data?.success) {
   const aiReply = getAiReplyFromResponse(response.data);
+  const nextSessionId = getAiSessionIdFromResponse(response.data);
 
-  if (response.data.data?.sessionId) {
-    setAiSessionId(response.data.data.sessionId);
+  if (nextSessionId) {
+    setAiSessionId(nextSessionId);
   }
 
   setChatMessages([
@@ -1228,7 +1263,7 @@ export default function UserDashboard() {
       id: Date.now(),
       text: aiReply || "Hi! Main aapki kaise madad kar sakta hu?",
       sender: "ai",
-      quickReplies: response.data.data?.quickReplies || null,
+      quickReplies: getAiQuickRepliesFromResponse(response.data),
     },
   ]);
 }
@@ -1273,39 +1308,41 @@ export default function UserDashboard() {
   setIsLoading(true);
 
   try {
+    const history = chatMessages.slice(-10).map((message) => ({
+      role: message.sender === "user" ? "user" : "assistant",
+      content: message.text,
+    }));
+
     const response = await axiosInstance.post(
-      `${API_BASE_URL}/api/ai/message`,
+      AI_CHAT_ENDPOINT,
       {
         message: userMessage.text,
+        history,
+        sessionId: aiSessionId,
         language: selectedLang,
       },
-      {
-        timeout: 180000,
-      }
+      { timeout: 180000 },
     );
 
     console.log("AI response:", response.data);
 
     if (response.data && response.data.success) {
-      const aiReply =
-        response.data.reply ||
-        response.data.data?.aiResponse ||
-        response.data.aiResponse ||
-        "";
+      const aiReply = getAiReplyFromResponse(response.data);
 
       if (!aiReply) {
         throw new Error("AI reply missing in response");
       }
 
-      if (response.data.data?.sessionId) {
-        setAiSessionId(response.data.data.sessionId);
+      const nextSessionId = getAiSessionIdFromResponse(response.data);
+      if (nextSessionId) {
+        setAiSessionId(nextSessionId);
       }
 
       const aiResponse = {
         id: Date.now() + 1,
         text: aiReply,
         sender: "ai",
-        quickReplies: response.data.data?.quickReplies || null,
+        quickReplies: getAiQuickRepliesFromResponse(response.data),
       };
 
       setChatMessages((prev) => [...prev, aiResponse]);
@@ -1349,7 +1386,6 @@ export default function UserDashboard() {
 
   const handleLangChange = async (newLang) => {
     if (isLoading) return;
-    setSelectedLang(newLang);
     // sync with the global i18n context (strip -IN/-US suffix → base code)
     setLang(newLang);
     setIsLoading(true);
@@ -1360,17 +1396,19 @@ export default function UserDashboard() {
     setNewMessage("");
     setChatMessages([]);
     try {
-      const response = await axiosInstance.post(
-        `${API_BASE_URL}/api/ai/message`,
-        { message: "hi", history: [], language: newLang },
-      );
+      const response = await axiosInstance.post(AI_CHAT_ENDPOINT, {
+        message: "hi",
+        history: [],
+        language: getAiChatLanguage(newLang),
+      });
       if (response.data?.success) {
-        if (response.data.data?.sessionId) setAiSessionId(response.data.data.sessionId);
+        const nextSessionId = getAiSessionIdFromResponse(response.data);
+        if (nextSessionId) setAiSessionId(nextSessionId);
         setChatMessages([{
           id: Date.now(),
-          text: response.data.data.aiResponse,
+          text: getAiReplyFromResponse(response.data),
           sender: "ai",
-          quickReplies: response.data.data.quickReplies || null,
+          quickReplies: getAiQuickRepliesFromResponse(response.data),
         }]);
       }
     } catch (err) {
@@ -1573,39 +1611,151 @@ export default function UserDashboard() {
   const supportOptions = [
     {
       icon: <FaCommentDots />,
-      title: t('chat'),
-      text: t('chat_desc') || "Ask health-related questions, continue your chat history, and start again when you want a fresh conversation.",
-      action: t('open_chat'),
+      title: "AI wellness chat",
+      text: "Ask mental-wellness questions, use voice input, get quick replies, and continue your recent AI chat from the dashboard.",
+      action: "Open AI chat",
       onClick: () => handleMenuItemClick("Chat"),
     },
     {
       icon: <FaUserMd />,
-      title: t('counselor'),
-      text: t('counselor_desc') || "Search counselors, view details, and request chat or appointment support from the counselor section.",
-      action: t('view_counselor'),
-      onClick: () => handleMenuItemClick("Counselor"),
+      title: "Counselor support",
+      text: "Browse counselors by name, specialization, language, location, rating, and online status before starting care.",
+      action: "Find counselor",
+      onClick: () => handleMenuItemClick("Live Chat"),
     },
     {
       icon: <FaCalendarAlt />,
-      title: t('appointments'),
-      text: t('appointments_desc'),
-      action: t('my_appointments'),
+      title: "Appointments",
+      text: "View requested, confirmed, upcoming, completed, and cancelled counselor appointments in one place.",
+      action: "My appointments",
       onClick: () => handleMenuItemClick("MyAppointments"),
     },
     {
       icon: <FaVideo />,
-      title: t('calls_sessions'),
-      text: t('calls_sessions_desc'),
-      action: t('call_history'),
+      title: "Calls and sessions",
+      text: "Check voice/video session history and reconnect from accepted chats when both sides are available.",
+      action: "Call history",
       onClick: () => handleMenuItemClick("Video"),
     },
     {
       icon: <FaWallet />,
-      title: t('wallet_payments'),
-      text: t('wallet_payments_desc'),
-      action: t('open_wallet'),
+      title: "Wallet and payments",
+      text: "Add money, review transactions, download wallet reports, and contact support for payment questions.",
+      action: "Open wallet",
       onClick: () => handleMenuItemClick("Wallet"),
     },
+  ];
+
+  const helpChecklist = [
+    "Complete your profile details so counselors can understand the care context you choose to share.",
+    "Keep your email and phone verified; protected profile changes ask for OTP confirmation.",
+    "Allow location when possible so login verification and location-aware counselor discovery work properly.",
+    "For counselor chat, send a request first. The conversation opens fully after the counselor accepts.",
+    "Voice and video calls work from an accepted chat/session. Check camera, microphone, browser permissions, and internet quality.",
+    "Wallet reports and transaction history are available from the Wallet tab for payment follow-up.",
+    "In an emergency or immediate risk situation, contact local emergency services or a crisis helpline right away. This app is not a substitute for emergency care.",
+  ];
+
+  const commonIssues = [
+    {
+      title: "Profile or photo is not updating",
+      text: "Refresh the profile page, confirm required fields, and complete OTP verification if you changed email or phone. For location, use Settings > Update location.",
+    },
+    {
+      title: "Counselor chat is not opening",
+      text: "Open Counselor Support, choose an available counselor, and wait for the request to be accepted. Existing chats appear in the AI/chat area and counselor chat screens.",
+    },
+    {
+      title: "Call is not connecting",
+      text: "Make sure the counselor has accepted your chat/session, both users are online, and browser permissions for microphone/camera are allowed.",
+    },
+    {
+      title: "Appointment is missing",
+      text: "Check My Appointments filters for pending, confirmed, upcoming, completed, or cancelled status. A request may still be awaiting counselor confirmation.",
+    },
+    {
+      title: "Wallet or payment issue",
+      text: "Open Wallet to review the latest transaction and download a report. Share the date, amount, and transaction status when contacting support.",
+    },
+    {
+      title: "Language or translation looks wrong",
+      text: "Use the language selector from the dashboard/settings. Some counselor or medical details may remain in the language entered by the provider.",
+    },
+  ];
+
+  const privacyHighlights = [
+    {
+      icon: <FaCheckCircle />,
+      label: "OTP protected",
+      value: "Email and phone changes",
+    },
+    {
+      icon: <FaUser />,
+      label: "Anonymous care identity",
+      value: "Shown to counselors where supported",
+    },
+    {
+      icon: <FaLock />,
+      label: "Sensitive areas",
+      value: "Chats, calls, appointments, profile",
+    },
+  ];
+
+  const privacyDataGroups = [
+    {
+      icon: <FaUser />,
+      title: "Profile and health details",
+      text: "Your name, anonymous display name, age, gender, contact details, photo/avatar, address, emergency contact, basic medical details, and insurance fields are used to maintain your patient profile.",
+    },
+    {
+      icon: <FaCommentDots />,
+      title: "AI chat and counselor conversations",
+      text: "Messages, quick replies, chat status, attachments, accepted chat sessions, and counselor details are used to provide conversations, continue history, and support rating prompts.",
+    },
+    {
+      icon: <FaCalendarAlt />,
+      title: "Appointments and sessions",
+      text: "Appointment date, time, reason/notes, status, assigned counselor, call metadata, and session history help users and counselors manage care.",
+    },
+    {
+      icon: <FaWallet />,
+      title: "Wallet and transactions",
+      text: "Wallet balance, top-ups, transaction records, generated reports, and related support context are used for payment tracking.",
+    },
+    {
+      icon: <FaCog />,
+      title: "Location and device context",
+      text: "Location can be captured at signup, login, or manual refresh to verify sessions, support account safety, and improve location-aware care features.",
+    },
+    {
+      icon: <FaLock />,
+      title: "Security and account access",
+      text: "Login tokens, auth provider, password status, OTP verification, role, and account status are used to keep user and counselor areas separated and protected.",
+    },
+  ];
+
+  const privacyVisibility = [
+    {
+      title: "Visible to you",
+      text: "Your dashboard shows your profile, AI chats, counselor interactions, appointments, wallet, call history, ratings prompts, and location/update controls.",
+    },
+    {
+      title: "Shared for care",
+      text: "Counselors receive only the information needed to respond to your request, manage appointments, and conduct chat/call sessions. Your anonymous identity is preferred in counselor-facing views where available.",
+    },
+    {
+      title: "Protected changes",
+      text: "Email and phone updates require OTP verification. Password and location controls are handled from Settings/Profile so you can keep account data current.",
+    },
+  ];
+
+  const privacyChecklist = [
+    "Use your anonymous name for counselor interactions when you do not want your real name displayed.",
+    "Keep emergency contact and medical profile details accurate if you choose to fill them in.",
+    "Review browser permissions for location, camera, and microphone before calls.",
+    "Update location manually from Settings/Profile if the login prompt was skipped.",
+    "Do not share OTPs, passwords, or sensitive account details inside chat messages.",
+    "Use My Profile and Settings to update or review the data stored in your account.",
   ];
 
 
@@ -1618,7 +1768,9 @@ export default function UserDashboard() {
         <div>
           <h2 className="ud-section-title">{t('help_support')}</h2>
           <p>
-            {t('help_desc')}
+            Use this support center to jump to the right MediConeckt feature,
+            troubleshoot common issues, and understand when to contact urgent
+            help outside the app.
           </p>
         </div>
       </div>
@@ -1643,44 +1795,33 @@ export default function UserDashboard() {
         <article className="ud-role-help-card">
           <div className="ud-role-help-title">
             <FaUser />
-            <h3>{t('important_help')}</h3>
+            <h3>Before you contact support</h3>
           </div>
           <ul>
-            <li>{t('profile_help')}</li>
-            <li>{t('verification_help')}</li>
-            <li>{t('appointments_help')}</li>
-            <li>{t('calls_help')}</li>
-            <li>{t('payments_help')}</li>
-            <li>{t('security_help')}</li>
-            <li>{t('emergency_help')}</li>
+            {helpChecklist.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
           </ul>
         </article>
       </div>
 
       <div className="ud-issue-grid">
-        <article className="ud-issue-card">
-          <h3>{t('profile_not_updating')}</h3>
-          <p>{t('profile_not_updating_desc')}</p>
-        </article>
-        <article className="ud-issue-card">
-          <h3>{t('call_not_connecting')}</h3>
-          <p>{t('call_not_connecting_desc')}</p>
-        </article>
-        <article className="ud-issue-card">
-          <h3>{t('appointment_not_visible')}</h3>
-          <p>{t('appointment_not_visible_desc')}</p>
-        </article>
-        <article className="ud-issue-card">
-          <h3>{t('payment_issue')}</h3>
-          <p>{t('payment_issue_desc')}</p>
-        </article>
+        {commonIssues.map((issue) => (
+          <article className="ud-issue-card" key={issue.title}>
+            <h3>{issue.title}</h3>
+            <p>{issue.text}</p>
+          </article>
+        ))}
       </div>
 
       <div className="ud-support-strip">
         <div>
-          <h3>{t('need_help')}</h3>
+          <h3>Need more help?</h3>
           <p>
-            {t('need_help_desc')}
+            Update account details from Profile/Settings, or email support
+            with screenshots, browser name, user email/phone, and the exact
+            time the issue happened. For crisis support in India, call
+            9152987821 or local emergency services.
           </p>
         </div>
         <div className="ud-support-strip-actions">
@@ -1689,6 +1830,15 @@ export default function UserDashboard() {
           </button>
           <button type="button" className="ud-privacy-btn" onClick={handleSettingsClick}>
             {t('settings')}
+          </button>
+          <button
+            type="button"
+            className="ud-privacy-btn ud-privacy-btn-secondary"
+            onClick={() => {
+              window.location.href = "mailto:support@mediconeckt.com?subject=MediConeckt%20Support%20Request";
+            }}
+          >
+            Email support
           </button>
         </div>
       </div>
@@ -1704,91 +1854,59 @@ export default function UserDashboard() {
         <div>
           <h2 className="ud-section-title">{t('privacy')}</h2>
           <p>
-            {t('privacy_desc')}
+            This privacy center explains how MediConeckt uses your profile,
+            chat, appointment, wallet, call, location, and security data inside
+            this web dashboard.
           </p>
         </div>
       </div>
 
       <div className="ud-privacy-highlight-row">
-        <article className="ud-privacy-highlight">
-          <span><FaCheckCircle /></span>
-          <div>
-            <p>{t('otp_protected')}</p>
-            <strong>{t('email_phone')}</strong>
-          </div>
-        </article>
-        <article className="ud-privacy-highlight">
-          <span><FaCog /></span>
-          <div>
-            <p>{t('manage_from')}</p>
-            <strong>{t('profile_settings')}</strong>
-          </div>
-        </article>
-        <article className="ud-privacy-highlight">
-          <span><FaLock /></span>
-          <div>
-            <p>{t('sensitive_areas')}</p>
-            <strong>{t('health_chat_calls')}</strong>
-          </div>
-        </article>
+        {privacyHighlights.map((item) => (
+          <article className="ud-privacy-highlight" key={item.label}>
+            <span>{item.icon}</span>
+            <div>
+              <p>{item.label}</p>
+              <strong>{item.value}</strong>
+            </div>
+          </article>
+        ))}
       </div>
 
       <div className="ud-privacy-content">
-        <article className="ud-privacy-option">
-          <span className="ud-privacy-option-icon"><FaUser /></span>
-          <h3>{t('profile_data')}</h3>
-          <p>{t('profile_data_desc')}</p>
-        </article>
-        <article className="ud-privacy-option">
-          <span className="ud-privacy-option-icon"><FaCommentDots /></span>
-          <h3>{t('chat_appointment_data')}</h3>
-          <p>{t('chat_appointment_data_desc')}</p>
-        </article>
-        <article className="ud-privacy-option">
-          <span className="ud-privacy-option-icon"><FaLock /></span>
-          <h3>{t('security_data')}</h3>
-          <p>{t('security_data_desc')}</p>
-        </article>
-        <article className="ud-privacy-option">
-          <span className="ud-privacy-option-icon"><FaCog /></span>
-          <h3>{t('location_data')}</h3>
-          <p>{t('location_data_desc')}</p>
-        </article>
+        {privacyDataGroups.map((group) => (
+          <article className="ud-privacy-option" key={group.title}>
+            <span className="ud-privacy-option-icon">{group.icon}</span>
+            <h3>{group.title}</h3>
+            <p>{group.text}</p>
+          </article>
+        ))}
       </div>
 
       <div className="ud-privacy-content">
-        <article className="ud-privacy-option ud-privacy-option-soft">
-          <h3>{t('visible_to_you')}</h3>
-          <p>{t('visible_to_you_desc')}</p>
-        </article>
-        <article className="ud-privacy-option ud-privacy-option-soft">
-          <h3>{t('shared_for_care')}</h3>
-          <p>{t('shared_for_care_desc')}</p>
-        </article>
-        <article className="ud-privacy-option ud-privacy-option-soft">
-          <h3>{t('protected_changes')}</h3>
-          <p>{t('protected_changes_desc')}</p>
-        </article>
+        {privacyVisibility.map((item) => (
+          <article className="ud-privacy-option ud-privacy-option-soft" key={item.title}>
+            <h3>{item.title}</h3>
+            <p>{item.text}</p>
+          </article>
+        ))}
       </div>
 
       <div className="ud-privacy-policy-panel">
-        <h3>{t('privacy_checklist')}</h3>
+        <h3>Your privacy checklist</h3>
         <ul>
-          <li>{t('privacy_checklist_1')}</li>
-          <li>{t('privacy_checklist_2')}</li>
-          <li>{t('privacy_checklist_3')}</li>
-          <li>{t('privacy_checklist_4')}</li>
-          <li>{t('privacy_checklist_5')}</li>
-          <li>{t('privacy_checklist_6')}</li>
+          {privacyChecklist.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
         </ul>
       </div>
 
       <div className="ud-privacy-actions">
         <button type="button" className="ud-privacy-btn" onClick={handleProfileClick}>
-          {t('manage_profile_data')}
+          Manage profile data
         </button>
         <button type="button" className="ud-privacy-btn" onClick={handleSettingsClick}>
-          {t('security_settings')}
+          Security settings
         </button>
       </div>
     </section>
