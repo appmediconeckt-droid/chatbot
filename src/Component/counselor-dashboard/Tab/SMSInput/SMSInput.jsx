@@ -5338,7 +5338,7 @@ const SMSInput = () => {
                     <div className="message-footer">
                       <span className="message-time">{item.time}</span>
                       {renderMessageStatus(item)}
-                      {item.sender === "me" && !item.isTemporary && item.status !== "sending" && item.status !== "error" && (
+                      {!item.isTemporary && item.status !== "sending" && item.status !== "error" && (
                         <button
                           type="button"
                           className="sms-message-delete-btn"

@@ -4800,7 +4800,8 @@ const ChatBox = () => {
       if (response.data && response.data.messages) {
         if (response.data.chatStatus) setChatStatus(response.data.chatStatus);
         const transformedMessages = response.data.messages.map((msg, index) => ({
-          id: msg.id || index,
+          id: msg.messageId || msg._id || msg.id || index,
+          _id: msg._id || msg.id || null,
           messageId: msg.messageId,
           text: msg.content,
           sender: msg.senderRole === "user" ? "user" : "counselor",
@@ -4898,7 +4899,8 @@ const ChatBox = () => {
         const alreadyHas = withoutTemp.some((m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId);
         if (alreadyHas) return withoutTemp;
         return [...withoutTemp, {
-          id: sentMsg.id || sentMsg._id,
+          id: sentMsg.messageId || sentMsg._id || sentMsg.id,
+          _id: sentMsg._id || sentMsg.id || null,
           messageId: sentMsg.messageId,
           text: sentMsg.content,
           sender: "user",
@@ -4918,7 +4920,8 @@ const ChatBox = () => {
         const alreadyHas = withoutTemp.some((m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId);
         if (alreadyHas) return withoutTemp;
         return [...withoutTemp, {
-          id: sentMsg.id || sentMsg._id,
+          id: sentMsg.messageId || sentMsg._id || sentMsg.id,
+          _id: sentMsg._id || sentMsg.id || null,
           messageId: sentMsg.messageId,
           text: sentMsg.content,
           sender: "user",
@@ -5114,8 +5117,10 @@ const ChatBox = () => {
     }
   };
 
+  const getMessageIdentifier = (message) => message?.messageId || message?._id || message?.id;
+
   const handleDeleteMessage = async (message) => {
-    const messageId = message?.id || message?._id || message?.messageId;
+    const messageId = getMessageIdentifier(message);
     if (!messageId || String(messageId).startsWith("temp_")) return;
     if (!window.confirm("Delete this message and its attachment?")) return;
 
@@ -5126,7 +5131,10 @@ const ChatBox = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const matchesDeletedMessage = (item) =>
-        [item.id, item._id, item.messageId].map(String).includes(String(messageId));
+        [item.id, item._id, item.messageId]
+          .filter(Boolean)
+          .map(String)
+          .includes(String(messageId));
       setMessages((current) => current.filter((item) => !matchesDeletedMessage(item)));
       setOriginalMessages((current) => current.filter((item) => !matchesDeletedMessage(item)));
     } catch (error) {
@@ -5255,7 +5263,8 @@ const ChatBox = () => {
         return;
       }
       const transformedMessage = {
-        id: messageData.id || messageData.messageId || `rt_${Date.now()}`,
+        id: messageData.messageId || messageData._id || messageData.id || `rt_${Date.now()}`,
+        _id: messageData._id || messageData.id || null,
         messageId: messageData.messageId,
         text: messageData.content,
         sender: messageData.senderRole === "user" ? "user" : "counselor",
@@ -5533,13 +5542,41 @@ const ChatBox = () => {
   };
 
   // ─── FIXED: Render Message Content ────────────────────────────────────
+  const isImageMessage = (item) => {
+    const contentType = String(item.contentType || "").toLowerCase();
+    const mimeType = String(item.attachmentMimeType || "").toLowerCase();
+    const url = String(item.attachmentUrl || "");
+    const name = String(item.attachmentName || item.text || "");
+
+    return (
+      contentType === "image" ||
+      contentType.startsWith("image/") ||
+      mimeType.startsWith("image/") ||
+      url.startsWith("data:image") ||
+      url.startsWith("blob:") ||
+      /\.(jpg|jpeg|png|gif|webp|bmp|svg|heic|heif)(\?|$)/i.test(url) ||
+      /\.(jpg|jpeg|png|gif|webp|bmp|svg|heic|heif)$/i.test(name)
+    );
+  };
+
+  const getDisplayMessageText = (item, isImage) => {
+    const text = String(item.text || "");
+    if (!isImage || !text) return text;
+
+    const attachmentName = String(item.attachmentName || "");
+    const normalizedText = text.replace(/^📎\s*/, "").trim();
+    const isFilenameOnly =
+      normalizedText === attachmentName ||
+      (attachmentName && normalizedText.endsWith(attachmentName) && normalizedText.length <= attachmentName.length + 4) ||
+      /^photo_\d+\.(jpg|jpeg|png|webp|heic|heif)$/i.test(normalizedText) ||
+      /^image_\d+\.(jpg|jpeg|png|webp|heic|heif)$/i.test(normalizedText);
+
+    return isFilenameOnly ? "" : text;
+  };
+
   const renderMessageContent = (item) => {
-    // Check if it's an image
-    const isImage = item.contentType === "IMAGE" || 
-                    (item.attachmentUrl && 
-                     (item.attachmentUrl.startsWith('data:image') || 
-                      item.attachmentUrl.startsWith('blob:') ||
-                      /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(item.attachmentUrl)));
+    const isImage = isImageMessage(item);
+    const displayText = getDisplayMessageText(item, isImage);
 
     // Check if it's a file (non-image)
     const isFile = item.contentType === "FILE" || 
@@ -5566,9 +5603,9 @@ const ChatBox = () => {
               }
             }}
           />
-          {item.text && item.text !== item.attachmentName && (
+          {displayText && (
             <div className="message-text" style={{ marginTop: '4px' }}>
-              <TranslatedMessage text={item.text} translate={translate} lang={lang} />
+              <TranslatedMessage text={displayText} translate={translate} lang={lang} />
             </div>
           )}
         </div>
@@ -5590,9 +5627,9 @@ const ChatBox = () => {
               {item.attachmentName || item.text || 'Attachment'}
             </a>
           </div>
-          {item.text && item.text !== item.attachmentName && (
+          {displayText && displayText !== item.attachmentName && (
             <div className="message-text" style={{ marginTop: '4px' }}>
-              <TranslatedMessage text={item.text} translate={translate} lang={lang} />
+              <TranslatedMessage text={displayText} translate={translate} lang={lang} />
             </div>
           )}
         </div>
@@ -5661,7 +5698,8 @@ const ChatBox = () => {
         
         // IMPORTANT: Keep the image preview URL
         const newMessage = {
-          id: sentMsg.id || sentMsg._id,
+          id: sentMsg.messageId || sentMsg._id || sentMsg.id,
+          _id: sentMsg._id || sentMsg.id || null,
           messageId: sentMsg.messageId,
           text: sentMsg.content || (isImage ? "📷 Image" : `📎 ${file.name}`),
           sender: "user",
@@ -5690,7 +5728,8 @@ const ChatBox = () => {
         );
         if (alreadyHas) return withoutTemp;
         const newMessage = {
-          id: sentMsg.id || sentMsg._id,
+          id: sentMsg.messageId || sentMsg._id || sentMsg.id,
+          _id: sentMsg._id || sentMsg.id || null,
           messageId: sentMsg.messageId,
           text: sentMsg.content || (isImage ? "📷 Image" : `📎 ${file.name}`),
           sender: "user",
@@ -5744,19 +5783,21 @@ const ChatBox = () => {
       // Show temporary message with local preview
       const tempFileMessage = {
         id: `temp_photo_${Date.now()}`,
-        text: "📷 Photo",
+        text: "",
         sender: "user",
         senderRole: "user",
         time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
         fullTime: new Date().toISOString(),
         contentType: "IMAGE",
         attachmentUrl: photoPreview,
-        attachmentName: `photo_${Date.now()}.jpg`,
+        attachmentName: file.name,
+        attachmentMimeType: file.type,
         status: "sending",
         isTemporary: true,
         isCall: false,
       };
       setMessages((prev) => [...prev, tempFileMessage]);
+      setOriginalMessages((prev) => [...prev, tempFileMessage]);
       
       const sentMsg = await sendMessageToAPI({ file });
       
@@ -5771,16 +5812,18 @@ const ChatBox = () => {
         return [
           ...withoutTemp,
           {
-            id: sentMsg.id || sentMsg._id,
+            id: sentMsg.messageId || sentMsg._id || sentMsg.id,
+            _id: sentMsg._id || sentMsg.id || null,
             messageId: sentMsg.messageId,
-            text: sentMsg.content || "📷 Photo",
+            text: sentMsg.content || "",
             sender: "user",
             senderRole: "user",
             time: new Date(sentMsg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
             fullTime: sentMsg.createdAt,
             contentType: sentMsg.contentType || "IMAGE",
             attachmentUrl: sentMsg.attachmentUrl || photoPreview,
-            attachmentName: sentMsg.attachmentName || `photo_${Date.now()}.jpg`,
+            attachmentName: sentMsg.attachmentName || file.name,
+            attachmentMimeType: sentMsg.attachmentMimeType || file.type,
             isRead: sentMsg.isRead,
             status: "sent",
             isCall: false,
@@ -5788,6 +5831,35 @@ const ChatBox = () => {
         ];
       });
       
+      setOriginalMessages((prev) => {
+        const withoutTemp = prev.filter((msg) => !msg.isTemporary);
+        if (!sentMsg) return withoutTemp;
+        const alreadyHas = withoutTemp.some(
+          (m) => m.messageId && sentMsg.messageId && m.messageId === sentMsg.messageId
+        );
+        if (alreadyHas) return withoutTemp;
+        return [
+          ...withoutTemp,
+          {
+            id: sentMsg.messageId || sentMsg._id || sentMsg.id,
+            _id: sentMsg._id || sentMsg.id || null,
+            messageId: sentMsg.messageId,
+            text: sentMsg.content || "",
+            sender: "user",
+            senderRole: "user",
+            time: new Date(sentMsg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+            fullTime: sentMsg.createdAt,
+            contentType: sentMsg.contentType || "IMAGE",
+            attachmentUrl: sentMsg.attachmentUrl || photoPreview,
+            attachmentName: sentMsg.attachmentName || file.name,
+            attachmentMimeType: sentMsg.attachmentMimeType || file.type,
+            isRead: sentMsg.isRead,
+            status: "sent",
+            isCall: false,
+          },
+        ];
+      });
+
       setPhotoPreview(null);
     } catch (error) {
       console.error('Error sending photo:', error);
@@ -5947,10 +6019,10 @@ const ChatBox = () => {
   };
 
   const renderMessageStatus = (message) => {
-    if (message.sender !== "user") return null;
+    const statusForOwnMessage = message.sender === "user";
     
     let statusBadge = null;
-    switch (message.status) {
+    switch (statusForOwnMessage ? message.status : undefined) {
       case "sending": 
         statusBadge = <span className="message-status sending">⌛ Sending...</span>;
         break;
@@ -5964,8 +6036,7 @@ const ChatBox = () => {
         statusBadge = null;
     }
 
-    const showDeleteIcon = message.sender === "user" && 
-                          !message.isTemporary && 
+    const showDeleteIcon = !message.isTemporary && 
                           message.status !== "error" &&
                           message.status !== "sending";
 
@@ -5977,11 +6048,11 @@ const ChatBox = () => {
             type="button"
             className="message-delete-btn"
             onClick={() => handleDeleteMessage(message)}
-            disabled={String(deletingMessageId) === String(message.id || message._id || message.messageId)}
+            disabled={String(deletingMessageId) === String(getMessageIdentifier(message))}
             aria-label="Delete message"
             title="Delete message"
           >
-            {String(deletingMessageId) === String(message.id || message._id || message.messageId) ? (
+            {String(deletingMessageId) === String(getMessageIdentifier(message)) ? (
               <span className="delete-loading">⌛</span>
             ) : (
               <span className="delete-icon">🗑️</span>
