@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { FaPhoneAlt, FaSearch, FaVideo } from "react-icons/fa";
+import { FaCalendarAlt, FaPhoneAlt, FaSearch, FaVideo } from "react-icons/fa";
 
 import "./CallHistory.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
@@ -115,6 +115,19 @@ const formatDateLabel = (value) => {
   });
 };
 
+const getDateInputValue = (value) => {
+  const date = value ? new Date(value) : null;
+
+  if (!date || Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const formatCallDuration = (seconds) => {
   const total = Math.max(0, Number(seconds) || 0);
   const hrs = Math.floor(total / 3600);
@@ -145,6 +158,7 @@ const isMissedCall = (call) => {
 const CallHistory = ({ currentUser }) => {
   const { t } = useUserTranslation();
   const [activeFilter, setActiveFilter] = useState("all");
+  const [selectedDate, setSelectedDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [activeCallMode, setActiveCallMode] = useState("video");
@@ -251,6 +265,7 @@ const CallHistory = ({ currentUser }) => {
             status: missed ? "missed" : direction,
             rawStatus: String(call.status || "").toLowerCase(),
             date: formatDateLabel(timestamp),
+            dateKey: getDateInputValue(timestamp),
             time:
               dateValue && !Number.isNaN(dateValue.getTime())
                 ? dateValue.toLocaleTimeString([], {
@@ -371,10 +386,14 @@ const CallHistory = ({ currentUser }) => {
           if (activeFilter === "voice") return call.type === "voice";
           return true;
         })
+        .filter((call) => {
+          if (!selectedDate) return true;
+          return call.dateKey === selectedDate;
+        })
         .filter((call) =>
           call.name.toLowerCase().includes(searchTerm.toLowerCase()),
         ),
-    [activeFilter, callsData, searchTerm],
+    [activeFilter, callsData, searchTerm, selectedDate],
   );
 
   // Group calls by date
@@ -422,6 +441,7 @@ const CallHistory = ({ currentUser }) => {
        
 
         {/* Search Bar */}
+        <div className="call-search-row">
         <div className="call-search">
           <FaSearch className="call-search-icon" aria-hidden="true" />
           <input
@@ -440,6 +460,28 @@ const CallHistory = ({ currentUser }) => {
               ✕
             </button>
           )}
+        </div>
+
+        <div className="call-date-filter">
+          <FaCalendarAlt className="call-date-filter-icon" aria-hidden="true" />
+          <input
+            type="date"
+            className="call-date-input"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            aria-label="Filter calls by date"
+          />
+          {selectedDate && (
+            <button
+              type="button"
+              className="call-date-clear-btn"
+              onClick={() => setSelectedDate("")}
+              aria-label="Clear date filter"
+            >
+              ×
+            </button>
+          )}
+        </div>
         </div>
 
         {/* Filter Tabs */}
@@ -567,7 +609,7 @@ const CallHistory = ({ currentUser }) => {
           <div className="call-no-results">
             <FaPhoneAlt className="call-no-results-icon" aria-hidden="true" />
             <p>{t('no_calls')}</p>
-            <small>Try changing your search or filter</small>
+            <small>Try changing your search, date, or filter</small>
           </div>
         )}
       </div>

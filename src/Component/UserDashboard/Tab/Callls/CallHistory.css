@@ -63,12 +63,20 @@
 }
 
 /* Search Bar */
+.call-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 16px 8px 16px;
+}
+
 .call-search {
   display: flex;
   align-items: center;
+  flex: 1;
+  min-width: 0;
   padding: 10px 16px;
   background: #f0f2f5;
-  margin: 12px 16px 8px 16px;
   border-radius: 30px;
   border: 1px solid #e0e0e0;
   transition: all 0.3s ease;
@@ -109,6 +117,54 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.call-date-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 190px;
+  flex-shrink: 0;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 30px;
+}
+
+.call-date-filter-icon {
+  flex-shrink: 0;
+  font-size: 14px;
+  color: #667eea;
+}
+
+.call-date-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #1f2937;
+  font-size: 14px;
+}
+
+.call-date-clear-btn {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.call-date-clear-btn:hover {
+  background: #cbd5e1;
 }
 
 /* Filter Tabs */
@@ -609,9 +665,17 @@
     font-size: 22px;
   }
 
-  .call-search {
+  .call-search-row {
     margin: 10px 16px 8px 16px;
+  }
+
+  .call-search {
     padding: 9px 15px;
+  }
+
+  .call-date-filter {
+    width: 180px;
+    padding: 9px 12px;
   }
 
   .call-filters {
@@ -660,9 +724,20 @@
     font-size: 20px;
   }
 
-  .call-search {
+  .call-search-row {
+    flex-wrap: wrap;
     margin: 8px 12px 6px 12px;
+  }
+
+  .call-search {
+    flex-basis: 100%;
+    margin: 0;
     padding: 8px 14px;
+  }
+
+  .call-date-filter {
+    width: 100%;
+    padding: 8px 10px;
   }
 
   .call-filters {
@@ -734,10 +809,18 @@
     font-size: 18px;
   }
 
-  .call-search {
+  .call-search-row {
     margin: 6px 10px 4px 10px;
+  }
+
+  .call-search {
+    margin: 0;
     padding: 7px 12px;
     font-size: 13px;
+  }
+
+  .call-date-filter {
+    width: 100%;
   }
 
   .call-search-icon {
@@ -835,6 +918,20 @@
   .call-search {
     background: #222e35;
     border-color: #2a3942;
+  }
+
+  .call-date-filter {
+    background: #222e35;
+    border-color: #2a3942;
+  }
+
+  .call-date-input {
+    color: #e9edef;
+  }
+
+  .call-date-clear-btn {
+    background: #2a3942;
+    color: #d1d7db;
   }
 
   .call-search-input {

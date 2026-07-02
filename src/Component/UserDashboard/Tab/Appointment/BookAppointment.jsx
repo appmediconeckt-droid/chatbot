@@ -1163,7 +1163,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaMapMarkerAlt, FaSearch } from "react-icons/fa";
 import "./BookAppointment.css";
-import { API_BASE_URL } from "../../../../axiosConfig";
+import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import axios from "axios";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
@@ -1199,6 +1199,13 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   const [pendingRequests, setPendingRequests] = useState({}); // { counselorId: true }
   const [acceptedChats, setAcceptedChats] = useState({}); // { counselorId: chatId }
   const [rejectedRequests, setRejectedRequests] = useState({}); // { counselorId: true }
+  const [paymentConfig, setPaymentConfig] = useState({
+    enabled: false,
+    fees: { chat: 100, voice: 200, video: 300 },
+    durationMinutes: 30,
+    requestExpiryHours: 24,
+  });
+  const [walletBalance, setWalletBalance] = useState(null);
 
   // Search state
   const [searchTerm, setSearchTerm] = useState(initialSearch);
@@ -1216,6 +1223,34 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   const userId = localStorage.getItem("userId");
   const token =
     localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+  useEffect(() => {
+    const fetchPaymentDetails = async () => {
+      try {
+        const configRes = await axiosInstance.get("/api/chat/payment-config");
+        setPaymentConfig((prev) => ({ ...prev, ...(configRes.data || {}) }));
+      } catch (error) {
+        console.warn(
+          "Payment config unavailable:",
+          error?.response?.data || error.message,
+        );
+      }
+
+      if (!token) return;
+
+      try {
+        const walletRes = await axiosInstance.get("/api/wallet/data");
+        setWalletBalance(Number(walletRes.data?.balance || 0));
+      } catch (error) {
+        console.warn(
+          "Wallet balance unavailable:",
+          error?.response?.data || error.message,
+        );
+      }
+    };
+
+    fetchPaymentDetails();
+  }, [token]);
 
   // Check chat status function
   const checkChatStatus = async () => {
@@ -1804,10 +1839,21 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
         return;
       }
 
+      if (paymentConfig.enabled) {
+        const amount = Number(paymentConfig.fees?.chat || 100);
+        const currentBalance = Number(walletBalance || 0);
+
+        if (currentBalance < amount) {
+          alert(`Insufficient wallet balance. Please add ₹${amount - currentBalance} to continue.`);
+          return;
+        }
+      }
+
       const res = await axios.post(
         `${API_BASE_URL}/api/chat/start`,
         {
           counselorId: counselorId,
+          sessionType: "chat",
         },
         {
           headers: {
@@ -1822,6 +1868,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       // Check response status
       const chatId = res.data?.chat?.id || res.data?.chatId;
       const status = res.data?.chat?.status || res.data?.status;
+      if (typeof res.data?.chat?.walletBalance === "number") {
+        setWalletBalance(res.data.chat.walletBalance);
+      }
 
       if (status === 'pending') {
         // Keep Chat Now visible immediately and after a tab change. The
@@ -2425,6 +2474,22 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                       )}
                     </div>
                   </div>
+                </div>
+              )}
+
+              {paymentConfig.enabled && (
+                <div className="paid-session-preview-unique">
+                  <div>
+                    <span>Chat Session</span>
+                    <strong>₹{paymentConfig.fees?.chat || 100} / {paymentConfig.durationMinutes || 30} min</strong>
+                  </div>
+                  <div>
+                    <span>Wallet Balance</span>
+                    <strong>₹{Number(walletBalance || 0).toFixed(2)}</strong>
+                  </div>
+                  <p>
+                    Amount will be kept on hold. If counselor does not accept within {paymentConfig.requestExpiryHours || 24} hours, it will be refunded automatically.
+                  </p>
                 </div>
               )}
 

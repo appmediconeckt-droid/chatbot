@@ -1600,6 +1600,14 @@ import { useCounselorTranslation } from '../../../../i18n/LanguageContext';
 const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
 
 const ACTIVE_CHAT_STATUSES = new Set(['active', 'accepted', 'ongoing']);
+const MAX_CERTIFICATION_DOCUMENTS = 5;
+const VERIFICATION_DOCUMENT_OPTIONS = [
+    'Medical / Professional Registration Certificate',
+    'Degree or Qualification Certificate',
+    'Internship / Training Completion Certificate',
+    'Government ID Proof',
+    'Clinic / Hospital Affiliation Proof'
+];
 
 const CounselorProfile = () => {
    const { t } = useCounselorTranslation();
@@ -2202,8 +2210,32 @@ const CounselorProfile = () => {
     };
 
     // Certification handlers
+    const handleSelectCertificationDocument = (documentName) => {
+        setNewCertification(prev => ({
+            ...prev,
+            name: documentName
+        }));
+    };
+
     const handleAddCertification = () => {
-        if (newCertification.name.trim()) {
+        if ((editedData.certifications || []).length >= MAX_CERTIFICATION_DOCUMENTS) {
+            setError(`You can upload a maximum of ${MAX_CERTIFICATION_DOCUMENTS} verification documents.`);
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+
+        if (!newCertification.name.trim()) {
+            setError('Please select a document type.');
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+
+        if (!newCertification.document) {
+            setError('Please upload the selected document file.');
+            setTimeout(() => setError(''), 3000);
+            return;
+        }
+
             const newCert = {
                 _id: `temp_${Date.now()}`,
                 name: newCertification.name,
@@ -2228,7 +2260,6 @@ const CounselorProfile = () => {
                 document: null,
                 documentName: ''
             });
-        }
     };
 
     const handleRemoveCertification = (certId) => {
@@ -3404,14 +3435,27 @@ const CounselorProfile = () => {
                             {isEditing && (
                                 <div className={`${COUNSELOR_PROFILE_CLASS}__add-certification-form`}>
                                     <h4>Add New License/Certification</h4>
-                                    <div className={`${COUNSELOR_PROFILE_CLASS}__form-group`}>
-                                        <input
-                                            type="text"
-                                            value={newCertification.name}
-                                            onChange={(e) => handleCertificationInputChange('name', e.target.value)}
-                                            placeholder="Certification/License Name *"
-                                            className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                        />
+                                    <div className={`${COUNSELOR_PROFILE_CLASS}__document-type-section`}>
+                                        <div className={`${COUNSELOR_PROFILE_CLASS}__document-type-header`}>
+                                            <span>Select verification document *</span>
+                                            <small>{(editedData.certifications || []).length}/{MAX_CERTIFICATION_DOCUMENTS} uploaded</small>
+                                        </div>
+                                        <div className={`${COUNSELOR_PROFILE_CLASS}__document-type-list`}>
+                                            {VERIFICATION_DOCUMENT_OPTIONS.map((documentName, index) => {
+                                                const isSelected = newCertification.name === documentName;
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        key={documentName}
+                                                        onClick={() => handleSelectCertificationDocument(documentName)}
+                                                        className={`${COUNSELOR_PROFILE_CLASS}__document-type-option ${isSelected ? `${COUNSELOR_PROFILE_CLASS}__document-type-option--active` : ''}`}
+                                                    >
+                                                        <span className={`${COUNSELOR_PROFILE_CLASS}__document-type-number`}>{index + 1}</span>
+                                                        <span className={`${COUNSELOR_PROFILE_CLASS}__document-type-name`}>{documentName}</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
                                     <div className={`${COUNSELOR_PROFILE_CLASS}__form-row`}>
                                         <div className={`${COUNSELOR_PROFILE_CLASS}__form-group`}>
@@ -3464,7 +3508,11 @@ const CounselorProfile = () => {
                                     <button
                                         onClick={handleAddCertification}
                                         className={`${COUNSELOR_PROFILE_CLASS}__add-cert-btn`}
-                                        disabled={!newCertification.name.trim()}
+                                        disabled={
+                                            !newCertification.name.trim() ||
+                                            !newCertification.document ||
+                                            (editedData.certifications || []).length >= MAX_CERTIFICATION_DOCUMENTS
+                                        }
                                     >
                                         + Add Certification
                                     </button>

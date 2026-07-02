@@ -3,6 +3,30 @@ import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
 import html2pdf from 'html2pdf.js';
 
+const RAZORPAY_SCRIPT_ID = 'razorpay-checkout-script';
+const loadRazorpayScript = () =>
+    new Promise((resolve, reject) => {
+        if (window.Razorpay) {
+            resolve(true);
+            return;
+        }
+
+        const existingScript = document.getElementById(RAZORPAY_SCRIPT_ID);
+        if (existingScript) {
+            existingScript.addEventListener('load', () => resolve(true), { once: true });
+            existingScript.addEventListener('error', () => reject(new Error('Unable to load Razorpay checkout')), { once: true });
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.id = RAZORPAY_SCRIPT_ID;
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.async = true;
+        script.onload = () => resolve(true);
+        script.onerror = () => reject(new Error('Unable to load Razorpay checkout'));
+        document.body.appendChild(script);
+    });
+
 const WalletDashboard = ({ userData }) => {
     const { t, lang } = useUserTranslation();
     const [amount, setAmount] = useState('');
@@ -17,16 +41,9 @@ const WalletDashboard = ({ userData }) => {
 
     useEffect(() => {
         fetchWalletData();
-        // Load Razorpay script
-        const script = document.createElement('script');
-        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-        script.async = true;
-        document.body.appendChild(script);
-        return () => {
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
-        }
+        loadRazorpayScript().catch((error) => {
+            console.error('Razorpay script load failed:', error);
+        });
     }, []);
 
     // Reset to first page when language changes
@@ -172,8 +189,24 @@ const WalletDashboard = ({ userData }) => {
 
         setLoading(true);
         try {
+            await loadRazorpayScript();
+            if (!window.Razorpay) {
+                throw new Error('Razorpay checkout is not available');
+            }
+
             // 1. Create order on server
             const { data: orderData } = await axiosInstance.post('/api/wallet/create-order', { amount: Number(amount) });
+            if (!orderData?.order_id || !orderData?.key_id || !orderData?.amount) {
+                throw new Error('Payment order response is incomplete');
+            }
+
+            let processingTimer = null;
+            const clearProcessingTimer = () => {
+                if (processingTimer) {
+                    window.clearTimeout(processingTimer);
+                    processingTimer = null;
+                }
+            };
 
             const options = {
                 key: orderData.key_id,
@@ -183,6 +216,7 @@ const WalletDashboard = ({ userData }) => {
                 description: t('professional_dashboard'),
                 order_id: orderData.order_id,
                 handler: async function (response) {
+                    clearProcessingTimer();
                     // 2. Verify payment on server
                     try {
                         const verifyRes = await axiosInstance.post('/api/wallet/verify-payment', {
@@ -194,11 +228,13 @@ const WalletDashboard = ({ userData }) => {
                         if (verifyRes.data.success) {
                             alert(t('funds_added'));
                             setAmount('');
-                            fetchWalletData();
+                            await fetchWalletData();
                         }
                     } catch (err) {
                         console.error('Verification failed:', err);
                         alert(t('payment_failed_verification'));
+                    } finally {
+                        setLoading(false);
                     }
                 },
                 prefill: {
@@ -208,18 +244,30 @@ const WalletDashboard = ({ userData }) => {
                 },
                 theme: {
                     color: "#4648d4"
+                },
+                modal: {
+                    ondismiss: function () {
+                        clearProcessingTimer();
+                        setLoading(false);
+                    }
                 }
             };
 
             const rzp1 = new window.Razorpay(options);
             rzp1.on('payment.failed', function (response) {
+                clearProcessingTimer();
+                console.error('Razorpay payment failed:', response?.error || response);
                 alert(t('payment_error_description'));
+                setLoading(false);
             });
             rzp1.open();
+            processingTimer = window.setTimeout(() => {
+                setLoading(false);
+                alert('Payment is taking longer than expected. Please click Cancel in Razorpay and try again with Card test mode.');
+            }, 120000);
         } catch (error) {
             console.error('Payment initialization failed:', error);
             alert(t('payment_error_description'));
-        } finally {
             setLoading(false);
         }
     };
@@ -301,9 +349,6 @@ const WalletDashboard = ({ userData }) => {
                         >
                             <span className="material-symbols-outlined text-lg">add_circle</span>
                             {t('add_funds_button')}
-                        </button>
-                        <button className="bg-white/10 backdrop-blur-md border border-white/20 text-white px-6 py-2.5 rounded-xl font-bold text-sm hover:bg-white/20 transition-all active:scale-95">
-                            {t('view_history')}
                         </button>
                     </div>
                 </div>
@@ -522,7 +567,13 @@ const WalletDashboard = ({ userData }) => {
                     <p className={`${styles.labelSm} text-[#4648d4] mb-0.5 uppercase tracking-wider`}>Need help with payments?</p>
                     <p className={`${styles.bodyMd} text-[#0b1c30]`}>Our support center is available 24/7 for you.</p>
                 </div>
-                <button className={`bg-[#4648d4] text-white px-6 py-2 rounded-[10px] font-bold text-[13px] hover:brightness-110 transition-all shadow-sm`}>
+                <button
+                    type="button"
+                    onClick={() => {
+                        window.location.href = 'mailto:support@mediconeckt.com?subject=Wallet%20Support&body=Hello%20Mediconeckt%20Support%2C%0A%0AI%20need%20help%20with%20my%20wallet%20or%20payment.%0A';
+                    }}
+                    className={`bg-[#4648d4] text-white px-6 py-2 rounded-[10px] font-bold text-[13px] hover:brightness-110 transition-all shadow-sm`}
+                >
                     Support Center
                 </button>
             </div>

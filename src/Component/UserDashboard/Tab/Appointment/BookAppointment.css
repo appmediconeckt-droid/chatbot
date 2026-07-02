@@ -836,6 +836,37 @@
   margin-top: 4px;
 }
 
+.paid-session-preview-unique {
+  margin-bottom: 20px;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 12px;
+  background: #eff6ff;
+}
+
+.paid-session-preview-unique > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: #1e3a8a;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.paid-session-preview-unique strong {
+  color: #0f172a;
+  text-align: right;
+}
+
+.paid-session-preview-unique p {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid #bfdbfe;
+  color: #475569;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
 .modal-info-unique {
   background: #f0f4f8;
   padding: 15px;

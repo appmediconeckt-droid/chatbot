@@ -1,5 +1,5 @@
 import React from "react";
-import { FaArrowRight, FaBrain, FaCalendarAlt, FaTimes } from "react-icons/fa";
+import { FaBrain, FaCalendarAlt, FaTimes } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { CardSkeleton } from "../../../common/Skeletons/Skeletons";
@@ -9,7 +9,6 @@ export default function AppointmentsTab({
   selectedDate,
   setSelectedDate,
   clearDateFilter,
-  handleViewAllRequests,
   handleUpdateAppointmentStatus,
   loading = false,
 }) {
@@ -90,9 +89,6 @@ export default function AppointmentsTab({
                   </button>
                 )}
               </div>
-              <button type="button" onClick={handleViewAllRequests}>
-                {t("view_all_requests")} <FaArrowRight style={{ marginLeft: "4px" }} />
-              </button>
             </div>
           </div>
 

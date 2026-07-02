@@ -587,6 +587,86 @@
   margin-bottom: 1rem;
 }
 
+.counselor-profile-container__document-type-section {
+  margin-bottom: 1rem;
+}
+
+.counselor-profile-container__document-type-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  color: #333;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.counselor-profile-container__document-type-header small {
+  color: #667eea;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.counselor-profile-container__document-type-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.counselor-profile-container__document-type-option {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 44px;
+  border: 1px solid #d8def8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.counselor-profile-container__document-type-option:hover {
+  border-color: #667eea;
+  background: #f3f5ff;
+}
+
+.counselor-profile-container__document-type-option--active {
+  border-color: #667eea;
+  background: #eef2ff;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.15);
+}
+
+.counselor-profile-container__document-type-number {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #edf2ff;
+  color: #667eea;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.counselor-profile-container__document-type-option--active .counselor-profile-container__document-type-number {
+  background: #667eea;
+  color: #ffffff;
+}
+
+.counselor-profile-container__document-type-name {
+  min-width: 0;
+  font-size: 0.86rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
 .counselor-profile-container__document-upload-area {
   border: 1px dashed #ddd;
   border-radius: 6px;

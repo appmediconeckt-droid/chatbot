@@ -60,7 +60,7 @@ export default function PendingRequestsModal({
             <FaBell className="header-icon" />
             <div>
               <h2>Pending Requests</h2>
-              <p className="request-count">{requests.length} waiting for response</p>
+              <p className="pending-request-count">{requests.length} waiting for response</p>
             </div>
           </div>
           <button className="close-button" onClick={onClose}>
@@ -111,14 +111,14 @@ export default function PendingRequestsModal({
                           {formatRequestTime(request.requestedAt)}
                         </span>
                       </div>
-                      <p className="request-message">
+                      <p className="pending-request-message">
                         {request.requestMessage}
                       </p>
                     </div>
 
                     <div className="pending-request-actions">
                       <button
-                        className="action-btn reject-btn"
+                        className="request-action-btn request-reject-btn"
                         onClick={() => openConfirmModal("reject", request)}
                         disabled={processingId !== null}
                         title="Reject request"
@@ -136,7 +136,7 @@ export default function PendingRequestsModal({
                         )}
                       </button>
                       <button
-                        className="action-btn accept-btn"
+                        className="request-action-btn request-accept-btn"
                         onClick={() => openConfirmModal("accept", request)}
                         disabled={processingId !== null}
                         title="Accept request"

@@ -564,11 +564,6 @@ export default function CounselorDashboard() {
     setShowMobileMenu(false);
   };
 
-  // ✅ View All Requests - Clear date filter
-  const handleViewAllRequests = () => {
-    clearDateFilter(); // ✅ Clear filter and fetch all appointments
-  };
-
   const getAppointmentPatientInfo = (appointment) => ({
     ...(appointment || {}),
     ...(appointment?.patient || appointment?.user || appointment?.client || {}),
@@ -761,7 +756,6 @@ export default function CounselorDashboard() {
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
             clearDateFilter={clearDateFilter} // ✅ Pass clear function
-            handleViewAllRequests={handleViewAllRequests}
             handleUpdateAppointmentStatus={handleUpdateAppointmentStatus}
             handleInitiateVideoCall={handleInitiateVideoCall}
             loading={appointmentsLoading}

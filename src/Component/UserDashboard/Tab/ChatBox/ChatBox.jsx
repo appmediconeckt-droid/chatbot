@@ -5250,13 +5250,38 @@ const ChatBox = () => {
 
   // ─── Socket Connection ──────────────────────────────────────────────────
   useEffect(() => {
-    const apiChatId = chatId || currentChat?.chatId;
+    const apiChatId = getChatIdForAPI();
     if (!apiChatId) return;
 
     let mounted = true;
 
-    const onNewMessage = (messageData) => {
+    const isCurrentChatMessage = (messageData = {}) => {
+      const incomingIds = [
+        messageData.chatId,
+        messageData.publicChatId,
+        messageData.chat?._id,
+        messageData.chat?.id,
+        messageData.chat?.chatId,
+      ].filter(Boolean).map(String);
+      const currentIds = [
+        apiChatId,
+        currentChat?.id,
+        currentChat?._id,
+        currentChat?.chatId,
+      ].filter(Boolean).map(String);
+      return incomingIds.length === 0 || incomingIds.some((id) => currentIds.includes(id));
+    };
+
+    const onNewMessage = (rawMessageData) => {
       if (!mounted) return;
+      const messageData = rawMessageData?.message
+        ? {
+            ...rawMessageData.message,
+            chatId: rawMessageData.message.chatId || rawMessageData.chatId,
+            publicChatId: rawMessageData.message.publicChatId || rawMessageData.publicChatId,
+          }
+        : rawMessageData;
+      if (!isCurrentChatMessage(messageData)) return;
       const userId = resolveCurrentUserId();
       if (messageData.senderRole === "user" && String(messageData.senderId) === String(userId)) {
         setMessages((prev) => prev.filter((msg) => !msg.isTemporary));
@@ -5370,6 +5395,7 @@ const ChatBox = () => {
       chatSocketRef.current = socket;
       socket.emit("join-chat", { chatId: apiChatId });
       socket.on("new-message", onNewMessage);
+      socket.on("message-notification", onNewMessage);
       socket.on("user-typing", onTyping);
       socket.on("messages-read", onMessagesRead);
       socket.on("call_rejected", onCallRejected);
@@ -5390,6 +5416,7 @@ const ChatBox = () => {
       const socket = chatSocketRef.current;
       if (socket) {
         socket.off("new-message", onNewMessage);
+        socket.off("message-notification", onNewMessage);
         socket.off("user-typing", onTyping);
         socket.off("messages-read", onMessagesRead);
         socket.off("call_rejected", onCallRejected);

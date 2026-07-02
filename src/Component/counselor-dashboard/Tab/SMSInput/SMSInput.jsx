@@ -4838,6 +4838,87 @@ const SMSInput = () => {
   }, [selectedUser, chatId, COUNSELOR_ID]);
 
   useEffect(() => {
+    if (!selectedUser || !COUNSELOR_ID) return;
+
+    let cancelled = false;
+
+    const syncMessagesSilently = async () => {
+      if (document.visibilityState !== "visible") return;
+
+      const apiChatId = getChatIdForAPI();
+      if (!apiChatId) return;
+
+      try {
+        const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+        const response = await axios.get(
+          `${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: token ? `Bearer ${token}` : "",
+            },
+          },
+        );
+
+        if (cancelled || !response.data?.messages) return;
+        if (response.data.chatStatus) setChatStatus(response.data.chatStatus);
+
+        const transformedMessages = response.data.messages.map((msg, index) => ({
+          id: msg._id || msg.id || msg.messageId || index,
+          _id: msg._id || msg.id,
+          messageId: msg.messageId,
+          text: msg.content,
+          sender: msg.senderRole === "counsellor" ? "me" : "user",
+          senderRole: msg.senderRole,
+          time: new Date(msg.createdAt).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          fullTime: msg.createdAt,
+          contentType: msg.contentType,
+          attachmentUrl: msg.attachmentUrl || null,
+          attachmentName: msg.attachmentName || null,
+          isRead: msg.isRead,
+          status: "sent",
+          isCall: false,
+        }));
+
+        const sameMessageList = (current) => {
+          const withoutTemp = current.filter((msg) => !msg.isTemporary);
+          if (withoutTemp.length !== transformedMessages.length) return false;
+          return transformedMessages.every((msg, index) => {
+            const currentMsg = withoutTemp[index];
+            return (
+              String(currentMsg?.messageId || currentMsg?.id || currentMsg?._id) ===
+              String(msg.messageId || msg.id || msg._id)
+            );
+          });
+        };
+
+        setOriginalMessages((prev) => {
+          if (sameMessageList(prev)) return prev;
+          return transformedMessages;
+        });
+        setMessages((prev) => {
+          if (sameMessageList(prev)) return prev;
+          const temporaryMessages = prev.filter((msg) => msg.isTemporary);
+          const nextMessages = [...transformedMessages, ...temporaryMessages];
+          saveMessagesToLocalStorage(nextMessages);
+          return nextMessages;
+        });
+      } catch (error) {
+        if (error?.response?.status === 401) handleSessionExpired();
+      }
+    };
+
+    const intervalId = setInterval(syncMessagesSilently, 1500);
+    return () => {
+      cancelled = true;
+      clearInterval(intervalId);
+    };
+  }, [selectedUser, chatId, COUNSELOR_ID]);
+
+  useEffect(() => {
     if (callError) {
       const timer = setTimeout(() => setCallError(null), 5000);
       return () => clearTimeout(timer);
@@ -4846,13 +4927,39 @@ const SMSInput = () => {
 
   // ─── Socket Connection ──────────────────────────────────────────────────
   useEffect(() => {
-    const apiChatId = chatId;
+    const apiChatId = getChatIdForAPI();
     if (!apiChatId || !selectedUser) return;
 
     let mounted = true;
 
-    const onNewMessage = (messageData) => {
+    const isCurrentChatMessage = (messageData = {}) => {
+      const incomingIds = [
+        messageData.chatId,
+        messageData.publicChatId,
+        messageData.chat?._id,
+        messageData.chat?.id,
+        messageData.chat?.chatId,
+      ].filter(Boolean).map(String);
+      const currentIds = [
+        apiChatId,
+        selectedUser?.id,
+        selectedUser?._id,
+        selectedUser?.chatId,
+        selectedUser?.publicChatId,
+      ].filter(Boolean).map(String);
+      return incomingIds.length === 0 || incomingIds.some((id) => currentIds.includes(id));
+    };
+
+    const onNewMessage = (rawMessageData) => {
       if (!mounted) return;
+      const messageData = rawMessageData?.message
+        ? {
+            ...rawMessageData.message,
+            chatId: rawMessageData.message.chatId || rawMessageData.chatId,
+            publicChatId: rawMessageData.message.publicChatId || rawMessageData.publicChatId,
+          }
+        : rawMessageData;
+      if (!isCurrentChatMessage(messageData)) return;
       if (
         messageData.senderRole === "counsellor" &&
         String(messageData.senderId) === String(COUNSELOR_ID)
@@ -4980,6 +5087,7 @@ const SMSInput = () => {
       chatSocketRef.current = socket;
       socket.emit("join-chat", { chatId: apiChatId });
       socket.on("new-message", onNewMessage);
+      socket.on("message-notification", onNewMessage);
       socket.on("user-typing", onTyping);
       socket.on("messages-read", onMessagesRead);
       socket.on("presence-update", onPresenceUpdate);
@@ -4999,6 +5107,7 @@ const SMSInput = () => {
       const socket = chatSocketRef.current;
       if (socket) {
         socket.off("new-message", onNewMessage);
+        socket.off("message-notification", onNewMessage);
         socket.off("user-typing", onTyping);
         socket.off("messages-read", onMessagesRead);
         socket.off("presence-update", onPresenceUpdate);
