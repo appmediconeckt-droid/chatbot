@@ -1,0 +1,818 @@
+{
+  "results": [
+    {
+      "kind": "user",
+      "login": {
+        "url": "http://127.0.0.1:5173/user-dashboard",
+        "onDashboard": true,
+        "activeSession": false,
+        "onOtp": false,
+        "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nVIVEKRAJ SINGH THAKUR\nLast Seen: 2 Min Ago\nWed\n\nya goods\n\nDentist\nAccepted Status\nVIVEK SINGH\n16d ago\n\nhello\n\nDentist\nAccepted Status\n✨\nAI\n1",
+        "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-02-login-result.png"
+      },
+      "menus": [
+        {
+          "label": "Chat",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-03-chat.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nVIVEKRAJ SINGH THAKUR\nLast Seen: 2 Min Ago\nWed\n\nya goods\n\nDentist\nAccepted Status\nVIVEK SINGH\n16d ago\n\nhello\n\nDentist\nAccepted Status\n✨\nAI\n1"
+        },
+        {
+          "label": "Counselor",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-04-counselor.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nOnline Counselors\n\nClick Chat Now Request\n\nOffline\nVivekraj Singh\n📍 Bhopal Madhya Pradesh\nRelationship Counseling , Stress Management , Relationship\n💼 4 years experience\n★★★★☆\n4.5\nUnavailable\n📅 Book\nOffline\nVIVEKRAJ SINGH THAKUR\n📍 Mumbai\nDentist\n💼 2 years experience\n★★★★★\n5\nUnavailable\n📅 Book\nOnline\nVIVEK SINGH\n📍 Bangalor Pune,\nDentist , Psychologists , Psychiatrists , sdfds\n💼 4 years experience\n★★★★☆\n4.7\nChat Now\n📅 Book\n✨\nAI\n1"
+        },
+        {
+          "label": "Appointments",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-05-appointments.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nMy Appointments\n\nManage Consultations\n\nUpcoming\nPast\nAll Statuses\nPending\nAccepted\nCONFIRMED\nDr. VIVEK SINGH\n\nstethoscope\nMedical Specialist\n\nAPPOINTMENT DATE\ncalendar_today\nFri, Jul 3, 2026\n03:45 PM\nvisibility\nView Details\nchat\nChat\ncall\nVoice Call\nvideocam\nVideo Call\nNeed Checkup\n\nCheckup Description\n\nBook New Appointment\nhealth_and_safety\n✨\nAI\n1"
+        },
+        {
+          "label": "Wallet",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-06-wallet.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nWallet Overview\n\nTransaction History Full\n\nHealthWallet\n\nPLATINUM CARD\n\nTOTAL BALANCE\n\n₹10,001.00\n\n•••• •••• •••• 4242\n\nEXP\n12/28\nadd_circle\nAdd Funds Button\nSpending Summary\nConsultations\n₹0.00\nOther\n₹0.00\n\nTotal Spent This Month\n\n₹0.00\n\nAdd Money\nAmount\n₹\nPayment Method\ncredit_card\nvisa\npayments\nupi\naccount_balance\nnetbanking\nwallet\nmastercard\nConfirm Add Funds\nTransaction History\nDownload Report\nDate\tDescription\tStatus\tAmount\n7/1/2026\t\n\nWallet Top-up\n\npay_T8BDILnl57UHum\n\n\tCOMPLETED\t+₹10000.00\n7/1/2026\t\n\nWallet Top-up\n\nId Pending\n\n\tPENDING\t+₹10000.00\n7/1/2026\t\n\nWallet Top-up\n\npay_T8BCDC3vFuZBk2\n\n\tCOMPLETED\t+₹1.00\nView All Transactions\nchevron_right\n\nNEED HELP WITH PAYMENTS?\n\nOur support center is available 24/7 for you.\n\nSupport Center\n✨\nAI\n1"
+        },
+        {
+          "label": "Call History",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-07-call-history.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nAll\nMissed\nVideo Call\nVoice Call\nYESTERDAY\nVIVEK SINGH\n04:02 PM\n❌\nVideo Call\nMissed\nJUN 17\nVIVEK SINGH\n06:44 PM\n⬇️\nVideo Call\nVIVEK SINGH\n06:44 PM\n⬇️\nVoice Call\nJUN 15\nVIVEK SINGH\n03:46 PM\n⬇️\nVideo Call\nJUN 10\nVIVEK SINGH\n10:41 AM\n⬆️\nVoice Call\nJUN 09\nVIVEK SINGH\n06:13 PM\n⬇️\nVideo Call\nMAY 29\nVIVEK SINGH\n04:25 PM\n⬆️\nVideo Call\nVIVEK SINGH\n04:25 PM\n⬆️\nVideo Call\nVIVEK SINGH\n04:09 PM\n⬆️\nVoice Call\nVIVEK SINGH\n03:53 PM\n⬆️\nVoice Call\nMAY 26\nVIVEK SINGH\n04:52 PM\n⬇️\nVideo Call\nVIVEK SINGH\n04:41 PM\n⬇️\nVideo Call\nVIVEK SINGH\n04:41 PM\n⬆️\nVideo Call\nVIVEK SINGH\n04:27 PM\n⬇️\nVideo Call\nVIVEK SINGH\n04:26 PM\n⬇️\nVideo Call\nVIVEK SINGH\n04:26 PM\n⬆️\nVideo Call\nVIVEK SINGH\n04:06 PM\n⬆️\nVideo Call\nVIVEK SINGH\n03:57 PM\n⬇️\nVideo Call\nVIVEK SINGH\n03:57 PM\n❌\nVideo Call\nMissed\nVIVEK SINGH\n03:57 PM\n❌\nVideo Call\nMissed\nVIVEK SINGH\n03:54 PM\n⬆️\nVideo Call\nVIVEK SINGH\n02:44 PM\n⬆️\nVideo Call\nVIVEK SINGH\n02:44 PM\n⬆️\nVideo Call\nVIVEK SINGH\n02:42 PM\n⬇️\nVideo Call\nVIVEK SINGH\n02:42 PM\n⬇️\nVoice Call\nVIVEK SINGH\n02:41 PM\n⬇️\nVideo Call\nVIVEK SINGH\n02:39 PM\n⬆️\nVideo Call\nVIVEK SINGH\n"
+        },
+        {
+          "label": "Help Support",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-08-help-support.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nHelp Support\n\nUse this support center to jump to the right MediConeckt feature, troubleshoot common issues, and understand when to contact urgent help outside the app.\n\nAI wellness chat\n\nAsk mental-wellness questions, use voice input, get quick replies, and continue your recent AI chat from the dashboard.\n\nOpen AI chat\nCounselor support\n\nBrowse counselors by name, specialization, language, location, rating, and online status before starting care.\n\nFind counselor\nAppointments\n\nView requested, confirmed, upcoming, completed, and cancelled counselor appointments in one place.\n\nMy appointments\nCalls and sessions\n\nCheck voice/video session history and reconnect from accepted chats when both sides are available.\n\nCall history\nWallet and payments\n\nAdd money, review transactions, download wallet reports, and contact support for payment questions.\n\nOpen wallet\nBefore you contact support\nComplete your profile details so counselors can understand the care context you choose to share.\nKeep your email and phone verified; protected profile changes ask for OT"
+        },
+        {
+          "label": "Privacy",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-09-privacy.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nPrivacy\n\nThis privacy center explains how MediConeckt uses your profile, chat, appointment, wallet, call, location, and security data inside this web dashboard.\n\nOTP PROTECTED\n\nEmail and phone changes\n\nANONYMOUS CARE IDENTITY\n\nShown to counselors where supported\n\nSENSITIVE AREAS\n\nChats, calls, appointments, profile\nProfile and health details\n\nYour name, anonymous display name, age, gender, contact details, photo/avatar, address, emergency contact, basic medical details, and insurance fields are used to maintain your patient profile.\n\nAI chat and counselor conversations\n\nMessages, quick replies, chat status, attachments, accepted chat sessions, and counselor details are used to provide conversations, continue history, and support rating prompts.\n\nAppointments and sessions\n\nAppointment date, time, reason/notes, status, assigned counselor, call metadata, and session history help users and counselors manage care.\n\nWallet and transactions\n\nWallet balance, top-ups, transaction records, generated reports, and related support context are used for payme"
+        },
+        {
+          "label": "Settings",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-10-settings.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nSettings\n\nManage Account\n\nEdit Profile\nAccount\nName\nVijay\nEmail\nvijaybadoria21@gmail.com\nPhone\nNot Added\nLocation\n\nLocation Desc\n\nUpdate Location\nPassword Security\n\nChange Account Password\n\nAdd Button\nChange Button\nChange Password Button\n✨\nAI\n1"
+        },
+        {
+          "label": "My Profile",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-11-my-profile.png",
+          "url": "http://127.0.0.1:5173/user-dashboard",
+          "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nVijay\n\nPatient ID: 6a143d61f1f85a31187e77b2\n\nBlood Group\n-- Years\nmale\nUpdate Location\nEdit Profile\nPersonal Information\nFULL NAME\nVijay\nANONYMOUS NAME\nStriver\nDATE OF BIRTH\nNot specified\nGENDER\nmale\nEMAIL\nvijaybadoria21@gmail.com\nPHONE\nAddress\n\nNo address provided\n\nIndia\n\nEmergency Contact\n🆘\nNot specified\n\nMedical Information\nVital Statistics\nHeight\n-- cm\nWeight\n-- kg\n\nNo medical information provided\n\nInsurance Information\n\nNo insurance information added yet.\n\n✨\nAI\n1"
+        }
+      ],
+      "logoutClicked": true,
+      "logoutScreenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\user-logout.png"
+    },
+    {
+      "kind": "counsellor",
+      "login": {
+        "url": "http://127.0.0.1:5173/counselor-dashboard",
+        "onDashboard": true,
+        "activeSession": false,
+        "onOtp": false,
+        "text": "VIVEKRAJ SINGH THAKUR\n\nvivekraj211202cst@sdbc.ac.in\n\nMessages\nAppointments\nSessions\nCall History\nEarnings\nProfile\nSettings\n🌐\nEnglish\nLogout\nMessages\n4 conversations\n15 unread\nStranger\n04:21 PM\n\nHloo\n\n15\nPatient\nlast seen yesterday at 05:42 PM\nAccepted\nShubham\n02:49 PM\n\nDA7F1D94-6F2E-4F88-8C06-95A7AAD8620E.jpg\n\nPatient\nlast seen yesterday at 06:50 PM\nAccepted\nStriver\nWed\n\nya goods\n\nPatient\nlast seen today at 12:09 PM\nAccepted\ndummyy\nTue\n\nChatGPT Image Jun 17, 2026, 03_41_39 PM (2).png\n\nPatient\nlast seen yesterday at 04:14 PM\nAccepted",
+        "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-02-login-result.png"
+      },
+      "menus": [
+        {
+          "label": "Messages",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-03-messages.png",
+          "url": "http://127.0.0.1:5173/counselor-dashboard",
+          "text": "VIVEKRAJ SINGH THAKUR\n\nvivekraj211202cst@sdbc.ac.in\n\nMessages\nAppointments\nSessions\nCall History\nEarnings\nProfile\nSettings\n🌐\nEnglish\nLogout\nMessages\n4 conversations\n15 unread\nStranger\n04:21 PM\n\nHloo\n\n15\nPatient\nlast seen yesterday at 05:42 PM\nAccepted\nShubham\n02:49 PM\n\nDA7F1D94-6F2E-4F88-8C06-95A7AAD8620E.jpg\n\nPatient\nlast seen yesterday at 06:50 PM\nAccepted\nStriver\nWed\n\nya goods\n\nPatient\nlast seen today at 12:09 PM\nAccepted\ndummyy\nTue\n\nChatGPT Image Jun 17, 2026, 03_41_39 PM (2).png\n\nPatient\nlast seen yesterday at 04:14 PM\nAccepted"
+        },
+        {
+          "label": "Appointments",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-04-appointments.png",
+          "url": "http://127.0.0.1:5173/counselor-dashboard",
+          "text": "VIVEKRAJ SINGH THAKUR\n\nvivekraj211202cst@sdbc.ac.in\n\nMessages\nAppointments\nSessions\nCall History\nEarnings\nProfile\nSettings\n🌐\nEnglish\nLogout\nManage Appointments\nShubham\nINITIAL CONSULTATION\nCONFIRMED\n\"Arun\"\nAppointment Date\nFri, Jul 3, 2026 • 02:56 PM\nShubham\nINITIAL CONSULTATION\nCONFIRMED\n\"Hyyllll\"\nAppointment Date\nThu, Jun 25, 2026 • 03:56 PM\nShubham\nINITIAL CONSULTATION\nCONFIRMED\n\"Hyy\"\nAppointment Date\nThu, Jun 25, 2026 • 03:55 PM\nStranger\nINITIAL CONSULTATION\nCONFIRMED\n\"ef\"\nAppointment Date\nTue, Jun 23, 2026 • 02:31 PM\ndummyy\nINITIAL CONSULTATION\nCONFIRMED\n\"health issue \"\nAppointment Date\nMon, Jun 22, 2026 • 12:18 PM\n👤\nAnonymous User\nINITIAL CONSULTATION\nCONFIRMED\n\"Hyy\"\nAppointment Date\nTue, Jun 16, 2026 • 11:50 PM\n👤\nAnonymous User\nINITIAL CONSULTATION\nCONFIRMED\n\"fgdddf\"\nAppointment Date\nSun, Jun 14, 2026 • 09:30 AM\n👤\nAnonymous User\nINITIAL CONSULTATION\nCONFIRMED\n\"dddddd\"\nAppointment Date\nSat, Jun 13, 2026 • 09:30 PM\n👤\nAnonymous User\nINITIAL CONSULTATION\nCONFIRMED\n\"Bans\"\nAppointment Date\nSat, Jun 13, 2026 • 05:37 PM\n👤\nAnonymous User\nINITIAL CONSULTATION\nCONFIRMED\n\"Ggg\"\nAppointment Date\nFri, Jun 12, 2026 • 05:25 PM\n👤\nAnonymous User\nINITIAL CONSULTATION\nCONFIRMED\n\"hii\"\nAppo"
+        },
+        {
+          "label": "Sessions",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-05-sessions.png",
+          "url": "http://127.0.0.1:5173/counselor-dashboard",
+          "text": "VIVEKRAJ SINGH THAKUR\n\nvivekraj211202cst@sdbc.ac.in\n\nMessages\nAppointments\nSessions\nCall History\nEarnings\nProfile\nSettings\n🌐\nEnglish\nLogout\nSessions\n0 Confirmed Sessions\nShowing for: Sat, Jul 4, 2026\nNo sessions for Sat, Jul 4, 2026"
+        },
+        {
+          "label": "Call History",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-06-call-history.png",
+          "url": "http://127.0.0.1:5173/counselor-dashboard",
+          "text": "VIVEKRAJ SINGH THAKUR\n\nvivekraj211202cst@sdbc.ac.in\n\nMessages\nAppointments\nSessions\nCall History\nEarnings\nProfile\nSettings\n🌐\nEnglish\nLogout\nAll\nMissed\nVideo Call\nVoice Call\nYESTERDAY\nShubham\n02:48 PM\n⬆️\nVoice Call\nShubham\n02:47 PM\n⬆️\nVideo Call\nJUN 30\nShubham\n02:57 PM\n❌\nVideo Call\nMissed\nShubham\n12:26 PM\n⬆️\nVideo Call\nShubham\n12:25 PM\n⬇️\nVoice Call\nJUN 27\nStranger\n02:57 PM\n⬆️\nVideo Call\ndummyy\n02:48 PM\n⬆️\nVoice Call\ndummyy\n02:47 PM\n⬆️\nVideo Call\nShubham\n02:47 PM\n❌\nVideo Call\nMissed\ndummyy\n02:43 PM\n⬇️\nVideo Call\nShubham\n12:35 PM\n⬆️\nVoice Call\ndummyy\n11:51 AM\n⬆️\nVideo Call\nStranger\n11:51 AM\n⬆️\nVideo Call\nJUN 26\nShubham\n06:58 PM\n⬇️\nVideo Call\nStranger\n05:55 PM\n⬇️\nVoice Call\nStranger\n05:48 PM\n⬆️\nVideo Call\ndummyy\n02:51 PM\n⬆️\nVideo Call\nJUN 25\nShubham\n04:17 PM\n❌\nVideo Call\nMissed\nShubham\n04:17 PM\n❌\nVoice Call\nMissed\nShubham\n04:17 PM\n❌\nVoice Call\nMissed\nShubham\n04:16 PM\n❌\nVideo Call\nMissed\nShubham\n04:13 PM\n⬇️\nVideo Call\ndummyy\n02:45 PM\n⬆️\nVideo Call\ndummyy\n02:22 PM\n⬆️\nVideo Call\nStranger\n01:54 PM\n⬇️\nVoice Call\ndummyy\n11:04 AM\n⬆️\nVideo Call\ndummyy\n11:03 AM\n⬆️\nVoice Call\nJUN 24\ndummyy\n12:55 PM\n⬇️\nVoice Call\nJUN 23\nShubham\n03:58 PM\n⬆️\nVideo Call\ndummyy\n03:06 PM\n⬇️\nVideo Call\ndummyy\n03:06 P"
+        },
+        {
+          "label": "Earnings",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-07-earnings.png",
+          "url": "http://127.0.0.1:5173/counselor-dashboard",
+          "text": "VIVEKRAJ SINGH THAKUR\n\nvivekraj211202cst@sdbc.ac.in\n\nMessages\nAppointments\nSessions\nCall History\nEarnings\nProfile\nSettings\n🌐\nEnglish\nLogout\nThe remaining work is currently in progress."
+        },
+        {
+          "label": "Profile",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-08-profile.png",
+          "url": "http://127.0.0.1:5173/counselor-dashboard",
+          "text": "VIVEKRAJ SINGH THAKUR\n\nvivekraj211202cst@sdbc.ac.in\n\nMessages\nAppointments\nSessions\nCall History\nEarnings\nProfile\nSettings\n🌐\nEnglish\nLogout\nC\nCounselor Code:Not Assigned\n\nNot specified\n\n0.0 ★\nRating\n0\nSessions\n0\nActive Clients\n📍 Update Location\nEdit Profile\nContact Info\n📧\nEmail\n\nNot specified\n\n📱\nPhone\n\nNot specified\n\n📍\nLocation\n\nNot specified\n\nPersonal Info\nAge:\n\nNot specified\n\nGender:\n\nNot specified\n\nBlood Group:\n\nNot specified\n\nAddress\n\nIndia\n\nNo Address\n\nEducation\n\nNot specified\n\nExperience\n\n0 years\n\nConsultation Mode\nLanguage\nAbout Me\n\nNo bio provided\n\nCertifications"
+        },
+        {
+          "label": "Settings",
+          "clicked": true,
+          "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-09-settings.png",
+          "url": "http://127.0.0.1:5173/counselor-dashboard",
+          "text": "VIVEKRAJ SINGH THAKUR\n\nvivekraj211202cst@sdbc.ac.in\n\nMessages\nAppointments\nSessions\nCall History\nEarnings\nProfile\nSettings\n🌐\nEnglish\nLogout\nCounselor Settings\n\nManage Account\n\nEdit Profile\nAccount\nName\nVIVEKRAJ SINGH THAKUR\nEmail\nvivekraj211202cst@sdbc.ac.in\nPhone\nNot Added\nLocation\n\nLocation Desc\n\nUpdate Location\nPassword Security\n\nChange Account Password\n\nAdd Button\nChange Button\nChange Password Button"
+        }
+      ],
+      "logoutClicked": true,
+      "logoutScreenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\slow-full-menu-test\\counsellor-logout.png"
+    }
+  ],
+  "network": [
+    {
+      "status": 403,
+      "url": "https://accounts.google.com/gsi/button?type=standard&theme=outline&size=large&text=signin_with&shape=rectangular&logo_alignment=left&width=320&locale=undefined&click_listener=undefined&is_fedcm_supported=true&client_id=704541656207-prln6ckc25sph827vat5cub6iu4fk6ft.apps.googleusercontent.com&iframe_id=gsi_129064_880294&cas=582%2FVXev5hkl8UGI%2FtQnGUTm8q0Hs8OmBIinvF%2F2M7k"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/location/update"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/location/update"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ai-chat/history"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chats"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/getUser/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 404,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ai-chat/history"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/getUser/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chats"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/payment-config"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zrw5v65g"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chat-statuses"
+    },
+    {
+      "status": 404,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/payment-config"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zrwj4zj1&sid=7wk9UnMJoMeXv1wZAAAi"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zrwj97xw&sid=7wk9UnMJoMeXv1wZAAAi"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/counsellors"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/wallet/data"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chat-statuses"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zrwxb7ig&sid=7wk9UnMJoMeXv1wZAAAi"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zrxalk6n&sid=7wk9UnMJoMeXv1wZAAAi"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/wallet/data"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/counsellors"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/appointments"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/counsellors"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/appointments"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/wallet/data"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/wallet/data"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/history/6a143d61f1f85a31187e77b2?page=1&limit=100"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/history/6a143d61f1f85a31187e77b2?page=1&limit=100"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/getUser/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zrxi1rec&sid=7wk9UnMJoMeXv1wZAAAi"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/getUser/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zsfw09jb&sid=7wk9UnMJoMeXv1wZAAAi"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/getUser/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/logout"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/logout"
+    },
+    {
+      "status": 403,
+      "url": "https://accounts.google.com/gsi/button?type=standard&theme=outline&size=large&text=signin_with&shape=rectangular&logo_alignment=left&width=320&locale=undefined&click_listener=undefined&is_fedcm_supported=true&client_id=704541656207-prln6ckc25sph827vat5cub6iu4fk6ft.apps.googleusercontent.com&iframe_id=gsi_197030_143464&cas=EHOGJzRPCwGNubSljaA0GwlXDv6j7A32xGFpIwq%2Bo%2BY"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/location/update"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/location/update"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/counsellors/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zt3hhyfb"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zt3wtqmf&sid=WEEind3YJTsG5AtKAAAm"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/counsellors/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zt3wxfgm&sid=WEEind3YJTsG5AtKAAAm"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chats"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zt4chm6s&sid=WEEind3YJTsG5AtKAAAm"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chats"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/appointments"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=zt4pl69r&sid=WEEind3YJTsG5AtKAAAm"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/appointments"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/appointments?date=2026-07-04"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/appointments?date=2026-07-04"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/history/6a195906d91aa36309a6c583?page=1&limit=100"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/history/6a195906d91aa36309a6c583?page=1&limit=100"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=ztdugz5x&sid=WEEind3YJTsG5AtKAAAm"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/socket.io/?EIO=4&transport=polling&t=ztn4w1am&sid=WEEind3YJTsG5AtKAAAm"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/counsellors/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/counsellors/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/appointments"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/appointments"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chats"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/counsellors/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chats"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/logout"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a195906d91aa36309a6c583"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/pending-requests"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/logout"
+    }
+  ],
+  "consoleMessages": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "counsellor selected"
+    },
+    {
+      "type": "log",
+      "text": "[SocketService] Connecting to https://chatbot-backend-production-ea76.up.railway.app"
+    },
+    {
+      "type": "log",
+      "text": "[SocketService] Connected ✓ id: HwrPTtTxWfC3CgxeAAAf"
+    },
+    {
+      "type": "log",
+      "text": "Counselor Socket Connected"
+    },
+    {
+      "type": "warning",
+      "text": "Google Translate error: Failed to fetch"
+    },
+    {
+      "type": "warning",
+      "text": "⚠️ Translation failed for: ChatGPT Image Jun 17, 2026, 03"
+    },
+    {
+      "type": "warning",
+      "text": "Google Translate error: Failed to fetch"
+    },
+    {
+      "type": "warning",
+      "text": "⚠️ Translation failed for: DA7F1D94-6F2E-4F88-8C06-95A7AA"
+    },
+    {
+      "type": "warning",
+      "text": "Google Translate error: Failed to fetch"
+    },
+    {
+      "type": "warning",
+      "text": "⚠️ Translation failed for: ya goods"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "user selected"
+    },
+    {
+      "type": "log",
+      "text": "📝 Current user language: en-US"
+    },
+    {
+      "type": "log",
+      "text": "Chat data received: Object"
+    },
+    {
+      "type": "log",
+      "text": "Transformed counselor list: Array(2)"
+    },
+    {
+      "type": "log",
+      "text": "[SocketService] Connecting to https://chatbot-backend-production-ea76.up.railway.app"
+    },
+    {
+      "type": "warning",
+      "text": "Payment config unavailable: <!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/chat/payment-config</pre>\n</body>\n</html>\n"
+    },
+    {
+      "type": "log",
+      "text": "[SocketService] Connected ✓ id: vQHZQHZsCjL07aSQAAAj"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "counsellor selected"
+    },
+    {
+      "type": "log",
+      "text": "[SocketService] Connecting to https://chatbot-backend-production-ea76.up.railway.app"
+    },
+    {
+      "type": "log",
+      "text": "[SocketService] Connected ✓ id: Z_AO_shde-DhZWTWAAAn"
+    },
+    {
+      "type": "log",
+      "text": "Counselor Socket Connected"
+    },
+    {
+      "type": "warning",
+      "text": "Google Translate error: Failed to fetch"
+    },
+    {
+      "type": "warning",
+      "text": "⚠️ Translation failed for: ChatGPT Image Jun 17, 2026, 03"
+    },
+    {
+      "type": "warning",
+      "text": "Google Translate error: Failed to fetch"
+    },
+    {
+      "type": "warning",
+      "text": "⚠️ Translation failed for: DA7F1D94-6F2E-4F88-8C06-95A7AA"
+    },
+    {
+      "type": "warning",
+      "text": "Google Translate error: Failed to fetch"
+    },
+    {
+      "type": "warning",
+      "text": "⚠️ Translation failed for: ya goods"
+    }
+  ]
+}

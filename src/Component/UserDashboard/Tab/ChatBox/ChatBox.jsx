@@ -4054,6 +4054,7 @@ import {
   resolveOfflineLastSeen,
 } from "../../../../utils/presence";
 import TranslatedMessage from "../../../common/TranslatedMessage";
+import { getCallHistoryTone } from "../../../common/callHistoryStyle";
 
 const normalizeCounselor = (counselor) => {
   if (!counselor) return counselor;
@@ -5513,20 +5514,23 @@ const ChatBox = () => {
         durationText = ` (${secs}s)`;
       }
     }
+    const callTone = getCallHistoryTone(call);
+    const callTextColor = callTone.variant === "neutral" ? statusColor : callTone.color;
 
     return (
       <article className={`chatMsgBubble ${isOutgoing ? "chatMsgRight" : "chatMsgLeft"}`}>
         <div className="chatMsgContent call-item" style={{
-          background: isOutgoing ? "#d9fdd3" : "#ffffff",
-          border: `1px solid ${isOutgoing ? "#25d366" : "#e9edef"}`,
+          background: "#ffffff",
+          border: "1px solid #e9edef",
+          borderLeft: `4px solid ${callTone.borderColor}`,
           borderRadius: "8px",
           padding: "8px 12px",
           maxWidth: "300px",
         }}>
           <div className="call-item-content" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "16px" }}>{callIcon}</span>
+            <span style={{ fontSize: "16px", color: callTextColor }}>{callIcon}</span>
             <div className="call-info" style={{ flex: 1 }}>
-              <div style={{ fontWeight: "500", fontSize: "14px", color: "#111b21" }}>
+              <div style={{ fontWeight: "500", fontSize: "14px", color: callTextColor }}>
                 {isOutgoing ? "Outgoing" : "Incoming"} {callLabel} call
               </div>
               <div style={{ 
@@ -5534,7 +5538,7 @@ const ChatBox = () => {
                 alignItems: "center", 
                 gap: "4px",
                 fontSize: "12px",
-                color: statusColor
+                color: callTextColor
               }}>
                 <span>{statusIcon}</span>
                 <span>{statusText}</span>
@@ -5543,7 +5547,7 @@ const ChatBox = () => {
             </div>
             <span className="chatMsgTimestamp" style={{ 
               fontSize: "11px", 
-              color: "#667781",
+              color: callTextColor,
               alignSelf: "flex-end"
             }}>
               {call.time}
@@ -6150,7 +6154,7 @@ const ChatBox = () => {
               </button>
               {showOptions && (
                 <div className="chatDropdownMenu" role="menu">
-                  {optionsMenuItems.map((item) => (
+                  {optionsMenuItems.filter((item) => item.id <= 2).map((item) => (
                     <button key={item.id} className="chatDropdownItem" onClick={() => { setShowOptions(false); handleMenuItemClick(item); }} role="menuitem">
                       <span className="chatDropdownIcon" aria-hidden="true">{item.icon}</span>
                       <span className="chatDropdownText">{item.label}</span>

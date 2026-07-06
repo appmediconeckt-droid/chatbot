@@ -258,6 +258,115 @@ const MyAppointments = () => {
     }
   };
 
+  const renderAppointmentDetailsModal = () => {
+    if (!showModal || !selectedApt) return null;
+
+    const appointmentSchedule = formatAppointmentDateTime(selectedApt.date);
+    const counselorName = selectedApt.counselor?.fullName || "Counselor";
+    const counselorSpecialization =
+      selectedApt.counselor?.specialization || "Mental health counselor";
+    const appointmentStatus = selectedApt.status || "pending";
+
+    return (
+      <div
+        className="appointment-detail-overlay"
+        onClick={() => setShowModal(false)}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Appointment details"
+      >
+        <div
+          className="appointment-detail-modal"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            className="appointment-detail-close"
+            onClick={() => setShowModal(false)}
+            aria-label="Close appointment details"
+          >
+            x
+          </button>
+
+          <div className="appointment-detail-hero">
+            <div className="appointment-detail-avatar-wrap">
+              <img
+                src={getAvatarSrc(selectedApt)}
+                alt={counselorName}
+                className="appointment-detail-avatar"
+              />
+            </div>
+            <div className="appointment-detail-heading">
+              <span className="appointment-detail-kicker">
+                {t('appointment_details')}
+              </span>
+              <h2>{counselorName}</h2>
+              <p>{counselorSpecialization}</p>
+            </div>
+            <span className={`appointment-detail-status ${appointmentStatus}`}>
+              {appointmentStatus}
+            </span>
+          </div>
+
+          <div className="appointment-detail-grid">
+            <div className="appointment-detail-card">
+              <span className="material-symbols-outlined">calendar_today</span>
+              <div>
+                <small>{t('date')}</small>
+                <strong>{appointmentSchedule.date}</strong>
+              </div>
+            </div>
+            <div className="appointment-detail-card">
+              <span className="material-symbols-outlined">schedule</span>
+              <div>
+                <small>{t('time')}</small>
+                <strong>{appointmentSchedule.time || "N/A"}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="appointment-detail-notes">
+            <div className="appointment-detail-notes-title">
+              <span className="material-symbols-outlined">notes</span>
+              <strong>{t('reason')}</strong>
+            </div>
+            <p>{selectedApt.notes || "N/A"}</p>
+          </div>
+
+          <div className="appointment-detail-actions">
+            <button
+              type="button"
+              className="appointment-detail-action secondary"
+              onClick={() => handleChat(selectedApt)}
+              disabled={actionLoading === `chat-${selectedApt._id}`}
+            >
+              <span className="material-symbols-outlined">chat</span>
+              {actionLoading === `chat-${selectedApt._id}` ? "Opening..." : "Chat"}
+            </button>
+            <button
+              type="button"
+              className="appointment-detail-action primary"
+              onClick={() => handleCall(selectedApt, "voice")}
+              disabled={actionLoading === `voice-${selectedApt._id}`}
+            >
+              <span className="material-symbols-outlined">call</span>
+              {actionLoading === `voice-${selectedApt._id}` ? "Starting..." : "Voice Call"}
+            </button>
+            <button
+              type="button"
+              className="appointment-detail-action primary"
+              onClick={() => handleCall(selectedApt, "video")}
+              disabled={actionLoading === `video-${selectedApt._id}`}
+            >
+              <span className="material-symbols-outlined">videocam</span>
+              {actionLoading === `video-${selectedApt._id}` ? "Starting..." : "Video Call"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div
       className="flex w-full gap-0 bg-[#f8f9ff] min-h-screen"
@@ -413,7 +522,7 @@ const MyAppointments = () => {
                         Video Call
                       </button>
                       {/* Appointment Details Modal */}
-                      {showModal && selectedApt && (
+                      {false && showModal && selectedApt && (
                         <div
                           style={{
                             position: "fixed",
@@ -499,6 +608,8 @@ const MyAppointments = () => {
             )}
           </div>
         )}
+
+        {renderAppointmentDetailsModal()}
 
         <VideoCallModal
           isOpen={isCallModalOpen}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { FaPhoneAlt, FaVideo } from "react-icons/fa";
 import { API_BASE_URL } from "../../axiosConfig";
+import { getCallHistoryTone } from "./callHistoryStyle";
 
 // Compact, conversation-specific call history. The full Call History tab
 // remains the place for all calls; this only shows calls with the person in
@@ -97,6 +98,8 @@ const ChatCallHistory = ({ userId, peerId }) => {
             const isVideo = String(call.type).toLowerCase() === "video";
             const direction = call.role === "initiator" ? "Outgoing" : "Incoming";
             const isOutgoing = call.role === "initiator";
+            const callTone = getCallHistoryTone(call);
+            const callTextColor = callTone.variant === "neutral" ? "#334155" : callTone.color;
             const time = Number.isNaN(timestamp.getTime())
               ? ""
               : timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -112,15 +115,16 @@ const ChatCallHistory = ({ userId, peerId }) => {
                   padding: "9px 12px",
                   maxWidth: "360px",
                   borderRadius: "10px",
-                  background: isOutgoing ? "#e8eaff" : "#f8fafc",
-                  border: `1px solid ${isOutgoing ? "#c7d2fe" : "#e2e8f0"}`,
+                  background: "#ffffff",
+                  border: "1px solid #e2e8f0",
+                  borderLeft: `4px solid ${callTone.borderColor}`,
                   fontSize: "13px",
-                  color: "#334155",
+                  color: callTextColor,
                 }}
               >
-                <span style={{ color: "#4648d4" }}>{isVideo ? <FaVideo /> : <FaPhoneAlt />}</span>
+                <span style={{ color: callTextColor }}>{isVideo ? <FaVideo /> : <FaPhoneAlt />}</span>
                 <span style={{ flex: 1 }}>{direction} {isVideo ? "video" : "voice"} call</span>
-                <span style={{ color: "#64748b" }}>{time}{call.duration ? ` • ${call.duration}` : ""}</span>
+                <span style={{ color: callTextColor }}>{time}{call.duration ? ` • ${call.duration}` : ""}</span>
               </div>
             );
           })}

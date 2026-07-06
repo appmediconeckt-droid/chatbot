@@ -1291,7 +1291,7 @@ main {
 /* Chat Popup */
 .chat-popup {
   position: fixed;
-  bottom: 100px;
+  bottom: 112px;
   right: 30px;
   width: 380px;
   height: 550px;
@@ -1654,34 +1654,164 @@ main {
   width: 70px;
   height: 70px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  background:
+    radial-gradient(circle at 30% 22%, rgba(255, 255, 255, 0.48), transparent 27%),
+    linear-gradient(145deg, #6f8cff 0%, #4b5bdc 48%, #7b42d9 100%);
   color: var(--white);
   border: none;
   cursor: pointer;
-  font-size: 2rem;
   box-shadow: var(--shadow-xl);
   z-index: 999;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: var(--transition);
-  animation: pulse 2s infinite;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  animation: landingAiFloat 3.2s ease-in-out infinite;
+  overflow: visible;
 }
 
-@keyframes pulse {
+@keyframes landingAiFloat {
   0%, 100% {
-    transform: scale(1);
+    transform: translateY(0) scale(1);
     box-shadow: 0 10px 30px rgba(46, 134, 171, 0.3);
   }
   50% {
-    transform: scale(1.1);
-    box-shadow: 0 15px 40px rgba(46, 134, 171, 0.5);
+    transform: translateY(-8px) scale(1.04);
+    box-shadow: 0 18px 46px rgba(75, 91, 220, 0.52);
   }
 }
 
 .chat-button:hover {
-  transform: scale(1.1) rotate(15deg);
-  box-shadow: 0 20px 50px rgba(46, 134, 171, 0.6);
+  animation-play-state: paused;
+  transform: translateY(-5px) scale(1.08);
+  box-shadow: 0 20px 52px rgba(75, 91, 220, 0.62);
+}
+
+.landing-ai-orbit {
+  position: absolute;
+  inset: -9px;
+  border-radius: 50%;
+  border: 2px solid rgba(111, 140, 255, 0.28);
+  animation: landingAiPulse 2.1s ease-out infinite;
+}
+
+.landing-ai-icon {
+  position: relative;
+  z-index: 1;
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    0 8px 18px rgba(19, 31, 88, 0.18);
+}
+
+.landing-ai-antenna {
+  position: absolute;
+  top: -7px;
+  width: 3px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.landing-ai-antenna::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #fef08a;
+  box-shadow: 0 0 12px rgba(254, 240, 138, 0.8);
+  transform: translateX(-50%);
+}
+
+.landing-ai-face {
+  width: 28px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+}
+
+.landing-ai-eye {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffffff;
+  animation: landingAiBlink 3.4s infinite;
+}
+
+.landing-ai-smile {
+  position: absolute;
+  bottom: 8px;
+  width: 14px;
+  height: 6px;
+  border-bottom: 2px solid #ffffff;
+  border-radius: 0 0 999px 999px;
+}
+
+.landing-ai-spark {
+  position: absolute;
+  z-index: 2;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #fef08a;
+  box-shadow: 0 0 12px rgba(254, 240, 138, 0.9);
+}
+
+.landing-ai-spark.spark-one {
+  top: 13px;
+  right: 12px;
+  animation: landingSpark 1.9s ease-in-out infinite;
+}
+
+.landing-ai-spark.spark-two {
+  left: 13px;
+  bottom: 14px;
+  width: 5px;
+  height: 5px;
+  animation: landingSpark 1.9s ease-in-out 0.55s infinite;
+}
+
+@keyframes landingAiPulse {
+  0% {
+    transform: scale(0.82);
+    opacity: 0.55;
+  }
+  100% {
+    transform: scale(1.32);
+    opacity: 0;
+  }
+}
+
+@keyframes landingAiBlink {
+  0%, 88%, 100% {
+    transform: scaleY(1);
+  }
+  92% {
+    transform: scaleY(0.18);
+  }
+}
+
+@keyframes landingSpark {
+  0%, 100% {
+    transform: scale(0.85);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 1;
+  }
 }
 
 .pulse-indicator {
@@ -1704,6 +1834,174 @@ main {
     transform: scale(1.5);
     opacity: 0;
   }
+}
+
+/* Landing chatbot logo: matches the supplied bubble-style Chat icon */
+.chat-button {
+  width: 82px;
+  height: 82px;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  align-items: center;
+  overflow: visible;
+  animation: landingChatFloat 3.2s ease-in-out infinite;
+}
+
+.chat-button:hover {
+  animation-play-state: paused;
+  transform: translateY(-6px) scale(1.03);
+  box-shadow: none;
+}
+
+.landing-chat-logo {
+  position: relative;
+  z-index: 1;
+  width: 82px;
+  height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 14px 20px rgba(15, 23, 42, 0.2));
+}
+
+.landing-chat-ring {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 70% 27%, rgba(255, 243, 213, 0.82), transparent 30%),
+    linear-gradient(145deg, #f7fdff 0%, #ffffff 62%, #ecf8fb 100%);
+  border: 2.5px solid #287896;
+  box-shadow:
+    0 12px 22px rgba(15, 23, 42, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.82),
+    inset 0 -8px 16px rgba(40, 120, 150, 0.08);
+  overflow: hidden;
+  animation: landingChatBreath 2.8s ease-in-out infinite;
+}
+
+.landing-chat-bubble {
+  position: absolute;
+  display: block;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+}
+
+.landing-chat-bubble::after {
+  content: "";
+  position: absolute;
+  width: 36%;
+  height: 36%;
+  top: 18%;
+  left: 18%;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  filter: blur(0.2px);
+}
+
+.landing-chat-bubble.bubble-back {
+  width: 31px;
+  height: 31px;
+  left: 25px;
+  top: 15px;
+  background: linear-gradient(145deg, #38b6d0 0%, #227f9b 100%);
+  opacity: 0.88;
+  z-index: 1;
+  box-shadow:
+    0 4px 8px rgba(31, 142, 170, 0.12),
+    inset 8px 8px 16px rgba(255, 255, 255, 0.16);
+  animation: landingBubbleBack 3.9s ease-in-out infinite;
+}
+
+.landing-chat-bubble.bubble-left {
+  width: 36px;
+  height: 36px;
+  left: 14px;
+  top: 28px;
+  background: linear-gradient(145deg, #43c8df 0%, #1f8eaa 100%);
+  opacity: 0.9;
+  z-index: 2;
+  box-shadow:
+    0 5px 10px rgba(31, 142, 170, 0.16),
+    inset 8px 8px 16px rgba(255, 255, 255, 0.2);
+  animation: landingBubbleLeft 3.6s ease-in-out 0.2s infinite;
+}
+
+.landing-chat-bubble.bubble-front {
+  width: 40px;
+  height: 40px;
+  left: 44px;
+  top: 31px;
+  transform: translate(-50%, -4px);
+  background: linear-gradient(145deg, #277f9d 0%, #155d75 100%);
+  z-index: 3;
+  box-shadow:
+    0 8px 14px rgba(9, 75, 98, 0.26),
+    inset 10px 10px 18px rgba(255, 255, 255, 0.12);
+  animation: landingBubbleFront 3.3s ease-in-out 0.05s infinite;
+}
+
+.landing-chat-bubble.bubble-accent {
+  width: 17px;
+  height: 17px;
+  right: 13px;
+  top: 28px;
+  background: linear-gradient(145deg, #ffb15f 0%, #f27b22 100%);
+  z-index: 4;
+  box-shadow:
+    0 5px 12px rgba(242, 123, 34, 0.38),
+    inset 5px 5px 8px rgba(255, 255, 255, 0.22);
+  animation: landingBubbleAccent 2.7s ease-in-out 0.15s infinite;
+}
+
+.chat-button .pulse-indicator {
+  top: 3px;
+  left: 3px;
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: transparent;
+  border: 2px solid rgba(40, 120, 150, 0.24);
+}
+
+@keyframes landingChatFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@keyframes landingChatBreath {
+  0%, 100% { transform: scale(1); box-shadow: 0 12px 22px rgba(15, 23, 42, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.82), inset 0 -8px 16px rgba(40, 120, 150, 0.08); }
+  50% { transform: scale(1.025); box-shadow: 0 16px 28px rgba(15, 23, 42, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.88), inset 0 -8px 16px rgba(40, 120, 150, 0.1); }
+}
+
+@keyframes landingBubbleFront {
+  0%, 100% { transform: translate(-50%, -4px) scale(1); }
+  25% { transform: translate(-52%, -8px) scale(1.035); }
+  55% { transform: translate(-48%, -5px) scale(1.015); }
+  78% { transform: translate(-50%, -2px) scale(0.985); }
+}
+
+@keyframes landingBubbleLeft {
+  0%, 100% { transform: translate(0, 0); }
+  24% { transform: translate(-3px, 1px) scale(1.025); }
+  52% { transform: translate(-1px, -4px) scale(1.045); }
+  76% { transform: translate(2px, -1px) scale(0.99); }
+}
+
+@keyframes landingBubbleBack {
+  0%, 100% { transform: translate(0, 0); }
+  22% { transform: translate(2px, -3px) scale(1.03); }
+  56% { transform: translate(4px, 1px) scale(0.995); }
+  78% { transform: translate(-1px, 2px) scale(1.015); }
+}
+
+@keyframes landingBubbleAccent {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  24% { transform: translate(3px, -4px) scale(1.12); }
+  54% { transform: translate(1px, -1px) scale(1.03); }
+  76% { transform: translate(-2px, 2px) scale(0.94); }
 }
 
 /* Responsive Design */
@@ -1788,7 +2086,7 @@ main {
     width: 350px;
     height: 500px;
     right: 20px;
-    bottom: 90px;
+    bottom: 102px;
   }
 }
 
@@ -1892,16 +2190,61 @@ main {
     height: 500px;
     right: 20px;
     left: 20px;
-    bottom: 90px;
+    bottom: 94px;
     margin: 0 auto;
   }
   
   .chat-button {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5rem;
+    width: 68px;
+    height: 68px;
     bottom: 20px;
-    right: 20px;
+    right: 16px;
+  }
+
+  .landing-chat-logo {
+    width: 68px;
+    height: 68px;
+  }
+
+  .landing-chat-ring {
+    width: 64px;
+    height: 64px;
+    border-width: 2px;
+  }
+
+  .landing-chat-bubble.bubble-back {
+    width: 26px;
+    height: 26px;
+    left: 21px;
+    top: 13px;
+  }
+
+  .landing-chat-bubble.bubble-left {
+    width: 30px;
+    height: 30px;
+    left: 12px;
+    top: 24px;
+  }
+
+  .landing-chat-bubble.bubble-front {
+    width: 34px;
+    height: 34px;
+    left: 37px;
+    top: 27px;
+  }
+
+  .landing-chat-bubble.bubble-accent {
+    width: 14px;
+    height: 14px;
+    right: 11px;
+    top: 23px;
+  }
+
+  .chat-button .pulse-indicator {
+    top: 2px;
+    left: 2px;
+    width: 64px;
+    height: 64px;
   }
 }
 
@@ -2001,7 +2344,7 @@ main {
   
   .chat-popup {
     height: 450px;
-    bottom: 80px;
+    bottom: 88px;
   }
 }
 

@@ -230,14 +230,18 @@ const LoginOtpVerification = () => {
             <div className="us-otp-page-input-wrapper">
               <input
                 type="text"
-                placeholder="Enter 6-digit code"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="000000"
+                aria-label="Enter 6 digit OTP"
                 value={loginOtp}
                 onChange={(e) =>
                   setLoginOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
                 }
                 className="us-otp-page-input"
-                maxLength="6"
+                maxLength={6}
                 disabled={isVerifying || success}
+                autoComplete="one-time-code"
                 autoFocus
               />
               {loginOtp.length === 6 && !success && (

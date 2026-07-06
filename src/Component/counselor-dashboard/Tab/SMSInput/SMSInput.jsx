@@ -3509,7 +3509,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaPhoneAlt, FaSpinner, FaVideo, FaCamera } from "react-icons/fa";
+import { FaEllipsisV, FaPhoneAlt, FaSpinner, FaSyncAlt, FaTrashAlt, FaVideo, FaCamera } from "react-icons/fa";
 import "./SMSInput.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
@@ -3526,6 +3526,7 @@ import {
 } from "../../../../utils/presence";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import TranslatedMessage from "../../../common/TranslatedMessage";
+import { getCallHistoryTone } from "../../../common/callHistoryStyle";
 
 const SMSInput = () => {
   const location = useLocation();
@@ -3575,7 +3576,9 @@ const SMSInput = () => {
   const [deletingCallId, setDeletingCallId] = useState(null);
   const [cameraStream, setCameraStream] = useState(null);
   const [showCameraPreview, setShowCameraPreview] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
   const videoRef = useRef(null);
+  const optionsRef = useRef(null);
 
   const handleSessionExpired = () => {
     localStorage.clear();
@@ -3860,6 +3863,64 @@ const SMSInput = () => {
       await fetchCallHistory();
     } finally {
       setIsLoadingMessages(false);
+    }
+  };
+
+  const handleClearChat = async () => {
+    const confirmed = window.confirm(
+      t('confirm_clear_chat') || 'Are you sure? This will delete all messages in this chat. You can start a new conversation after.'
+    );
+    if (!confirmed) return;
+
+    try {
+      setIsSending(true);
+      const apiChatId = getChatIdForAPI();
+
+      if (!apiChatId) {
+        alert(t('error_chat_id_not_found') || 'Error: Chat ID not found');
+        return;
+      }
+
+      const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
+
+      await axios.delete(`${API_BASE_URL}/api/chat/clear/${apiChatId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      setMessages([]);
+      setOriginalMessages([]);
+      setCallHistory([]);
+      setMessage('');
+      setChatStatus(null);
+      saveMessagesToLocalStorage([]);
+
+      alert(t('chat_cleared_restart') || 'Chat cleared! You can now start a new conversation.');
+    } catch (error) {
+      console.error('Error clearing chat:', error);
+      const errorMsg = error.response?.data?.error || error.message || 'Failed to clear chat';
+      alert(t('error_clear_chat') || `Error: ${errorMsg}`);
+    } finally {
+      setIsSending(false);
+      setShowOptions(false);
+    }
+  };
+
+  const counselorOptionsMenuItems = [
+    { id: 1, label: t('refresh_messages') || 'Refresh messages', icon: <FaSyncAlt /> },
+    { id: 2, label: t('clear_chat') || 'Clear Chat', icon: <FaTrashAlt /> },
+  ];
+
+  const handleOptionsMenuClick = (item) => {
+    setShowOptions(false);
+    if (item.id === 1) {
+      fetchMessagesFromAPI();
+      return;
+    }
+    if (item.id === 2) {
+      handleClearChat();
     }
   };
 
@@ -4838,6 +4899,17 @@ const SMSInput = () => {
   }, [selectedUser, chatId, COUNSELOR_ID]);
 
   useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (optionsRef.current && !optionsRef.current.contains(event.target)) {
+        setShowOptions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     if (!selectedUser || !COUNSELOR_ID) return;
 
     let cancelled = false;
@@ -5188,12 +5260,16 @@ const SMSInput = () => {
         durationText = ` (${secs}s)`;
       }
     }
+    const callTone = getCallHistoryTone(call);
+    const callTextColor = callTone.variant === "neutral" ? statusColor : callTone.color;
 
     return (
       <div className={`smsinput-message ${isOutgoing ? "sent" : "received"}`}>
         <div className="message-bubble call-item" style={{ 
-          background: isOutgoing ? "#d9fdd3" : "#ffffff",
-          border: `1px solid ${isOutgoing ? "#25d366" : "#e9edef"}`,
+          background: "#ffffff",
+          "--call-history-border-color": callTone.borderColor,
+          border: "1px solid #e9edef",
+          borderLeft: `4px solid ${callTone.borderColor}`,
           borderRadius: "8px",
           padding: "8px 12px",
           maxWidth: "300px",
@@ -5201,9 +5277,9 @@ const SMSInput = () => {
           marginRight: isOutgoing ? "0" : "auto",
         }}>
           <div className="call-item-content" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "16px" }}>{callIcon}</span>
+            <span style={{ fontSize: "16px", color: callTextColor }}>{callIcon}</span>
             <div className="call-info" style={{ flex: 1 }}>
-              <div style={{ fontWeight: "500", fontSize: "14px", color: "#111b21" }}>
+              <div style={{ fontWeight: "500", fontSize: "14px", color: callTextColor }}>
                 {isOutgoing ? "Outgoing" : "Incoming"} {callLabel} call
               </div>
               <div style={{ 
@@ -5211,7 +5287,7 @@ const SMSInput = () => {
                 alignItems: "center", 
                 gap: "4px",
                 fontSize: "12px",
-                color: statusColor
+                color: callTextColor
               }}>
                 <span>{statusIcon}</span>
                 <span>{statusText}</span>
@@ -5220,7 +5296,7 @@ const SMSInput = () => {
             </div>
             <span className="message-time" style={{ 
               fontSize: "11px", 
-              color: "#667781",
+              color: callTextColor,
               alignSelf: "flex-end"
             }}>
               {call.time}
@@ -5398,6 +5474,35 @@ const SMSInput = () => {
               {initiatingCallType === "video" ? <FaSpinner className="spinning" /> : <FaVideo />}
             </span>
           </button>
+          <div className="sms-more-options" ref={optionsRef}>
+            <button
+              className="sms-call-btn sms-more-options-btn"
+              onClick={() => setShowOptions((visible) => !visible)}
+              title="More options"
+              aria-label="More options"
+              aria-expanded={showOptions}
+              aria-haspopup="menu"
+            >
+              <span className="call-icon" aria-hidden="true">
+                <FaEllipsisV />
+              </span>
+            </button>
+            {showOptions && (
+              <div className="sms-chat-dropdown-menu" role="menu">
+                {counselorOptionsMenuItems.map((item) => (
+                  <button
+                    key={item.id}
+                    className="sms-chat-dropdown-item"
+                    onClick={() => handleOptionsMenuClick(item)}
+                    role="menuitem"
+                  >
+                    <span className="sms-chat-dropdown-icon" aria-hidden="true">{item.icon}</span>
+                    <span className="sms-chat-dropdown-text">{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

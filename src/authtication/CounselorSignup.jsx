@@ -2432,7 +2432,7 @@ const CounselorSignup = () => {
         localStorage.setItem("userId", id);
       }
     } else {
-      localStorage.setItem("userRole", "counselor");
+      localStorage.setItem("userRole", "counsellor");
     }
     localStorage.setItem("userEmail", formData.email);
     localStorage.setItem("isAuthenticated", "true");
@@ -2442,7 +2442,7 @@ const CounselorSignup = () => {
   const handleLogin = async () => {
     try {
       // Always send role for login to match backend expectation
-      const role = roleFromState || localStorage.getItem("role") || "counselor";
+      const role = roleFromState || localStorage.getItem("role") || "counsellor";
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`,
         {
           email: formData.email,
@@ -2518,7 +2518,7 @@ const CounselorSignup = () => {
         navigate("/verify-login-otp", { 
           state: { 
             email: formData.email,
-            role: "counselor"
+            role: "counsellor"
           } 
         });
       } else {
@@ -2579,7 +2579,7 @@ const CounselorSignup = () => {
       fd.append("aboutMe", formData.aboutMe.trim());
       fd.append("password", formData.password);
       fd.append("confirmPassword", formData.confirmPassword);
-      fd.append("role", "counselor");
+      fd.append("role", "counsellor");
       if (formData.profilePhoto instanceof File) {
         fd.append("profilePhoto", formData.profilePhoto);
       }
@@ -2599,7 +2599,7 @@ const CounselorSignup = () => {
         if (token) {
           localStorage.setItem("accessToken", token);
           localStorage.setItem("token", token);
-          localStorage.setItem("userRole", "counselor");
+          localStorage.setItem("userRole", "counsellor");
           localStorage.setItem("userEmail", formData.email);
           localStorage.setItem("isAuthenticated", "true");
           if (response.data.user) {

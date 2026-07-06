@@ -353,7 +353,7 @@
 // }
 
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { lazy, Suspense, useState, useEffect, useRef } from "react";
 import socketService from "../../../services/socketService";
 import "./CounselorDashboard.css";
 import { useNavigate } from "react-router-dom";
@@ -375,14 +375,7 @@ import {
   getAnonymousUserDisplay,
 } from "../../../utils/anonymousUser";
 
-import Dashboard from "../Tab/CounselorDashboard/Dashboardcou";
-import Messagesou from "../Tab/Messages/Messagesou";
-import CounselorProfile from "../Tab/Profile-Con/CounselorProfile";
-import CallHistory from "../../UserDashboard/Tab/Callls/CallHistory";
-import VideoCallModal from "../../UserDashboard/Tab/CallModal/VideoCallModal";
-import IncomingCallModal from "../../common/IncomingCallModal/IncomingCallModal";
 import LocationNoticeToast from "../../common/LocationNoticeToast";
-import AccountSettings from "../../Settings/AccountSettings";
 
 import { getAuthToken, getCounsellorId } from "./hooks/counsellorAuth";
 import useCounsellorData from "./hooks/useCounsellorData";
@@ -397,11 +390,24 @@ import {
   MobileBottomNav,
 } from "./components/MobileNav";
 import { useCounselorTranslation } from "../../../i18n/LanguageContext";
-import AppointmentsTab from "./components/AppointmentsTab";
-import RequestModal from "./components/RequestModal";
 import LogoutModal from "./components/LogoutModal";
-import SessionsTab from "./components/SessionsTab";
 import CounselorSkeleton from "./components/CounselorSkeleton";
+
+const AccountSettings = lazy(() => import("../../Settings/AccountSettings"));
+const AppointmentsTab = lazy(() => import("./components/AppointmentsTab"));
+const CallHistory = lazy(() => import("../../UserDashboard/Tab/Callls/CallHistory"));
+const CounselorProfile = lazy(() => import("../Tab/Profile-Con/CounselorProfile"));
+const Dashboard = lazy(() => import("../Tab/CounselorDashboard/Dashboardcou"));
+const IncomingCallModal = lazy(() => import("../../common/IncomingCallModal/IncomingCallModal"));
+const Messagesou = lazy(() => import("../Tab/Messages/Messagesou"));
+const SessionsTab = lazy(() => import("./components/SessionsTab"));
+const VideoCallModal = lazy(() => import("../../UserDashboard/Tab/CallModal/VideoCallModal"));
+
+const TabLoading = () => (
+  <div className="couns-tab-content">
+    <CounselorSkeleton />
+  </div>
+);
 
 
 export default function CounselorDashboard() {
@@ -677,33 +683,39 @@ export default function CounselorDashboard() {
   return (
     <div className="couns-dashboard">
       <LocationNoticeToast />
-      <IncomingCallModal
-        isOpen={showIncomingCallModal}
-        onClose={handleCloseIncomingModal}
-        callType={incomingCallData?.callType || "video"}
-        callerName={incomingCallData?.name}
-        callerImage={incomingCallData?.image}
-        callData={incomingCallData}
-        onAccept={(callId, data) =>
-          handleAcceptIncomingCall(
-            data || { ...(incomingCallData || {}), callId },
-          )
-        }
-        onReject={handleRejectIncomingCall}
-        fallbackName="User"
-      />
+      <Suspense fallback={null}>
+        {showIncomingCallModal && (
+          <IncomingCallModal
+            isOpen={showIncomingCallModal}
+            onClose={handleCloseIncomingModal}
+            callType={incomingCallData?.callType || "video"}
+            callerName={incomingCallData?.name}
+            callerImage={incomingCallData?.image}
+            callData={incomingCallData}
+            onAccept={(callId, data) =>
+              handleAcceptIncomingCall(
+                data || { ...(incomingCallData || {}), callId },
+              )
+            }
+            onReject={handleRejectIncomingCall}
+            fallbackName="User"
+          />
+        )}
 
-      <VideoCallModal
-        isOpen={isVideoModalOpen}
-        onClose={handleCloseVideoModal}
-        callData={selectedCall}
-        callMode={selectedCall?.callType || selectedCall?.type || "video"}
-        currentUser={{
-          id: localStorage.getItem("counsellorId"),
-          role: "counsellour",
-        }}
-        onEndCall={handleEndCall}
-      />
+        {isVideoModalOpen && (
+          <VideoCallModal
+            isOpen={isVideoModalOpen}
+            onClose={handleCloseVideoModal}
+            callData={selectedCall}
+            callMode={selectedCall?.callType || selectedCall?.type || "video"}
+            currentUser={{
+              id: localStorage.getItem("counsellorId"),
+              role: "counsellour",
+            }}
+            onEndCall={handleEndCall}
+          />
+        )}
+      </Suspense>
 
       {!isMobile && (
         <CounselorSidebar
@@ -742,6 +754,7 @@ export default function CounselorDashboard() {
       )}
 
       <div className={`couns-main-content ${isMobile ? "mobile" : ""}`}>
+        <Suspense fallback={<TabLoading />}>
         {activeTab === "dashboard" && (
           <div className="couns-tab-content">
             <div className="couns-tab-header">
@@ -821,6 +834,7 @@ export default function CounselorDashboard() {
             />
           </div>
         )}
+        </Suspense>
       </div>
 
       {/* Disabled - using notification bell in Messages tab instead */}

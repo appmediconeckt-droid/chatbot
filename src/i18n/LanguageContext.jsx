@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { translations } from './locales/index.js';
+import enUS from './locales/en-US.json';
 import { translationService } from './translationService';
 
 const USER_LANG_KEY = 'userLang';
@@ -68,6 +68,8 @@ export const SUPPORTED_LANGUAGES = [
 ];
 
 const LanguageContext = createContext(null);
+const DEFAULT_TRANSLATIONS = { 'en-US': enUS };
+const localeLoaders = import.meta.glob(['./locales/*.json', '!./locales/en-US.json']);
 
 // Map old language codes to new ones for backward compatibility
 const LANGUAGE_CODE_MAP = {
@@ -110,6 +112,23 @@ function normalizeLanguageCode(code) {
   return code;
 }
 
+async function loadLocaleMessages(lang) {
+  if (!lang || DEFAULT_TRANSLATIONS[lang]) {
+    return DEFAULT_TRANSLATIONS[lang] || DEFAULT_TRANSLATIONS['en-US'];
+  }
+
+  try {
+    const loader = localeLoaders[`./locales/${lang}.json`];
+    if (!loader) return DEFAULT_TRANSLATIONS['en-US'];
+
+    const module = await loader();
+    return module.default;
+  } catch (error) {
+    console.warn(`[i18n] Unable to load locale ${lang}:`, error);
+    return DEFAULT_TRANSLATIONS['en-US'];
+  }
+}
+
 export function LanguageProvider({ children }) {
   const [userLang, setUserLangState] = useState(() => {
     const saved = localStorage.getItem(USER_LANG_KEY);
@@ -122,6 +141,24 @@ export function LanguageProvider({ children }) {
     const normalized = normalizeLanguageCode(saved);
     return normalized;
   });
+  const [loadedTranslations, setLoadedTranslations] = useState(DEFAULT_TRANSLATIONS);
+
+  const ensureLanguageLoaded = useCallback((lang) => {
+    const normalized = normalizeLanguageCode(lang);
+    if (loadedTranslations[normalized]) return;
+
+    loadLocaleMessages(normalized).then((messages) => {
+      setLoadedTranslations((prev) => {
+        if (prev[normalized]) return prev;
+        return { ...prev, [normalized]: messages };
+      });
+    });
+  }, [loadedTranslations]);
+
+  useEffect(() => {
+    ensureLanguageLoaded(userLang);
+    ensureLanguageLoaded(counselorLang);
+  }, [counselorLang, ensureLanguageLoaded, userLang]);
 
   const setUserLang = useCallback((lang) => {
     const normalized = normalizeLanguageCode(lang);
@@ -136,7 +173,15 @@ export function LanguageProvider({ children }) {
   }, []);
 
   return (
-    <LanguageContext.Provider value={{ userLang, setUserLang, counselorLang, setCounselorLang }}>
+    <LanguageContext.Provider
+      value={{
+        userLang,
+        setUserLang,
+        counselorLang,
+        setCounselorLang,
+        translations: loadedTranslations,
+      }}
+    >
       {children}
     </LanguageContext.Provider>
   );
@@ -147,7 +192,7 @@ const TRANSLATION_KEY_ALIASES = {
   request_sent: ["request_sent", "chat_request_sent"],
 };
 
-function makeT(lang) {
+function makeT(lang, translations) {
   return (key) => {
     const lookupKeys = TRANSLATION_KEY_ALIASES[key] || [key];
 
@@ -170,13 +215,13 @@ function makeT(lang) {
 export function useUserTranslation() {
   const ctx = useContext(LanguageContext);
   if (!ctx) throw new Error('useUserTranslation must be used within LanguageProvider');
-  return { t: makeT(ctx.userLang), lang: ctx.userLang, setLang: ctx.setUserLang };
+  return { t: makeT(ctx.userLang, ctx.translations), lang: ctx.userLang, setLang: ctx.setUserLang };
 }
 
 export function useCounselorTranslation() {
   const ctx = useContext(LanguageContext);
   if (!ctx) throw new Error('useCounselorTranslation must be used within LanguageProvider');
-  return { t: makeT(ctx.counselorLang), lang: ctx.counselorLang, setLang: ctx.setCounselorLang };
+  return { t: makeT(ctx.counselorLang, ctx.translations), lang: ctx.counselorLang, setLang: ctx.setCounselorLang };
 }
 
 export function useUserApiTranslation() {

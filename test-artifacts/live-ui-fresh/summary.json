@@ -1,0 +1,210 @@
+{
+  "results": [
+    {
+      "kind": "user",
+      "url": "http://127.0.0.1:5173/user-dashboard",
+      "text": "Vijay\n\nvijaybadoria21@gmail.com\n\nChat\nCounselor\nAppointments\nWallet\nCall History\nHelp Support\nPrivacy\nSettings\n🌐\nEnglish\nMy Profile\nLogout\nVIVEKRAJ SINGH THAKUR\nLast Seen: 9 Min Ago\nWed\n\nya goods\n\nDentist\nAccepted Status\nVIVEK SINGH\n16d ago\n\nhello\n\nDentist\nAccepted Status\n✨\nAI\n1",
+      "onDashboard": true,
+      "onOtp": false,
+      "activeSession": false,
+      "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\live-ui-fresh\\user-03-result.png"
+    },
+    {
+      "kind": "counsellor",
+      "url": "http://127.0.0.1:5173/counselor-signup",
+      "text": "Counselors\nWelcome Back!\n\nConnect with expert counselors and find the support you need.\n\n✓ Expert Counselors\n✓ 24/7 Support\n✓ Confidential Sessions\nLogin to Account\n\nDon't have an account? Sign Up\n\nYour account is already logged in on another device.\n\nLogout Other Devices & Send OTP\nEmail Address\n*\nPassword\n*\nShow\nRemember me\nForgot password?\nLogin\nOR SIGN IN WITH\nSign in with Google",
+      "onDashboard": false,
+      "onOtp": false,
+      "activeSession": true,
+      "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\live-ui-fresh\\counsellor-03-result.png"
+    }
+  ],
+  "network": [
+    {
+      "status": 403,
+      "url": "https://accounts.google.com/gsi/button?type=standard&theme=outline&size=large&text=signin_with&shape=rectangular&logo_alignment=left&width=320&locale=undefined&click_listener=undefined&is_fedcm_supported=true&client_id=704541656207-prln6ckc25sph827vat5cub6iu4fk6ft.apps.googleusercontent.com&iframe_id=gsi_854180_648873&cas=aW8JOrjm4SYL0ve4%2FwPgbks7x7Wxwp1J56hBMu6zvkU"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/location/update"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/location/update"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ai-chat/history"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/getUser/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chats"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 404,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ai-chat/history"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/getUser/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/chat/chats"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/ratings/check-eligibility"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/video/calls/pending/6a143d61f1f85a31187e77b2"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/logout"
+    },
+    {
+      "status": 200,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/logout"
+    },
+    {
+      "status": 403,
+      "url": "https://accounts.google.com/gsi/button?type=standard&theme=outline&size=large&text=signin_with&shape=rectangular&logo_alignment=left&width=320&locale=undefined&click_listener=undefined&is_fedcm_supported=true&client_id=704541656207-prln6ckc25sph827vat5cub6iu4fk6ft.apps.googleusercontent.com&iframe_id=gsi_870963_231335&cas=mehQD5dlaRhDJ53ROMNWKQ89FCD%2BEvTkVMS0C%2FAkbPA"
+    },
+    {
+      "status": 204,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    },
+    {
+      "status": 409,
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    }
+  ],
+  "consoleMessages": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "counsellor selected"
+    },
+    {
+      "type": "error",
+      "text": "Login error: AxiosError: Request failed with status code 409\n    at settle (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:1319:7)\n    at XMLHttpRequest.onloadend (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:1682:7)\n    at Axios.request (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:2328:41)\n    at async handleLogin (http://127.0.0.1:5173/src/authtication/CounselorSignup.jsx:369:24)\n    at async handleSubmit (http://127.0.0.1:5173/src/authtication/CounselorSignup.jsx:540:9)"
+    },
+    {
+      "type": "error",
+      "text": "Login error: AxiosError: Request failed with status code 409\n    at settle (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:1319:7)\n    at XMLHttpRequest.onloadend (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:1682:7)\n    at Axios.request (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:2328:41)\n    at async handleLogin (http://127.0.0.1:5173/src/authtication/CounselorSignup.jsx:369:24)\n    at async handleSubmit (http://127.0.0.1:5173/src/authtication/CounselorSignup.jsx:540:9)"
+    },
+    {
+      "type": "warning",
+      "text": "[GSI_LOGGER]: google.accounts.id.initialize() is called multiple times. This could cause unexpected behavior and only the last initialized instance will be used."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "user selected"
+    },
+    {
+      "type": "log",
+      "text": "📝 Current user language: en-US"
+    },
+    {
+      "type": "log",
+      "text": "Chat data received: Object"
+    },
+    {
+      "type": "log",
+      "text": "Transformed counselor list: Array(2)"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "counsellor selected"
+    },
+    {
+      "type": "error",
+      "text": "Login error: AxiosError: Request failed with status code 409\n    at settle (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:1319:7)\n    at XMLHttpRequest.onloadend (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:1682:7)\n    at Axios.request (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:2328:41)\n    at async handleLogin (http://127.0.0.1:5173/src/authtication/CounselorSignup.jsx:369:24)\n    at async handleSubmit (http://127.0.0.1:5173/src/authtication/CounselorSignup.jsx:540:9)"
+    }
+  ]
+}

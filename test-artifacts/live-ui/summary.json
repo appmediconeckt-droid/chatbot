@@ -1,0 +1,104 @@
+{
+  "summary": [
+    {
+      "step": "Role selector opened",
+      "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\live-ui\\01-role-selector.png"
+    },
+    {
+      "step": "User login with provided email",
+      "result": "Please include an '@' in the email address. 'vijaybadoria21gmail.com' is missing an '@'.",
+      "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\live-ui\\02-user-provided-email.png"
+    },
+    {
+      "step": "User login with corrected email",
+      "result": "Active-session OTP flow shown",
+      "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\live-ui\\03-user-active-session.png"
+    },
+    {
+      "step": "User logout-other-devices OTP request",
+      "result": "OTP input visible",
+      "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\live-ui\\04-user-otp-sent.png"
+    },
+    {
+      "step": "Counselor login form filled",
+      "result": "Ready to submit",
+      "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\live-ui\\05-counselor-login-form.png"
+    },
+    {
+      "step": "Counselor dashboard",
+      "result": "Dashboard loaded",
+      "screenshot": "C:\\Users\\ArunBAarode\\Desktop\\chatbot-backend\\chatbot-frontend\\test-artifacts\\live-ui\\07-counselor-dashboard.png"
+    }
+  ],
+  "networkErrors": [
+    {
+      "status": 403,
+      "method": "GET",
+      "url": "https://accounts.google.com/gsi/button?type=standard&theme=outline&size=large&text=signin_with&shape=rectangular&logo_alignment=left&width=320&locale=undefined&click_listener=undefined&is_fedcm_supported=true&client_id=704541656207-prln6ckc25sph827vat5cub6iu4fk6ft.apps.googleusercontent.com&iframe_id=gsi_955493_20319&cas=PQ4kga9rRnPtAF3WnFeKQWEnUYP%2BFUIzPPjZinX%2B20Q"
+    },
+    {
+      "status": 409,
+      "method": "POST",
+      "url": "https://chatbot-backend-production-ea76.up.railway.app/api/auth/login"
+    },
+    {
+      "status": 403,
+      "method": "GET",
+      "url": "https://accounts.google.com/gsi/button?type=standard&theme=outline&size=large&text=signin_with&shape=rectangular&logo_alignment=left&width=320&locale=undefined&click_listener=undefined&is_fedcm_supported=true&client_id=704541656207-prln6ckc25sph827vat5cub6iu4fk6ft.apps.googleusercontent.com&iframe_id=gsi_964275_638007&cas=8TSVrwY53kguqwRV%2Fs07W2LRHFZZKbhWck2n2shzQOs"
+    }
+  ],
+  "consoleMessages": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "user selected"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "user selected"
+    },
+    {
+      "type": "error",
+      "text": "Login error: AxiosError: Request failed with status code 409\n    at settle (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:1319:7)\n    at XMLHttpRequest.onloadend (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:1682:7)\n    at Axios.request (http://127.0.0.1:5173/node_modules/.vite/deps/chunk-45FQV4MZ.js?v=d5763281:2328:41)\n    at async handleLogin (http://127.0.0.1:5173/src/authtication/UserSignup.jsx:329:24)\n    at async handleSubmit (http://127.0.0.1:5173/src/authtication/UserSignup.jsx:491:9)"
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "type": "log",
+      "text": "counsellor selected"
+    }
+  ]
+}

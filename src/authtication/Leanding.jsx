@@ -1223,7 +1223,14 @@ const ChatPopup = ({
 // ========== CHAT BUTTON COMPONENT ==========
 const ChatButton = ({ onClick }) => (
   <button className="chat-button" onClick={onClick} aria-label="Open chat">
-    <i className="fas fa-comment-medical"></i>
+    <span className="landing-chat-logo" aria-hidden="true">
+      <span className="landing-chat-ring">
+        <span className="landing-chat-bubble bubble-back" />
+        <span className="landing-chat-bubble bubble-left" />
+        <span className="landing-chat-bubble bubble-front" />
+        <span className="landing-chat-bubble bubble-accent" />
+      </span>
+    </span>
     <span className="pulse-indicator"></span>
   </button>
 );
