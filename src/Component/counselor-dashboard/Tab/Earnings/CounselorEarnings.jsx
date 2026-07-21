@@ -325,7 +325,7 @@ const CounselorEarnings = () => {
                 <tr key={earning._id} className="hover:bg-slate-50">
                   <td className="px-5 py-4 text-slate-600">{new Date(earning.createdAt).toLocaleDateString("en-IN")}</td>
                   <td className="px-4 py-4">
-                    <p className="font-semibold capitalize text-slate-900">{earning.userId?.fullName || "User"}</p>
+                    <p className="font-semibold capitalize text-slate-900">{earning.userId?.anonymous || "Anonymous User"}</p>
                     <p className="text-xs capitalize text-slate-500">{earning.sessionType} session</p>
                   </td>
                   <td className="px-4 py-4 text-right font-medium">{money(earning.totalAmount)}</td>
