@@ -365,6 +365,7 @@ import {
   FaMoneyBillWave,
   FaCog,
   FaUser,
+  FaBell,
 } from "react-icons/fa";
 import useVibration from "../../../hooks/useVibration";
 import useRingtone from "../../../hooks/useRingtone";
@@ -402,6 +403,8 @@ const IncomingCallModal = lazy(() => import("../../common/IncomingCallModal/Inco
 const Messagesou = lazy(() => import("../Tab/Messages/Messagesou"));
 const SessionsTab = lazy(() => import("./components/SessionsTab"));
 const VideoCallModal = lazy(() => import("../../UserDashboard/Tab/CallModal/VideoCallModal"));
+const CounselorEarnings = lazy(() => import("../Tab/Earnings/CounselorEarnings"));
+const NotificationsPage = lazy(() => import("../../common/Notifications/NotificationsPage"));
 
 const TabLoading = () => (
   <div className="couns-tab-content">
@@ -561,6 +564,7 @@ export default function CounselorDashboard() {
     // { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
     { id: "earnings", icon: <FaMoneyBillWave />, label: t('earnings'), badge: 0 },
     { id: "profile", icon: <FaUser />, label: t('profile'), badge: 0 },
+    { id: "notifications", icon: <FaBell />, label: "Notifications", badge: 0 },
     { id: "settings", icon: <FaCog />, label: t('settings'), badge: 0 },
   ];
 
@@ -806,9 +810,13 @@ export default function CounselorDashboard() {
 
         {activeTab === "earnings" && (
           <div className="couns-tab-content">
-            <div className="couns-work-in-progress">
-              The remaining work is currently in progress.
-            </div>
+            <CounselorEarnings />
+          </div>
+        )}
+
+        {activeTab === "notifications" && (
+          <div className="couns-tab-content">
+            <NotificationsPage role="counsellor" />
           </div>
         )}
 

@@ -17,6 +17,7 @@ const ResetPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
+  const role = location.state?.role === "counsellor" ? "counsellor" : "user";
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,9 +29,9 @@ const ResetPassword = () => {
 
   useEffect(() => {
     if (!email) {
-      navigate("/forgot-password");
+      navigate("/forgot-password", { state: { role } });
     }
-  }, [email, navigate]);
+  }, [email, navigate, role]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,7 +67,7 @@ const ResetPassword = () => {
         setSuccess(true);
         // Navigate to login after success
         setTimeout(() => {
-          navigate("/user-signup", { 
+          navigate(role === "counsellor" ? "/counselor-signup" : "/user-signup", {
             state: { message: "Password reset successfully! Please login." } 
           });
         }, 2000);
@@ -89,7 +90,7 @@ const ResetPassword = () => {
         {/* Back Button */}
         <button 
           className="rp-back-btn"
-          onClick={() => navigate("/forgot-password-otp", { state: { email } })}
+          onClick={() => navigate("/forgot-password-otp", { state: { email, role } })}
           aria-label="Go back"
         >
           <FaArrowLeft />
@@ -204,7 +205,7 @@ const ResetPassword = () => {
                 <button
                   type="button"
                   className="rp-link"
-                  onClick={() => navigate("/user-signup")}
+                  onClick={() => navigate(role === "counsellor" ? "/counselor-signup" : "/user-signup")}
                 >
                   Back to Login
                 </button>

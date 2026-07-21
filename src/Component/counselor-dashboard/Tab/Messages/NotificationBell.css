@@ -1,23 +1,26 @@
 .notification-bell {
   position: relative;
-  background: none;
-  border: none;
-  color: #1f2937;
-  font-size: 1.5rem;
+  background: linear-gradient(145deg, #ffffff, #f4f5ff);
+  border: 1px solid #dfe3f4;
+  color: #4f46e5;
+  font-size: 1.05rem;
   cursor: pointer;
-  padding: 8px;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  border-radius: 13px;
+  width: 44px;
+  height: 44px;
+  box-shadow: 0 6px 16px rgba(49, 46, 129, 0.12);
 }
 
 .notification-bell:hover {
-  background-color: #f3f4f6;
-  transform: scale(1.05);
+  background: #eef2ff;
+  border-color: #c7d2fe;
+  transform: translateY(-2px);
+  box-shadow: 0 9px 20px rgba(49, 46, 129, 0.17);
 }
 
 .notification-bell:active {
@@ -26,6 +29,11 @@
 
 .notification-bell.ringing {
   animation: ring 0.6s ease-in-out;
+}
+
+.notification-bell-icon {
+  display: grid;
+  place-items: center;
 }
 
 @keyframes ring {
@@ -54,23 +62,25 @@
 
 .notification-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
-  background: #ef4444;
+  top: -7px;
+  right: -7px;
+  background: linear-gradient(135deg, #fb7185, #e11d48);
   color: white;
   font-size: 0.7rem;
   font-weight: 700;
-  width: 22px;
+  min-width: 22px;
+  padding: 0 5px;
   height: 22px;
-  border-radius: 50%;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: 2px solid white;
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  box-shadow: 0 3px 8px rgba(225, 29, 72, 0.3);
+  animation: notificationPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-@keyframes pulse {
+@keyframes notificationPulse {
   0%,
   100% {
     opacity: 1;

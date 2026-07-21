@@ -9,6 +9,7 @@ import {
 } from "react-icons/fa";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { LanguageSelector } from "../../../common/LanguageSelector";
+import NotificationCenter from "../../../common/Notifications/NotificationCenter";
 
 export function MobileHeader({ showMobileMenu, setShowMobileMenu }) {
   return (
@@ -19,6 +20,7 @@ export function MobileHeader({ showMobileMenu, setShowMobileMenu }) {
       >
         {showMobileMenu ? <FaTimes /> : <FaBars />}
       </button>
+      <NotificationCenter />
     </div>
   );
 }

@@ -17,7 +17,7 @@
   --couns-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   --couns-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --couns-transition: all 0.3s ease;
-  --couns-sidebar-width: 310px;
+  --couns-sidebar-width: 280px;
 }
 
 body {

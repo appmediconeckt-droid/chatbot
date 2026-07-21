@@ -191,7 +191,7 @@ const LoginOtpVerification = () => {
           <FaArrowLeft /> Back
         </button>
 
-        <div className="us-otp-page-card">
+        <main className="us-otp-page-card">
           <div className="us-otp-page-header">
             <div className="us-otp-page-icon">
               <FaEnvelope />
@@ -205,7 +205,7 @@ const LoginOtpVerification = () => {
           <div className="us-otp-page-body">
             <div className="us-otp-page-email">
               <span className="us-email-label">Email:</span>
-              <span className="us-email-value">{email}</span>
+              <span className="us-email-value" title={email}>{email || "Email unavailable"}</span>
             </div>
             
             <div className="us-otp-page-role">
@@ -298,7 +298,7 @@ const LoginOtpVerification = () => {
               </p>
             </div>
           </div>
-        </div>
+        </main>
       </div>
     </div>
   );

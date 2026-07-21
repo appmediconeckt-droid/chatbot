@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "./Dashboardcou.css";
+import axiosInstance from "../../../../axiosConfig";
 
 /**
  * Dashboard Component – Sirf Dashboard ka data/content
@@ -7,14 +8,21 @@ import "./Dashboardcou.css";
  */
 const Dashboard = () => {
     const [loading, setLoading] = useState(true);
+    const [monthlyEarnings, setMonthlyEarnings] = useState(0);
 
     // Simulate loading data
     useEffect(() => {
-        const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1000);
-
-        return () => clearTimeout(timer);
+        const loadDashboardEarnings = async () => {
+            try {
+                const response = await axiosInstance.get("/api/wallet/counselor");
+                setMonthlyEarnings(Number(response.data?.monthlyEarned || 0));
+            } catch (error) {
+                console.error("Dashboard earnings load failed:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        void loadDashboardEarnings();
     }, []);
 
     // Dashboard statistics data
@@ -24,6 +32,12 @@ const Dashboard = () => {
         { title: "Appointments", value: "12", icon: "📅", change: "3 urgent", color: "#F4B400" },
         { title: "Monthly Earnings", value: "₹84.5K", icon: "💰", change: "+18%", color: "#DB4437" },
     ];
+    dashboardStats[3] = {
+        ...dashboardStats[3],
+        value: `₹${monthlyEarnings.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+        icon: "₹",
+        change: "80% counselor share",
+    };
 
     // Recent sessions data
     const recentSessions = [

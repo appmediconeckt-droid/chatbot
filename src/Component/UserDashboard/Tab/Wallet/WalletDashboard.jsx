@@ -37,6 +37,9 @@ const WalletDashboard = ({ userData }) => {
     const [loading, setLoading] = useState(false);
     const [downloadLoading, setDownloadLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const [fromDate, setFromDate] = useState('');
+    const [toDate, setToDate] = useState('');
+    const [statementLoading, setStatementLoading] = useState(false);
     const transactionsPerPage = 5;
 
     useEffect(() => {
@@ -44,6 +47,9 @@ const WalletDashboard = ({ userData }) => {
         loadRazorpayScript().catch((error) => {
             console.error('Razorpay script load failed:', error);
         });
+        const refreshWallet = () => fetchWalletData();
+        window.addEventListener('wallet-balance-updated', refreshWallet);
+        return () => window.removeEventListener('wallet-balance-updated', refreshWallet);
     }, []);
 
     // Reset to first page when language changes
@@ -51,9 +57,14 @@ const WalletDashboard = ({ userData }) => {
         setCurrentPage(1);
     }, [lang]);
 
-    const fetchWalletData = async () => {
+    const fetchWalletData = async (range = null) => {
         try {
-            const response = await axiosInstance.get('/api/wallet/data');
+            const selectedFrom = range?.from ?? fromDate;
+            const selectedTo = range?.to ?? toDate;
+            const params = {};
+            if (selectedFrom) params.from = selectedFrom;
+            if (selectedTo) params.to = selectedTo;
+            const response = await axiosInstance.get('/api/wallet/data', { params });
             setBalance(response.data.balance);
             setTransactions(response.data.transactions);
             setSpendingSummary(response.data.spendingSummary || { total: 0, breakdown: [] });
@@ -63,19 +74,93 @@ const WalletDashboard = ({ userData }) => {
         }
     };
 
+    const handleApplyDateFilter = async () => {
+        if (fromDate && toDate && fromDate > toDate) {
+            alert('From date cannot be after To date.');
+            return;
+        }
+        setStatementLoading(true);
+        await fetchWalletData({ from: fromDate, to: toDate });
+        setStatementLoading(false);
+    };
+
+    const handleThisMonth = async () => {
+        const now = new Date();
+        const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+        const formatLocalDate = (date) => {
+            const offset = date.getTimezoneOffset();
+            return new Date(date.getTime() - offset * 60000).toISOString().split('T')[0];
+        };
+        const from = formatLocalDate(firstDay);
+        const to = formatLocalDate(now);
+        setFromDate(from);
+        setToDate(to);
+        setStatementLoading(true);
+        await fetchWalletData({ from, to });
+        setStatementLoading(false);
+    };
+
+    const handleClearDateFilter = async () => {
+        setFromDate('');
+        setToDate('');
+        setStatementLoading(true);
+        await fetchWalletData({ from: '', to: '' });
+        setStatementLoading(false);
+    };
+
     const handleDownloadReport = async () => {
         setDownloadLoading(true);
         try {
+            if (transactions.length === 0) {
+                alert('No transactions found for the selected date range.');
+                return;
+            }
             // Generate HTML report
             const totalCredit = transactions.filter(tx => tx.type === 'credit').reduce((acc, tx) => acc + tx.amount, 0);
             const totalDebit = transactions.filter(tx => tx.type === 'debit').reduce((acc, tx) => acc + tx.amount, 0);
+            const statementPhone = [
+                userData?.phone,
+                userData?.phoneNumber,
+                userData?.mobile,
+                userData?.mobileNumber,
+                userData?.contactNumber
+            ].find(value => typeof value === 'string' && value.trim());
 
             const htmlContent = `
-                <div style="font-family: Arial, sans-serif; padding: 40px; background: white;">
-                    <h1 style="text-align: center; color: #667eea; margin-bottom: 10px;">${t('wallet_overview')}</h1>
+                <style>
+                    * { box-sizing: border-box; }
+                    .wallet-pdf { width: 100%; color: #172033; font-family: Arial, Helvetica, sans-serif; font-size: 10px; background: #fff; }
+                    .wallet-pdf h1 { margin: 0 0 8px; color: #4338ca !important; font-size: 25px; letter-spacing: -.4px; }
+                    .wallet-pdf h3 { margin: 18px 0 8px !important; color: #172033 !important; font-size: 13px; page-break-after: avoid; break-after: avoid; }
+                    .wallet-pdf hr { border: 0 !important; border-top: 2px solid #6366f1 !important; margin: 18px 0 !important; }
+                    .wallet-pdf table { width: 100% !important; border-collapse: separate !important; border-spacing: 0 !important; table-layout: fixed; margin-bottom: 16px !important; }
+                    .wallet-pdf thead { display: table-header-group !important; }
+                    .wallet-pdf tfoot { display: table-footer-group !important; }
+                    .wallet-pdf tr { page-break-inside: avoid !important; break-inside: avoid-page !important; }
+                    .wallet-pdf th { padding: 9px 7px !important; border: 0 !important; border-right: 1px solid #818cf8 !important; color: #fff !important; background: #4f46e5 !important; font-size: 8px; line-height: 1.25; letter-spacing: .25px; text-transform: uppercase; }
+                    .wallet-pdf th:first-child { border-radius: 6px 0 0 0; }
+                    .wallet-pdf th:last-child { border-right: 0 !important; border-radius: 0 6px 0 0; }
+                    .wallet-pdf td { padding: 9px 7px !important; border: 0 !important; border-right: 1px solid #e2e8f0 !important; border-bottom: 1px solid #e2e8f0 !important; vertical-align: top; line-height: 1.35; overflow-wrap: anywhere; }
+                    .wallet-pdf td:first-child { border-left: 1px solid #e2e8f0 !important; }
+                    .wallet-pdf tbody tr:nth-child(even) td { background: #f8fafc !important; }
+                    .wallet-pdf thead th:nth-child(1) { width: 16%; }
+                    .wallet-pdf thead th:nth-child(2) { width: 15%; }
+                    .wallet-pdf thead th:nth-child(3) { width: 35%; }
+                    .wallet-pdf thead th:nth-child(4) { width: 17%; }
+                    .wallet-pdf thead th:nth-child(5) { width: 17%; }
+                    .wallet-pdf p { line-height: 1.45; }
+                    .pdf-header { padding: 18px 20px; border-radius: 10px; background: #eef2ff; page-break-inside: avoid; break-inside: avoid-page; }
+                    .pdf-header p { margin: 0 !important; }
+                    .pdf-footer { padding-top: 10px; border-top: 1px solid #e2e8f0; color: #64748b; page-break-inside: avoid; break-inside: avoid-page; }
+                </style>
+                <div class="wallet-pdf">
+                    <div class="pdf-header">
+                    <h1 style="text-align: center;">Wallet Statement</h1>
                     <p style="text-align: center; color: #666; margin-bottom: 30px;">
-                        ${t('transaction_history_full')} | ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
+                        Wallet Statement: ${fromDate || 'All records'} to ${toDate || 'Today'}<br>
+                        Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}
                     </p>
+                    </div>
 
                     <hr style="border: 2px solid #667eea; margin-bottom: 30px;">
 
@@ -89,10 +174,12 @@ const WalletDashboard = ({ userData }) => {
                             <td style="padding: 10px; border: 1px solid #ddd;">${t('email_label')}</td>
                             <td style="padding: 10px; border: 1px solid #ddd;">${userData.email || 'N/A'}</td>
                         </tr>
-                        <tr style="background: #f8f9ff;">
-                            <td style="padding: 10px; border: 1px solid #ddd;">${t('phone_label')}</td>
-                            <td style="padding: 10px; border: 1px solid #ddd;">${userData.phone || 'N/A'}</td>
-                        </tr>
+                        ${statementPhone ? `
+                            <tr style="background: #f8f9ff;">
+                                <td style="padding: 10px; border: 1px solid #ddd;">${t('phone_label')}</td>
+                                <td style="padding: 10px; border: 1px solid #ddd;">${statementPhone.trim()}</td>
+                            </tr>
+                        ` : ''}
                         <tr style="background: #667eea; color: white;">
                             <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">${t('current_balance')}</td>
                             <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold;">₹${balance.toFixed(2)}</td>
@@ -144,7 +231,7 @@ const WalletDashboard = ({ userData }) => {
                     </table>
 
                     <hr style="border: 1px solid #ddd; margin: 30px 0;">
-                    <p style="text-align: center; color: #999; font-size: 12px;">
+                    <p class="pdf-footer" style="text-align: center; color: #999; font-size: 10px;">
                         This is an automatically generated wallet report. For queries, please contact support.
                     </p>
                     <p style="text-align: center; color: #999; font-size: 12px;">
@@ -159,15 +246,33 @@ const WalletDashboard = ({ userData }) => {
             document.body.appendChild(element);
 
             const opt = {
-                margin: 10,
-                filename: `wallet-report-${new Date().toISOString().split('T')[0]}.pdf`,
+                margin: [9, 8, 14, 8],
+                filename: `wallet-statement-${fromDate || 'all'}-to-${toDate || new Date().toISOString().split('T')[0]}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    letterRendering: true,
+                    backgroundColor: '#ffffff'
+                },
+                jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' },
+                pagebreak: {
+                    mode: ['css', 'legacy'],
+                    avoid: ['tr', 'h3', '.pdf-header', '.pdf-footer']
+                }
             };
 
-            // Generate and save PDF
-            await html2pdf().set(opt).from(element).save();
+            // Generate first, then add a consistent page counter to all pages.
+            const worker = html2pdf().set(opt).from(element).toPdf();
+            const pdf = await worker.get('pdf');
+            const pageCount = pdf.internal.getNumberOfPages();
+            for (let pageNumber = 1; pageNumber <= pageCount; pageNumber += 1) {
+                pdf.setPage(pageNumber);
+                pdf.setFontSize(8);
+                pdf.setTextColor(100, 116, 139);
+                pdf.text(`Page ${pageNumber} of ${pageCount}`, 201, 290, { align: 'right' });
+            }
+            await worker.save();
 
             // Clean up
             document.body.removeChild(element);
@@ -446,14 +551,67 @@ const WalletDashboard = ({ userData }) => {
                 {/* Right Column: Transaction History with Pagination */}
                 <section className="lg:col-span-7 bg-white rounded-[20px] border border-slate-200 shadow-[0px_4px_15px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col max-h-[550px]">
                     <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className={`${styles.headlineSm} text-[#0b1c30]`}>{t('transaction_history')}</h3>
+                        <div>
+                            <h3 className={`${styles.headlineSm} text-[#0b1c30]`}>{t('transaction_history')}</h3>
+                            <p className="text-[11px] text-[#64748b]">Select a date range to generate a wallet statement</p>
+                        </div>
                         <button
                             onClick={handleDownloadReport}
                             disabled={downloadLoading}
                             className={`${styles.labelMd} ${downloadLoading ? 'opacity-50 cursor-not-allowed' : 'hover:underline'} text-[#4648d4] transition-all`}
                         >
-                            {downloadLoading ? `${t('updating')}...` : t('download_report')}
+                            {downloadLoading ? `${t('updating')}...` : 'Download Statement'}
                         </button>
+                    </div>
+                    <div className="px-6 py-3 border-b border-slate-100 bg-slate-50/70">
+                        <div className="flex flex-wrap items-end gap-2">
+                            <label className="flex flex-col gap-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">From date</span>
+                                <input
+                                    type="date"
+                                    value={fromDate}
+                                    max={toDate || undefined}
+                                    onChange={(event) => setFromDate(event.target.value)}
+                                    className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
+                                />
+                            </label>
+                            <label className="flex flex-col gap-1">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748b]">To date</span>
+                                <input
+                                    type="date"
+                                    value={toDate}
+                                    min={fromDate || undefined}
+                                    onChange={(event) => setToDate(event.target.value)}
+                                    className="h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
+                                />
+                            </label>
+                            <button
+                                type="button"
+                                onClick={handleApplyDateFilter}
+                                disabled={statementLoading}
+                                className="h-9 rounded-lg bg-[#4648d4] px-4 text-xs font-bold text-white disabled:opacity-50"
+                            >
+                                {statementLoading ? 'Loading...' : 'Apply'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleThisMonth}
+                                disabled={statementLoading}
+                                className="h-9 rounded-lg border border-[#4648d4] bg-white px-3 text-xs font-bold text-[#4648d4] disabled:opacity-50"
+                            >
+                                This Month
+                            </button>
+                            {(fromDate || toDate) && (
+                                <button
+                                    type="button"
+                                    onClick={handleClearDateFilter}
+                                    disabled={statementLoading}
+                                    className="h-9 px-2 text-xs font-semibold text-[#64748b] hover:text-[#0b1c30] disabled:opacity-50"
+                                >
+                                    Clear
+                                </button>
+                            )}
+                        </div>
                     </div>
                     <div className="overflow-y-auto overflow-x-auto flex-1">
                         <table className="w-full text-left">
@@ -472,7 +630,11 @@ const WalletDashboard = ({ userData }) => {
                                             <td className={`px-6 py-4 ${styles.labelMd} text-[#464554]`}>{new Date(tx.createdAt).toLocaleDateString()}</td>
                                             <td className="px-4 py-4">
                                                 <p className={`${styles.labelMd} text-[#0b1c30] font-[600]`}>{tx.description}</p>
-                                                <p className="text-[11px] text-[#464554]">{tx.razorpayPaymentId || t('id_pending')}</p>
+                                                <p className="text-[11px] text-[#464554]">
+                                                    {tx.counselorId?.fullName
+                                                        ? `${tx.counselorId.fullName}${tx.metadata?.sessionType ? ` • ${tx.metadata.sessionType}` : ''}${tx.metadata?.billedMinutes ? ` • ${tx.metadata.billedMinutes} min` : ''}`
+                                                        : (tx.razorpayPaymentId || t('id_pending'))}
+                                                </p>
                                             </td>
                                             <td className="px-4 py-4">
                                                 <span className={`px-2 py-0.5 ${tx.status === 'pending' ? 'bg-indigo-50 text-[#4648d4]' : (tx.status === 'completed' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600')} text-[9px] font-bold uppercase rounded-md tracking-wider`}>

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FaEnvelope, FaArrowLeft, FaSpinner } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ForgotPassword.css";
 import logo from "../image/Mediconect Logo-3.png";
@@ -8,6 +8,8 @@ import { API_BASE_URL } from "../axiosConfig";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const role = location.state?.role === "counsellor" ? "counsellor" : "user";
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +41,7 @@ const ForgotPassword = () => {
         setSuccess(true);
         // Navigate to OTP verification page with email
         navigate("/forgot-password-otp", { 
-          state: { email, from: "forgot-password" } 
+          state: { email, role, from: "forgot-password" }
         });
       } else {
         setError(response.data.message || "Failed to send OTP");
@@ -129,7 +131,7 @@ const ForgotPassword = () => {
                 <button
                   type="button"
                   className="fp-link"
-                  onClick={() => navigate("/user-signup")}
+                  onClick={() => navigate(role === "counsellor" ? "/counselor-signup" : "/user-signup")}
                 >
                   Back to Login
                 </button>

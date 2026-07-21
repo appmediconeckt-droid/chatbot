@@ -36,6 +36,7 @@ const SMSList = () => {
   const [pendingRequests, setPendingRequests] = useState([]);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [loadingRequests, setLoadingRequests] = useState(false);
+  const [contextMenu, setContextMenu] = useState(null);
   const navigate = useNavigate();
 
   const handleSessionExpired = useCallback(() => {
@@ -313,6 +314,7 @@ const SMSList = () => {
     socketService.connect().then((socket) => {
       if (!mounted) return;
       socket.on("presence-update", onPresenceUpdate);
+      socket.on("chat-list-update", fetchChats);
       socket.on("connect_error", onConnectError);
     }).catch((err) => {
       console.error("[Messagesou] Socket connect failed:", err.message);
@@ -321,9 +323,10 @@ const SMSList = () => {
     return () => {
       mounted = false;
       socketService.off("presence-update", onPresenceUpdate);
+      socketService.off("chat-list-update", fetchChats);
       socketService.off("connect_error", onConnectError);
     };
-  }, []);
+  }, [fetchChats]);
 
   // Translate user messages when language changes
   useEffect(() => {
@@ -375,6 +378,53 @@ const SMSList = () => {
       },
     });
   };
+
+  const handleDeleteChat = async (event, user) => {
+    event.stopPropagation();
+    setContextMenu(null);
+    if (!window.confirm(`Hide conversation with ${user.name}? Message history will be kept.`)) {
+      return;
+    }
+
+    const token =
+      localStorage.getItem("token") || localStorage.getItem("accessToken");
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/chat/chat/${encodeURIComponent(user.chatId)}`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+      const removeHiddenChat = (items) =>
+        items.filter((item) => item.chatId !== user.chatId);
+      setUsers(removeHiddenChat);
+      setOriginalUsers(removeHiddenChat);
+    } catch (err) {
+      console.error("Error hiding chat:", err);
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    if (!contextMenu) return undefined;
+
+    const closeContextMenu = () => setContextMenu(null);
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") closeContextMenu();
+    };
+    window.addEventListener("click", closeContextMenu);
+    window.addEventListener("scroll", closeContextMenu, true);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("click", closeContextMenu);
+      window.removeEventListener("scroll", closeContextMenu, true);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [contextMenu]);
 
   const handleAcceptRequest = async (requestId) => {
     const token =
@@ -544,6 +594,15 @@ const SMSList = () => {
                 selectedChatId === user.chatId ? "selected" : ""
               } status-${user.status} ${user.isExpired ? "expired-chat" : ""}`}
               onClick={() => handleUserClick(user)}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setContextMenu({
+                  x: event.clientX,
+                  y: event.clientY,
+                  user,
+                });
+              }}
             >
               {/* Avatar with status indicator */}
               <div className="smslist-user-avatar">
@@ -616,6 +675,24 @@ const SMSList = () => {
           </div>
         )}
       </div>
+
+      {contextMenu && (
+        <div
+          className="smslist-context-menu"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          role="menu"
+          onClick={(event) => event.stopPropagation()}
+        >
+          <button
+            type="button"
+            role="menuitem"
+            className="smslist-context-delete"
+            onClick={(event) => handleDeleteChat(event, contextMenu.user)}
+          >
+            Delete chat
+          </button>
+        </div>
+      )}
     </div>
   );
 };

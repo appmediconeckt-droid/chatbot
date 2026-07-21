@@ -16,8 +16,9 @@ export default function NotificationBell({ pendingCount, onClick }) {
       className={`notification-bell ${isRinging ? "ringing" : ""}`}
       onClick={handleClick}
       title={`${pendingCount} pending request${pendingCount !== 1 ? "s" : ""}`}
+      aria-label={`${pendingCount} pending chat request${pendingCount !== 1 ? "s" : ""}`}
     >
-      <FaBell />
+      <span className="notification-bell-icon"><FaBell /></span>
       {pendingCount > 0 && (
         <span className="notification-badge">{pendingCount > 99 ? "99+" : pendingCount}</span>
       )}
