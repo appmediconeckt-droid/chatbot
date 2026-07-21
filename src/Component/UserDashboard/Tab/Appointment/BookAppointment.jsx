@@ -1909,7 +1909,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           return newRejected;
         });
         setShowUserModal(false);
-        navigate("/user-dashboard", {
+        navigate("/chat", {
           state: {
             chatId: chatId,
             counselor: selectedCounselorForRequest,

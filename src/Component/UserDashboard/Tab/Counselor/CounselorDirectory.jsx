@@ -33,12 +33,9 @@ const getProfilePhotoUrl = (profilePhoto) => {
   return profilePhoto.url || null;
 };
 
-const isCounselorOnline = (counselor) =>
-  counselor?.presenceStatus === "online" ||
-  counselor?.hasActiveSession === true ||
-  counselor?.socketOnline === true ||
-  counselor?.online === true ||
-  counselor?.isOnline === true;
+// Keep this identical to the Chat tab: all API/socket payload shapes are
+// normalized in one place instead of requiring several duplicate flags.
+const isCounselorOnline = (counselor) => getPresence(counselor).isOnline;
 
 const CounselorTable = () => {
   const { t } = useUserTranslation();
@@ -120,10 +117,9 @@ const CounselorTable = () => {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchCounselors = async () => {
+    const fetchCounselors = async (showLoader = true) => {
       try {
-        setIsLoading(true);
-        setError("");
+        if (showLoader) setIsLoading(true);
 
         const response = await axiosInstance.get("/api/auth/counsellors");
         const counselors = (
@@ -131,37 +127,46 @@ const CounselorTable = () => {
           response.data?.counselors ||
           []
         ).map((counselor) => {
+          const presence = getPresence(counselor);
           return {
             ...counselor,
-            // A counselor is available only when both API flags are true.
-            // `presenceStatus` / `hasActiveSession` come from the backend's
-            // token-session check and remain stable during socket reconnects.
-            presenceStatus: counselor.presenceStatus || "offline",
-            hasActiveSession: counselor.hasActiveSession === true,
-            socketOnline: counselor.socketOnline === true,
-            isOnline:
-              counselor.presenceStatus === "online" ||
-              counselor.hasActiveSession === true ||
-              (counselor.isOnline === true && counselor.isLoggedIn === true),
-            isLoggedIn:
-              counselor.hasActiveSession === true ||
-              counselor.isLoggedIn === true,
+            presenceStatus: presence.isOnline ? "online" : "offline",
+            hasActiveSession: presence.isOnline,
+            socketOnline: presence.isOnline,
+            online: presence.isOnline,
+            isOnline: presence.isOnline,
+            isLoggedIn: presence.isOnline,
           };
         });
 
-        if (isMounted) setCounselorsData(counselors);
+        if (isMounted) {
+          setCounselorsData(counselors);
+          setError("");
+        }
       } catch (err) {
         console.error("Failed to fetch counselors:", err);
-        if (isMounted) setError(t('error_load_counselors'));
+        if (isMounted && showLoader) setError(t('error_load_counselors'));
       } finally {
-        if (isMounted) setIsLoading(false);
+        if (isMounted && showLoader) setIsLoading(false);
       }
     };
 
-    fetchCounselors();
+    void fetchCounselors(true);
+
+    // Socket events are primary. This reconciliation covers an event missed
+    // while the tab was mounting, reconnecting, or in the background.
+    const refreshTimer = window.setInterval(() => {
+      void fetchCounselors(false);
+    }, 15_000);
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void fetchCounselors(false);
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       isMounted = false;
+      window.clearInterval(refreshTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [t]);
 
@@ -172,9 +177,6 @@ const CounselorTable = () => {
       if (!mounted) return;
       const presence = getPresence(payload);
       const userId = getPresenceUserId(payload);
-      const hasActiveSession = counselor =>
-        counselor.hasActiveSession === true ||
-        counselor.presenceStatus === "online";
       const isLoggedIn = presence.isLoggedIn;
       const hasLoginStatus = presence.hasLoginStatus;
       const lastSeen = presence.lastSeen;
@@ -183,12 +185,13 @@ const CounselorTable = () => {
         prev.map((counselor) =>
           String(counselor._id || counselor.id) === String(userId)
             ? (() => {
-                const sessionOnline = hasActiveSession(counselor);
-                const isOnline = sessionOnline || presence.isOnline;
+                const isOnline = presence.isOnline;
                 return {
                 ...counselor,
                 isOnline,
                 online: isOnline,
+                presenceStatus: isOnline ? "online" : "offline",
+                hasActiveSession: isOnline,
                 isLoggedIn: hasLoginStatus
                   ? isLoggedIn
                   : counselor.isLoggedIn,

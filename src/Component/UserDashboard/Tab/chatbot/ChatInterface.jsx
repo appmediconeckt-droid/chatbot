@@ -6,6 +6,7 @@ import { API_BASE_URL } from '../../../../axiosConfig';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
 import { getPresence } from '../../../../utils/presence';
+import socketService from '../../../../services/socketService';
 
 const ChatInterface = ({ setActiveTab }) => {
     const navigate = useNavigate();
@@ -187,6 +188,7 @@ const ChatInterface = ({ setActiveTab }) => {
 
                     return {
                         id: otherParty.id || chat.chatId,
+                        chatMongoId: chat.id || chat._id || null,
                         name: otherParty.name || t('unknown_counselor'),
                         lastMessage: lastMessage,
                         lastMessageTime: lastMessageTime,
@@ -259,6 +261,7 @@ const ChatInterface = ({ setActiveTab }) => {
 
                             return {
                                 id: otherParty.id || chat.chatId,
+                                chatMongoId: chat.id || chat._id || null,
                                 name: otherParty.name || t('unknown_counselor'),
                                 lastMessage: lastMessage,
                                 lastMessageTime: lastMessageTime,
@@ -331,7 +334,7 @@ const ChatInterface = ({ setActiveTab }) => {
             const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
             if (!token) return false;
 
-            const response = await fetch(`${API_BASE_URL}/chat/chats/${chatId}`, {
+            const response = await fetch(`${API_BASE_URL}/api/chat/chat/${chatId}`, {
                     method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -341,12 +344,16 @@ const ChatInterface = ({ setActiveTab }) => {
 
             if (response.ok) {
                 // Remove from local state
-                setCounselors(prev => prev.filter(c => c.id !== chatId));
+                setCounselors(prev => prev.filter(c =>
+                    c.id !== chatId && c.chatId !== chatId && c.chatMongoId !== chatId
+                ));
 
                 // Also remove from localStorage
                 try {
                     const savedChats = JSON.parse(localStorage.getItem('activeChats') || '[]');
-                    const updatedChats = savedChats.filter(chat => chat.chatId !== chatId);
+                    const updatedChats = savedChats.filter(chat =>
+                        chat.chatId !== chatId && chat.id !== chatId && chat._id !== chatId
+                    );
                     localStorage.setItem('activeChats', JSON.stringify(updatedChats));
                 } catch (error) {
                     console.error('Error updating localStorage:', error);
@@ -382,6 +389,24 @@ const ChatInterface = ({ setActiveTab }) => {
         return () => {
             clearInterval(intervalId);
             window.removeEventListener('storage', handleStorageChange);
+        };
+    }, [fetchChats]);
+
+    useEffect(() => {
+        let mounted = true;
+        const refreshChatList = () => {
+            if (mounted) fetchChats(false);
+        };
+
+        socketService.connect().then((socket) => {
+            if (mounted) socket.on('chat-list-update', refreshChatList);
+        }).catch((error) => {
+            console.error('Chat list socket connection failed:', error.message);
+        });
+
+        return () => {
+            mounted = false;
+            socketService.off('chat-list-update', refreshChatList);
         };
     }, [fetchChats]);
 
@@ -521,7 +546,9 @@ const ChatInterface = ({ setActiveTab }) => {
     // Confirm delete chat
     const confirmDeleteChat = useCallback(async () => {
         if (counselorToDelete) {
-            const success = await deleteChat(counselorToDelete.id);
+            const success = await deleteChat(
+                counselorToDelete.chatMongoId || counselorToDelete.chatId
+            );
 
             if (success && window.navigator.vibrate) {
                 window.navigator.vibrate([50, 30, 50]);

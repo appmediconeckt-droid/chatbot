@@ -10,6 +10,7 @@ const ForgotPasswordOTP = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
+  const role = location.state?.role === "counsellor" ? "counsellor" : "user";
 
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
@@ -20,7 +21,7 @@ const ForgotPasswordOTP = () => {
 
   useEffect(() => {
     if (!email) {
-      navigate("/forgot-password");
+      navigate("/forgot-password", { state: { role } });
       return;
     }
 
@@ -36,7 +37,7 @@ const ForgotPasswordOTP = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [email, navigate]);
+  }, [email, navigate, role]);
 
   const handleVerify = async () => {
     if (!otp || otp.length !== 6) {
@@ -59,7 +60,7 @@ const ForgotPasswordOTP = () => {
         // Navigate to reset password page
         setTimeout(() => {
           navigate("/reset-password", { 
-            state: { email, from: "otp-verified" } 
+            state: { email, role, from: "otp-verified" }
           });
         }, 1500);
       } else {
@@ -123,7 +124,7 @@ const ForgotPasswordOTP = () => {
         {/* Back Button */}
         <button 
           className="fpotp-back-btn"
-          onClick={() => navigate("/forgot-password")}
+          onClick={() => navigate("/forgot-password", { state: { role } })}
           aria-label="Go back"
         >
           <FaArrowLeft />
@@ -226,7 +227,7 @@ const ForgotPasswordOTP = () => {
                 <button
                   type="button"
                   className="fpotp-link"
-                  onClick={() => navigate("/forgot-password")}
+                  onClick={() => navigate("/forgot-password", { state: { role } })}
                 >
                   Go back
                 </button>

@@ -219,6 +219,35 @@
   min-width: 0;
 }
 
+.smslist-context-menu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 150px;
+  padding: 0.35rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.55rem;
+  background: #ffffff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.18);
+}
+
+.smslist-context-delete {
+  width: 100%;
+  border: 0;
+  border-radius: 0.4rem;
+  padding: 0.6rem 0.75rem;
+  color: #dc2626;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.smslist-context-delete:hover,
+.smslist-context-delete:focus-visible {
+  background: #fee2e2;
+  outline: none;
+}
+
 .smslist-user-row {
   display: flex;
   justify-content: space-between;

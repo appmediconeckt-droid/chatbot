@@ -3509,7 +3509,7 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaEllipsisV, FaPhoneAlt, FaSpinner, FaSyncAlt, FaTrashAlt, FaVideo, FaCamera } from "react-icons/fa";
+import { FaEllipsisV, FaPaperPlane, FaPhoneAlt, FaSpinner, FaSyncAlt, FaTrashAlt, FaVideo, FaCamera } from "react-icons/fa";
 import "./SMSInput.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
@@ -5610,8 +5610,14 @@ const SMSInput = () => {
             type="submit"
             className={`send-btn ${message.trim() && !isSending ? "active" : ""}`}
             disabled={!message.trim() || isSending}
+            aria-label={isSending ? "Sending message" : "Send message"}
+            title={isSending ? "Sending..." : "Send message"}
           >
-            {isSending ? "Sending..." : "Send"}
+            {isSending ? (
+              <FaSpinner className="send-btn-spinner" aria-hidden="true" />
+            ) : (
+              <FaPaperPlane aria-hidden="true" />
+            )}
           </button>
         </div>
       </form>

@@ -213,7 +213,7 @@ const UserSignup = () => {
 
 
   const handleForgotPassword = () => {
-  navigate("/forgot-password");
+  navigate("/forgot-password", { state: { role: "user" } });
 };
   const validateSignup = () => {
     const newErrors = {};

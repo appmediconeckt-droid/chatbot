@@ -2236,7 +2236,7 @@ const CounselorSignup = () => {
   };
 
   const handleForgotPassword = () => {
-    navigate("/forgot-password");
+    navigate("/forgot-password", { state: { role: "counsellor" } });
   };
 
   const validateSignup = () => {

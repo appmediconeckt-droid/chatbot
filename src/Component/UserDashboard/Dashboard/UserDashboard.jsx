@@ -24,6 +24,7 @@ import {
   FaCommentMedical,
   FaUser,
   FaCalendarAlt,
+  FaBell,
 } from "react-icons/fa";
 
 import useVibration from "../../../hooks/useVibration";
@@ -36,6 +37,7 @@ import { useUserTranslation } from "../../../i18n/LanguageContext";
 import { LanguageSelector } from "../../common/LanguageSelector";
 import AiChatPopup from "./components/AiChatPopup";
 import ChatButton from "./components/ChatButton";
+import NotificationCenter from "../../common/Notifications/NotificationCenter";
 
 const AccountSettings = lazy(() => import("../../Settings/AccountSettings"));
 const CallHistory = lazy(() => import("../Tab/Callls/CallHistory"));
@@ -47,6 +49,7 @@ const PatientProfile = lazy(() => import("../../PatientProfile/PatientProfile"))
 const RatingPrompt = lazy(() => import("../../../components/RatingPrompt"));
 const VideoCallModal = lazy(() => import("../Tab/CallModal/VideoCallModal"));
 const WalletDashboard = lazy(() => import("../Tab/Wallet/WalletDashboard"));
+const NotificationsPage = lazy(() => import("../../common/Notifications/NotificationsPage"));
 
 const DashboardPanelLoader = () => (
   <div className="ud-content-section">
@@ -820,6 +823,7 @@ export default function UserDashboard() {
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
     { id: "help", icon: <FaQuestionCircle />, label: t('help_support') },
     { id: "privacy", icon: <FaLock />, label: t('privacy') },
+    { id: "Notifications", icon: <FaBell />, label: "Notifications" },
     { id: "settings", icon: <FaCog />, label: t('settings') },
   ];
 
@@ -1193,6 +1197,7 @@ export default function UserDashboard() {
             <h2 className="ud-mobile-logo">MChat</h2>
           </div>
           <div className="ud-mobile-header-right">
+            <NotificationCenter />
             <button
               className="ud-mobile-profile-btn"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -1345,6 +1350,7 @@ export default function UserDashboard() {
                 <CounselorRequestChat initialSearch={targetCounselor} />
               )}
               {active === "MyAppointments" && <MyAppointments />}
+              {active === "Notifications" && <NotificationsPage />}
               {active === "Wallet" && <WalletDashboard userData={userData} />}
               {active === "Video" && (
                 <CallHistory currentUser={{ id: userId, role: "user" }} />

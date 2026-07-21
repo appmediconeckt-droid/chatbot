@@ -4066,7 +4066,26 @@ const normalizeCounselor = (counselor) => {
     counselor.counselorName,
   ].find((value) => typeof value === "string" && value.trim());
 
-  return name ? { ...counselor, name: name.trim() } : counselor;
+  const profilePhoto =
+    counselor.profilePhoto ||
+    counselor.profileImage ||
+    counselor.photo ||
+    (counselor.avatarType === "image" ? counselor.avatar : null);
+
+  return {
+    ...counselor,
+    ...(name ? { name: name.trim() } : {}),
+    ...(profilePhoto ? { profilePhoto } : {}),
+  };
+};
+
+const mergeCounselorProfiles = (storedCounselor, freshCounselor) => {
+  const stored = normalizeCounselor(storedCounselor) || {};
+  const fresh = normalizeCounselor(freshCounselor) || {};
+  const freshValues = Object.fromEntries(
+    Object.entries(fresh).filter(([, value]) => value !== undefined && value !== null && value !== ""),
+  );
+  return normalizeCounselor({ ...stored, ...freshValues });
 };
 
 const ChatBox = () => {
@@ -4174,7 +4193,11 @@ const ChatBox = () => {
 
   const getProfilePhotoUrl = (counselor) => {
     if (!counselor) return null;
+    if (typeof counselor.profilePhoto === "string") return counselor.profilePhoto;
     if (counselor?.profilePhoto?.url) return counselor.profilePhoto.url;
+    if (counselor?.profilePhoto?.secure_url) return counselor.profilePhoto.secure_url;
+    if (typeof counselor.profileImage === "string") return counselor.profileImage;
+    if (counselor?.profileImage?.url) return counselor.profileImage.url;
     if (counselor?.avatar && counselor?.avatarType === "image") return counselor.avatar;
     return null;
   };
@@ -5184,10 +5207,15 @@ const ChatBox = () => {
           savedChats.find((c) => c.chatId === chatId || c.id === chatId) ||
           savedChats.find((c) => c.counselorId === (counselorId || stateCounselorId));
         if (chat) {
+          const mergedCounselor = mergeCounselorProfiles(chat.counselor, initialCounselor);
+          chat = { ...chat, counselor: mergedCounselor };
           setCurrentChat(chat);
-          if (chat.counselor) setCurrentCounselor(normalizeCounselor(chat.counselor));
+          if (mergedCounselor) setCurrentCounselor(mergedCounselor);
           if (chat.unread) {
-            const updatedChats = savedChats.map((c) => { if (c.id === chat.id) return { ...c, unread: false }; return c; });
+            const updatedChats = savedChats.map((c) => { if (c.id === chat.id) return { ...chat, unread: false }; return c; });
+            localStorage.setItem("activeChats", JSON.stringify(updatedChats));
+          } else {
+            const updatedChats = savedChats.map((c) => c.id === chat.id ? chat : c);
             localStorage.setItem("activeChats", JSON.stringify(updatedChats));
           }
         } else if (initialCounselor) {
