@@ -1,22 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { FaBell, FaCalendarAlt, FaCheck, FaCheckDouble, FaPhone, FaTrash, FaWallet } from "react-icons/fa";
-import { FaMessage } from "react-icons/fa6";
+import { FaBell, FaCalendarAlt, FaCheck, FaCheckDouble, FaTrash, FaWallet } from "react-icons/fa";
 import axiosInstance from "../../../axiosConfig";
 import socketService from "../../../services/socketService";
 import "./Notifications.css";
 
 const icons = {
-  message: <FaMessage />,
-  call: <FaPhone />,
   appointment: <FaCalendarAlt />,
   payment: <FaWallet />,
-  system: <FaBell />,
 };
 
 const filters = [
   { value: "", label: "All", icon: <FaBell /> },
-  { value: "message", label: "Messages", icon: <FaMessage /> },
-  { value: "call", label: "Calls", icon: <FaPhone /> },
   { value: "appointment", label: "Appointments", icon: <FaCalendarAlt /> },
   { value: "payment", label: "Payments", icon: <FaWallet /> },
 ];
@@ -89,8 +83,8 @@ const NotificationsPage = ({ role = "user" }) => {
             <span className="notifications-eyebrow">{isCounselor ? "Counselor activity centre" : "Activity centre"}</span>
             <h1>Notifications</h1>
             <p>{isCounselor
-              ? "Manage client messages, consultation calls, appointments and earnings updates."
-              : "Stay updated with every message, call, appointment and payment."}</p>
+              ? "Track appointment requests and payment updates."
+              : "Stay updated with appointment requests and payments."}</p>
           </div>
         </div>
         {unreadCount > 0 && (
@@ -106,7 +100,7 @@ const NotificationsPage = ({ role = "user" }) => {
           <span><strong>{notifications.length}</strong><small>Showing now</small></span>
         </div>
         <div className="notification-summary-card summary-unread">
-          <span className="summary-icon"><FaMessage /></span>
+          <span className="summary-icon"><FaBell /></span>
           <span><strong>{unreadCount}</strong><small>Unread updates</small></span>
         </div>
         <div className="notification-summary-card summary-read">

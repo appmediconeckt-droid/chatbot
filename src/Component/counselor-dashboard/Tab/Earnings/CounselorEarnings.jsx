@@ -16,6 +16,8 @@ const CounselorEarnings = () => {
   const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [notice, setNotice] = useState("");
+  const [dateInputs, setDateInputs] = useState({ from: "", to: "" });
+  const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [withdrawalForm, setWithdrawalForm] = useState({
     amount: "",
     payoutType: "standard",
@@ -28,7 +30,10 @@ const CounselorEarnings = () => {
   const loadEarnings = async ({ silent = false } = {}) => {
       try {
         if (!silent) setLoading(true);
-        const response = await axiosInstance.get("/api/wallet/counselor");
+        const params = {};
+        if (dateFilter.from) params.from = dateFilter.from;
+        if (dateFilter.to) params.to = dateFilter.to;
+        const response = await axiosInstance.get("/api/wallet/counselor", { params });
         setData(response.data);
         const account = response.data?.payoutAccount || {};
         setWithdrawalForm((current) => ({
@@ -58,7 +63,24 @@ const CounselorEarnings = () => {
       window.clearInterval(refreshTimer);
       window.removeEventListener("focus", refreshOnFocus);
     };
-  }, []);
+  }, [dateFilter.from, dateFilter.to]);
+
+  const applyDateFilter = (event) => {
+    event.preventDefault();
+    if (dateInputs.from && dateInputs.to && dateInputs.from > dateInputs.to) {
+      setError("From date cannot be after To date.");
+      return;
+    }
+    setError("");
+    setDateFilter(dateInputs);
+  };
+
+  const clearDateFilter = () => {
+    const empty = { from: "", to: "" };
+    setDateInputs(empty);
+    setDateFilter(empty);
+    setError("");
+  };
 
   const withdrawalStatusClass = (status) => {
     if (status === "paid") return "bg-emerald-50 text-emerald-700";
@@ -122,6 +144,44 @@ const CounselorEarnings = () => {
           Withdraw funds
         </button>
       </div>
+
+      <form onSubmit={applyDateFilter} className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mr-auto">
+          <h2 className="text-sm font-bold text-slate-900">Filter by date</h2>
+          <p className="mt-1 text-xs text-slate-500">View complete earnings and withdrawals for any selected period.</p>
+        </div>
+        <label className="flex min-w-[150px] flex-col gap-1 text-xs font-semibold text-slate-600">
+          From date
+          <input
+            type="date"
+            value={dateInputs.from}
+            max={dateInputs.to || undefined}
+            onChange={(event) => setDateInputs((current) => ({ ...current, from: event.target.value }))}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:border-indigo-500"
+          />
+        </label>
+        <label className="flex min-w-[150px] flex-col gap-1 text-xs font-semibold text-slate-600">
+          To date
+          <input
+            type="date"
+            value={dateInputs.to}
+            min={dateInputs.from || undefined}
+            onChange={(event) => setDateInputs((current) => ({ ...current, to: event.target.value }))}
+            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:border-indigo-500"
+          />
+        </label>
+        <button type="submit" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">Apply</button>
+        {(dateFilter.from || dateFilter.to) && (
+          <button type="button" onClick={clearDateFilter} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Clear</button>
+        )}
+        {data?.period?.filtered && (
+          <p className="w-full text-xs font-semibold text-indigo-700">
+            Showing {data.period.earningCount} earning records and {data.period.withdrawalCount} withdrawals
+            {data.period.from ? ` from ${new Date(`${data.period.from}T00:00:00`).toLocaleDateString("en-IN")}` : ""}
+            {data.period.to ? ` to ${new Date(`${data.period.to}T00:00:00`).toLocaleDateString("en-IN")}` : ""}.
+          </p>
+        )}
+      </form>
 
       {notice && (
         <div className={`rounded-xl border px-4 py-3 text-sm font-semibold ${
@@ -284,9 +344,9 @@ const CounselorEarnings = () => {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ["Available balance", data?.balance, "Ready for withdrawal"],
-          ["Total earned", data?.totalEarned, `${counselorPercentage}% counselor share`],
+          [data?.period?.filtered ? "Earned in selected period" : "Total earned", data?.totalEarned, `${counselorPercentage}% counselor share`],
           ["Available for payout", data?.pendingPayout, "Earned, but not withdrawn yet"],
-          ["Gross session value", data?.grossRevenue, `Platform received ${money(data?.platformCommission)}`],
+          [data?.period?.filtered ? "Period gross session value" : "Gross session value", data?.grossRevenue, `Platform received ${money(data?.platformCommission)}`],
         ].map(([label, value, caption]) => (
           <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
