@@ -25,9 +25,9 @@ const CounselorEarnings = () => {
     bankName: "",
   });
 
-  const loadEarnings = async () => {
+  const loadEarnings = async ({ silent = false } = {}) => {
       try {
-        setLoading(true);
+        if (!silent) setLoading(true);
         const response = await axiosInstance.get("/api/wallet/counselor");
         setData(response.data);
         const account = response.data?.payoutAccount || {};
@@ -43,13 +43,29 @@ const CounselorEarnings = () => {
         console.error("Counselor earnings load failed:", requestError);
         setError(requestError.response?.data?.message || "Earnings could not be loaded.");
       } finally {
-        setLoading(false);
+        if (!silent) setLoading(false);
       }
   };
 
   useEffect(() => {
     void loadEarnings();
+    const refreshTimer = window.setInterval(() => {
+      void loadEarnings({ silent: true });
+    }, 15_000);
+    const refreshOnFocus = () => void loadEarnings({ silent: true });
+    window.addEventListener("focus", refreshOnFocus);
+    return () => {
+      window.clearInterval(refreshTimer);
+      window.removeEventListener("focus", refreshOnFocus);
+    };
   }, []);
+
+  const withdrawalStatusClass = (status) => {
+    if (status === "paid") return "bg-emerald-50 text-emerald-700";
+    if (status === "approved") return "bg-sky-50 text-sky-700";
+    if (status === "rejected" || status === "refunded") return "bg-rose-50 text-rose-700";
+    return "bg-amber-50 text-amber-700";
+  };
 
   const submitWithdrawal = async (event) => {
     event.preventDefault();
@@ -357,7 +373,7 @@ const CounselorEarnings = () => {
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-5 py-4">
           <h2 className="font-bold text-slate-900">Withdrawal requests</h2>
-          <p className="mt-1 text-xs text-slate-500">Submitted requests remain pending until processed by the platform.</p>
+          <p className="mt-1 text-xs text-slate-500">Approved means the payout is being processed. Paid appears after the bank transfer is completed.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[620px] text-left text-sm">
@@ -380,7 +396,19 @@ const CounselorEarnings = () => {
                     <p className="font-bold text-slate-900">{money(item.metadata?.netAmount ?? item.amount)}</p>
                     {Number(item.metadata?.feeAmount || 0) > 0 && <p className="text-xs text-rose-600">Fee {money(item.metadata.feeAmount)}</p>}
                   </td>
-                  <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${item.status === "completed" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"}`}>{item.status}</span></td>
+                  <td className="px-5 py-4">
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${withdrawalStatusClass(item.status)}`}>{item.status}</span>
+                    {item.status === "approved" && <p className="mt-1 text-[10px] text-sky-700">Payment processing</p>}
+                    {item.status === "paid" && (
+                      <div className="mt-1 text-[10px] text-emerald-700">
+                        <p>Sent to bank{item.metadata?.paidAt ? ` on ${new Date(item.metadata.paidAt).toLocaleDateString("en-IN")}` : ""}</p>
+                        {item.metadata?.transactionReference && <p className="font-semibold">UTR: {item.metadata.transactionReference}</p>}
+                      </div>
+                    )}
+                    {item.status === "rejected" && item.metadata?.failureReason && (
+                      <p className="mt-1 text-[10px] text-rose-700">{item.metadata.failureReason} · Amount returned to wallet</p>
+                    )}
+                  </td>
                 </tr>
               )) : <tr><td colSpan="5" className="px-5 py-10 text-center text-slate-500">No withdrawal requests yet.</td></tr>}
             </tbody>
