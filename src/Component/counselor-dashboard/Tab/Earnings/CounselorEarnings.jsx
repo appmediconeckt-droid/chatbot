@@ -359,9 +359,8 @@ const CounselorEarnings = () => {
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Counselor share</p>
-          <div className="mt-2 flex items-end justify-between">
+          <div className="mt-2">
             <strong className="text-3xl text-indigo-950">{counselorPercentage}%</strong>
-            <span className="text-sm text-indigo-700">₹400 from every ₹500</span>
           </div>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-indigo-100">
             <div className="h-full bg-indigo-600" style={{ width: `${counselorPercentage}%` }} />
@@ -369,9 +368,8 @@ const CounselorEarnings = () => {
         </div>
         <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Platform commission</p>
-          <div className="mt-2 flex items-end justify-between">
+          <div className="mt-2">
             <strong className="text-3xl text-amber-950">{platformPercentage}%</strong>
-            <span className="text-sm text-amber-700">₹100 from every ₹500</span>
           </div>
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-amber-100">
             <div className="h-full bg-amber-500" style={{ width: `${platformPercentage}%` }} />

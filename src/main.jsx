@@ -5,6 +5,9 @@ import "./index.css";
 import App from "./App.jsx";
 import "../setupAxios";
 import { LanguageProvider } from "./i18n/LanguageContext";
+import { initializeWebSession } from "./utils/webSession";
+
+initializeWebSession();
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 const app = (

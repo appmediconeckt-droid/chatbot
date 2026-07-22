@@ -5499,15 +5499,9 @@ const ChatBox = () => {
         statusColor = "#667781";
       }
     } else if (call.status === "missed") {
-      if (isOutgoing) {
-        statusText = "Cancelled";
-        statusIcon = <FaPhoneAlt aria-hidden="true" />;
-        statusColor = "#667781";
-      } else {
-        statusText = "Missed";
-        statusIcon = "❌";
-        statusColor = "#d32f2f";
-      }
+      statusText = "Missed call";
+      statusIcon = "❌";
+      statusColor = "#d32f2f";
     } else if (call.status === "rejected") {
       if (isOutgoing) {
         statusText = "Cancelled";
@@ -5543,7 +5537,8 @@ const ChatBox = () => {
       }
     }
     const callTone = getCallHistoryTone(call);
-    const callTextColor = callTone.variant === "neutral" ? statusColor : callTone.color;
+    const primaryCallColor = "#334155";
+    const callStatusColor = callTone.variant === "missed" ? callTone.color : statusColor;
 
     return (
       <article className={`chatMsgBubble ${isOutgoing ? "chatMsgRight" : "chatMsgLeft"}`}>
@@ -5556,9 +5551,9 @@ const ChatBox = () => {
           maxWidth: "300px",
         }}>
           <div className="call-item-content" style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <span style={{ fontSize: "16px", color: callTextColor }}>{callIcon}</span>
+            <span style={{ fontSize: "16px", color: primaryCallColor }}>{callIcon}</span>
             <div className="call-info" style={{ flex: 1 }}>
-              <div style={{ fontWeight: "500", fontSize: "14px", color: callTextColor }}>
+              <div style={{ fontWeight: "500", fontSize: "14px", color: primaryCallColor }}>
                 {isOutgoing ? "Outgoing" : "Incoming"} {callLabel} call
               </div>
               <div style={{ 
@@ -5566,16 +5561,16 @@ const ChatBox = () => {
                 alignItems: "center", 
                 gap: "4px",
                 fontSize: "12px",
-                color: callTextColor
+                color: primaryCallColor
               }}>
-                <span>{statusIcon}</span>
-                <span>{statusText}</span>
+                <span style={{ color: callStatusColor }}>{statusIcon}</span>
+                <span style={{ color: callStatusColor }}>{statusText}</span>
                 {durationText && <span>{durationText}</span>}
               </div>
             </div>
             <span className="chatMsgTimestamp" style={{ 
               fontSize: "11px", 
-              color: callTextColor,
+              color: "#64748b",
               alignSelf: "flex-end"
             }}>
               {call.time}

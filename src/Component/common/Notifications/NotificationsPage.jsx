@@ -148,7 +148,10 @@ const NotificationsPage = ({ role = "user" }) => {
             </div>
             <div className="notification-item-actions">
               {!notification.isRead && (
-                <button type="button" onClick={() => markRead(notification._id)} className="notification-action-read" title="Mark as read"><FaCheck /></button>
+                <button type="button" onClick={() => markRead(notification._id)} className="notification-action-read" title="Mark as read" aria-label="Mark notification as read">
+                  <FaCheck />
+                  <span>Mark as read</span>
+                </button>
               )}
               <button type="button" onClick={() => remove(notification._id)} className="notification-action-delete" title="Delete notification"><FaTrash /></button>
             </div>

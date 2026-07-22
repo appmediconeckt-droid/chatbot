@@ -7,6 +7,7 @@ import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
 import "./AccountSettings.css";
 import { useUserTranslation, useCounselorTranslation } from "../../i18n/LanguageContext";
 import { LanguageSelector } from "../common/LanguageSelector";
+import { FaCog, FaEnvelope, FaMapMarkerAlt, FaPhoneAlt, FaShieldAlt, FaUser, FaUserEdit } from "react-icons/fa";
 
 const emptyAccount = {
   name: "",
@@ -148,9 +149,13 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
   return (
     <section className={`account-settings ${isCounselor ? "account-settings--counselor" : "account-settings--user"}`}>
       <div className="account-settings__header">
-        <div>
-          <h1>{title}</h1>
-          <p>{t('manage_account')}</p>
+        <div className="account-settings__header-copy">
+          <span className="account-settings__header-icon"><FaCog /></span>
+          <div>
+            <span className="account-settings__eyebrow">ACCOUNT PREFERENCES</span>
+            <h1>{title}</h1>
+            <p>{t('manage_account')}</p>
+          </div>
         </div>
         <div className="account-settings__actions">
           {onOpenProfile && (
@@ -159,7 +164,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
               className="account-settings__edit-btn"
               onClick={onOpenProfile}
             >
-              {t('edit_profile')}
+              <FaUserEdit /> {t('edit_profile')}
             </button>
           )}
         </div>
@@ -173,18 +178,21 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
       <div className="account-settings__grid">
         <div className={`account-settings__panel account-settings__panel--account ${!isCounselor ? "account-settings__panel--account-with-language" : ""}`}>
-          <h2>{t('account')}</h2>
+          <div className="account-settings__panel-heading">
+            <span className="account-settings__panel-icon account-settings__panel-icon--account"><FaUser /></span>
+            <div><h2>{t('account')}</h2><p>Your personal and contact information</p></div>
+          </div>
           <dl className="account-settings__details">
             <div>
-              <dt>{t('name')}</dt>
+              <dt><span><FaUser /></span>{t('name')}</dt>
               <dd>{account.name || t('not_added')}</dd>
             </div>
             <div>
-              <dt>{t('email')}</dt>
+              <dt><span><FaEnvelope /></span>{t('email')}</dt>
               <dd>{account.email || t('not_added')}</dd>
             </div>
             <div>
-              <dt>{t('phone')}</dt>
+              <dt><span><FaPhoneAlt /></span>{t('phone')}</dt>
               <dd>{account.phone || t('not_added')}</dd>
             </div>
             {/* <div>
@@ -199,7 +207,10 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         </div>
 
         <div className="account-settings__panel account-settings__panel--location">
-          <h2>{t('location')}</h2>
+          <div className="account-settings__panel-heading">
+            <span className="account-settings__panel-icon account-settings__panel-icon--location"><FaMapMarkerAlt /></span>
+            <div><h2>{t('location')}</h2><span className="account-settings__status"><i /> Location services</span></div>
+          </div>
           <p>{t('location_desc')}</p>
           <button
             type="button"
@@ -207,7 +218,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             onClick={handleLocationRefresh}
             disabled={locationLoading}
           >
-            {locationLoading ? t('updating') : t('update_location')}
+            <FaMapMarkerAlt /> {locationLoading ? t('updating') : t('update_location')}
           </button>
         </div>
 
@@ -225,12 +236,18 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         )} */}
       </div>
 
-      <PasswordChangePage
-        email={account.email}
-        hasPassword={account.hasPassword}
-        onPasswordUpdated={handlePasswordUpdated}
-        role={role}
-      />
+      <div className="account-settings__security">
+        <div className="account-settings__security-title">
+          <span><FaShieldAlt /></span>
+          <div><h2>Security</h2><p>Keep your account protected with a secure password.</p></div>
+        </div>
+        <PasswordChangePage
+          email={account.email}
+          hasPassword={account.hasPassword}
+          onPasswordUpdated={handlePasswordUpdated}
+          role={role}
+        />
+      </div>
     </section>
   );
 };
