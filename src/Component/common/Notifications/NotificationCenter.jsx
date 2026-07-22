@@ -1,16 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
-import { FaBell, FaCalendarAlt, FaCheckDouble, FaPhone, FaWallet } from "react-icons/fa";
-import { FaMessage } from "react-icons/fa6";
+import { FaBell, FaCalendarAlt, FaCheckDouble, FaWallet } from "react-icons/fa";
 import axiosInstance from "../../../axiosConfig";
 import socketService from "../../../services/socketService";
 import "./Notifications.css";
 
 const typeIcon = {
-  message: <FaMessage />,
-  call: <FaPhone />,
   appointment: <FaCalendarAlt />,
   payment: <FaWallet />,
-  system: <FaBell />,
 };
 
 const relativeTime = (date) => {
@@ -49,6 +45,7 @@ const NotificationCenter = ({ className = "" }) => {
     void loadNotifications();
     let removeSocketListener;
     const handleNewNotification = (notification) => {
+      if (!notification || !["appointment", "payment"].includes(notification.type)) return;
       setNotifications((current) => [
         notification,
         ...current.filter((item) => item._id !== notification._id),
@@ -136,7 +133,7 @@ const NotificationCenter = ({ className = "" }) => {
               <div className="notification-empty">
                 <span className="notification-empty-icon"><FaBell /></span>
                 <strong>No notifications yet</strong>
-                <p>Messages, calls, appointments and payments will appear here.</p>
+                <p>Appointment requests and payment updates will appear here.</p>
               </div>
             ) : notifications.map((notification) => (
               <button
