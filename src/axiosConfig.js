@@ -2,7 +2,7 @@ import axios from "axios";
 
 const envApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://s5jl7g4z-5001.inc1.devtunnels.ms/";
+  "https://chatbot-backend-production-ea76.up.railway.app";
 // const envApiBaseUrl = import.meta.env.VITE_API_BASE_URL || "https://s5jl7g4z-5001.inc1.devtunnels.ms";
 if (!envApiBaseUrl) {
   throw new Error(
