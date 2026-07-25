@@ -5,7 +5,8 @@ import './Leanding.css';
 import logo from '../assets/humaeli.png';
 import { API_BASE_URL } from '../axiosConfig';
 import { Link } from 'react-router-dom';
-import { SUPPORTED_LANGUAGES, useUserTranslation } from '../i18n/LanguageContext';
+import { SUPPORTED_LANGUAGES, useSiteTranslation } from '../i18n/LanguageContext';
+import { LanguageSelector } from '../Component/common/LanguageSelector';
 import { translationService } from '../i18n/translationService';
 
 const GUEST_CHAT_LIMIT_MS = 5 * 60 * 1000;
@@ -25,7 +26,7 @@ const translateTypedMessage = async (text, targetLanguage) => {
 };
 
 const Leanding = () => {
-  const { lang, setLang } = useUserTranslation();
+  const { t, lang, setLang } = useSiteTranslation();
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -78,7 +79,7 @@ const Leanding = () => {
         console.error('Error starting guest chat:', error);
         setChatMessages([{
           id: Date.now(),
-          text: 'Hello! How can I help you today?',
+          text: t('landing_chat_fallback_greeting'),
           sender: 'ai',
         }]);
       } finally {
@@ -159,7 +160,7 @@ const Leanding = () => {
     try {
       const response = await sendMessageToAPI(outgoingText);
 
-      let aiResponseText = "I understand. Could you tell me more about how you're feeling?";
+      let aiResponseText = t('landing_chat_fallback_reply');
       let quickReplies = null;
 
       if (response && response.success && response.data) {
@@ -193,14 +194,14 @@ const Leanding = () => {
         setGuestChatExpired(true);
         return;
       }
-      let errorMessageText = "I'm having trouble connecting. Please try again or call our crisis helpline at 9152987821 if you need immediate support.";
+      let errorMessageText = t('landing_chat_error_connection');
 
       if (error.response) {
         console.error('Server Error:', error.response.data);
-        errorMessageText = 'Server is busy. Please try again in a moment.';
+        errorMessageText = t('landing_chat_error_server');
       } else if (error.request) {
         console.error('No response:', error.request);
-        errorMessageText = 'Network issue. Please check your internet connection.';
+        errorMessageText = t('landing_chat_error_network');
       } else {
         console.error('Error:', error.message);
       }
@@ -287,6 +288,7 @@ const Leanding = () => {
 
 // ========== HEADER COMPONENT ==========
 const Header = ({ onLoginClick }) => {
+  const { t, lang, setLang } = useSiteTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
@@ -299,21 +301,21 @@ const Header = ({ onLoginClick }) => {
   }, []);
 
   const navItems = [
-    { href: '#services', label: 'Services' },
-    { href: '#how-it-works', label: 'How It Works' },
-    { href: '#features', label: 'Features' },
-    { href: '#doctors', label: 'Our Doctors' },
-    { href: '#testimonials', label: 'Testimonials' }
+    { href: '#services', label: t('landing_nav_services') },
+    { href: '#how-it-works', label: t('landing_nav_how_it_works') },
+    { href: '#features', label: t('landing_nav_features') },
+    { href: '#doctors', label: t('landing_nav_doctors') },
+    { href: '#testimonials', label: t('landing_nav_testimonials') }
   ];
 
   return (
     <header className={`header ${scrolled ? 'header-scrolled' : ''}`}>
       <div className="header-container">
         <div className="logo">
-          <button 
+          <button
             className="mobile-menu-btn"
             onClick={() => setMenuOpen(!menuOpen)}
-            aria-label="Toggle menu"
+            aria-label={t('landing_toggle_menu')}
           >
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
@@ -322,7 +324,7 @@ const Header = ({ onLoginClick }) => {
 
         <nav className={`nav-menu ${menuOpen ? 'active' : ''}`}>
           {navItems.map(item => (
-            <a 
+            <a
               key={item.href}
               href={item.href}
               className="nav-link"
@@ -334,8 +336,11 @@ const Header = ({ onLoginClick }) => {
         </nav>
 
         <div className="header-actions">
+          <div className="header-language">
+            <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
+          </div>
           <button className="btn btn-secondary" onClick={onLoginClick}>
-            Sign In
+            {t('landing_sign_in')}
           </button>
         </div>
       </div>
@@ -344,60 +349,68 @@ const Header = ({ onLoginClick }) => {
 };
 
 // ========== HERO SECTION ==========
-const HeroSection = () => (
-  <section className="section hero" id="home">
-    <div className="container">
-      <div className="hero-content">
-        <h1 className="hero-title">
-          Human Empowered <span className="text-highlight">Mental Health wellness</span> 
-        </h1>
-        <p className="hero-description">
-         In your most difficult time of mental health, Humaeli will guide you to calm & care. If needed, we will connect you with counsellors, psychologists, psychological wellness practitioners (PWP), and psychiatrists.
-        </p>
-        <div className="hero-actions">
-          <Link to="/role-selector" className="btn btn-primary">
-            Get Started
-            <i className="btn-icon fas fa-arrow-right"></i>
-          </Link>
-          <button className="btn btn-outline btn-large">
-            <i className="btn-icon fas fa-play"></i>
-            Watch Demo
-          </button>
-        </div>
-        <div className="hero-stats">
-          <StatItem number="50,000+" label="Indian Patients Helped" />
-          <StatItem number="500+" label="Indian Medical Partners" />
-          <StatItem number="24/7" label="Support in 8 Languages" />
-          <StatItem number="98%" label="Patient Satisfaction" />
-        </div>
-      </div>
-      <div className="hero-visual">
-        <div className="chat-preview">
-          <div className="chat-preview-header">
-            <div className="chat-preview-avatar">
-              <i className="fas fa-robot"></i>
-            </div>
-            <div className="chat-preview-info">
-              <div className="chat-preview-name">Humaeli Assistant</div>
-              <div className="chat-preview-status">Online • Hindi/English Support</div>
-            </div>
+const HeroSection = () => {
+  const { t } = useSiteTranslation();
+
+  return (
+    <section className="section hero" id="home">
+      <div className="container">
+        <div className="hero-content">
+          <span className="hero-badge">
+            <i className="fas fa-shield-heart"></i>
+            {t('landing_hero_badge')}
+          </span>
+          <h1 className="hero-title">
+            {t('landing_hero_title')} <span className="text-highlight">{t('landing_hero_title_highlight')}</span>
+          </h1>
+          <p className="hero-description">
+            {t('landing_hero_description')}
+          </p>
+          <div className="hero-actions">
+            <Link to="/role-selector" className="btn btn-primary">
+              {t('landing_get_started')}
+              <i className="btn-icon fas fa-arrow-right"></i>
+            </Link>
+            <button className="btn btn-outline btn-large">
+              <i className="btn-icon fas fa-play"></i>
+              {t('landing_watch_demo')}
+            </button>
           </div>
-          <div className="chat-preview-messages">
-            <div className="chat-message chat-message-ai">
-              Namaste! I'm here to listen. How are you feeling today?
-            </div>
-            <div className="chat-message chat-message-user">
-              I've been feeling really anxious about my job interview.
-            </div>
-            <div className="chat-message chat-message-ai">
-              I understand interview anxiety. Would you like to try some breathing exercises?
-            </div>
+          <div className="hero-stats">
+            <StatItem number="50,000+" label={t('landing_stat_patients_label')} />
+            <StatItem number="500+" label={t('landing_stat_partners_label')} />
+            <StatItem number="24/7" label={t('landing_stat_support_label')} />
+            <StatItem number="98%" label={t('landing_stat_satisfaction_label')} />
           </div>
         </div>
+        <div className="hero-visual">
+          <div className="chat-preview">
+            <div className="chat-preview-header">
+              <div className="chat-preview-avatar">
+                <i className="fas fa-robot"></i>
+              </div>
+              <div className="chat-preview-info">
+                <div className="chat-preview-name">{t('landing_chat_preview_name')}</div>
+                <div className="chat-preview-status">{t('landing_chat_preview_status')}</div>
+              </div>
+            </div>
+            <div className="chat-preview-messages">
+              <div className="chat-message chat-message-ai">
+                {t('landing_chat_preview_msg1')}
+              </div>
+              <div className="chat-message chat-message-user">
+                {t('landing_chat_preview_msg2')}
+              </div>
+              <div className="chat-message chat-message-ai">
+                {t('landing_chat_preview_msg3')}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 const StatItem = ({ number, label }) => (
   <div className="stat-item">
@@ -408,58 +421,28 @@ const StatItem = ({ number, label }) => (
 
 // ========== SERVICES SECTION ==========
 const ServicesSection = () => {
-  const services = [
-    {
-      icon: "comments",
-      title: "24/7 AI Chat Support",
-      description: "Round-the-clock empathetic AI conversations in English, Hindi, Tamil, Telugu, Bengali, and Marathi with real-time mood analysis."
-    },
-    {
-      icon: "user-md",
-      title: "Top Indian Psychiatrists",
-      description: "Connect with India's best mental health professionals from AIIMS, NIMHANS, and top medical institutions across the country."
-    },
-    {
-      icon: "chart-line",
-      title: "Mood Tracking",
-      description: "Advanced mood tracking with insights tailored to Indian lifestyle, work culture, and family dynamics."
-    },
-    {
-      icon: "mobile-alt",
-      title: "Crisis Support",
-      description: "Immediate crisis intervention with connections to local helplines in Delhi, Mumbai, Bangalore, Chennai, Kolkata, and other cities."
-    },
-    {
-      icon: "users",
-      title: "Support Community",
-      description: "Safe, moderated community spaces for Indians to share experiences and support each other."
-    },
-    {
-      icon: "file-medical-alt",
-      title: "Health Reports",
-      description: "Comprehensive health reports compatible with Indian healthcare systems and insurance providers."
-    }
-  ];
+  const { t } = useSiteTranslation();
+  const icons = ["comments", "user-md", "chart-line", "mobile-alt", "users", "file-medical-alt"];
 
   return (
     <section className="section services" id="services">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">Our Services for India</h2>
+          <h2 className="section-title">{t('landing_services_title')}</h2>
           <p className="section-description">
-            Comprehensive mental health solutions designed specifically for the Indian population.
+            {t('landing_services_description')}
           </p>
         </div>
         <div className="services-grid">
-          {services.map((service, index) => (
-            <div className="service-card" key={index}>
+          {icons.map((icon, index) => (
+            <div className="service-card" key={icon}>
               <div className="service-icon">
-                <i className={`fas fa-${service.icon}`}></i>
+                <i className={`fas fa-${icon}`}></i>
               </div>
-              <h3 className="service-title">{service.title}</h3>
-              <p className="service-description">{service.description}</p>
+              <h3 className="service-title">{t(`landing_service_${index + 1}_title`)}</h3>
+              <p className="service-description">{t(`landing_service_${index + 1}_description`)}</p>
               <button className="service-learn-more">
-                Learn More <i className="fas fa-arrow-right"></i>
+                {t('landing_learn_more')} <i className="fas fa-arrow-right"></i>
               </button>
             </div>
           ))}
@@ -471,51 +454,27 @@ const ServicesSection = () => {
 
 // ========== HOW IT WORKS SECTION ==========
 const HowItWorksSection = () => {
-  const steps = [
-    {
-      number: "01",
-      title: "Sign Up in Your Language",
-      description: "Complete a confidential assessment in English, Hindi, or your preferred regional language.",
-      icon: "user-plus"
-    },
-    {
-      number: "02",
-      title: "AI Companion",
-      description: "Start conversations with our empathetic AI that understands Indian cultural contexts.",
-      icon: "robot"
-    },
-    {
-      number: "03",
-      title: "Track Your Progress",
-      description: "Use mood tracking to identify triggers related to Indian lifestyle and family pressures.",
-      icon: "chart-bar"
-    },
-    {
-      number: "04",
-      title: "Expert Medical Help",
-      description: "Get connected to licensed Indian professionals from top institutions when needed.",
-      icon: "handshake"
-    }
-  ];
+  const { t } = useSiteTranslation();
+  const icons = ["user-plus", "robot", "chart-bar", "handshake"];
 
   return (
     <section className="section how-it-works" id="how-it-works">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">How It Works for You</h2>
+          <h2 className="section-title">{t('landing_how_title')}</h2>
           <p className="section-description">
-            Simple 4-step process designed for the Indian healthcare ecosystem.
+            {t('landing_how_description')}
           </p>
         </div>
         <div className="steps-container">
-          {steps.map((step, index) => (
-            <div className="step" key={index}>
-              <div className="step-number">{step.number}</div>
+          {icons.map((icon, index) => (
+            <div className="step" key={icon}>
+              <div className="step-number">{String(index + 1).padStart(2, '0')}</div>
               <div className="step-icon">
-                <i className={`fas fa-${step.icon}`}></i>
+                <i className={`fas fa-${icon}`}></i>
               </div>
-              <h3 className="step-title">{step.title}</h3>
-              <p className="step-description">{step.description}</p>
+              <h3 className="step-title">{t(`landing_step_${index + 1}_title`)}</h3>
+              <p className="step-description">{t(`landing_step_${index + 1}_description`)}</p>
             </div>
           ))}
         </div>
@@ -526,56 +485,26 @@ const HowItWorksSection = () => {
 
 // ========== FEATURES SECTION ==========
 const FeaturesSection = () => {
-  const features = [
-    {
-      icon: "shield-alt",
-      title: "Data Privacy",
-      description: "Your data is protected with Indian data protection laws and enterprise-grade security."
-    },
-    {
-      icon: "handshake",
-      title: "Doctor Network",
-      description: "Direct connections to psychiatrists and therapists from AIIMS, NIMHANS, PGI Chandigarh, and other top Indian institutions."
-    },
-    {
-      icon: "file-medical",
-      title: "Insurance Ready",
-      description: "Progress reports and prescriptions accepted by all major Indian health insurance providers."
-    },
-    {
-      icon: "clock",
-      title: "24/7 Support",
-      description: "Round-the-clock AI support in 8 Indian languages with emergency protocols for immediate assistance."
-    },
-    {
-      icon: "brain",
-      title: "Cultural Context",
-      description: "AI algorithms trained on Indian emotional patterns, family dynamics, and social pressures."
-    },
-    {
-      icon: "mobile-alt",
-      title: "Works on Any Phone",
-      description: "Optimized for all smartphones used in India, works on 2G/3G/4G networks across the country."
-    }
-  ];
+  const { t } = useSiteTranslation();
+  const icons = ["shield-alt", "handshake", "file-medical", "clock", "brain", "mobile-alt"];
 
   return (
     <section className="section features" id="features">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">Indian-First Features</h2>
+          <h2 className="section-title">{t('landing_features_title')}</h2>
           <p className="section-description">
-            Bridging AI support with professional Indian medical care for comprehensive mental wellness.
+            {t('landing_features_description')}
           </p>
         </div>
         <div className="features-grid">
-          {features.map((feature, index) => (
-            <div className="feature-card" key={index}>
+          {icons.map((icon, index) => (
+            <div className="feature-card" key={`${icon}-${index}`}>
               <div className="feature-icon">
-                <i className={`fas fa-${feature.icon}`}></i>
+                <i className={`fas fa-${icon}`}></i>
               </div>
-              <h3 className="feature-title">{feature.title}</h3>
-              <p className="feature-description">{feature.description}</p>
+              <h3 className="feature-title">{t(`landing_feature_${index + 1}_title`)}</h3>
+              <p className="feature-description">{t(`landing_feature_${index + 1}_description`)}</p>
             </div>
           ))}
         </div>
@@ -586,54 +515,7 @@ const FeaturesSection = () => {
 
 // ========== DOCTORS SECTION ==========
 const DoctorsSection = () => {
-  const doctorExamples = [
-    {
-      id: 1,
-      name: "Dr. Anjali Mehta",
-      specialization: "Clinical Psychologist",
-      experience: "15+ years",
-      rating: 4.9,
-      patients: "2,500+",
-      education: "MBBS, MD Psychiatry - AIIMS Delhi",
-      approach: "Cognitive Behavioral Therapy",
-      image: "👩‍⚕️",
-      availability: "Mon-Fri, 9AM-5PM",
-      location: "Mumbai, Maharashtra",
-      languages: ["English", "Hindi", "Marathi"],
-      hospital: "Jaslok Hospital, Mumbai"
-    },
-    {
-      id: 2,
-      name: "Dr. Rajesh Kumar",
-      specialization: "Psychiatrist",
-      experience: "12+ years",
-      rating: 4.8,
-      patients: "1,800+",
-      education: "MBBS, MD Psychiatry - NIMHANS Bangalore",
-      approach: "Medication Management & Therapy",
-      image: "👨‍⚕️",
-      availability: "Tue-Sat, 10AM-6PM",
-      location: "Bangalore, Karnataka",
-      languages: ["English", "Hindi", "Kannada"],
-      hospital: "Manipal Hospital, Bangalore"
-    },
-    {
-      id: 3,
-      name: "Dr. Priya Sharma",
-      specialization: "Child Psychologist",
-      experience: "18+ years",
-      rating: 4.9,
-      patients: "3,000+",
-      education: "PhD Clinical Psychology - Delhi University",
-      approach: "Child & Adolescent Therapy",
-      image: "👩‍⚕️",
-      availability: "Mon-Thu, 8AM-4PM",
-      location: "Delhi NCR",
-      languages: ["English", "Hindi", "Punjabi"],
-      hospital: "Fortis Hospital, Delhi"
-    },
-  ];
-
+  const { t } = useSiteTranslation();
   const [doctors, setDoctors] = useState([]);
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(true);
   const [doctorLoadError, setDoctorLoadError] = useState(false);
@@ -687,16 +569,16 @@ const DoctorsSection = () => {
     <section className="section doctors" id="doctors">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">India's Top Mental Health Experts</h2>
+          <h2 className="section-title">{t('landing_doctors_title')}</h2>
           <p className="section-description">
-            Licensed professionals from premier Indian institutions dedicated to providing compassionate care.
+            {t('landing_doctors_description')}
           </p>
         </div>
         <div className="doctors-grid">
-          {isLoadingDoctors && <p className="landing-doctors-state">Loading doctors...</p>}
-          {doctorLoadError && <p className="landing-doctors-state">Doctors are unavailable right now. Please try again shortly.</p>}
+          {isLoadingDoctors && <p className="landing-doctors-state">{t('landing_doctors_loading')}</p>}
+          {doctorLoadError && <p className="landing-doctors-state">{t('landing_doctors_error')}</p>}
           {!isLoadingDoctors && !doctorLoadError && doctors.map((doctor) => {
-            const name = doctor.fullName || doctor.name || 'Mental Health Expert';
+            const name = doctor.fullName || doctor.name || t('landing_doctor_default_name');
             const specializations = asList(doctor.specialization);
             const languages = asList(doctor.languages);
             const photoUrl = getPhotoUrl(doctor.profilePhoto);
@@ -710,34 +592,34 @@ const DoctorsSection = () => {
                 </div>
                 <div>
                   <h3 className="doctor-name">{name}</h3>
-                  <p className="doctor-specialization">{specializations[0] || doctor.qualification || 'Counselor'}</p>
+                  <p className="doctor-specialization">{specializations[0] || doctor.qualification || t('landing_doctor_default_role')}</p>
                   <div className="doctor-rating">
                     <i className="fas fa-star"></i>
                     <span>{Number(doctor.rating || 0).toFixed(1)}</span>
-                    <span className="doctor-patients">({doctor.totalSessions || 0} sessions)</span>
+                    <span className="doctor-patients">({doctor.totalSessions || 0} {t('landing_doctor_sessions')})</span>
                   </div>
                 </div>
               </div>
               <div className="doctor-details">
                 <div className="doctor-detail">
                   <i className="fas fa-graduation-cap"></i>
-                  <span>{doctor.qualification || 'Qualified mental health professional'}</span>
+                  <span>{doctor.qualification || t('landing_doctor_default_qualification')}</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-briefcase"></i>
-                  <span>{experience} years experience</span>
+                  <span>{experience} {t('landing_doctor_years_experience')}</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-hospital"></i>
-                  <span>{consultationModes.join(', ') || 'Online consultation available'}</span>
+                  <span>{consultationModes.join(', ') || t('landing_doctor_online_consultation')}</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-map-marker-alt"></i>
-                  <span>{doctor.location || 'India'}</span>
+                  <span>{doctor.location || t('landing_doctor_location_default')}</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-clock"></i>
-                  <span>{doctor.isOnline ? 'Available now' : 'View availability after sign in'}</span>
+                  <span>{doctor.isOnline ? t('landing_doctor_available_now') : t('landing_doctor_view_availability')}</span>
                 </div>
                 <div className="doctor-languages">
                   {languages.slice(0, 5).map((lang, idx) => (
@@ -747,17 +629,17 @@ const DoctorsSection = () => {
               </div>
               <div className="doctor-actions">
                 <Link to="/role-selector" className="btn btn-outline">
-                  <i className="fas fa-calendar"></i> Book Appointment
+                  <i className="fas fa-calendar"></i> {t('landing_book_appointment')}
                 </Link>
                 <Link to="/role-selector" className="btn btn-primary">
-                  <i className="fas fa-video"></i> Consult Online
+                  <i className="fas fa-video"></i> {t('landing_consult_online')}
                 </Link>
               </div>
             </div>
           );
           })}
           {!isLoadingDoctors && !doctorLoadError && doctors.length === 0 && (
-            <p className="landing-doctors-state">No doctors are available yet.</p>
+            <p className="landing-doctors-state">{t('landing_doctors_empty')}</p>
           )}
         </div>
       </div>
@@ -767,68 +649,41 @@ const DoctorsSection = () => {
 
 // ========== TESTIMONIALS SECTION ==========
 const TestimonialsSection = () => {
+  const { t } = useSiteTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
-  const testimonials = [
-    {
-      quote: "MediConeckt helped me through my depression during COVID lockdown in Mumbai. The AI understood my cultural context and connected me with an amazing therapist from AIIMS within 24 hours.",
-      author: "Rahul Sharma",
-      role: "Software Engineer, Mumbai",
-      location: "Maharashtra",
-      rating: 5
-    },
-    {
-      quote: "As a psychiatrist practicing in Bangalore, I appreciate how MediConeckt bridges the gap between technology and Indian mental health care. Their referral system is seamless and culturally sensitive.",
-      author: "Dr. Lakshmi Narayan",
-      role: "Consultant Psychiatrist, NIMHANS",
-      location: "Bangalore",
-      rating: 5
-    },
-    {
-      quote: "The mood tracking feature helped me identify patterns related to work pressure in IT industry. Combined with the AI support, it's been a game-changer for managing my anxiety.",
-      author: "Priya Patel",
-      role: "Tech Professional, Pune",
-      location: "Maharashtra",
-      rating: 5
-    },
-    {
-      quote: "My teenage son was struggling with academic pressure. The child psychologist from Delhi and the AI support helped him tremendously. Thank you MediConeckt!",
-      author: "Amit Singh",
-      role: "Parent, Delhi NCR",
-      location: "Delhi",
-      rating: 5
-    }
-  ];
+  const TESTIMONIAL_COUNT = 4;
+  const n = activeIndex + 1;
 
   return (
     <section className="section testimonials" id="testimonials">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">Stories from Across India</h2>
+          <h2 className="section-title">{t('landing_testimonials_title')}</h2>
           <p className="section-description">
-            Real stories from people across India who found support and healing through MediConeckt.
+            {t('landing_testimonials_description')}
           </p>
         </div>
         <div className="testimonials-container">
           <div className="testimonial-card">
             <i className="quote-icon fas fa-quote-left"></i>
-            <p className="testimonial-text">{testimonials[activeIndex].quote}</p>
+            <p className="testimonial-text">{t(`landing_testimonial_${n}_quote`)}</p>
             <div className="testimonial-author">
-              <div className="author-name">{testimonials[activeIndex].author}</div>
-              <div className="author-role">{testimonials[activeIndex].role} • {testimonials[activeIndex].location}</div>
+              <div className="author-name">{t(`landing_testimonial_${n}_author`)}</div>
+              <div className="author-role">{t(`landing_testimonial_${n}_role`)} • {t(`landing_testimonial_${n}_location`)}</div>
             </div>
             <div className="testimonial-rating">
               {[...Array(5)].map((_, i) => (
-                <i key={i} className={`fas fa-star ${i < testimonials[activeIndex].rating ? 'filled' : ''}`}></i>
+                <i key={i} className="fas fa-star filled"></i>
               ))}
             </div>
           </div>
           <div className="testimonial-dots">
-            {testimonials.map((_, index) => (
+            {[...Array(TESTIMONIAL_COUNT)].map((_, index) => (
               <button
                 key={index}
                 className={`dot ${index === activeIndex ? 'active' : ''}`}
                 onClick={() => setActiveIndex(index)}
-                aria-label={`View testimonial ${index + 1}`}
+                aria-label={`${t('landing_testimonial_view')} ${index + 1}`}
               ></button>
             ))}
           </div>
@@ -840,55 +695,32 @@ const TestimonialsSection = () => {
 
 // ========== FAQ SECTION ==========
 const FAQSection = () => {
+  const { t } = useSiteTranslation();
   const [openIndex, setOpenIndex] = useState(null);
-  const faqs = [
-    {
-      question: "Is MediConeckt available in Indian languages?",
-      answer: "Yes! We currently support English, Hindi, Tamil, Telugu, Bengali, Marathi, Gujarati, and Kannada. More languages coming soon."
-    },
-    {
-      question: "Are the doctors qualified in India?",
-      answer: "All our doctors are licensed medical professionals in India, with degrees from top institutions like AIIMS, NIMHANS, CMC Vellore, and are registered with the Medical Council of India."
-    },
-    {
-      question: "Is my data protected under Indian laws?",
-      answer: "Absolutely! We comply with Indian data protection laws and IT Act 2000. Your conversations are confidential and encrypted."
-    },
-    {
-      question: "Do you accept Indian health insurance?",
-      answer: "Yes, we work with all major Indian insurance providers including ICICI Lombard, Star Health, New India Assurance, and others. We provide documentation for insurance claims."
-    },
-    {
-      question: "Can I consult doctors from my city?",
-      answer: "Yes, we have doctors available in all major Indian cities including Mumbai, Delhi, Bangalore, Chennai, Kolkata, Pune, Hyderabad, and Ahmedabad."
-    },
-    {
-      question: "What about emergency support in India?",
-      answer: "We have 24/7 crisis support with connections to local helplines. In case of emergency, we can connect you to immediate support in your city."
-    }
-  ];
+  const FAQ_COUNT = 6;
 
   return (
     <section className="section faq" id="faq">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">Frequently Asked Questions</h2>
+          <h2 className="section-title">{t('landing_faq_title')}</h2>
           <p className="section-description">
-            Get answers to common questions about MediConeckt services in India.
+            {t('landing_faq_description')}
           </p>
         </div>
         <div className="faq-container">
-          {faqs.map((faq, index) => (
+          {[...Array(FAQ_COUNT)].map((_, index) => (
             <div className="faq-item" key={index}>
               <button
                 className="faq-question"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
+                aria-expanded={openIndex === index}
               >
-                <span>{faq.question}</span>
+                <span>{t(`landing_faq_${index + 1}_question`)}</span>
                 <i className={`fas fa-${openIndex === index ? 'minus' : 'plus'}`}></i>
               </button>
               <div className={`faq-answer ${openIndex === index ? 'active' : ''}`}>
-                <p>{faq.answer}</p>
+                <p>{t(`landing_faq_${index + 1}_answer`)}</p>
               </div>
             </div>
           ))}
@@ -899,7 +731,10 @@ const FAQSection = () => {
 };
 
 // ========== FOOTER ==========
-const Footer = () => (
+const Footer = () => {
+  const { t } = useSiteTranslation();
+
+  return (
   <footer className="footer">
     <div className="container">
       <div className="footer-content">
@@ -908,7 +743,7 @@ const Footer = () => (
             <img src={logo} alt="Humaeli Logo" />
           </div>
           <p className="footer-description">
-            India's most trusted AI-powered mental health platform with connections to top medical professionals across the country. Available 24/7 in multiple Indian languages.
+            {t('landing_footer_description')}
           </p>
           <div className="social-links">
             <a href="#" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
@@ -919,58 +754,59 @@ const Footer = () => (
         </div>
         <div className="footer-links">
           <div className="footer-column">
-            <h4>Our Services</h4>
-            <a href="#features">AI Support in 8 Languages</a>
-            <a href="#pricing">Affordable Plans (INR)</a>
-            <a href="#doctors">Indian Doctors Network</a>
-            <a href="#testimonials">Patient Stories</a>
+            <h4>{t('landing_footer_services_heading')}</h4>
+            <a href="#features">{t('landing_footer_link_ai_support')}</a>
+            <a href="#pricing">{t('landing_footer_link_pricing')}</a>
+            <a href="#doctors">{t('landing_footer_link_doctors')}</a>
+            <a href="#testimonials">{t('landing_footer_link_stories')}</a>
           </div>
           <div className="footer-column">
-            <h4>Company</h4>
-            <a href="#">About Us</a>
-            <a href="#">Careers in India</a>
-            <a href="#">Press (India)</a>
-            <a href="#">Hospital Partners</a>
+            <h4>{t('landing_footer_company_heading')}</h4>
+            <a href="#">{t('landing_footer_link_about')}</a>
+            <a href="#">{t('landing_footer_link_careers')}</a>
+            <a href="#">{t('landing_footer_link_press')}</a>
+            <a href="#">{t('landing_footer_link_hospital_partners')}</a>
           </div>
           <div className="footer-column">
-            <h4>Resources</h4>
-            <a href="#">Mental Health Blog</a>
-            <a href="#">Help Center</a>
-            <a href="#">Community Forum</a>
-            <a href="#">Research & Studies</a>
+            <h4>{t('landing_footer_resources_heading')}</h4>
+            <a href="#">{t('landing_footer_link_blog')}</a>
+            <a href="#">{t('landing_footer_link_help')}</a>
+            <a href="#">{t('landing_footer_link_forum')}</a>
+            <a href="#">{t('landing_footer_link_research')}</a>
           </div>
           <div className="footer-column">
-            <h4>Contact</h4>
-            <a href="#">Support</a>
-            <a href="#">Partner with Us</a>
-            <a href="#">Become a Doctor</a>
-            <a href="#">Corporate Wellness</a>
+            <h4>{t('landing_footer_contact_heading')}</h4>
+            <a href="#">{t('landing_footer_link_support')}</a>
+            <a href="#">{t('landing_footer_link_partner')}</a>
+            <a href="#">{t('landing_footer_link_become_doctor')}</a>
+            <a href="#">{t('landing_footer_link_corporate')}</a>
           </div>
         </div>
       </div>
       <div className="footer-bottom">
         <div className="footer-copyright">
-          <p>&copy; {new Date().getFullYear()} MediConeckt India. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} {t('landing_footer_rights')}</p>
           <p className="emergency-notice">
             <i className="fas fa-exclamation-triangle"></i>
-            <strong>24/7 Crisis Support:</strong> Call +91-9152987821 (India) or 
-            <a href="tel:9152987821" style={{color: '#fff', marginLeft: '5px'}}> 9152987821</a> (Toll-Free)
+            <strong>{t('landing_footer_crisis_label')}</strong> {t('landing_footer_crisis_text')}
+            <a href="tel:9152987821" style={{color: '#fff', marginLeft: '5px'}}> 9152987821</a> {t('landing_footer_toll_free')}
           </p>
           <p className="emergency-notice">
             <i className="fas fa-map-marker-alt"></i>
-            <strong>Corporate Office:</strong> Saket Nagar, Indore, Madhya Pradesh 452018, India
+            <strong>{t('landing_footer_office_label')}</strong> {t('landing_footer_office_address')}
           </p>
         </div>
         <div className="footer-legal">
-          <a href="#">Privacy Policy (India)</a>
-          <a href="#">Terms of Service</a>
-          <a href="#">Medical Disclaimer</a>
-          <a href="#">Grievance Redressal</a>
+          <a href="#">{t('landing_footer_legal_privacy')}</a>
+          <a href="#">{t('landing_footer_legal_terms')}</a>
+          <a href="#">{t('landing_footer_legal_disclaimer')}</a>
+          <a href="#">{t('landing_footer_legal_grievance')}</a>
         </div>
       </div>
     </div>
   </footer>
-);
+  );
+};
 
 // ========== CHAT POPUP COMPONENT ==========
 const ChatPopup = ({
@@ -987,6 +823,7 @@ const ChatPopup = ({
   onLanguageChange,
   guestChatExpired,
 }) => {
+  const { t } = useSiteTranslation();
   const [speakingId, setSpeakingId] = useState(null);
   const [ttsLoadingId, setTtsLoadingId] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -1008,7 +845,7 @@ const ChatPopup = ({
 
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert('Voice input is not supported in this browser. Please use Chrome or Edge.');
+      alert(t('landing_chat_voice_unsupported'));
       return;
     }
 
@@ -1081,14 +918,14 @@ const ChatPopup = ({
             <i className="fas fa-robot"></i>
           </div>
           <div>
-            <h3>Humaeli AI Assistant</h3>
+            <h3>{t('landing_chat_title')}</h3>
             <p className="chat-status">
               <span className="status-dot"></span>
-              Available in English, हिन्दी, தமிழ், తెలుగు
+              {t('landing_chat_available')}
             </p>
           </div>
         </div>
-        <button className="chat-close-btn" onClick={onClose} aria-label="Close chat">
+        <button className="chat-close-btn" onClick={onClose} aria-label={t('landing_chat_close')}>
           <i className="fas fa-times"></i>
         </button>
       </div>
@@ -1114,11 +951,11 @@ const ChatPopup = ({
                   className={`guest-chat-tts-btn ${speakingId === message.id ? 'guest-chat-tts-btn--playing' : ''}`}
                   onClick={() => speakMessage(message.id, message.text)}
                   disabled={ttsLoadingId === message.id}
-                  title={speakingId === message.id ? 'Stop speaking' : 'Listen to response'}
-                  aria-label={speakingId === message.id ? 'Stop speaking' : 'Listen to response'}
+                  title={speakingId === message.id ? t('landing_chat_stop_title') : t('landing_chat_listen_title')}
+                  aria-label={speakingId === message.id ? t('landing_chat_stop_title') : t('landing_chat_listen_title')}
                 >
                   <i className={`fas ${ttsLoadingId === message.id ? 'fa-spinner fa-spin' : speakingId === message.id ? 'fa-stop' : 'fa-volume-up'}`} />
-                  <span>{speakingId === message.id ? 'Stop' : 'Listen'}</span>
+                  <span>{speakingId === message.id ? t('landing_chat_stop') : t('landing_chat_listen')}</span>
                 </button>
               )}
               {message.sender === 'ai' &&
@@ -1164,10 +1001,10 @@ const ChatPopup = ({
 
         {guestChatExpired && (
           <div className="guest-chat-limit-card" role="status">
-            <strong>Your 5-minute free chat has ended.</strong>
-            <span>Sign up to continue talking with the AI assistant.</span>
+            <strong>{t('landing_chat_expired_title')}</strong>
+            <span>{t('landing_chat_expired_text')}</span>
             <Link className="guest-chat-signup-btn" to="/user-signup">
-              Sign up to continue
+              {t('landing_chat_expired_cta')}
             </Link>
           </div>
         )}
@@ -1179,7 +1016,7 @@ const ChatPopup = ({
           value={selectedLanguage}
           onChange={onLanguageChange}
           disabled={isLoading || guestChatExpired}
-          aria-label="Select chat language"
+          aria-label={t('landing_chat_select_language')}
         >
           {SUPPORTED_LANGUAGES.map((language) => (
             <option key={language.code} value={language.code}>{language.label}</option>
@@ -1187,28 +1024,28 @@ const ChatPopup = ({
         </select>
         <input
           type="text"
-          placeholder={isRecording ? 'Listening...' : 'Type your message...'}
+          placeholder={isRecording ? t('landing_chat_listening') : t('landing_chat_placeholder')}
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           onKeyPress={handleKeyPress}
           disabled={isLoading || guestChatExpired || isRecording}
-          aria-label="Chat message input"
+          aria-label={t('landing_chat_input_label')}
         />
         <button
           type="button"
           className={`guest-chat-mic-btn ${isRecording ? 'guest-chat-mic-btn--recording' : ''}`}
           onClick={toggleRecording}
           disabled={isLoading || guestChatExpired}
-          title={isRecording ? 'Stop listening' : 'Speak your message'}
-          aria-label={isRecording ? 'Stop voice input' : 'Start voice input'}
+          title={isRecording ? t('landing_chat_mic_stop') : t('landing_chat_mic_start')}
+          aria-label={isRecording ? t('landing_chat_mic_stop') : t('landing_chat_mic_start')}
         >
           <i className={`fas ${isRecording ? 'fa-stop' : 'fa-microphone'}`} />
         </button>
-        <button 
+        <button
           className="btn btn-primary send-btn"
           onClick={sendMessage}
           disabled={isLoading || guestChatExpired || !newMessage.trim()}
-          aria-label="Send message"
+          aria-label={t('landing_chat_send')}
         >
           <i className="fas fa-paper-plane"></i>
         </button>
@@ -1219,8 +1056,11 @@ const ChatPopup = ({
 };
 
 // ========== CHAT BUTTON COMPONENT ==========
-const ChatButton = ({ onClick }) => (
-  <button className="chat-button" onClick={onClick} aria-label="Open chat">
+const ChatButton = ({ onClick }) => {
+  const { t } = useSiteTranslation();
+
+  return (
+  <button className="chat-button" onClick={onClick} aria-label={t('landing_chat_open')}>
     <span className="landing-chat-logo" aria-hidden="true">
       <span className="landing-chat-ring">
         <span className="landing-chat-bubble bubble-back" />
@@ -1231,6 +1071,7 @@ const ChatButton = ({ onClick }) => (
     </span>
     <span className="pulse-indicator"></span>
   </button>
-);
+  );
+};
 
 export default Leanding;

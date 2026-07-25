@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
 import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
+import PrivacyPolicy from "./PrivacyPolicy";
+import HelpSupport from "./HelpSupport";
 import "./AccountSettings.css";
 import { useUserTranslation, useCounselorTranslation } from "../../i18n/LanguageContext";
 import { LanguageSelector } from "../common/LanguageSelector";
@@ -248,6 +250,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
           <nav>
             <button type="button" onClick={() => setCounselorSettingsSection("account")}><FaUser /> Profile</button>
             <button type="button" onClick={() => setCounselorSettingsSection("account")}><FaCreditCard /> Payout</button>
+            <button type="button" onClick={() => setCounselorSettingsSection("privacy")}><FaShieldAlt /> Privacy</button>
             <button type="button" onClick={() => setCounselorSettingsSection("support")}><FaQuestionCircle /> Help</button>
             <button type="button"><FaGlobe /> Language</button>
           </nav>
@@ -270,7 +273,13 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
               Security
             </button>
             <button type="button"><FaBell /> Notifications</button>
-            <button type="button"><FaShieldAlt /> Privacy</button>
+            <button
+              type="button"
+              className={counselorSettingsSection === "privacy" ? "active" : ""}
+              onClick={() => setCounselorSettingsSection("privacy")}
+            >
+              <FaShieldAlt /> Privacy
+            </button>
             <button
               type="button"
               className={counselorSettingsSection === "support" ? "active" : ""}
@@ -337,76 +346,11 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
                   </div>
                 )}
               </>
-            ) : (
-              <div className="counselor-help-page">
-                <div className="counselor-help-heading">
-                  <h1>How can we help you today?</h1>
-                  <p>Find answers, contact support, or explore helpful resources for your counselling practice.</p>
-                </div>
-
-                <label className="counselor-help-search">
-                  <FaSearch />
-                  <input type="search" placeholder="Search help articles, payments..." aria-label="Search help" />
-                </label>
-
-                <div className="counselor-help-layout">
-                  <div className="counselor-help-main">
-                    <h2>Quick Actions</h2>
-                    <div className="counselor-help-quick-grid">
-                      {[
-                        [<FaCalendarAlt />, "Appointment Issues", "Reschedule, Cancel, Conflicts", "blue"],
-                        [<FaMoneyBillWave />, "Earnings & Payments", "Wallet, Payout Status, Transactions", "green"],
-                        [<FaShieldAlt />, "Account & Verification", "Update Profile, Upload Documents", "orange"],
-                        [<FaLock />, "Privacy & Security", "Change Password, Login Issues", "pink"],
-                      ].map(([icon, heading, copy, tone]) => (
-                        <button type="button" key={heading}>
-                          <i className={tone}>{icon}</i>
-                          <span><strong>{heading}</strong><small>{copy}</small></span>
-                          <FaChevronRight />
-                        </button>
-                      ))}
-                    </div>
-
-                    <section className="counselor-help-faqs">
-                      <h2>Popular Questions</h2>
-                      <details open>
-                        <summary>How do I update my availability?</summary>
-                        <p>To update your availability, navigate to the Settings section from the sidebar, select “Availability”, and choose your preferred working hours for each day of the week. Don&apos;t forget to save your changes.</p>
-                      </details>
-                      <details><summary>How do I edit consultation fees?</summary><p>You can update consultation fees from your profile editing section.</p></details>
-                      <details><summary>How do I change working hours?</summary><p>Choose availability settings and update your preferred working schedule.</p></details>
-                      <details><summary>How do I verify my profile?</summary><p>Upload the required professional documents from your profile page.</p></details>
-                    </section>
-                  </div>
-
-                  <aside className="counselor-help-side">
-                    <section className="counselor-help-emergency">
-                      <h2><FaExclamationTriangle /> Need Immediate Help?</h2>
-                      <p>If you are experiencing a medical emergency, please call your local emergency services immediately.</p>
-                      <button type="button">Emergency Contact</button>
-                      <button type="button">Crisis Resources</button>
-                    </section>
-
-                    <section className="counselor-help-contact">
-                      <h2>Contact Support</h2>
-                      <div>
-                        <button type="button"><FaPhoneAlt /> <span>Call Support</span></button>
-                        <button type="button"><FaComments /> <span>Live Chat</span></button>
-                        <button type="button"><FaEnvelope /> <span>Email Support</span></button>
-                        <button type="button"><FaRobot /> <span>AI Assistant</span></button>
-                      </div>
-                      <p><span>● &nbsp;Live Chat - 2 to 5 min</span><small>● &nbsp;Email - Within 24 hrs</small></p>
-                    </section>
-
-                    <section className="counselor-help-report">
-                      <h2>Report a Problem</h2>
-                      <p>Encountered a bug or technical issue in the platform?</p>
-                      <div><button type="button">Report Issue</button><button type="button"><FaImage /> Screenshot</button></div>
-                    </section>
-                  </aside>
-                </div>
-              </div>
-            )}
+            ) : counselorSettingsSection === 'privacy' ? (
+              <PrivacyPolicy />
+            ) : counselorSettingsSection === 'support' ? (
+              <HelpSupport />
+            ) : null}
           </main>
         </div>
       </section>

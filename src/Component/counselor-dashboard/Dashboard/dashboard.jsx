@@ -564,8 +564,8 @@ export default function CounselorDashboard() {
     { id: "call_history", icon: <FaHistory />, label: t('call_history'), badge: 0 },
     // { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
     { id: "earnings", icon: <FaMoneyBillWave />, label: t('earnings'), badge: 0 },
-    { id: "profile", icon: <FaUser />, label: t('profile'), badge: 0 },
-    { id: "notifications", icon: <FaBell />, label: "Notifications", badge: 0 },
+    // Profile moved to the sidebar actions group as "My Profile"
+    // Notifications moved into Settings
     { id: "settings", icon: <FaCog />, label: t('settings'), badge: 0 },
   ];
 

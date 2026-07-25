@@ -2486,3 +2486,459 @@ main {
 @keyframes guest-chat-mic-pulse {
   50% { transform: scale(1.06); }
 }
+
+
+/* ============================================================
+   UI POLISH LAYER
+   Appended intentionally: later rules win at equal specificity,
+   so this refines the visual layer without touching the original
+   structure or any markup above.
+   ============================================================ */
+
+:root {
+  /* Layered, softer shadows read as more premium than flat black */
+  --shadow-sm: 0 1px 2px rgba(16, 42, 58, .06), 0 1px 3px rgba(16, 42, 58, .08);
+  --shadow-md: 0 4px 6px -1px rgba(16, 42, 58, .07), 0 2px 4px -2px rgba(16, 42, 58, .06);
+  --shadow-lg: 0 12px 20px -6px rgba(16, 42, 58, .10), 0 4px 8px -4px rgba(16, 42, 58, .06);
+  --shadow-xl: 0 24px 44px -12px rgba(16, 42, 58, .16), 0 8px 16px -8px rgba(16, 42, 58, .08);
+  --ring: 0 0 0 3px rgba(46, 134, 171, .18);
+
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  --grad-primary: linear-gradient(135deg, #2e86ab 0%, #1c5d7a 100%);
+  --grad-soft: linear-gradient(180deg, #f7fcff 0%, #ffffff 100%);
+  --ease: cubic-bezier(.4, 0, .2, 1);
+  --transition: all .25s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* ---------- Typography rhythm ---------- */
+.section-title {
+  font-size: clamp(1.75rem, 1.15rem + 2.1vw, 2.6rem);
+  letter-spacing: -.022em;
+  line-height: 1.15;
+}
+
+.section-description {
+  max-width: 62ch;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.7;
+}
+
+/* Accent rule under each section heading */
+.section-header {
+  position: relative;
+  padding-bottom: .35rem;
+}
+
+.section-header .section-title::after {
+  content: "";
+  display: block;
+  width: 56px;
+  height: 4px;
+  margin: .85rem auto 0;
+  border-radius: var(--radius-full);
+  background: var(--grad-primary);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  border-radius: var(--radius-md);
+  letter-spacing: .005em;
+  transition: var(--transition);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.btn-primary {
+  background: var(--grad-primary);
+  border-color: transparent;
+  box-shadow: 0 4px 12px -2px rgba(46, 134, 171, .38);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px -6px rgba(46, 134, 171, .48);
+}
+
+.btn-primary:active,
+.btn-secondary:active,
+.btn-outline:active {
+  transform: translateY(0);
+}
+
+.btn-secondary,
+.btn-outline {
+  border-width: 1.5px;
+  background: var(--white);
+}
+
+.btn-secondary:hover,
+.btn-outline:hover {
+  background: rgba(46, 134, 171, .07);
+  border-color: var(--primary-dark);
+  color: var(--primary-dark);
+  box-shadow: var(--shadow-md);
+}
+
+/* ---------- Header ---------- */
+.header {
+  height: 74px;
+  border-bottom: 1px solid rgba(16, 42, 58, .06);
+  box-shadow: none;
+}
+
+.header-scrolled {
+  background-color: rgba(255, 255, 255, .82);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
+  box-shadow: var(--shadow-md);
+  border-bottom-color: transparent;
+}
+
+.nav-link {
+  position: relative;
+  font-weight: 500;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -6px;
+  width: 0;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--grad-primary);
+  transition: width .25s var(--ease);
+}
+
+.nav-link:hover::after {
+  width: 100%;
+}
+
+/* ---------- Language selector in the navbar ----------
+   The shared trigger is styled for a dark sidebar, so it needs a light
+   treatment to stay legible on the white header. */
+.header-language {
+  display: flex;
+  align-items: center;
+}
+
+.header-language .language-selector-root {
+  display: flex;
+}
+
+.header-language .lang-selector-trigger {
+  width: auto;
+  height: 40px;
+  padding: 0 .85rem;
+  gap: 7px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--gray-300);
+  background: var(--white);
+  color: var(--text);
+  font-size: .875rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.header-language .lang-selector-trigger:hover {
+  border-color: var(--primary);
+  background: rgba(46, 134, 171, .06);
+  color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.header-language .lang-selector-trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+.header-language .lang-trigger-globe {
+  font-size: 1rem;
+  line-height: 1;
+  color: var(--primary);
+}
+
+/* ---------- Hero ---------- */
+.hero {
+  background: var(--grad-soft);
+}
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: 1.1rem;
+  padding: .4rem .85rem;
+  border: 1px solid rgba(46, 134, 171, .22);
+  border-radius: var(--radius-full);
+  background: rgba(46, 134, 171, .08);
+  color: var(--primary-dark);
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.hero-badge i {
+  font-size: .85rem;
+}
+
+.hero-title {
+  letter-spacing: -.03em;
+  line-height: 1.08;
+}
+
+.text-highlight {
+  background: linear-gradient(135deg, #2e86ab 0%, #20b2aa 60%, #6ac6e8 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--primary);
+}
+
+.hero-description {
+  max-width: 60ch;
+  line-height: 1.75;
+}
+
+.hero-stats .stat-item {
+  padding: .9rem .75rem;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, .72);
+  border: 1px solid rgba(16, 42, 58, .06);
+  transition: var(--transition);
+}
+
+.hero-stats .stat-item:hover {
+  transform: translateY(-3px);
+  border-color: rgba(46, 134, 171, .28);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-number {
+  background: var(--grad-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -.02em;
+}
+
+.chat-preview {
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  border: 1px solid rgba(16, 42, 58, .06);
+  overflow: hidden;
+}
+
+/* ---------- Cards: services / features / steps / doctors ---------- */
+.service-card,
+.feature-card,
+.doctor-card,
+.testimonial-card,
+.step {
+  border-radius: var(--radius-xl);
+  border: 1px solid rgba(16, 42, 58, .07);
+  box-shadow: var(--shadow-sm);
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease), border-color .25s var(--ease);
+}
+
+.service-card:hover,
+.feature-card:hover,
+.doctor-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(46, 134, 171, .28);
+  box-shadow: var(--shadow-xl);
+}
+
+.service-icon,
+.feature-icon,
+.step-icon {
+  border-radius: var(--radius-lg);
+  transition: transform .25s var(--ease);
+}
+
+.service-card:hover .service-icon,
+.feature-card:hover .feature-icon {
+  transform: scale(1.06) rotate(-3deg);
+}
+
+.service-learn-more {
+  font-weight: 600;
+  transition: gap .2s var(--ease), color .2s var(--ease);
+}
+
+.service-learn-more:hover {
+  gap: .6rem;
+  color: var(--primary-dark);
+}
+
+.step-number {
+  background: var(--grad-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.language-tag {
+  border-radius: var(--radius-full);
+  border: 1px solid rgba(46, 134, 171, .2);
+  background: rgba(46, 134, 171, .07);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.landing-doctors-state {
+  grid-column: 1 / -1;
+  padding: 2.5rem 1rem;
+  text-align: center;
+  color: var(--text-light);
+}
+
+/* ---------- Testimonials ---------- */
+.testimonial-card {
+  box-shadow: var(--shadow-lg);
+}
+
+.testimonial-rating .fa-star.filled {
+  color: #f5a623;
+}
+
+.testimonial-dots .dot {
+  transition: var(--transition);
+  border-radius: var(--radius-full);
+}
+
+.testimonial-dots .dot.active {
+  background: var(--grad-primary);
+  width: 26px;
+}
+
+/* ---------- FAQ ---------- */
+.faq-item {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(16, 42, 58, .08);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: var(--transition);
+}
+
+.faq-item:hover {
+  border-color: rgba(46, 134, 171, .26);
+}
+
+.faq-question {
+  font-weight: 600;
+  transition: var(--transition);
+}
+
+.faq-question:hover {
+  background: rgba(46, 134, 171, .04);
+}
+
+.faq-question i {
+  transition: transform .25s var(--ease);
+  color: var(--primary);
+}
+
+/* ---------- Footer ---------- */
+.footer-column a,
+.footer-legal a {
+  transition: var(--transition);
+}
+
+.footer-column a:hover,
+.footer-legal a:hover {
+  color: var(--white);
+  padding-left: 4px;
+}
+
+.social-links a {
+  transition: var(--transition);
+  border-radius: var(--radius-full);
+}
+
+.social-links a:hover {
+  transform: translateY(-3px);
+  background: var(--primary);
+  color: var(--white);
+}
+
+/* ---------- Motion / accessibility ---------- */
+html {
+  scroll-behavior: smooth;
+}
+
+:where(a, button):focus-visible {
+  outline: none;
+  box-shadow: var(--ring);
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  * {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+  }
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 992px) {
+  .header-language .lang-selector-trigger {
+    height: 38px;
+    padding: 0 .7rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .section-header .section-title::after {
+    margin-top: .7rem;
+  }
+
+  .hero-badge {
+    font-size: .74rem;
+  }
+
+  .header-actions {
+    gap: .5rem;
+  }
+
+  .header-language .lang-selector-trigger {
+    height: 36px;
+    padding: 0 .6rem;
+    font-size: .8rem;
+  }
+
+  .service-card:hover,
+  .feature-card:hover,
+  .doctor-card:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Below this the globe alone is enough; the full name shows in the modal */
+  .header-language .lang-selector-trigger > span:not(.lang-trigger-globe) {
+    display: none;
+  }
+
+  .header-language .lang-selector-trigger {
+    width: 36px;
+    padding: 0;
+    justify-content: center;
+  }
+}

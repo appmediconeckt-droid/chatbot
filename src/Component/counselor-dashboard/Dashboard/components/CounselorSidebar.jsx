@@ -1,5 +1,5 @@
 import React from "react";
-import { FaUserCircle, FaSignOutAlt, FaEnvelope, FaPhone } from "react-icons/fa";
+import { FaUserCircle, FaSignOutAlt, FaEnvelope, FaPhone, FaUser } from "react-icons/fa";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { LanguageSelector } from "../../../common/LanguageSelector";
 
@@ -19,27 +19,30 @@ export default function CounselorSidebar({
         <div className="couns-sidebar-header">
           <div className="couns-profile-section">
             {/* Profile Image */}
-            <div className="couns-profile-image">
-              {counselorData?.profilePhoto ? (
-                <img
-                  src={counselorData.profilePhoto}
-                  alt={counselorData?.name || "Profile"}
-                  className="couns-profile-img"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.style.display = "none";
-                    const fallback = e.target.nextElementSibling;
-                    if (fallback) fallback.style.display = "block";
-                  }}
+            <div className="couns-profile-avatar-wrap">
+              <div className="couns-profile-image">
+                {counselorData?.profilePhoto ? (
+                  <img
+                    src={counselorData.profilePhoto}
+                    alt={counselorData?.name || "Profile"}
+                    className="couns-profile-img"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.style.display = "none";
+                      const fallback = e.target.nextElementSibling;
+                      if (fallback) fallback.style.display = "block";
+                    }}
+                  />
+                ) : null}
+                {!counselorData?.profilePhoto && (
+                  <FaUserCircle className="couns-default-avatar" />
+                )}
+                <FaUserCircle
+                  className="couns-profile-avatar-fallback"
+                  style={{ display: "none" }}
                 />
-              ) : null}
-              {!counselorData?.profilePhoto && (
-                <FaUserCircle className="couns-default-avatar" />
-              )}
-              <FaUserCircle
-                className="couns-profile-avatar-fallback"
-                style={{ display: "none" }}
-              />
+              </div>
+              <span className="couns-profile-status" aria-hidden="true" />
             </div>
 
             {/* Profile Info - Centered */}
@@ -51,7 +54,7 @@ export default function CounselorSidebar({
 
               {/* Email */}
               {counselorData?.email && (
-                <p className="couns-sidebar-meta" title={counselorData.email}>
+                <p className="couns-sidebar-meta couns-sidebar-meta--email" title={counselorData.email}>
                   <FaEnvelope className="couns-sidebar-meta-icon" />
                   <span>{counselorData.email}</span>
                 </p>
@@ -88,6 +91,15 @@ export default function CounselorSidebar({
         {/* Actions Section */}
         <div className="couns-sidebar-actions">
           <LanguageSelector lang={lang} setLang={setLang} t={t} />
+          <button
+            className={`couns-sidebar-item ${activeTab === "profile" ? "couns-active" : ""}`}
+            onClick={() => handleTabChange("profile")}
+          >
+            <span className="couns-sidebar-icon">
+              <FaUser />
+            </span>
+            <span className="couns-sidebar-text">{t('my_profile')}</span>
+          </button>
           <button
             className="couns-sidebar-item couns-action"
             onClick={() => setShowLogoutConfirm(true)}
