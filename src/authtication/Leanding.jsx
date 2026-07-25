@@ -349,10 +349,10 @@ const HeroSection = () => (
     <div className="container">
       <div className="hero-content">
         <h1 className="hero-title">
-          Human Empower <span className="text-highlight">Mental Health</span> 
+          Human Empowered <span className="text-highlight">Mental Health wellness</span> 
         </h1>
         <p className="hero-description">
-          Connect with top Indian psychiatrists and therapists. Get 24/7 AI support in Hindi, English, and regional languages. Emergency crisis support across all major Indian cities.
+         In your most difficult time of mental health, Humaeli will guide you to calm & care. If needed, we will connect you with counsellors, psychologists, psychological wellness practitioners (PWP), and psychiatrists.
         </p>
         <div className="hero-actions">
           <Link to="/role-selector" className="btn btn-primary">
@@ -378,7 +378,7 @@ const HeroSection = () => (
               <i className="fas fa-robot"></i>
             </div>
             <div className="chat-preview-info">
-              <div className="chat-preview-name">MediConeckt Assistant</div>
+              <div className="chat-preview-name">Humaeli Assistant</div>
               <div className="chat-preview-status">Online • Hindi/English Support</div>
             </div>
           </div>
@@ -1081,7 +1081,7 @@ const ChatPopup = ({
             <i className="fas fa-robot"></i>
           </div>
           <div>
-            <h3>MediConeckt AI Assistant</h3>
+            <h3>Humaeli AI Assistant</h3>
             <p className="chat-status">
               <span className="status-dot"></span>
               Available in English, हिन्दी, தமிழ், తెలుగు
