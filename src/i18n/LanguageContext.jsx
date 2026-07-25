@@ -4,6 +4,9 @@ import { translationService } from './translationService';
 
 const USER_LANG_KEY = 'userLang';
 const COUNSELOR_LANG_KEY = 'counselorLang';
+// Public/landing pages have no role yet, so they get their own scope. Picking a
+// language before signing in also seeds both portals, so the choice carries over.
+const SITE_LANG_KEY = 'siteLang';
 
 export const SUPPORTED_LANGUAGES = [
   // ──── TOP PRIORITY ────
@@ -141,6 +144,10 @@ export function LanguageProvider({ children }) {
     const normalized = normalizeLanguageCode(saved);
     return normalized;
   });
+  const [siteLang, setSiteLangState] = useState(() => {
+    const saved = localStorage.getItem(SITE_LANG_KEY) || localStorage.getItem(USER_LANG_KEY);
+    return normalizeLanguageCode(saved);
+  });
   const [loadedTranslations, setLoadedTranslations] = useState(DEFAULT_TRANSLATIONS);
 
   const ensureLanguageLoaded = useCallback((lang) => {
@@ -158,7 +165,8 @@ export function LanguageProvider({ children }) {
   useEffect(() => {
     ensureLanguageLoaded(userLang);
     ensureLanguageLoaded(counselorLang);
-  }, [counselorLang, ensureLanguageLoaded, userLang]);
+    ensureLanguageLoaded(siteLang);
+  }, [counselorLang, ensureLanguageLoaded, siteLang, userLang]);
 
   const setUserLang = useCallback((lang) => {
     const normalized = normalizeLanguageCode(lang);
@@ -172,6 +180,18 @@ export function LanguageProvider({ children }) {
     setCounselorLangState(normalized);
   }, []);
 
+  // Choosing a language on a public page also seeds both portals, so the
+  // preference survives sign-up/login instead of resetting to English.
+  const setSiteLang = useCallback((lang) => {
+    const normalized = normalizeLanguageCode(lang);
+    localStorage.setItem(SITE_LANG_KEY, normalized);
+    localStorage.setItem(USER_LANG_KEY, normalized);
+    localStorage.setItem(COUNSELOR_LANG_KEY, normalized);
+    setSiteLangState(normalized);
+    setUserLangState(normalized);
+    setCounselorLangState(normalized);
+  }, []);
+
   return (
     <LanguageContext.Provider
       value={{
@@ -179,6 +199,8 @@ export function LanguageProvider({ children }) {
         setUserLang,
         counselorLang,
         setCounselorLang,
+        siteLang,
+        setSiteLang,
         translations: loadedTranslations,
       }}
     >
@@ -216,6 +238,13 @@ export function useUserTranslation() {
   const ctx = useContext(LanguageContext);
   if (!ctx) throw new Error('useUserTranslation must be used within LanguageProvider');
   return { t: makeT(ctx.userLang, ctx.translations), lang: ctx.userLang, setLang: ctx.setUserLang };
+}
+
+// For public pages (landing, signup, login) where no role is known yet.
+export function useSiteTranslation() {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) throw new Error('useSiteTranslation must be used within LanguageProvider');
+  return { t: makeT(ctx.siteLang, ctx.translations), lang: ctx.siteLang, setLang: ctx.setSiteLang };
 }
 
 export function useCounselorTranslation() {

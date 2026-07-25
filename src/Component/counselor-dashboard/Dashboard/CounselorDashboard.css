@@ -18,6 +18,9 @@
   --couns-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
   --couns-transition: all 0.3s ease;
   --couns-sidebar-width: 280px;
+  /* Sidebar accent — blue gradient per Figma */
+  --couns-sidebar-accent: #1a6dff;
+  --couns-sidebar-accent-dark: #0b4ec9;
 }
 
 body {
@@ -64,8 +67,7 @@ body {
 }
 
 .couns-sidebar-header {
-  padding: 1rem 0.8rem;
-  border-bottom: 1px solid #e8eeff;
+  padding: 0.8rem;
   text-align: center;
 }
 
@@ -74,6 +76,29 @@ body {
   flex-direction: column;
   align-items: center;
   gap: 0.35rem;
+  padding: 1rem 0.75rem 1.1rem;
+  border-radius: 14px;
+  background: #eef3ff;
+}
+
+/* Avatar + online dot */
+.couns-profile-avatar-wrap {
+  position: relative;
+  width: 75px;
+  height: 75px;
+  flex-shrink: 0;
+}
+
+.couns-profile-status {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2.5px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
 }
 
 .couns-profile-image {
@@ -158,6 +183,15 @@ body {
   color: #1f2937;
 }
 
+.couns-sidebar-meta--email span {
+  color: #1a6dff;
+  text-decoration: underline;
+}
+
+.couns-sidebar-meta--email .couns-sidebar-meta-icon {
+  color: #64748b;
+}
+
 /* Sidebar Navigation */
 .couns-sidebar-menu {
   padding: 1rem;
@@ -185,15 +219,20 @@ body {
   position: relative;
 }
 
-.couns-sidebar-item:hover {
-  background: var(--couns-bg-light);
-  color: var(--couns-primary);
+.couns-sidebar-item:hover:not(.couns-active) {
+  background: #f1f5ff;
+  color: var(--couns-sidebar-accent);
 }
 
 .couns-sidebar-item.couns-active {
-  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  background: linear-gradient(135deg, var(--couns-sidebar-accent), var(--couns-sidebar-accent-dark));
   color: white;
-  box-shadow: 0 4px 10px rgba(107, 70, 193, 0.2);
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(11, 90, 227, 0.25);
+}
+
+.couns-sidebar-item.couns-active .couns-sidebar-icon {
+  color: white;
 }
 
 .couns-sidebar-icon {
@@ -229,7 +268,7 @@ body {
 
 .couns-sidebar-item.couns-active .couns-sidebar-badge {
   background: white;
-  color: var(--couns-primary);
+  color: var(--couns-sidebar-accent);
 }
 
 /* Sidebar Actions */
