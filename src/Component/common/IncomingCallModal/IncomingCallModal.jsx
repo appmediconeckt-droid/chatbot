@@ -5,6 +5,8 @@ import {
   FaSpinner,
   FaUserCircle,
   FaVideo,
+  FaLock,
+  FaMapMarkerAlt,
 } from "react-icons/fa";
 import "./IncomingCallModal.css";
 import { getAnonymousUserDisplay } from "../../../utils/anonymousUser";
@@ -56,10 +58,75 @@ const IncomingCallModal = ({
     ...callData,
     ...fromData,
   });
+  const resolvedAnonymousName = useMemo(() => {
+    const genericNames = new Set([
+      "",
+      "anonymous",
+      "anonymous user",
+      "user",
+      "patient",
+      "caller",
+    ]);
+    const directCandidates = [
+      anonymousCaller.name,
+      fromData?.anonymous,
+      fromData?.anonymousName,
+      fromData?.anonymousDisplayName,
+      fromData?.patientName,
+      fromData?.displayName,
+      fromData?.name,
+      callData?.anonymous,
+      callData?.anonymousName,
+      callData?.anonymousDisplayName,
+      callData?.patientName,
+      callData?.name,
+      callerName,
+    ];
+    const directName = directCandidates.find(
+      (value) =>
+        typeof value === "string" &&
+        value.trim() &&
+        !genericNames.has(value.trim().toLowerCase()),
+    );
+    if (directName) return directName.trim();
+
+    const callerId = String(
+      fromData?._id ||
+        fromData?.id ||
+        fromData?.userId ||
+        callData?.initiatorId ||
+        callData?.fromId ||
+        "",
+    );
+    try {
+      const cached = JSON.parse(localStorage.getItem("activeChats") || "[]");
+      const matchingChat = Array.isArray(cached)
+        ? cached.find((chat) => {
+            const party = chat?.otherParty || chat?.user || chat?.patient || {};
+            return (
+              callerId &&
+              String(party?._id || party?.id || party?.userId || "") === callerId
+            );
+          })
+        : null;
+      if (matchingChat) {
+        const cachedName = getAnonymousUserDisplay(
+          matchingChat.otherParty || matchingChat.user || matchingChat.patient || matchingChat,
+        ).name;
+        if (cachedName && !genericNames.has(cachedName.toLowerCase())) {
+          return cachedName;
+        }
+      }
+    } catch {
+      // Ignore malformed offline chat cache.
+    }
+
+    return "Anonymous User";
+  }, [anonymousCaller.name, callData, callerName, fromData]);
 
   const displayName = useMemo(() => {
     if (isPatientCaller) {
-      return anonymousCaller.name;
+      return resolvedAnonymousName;
     }
 
     if (callData?.from?.isAnonymous) {
@@ -74,11 +141,16 @@ const IncomingCallModal = ({
       callerName ||
       fallbackName
     );
-  }, [anonymousCaller.name, callData, callerName, fallbackName, isPatientCaller]);
+  }, [callData, callerName, fallbackName, isPatientCaller, resolvedAnonymousName]);
 
   const profilePhoto = isPatientCaller
     ? anonymousCaller.avatarUrl || anonymousCaller.avatar
-    : callData?.from?.profilePhoto || callData?.from?.avatar || callerImage;
+    : callData?.from?.profilePhoto ||
+      callData?.from?.profilePic ||
+      callData?.initiator?.profilePhoto ||
+      callData?.initiator?.profilePic ||
+      callData?.from?.avatar ||
+      callerImage;
 
   const requestedTime = formatRequestTime(
     callData?.requestedAt || callData?.createdAt,
@@ -86,6 +158,11 @@ const IncomingCallModal = ({
 
   const requestMessage =
     callData?.requestMessage || `Incoming ${normalizedCallType} call...`;
+  const callerLocation =
+    callData?.from?.location ||
+    callData?.initiator?.location ||
+    callData?.location ||
+    "";
 
   const isActionSuccessful = (result) => {
     if (result === undefined) return true;
@@ -149,6 +226,17 @@ const IncomingCallModal = ({
         className={`ucm-modal ${normalizedCallType === "video" ? "ucm-video" : "ucm-voice"}`}
       >
         <div className="ucm-body">
+          <p className="ucm-kicker">
+            INCOMING {normalizedCallType === "video" ? "VIDEO " : ""}CALL
+          </p>
+          <h3 className="ucm-name">{displayName}</h3>
+          {callerLocation && (
+            <p className="ucm-location">
+              <FaMapMarkerAlt aria-hidden="true" />
+              <span>{callerLocation}</span>
+            </p>
+          )}
+
           <div className="ucm-avatar-wrap">
             <div className="ucm-avatar">
               {isEmojiAvatar ? (
@@ -161,24 +249,10 @@ const IncomingCallModal = ({
             </div>
           </div>
 
-          <h3 className="ucm-name">{displayName}</h3>
-          <p className="ucm-type">
-            {normalizedCallType === "video" ? (
-              <>
-                <FaVideo aria-hidden="true" />
-                <span>Video Call</span>
-              </>
-            ) : (
-              <>
-                <FaPhoneAlt aria-hidden="true" />
-                <span>Voice Call</span>
-              </>
-            )}
+          <p className="ucm-encrypted">
+            <FaLock aria-hidden="true" />
+            <span>ENCRYPTED</span>
           </p>
-          {requestedTime && (
-            <p className="ucm-time">Received at {requestedTime}</p>
-          )}
-          <p className="ucm-message">{requestMessage}</p>
 
           <div className="ucm-actions">
             <button

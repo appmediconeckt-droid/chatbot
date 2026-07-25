@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./UserSignup.css";
-import logo from "../image/Mediconect Logo-3.png";
+import logo from "../assets/humaeli.png";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
 import LocationGate from "./LocationGate";
@@ -982,7 +982,6 @@ const handleVerify = async () => {
                 alt="Mediconeckt ChatBot Logo"
                 className="us-logo-img"
               />
-              <span className="us-logo-text">Mediconeckt ChatBot</span>
             </div>
             <h1 className="us-brand-title">
               {isLogin ? "Welcome Back!" : "Begin Your Journey"}

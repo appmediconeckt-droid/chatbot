@@ -2186,3 +2186,119 @@
     overflow: hidden;
     aspect-ratio: 4/3;
 }
+/* Counselor profile screenshot layout (view mode only). */
+.counselor-profile-reference {
+  min-height: 100vh;
+  padding: 0 24px 50px;
+  color: #20242d;
+  background: #f8f9ff;
+}
+
+.counselor-profile-reference__title {
+  height: 99px;
+  margin: 0 -24px 25px;
+  padding: 29px 14px;
+  border-bottom: 1px solid #d4dae6;
+  background: #fff;
+}
+
+.counselor-profile-reference__title h1 { margin: 0; font-size: 30px; font-weight: 750; }
+.counselor-profile-reference__grid { display: grid; grid-template-columns: minmax(360px,.77fr) minmax(0,1fr); gap: 22px; align-items: start; }
+.counselor-profile-reference__left,
+.counselor-profile-reference__right { display: grid; gap: 24px; }
+
+.counselor-profile-identity-card,
+.counselor-profile-stats-card,
+.counselor-profile-completion-card,
+.counselor-profile-details-card,
+.counselor-profile-about-card,
+.counselor-profile-mini-grid > section,
+.counselor-profile-specializations-card,
+.counselor-profile-certificates-card {
+  border: 1px solid #e1e5ec;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 3px 10px rgba(31,48,80,.025);
+}
+
+.counselor-profile-identity-card { min-height: 365px; padding: 28px 24px 23px; text-align: center; }
+.counselor-profile-reference__photo { width: 126px; height: 126px; margin: 0 auto 16px; overflow: hidden; border: 5px solid #eef2f3; border-radius: 50%; background: #dfe9ff; display: grid; place-items: center; color: #0759bd; font-size: 42px; font-weight: 800; }
+.counselor-profile-reference__photo img { width: 100%; height: 100%; object-fit: cover; }
+.counselor-profile-identity-card h2 { margin: 0; color: #1e2025; font-size: 19px; text-transform: uppercase; }
+.counselor-profile-identity-card h2 svg { margin-left: 5px; color: #0759bd; font-size: 18px; }
+.counselor-profile-identity-card > p { margin: 6px 0 0; color: #5d6675; font-size: 13px; }
+.counselor-profile-reference__tags { min-height: 57px; padding: 17px 0 12px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.counselor-profile-reference__tags span { padding: 5px 13px; border-radius: 15px; color: #18365f; background: #dce7ff; font-size: 11px; }
+.counselor-profile-identity-card > button { width: 100%; min-height: 49px; margin-top: 9px; border: 0; border-radius: 7px; color: #fff; background: linear-gradient(90deg,#0872e5,#0754af); display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; cursor: pointer; }
+
+.counselor-profile-stats-card { min-height: 102px; padding: 17px 10px; display: grid; grid-template-columns: repeat(4,1fr); }
+.counselor-profile-stats-card > div { min-width: 0; border-right: 1px solid #dce1e9; color: #07469f; display: grid; place-items: center; align-content: center; }
+.counselor-profile-stats-card > div:last-child { border-right: 0; }
+.counselor-profile-stats-card svg { font-size: 16px; }
+.counselor-profile-stats-card strong { margin-top: 4px; font-size: 17px; }
+.counselor-profile-stats-card span { color: #3e4653; font-size: 9px; }
+
+.counselor-profile-completion-card { min-height: 94px; padding: 25px 24px; }
+.counselor-profile-completion-card > div { color: #0750aa; display: flex; align-items: center; justify-content: space-between; font-size: 14px; }
+.counselor-profile-completion-card > div span { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.counselor-profile-completion-card > div strong { font-size: 17px; }
+.counselor-profile-completion-card > i { height: 8px; margin-top: 13px; overflow: hidden; border-radius: 5px; background: #e2e8f2; display: block; }
+.counselor-profile-completion-card > i b { height: 100%; border-radius: inherit; background: #0759bd; display: block; }
+
+.counselor-profile-details-card { min-height: 265px; padding: 26px 24px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-content: start; gap: 17px 38px; }
+.counselor-profile-details-card > div { min-width: 0; display: flex; gap: 13px; }
+.counselor-profile-details-card > div > i { width: 20px; color: #4f5764; font-size: 18px; }
+.counselor-profile-details-card span { min-width: 0; color: #505867; display: grid; gap: 5px; font-size: 9px; }
+.counselor-profile-details-card strong { overflow-wrap: anywhere; color: #272b31; font-size: 14px; font-weight: 450; }
+
+.counselor-profile-about-card { min-height: 168px; padding: 26px 24px; }
+.counselor-profile-about-card h2,
+.counselor-profile-specializations-card h2,
+.counselor-profile-certificates-card h2 { margin: 0; color: #22262d; font-size: 20px; }
+.counselor-profile-about-card p { margin: 16px 0 0; color: #586170; font-size: 14px; line-height: 1.6; }
+
+.counselor-profile-mini-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 24px; }
+.counselor-profile-mini-grid > section { min-height: 98px; padding: 24px; display: flex; align-items: center; gap: 15px; }
+.counselor-profile-mini-grid > section > i { width: 48px; height: 48px; flex: 0 0 48px; border-radius: 11px; color: #075bc4; background: #dce7ff; display: grid; place-items: center; font-size: 19px; }
+.counselor-profile-mini-grid > section > span { color: #586170; display: grid; gap: 7px; font-size: 9px; }
+.counselor-profile-mini-grid > section > span strong { color: #292d34; font-size: 14px; font-weight: 450; }
+.counselor-profile-mini-grid > section.modes,
+.counselor-profile-mini-grid > section.languages { min-height: 183px; align-items: flex-start; flex-direction: column; }
+.counselor-profile-mini-grid > section.modes > span,
+.counselor-profile-mini-grid > section.languages > span { color: #555e6d; font-size: 9px; }
+.counselor-profile-mini-grid section > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.counselor-profile-mini-grid section > div b { padding: 10px 16px; border: 1px solid #cbd3df; border-radius: 21px; color: #273346; background: #fff; font-size: 11px; font-weight: 450; text-transform: capitalize; }
+.counselor-profile-mini-grid section.languages > div b { border: 0; background: #dce7ff; }
+
+.counselor-profile-specializations-card { min-height: 153px; padding: 28px 24px; }
+.counselor-profile-specializations-card h2 { padding-bottom: 16px; border-bottom: 1px solid #d9dfe7; }
+.counselor-profile-specializations-card > div { padding-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; }
+.counselor-profile-specializations-card span { min-width: 68px; padding: 11px 17px; border: 1px solid #c7cfdd; border-radius: 7px; text-align: center; font-size: 11px; }
+
+.counselor-profile-certificates-card { min-height: 400px; padding: 28px 24px; }
+.counselor-profile-certificates-card article { position: relative; min-height: 108px; padding-left: 24px; border-left: 2px solid #0870dd; display: flex; gap: 10px; }
+.counselor-profile-certificates-card article > i { position: absolute; left: -7px; top: 6px; color: #0870dd; background: #fff; }
+.counselor-profile-certificates-card article > div { display: grid; align-content: start; gap: 7px; }
+.counselor-profile-certificates-card article strong { font-size: 15px; }
+.counselor-profile-certificates-card article span { color: #596271; font-size: 12px; }
+.counselor-profile-certificates-card article small { color: #697280; font-size: 9px; line-height: 1.45; }
+.counselor-profile-certificates-card > p { color: #697280; }
+
+@media (max-width: 1050px) {
+  .counselor-profile-reference__grid { grid-template-columns: 1fr; }
+  .counselor-profile-reference__left { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .counselor-profile-identity-card { grid-row: span 2; }
+}
+
+@media (max-width: 680px) {
+  .counselor-profile-reference { padding: 0 14px 30px; }
+  .counselor-profile-reference__title { height: auto; margin: 0 -14px 16px; padding: 18px 16px; }
+  .counselor-profile-reference__title h1 { font-size: 24px; }
+  .counselor-profile-reference__left,
+  .counselor-profile-mini-grid { grid-template-columns: 1fr; }
+  .counselor-profile-identity-card { grid-row: auto; }
+  .counselor-profile-details-card { grid-template-columns: 1fr; }
+  .counselor-profile-stats-card { grid-template-columns: repeat(2,1fr); }
+  .counselor-profile-stats-card > div { min-height: 65px; }
+  .counselor-profile-stats-card > div:nth-child(2) { border-right: 0; }
+}

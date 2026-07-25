@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Leanding.css';
-import logo from '../image/Mediconect Logo-3.png';
+import logo from '../assets/humaeli.png';
 import { API_BASE_URL } from '../axiosConfig';
 import { Link } from 'react-router-dom';
 import { SUPPORTED_LANGUAGES, useUserTranslation } from '../i18n/LanguageContext';
@@ -317,8 +317,7 @@ const Header = ({ onLoginClick }) => {
           >
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
-          <img src={logo} height={30} alt="MediConeckt Logo" />
-          <span className="logo-text">Medi<span className="logo-highlight">Coneckt</span></span>
+          <img src={logo} alt="Humaeli Logo" />
         </div>
 
         <nav className={`nav-menu ${menuOpen ? 'active' : ''}`}>
@@ -350,10 +349,10 @@ const HeroSection = () => (
     <div className="container">
       <div className="hero-content">
         <h1 className="hero-title">
-          Human Empower <span className="text-highlight">Mental Health</span> 
+          Human Empowered <span className="text-highlight">Mental Health wellness</span> 
         </h1>
         <p className="hero-description">
-          Connect with top Indian psychiatrists and therapists. Get 24/7 AI support in Hindi, English, and regional languages. Emergency crisis support across all major Indian cities.
+         In your most difficult time of mental health, Humaeli will guide you to calm & care. If needed, we will connect you with counsellors, psychologists, psychological wellness practitioners (PWP), and psychiatrists.
         </p>
         <div className="hero-actions">
           <Link to="/role-selector" className="btn btn-primary">
@@ -379,7 +378,7 @@ const HeroSection = () => (
               <i className="fas fa-robot"></i>
             </div>
             <div className="chat-preview-info">
-              <div className="chat-preview-name">MediConeckt Assistant</div>
+              <div className="chat-preview-name">Humaeli Assistant</div>
               <div className="chat-preview-status">Online • Hindi/English Support</div>
             </div>
           </div>
@@ -906,8 +905,7 @@ const Footer = () => (
       <div className="footer-content">
         <div className="footer-about">
           <div className="footer-logo">
-            <img src={logo} height={30} alt="MediConeckt Logo" />
-            <span>Medi<span className="logo-highlight">Coneckt</span></span>
+            <img src={logo} alt="Humaeli Logo" />
           </div>
           <p className="footer-description">
             India's most trusted AI-powered mental health platform with connections to top medical professionals across the country. Available 24/7 in multiple Indian languages.
@@ -1083,7 +1081,7 @@ const ChatPopup = ({
             <i className="fas fa-robot"></i>
           </div>
           <div>
-            <h3>MediConeckt AI Assistant</h3>
+            <h3>Humaeli AI Assistant</h3>
             <p className="chat-status">
               <span className="status-dot"></span>
               Available in English, हिन्दी, தமிழ், తెలుగు

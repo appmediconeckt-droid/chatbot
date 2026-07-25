@@ -77,8 +77,8 @@
 }
 
 .cs-logo-img {
-  width: 40px;
-  height: 40px;
+  width: clamp(180px, 22vw, 240px);
+  height: auto;
   object-fit: contain;
 }
 

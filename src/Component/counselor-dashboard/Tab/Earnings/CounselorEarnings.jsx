@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { FaTimes } from "react-icons/fa";
+import { FaArrowRight, FaCheckCircle, FaComments, FaPhoneAlt, FaTimes, FaVideo, FaWallet } from "react-icons/fa";
 import axiosInstance from "../../../../axiosConfig";
 import "./CounselorEarnings.css";
 
 const money = (value) =>
   `₹${Number(value || 0).toLocaleString("en-IN", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   })}`;
 
 const CounselorEarnings = () => {
@@ -129,20 +129,60 @@ const CounselorEarnings = () => {
   const estimatedPayout = Math.max(0, requestedAmount - estimatedFee);
 
   return (
-    <div className="ml-2 mt-3 space-y-6 p-1 sm:ml-3 sm:mt-4 lg:ml-5 lg:mt-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Earnings & payouts</h1>
-          <p className="mt-1 text-sm text-slate-500">Live earning data from completed paid chat, voice and video sessions.</p>
+    <div className="counselor-earnings-page ml-2 mt-3 space-y-6 p-1 sm:ml-3 sm:mt-4 lg:ml-5 lg:mt-5">
+      <header className="earnings-page-title">
+        <h1>Earnings Overview</h1>
+      </header>
+
+      <div className="earnings-overview-layout">
+        <div className="earnings-overview-main">
+          <section className="earnings-balance-card">
+            <div className="earnings-balance-label"><FaWallet /> Total Earning</div>
+            <div className="earnings-growth">↗ +12.5%</div>
+            <strong>{money(data?.totalEarned)}</strong>
+            <p>Across {earnings.length} completed sessions this month</p>
+            <div className="earnings-balance-footer">
+              <div><span>Pending</span><b>{money(data?.pendingPayout)}</b></div>
+              <div><span>Withdrawable</span><b>{money(data?.balance)}</b></div>
+              <button
+                type="button"
+                onClick={() => { setNotice(""); setShowWithdrawal((value) => !value); }}
+                disabled={Number(data?.balance || 0) <= 0}
+              >
+                <FaArrowRight /> Withdraw
+              </button>
+            </div>
+          </section>
+
+          <div className="earnings-summary-grid">
+            <article><span><FaCheckCircle /> Last 30 Days</span><strong>{money(data?.totalEarned)}</strong></article>
+            <article><span><FaCheckCircle /> Last 30 Days</span><strong>{money(data?.balance)}</strong></article>
+            <article><span>Pending Payout</span><strong>{money(data?.pendingPayout)}</strong><small>◷ Awaiting processing</small></article>
+            <article><span>This Month</span><strong>{money(data?.totalEarned)}</strong><small>{earnings.length} sessions completed</small></article>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => { setNotice(""); setShowWithdrawal((value) => !value); }}
-          disabled={Number(data?.balance || 0) <= 0}
-          className="rounded-xl bg-indigo-600 px-5 py-3 text-sm font-bold text-white shadow-md hover:bg-indigo-700 disabled:cursor-not-allowed disabled:bg-slate-300"
-        >
-          Withdraw funds
-        </button>
+
+        <aside className="earnings-recent-panel">
+          <div className="earnings-recent-header"><h2>Recent Transactions</h2><span>View all</span></div>
+          <div className="earnings-recent-list">
+            {earnings.slice(0, 5).map((earning) => {
+              const type = String(earning.sessionType || "chat").toLowerCase();
+              const Icon = type === "video" ? FaVideo : type === "voice" || type === "audio" ? FaPhoneAlt : FaComments;
+              return (
+                <div className="earnings-recent-item" key={earning._id}>
+                  <i><Icon /></i>
+                  <div>
+                    <strong>{earning.userId?.anonymous || "Anonymous User"}</strong>
+                    <span>{type} session •</span>
+                    <small>{new Date(earning.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</small>
+                  </div>
+                  <b>+ {money(earning.earningAmount)}</b>
+                </div>
+              );
+            })}
+            {!earnings.length && <p className="earnings-recent-empty">No transactions yet.</p>}
+          </div>
+        </aside>
       </div>
 
       <form onSubmit={applyDateFilter} className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
@@ -157,7 +197,7 @@ const CounselorEarnings = () => {
             value={dateInputs.from}
             max={dateInputs.to || undefined}
             onChange={(event) => setDateInputs((current) => ({ ...current, from: event.target.value }))}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:border-indigo-500"
+            className="earnings-date-input rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-800 outline-none"
           />
         </label>
         <label className="flex min-w-[150px] flex-col gap-1 text-xs font-semibold text-slate-600">
@@ -167,15 +207,15 @@ const CounselorEarnings = () => {
             value={dateInputs.to}
             min={dateInputs.from || undefined}
             onChange={(event) => setDateInputs((current) => ({ ...current, to: event.target.value }))}
-            className="rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-800 outline-none focus:border-indigo-500"
+            className="earnings-date-input rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-800 outline-none"
           />
         </label>
-        <button type="submit" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-bold text-white hover:bg-indigo-700">Apply</button>
+        <button type="submit" className="earnings-primary-button rounded-lg px-4 py-2 text-sm font-bold text-white">Apply</button>
         {(dateFilter.from || dateFilter.to) && (
           <button type="button" onClick={clearDateFilter} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Clear</button>
         )}
         {data?.period?.filtered && (
-          <p className="w-full text-xs font-semibold text-indigo-700">
+          <p className="earnings-filter-summary w-full text-xs font-semibold">
             Showing {data.period.earningCount} earning records and {data.period.withdrawalCount} withdrawals
             {data.period.from ? ` from ${new Date(`${data.period.from}T00:00:00`).toLocaleDateString("en-IN")}` : ""}
             {data.period.to ? ` to ${new Date(`${data.period.to}T00:00:00`).toLocaleDateString("en-IN")}` : ""}.
@@ -340,21 +380,6 @@ const CounselorEarnings = () => {
           </div>
         </form>
       )}
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          ["Available balance", data?.balance, "Ready for withdrawal"],
-          [data?.period?.filtered ? "Earned in selected period" : "Total earned", data?.totalEarned, `${counselorPercentage}% counselor share`],
-          ["Available for payout", data?.pendingPayout, "Earned, but not withdrawn yet"],
-          [data?.period?.filtered ? "Period gross session value" : "Gross session value", data?.grossRevenue, `Platform received ${money(data?.platformCommission)}`],
-        ].map(([label, value, caption]) => (
-          <div key={label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500">{label}</p>
-            <p className="mt-2 text-2xl font-bold text-slate-900">{money(value)}</p>
-            <p className="mt-1 text-xs text-slate-500">{caption}</p>
-          </div>
-        ))}
-      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">

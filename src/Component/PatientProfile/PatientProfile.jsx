@@ -5,7 +5,17 @@ import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
 import { useUserTranslation } from "../../i18n/LanguageContext";
 import AvatarBuilder from "./AvatarBuilder";
-import { FaEdit, FaLocationArrow } from "react-icons/fa";
+import {
+  FaBriefcaseMedical,
+  FaCamera,
+  FaEdit,
+  FaHome,
+  FaMapMarkerAlt,
+  FaPhoneAlt,
+  FaShieldAlt,
+  FaStarOfLife,
+  FaUser,
+} from "react-icons/fa";
 
 const calculateAge = (dateOfBirth) => {
   if (!dateOfBirth) return "";
@@ -825,44 +835,36 @@ const PatientProfile = () => {
                   .join("")}
               </div>
             )}
+            <button type="button" className="profile-camera-button" onClick={openEditModal} aria-label="Change profile photo">
+              <FaCamera />
+            </button>
           </div>
         </div>
 
         <div className="profile-info">
           <h1>{patientData.personalInfo.name}</h1>
+          <p className="profile-contact-line">
+            {patientData.personalInfo.email}
+            <span aria-hidden="true">|</span>
+            {patientData.personalInfo.phone || t('profile.notSpecified')}
+          </p>
           <p className="patient-id">
-            {t('profile.patientId')}: {patientData.personalInfo.id}
+            ID: #{patientData.personalInfo.id?.slice(-8).toUpperCase()}
           </p>
           <div className="badge-group">
             <span className="badge">
-              {patientData.personalInfo.bloodGroup || t('profile.bloodGroup')}
+              Blood - {patientData.personalInfo.bloodGroup || "--"}
             </span>
             <span className="badge">
-              {patientData.personalInfo.age || "--"} {t('profile.years')}
+              Gender - {patientData.personalInfo.gender || "--"}
             </span>
             <span className="badge">
-              {patientData.personalInfo.gender || t('profile.gender')}
+              Age - {patientData.personalInfo.age || "--"} yrs
             </span>
           </div>
         </div>
 
         <div className="header-actions">
-          <button
-            className="btn-secondary btn-location"
-            onClick={handleUpdateLocation}
-            disabled={isSaving || isUpdatingLocation}
-            title="Send your current GPS coordinates to the server"
-          >
-            {isUpdatingLocation ? (
-              <>
-                <span className="btn-location-spinner" /> {t('profile.updating')}
-              </>
-            ) : (
-              <>
-                <FaLocationArrow aria-hidden="true" /> {t('profile.updateLocation')}
-              </>
-            )}
-          </button>
           <button
             className="btn-primary"
             onClick={openEditModal}
@@ -875,10 +877,11 @@ const PatientProfile = () => {
 
       {/* Main Content */}
       <div className="profile-content">
+        <div className="profile-main-column">
         {/* Personal Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('profile.personalInformation')}</h2>
+            <h2><FaUser /> {t('profile.personalInformation')}</h2>
           </div>
           <div className="info-grid">
             <div className="info-item">
@@ -915,7 +918,8 @@ const PatientProfile = () => {
         {/* Address */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('profile.address')}</h2>
+            <h2><FaHome /> {t('profile.address')}</h2>
+            <button type="button" className="profile-card-edit" onClick={openEditModal} aria-label="Edit address"><FaEdit /></button>
           </div>
           <div className="address-display">
             <p>
@@ -937,14 +941,35 @@ const PatientProfile = () => {
             )}
           </div>
         </div>
+        </div>
+
+        <aside className="profile-side-column">
+        <div className="profile-location-card">
+          <FaMapMarkerAlt />
+          <div>
+            <strong>Share my current location</strong>
+            <span>{[
+              patientData.personalInfo.address?.city,
+              patientData.personalInfo.address?.state,
+            ].filter(Boolean).join(", ") || "Location not added"}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleUpdateLocation}
+            disabled={isSaving || isUpdatingLocation}
+            title="Send your current GPS coordinates to the server"
+          >
+            {isUpdatingLocation ? <span className="btn-location-spinner" /> : "Update"}
+          </button>
+        </div>
 
         {/* Emergency Contact */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('profile.emergencyContact')}</h2>
+            <h2 className="emergency-title"><FaStarOfLife /> {t('profile.emergencyContact')}</h2>
           </div>
           <div className="emergency-display">
-            <div className="emergency-icon">🆘</div>
+            <div className="emergency-icon">SOS</div>
             <div className="emergency-details">
               <h3>
                 {patientData.personalInfo.emergencyContact?.name ||
@@ -955,13 +980,18 @@ const PatientProfile = () => {
                 {patientData.personalInfo.emergencyContact?.phone}
               </p>
             </div>
+            {patientData.personalInfo.emergencyContact?.phone && (
+              <a className="emergency-call" href={`tel:${patientData.personalInfo.emergencyContact.phone}`} aria-label="Call emergency contact">
+                <FaPhoneAlt />
+              </a>
+            )}
           </div>
         </div>
 
         {/* Medical Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('profile.medicalInformation')}</h2>
+            <h2><FaBriefcaseMedical /> {t('profile.medicalInformation')}</h2>
           </div>
           <div className="medical-grid">
             <div className="vital-stats">
@@ -1024,7 +1054,7 @@ const PatientProfile = () => {
         {/* Insurance Information */}
         <div className="info-card-modern">
           <div className="card-header">
-            <h2>{t('profile.insuranceInformation')}</h2>
+            <h2><FaShieldAlt /> {t('profile.insuranceInformation')}</h2>
           </div>
           {patientData.insuranceInfo?.provider ? (
             <div className="insurance-display">
@@ -1066,6 +1096,7 @@ const PatientProfile = () => {
             <p className="no-data">No insurance information added yet.</p>
           )}
         </div>
+        </aside>
       </div>
 
       {/* Edit Modal */}
@@ -1104,7 +1135,7 @@ const PatientProfile = () => {
                     <button
                       type="button"
                       className="upload-btn"
-                      style={{ background: "linear-gradient(135deg, #667eea, #764ba2)", color: "#fff" }}
+                      style={{ background: "linear-gradient(135deg, #006B2C, #01CE54)", color: "#fff" }}
                       onClick={() => setShowAvatarBuilder(true)}
                     >
                       Choose Avatar

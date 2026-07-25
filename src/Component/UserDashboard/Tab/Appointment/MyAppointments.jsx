@@ -4,6 +4,18 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import VideoCallModal from "../CallModal/VideoCallModal";
+import {
+  FaBriefcase,
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaClock,
+  FaCommentDots,
+  FaEye,
+  FaLaptop,
+  FaPhoneAlt,
+  FaStopwatch,
+  FaVideo,
+} from "react-icons/fa";
 import './MyAppointments.css'; // Import the CSS file for styling
 const MyAppointments = () => {
   const { t } = useUserTranslation();
@@ -73,6 +85,8 @@ const MyAppointments = () => {
     displayApts = displayApts.filter((apt) => apt.status === "pending");
   } else if (statusFilter === "Confirmed") {
     displayApts = displayApts.filter((apt) => apt.status === "confirmed");
+  } else if (statusFilter === "Completed") {
+    displayApts = displayApts.filter((apt) => apt.status === "completed");
   }
 
   const getStatusStyle = (status) => {
@@ -266,6 +280,18 @@ const MyAppointments = () => {
     const counselorSpecialization =
       selectedApt.counselor?.specialization || "Mental health counselor";
     const appointmentStatus = selectedApt.status || "pending";
+    const appointmentTime = new Date(selectedApt.date);
+    const remainingMs = Math.max(0, appointmentTime.getTime() - Date.now());
+    const remainingHours = Math.floor(remainingMs / 3600000);
+    const remainingMinutes = Math.floor((remainingMs % 3600000) / 60000);
+    const remainingSeconds = Math.floor((remainingMs % 60000) / 1000);
+    const countdown = `${String(remainingHours).padStart(2, "0")}:${String(
+      remainingMinutes,
+    ).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+    const appointmentMode =
+      selectedApt.mode || selectedApt.consultationMode || "Video Call";
+    const appointmentDuration =
+      selectedApt.duration || selectedApt.durationMinutes || 45;
 
     return (
       <div
@@ -285,10 +311,15 @@ const MyAppointments = () => {
             onClick={() => setShowModal(false)}
             aria-label="Close appointment details"
           >
-            x
+            &times;
           </button>
 
-          <div className="appointment-detail-hero">
+          <div className="appointment-detail-title">
+            <h2>{t('appointment_details')}</h2>
+            <p>View your session information</p>
+          </div>
+
+          <div className="appointment-detail-counselor">
             <div className="appointment-detail-avatar-wrap">
               <img
                 src={getAvatarSrc(selectedApt)}
@@ -297,50 +328,78 @@ const MyAppointments = () => {
               />
             </div>
             <div className="appointment-detail-heading">
-              <span className="appointment-detail-kicker">
-                {t('appointment_details')}
-              </span>
-              <h2>{counselorName}</h2>
+              <h3>Dr. {counselorName}</h3>
               <p>{counselorSpecialization}</p>
+              <div>
+                <span><FaBriefcase /> {selectedApt.counselor?.experience || 0} years</span>
+                <span className="rating">★ {selectedApt.counselor?.rating || 4.9}</span>
+              </div>
             </div>
             <span className={`appointment-detail-status ${appointmentStatus}`}>
-              {appointmentStatus}
+              <i></i>{appointmentStatus}
             </span>
+          </div>
+
+          <div className="appointment-detail-countdown">
+            <span className="countdown-icon"><FaClock /></span>
+            <div>
+              <small>Session starts in</small>
+              <strong>{countdown}</strong>
+            </div>
+            <div className="countdown-time">
+              <small>Today</small>
+              <strong>{appointmentSchedule.time || "N/A"}</strong>
+            </div>
           </div>
 
           <div className="appointment-detail-grid">
             <div className="appointment-detail-card">
-              <span className="material-symbols-outlined">calendar_today</span>
+              <FaCalendarAlt />
               <div>
                 <small>{t('date')}</small>
                 <strong>{appointmentSchedule.date}</strong>
               </div>
             </div>
             <div className="appointment-detail-card">
-              <span className="material-symbols-outlined">schedule</span>
+              <FaClock />
               <div>
                 <small>{t('time')}</small>
                 <strong>{appointmentSchedule.time || "N/A"}</strong>
               </div>
             </div>
-          </div>
-
-          <div className="appointment-detail-notes">
-            <div className="appointment-detail-notes-title">
-              <span className="material-symbols-outlined">notes</span>
-              <strong>{t('reason')}</strong>
+            <div className="appointment-detail-card mode">
+              <FaLaptop />
+              <div>
+                <small>Mode</small>
+                <strong>{appointmentMode}</strong>
+              </div>
             </div>
-            <p>{selectedApt.notes || "N/A"}</p>
+            <div className="appointment-detail-card duration">
+              <FaStopwatch />
+              <div>
+                <small>Duration</small>
+                <strong>{appointmentDuration} Minutes</strong>
+              </div>
+            </div>
           </div>
 
           <div className="appointment-detail-actions">
+            <button
+              type="button"
+              className="appointment-detail-action join"
+              onClick={() => handleCall(selectedApt, "video")}
+              disabled={actionLoading === `video-${selectedApt._id}`}
+            >
+              <FaVideo />
+              {actionLoading === `video-${selectedApt._id}` ? "Starting..." : "Join Video Session"}
+            </button>
             <button
               type="button"
               className="appointment-detail-action secondary"
               onClick={() => handleChat(selectedApt)}
               disabled={actionLoading === `chat-${selectedApt._id}`}
             >
-              <span className="material-symbols-outlined">chat</span>
+              <FaCommentDots />
               {actionLoading === `chat-${selectedApt._id}` ? "Opening..." : "Chat"}
             </button>
             <button
@@ -349,17 +408,8 @@ const MyAppointments = () => {
               onClick={() => handleCall(selectedApt, "voice")}
               disabled={actionLoading === `voice-${selectedApt._id}`}
             >
-              <span className="material-symbols-outlined">call</span>
-              {actionLoading === `voice-${selectedApt._id}` ? "Starting..." : "Voice Call"}
-            </button>
-            <button
-              type="button"
-              className="appointment-detail-action primary"
-              onClick={() => handleCall(selectedApt, "video")}
-              disabled={actionLoading === `video-${selectedApt._id}`}
-            >
-              <span className="material-symbols-outlined">videocam</span>
-              {actionLoading === `video-${selectedApt._id}` ? "Starting..." : "Video Call"}
+              <FaPhoneAlt />
+              {actionLoading === `voice-${selectedApt._id}` ? "Starting..." : "Call"}
             </button>
           </div>
         </div>
@@ -369,59 +419,55 @@ const MyAppointments = () => {
 
   return (
     <div
-      className="flex w-full gap-0 bg-[#f8f9ff] min-h-screen"
+      className="user-appointments-page flex w-full gap-0 min-h-screen"
       style={{ fontFamily: "'Manrope', sans-serif" }}
     >
       {/* ── Main Content ── */}
       <main className="flex-1 p-4 sm:p-8 min-w-0">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+        <header className="user-appointments-hero">
           <div>
-            <h1 className="text-[32px] font-[700] leading-[40px] tracking-[-0.02em] text-[#0b1c30]">
-              {t('my_appointments')}
-            </h1>
-            <p className="text-[#464554] text-[16px] mt-1">
-              {t('manage_consultations')}
-            </p>
+            <h1>{t('my_appointments')}</h1>
+            <p>View your past and upcoming Appointments</p>
           </div>
-          {/* Tab Toggle */}
-          <div className="bg-[#eff4ff] p-1 rounded-xl flex shrink-0">
+        </header>
+
+        <div className="user-appointments-filterbar">
+          <div className="user-appointments-status-pills">
+            {["All", "Pending", "Confirmed", "Completed"].map((filter) => (
+              <button
+                key={filter}
+                type="button"
+                className={statusFilter === filter ? "active" : ""}
+                onClick={() => setStatusFilter(filter)}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+          <div className="user-appointments-tabs p-1 rounded-xl flex shrink-0">
             <button
               onClick={() => setActiveTab("Upcoming")}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Upcoming" ? "bg-white shadow-sm text-[#4648d4]" : "text-[#464554] hover:text-[#0b1c30]"}`}
+              className={`user-appointments-tab px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Upcoming" ? "active" : ""}`}
             >
               {t('upcoming')}
             </button>
             <button
               onClick={() => setActiveTab("Past")}
-              className={`px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Past" ? "bg-white shadow-sm text-[#4648d4]" : "text-[#464554] hover:text-[#0b1c30]"}`}
+              className={`user-appointments-tab px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Past" ? "active" : ""}`}
             >
               {t('past')}
             </button>
           </div>
-        </header>
-
-        {/* Status Filter Dropdown */}
-        <div className="flex justify-end mb-4">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 rounded-lg border border-slate-200 bg-white text-[#0b1c30] font-medium shadow-sm focus:outline-none"
-            style={{ minWidth: 160 }}
-          >
-            <option value="All">{t('all_statuses')}</option>
-            <option value="Pending">{t('pending')}</option>
-            <option value="Confirmed">{t('accepted')}</option>
-          </select>
         </div>
 
         {/* Appointment Cards */}
         {loading ? (
           <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#4648d4]"></div>
+            <div className="user-appointments-spinner animate-spin rounded-full h-10 w-10 border-b-2"></div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 mb-8">
+          <div className="user-appointments-grid">
             {displayApts.length === 0 ? (
               <div className="bg-white rounded-xl p-8 sm:p-16 border border-dashed border-slate-200 text-center shadow-[0px_4px_20px_rgba(0,0,0,0.05)]">
                 <span className="material-symbols-outlined text-slate-300 text-5xl block mb-3">
@@ -438,88 +484,79 @@ const MyAppointments = () => {
                 return (
                   <div
                   key={apt._id}
-                  className="bg-white rounded-xl p-5 sm:p-6 shadow-[0px_4px_20px_rgba(0,0,0,0.05)] border border-slate-100 flex flex-col md:flex-row gap-4 sm:gap-6 items-start hover:shadow-md transition-shadow"
+                  className="user-appointment-card"
                 >
-                  {/* Doctor Photo */}
-                  <div className="flex-shrink-0">
+                  <div className="user-appointment-profile">
                     <img
                       alt={apt.counselor?.fullName}
                       src={getAvatarSrc(apt)}
-                      className="w-24 h-24 rounded-2xl object-cover ring-4 ring-indigo-50"
+                      className="user-appointment-avatar"
                     />
-                  </div>
-
-                  {/* Card Body */}
-                  <div className="flex-1 space-y-2 w-full">
-                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                      <div>
-                        <span
-                          className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded-md ${getStatusStyle(apt.status)}`}
-                        >
-                          {apt.status}
-                        </span>
-                        <h2 className="text-[22px] font-[600] leading-[30px] text-[#0b1c30] mt-1">
-                          Dr. {apt.counselor?.fullName || "Counselor"}
-                        </h2>
-                        <p className="text-[#464554] text-sm flex items-center gap-1">
-                          <span className="material-symbols-outlined text-sm">
-                            stethoscope
-                          </span>
-                          {apt.counselor?.specialization ||
-                            t('medical_specialist')}
-                        </p>
-                      </div>
-                      <div className="text-left sm:text-right shrink-0">
-                        <div className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-1">
-                          Appointment Date
-                        </div>
-                        <div className="text-[#4648d4] font-bold text-lg flex items-center gap-1 sm:justify-end">
-                          <span className="material-symbols-outlined text-lg">calendar_today</span>
-                          {appointmentSchedule.date}
-                        </div>
-                        <div className="text-slate-500 text-sm mt-1">
-                          {appointmentSchedule.time}
-                        </div>
+                    <div className="user-appointment-person">
+                      <h2>
+                        Dr. {apt.counselor?.fullName || "Counselor"}
+                        <FaCheckCircle aria-label="Verified" />
+                      </h2>
+                      <p>
+                        {Array.isArray(apt.counselor?.specialization)
+                          ? apt.counselor.specialization.join(" | ")
+                          : apt.counselor?.specialization || t('medical_specialist')}
+                      </p>
+                      <div className="user-appointment-meta">
+                        <span><FaBriefcase /> {apt.counselor?.experience || 0} years</span>
+                        <span className="rating">★ {apt.counselor?.rating || 4.9}</span>
                       </div>
                     </div>
+                    <span className={`user-appointment-status ${apt.status || "pending"}`}>
+                      <i></i>{apt.status || "pending"}
+                    </span>
+                  </div>
 
-                    {/* Actions */}
-                    <div className="flex flex-wrap gap-3 pt-4">
+                  <div className="user-appointment-schedule">
+                    <FaCalendarAlt aria-hidden="true" />
+                    <span>{appointmentSchedule.date}</span>
+                    <b></b>
+                    <FaClock aria-hidden="true" />
+                    <span>{appointmentSchedule.time}</span>
+                  </div>
+
+                    <div className="user-appointment-actions">
                       <button
-                        className="flex items-center gap-2 px-4 py-2 border border-slate-200 text-slate-700 rounded-lg text-sm font-[500] hover:bg-slate-50 transition-colors"
+                        className="user-appointment-action secondary"
                         onClick={() => {
                           setSelectedApt(apt);
                           setShowModal(true);
                         }}
                       >
-                        <span className="material-symbols-outlined text-sm">
-                          visibility
-                        </span>
+                        <FaEye aria-hidden="true" />
                         {t('view_details')}
                       </button>
                       <button
-                        className="flex items-center gap-2 px-4 py-2 border border-emerald-200 text-emerald-700 rounded-lg text-sm font-[500] hover:bg-emerald-50 transition-colors disabled:opacity-50"
-                        onClick={() => handleChat(apt)}
-                        disabled={actionLoading === `chat-${apt._id}`}
-                      >
-                        <span className="material-symbols-outlined text-sm">chat</span>
-                        Chat
-                      </button>
-                      <button
-                        className="flex items-center gap-2 px-4 py-2 border border-violet-200 text-violet-700 rounded-lg text-sm font-[500] hover:bg-violet-50 transition-colors disabled:opacity-50"
-                        onClick={() => handleCall(apt, "voice")}
-                        disabled={actionLoading === `voice-${apt._id}`}
-                      >
-                        <span className="material-symbols-outlined text-sm">call</span>
-                        Voice Call
-                      </button>
-                      <button
-                        className="flex items-center gap-2 px-4 py-2 border border-indigo-200 text-indigo-700 rounded-lg text-sm font-[500] hover:bg-indigo-50 transition-colors disabled:opacity-50"
+                        className="user-appointment-action icon"
                         onClick={() => handleCall(apt, "video")}
                         disabled={actionLoading === `video-${apt._id}`}
+                        title="Video Call"
+                        aria-label="Video Call"
                       >
-                        <span className="material-symbols-outlined text-sm">videocam</span>
-                        Video Call
+                        <FaVideo aria-hidden="true" />
+                      </button>
+                      <button
+                        className="user-appointment-action icon"
+                        onClick={() => handleCall(apt, "voice")}
+                        disabled={actionLoading === `voice-${apt._id}`}
+                        title="Voice Call"
+                        aria-label="Voice Call"
+                      >
+                        <FaPhoneAlt aria-hidden="true" />
+                      </button>
+                      <button
+                        className="user-appointment-action icon"
+                        onClick={() => handleChat(apt)}
+                        disabled={actionLoading === `chat-${apt._id}`}
+                        title="Chat"
+                        aria-label="Chat"
+                      >
+                        <FaCommentDots aria-hidden="true" />
                       </button>
                       {/* Appointment Details Modal */}
                       {false && showModal && selectedApt && (
@@ -602,7 +639,6 @@ const MyAppointments = () => {
                       )}
                     </div>
                   </div>
-                  </div>
                 );
               })
             )}
@@ -624,7 +660,7 @@ const MyAppointments = () => {
         />
 
         {/* Promo Banner */}
-        <section className="relative overflow-hidden rounded-2xl bg-[#4648d4] p-8 text-white">
+        <section className="user-appointments-promo relative overflow-hidden rounded-2xl p-8 text-white">
           <div className="relative z-10 md:w-2/3">
             <h2 className="text-2xl font-[600] mb-2">{t('need_checkup')}</h2>
             <p className="opacity-90 mb-6 text-[16px]">
@@ -632,13 +668,13 @@ const MyAppointments = () => {
             </p>
             <button
               onClick={handleBookNewClick}
-              className="bg-white text-[#4648d4] px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-slate-50 transition-colors active:scale-95"
+              className="user-appointments-book-button bg-white px-8 py-3 rounded-xl font-bold shadow-lg transition-colors active:scale-95"
             >
               {t('book_new_appointment')}
             </button>
           </div>
           <div className="absolute right-[-10%] top-[-50%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute right-[5%] bottom-[-20%] w-48 h-48 bg-indigo-400/20 rounded-full blur-2xl"></div>
+          <div className="absolute right-[5%] bottom-[-20%] w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
           <span className="material-symbols-outlined absolute right-12 top-1/2 -translate-y-1/2 text-[140px] opacity-10">
             health_and_safety
           </span>
@@ -679,7 +715,7 @@ const MyAppointments = () => {
                   <select
                     value={selectedCounselorId}
                     onChange={(e) => setSelectedCounselorId(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
+                    className="user-booking-input w-full rounded-xl border px-4 py-3 text-[#0b1c30] focus:outline-none"
                     required
                   >
                     <option value="">{t('select_counselor')}</option>
@@ -705,7 +741,7 @@ const MyAppointments = () => {
                     type="datetime-local"
                     value={bookingDate}
                     onChange={(e) => setBookingDate(e.target.value)}
-                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
+                    className="user-booking-input w-full rounded-xl border px-4 py-3 text-[#0b1c30] focus:outline-none"
                     required
                   />
                 </div>
@@ -718,19 +754,19 @@ const MyAppointments = () => {
                     value={bookingNotes}
                     onChange={(e) => setBookingNotes(e.target.value)}
                     placeholder={t('share_to_discuss')}
-                    className="min-h-[110px] w-full rounded-xl border border-slate-200 px-4 py-3 text-[#0b1c30] focus:border-[#4648d4] focus:outline-none"
+                    className="user-booking-input min-h-[110px] w-full rounded-xl border px-4 py-3 text-[#0b1c30] focus:outline-none"
                     required
                   />
                 </div>
 
-                <div className="rounded-xl bg-indigo-50 p-4 text-sm text-[#4648d4]">
+                <div className="user-booking-notice rounded-xl p-4 text-sm">
                   {t('appointment_confirmation')}
                 </div>
 
                 <button
                   type="submit"
                   disabled={bookingLoading}
-                  className="w-full rounded-xl bg-[#4648d4] px-5 py-3 font-bold text-white transition-colors hover:bg-[#3839b8] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="user-booking-submit w-full rounded-xl px-5 py-3 font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {bookingLoading ? t('booking_button') : t('confirm_appointment')}
                 </button>

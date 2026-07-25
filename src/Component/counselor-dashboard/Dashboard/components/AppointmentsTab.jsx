@@ -1,5 +1,5 @@
 import React from "react";
-import { FaBrain, FaCalendarAlt, FaTimes } from "react-icons/fa";
+import { FaBrain, FaCalendarAlt, FaCheckCircle, FaClock, FaHistory, FaSearch, FaSyncAlt, FaTimes } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { CardSkeleton } from "../../../common/Skeletons/Skeletons";
@@ -13,6 +13,8 @@ export default function AppointmentsTab({
   loading = false,
 }) {
   const { t } = useCounselorTranslation();
+  const [statusFilter, setStatusFilter] = React.useState("all");
+  const [searchTerm, setSearchTerm] = React.useState("");
 
   const getAppointmentDisplay = (appointment) =>
     getAnonymousUserDisplay({
@@ -34,15 +36,42 @@ export default function AppointmentsTab({
   };
 
   const filteredAppointments = React.useMemo(() => {
-    if (!selectedDate) {
-      return appointments;
-    }
-
+    const now = new Date();
     return appointments.filter((apt) => {
-      const aptDate = new Date(apt.date).toISOString().split("T")[0];
-      return aptDate === selectedDate;
+      const date = new Date(apt.date);
+      if (Number.isNaN(date.getTime())) return false;
+      const matchesDate = !selectedDate || date.toISOString().split("T")[0] === selectedDate;
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "past"
+          ? date < now
+          : String(apt.status || "").toLowerCase() === statusFilter);
+      const patientName = getAppointmentDisplay(apt).name.toLowerCase();
+      const matchesSearch = patientName.includes(searchTerm.trim().toLowerCase());
+      return matchesDate && matchesStatus && matchesSearch;
     });
-  }, [appointments, selectedDate]);
+  }, [appointments, selectedDate, statusFilter, searchTerm]);
+
+  const counts = React.useMemo(() => {
+    const now = new Date();
+    return {
+      all: appointments.length,
+      pending: appointments.filter((apt) => apt.status === "pending").length,
+      confirmed: appointments.filter((apt) => apt.status === "confirmed").length,
+      past: appointments.filter((apt) => new Date(apt.date) < now).length,
+      today: appointments.filter((apt) => {
+        const date = new Date(apt.date);
+        return !Number.isNaN(date.getTime()) && date.toDateString() === now.toDateString();
+      }).length,
+    };
+  }, [appointments]);
+
+  const tabs = [
+    { key: "all", label: "All", icon: FaCalendarAlt },
+    { key: "pending", label: "Pending", icon: FaClock },
+    { key: "confirmed", label: "Confirmed", icon: FaCheckCircle },
+    { key: "past", label: "Past", icon: FaHistory },
+  ];
 
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return "";
@@ -64,30 +93,57 @@ export default function AppointmentsTab({
 
   return (
     <div className="couns-tab-content-stitch">
+      <div className="stitch-apt-page-title">Appointments Section</div>
       <div className="stitch-apt-layout stitch-apt-layout-cards-only">
         <div className="stitch-apt-left">
-          <div className="stitch-apt-header">
-            <h2>{t("manage_appointments")}</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <section className="stitch-apt-summary">
+            <div className="stitch-apt-summary-copy">
+              <span>Good Afternoon,</span>
+              <h2>Dr. VIVEK Singh</h2>
+              <p>{counts.all} total appointment(s)</p>
+            </div>
+            <button type="button" className="stitch-apt-refresh" aria-label="Refresh appointments">
+              <FaSyncAlt />
+            </button>
+            <div className="stitch-apt-metrics">
+              <div><strong>{counts.pending}</strong><span>Pending</span></div>
+              <div><strong>{counts.confirmed}</strong><span>Confirmed</span></div>
+              <div><strong>{counts.today}</strong><span>Today</span></div>
+            </div>
+          </section>
+
+          <div className="stitch-apt-toolbar">
+            <label className="stitch-apt-search">
+              <FaSearch aria-hidden="true" />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Search patients..."
+                aria-label="Search patients"
+              />
+            </label>
+            <div className="stitch-apt-header-tools">
               <div className="stitch-date-filter">
-                <FaCalendarAlt style={{ color: "#4648d4", fontSize: "14px" }} />
-                <input
-                  type="date"
-                  className="stitch-date-input"
-                  value={selectedDate || ""}
-                  onChange={handleDateChange}
-                  title="Filter by date"
-                />
+                <FaCalendarAlt />
+                <input type="date" className="stitch-date-input" value={selectedDate || ""} onChange={handleDateChange} title="Filter by date" />
                 {selectedDate && (
-                  <button
-                    className="stitch-clear-filter"
-                    onClick={handleClearFilter}
-                    title="Clear date filter"
-                    type="button"
-                  >
+                  <button className="stitch-clear-filter" onClick={handleClearFilter} title="Clear date filter" type="button">
                     <FaTimes size={10} />
                   </button>
                 )}
+              </div>
+            </div>
+
+            <div className="stitch-apt-filter-scroll">
+              <div className="stitch-apt-filter-tabs">
+                {tabs.map(({ key, label, icon: TabIcon }) => (
+                  <button key={key} type="button" className={`stitch-apt-filter-tab ${statusFilter === key ? "active" : ""}`} onClick={() => setStatusFilter(key)}>
+                    <TabIcon />
+                    <span>{label}</span>
+                    <b>{counts[key]}</b>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
@@ -131,23 +187,12 @@ export default function AppointmentsTab({
                         </div>
                       </div>
 
-                      <div className={`status-badge-stitch ${apt.status}`}>
-                        {apt.status.toUpperCase()}
+                      <div className={`status-badge-stitch ${apt.status || "pending"}`}>
+                        {String(apt.status || "pending").toUpperCase()}
                       </div>
 
                       {apt.notes && apt.notes.trim() !== "" && (
-                        <div
-                          style={{
-                            marginTop: "16px",
-                            padding: "12px",
-                            backgroundColor: "#f8fafc",
-                            borderRadius: "8px",
-                            fontSize: "13px",
-                            color: "#475569",
-                            borderLeft: "3px solid #cbd5e1",
-                            fontStyle: "italic",
-                          }}
-                        >
+                        <div className="stitch-apt-notes">
                           "{apt.notes}"
                         </div>
                       )}

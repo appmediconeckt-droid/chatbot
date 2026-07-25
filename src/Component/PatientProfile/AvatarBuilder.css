@@ -77,17 +77,17 @@
 
 .ab-camera-btn {
   padding: 12px 24px; border: none;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #006B2C, #01CE54);
   color: #fff; border-radius: 12px; font-size: 15px; font-weight: 700;
-  cursor: pointer; box-shadow: 0 4px 14px rgba(102,126,234,0.4);
+  cursor: pointer; box-shadow: 0 4px 14px rgba(0, 107, 44,0.4);
   transition: all 0.2s;
 }
 .ab-camera-btn:hover { transform: translateY(-1px); }
 
 .ab-upload-btn {
   padding: 12px 24px;
-  border: 2px solid #667eea;
-  background: #fff; color: #667eea;
+  border: 2px solid #006B2C;
+  background: #fff; color: #006B2C;
   border-radius: 12px; font-size: 15px; font-weight: 700;
   cursor: pointer; transition: all 0.2s;
 }
@@ -154,7 +154,7 @@
   background: #fff;
   cursor: pointer;
   transition: transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 0 0 3px rgba(102,126,234,0.6);
+  box-shadow: 0 0 0 3px rgba(0, 107, 44,0.6);
   position: relative;
   flex-shrink: 0;
 }
@@ -165,12 +165,12 @@
   position: absolute;
   inset: 8px;
   border-radius: 50%;
-  background: #667eea;
+  background: #006B2C;
 }
 
 .ab-shutter:hover {
   transform: scale(1.08);
-  box-shadow: 0 0 0 4px rgba(102,126,234,0.8);
+  box-shadow: 0 0 0 4px rgba(0, 107, 44,0.8);
 }
 
 .ab-shutter:active {
@@ -201,7 +201,7 @@
 }
 .ab-spinner {
   width: 44px; height: 44px; border-radius: 50%;
-  border: 4px solid #e2e8f0; border-top-color: #667eea;
+  border: 4px solid #e2e8f0; border-top-color: #006B2C;
   animation: abSpin 0.8s linear infinite;
 }
 @keyframes abSpin { to { transform: rotate(360deg); } }
@@ -242,8 +242,8 @@
 .ab-preview-ring {
   width: 100px; height: 100px; border-radius: 50%;
   padding: 3px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  box-shadow: 0 6px 20px rgba(102,126,234,0.35);
+  background: linear-gradient(135deg, #006B2C, #01CE54);
+  box-shadow: 0 6px 20px rgba(0, 107, 44,0.35);
   flex-shrink: 0;
 }
 .ab-preview-img {
@@ -253,7 +253,7 @@
 .ab-preview-fallback {
   width: 100%; height: 100%; border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  background: #e8ecf4; color: #667eea;
+  background: #e8ecf4; color: #006B2C;
   font-size: 24px; font-weight: 800;
 }
 .ab-result-hint {
@@ -286,13 +286,13 @@
 }
 
 .ab-preset-card:hover {
-  border-color: #667eea;
+  border-color: #006B2C;
   transform: translateY(-1px);
 }
 
 .ab-preset-card.selected {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.16);
+  border-color: #006B2C;
+  box-shadow: 0 0 0 3px rgba(0, 107, 44, 0.16);
   color: #4f46e5;
 }
 
@@ -317,7 +317,7 @@
   color: #94a3b8; cursor: pointer;
   border-bottom: 2px solid transparent; transition: all 0.18s;
 }
-.ab-tab.active { color: #667eea; border-bottom-color: #667eea; }
+.ab-tab.active { color: #006B2C; border-bottom-color: #006B2C; }
 .ab-tab:hover:not(.active) { color: #64748b; background: #f8fafc; }
 .ab-tab-icon  { font-size: 15px; line-height: 1; }
 .ab-tab-label { font-size: 10px; font-weight: 600; }
@@ -362,9 +362,9 @@
   cursor: pointer; transition: all 0.15s; white-space: nowrap;
 }
 .ab-option-pill.selected {
-  background: #667eea; border-color: #667eea; color: #fff; font-weight: 600;
+  background: #006B2C; border-color: #006B2C; color: #fff; font-weight: 600;
 }
-.ab-option-pill:hover:not(.selected) { border-color: #667eea; color: #667eea; }
+.ab-option-pill:hover:not(.selected) { border-color: #006B2C; color: #006B2C; }
 
 /* Footer */
 .ab-footer {
@@ -381,16 +381,16 @@
 }
 .ab-use-btn {
   flex: 1; padding: 10px 0; border: none;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #006B2C, #01CE54);
   color: #fff; border-radius: 10px; font-size: 14px; font-weight: 700;
-  cursor: pointer; box-shadow: 0 4px 14px rgba(102,126,234,0.4); transition: all 0.2s;
+  cursor: pointer; box-shadow: 0 4px 14px rgba(0, 107, 44,0.4); transition: all 0.2s;
 }
 .ab-use-btn:hover { transform: translateY(-1px); }
 
 .ab-apply-btn {
-  border: 2px solid #667eea;
+  border: 2px solid #006B2C;
   background: #fff;
-  color: #667eea;
+  color: #006B2C;
   padding: 10px 14px;
   border-radius: 10px;
   font-weight: 700;

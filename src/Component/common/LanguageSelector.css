@@ -1,3 +1,51 @@
+/* Centered language preference modal */
+.language-selector-root { position: relative; display: inline-block; width: 100%; }
+.lang-trigger-globe { color: #009844; font-size: 18px; }
+.lang-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  padding: 18px;
+  background: rgba(20, 29, 40, .32);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+}
+.lang-selector-modal.lang-selector-modal-centered {
+  position: relative;
+  inset: auto;
+  width: min(430px, calc(100vw - 30px));
+  max-height: min(720px, calc(100vh - 36px));
+  border: 1px solid #dce4df;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgba(18, 31, 47, .24);
+  overflow: hidden;
+}
+.lang-selector-modal-centered .lang-modal-header { padding: 17px 18px 13px; border-bottom: 0; background: #fff; }
+.lang-selector-modal-centered .lang-modal-icon-wrap { width: 34px; height: 34px; border-radius: 50%; color: #00883b; background: #e8fff1; font-size: 17px; }
+.lang-selector-modal-centered .lang-modal-title { font-size: 17px; }
+.lang-selector-modal-centered .lang-modal-subtitle { font-size: 10px; }
+.lang-selector-modal-centered .lang-modal-close { width: 28px; height: 28px; border-radius: 50%; font-size: 15px; }
+.lang-selector-modal-centered .lang-modal-search { padding: 9px 17px 11px; border-bottom: 0; }
+.lang-selector-modal-centered .lang-modal-search input { height: 36px; padding: 8px 12px 8px 35px; border: 0; border-radius: 8px; background: #f3f5f6; font-size: 11px; }
+.lang-selector-modal-centered .lang-modal-search-icon { left: 29px; font-size: 11px; }
+.lang-selector-modal-centered .lang-modal-list { padding: 0 17px 8px; max-height: min(500px, calc(100vh - 220px)); }
+.lang-modal-section-title { padding: 8px 0 7px; color: #76817b; font-size: 8px; font-weight: 750; letter-spacing: .07em; }
+.lang-selector-modal-centered .lang-modal-item { min-height: 57px; margin-bottom: 8px; padding: 9px 11px; border: 1px solid #dfe6e1; border-left: 1px solid #dfe6e1; border-radius: 8px; gap: 10px; }
+.lang-selector-modal-centered .lang-modal-item--active { border-color: #00b84f; background: #f7fff9; box-shadow: 0 0 0 1px rgba(0, 184, 79, .08); }
+.lang-modal-flag { flex: 0 0 22px; width: 22px; font-size: 15px; text-align: center; }
+.lang-selector-modal-centered .lang-modal-labels { display: flex; flex-direction: column; }
+.lang-selector-modal-centered .lang-modal-labels strong { color: #1f2937; font-size: 12px; font-weight: 650; }
+.lang-selector-modal-centered .lang-modal-labels small { margin-top: 2px; color: #77828d; font-size: 9px; }
+.lang-selector-modal-centered .lang-modal-check { width: 17px; height: 17px; border-radius: 50%; background: #00a848; font-size: 9px; }
+.lang-selector-modal-centered .lang-modal-check-empty { width: 17px; height: 17px; }
+.lang-modal-empty { padding: 25px; color: #84909d; text-align: center; font-size: 12px; }
+.lang-modal-actions { padding: 12px 17px 16px; border-top: 1px solid #e6ebe7; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lang-modal-actions button { height: 40px; border: 0; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+.lang-modal-cancel { color: #007e36; background: #eaf7ee; }
+.lang-modal-apply { color: #fff; background: linear-gradient(90deg, #007d35, #00c956); }
+
 /* Language Selector Trigger Button */
 .lang-selector-trigger {
   display: flex;

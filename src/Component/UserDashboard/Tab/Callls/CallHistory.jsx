@@ -382,6 +382,8 @@ const CallHistory = ({ currentUser }) => {
         .filter((call) => {
           if (activeFilter === "all") return true;
           if (activeFilter === "missed") return call.missed;
+          if (activeFilter === "incoming") return call.status === "incoming";
+          if (activeFilter === "outgoing") return call.status === "outgoing";
           if (activeFilter === "video") return call.type === "video";
           if (activeFilter === "voice") return call.type === "voice";
           return true;
@@ -435,10 +437,109 @@ const CallHistory = ({ currentUser }) => {
   };
 
   return (
+    <div className="portal-call-history">
+      <header className="pch-header">
+        <h1>Call History</h1>
+        <p>Track your call records</p>
+      </header>
+
+      <div className="pch-layout">
+        <aside className="pch-sidebar">
+          <div className="pch-controls">
+            <div className="pch-search">
+              <FaSearch aria-hidden="true" />
+              <input type="text" placeholder={t("search_calls")} value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} aria-label="Search calls" />
+              {searchTerm && <button type="button" onClick={() => setSearchTerm("")} aria-label="Clear search">×</button>}
+            </div>
+            <div className="pch-filter-row">
+              {[["all", t("all")], ["missed", t("missed")], ["incoming", "Incoming"], ["outgoing", "Outgoing"]].map(([value, label]) => (
+                <button type="button" key={value} className={activeFilter === value ? "active" : ""} onClick={() => setActiveFilter(value)}>{label}</button>
+              ))}
+            </div>
+          </div>
+
+          <div className="pch-compact-list">
+            {isLoadingCalls && <p className="pch-empty">{t("loading_calls")}</p>}
+            {!isLoadingCalls && filteredCalls.map((call, index) => (
+              <button type="button" key={`${call.id}-compact-${index}`} className={`pch-compact-call ${index === 0 ? "selected" : ""}`} onClick={() => openCallModal(call)}>
+                <span className="pch-avatar">
+                  {isImageUrl(call.avatarUrl || call.profilePic) ? <img src={call.avatarUrl || call.profilePic} alt="" /> : <span>{call.avatar || call.profilePic || FALLBACK_AVATAR}</span>}
+                  <i />
+                </span>
+                <span className="pch-compact-info">
+                  <strong>{call.name}</strong>
+                  <small className={call.missed ? "missed" : ""}>{getCallIcon(call.type)} {call.missed ? "Missed Call" : (call.type === "video" ? t("video_call") : t("voice_call"))}{call.duration ? ` · ${call.duration}` : ""}</small>
+                </span>
+                <time>{call.time || call.date}</time>
+              </button>
+            ))}
+            {!isLoadingCalls && !filteredCalls.length && <p className="pch-empty">{t("no_calls")}</p>}
+          </div>
+        </aside>
+
+        <main className="pch-records">
+          {callError && <div className="call-error-banner">{callError}</div>}
+          {!isLoadingCalls && Object.keys(groupedCalls).map((date) => (
+            <section className="pch-date-group" key={date}>
+              <div className="pch-date-heading"><h2>{date}</h2><span /></div>
+              <div className="pch-cards">
+                {groupedCalls[date].map((call) => (
+                  <article className={`pch-call-card ${call.missed ? "missed" : ""}`} key={call.id}>
+                    <span className="pch-avatar">
+                      {isImageUrl(call.avatarUrl || call.profilePic) ? <img src={call.avatarUrl || call.profilePic} alt={call.name} /> : <span>{call.avatar || call.profilePic || FALLBACK_AVATAR}</span>}
+                      <i />
+                    </span>
+                    <div className="pch-card-info">
+                      <strong>{call.name}</strong>
+                      <span>{call.role || "Clinical Psychologist"}</span>
+                      <small>{call.time}{call.duration ? ` | ${call.duration}` : ""}</small>
+                    </div>
+                    {call.missed ? (
+                      <span className="pch-missed-label">↙&nbsp; {t("missed")} Call</span>
+                    ) : (
+                      <button type="button" className="pch-call-action" onClick={() => openCallModal(call)} aria-label={`Call ${call.name}`}>
+                        {call.type === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />}
+                      </button>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </section>
+          ))}
+          {isLoadingCalls && <div className="pch-main-empty"><p>{t("loading_calls")}</p></div>}
+          {!isLoadingCalls && !filteredCalls.length && <div className="pch-main-empty"><FaPhoneAlt /><p>{t("no_calls")}</p><small>Try changing your search, date, or filter</small></div>}
+        </main>
+      </div>
+
+      <VideoCallModal
+        isOpen={isVideoModalOpen}
+        onClose={() => {
+          setIsVideoModalOpen(false);
+          setSelectedCall(null);
+          void fetchCallHistory();
+        }}
+        callData={selectedCall}
+        callMode={activeCallMode}
+        currentUser={{ id: currentUserId, role: currentUserType }}
+      />
+    </div>
+  );
+
+  return (
     <div className="call-history-container">
       {/* Fixed Header Section */}
       <div className="call-history-header-fixed">
-       
+        <div className="call-history-hero">
+          <div>
+            <span className="call-history-eyebrow">COMMUNICATION</span>
+            <h1>Call History</h1>
+            <p>Review your voice and video calls in one place.</p>
+          </div>
+          <div className="call-history-count">
+            <FaPhoneAlt aria-hidden="true" />
+            <span>{filteredCalls.length} calls</span>
+          </div>
+        </div>
 
         {/* Search Bar */}
         <div className="call-search-row">

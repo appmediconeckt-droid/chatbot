@@ -4036,3 +4036,1609 @@ button:focus {
     padding-top: 80px;
   }
 }
+
+/* Counselor appointments — polished responsive layout */
+.couns-tab-content-stitch {
+  min-height: 100%;
+  padding: clamp(18px, 3vw, 36px);
+  background:
+    radial-gradient(circle at 100% 0, rgba(20, 144, 255, 0.1), transparent 28rem),
+    #f7f9fd;
+}
+
+.stitch-apt-left {
+  gap: 22px;
+}
+
+.stitch-apt-header {
+  gap: 24px;
+  padding: 22px 24px;
+  background: #fff;
+  border: 1px solid #e6ebf3;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 35, 65, 0.06);
+}
+
+.stitch-apt-eyebrow {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--couns-primary);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stitch-apt-header h2 {
+  font-size: clamp(22px, 2.3vw, 30px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.stitch-apt-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.stitch-apt-header-tools {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.stitch-date-filter {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px 0 14px;
+  color: var(--couns-primary);
+  background: #f8faff;
+  border: 1px solid #dbe4f0;
+  border-radius: 12px;
+}
+
+.stitch-date-input {
+  width: auto;
+  min-width: 132px;
+  padding: 0;
+  color: #25364d;
+  background: transparent;
+  border: 0;
+  font-weight: 650;
+}
+
+.stitch-date-input:focus {
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+}
+
+.stitch-clear-filter {
+  width: 27px;
+  height: 27px;
+  justify-content: center;
+  padding: 0 !important;
+  color: #64748b !important;
+  background: #e9eef6 !important;
+  border-radius: 50% !important;
+}
+
+.stitch-apt-filter-scroll {
+  overflow-x: auto;
+  padding: 2px 1px 7px;
+  scrollbar-width: thin;
+  scrollbar-color: #aac8eb transparent;
+}
+
+.stitch-apt-filter-tabs {
+  display: flex;
+  min-width: max-content;
+  gap: 10px;
+}
+
+.stitch-apt-filter-tab {
+  display: inline-flex !important;
+  min-width: 132px;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px !important;
+  padding: 0 16px !important;
+  color: #526174 !important;
+  background: #fff !important;
+  border: 1px solid #dfe6ef !important;
+  border-radius: 13px !important;
+  box-shadow: 0 3px 10px rgba(15, 35, 65, 0.04);
+}
+
+.stitch-apt-filter-tab b {
+  min-width: 23px;
+  padding: 3px 6px;
+  color: #627188;
+  background: #eef2f7;
+  border-radius: 999px;
+  font-size: 11px;
+}
+
+.stitch-apt-filter-tab.active {
+  color: #fff !important;
+  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary)) !important;
+  border-color: transparent !important;
+  box-shadow: 0 8px 18px rgba(107, 70, 193, 0.22);
+}
+
+.stitch-apt-filter-tab.active b {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.stitch-apt-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 335px), 1fr));
+  gap: 18px;
+}
+
+.stitch-apt-card {
+  min-height: 280px;
+  padding: 20px;
+  border-color: #e3e9f1;
+  border-radius: 17px;
+  box-shadow: 0 8px 24px rgba(15, 35, 65, 0.07);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.stitch-apt-card:hover {
+  border-color: #bdd5f3;
+  box-shadow: 0 14px 34px rgba(15, 35, 65, 0.11);
+  transform: translateY(-2px);
+}
+
+.stitch-apt-avatar {
+  flex: 0 0 56px;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  border-radius: 15px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.stitch-apt-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.stitch-apt-info h3 {
+  overflow: hidden;
+  font-size: 18px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status-badge-stitch {
+  display: inline-flex;
+  width: fit-content;
+  margin-top: 15px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.06em;
+}
+
+.stitch-apt-notes {
+  margin-top: 14px;
+  padding: 11px 12px;
+  color: #526174;
+  background: #f7f9fc;
+  border-left: 3px solid #9fb5cf;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.stitch-apt-time {
+  align-items: flex-start;
+  gap: 8px;
+  margin: 16px 0;
+  padding: 12px 13px;
+  background: #f1f6fd;
+  border: 1px solid #e2ebf6;
+  border-radius: 11px;
+}
+
+.stitch-apt-time-value {
+  text-align: right;
+  line-height: 1.4;
+}
+
+.stitch-apt-actions {
+  gap: 10px;
+}
+
+.stitch-btn-accept,
+.stitch-btn-reject {
+  min-height: 43px;
+  border-radius: 11px;
+  font-weight: 700;
+}
+
+.stitch-btn-accept {
+  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  box-shadow: 0 7px 16px rgba(107, 70, 193, 0.18);
+}
+
+.stitch-btn-accept:hover {
+  background: linear-gradient(135deg, var(--couns-primary), var(--couns-primary-dark));
+}
+
+.stitch-empty-state-couns {
+  padding: clamp(44px, 8vw, 80px) 24px;
+  background: rgba(255, 255, 255, 0.8);
+  border-color: #cad8e8;
+  border-radius: 18px;
+}
+
+@media (max-width: 680px) {
+  .couns-tab-content-stitch {
+    padding: 14px;
+  }
+
+  .stitch-apt-header {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .stitch-apt-header-tools,
+  .stitch-date-filter {
+    width: 100%;
+  }
+
+  .stitch-date-input {
+    flex: 1;
+  }
+
+  .stitch-apt-filter-tab {
+    min-width: 118px;
+  }
+
+  .stitch-apt-card {
+    min-height: 0;
+    padding: 17px;
+  }
+
+  .stitch-apt-time {
+    flex-direction: column;
+  }
+
+  .stitch-apt-time-value {
+    text-align: left;
+  }
+}
+
+/* Counselor sessions — same visual language as appointments */
+.stitch-session-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.stitch-session-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: nowrap;
+  margin-bottom: 0;
+  padding: 22px 24px;
+  background: #fff;
+  border: 1px solid #e6ebf3;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 35, 65, 0.06);
+}
+
+.stitch-session-header-left {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 0;
+}
+
+.stitch-session-header-left h2 {
+  margin: 0;
+  color: #0b1c30;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(22px, 2.3vw, 30px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.stitch-session-header-left p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.stitch-session-header-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 13px;
+}
+
+.stitch-session-count,
+.stitch-session-today-badge {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  margin: 0;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.stitch-session-count {
+  color: var(--couns-primary-dark);
+  background: #f2ecff;
+}
+
+.stitch-session-today-badge {
+  color: #526174;
+  background: #f1f4f8;
+}
+
+.stitch-session-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
+  gap: 18px;
+}
+
+.stitch-session-card {
+  overflow: hidden;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e3e9f1;
+  border-radius: 17px;
+  box-shadow: 0 8px 24px rgba(15, 35, 65, 0.07);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.stitch-session-card:hover {
+  border-color: #bdd5f3;
+  box-shadow: 0 14px 34px rgba(15, 35, 65, 0.11);
+  transform: translateY(-2px);
+}
+
+.stitch-session-card-header {
+  align-items: center;
+  gap: 14px;
+}
+
+.stitch-session-avatar {
+  flex: 0 0 58px;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  border-radius: 15px;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.stitch-session-info {
+  min-width: 0;
+}
+
+.stitch-session-info h3 {
+  overflow: hidden;
+  margin: 0 0 7px;
+  color: #10233e;
+  font-size: 18px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stitch-session-tags {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.stitch-session-status,
+.stitch-session-type {
+  padding: 5px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.stitch-session-details {
+  gap: 0;
+  margin-top: 17px;
+  padding: 4px 13px;
+  background: #f4f7fb;
+  border: 1px solid #e5ecf5;
+  border-radius: 12px;
+}
+
+.stitch-session-detail-item {
+  min-height: 42px;
+  padding: 9px 0;
+  color: #46566c;
+  border-bottom: 1px solid #e4eaf2;
+  font-size: 12.5px;
+}
+
+.stitch-session-detail-item:last-child {
+  border-bottom: 0;
+}
+
+.stitch-session-detail-icon {
+  flex: 0 0 16px;
+  color: var(--couns-primary);
+}
+
+.stitch-session-notes {
+  margin-top: 13px;
+  padding: 11px 12px;
+  color: #526174;
+  background: #f8fafc;
+  border-left: 3px solid #9fb5cf;
+  border-radius: 9px;
+  font-size: 12.5px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.stitch-session-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 17px;
+}
+
+.stitch-session-action-btn {
+  width: 100%;
+  min-height: 43px;
+  gap: 7px;
+  border-radius: 11px;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.stitch-session-action-btn span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stitch-session-video-btn {
+  color: #fff;
+  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  border-color: transparent;
+  box-shadow: 0 7px 16px rgba(107, 70, 193, 0.17);
+}
+
+.stitch-session-video-btn:hover {
+  color: #fff;
+  background: linear-gradient(135deg, var(--couns-primary), var(--couns-primary-dark));
+}
+
+@media (max-width: 680px) {
+  .stitch-session-header {
+    align-items: stretch;
+    flex-direction: column;
+    padding: 18px;
+  }
+
+  .stitch-session-header .stitch-date-filter {
+    width: 100%;
+  }
+
+  .stitch-session-card {
+    padding: 17px;
+  }
+
+  .stitch-session-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-session-action-btn {
+    min-height: 45px;
+  }
+}
+
+@media (max-width: 900px) {
+  .stitch-session-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+
+/* Counselor call history — scoped so the user portal stays unchanged */
+.couns-call-page {
+  min-height: 100%;
+  padding: clamp(18px, 3vw, 36px);
+  background:
+    radial-gradient(circle at 100% 0, rgba(159, 122, 234, 0.11), transparent 28rem),
+    #f7f9fd;
+}
+
+.couns-call-page-header {
+  margin-bottom: 18px;
+  padding: 22px 24px;
+  background: #fff;
+  border: 1px solid #e6ebf3;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(15, 35, 65, 0.06);
+}
+
+.couns-call-page-header h2 {
+  margin: 0;
+  color: #0b1c30;
+  font-family: 'Manrope', sans-serif;
+  font-size: clamp(22px, 2.3vw, 30px);
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+.couns-call-page-header p {
+  margin: 7px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.couns-call-page .call-history-container {
+  height: auto;
+  min-height: 520px;
+  overflow: hidden;
+  background: transparent;
+  box-shadow: none;
+}
+
+.couns-call-page .call-history-header-fixed {
+  position: relative;
+  top: auto;
+  z-index: 2;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e3e9f1;
+  border-radius: 17px;
+  box-shadow: 0 8px 24px rgba(15, 35, 65, 0.07);
+}
+
+.couns-call-page .call-search-row {
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+.couns-call-page .call-search,
+.couns-call-page .call-date-filter {
+  min-height: 46px;
+  background: #f8f9fc;
+  border: 1px solid #dfe6ef;
+  border-radius: 12px;
+}
+
+.couns-call-page .call-search:focus-within,
+.couns-call-page .call-date-filter:focus-within {
+  background: #fff;
+  border-color: var(--couns-primary-light);
+  box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
+}
+
+.couns-call-page .call-search-icon,
+.couns-call-page .call-date-filter-icon {
+  color: var(--couns-primary);
+}
+
+.couns-call-page .call-search-input,
+.couns-call-page .call-date-input {
+  color: #25364d;
+  font-weight: 600;
+}
+
+.couns-call-page .call-filters {
+  gap: 10px;
+  padding: 0;
+  background: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: #c5b3e9 transparent;
+}
+
+.couns-call-page .call-filter-btn {
+  min-width: 122px;
+  min-height: 43px;
+  padding: 0 16px;
+  color: #526174;
+  background: #fff;
+  border: 1px solid #dfe6ef;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.couns-call-page .call-filter-btn:hover {
+  color: var(--couns-primary);
+  background: #f7f2ff;
+  border-color: #cab6ec;
+}
+
+.couns-call-page .call-filter-btn.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  border-color: transparent;
+  box-shadow: 0 7px 17px rgba(107, 70, 193, 0.2);
+}
+
+.couns-call-page .calls-list {
+  margin-top: 18px;
+  padding: 0;
+  overflow: visible;
+}
+
+.couns-call-page .call-date-group {
+  margin-bottom: 18px;
+  padding: 15px;
+  background: #fff;
+  border: 1px solid #e3e9f1;
+  border-radius: 17px;
+  box-shadow: 0 8px 24px rgba(15, 35, 65, 0.06);
+}
+
+.couns-call-page .call-date-header {
+  padding: 2px 3px 12px;
+  background: transparent;
+  border-bottom: 1px solid #edf1f6;
+}
+
+.couns-call-page .call-date {
+  color: #415168;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.couns-call-page .call-item {
+  min-height: 78px;
+  margin-top: 8px;
+  padding: 12px;
+  background: #fbfcfe;
+  border: 1px solid transparent;
+  border-radius: 13px;
+}
+
+.couns-call-page .call-item:hover {
+  background: #f8f4ff;
+  border-color: #ddcff5;
+  transform: none;
+}
+
+.couns-call-page .call-avatar {
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  border-radius: 13px;
+}
+
+.couns-call-page .call-action-btn {
+  color: #fff;
+  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  border: 0;
+  box-shadow: 0 6px 14px rgba(107, 70, 193, 0.18);
+}
+
+.couns-call-page .call-action-btn:hover {
+  background: linear-gradient(135deg, var(--couns-primary), var(--couns-primary-dark));
+}
+
+.couns-call-page .call-no-results {
+  min-height: 260px;
+  margin-top: 18px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 2px dashed #d6c9e9;
+  border-radius: 17px;
+}
+
+@media (max-width: 680px) {
+  .couns-call-page {
+    padding: 14px;
+  }
+
+  .couns-call-page-header {
+    padding: 18px;
+  }
+
+  .couns-call-page .call-search-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .couns-call-page .call-date-filter {
+    width: 100%;
+  }
+
+  .couns-call-page .call-filter-btn {
+    min-width: 112px;
+  }
+
+  .couns-call-page .call-history-header-fixed,
+  .couns-call-page .call-date-group {
+    padding: 12px;
+  }
+}
+/* ============================================================
+   PORTAL RESPONSIVE SAFETY LAYER
+   Applies viewport-safe sizing to all counselor portal tabs.
+   ============================================================ */
+.couns-dashboard,
+.couns-main-content,
+.couns-tab-content {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.couns-main-content img,
+.couns-main-content video,
+.couns-main-content canvas,
+.couns-main-content svg {
+  max-width: 100%;
+}
+
+.couns-main-content input,
+.couns-main-content select,
+.couns-main-content textarea,
+.couns-main-content button {
+  max-width: 100%;
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .couns-main-content {
+    min-width: 0;
+    overflow-x: hidden;
+    padding-inline: clamp(14px, 2vw, 22px);
+  }
+
+  .couns-tab-content {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .couns-main-content :where(
+    .cards-grid,
+    .stats-grid,
+    .settings-grid,
+    .profile-grid,
+    .form-grid
+  ) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .couns-dashboard {
+    width: 100%;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+
+  .couns-main-content {
+    width: 100%;
+    min-height: 100dvh;
+    padding-top: calc(56px + env(safe-area-inset-top));
+    padding-right: clamp(8px, 3vw, 16px);
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+    padding-left: clamp(8px, 3vw, 16px);
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .couns-tab-content {
+    width: 100%;
+    max-width: none;
+    padding-block: 10px;
+    overflow-x: hidden;
+  }
+
+  .couns-main-content :where(
+    .cards-grid,
+    .stats-grid,
+    .settings-grid,
+    .profile-grid,
+    .form-grid,
+    .couns-analytics-grid,
+    .couns-appointments-grid,
+    .couns-earnings-summary
+  ) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .couns-main-content :where(.table-container, .table-wrapper, .responsive-table) {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .couns-main-content :where(.modal, .dialog, [role="dialog"]) {
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 24px);
+  }
+
+  .couns-mobile-header {
+    padding-top: calc(10px + env(safe-area-inset-top));
+  }
+
+  .couns-mobile-bottom-nav {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 480px) {
+  .couns-main-content {
+    padding-inline: 8px;
+  }
+
+  .couns-tab-content {
+    padding-block: 8px;
+  }
+
+  .couns-tab-header h2 {
+    font-size: clamp(18px, 5.5vw, 21px);
+    line-height: 1.25;
+  }
+
+  .couns-main-content :where(button, input, select, textarea) {
+    min-height: 42px;
+  }
+}
+/* Appointments reference layout — visual overrides only. */
+.couns-tab-content-stitch { padding: 0 24px 36px; background: #f8f9ff; }
+.stitch-apt-page-title { height: 99px; margin: 0 -24px 24px; padding: 30px 22px; border-bottom: 1px solid #d4dae6; color: #20242d; background: #fff; font-size: 30px; font-weight: 750; line-height: 1.2; }
+.stitch-apt-left { display: flex; flex-direction: column; gap: 28px; }
+.stitch-apt-summary { position: relative; min-height: 330px; overflow: hidden; padding: 42px 40px 39px; border-radius: 24px; color: #fff; background: linear-gradient(112deg, #0874f1 0%, #0757ba 68%, #064594 100%); box-shadow: 0 13px 24px rgba(14,75,157,.13); }
+.stitch-apt-summary::after { content: ""; position: absolute; top: -38px; right: -22px; width: 175px; height: 175px; border-radius: 50%; background: rgba(255,255,255,.1); }
+.stitch-apt-summary-copy { position: relative; z-index: 1; }
+.stitch-apt-summary-copy > span { font-size: 25px; font-weight: 400; }
+.stitch-apt-summary-copy h2 { margin: 9px 0 5px; color: #fff; font-size: 31px; font-weight: 750; }
+.stitch-apt-summary-copy p { margin: 0; font-size: 16px; }
+.stitch-apt-refresh { position: absolute; top: 40px; right: 40px; z-index: 2; width: 50px; height: 50px; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; background: rgba(255,255,255,.1); display: grid; place-items: center; cursor: pointer; }
+.stitch-apt-metrics { position: absolute; right: 40px; bottom: 40px; left: 40px; z-index: 2; min-height: 110px; padding: 24px 0; border: 1px solid rgba(255,255,255,.25); border-radius: 12px; background: rgba(255,255,255,.035); display: grid; grid-template-columns: repeat(3,1fr); }
+.stitch-apt-metrics > div { display: grid; place-items: center; align-content: center; }
+.stitch-apt-metrics > div + div { border-left: 1px solid rgba(255,255,255,.22); }
+.stitch-apt-metrics strong { color: #fff; font-size: 40px; line-height: 1; }
+.stitch-apt-metrics span { margin-top: 8px; font-size: 12px; letter-spacing: .03em; text-transform: uppercase; }
+.stitch-apt-toolbar { min-height: 82px; padding: 16px; border: 1px solid #e3e7ef; border-radius: 14px; background: #fff; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(31,48,80,.035); }
+.stitch-apt-search { position: relative; flex: 1 1 385px; max-width: 385px; height: 40px; display: flex; align-items: center; }
+.stitch-apt-search svg { position: absolute; left: 13px; color: #7c8799; font-size: 16px; }
+.stitch-apt-search input { width: 100%; height: 100%; padding: 0 15px 0 40px; border: 1px solid #c9d3e4; border-radius: 22px; outline: 0; color: #344054; background: #f2f5fd; font-size: 14px; }
+.stitch-apt-search input:focus { border-color: #1370d6; box-shadow: 0 0 0 3px rgba(19,112,214,.08); }
+.stitch-apt-toolbar .stitch-apt-header-tools { margin-left: auto; }
+.stitch-apt-toolbar .stitch-date-filter { min-height: 44px; border-radius: 24px; }
+.stitch-apt-toolbar .stitch-apt-filter-scroll { padding: 0; }
+.stitch-apt-toolbar .stitch-apt-filter-tabs { gap: 8px; }
+.stitch-apt-toolbar .stitch-apt-filter-tab { min-width: auto; min-height: 48px; padding: 0 15px !important; border-color: #c9d3e4 !important; border-radius: 24px !important; box-shadow: none; }
+.stitch-apt-toolbar .stitch-apt-filter-tab.active { background: linear-gradient(90deg,#0872e7,#0751aa) !important; }
+.stitch-apt-grid { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 28px; }
+.stitch-apt-card { min-height: 310px; padding: 16px 14px 18px; border: 0; border-radius: 20px; box-shadow: 0 7px 18px rgba(34,49,82,.06); }
+.stitch-apt-card:hover { transform: none; }
+.stitch-apt-card-top { align-items: center; }
+.stitch-apt-avatar { flex-basis: 52px; width: 52px; height: 52px; border-radius: 50%; }
+.stitch-apt-info h3 { font-size: 16px; }
+.status-badge-stitch { position: absolute; top: 12px; right: 12px; margin: 0; padding: 5px 12px; border-radius: 16px; font-size: 10px; }
+.stitch-apt-notes { margin-top: 10px; padding: 9px 12px; border: 0; color: #4d5665; background: #fff; font-style: normal; }
+.stitch-apt-time { min-height: 126px; margin: 13px 0 10px; padding: 18px 16px; border: 0; border-radius: 12px; background: #eef0f8; flex-direction: column; }
+.stitch-apt-time-label { font-size: 12px; }
+.stitch-apt-time-value { color: #1269ca; text-align: left; font-size: 13px; }
+.stitch-apt-actions { padding-top: 14px; border-top: 1px solid #d8ddd9; }
+.stitch-btn-accept,.stitch-btn-reject { min-height: 50px; border-radius: 12px; }
+.stitch-btn-accept { background: linear-gradient(90deg,#0871e4,#0754b2); }
+.stitch-btn-reject { border: 1px solid #ef3d3d; color: #ca1616; background: #ffe9e8; }
+
+/* Sessions reference layout — visual overrides only. */
+.couns-sessions-page {
+  min-height: 100vh;
+  padding: 0 24px 38px;
+  background: #f8f9ff;
+}
+
+.couns-sessions-page-title {
+  height: 99px;
+  margin: 0 -24px 24px;
+  padding: 29px 22px;
+  border-bottom: 1px solid #d4dae6;
+  background: #fff;
+}
+
+.couns-sessions-page-title h1 {
+  margin: 0;
+  color: #20242d;
+  font-size: 30px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.couns-sessions-page .stitch-session-layout {
+  gap: 39px;
+}
+
+.couns-sessions-page .stitch-session-header {
+  min-height: 122px;
+  padding: 22px 24px;
+  border: 1px solid #c9d1e0;
+  border-radius: 24px;
+  box-shadow: none;
+}
+
+.couns-sessions-page .stitch-session-heading-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.couns-sessions-page .stitch-session-header-left h2 {
+  color: #102139;
+  font-size: 32px;
+  line-height: 1;
+}
+
+.couns-sessions-page .stitch-session-count {
+  min-height: 26px;
+  padding: 4px 13px;
+  border: 1px solid #b8d1ff;
+  color: #063e8e;
+  background: #dfeaff;
+  font-size: 12px;
+}
+
+.couns-sessions-page .stitch-session-header-meta {
+  margin-top: 14px;
+  gap: 9px;
+  color: #515b6c;
+  font-size: 16px;
+}
+
+.couns-sessions-page .stitch-session-header-meta strong {
+  color: #202c3d;
+  font-weight: 750;
+}
+
+.couns-sessions-page .stitch-date-filter {
+  width: 205px;
+  min-height: 52px;
+  padding: 0 14px;
+  border: 1px solid #c5cde0;
+  border-radius: 8px;
+  color: #073f91;
+  background: #f8f9ff;
+}
+
+.couns-sessions-page .stitch-date-filter svg {
+  flex: 0 0 auto;
+  color: #0757b8;
+  font-size: 17px;
+}
+
+.couns-sessions-page .stitch-date-input {
+  min-width: 0;
+  color: #073f91;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.couns-sessions-page .stitch-session-filter-row {
+  margin: -20px 0 0;
+  padding: 0;
+}
+
+.couns-sessions-page .stitch-session-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
+  gap: 18px;
+}
+
+.couns-sessions-page .stitch-empty-state-couns {
+  grid-column: 1 / -1;
+  min-height: 494px;
+  padding: 55px 24px;
+  border: 2px dashed #d5d7dc;
+  border-radius: 45px;
+  color: #202632;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+}
+
+.stitch-empty-session-icon {
+  width: 142px;
+  height: 142px;
+  border: 4px solid #0759bd;
+  border-radius: 50%;
+  color: #0864d5;
+  background: #e5edff;
+  display: grid;
+  place-items: center;
+}
+
+.stitch-empty-session-icon svg {
+  width: 55px;
+  height: 55px;
+}
+
+.couns-sessions-page .stitch-empty-state-couns h3 {
+  margin: 25px 0 0;
+  color: #202632;
+  font-size: 24px;
+  font-weight: 750;
+}
+
+.couns-sessions-page .stitch-empty-state-couns p {
+  margin: 22px 0 0;
+  color: #525b6d;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.stitch-empty-session-actions {
+  display: flex;
+  gap: 16px;
+  margin-top: 41px;
+}
+
+.stitch-empty-session-actions button {
+  min-width: 218px;
+  min-height: 70px;
+  padding: 0 24px;
+  border: 1.5px solid #0867de;
+  border-radius: 29px;
+  color: #075fc9;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.stitch-empty-session-actions button.primary {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(90deg, #0875f2, #0753ae);
+}
+
+@media (max-width: 700px) {
+  .couns-sessions-page {
+    padding: 0 14px 28px;
+  }
+
+  .couns-sessions-page-title {
+    height: auto;
+    margin: 0 -14px 16px;
+    padding: 18px 16px;
+  }
+
+  .couns-sessions-page-title h1 {
+    font-size: 23px;
+  }
+
+  .couns-sessions-page .stitch-session-layout {
+    gap: 20px;
+  }
+
+  .couns-sessions-page .stitch-session-header {
+    min-height: 0;
+    padding: 18px;
+    border-radius: 18px;
+  }
+
+  .couns-sessions-page .stitch-session-header-left h2 {
+    font-size: 26px;
+  }
+
+  .couns-sessions-page .stitch-date-filter {
+    width: 100%;
+  }
+
+  .couns-sessions-page .stitch-empty-state-couns {
+    min-height: 440px;
+    padding: 42px 18px;
+    border-radius: 28px;
+  }
+
+  .stitch-empty-session-icon {
+    width: 110px;
+    height: 110px;
+  }
+
+  .stitch-empty-session-actions {
+    width: 100%;
+    flex-direction: column;
+    margin-top: 30px;
+  }
+
+  .stitch-empty-session-actions button {
+    width: 100%;
+    min-width: 0;
+    min-height: 52px;
+  }
+}
+
+.couns-sessions-page .stitch-session-card-body .stitch-session-details-btn {
+  min-width: 148px;
+  border: 2px solid #064a9f;
+  color: #073f89;
+  background: #fff;
+  font-size: 14px;
+}
+
+.stitch-session-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(30, 36, 47, .27);
+  backdrop-filter: blur(1px);
+  display: grid;
+  place-items: center;
+}
+
+.stitch-session-details-modal {
+  width: min(495px, 100%);
+  overflow: hidden;
+  border-radius: 30px;
+  background: #fff;
+  box-shadow: 0 25px 65px rgba(15, 23, 42, .24);
+}
+
+.stitch-session-details-modal > header {
+  min-height: 138px;
+  padding: 27px 25px;
+  border-bottom: 1px solid #d8dee8;
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.stitch-session-modal-avatar {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 62px;
+  overflow: hidden;
+  border-radius: 50%;
+  color: #0759bd;
+  background: #e5edff;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.stitch-session-modal-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stitch-session-details-modal > header > div:nth-child(2) {
+  min-width: 0;
+  flex: 1;
+}
+
+.stitch-session-details-modal > header h2 {
+  margin: 0;
+  color: #1e222a;
+  font-size: 25px;
+  line-height: 1.15;
+}
+
+.stitch-session-details-modal > header p {
+  margin: 7px 0;
+  color: #525a68;
+  font-size: 14px;
+}
+
+.stitch-session-details-modal > header div > span {
+  width: fit-content;
+  padding: 4px 8px;
+  border: 1px solid #a8c7ff;
+  border-radius: 12px;
+  color: #0759bd;
+  background: #eef5ff;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+}
+
+.stitch-session-details-modal > header > button {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  color: #424b58;
+  background: transparent;
+  font-size: 31px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stitch-session-modal-content {
+  padding: 25px 24px 28px;
+  background: #f5f9ff;
+}
+
+.stitch-session-detail-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 8px;
+}
+
+.stitch-session-detail-pills span {
+  min-height: 31px;
+  padding: 5px 11px;
+  border: 1px solid #c4ccdb;
+  border-radius: 16px;
+  color: #28313e;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.stitch-session-detail-pills span.progress {
+  border-color: #95e5c6;
+  color: #087b54;
+  background: #d9fff0;
+}
+
+.stitch-session-reason-card {
+  margin-top: 31px;
+  padding: 18px 16px;
+  border: 1px solid #d8dde5;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.stitch-session-reason-card h3 {
+  margin: 0;
+  color: #23262d;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+.stitch-session-reason-card h3 svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+  color: #59616d;
+}
+
+.stitch-session-reason-card blockquote {
+  min-height: 94px;
+  margin: 9px 0 0;
+  padding: 14px 16px;
+  border: 1px solid #d1d5de;
+  border-radius: 8px;
+  color: #252a32;
+  background: #f8f7f8;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.stitch-session-reason-card blockquote svg {
+  flex: 0 0 auto;
+  color: #c7cbd3;
+}
+
+.stitch-session-details-modal > footer {
+  padding: 24px;
+  border-top: 1px solid #d8dee8;
+  background: #fff;
+}
+
+.stitch-session-details-modal > footer button {
+  width: 100%;
+  min-height: 49px;
+  border: 0;
+  border-radius: 24px;
+  color: #fff;
+  background: linear-gradient(90deg, #0875ee, #0752ad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+@media (max-width: 560px) {
+  .stitch-session-modal-backdrop {
+    padding: 12px;
+    align-items: end;
+  }
+
+  .stitch-session-details-modal {
+    border-radius: 24px 24px 18px 18px;
+  }
+
+  .stitch-session-details-modal > header {
+    padding: 22px 18px;
+  }
+
+  .stitch-session-modal-content,
+  .stitch-session-details-modal > footer {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+}
+
+/* Scheduled sessions state from the second supplied reference. */
+.couns-sessions-page .stitch-session-grid.has-sessions {
+  grid-template-columns: minmax(0, 2.25fr) minmax(285px, .95fr);
+  align-items: start;
+  gap: 22px;
+}
+
+.stitch-scheduled-session-list {
+  display: grid;
+  gap: 20px;
+}
+
+.couns-sessions-page .stitch-scheduled-session-list .stitch-session-card {
+  min-height: 237px;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid #c7cfdf;
+  border-radius: 24px;
+  box-shadow: none;
+}
+
+.couns-sessions-page .stitch-scheduled-session-list .stitch-session-card:hover {
+  border-color: #9eb5d7;
+  box-shadow: none;
+  transform: none;
+}
+
+.stitch-session-timebar {
+  min-height: 78px;
+  padding: 0 24px;
+  border-bottom: 1px solid #dbe1ec;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.stitch-session-timebar > span {
+  color: #0757bd;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 17px;
+  font-weight: 750;
+}
+
+.stitch-session-timebar > span svg {
+  font-size: 20px;
+}
+
+.stitch-session-timebar > b {
+  padding: 7px 13px;
+  border: 1px solid #f3aaa5;
+  border-radius: 18px;
+  color: #a91414;
+  background: #ffe2df;
+  font-size: 11px;
+  letter-spacing: .02em;
+}
+
+.stitch-session-card-body {
+  min-height: 157px;
+  padding: 25px 24px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.couns-sessions-page .stitch-session-card-body .stitch-session-avatar {
+  width: 64px;
+  height: 64px;
+  flex-basis: 64px;
+  border: 1px solid #b8cdf4;
+  border-radius: 50%;
+  color: #0756ba;
+  background: #e4edff;
+}
+
+.couns-sessions-page .stitch-session-card-body .stitch-session-avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.stitch-session-card-body .stitch-session-info {
+  flex: 1 1 auto;
+}
+
+.stitch-session-card-body .stitch-session-info h3 {
+  margin: 0;
+  color: #102139;
+  font-size: 24px;
+}
+
+.stitch-session-card-body .stitch-session-info p {
+  margin: 7px 0 0;
+  color: #555e6e;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.couns-sessions-page .stitch-session-card-body .stitch-session-action-btn {
+  width: auto;
+  min-width: 48px;
+  min-height: 48px;
+  padding: 0 15px;
+  border-radius: 13px;
+}
+
+.couns-sessions-page .stitch-session-card-body .stitch-session-video-btn {
+  min-width: 214px;
+  background: linear-gradient(90deg, #0875ef, #0754b2);
+  font-size: 14px;
+}
+
+.couns-sessions-page .stitch-session-card-body .stitch-session-voice-btn,
+.couns-sessions-page .stitch-session-card-body .stitch-session-chat-btn {
+  padding: 0;
+  color: #0759bd;
+  border: 1px solid #a7b9d6;
+  background: #fff;
+}
+
+.stitch-session-day-summary {
+  min-height: 519px;
+  padding: 26px 23px 14px;
+  border: 1px solid #c7cfdf;
+  border-radius: 24px;
+  background: #fff;
+}
+
+.stitch-session-day-summary h3 {
+  margin: 0 0 26px;
+  color: #152238;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 17px;
+}
+
+.stitch-session-day-summary h3 svg {
+  color: #0759bd;
+}
+
+.stitch-session-day-summary > div {
+  min-height: 48px;
+  margin-bottom: 16px;
+  padding: 0 13px;
+  border-radius: 8px;
+  color: #535c6d;
+  background: #f6f7fc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stitch-session-day-summary > div b {
+  color: #16243a;
+}
+
+.stitch-session-day-summary > div.in-progress {
+  border: 1px solid #f4bab7;
+  color: #d11616;
+}
+
+.stitch-session-day-summary > div.in-progress b {
+  color: #d11616;
+}
+
+.stitch-session-day-summary footer {
+  min-height: 153px;
+  margin-top: 36px;
+  padding-top: 25px;
+  border-top: 1px solid #c7cfdf;
+  background: #fbfbfe;
+  display: grid;
+  place-items: start center;
+}
+
+.stitch-session-day-summary footer span {
+  padding: 5px 13px;
+  border: 1px solid #aac5ff;
+  border-radius: 14px;
+  color: #06439a;
+  background: #f8fbff;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+@media (max-width: 1050px) {
+  .couns-sessions-page .stitch-session-grid.has-sessions {
+    grid-template-columns: 1fr;
+  }
+
+  .stitch-session-day-summary {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .stitch-session-timebar {
+    min-height: 64px;
+    padding: 0 16px;
+  }
+
+  .stitch-session-card-body {
+    padding: 20px 16px;
+    flex-wrap: wrap;
+  }
+
+  .stitch-session-card-body .stitch-session-info {
+    width: calc(100% - 80px);
+    flex: 0 0 calc(100% - 80px);
+  }
+
+  .stitch-session-card-body .stitch-session-info h3 {
+    font-size: 20px;
+  }
+
+  .couns-sessions-page .stitch-session-card-body .stitch-session-video-btn {
+    flex: 1 1 calc(100% - 122px);
+    min-width: 0;
+  }
+}
+@media (max-width:1120px) {
+  .stitch-apt-toolbar { flex-wrap: wrap; }
+  .stitch-apt-search { max-width: none; }
+  .stitch-apt-toolbar .stitch-apt-header-tools { margin-left: 0; }
+}
+@media (max-width:800px) {
+  .couns-tab-content-stitch { padding: 0 14px 28px; }
+  .stitch-apt-page-title { height: auto; margin: 0 -14px 14px; padding: 18px 16px; font-size: 24px; }
+  .stitch-apt-summary { min-height: 310px; padding: 30px 22px; }
+  .stitch-apt-metrics { right: 22px; bottom: 25px; left: 22px; }
+  .stitch-apt-refresh { top: 24px; right: 22px; }
+  .stitch-apt-grid { grid-template-columns: 1fr; gap: 16px; }
+}
+@media (max-width:540px) {
+  .stitch-apt-summary-copy > span { font-size: 18px; }
+  .stitch-apt-summary-copy h2 { font-size: 24px; }
+  .stitch-apt-metrics strong { font-size: 30px; }
+  .stitch-apt-toolbar { align-items: stretch; flex-direction: column; }
+  .stitch-apt-search { flex-basis: 40px; max-width: none; }
+  .stitch-apt-toolbar .stitch-apt-header-tools,.stitch-apt-toolbar .stitch-date-filter { width: 100%; }
+}

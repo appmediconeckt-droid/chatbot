@@ -5,6 +5,7 @@ import {
   FaPaperPlane,
   FaPhone,
   FaPhoneSlash,
+  FaPlus,
   FaRedoAlt,
   FaRobot,
   FaSpinner,
@@ -13,7 +14,9 @@ import {
   FaUserCircle,
   FaVolumeMute,
   FaVolumeUp,
+  FaWaveSquare,
 } from "react-icons/fa";
+import { HiSparkles } from "react-icons/hi2";
 import { API_BASE_URL } from "../../../../axiosConfig";
 const VOICE_LANGUAGES = [
   { label: 'English (India)', code: 'en-IN' },
@@ -42,6 +45,7 @@ export default function AiChatPopup({
   sendQuickReply,
   sendChat,
   selectedLang,
+  userName,
 }) {
   const [isRecording, setIsRecording] = React.useState(false);
   const [speakingId, setSpeakingId] = React.useState(null);
@@ -495,16 +499,16 @@ export default function AiChatPopup({
           <div className="ud-chat-header-info">
             <div className="ud-chat-avatar-wrap">
               <div className="ud-chat-avatar ud-chat-avatar--bounce">
-                <FaRobot />
+                <HiSparkles />
               </div>
               <span className="ud-chat-avatar-dot" />
             </div>
             <div>
-              <h3>MediConeckt AI</h3>
-              {/* <p className="ud-chat-status">
+              <h3>AI Health Assistant</h3>
+              <p className="ud-chat-status">
                 <span className="ud-status-dot" />
-                Online • Always here
-              </p> */}
+                Online · Secure
+              </p>
             </div>
           </div>
           <div className="ud-chat-header-actions">
@@ -552,6 +556,44 @@ export default function AiChatPopup({
           </svg>
         </div>
         <div className="ud-chat-popup-body" ref={chatBodyRef}>
+          <section className="ud-ai-welcome-card">
+            <p className="ud-ai-welcome-title">Hello {userName?.trim()?.split(/\s+/)[0] || "there"}! 👋</p>
+            <p>
+              I am MediConeckt AI, your personal medical companion. I can help
+              you analyze reports, track symptoms, or find the right specialist.
+            </p>
+            <div className="ud-ai-safety-note">
+              <span aria-hidden="true">△</span>
+              <p>
+                In case of a medical emergency, please call your local emergency
+                services immediately. AI advice does not replace professional
+                medical diagnosis.
+              </p>
+            </div>
+          </section>
+
+          {messages.length <= 1 && !isLoading && (
+            <section className="ud-ai-mood-section">
+              <p>How are you feeling today?</p>
+              <div className="ud-ai-mood-row">
+                {[
+                  ["😟", "Low"],
+                  ["🙂", "Okay"],
+                  ["😊", "Good"],
+                  ["✨", "Great"],
+                ].map(([emoji, label]) => (
+                  <button
+                    key={label}
+                    type="button"
+                    disabled={isLoading}
+                    onClick={() => sendQuickReply?.(`I am feeling ${label.toLowerCase()} today`)}
+                  >
+                    <span>{emoji}</span>{label}
+                  </button>
+                ))}
+              </div>
+            </section>
+          )}
           {messages.map((message) => (
             <div
               key={message.id}
@@ -559,7 +601,7 @@ export default function AiChatPopup({
             >
               {message.sender === "ai" && (
                 <div className="ud-chat-avatar ud-small">
-                  <FaRobot />
+                  <HiSparkles />
                 </div>
               )}
               <div className="ud-chat-bubble">
@@ -610,7 +652,7 @@ export default function AiChatPopup({
           {isLoading && (
             <div className="ud-chat-message-wrapper ai">
               <div className="ud-chat-avatar ud-small">
-                <FaRobot />
+                <HiSparkles />
               </div>
               <div className="ud-chat-bubble">
                 <div className="ud-loading-dots">
@@ -686,6 +728,14 @@ export default function AiChatPopup({
           </div>
         )}
         <div className="ud-chat-popup-footer">
+          <button
+            type="button"
+            className="ud-chat-add-btn"
+            title="More options"
+            aria-label="More chat options"
+          >
+            <FaPlus />
+          </button>
           <div className="ud-lang-picker-wrap" hidden>
             <button
               type="button"
@@ -735,7 +785,7 @@ export default function AiChatPopup({
           <div className="ud-chat-input-wrap" style={{ flex: 1 }}>
             <input
               type="text"
-              placeholder={isRecording ? "Listening…" : "Type a message…"}
+              placeholder={isRecording ? "Listening…" : "Type your question"}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyPress}
@@ -755,10 +805,10 @@ export default function AiChatPopup({
           <button
             className="ud-send-btn"
             onClick={sendMessage}
-            disabled={isLoading || !newMessage.trim()}
-            aria-label="Send message"
+            disabled={isLoading}
+            aria-label={newMessage.trim() ? "Send message" : "AI voice input"}
           >
-            <FaPaperPlane />
+            {newMessage.trim() ? <FaPaperPlane /> : <FaWaveSquare />}
           </button>
         </div>
       </div>

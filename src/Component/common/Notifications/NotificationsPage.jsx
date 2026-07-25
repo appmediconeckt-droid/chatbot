@@ -1,18 +1,22 @@
 import React, { useEffect, useState } from "react";
-import { FaBell, FaCalendarAlt, FaCheck, FaCheckDouble, FaTrash, FaWallet } from "react-icons/fa";
+import { FaBell, FaCalendarAlt, FaCheck, FaCommentAlt, FaTrash } from "react-icons/fa";
+import { HiSparkles } from "react-icons/hi2";
 import axiosInstance from "../../../axiosConfig";
 import socketService from "../../../services/socketService";
 import "./Notifications.css";
 
 const icons = {
   appointment: <FaCalendarAlt />,
-  payment: <FaWallet />,
+  message: <FaCommentAlt />,
+  chat: <FaCommentAlt />,
+  ai: <HiSparkles />,
 };
 
 const filters = [
-  { value: "", label: "All", icon: <FaBell /> },
-  { value: "appointment", label: "Appointments", icon: <FaCalendarAlt /> },
-  { value: "payment", label: "Payments", icon: <FaWallet /> },
+  { value: "all", label: "All" },
+  { value: "unread", label: "Unread" },
+  { value: "appointment", label: "Appointments" },
+  { value: "message", label: "Chats" },
 ];
 
 const NotificationsPage = ({ role = "user" }) => {
@@ -74,53 +78,43 @@ const NotificationsPage = ({ role = "user" }) => {
     changed();
   };
 
+  const selectFilter = (value) => {
+    if (value === "all") {
+      setType("");
+      setUnreadOnly(false);
+      return;
+    }
+    if (value === "unread") {
+      setType("");
+      setUnreadOnly(true);
+      return;
+    }
+    setUnreadOnly(false);
+    setType(value);
+  };
+
+  const activeFilter = unreadOnly ? "unread" : (type || "all");
+
   return (
     <div className={`notifications-page ${isCounselor ? "notifications-page--counselor" : ""}`}>
       <header className="notifications-hero">
-        <div className="notifications-hero-copy">
-          <span className="notifications-hero-icon"><FaBell /></span>
-          <div>
-            <span className="notifications-eyebrow">{isCounselor ? "Counselor activity centre" : "Activity centre"}</span>
-            <h1>Notifications</h1>
-            <p>{isCounselor
-              ? "Track appointment requests and payment updates."
-              : "Stay updated with appointment requests and payments."}</p>
-          </div>
+        <div>
+          <h1>Notification</h1>
+          <p>Manage your reminders</p>
         </div>
-        {unreadCount > 0 && (
-          <button type="button" onClick={markAll} className="notifications-primary-action">
-            <FaCheckDouble /> Mark all as read
-          </button>
-        )}
+        <button type="button" onClick={markAll} className="notifications-primary-action" disabled={unreadCount === 0}>
+          Mark all as read
+        </button>
       </header>
-
-      <div className="notifications-summary">
-        <div className="notification-summary-card summary-total">
-          <span className="summary-icon"><FaBell /></span>
-          <span><strong>{notifications.length}</strong><small>Showing now</small></span>
-        </div>
-        <div className="notification-summary-card summary-unread">
-          <span className="summary-icon"><FaBell /></span>
-          <span><strong>{unreadCount}</strong><small>Unread updates</small></span>
-        </div>
-        <div className="notification-summary-card summary-read">
-          <span className="summary-icon"><FaCheckDouble /></span>
-          <span><strong>{Math.max(0, notifications.length - unreadCount)}</strong><small>Read updates</small></span>
-        </div>
-      </div>
 
       <div className="notifications-toolbar">
         <div className="notification-filter-group">
         {filters.map((filter) => (
-          <button key={filter.label} type="button" onClick={() => setType(filter.value)} className={`notification-filter ${type === filter.value ? "active" : ""}`}>
-            <span>{filter.icon}</span>{filter.label}
+          <button key={filter.label} type="button" onClick={() => selectFilter(filter.value)} className={`notification-filter ${activeFilter === filter.value ? "active" : ""}`}>
+            {filter.label}
           </button>
         ))}
         </div>
-        <label className="notifications-unread-toggle">
-          <input type="checkbox" checked={unreadOnly} onChange={(event) => setUnreadOnly(event.target.checked)} className="rounded border-slate-300 text-indigo-600" />
-          Unread only ({unreadCount})
-        </label>
       </div>
 
       <section className="notifications-panel">
@@ -140,19 +134,17 @@ const NotificationsPage = ({ role = "user" }) => {
             <div className="notifications-page-item-copy">
               <div className="notifications-page-item-heading">
                 <h3>{notification.title}</h3>
-                <span className={`notification-type-pill type-${notification.type || "system"}`}>{notification.type}</span>
-                {!notification.isRead && <span className="new-notification-pill">New</span>}
               </div>
               <p>{notification.message}</p>
-              <time>{new Date(notification.createdAt).toLocaleString("en-IN")}</time>
-            </div>
-            <div className="notification-item-actions">
               {!notification.isRead && (
-                <button type="button" onClick={() => markRead(notification._id)} className="notification-action-read" title="Mark as read" aria-label="Mark notification as read">
-                  <FaCheck />
-                  <span>Mark as read</span>
+                <button type="button" onClick={() => markRead(notification._id)} className="notification-inline-action">
+                  <FaCheck /> Mark as read
                 </button>
               )}
+            </div>
+            <time className="notifications-page-item-time">{new Date(notification.createdAt).toLocaleString("en-IN")}</time>
+            {!notification.isRead && <span className="notifications-page-unread-dot" aria-label="Unread" />}
+            <div className="notification-item-actions">
               <button type="button" onClick={() => remove(notification._id)} className="notification-action-delete" title="Delete notification"><FaTrash /></button>
             </div>
           </article>

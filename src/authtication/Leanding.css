@@ -253,8 +253,8 @@ body {
 }
 
 .logo img {
-  height: 35px;
-  width: auto;
+  width: clamp(150px, 16vw, 190px);
+  height: auto;
 }
 
 .logo-text {
@@ -1173,8 +1173,8 @@ main {
 }
 
 .footer-logo img {
-  height: 35px;
-  width: auto;
+  width: clamp(170px, 20vw, 220px);
+  height: auto;
 }
 
 .footer-logo span {
@@ -2267,7 +2267,8 @@ main {
   }
   
   .logo img {
-    height: 25px;
+    width: 145px;
+    height: auto;
   }
   
   .logo-text {

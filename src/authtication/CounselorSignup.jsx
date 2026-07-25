@@ -2069,7 +2069,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import "./CounselorSignup.css";
-import logo from "../image/Mediconect Logo-3.png";
+import logo from "../assets/humaeli.png";
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";

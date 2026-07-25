@@ -3,7 +3,7 @@ import { FaEnvelope, FaArrowLeft, FaSpinner } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ForgotPassword.css";
-import logo from "../image/Mediconect Logo-3.png";
+import logo from "../assets/humaeli.png";
 import { API_BASE_URL } from "../axiosConfig";
 
 const ForgotPassword = () => {
@@ -71,7 +71,6 @@ const ForgotPassword = () => {
         {/* Logo */}
         <div className="fp-logo">
           <img src={logo} alt="Mediconeckt" className="fp-logo-img" />
-          <span className="fp-logo-text">Mediconeckt ChatBot</span>
         </div>
 
         <div className="fp-card">

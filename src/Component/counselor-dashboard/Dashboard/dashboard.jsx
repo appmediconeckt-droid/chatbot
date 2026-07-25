@@ -366,6 +366,7 @@ import {
   FaCog,
   FaUser,
   FaBell,
+  FaHistory,
 } from "react-icons/fa";
 import useVibration from "../../../hooks/useVibration";
 import useRingtone from "../../../hooks/useRingtone";
@@ -560,7 +561,7 @@ export default function CounselorDashboard() {
     { id: "messages", icon: <FaComments />, label: t('messages'), badge: pendingRequests.length },
     { id: "appointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "sessions", icon: <FaVideo />, label: t('sessions'), badge: 0 },
-    { id: "call_history", icon: <FaVideo />, label: t('call_history'), badge: 0 },
+    { id: "call_history", icon: <FaHistory />, label: t('call_history'), badge: 0 },
     // { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
     { id: "earnings", icon: <FaMoneyBillWave />, label: t('earnings'), badge: 0 },
     { id: "profile", icon: <FaUser />, label: t('profile'), badge: 0 },
@@ -795,7 +796,14 @@ export default function CounselorDashboard() {
 )}
 
         {activeTab === "call_history" && (
-          <div className="couns-tab-content">
+          <div className="couns-tab-content couns-call-page">
+            <div className="couns-call-page-header">
+              <div>
+                <span className="stitch-apt-eyebrow">Communication log</span>
+                <h2>{t('call_history')}</h2>
+                <p>Review voice and video calls, missed sessions and call duration.</p>
+              </div>
+            </div>
             <CallHistory currentUser={{ id: localStorage.getItem("counsellorId"), role: "counsellor" }} />
           </div>
         )}

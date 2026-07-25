@@ -3,6 +3,7 @@ import "./App.css";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import "../setupAxios";
 import ProtectedRoute from "./Component/common/ProtectedRoute";
+import axiosInstance from "./axiosConfig";
 
 const Leanding = lazy(() => import("./authtication/Leanding"));
 const UserDashboard = lazy(
@@ -59,6 +60,57 @@ function App() {
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [navigate, location.pathname]);
+
+  // Keep the server-side login session alive while a protected web page is
+  // open. Closing the browser stops this signal, allowing the backend to
+  // release the one-device lock automatically.
+  useEffect(() => {
+    const protectedPaths = [
+      "/user-dashboard",
+      "/counselor-dashboard",
+      "/counselor-directory",
+      "/chat",
+      "/sms-input",
+    ];
+    const isProtectedPage = protectedPaths.some(
+      (path) =>
+        location.pathname === path || location.pathname.startsWith(`${path}/`),
+    );
+    const hasToken =
+      localStorage.getItem("accessToken") || localStorage.getItem("token");
+
+    if (!isProtectedPage || !hasToken) return undefined;
+
+    let stopped = false;
+    const sendHeartbeat = async () => {
+      if (stopped) return;
+      try {
+        await axiosInstance.post("/api/auth/session-heartbeat");
+      } catch (error) {
+        // Token refresh/session expiry is handled by the shared interceptor.
+        // Temporary network loss must not immediately eject the user.
+        if (error.response?.status !== 401) {
+          console.debug("Session heartbeat delayed:", error.message);
+        }
+      }
+    };
+
+    sendHeartbeat();
+    const heartbeatTimer = window.setInterval(sendHeartbeat, 15_000);
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") sendHeartbeat();
+    };
+
+    window.addEventListener("focus", sendHeartbeat);
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    return () => {
+      stopped = true;
+      window.clearInterval(heartbeatTimer);
+      window.removeEventListener("focus", sendHeartbeat);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [location.pathname]);
 
   return (
     <>

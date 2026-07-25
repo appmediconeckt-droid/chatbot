@@ -13,7 +13,7 @@ const initialForm = {
   confirmNewPassword: "",
 };
 
-const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated, role = "user" }) => {
+const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated, onCancel, role = "user" }) => {
   const isCounselor = role === "counsellor" || role === "counselor";
   const userT = useUserTranslation();
   const counselorT = useCounselorTranslation();
@@ -28,10 +28,12 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated, role = "use
   const [redirectCountdown, setRedirectCountdown] = useState(0);
 
   useEffect(() => {
-    if (typeof hasPassword === "boolean") {
+    if (initialMode === "set" || initialMode === "change") {
+      setMode(initialMode);
+    } else if (typeof hasPassword === "boolean") {
       setMode(hasPassword ? "change" : "set");
     }
-  }, [hasPassword]);
+  }, [hasPassword, initialMode]);
 
   // Countdown effect for redirect
   useEffect(() => {
@@ -68,7 +70,18 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated, role = "use
     }));
   };
 
-  const passwordIsValid = (value) => String(value || "").length >= 6;
+  const passwordChecks = (value) => {
+    const password = String(value || "");
+    return {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      number: /\d/.test(password),
+      special: /[^A-Za-z0-9]/.test(password),
+    };
+  };
+  const passwordIsValid = (value) => Object.values(passwordChecks(value)).every(Boolean);
+  const newPasswordChecks = passwordChecks(form.newPassword);
+  const setPasswordChecks = passwordChecks(form.password);
 
   const handleSendOtp = async () => {
     clearStatus();
@@ -123,7 +136,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated, role = "use
     clearStatus();
 
     if (!passwordIsValid(form.password)) {
-      setError(t('password_min_6_chars'));
+      setError("Password must be at least 8 characters and include an uppercase letter, number, and special character.");
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -175,7 +188,7 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated, role = "use
       return;
     }
     if (!passwordIsValid(form.newPassword)) {
-      setError(t('new_password_min_6_chars'));
+      setError("New password must be at least 8 characters and include an uppercase letter, number, and special character.");
       return;
     }
     if (form.newPassword !== form.confirmNewPassword) {
@@ -231,11 +244,11 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated, role = "use
     <section className="password-security-panel">
       <div className="password-security-panel__header">
         <div>
-          <h2>{t('password_security')}</h2>
+          <h2>Password Security</h2>
           <p>
             {mode === "set"
               ? t('add_reset_password_otp')
-              : t('change_account_password')}
+              : "Update your current password"}
           </p>
         </div>
         <div className="password-security-panel__switch">
@@ -264,76 +277,122 @@ const PasswordChangePage = ({ email, hasPassword, onPasswordUpdated, role = "use
 
       {mode === "set" ? (
         <form className="password-security-panel__form" onSubmit={handleSetPassword}>
-          <div className="password-security-panel__otp-row">
-            <input type="email" value={normalizedEmail} readOnly />
-            <button type="button" onClick={handleSendOtp} disabled={loading || !normalizedEmail}>
-              {otpSent ? t('resend_otp') : t('send_otp')}
-            </button>
-          </div>
+          <label className="password-field password-email-field">
+            <span>Your Mail</span>
+            <div className="password-email-input-row">
+              <input type="email" value={normalizedEmail} placeholder="Enter your mail id" readOnly />
+              <button type="button" onClick={handleSendOtp} disabled={loading || !normalizedEmail}>
+                {otpSent ? t("resend_otp") : t("send_otp")}
+              </button>
+            </div>
+          </label>
           {otpSent && (
-            <input
-              type="text"
-              inputMode="numeric"
-              maxLength={6}
-              name="otp"
-              value={form.otp}
-              onChange={handleChange}
-              placeholder={t('enter_6_digit_otp')}
-            />
+            <label className="password-field password-otp-field">
+              <span>Verification Code</span>
+              <input type="text" inputMode="numeric" maxLength={6} name="otp" value={form.otp} onChange={handleChange} placeholder={t("enter_6_digit_otp")} />
+            </label>
           )}
-          <div className="password-security-panel__grid">
+          <label className="password-field password-new-field">
+            <span>New Password</span>
             <input
               type="password"
               name="password"
               value={form.password}
               onChange={handleChange}
-              placeholder={t('new_password')}
+              placeholder="Minimum 8 characters"
               autoComplete="new-password"
             />
+          </label>
+          <div className="password-strength">
+            <div className="password-strength-row">
+              <div className="password-strength-bar">
+                {[0, 1, 2, 3].map((part) => <i key={part} className={Object.values(setPasswordChecks).filter(Boolean).length > part ? "passed" : ""} />)}
+              </div>
+              <strong>Strong Password</strong>
+            </div>
+            <ul>
+              <li className={setPasswordChecks.length ? "passed" : ""}>8+ chars</li>
+              <li className={setPasswordChecks.uppercase ? "passed" : ""}>Uppercase</li>
+              <li className={setPasswordChecks.number ? "passed" : ""}>Number</li>
+              <li className={setPasswordChecks.special ? "passed" : ""}>Special char</li>
+            </ul>
+          </div>
+          <label className="password-field password-confirm-field">
+            <span>Confirm Password</span>
             <input
               type="password"
               name="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
-              placeholder={t('confirm_password')}
+              placeholder="Re-enter new password"
               autoComplete="new-password"
             />
+          </label>
+          <div className="password-change-actions">
+            <button type="submit" className="password-security-panel__primary" disabled={loading}>
+              {loading ? t("saving") : "Save Changes"}
+            </button>
+            <button type="button" className="password-change-cancel" onClick={() => { setForm(initialForm); setOtpSent(false); clearStatus(); onCancel?.(); }}>Cancel Changes</button>
           </div>
-          <button type="submit" className="password-security-panel__primary" disabled={loading}>
-            {loading ? t('saving') : t('save_password')}
-          </button>
         </form>
       ) : (
         <form className="password-security-panel__form" onSubmit={handleChangePassword}>
-          <input
-            type="password"
-            name="oldPassword"
-            value={form.oldPassword}
-            onChange={handleChange}
-            placeholder={t('current_password')}
-            autoComplete="current-password"
-          />
-          <div className="password-security-panel__grid">
+          <div className="password-current-meta">
+            <span>Current:</span><strong>••••••••</strong><small>Updated 2 mos ago</small>
+          </div>
+          <label className="password-field">
+            <span>Current Password</span>
+            <input
+              type="password"
+              name="oldPassword"
+              value={form.oldPassword}
+              onChange={handleChange}
+              placeholder="Enter current password"
+              autoComplete="current-password"
+            />
+          </label>
+          <label className="password-field">
+            <span>New Password</span>
             <input
               type="password"
               name="newPassword"
               value={form.newPassword}
               onChange={handleChange}
-              placeholder={t('new_password')}
+              placeholder="Minimum 8 characters"
               autoComplete="new-password"
             />
+          </label>
+          <div className="password-strength">
+            <div className="password-strength-row">
+              <div className="password-strength-bar">
+                {[0, 1, 2, 3].map((part) => <i key={part} className={Object.values(newPasswordChecks).filter(Boolean).length > part ? "passed" : ""} />)}
+              </div>
+              <strong>Strong Password</strong>
+            </div>
+            <ul>
+              <li className={newPasswordChecks.length ? "passed" : ""}>8+ chars</li>
+              <li className={newPasswordChecks.uppercase ? "passed" : ""}>Uppercase</li>
+              <li className={newPasswordChecks.number ? "passed" : ""}>Number</li>
+              <li className={newPasswordChecks.special ? "passed" : ""}>Special char</li>
+            </ul>
+          </div>
+          <label className="password-field">
+            <span>Confirm Password</span>
             <input
               type="password"
               name="confirmNewPassword"
               value={form.confirmNewPassword}
               onChange={handleChange}
-              placeholder={t('confirm_new_password')}
+              placeholder="Re-enter new password"
               autoComplete="new-password"
             />
+          </label>
+          <div className="password-change-actions">
+            <button type="submit" className="password-security-panel__primary" disabled={loading}>
+              {loading ? t('updating') : "Save Changes"}
+            </button>
+            <button type="button" className="password-change-cancel" onClick={() => { setForm(initialForm); clearStatus(); onCancel?.(); }}>Cancel Changes</button>
           </div>
-          <button type="submit" className="password-security-panel__primary" disabled={loading}>
-            {loading ? t('updating') : t('change_password_button')}
-          </button>
         </form>
       )}
 
