@@ -7,7 +7,12 @@ import {
   FaClock,
   FaCalendarAlt,
   FaUser,
-  FaTimes,
+  FaVideoSlash,
+  FaRedoAlt,
+  FaMagic,
+  FaShieldAlt,
+  FaQuoteLeft,
+  FaBriefcaseMedical,
 } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
@@ -24,6 +29,8 @@ export default function SessionsTab({
   loading = false,
 }) {
   const { t } = useCounselorTranslation();
+  const [sessionFilter, setSessionFilter] = React.useState("all");
+  const [selectedSession, setSelectedSession] = React.useState(null);
 
   // ✅ Helper function with fallback
   const translate = (key, fallback) => {
@@ -101,6 +108,52 @@ export default function SessionsTab({
     });
   };
 
+  const handleViewTomorrow = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const localDate = new Date(tomorrow.getTime() - tomorrow.getTimezoneOffset() * 60000)
+      .toISOString()
+      .split("T")[0];
+    setSessionSelectedDate(localDate);
+  };
+
+  const visibleSessions = React.useMemo(() => {
+    return sessionAppointments.filter((appointment) => {
+      if (sessionFilter === "today") return isToday(appointment.date);
+      if (sessionFilter === "upcoming") return isUpcoming(appointment.date) && !isToday(appointment.date);
+      if (sessionFilter === "past") return !isUpcoming(appointment.date) && !isToday(appointment.date);
+      return true;
+    });
+  }, [sessionAppointments, sessionFilter]);
+
+  const sessionCounts = React.useMemo(() => ({
+    all: sessionAppointments.length,
+    today: sessionAppointments.filter((appointment) => isToday(appointment.date)).length,
+    upcoming: sessionAppointments.filter((appointment) => isUpcoming(appointment.date) && !isToday(appointment.date)).length,
+    past: sessionAppointments.filter((appointment) => !isUpcoming(appointment.date) && !isToday(appointment.date)).length,
+  }), [sessionAppointments]);
+
+  const daySummary = React.useMemo(() => {
+    const now = new Date();
+    const completed = visibleSessions.filter((appointment) =>
+      ["completed", "done"].includes(String(appointment.status || "").toLowerCase())
+    ).length;
+    const inProgress = visibleSessions.filter((appointment) => {
+      const status = String(appointment.status || "").toLowerCase();
+      if (["in-progress", "in_progress", "ongoing"].includes(status)) return true;
+      const start = new Date(appointment.date);
+      const duration = Number(appointment.duration || 45);
+      const end = new Date(start.getTime() + duration * 60000);
+      return now >= start && now <= end && !["completed", "cancelled", "rejected"].includes(status);
+    }).length;
+    return {
+      total: visibleSessions.length,
+      completed,
+      inProgress,
+      remaining: Math.max(0, visibleSessions.length - completed - inProgress),
+    };
+  }, [visibleSessions]);
+
   if (loading) {
     return (
       <div className="couns-tab-content-stitch">
@@ -110,21 +163,28 @@ export default function SessionsTab({
   }
 
   return (
-    <div className="couns-tab-content-stitch">
+    <div className="couns-tab-content-stitch couns-sessions-page">
+      <header className="couns-sessions-page-title">
+        <h1>Counselling seasons overview</h1>
+      </header>
+
       <div className="stitch-session-layout">
         {/* Header with Date Filter */}
         <div className="stitch-session-header">
           <div className="stitch-session-header-left">
-            <h2>{translate('sessions', 'Sessions')}</h2>
-            <span className="stitch-session-count">
-              {sessionAppointments.length} {translate('confirmed_sessions', 'Confirmed Sessions')}
-            </span>
-            <span className="stitch-session-today-badge">
-              {translate('showing_for', 'Showing for')}: {getTodayDate()}
-            </span>
+            <div className="stitch-session-heading-row">
+              <h2>{translate('sessions', 'Sessions')}</h2>
+              <span className="stitch-session-count">
+                {sessionAppointments.length} {translate('confirmed', 'Confirmed')}
+              </span>
+            </div>
+            <div className="stitch-session-header-meta">
+              <span>{translate('showing_for', 'Showing for')}:</span>
+              <strong>{sessionSelectedDate ? formatDateForDisplay(sessionSelectedDate) : getTodayDate()}</strong>
+            </div>
           </div>
           <div className="stitch-date-filter">
-            <FaCalendarAlt style={{ color: "#4648d4", fontSize: "14px" }} />
+            <FaCalendarAlt />
             <input
               type="date"
               className="stitch-date-input"
@@ -132,36 +192,75 @@ export default function SessionsTab({
               onChange={handleDateChange}
               title="Filter by date"
             />
-            <button
-              className="stitch-clear-filter"
-              onClick={handleClearFilter}
-              title="Show today's sessions"
-            >
-              <FaTimes size={10} />
-            </button>
           </div>
         </div>
 
+        {sessionAppointments.length > 0 && (
+          <div className="stitch-apt-filter-scroll stitch-session-filter-row">
+          <div className="stitch-apt-filter-tabs">
+            {[
+              ["all", translate("all", "All")],
+              ["today", translate("today", "Today")],
+              ["upcoming", translate("upcoming", "Upcoming")],
+              ["past", translate("past", "Past")],
+            ].map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                className={`stitch-apt-filter-tab ${sessionFilter === key ? "active" : ""}`}
+                onClick={() => setSessionFilter(key)}
+              >
+                <span>{label}</span>
+                <b>{sessionCounts[key]}</b>
+              </button>
+            ))}
+          </div>
+          </div>
+        )}
+
         {/* Sessions Grid */}
-        <div className="stitch-session-grid">
-          {sessionAppointments.length === 0 ? (
+        <div className={`stitch-session-grid ${visibleSessions.length ? "has-sessions" : ""}`}>
+          {visibleSessions.length === 0 ? (
             <div className="stitch-empty-state-couns">
-              {sessionSelectedDate 
-                ? `${translate('no_sessions_for_date', 'No sessions for')} ${formatDateForDisplay(sessionSelectedDate)}`
-                : translate('no_confirmed_sessions', 'No confirmed sessions')}
+              <div className="stitch-empty-session-icon" aria-hidden="true">
+                <FaVideoSlash />
+              </div>
+              <h3>{isToday(sessionSelectedDate || new Date()) ? "No sessions today" : "No sessions for this day"}</h3>
+              <p>
+                Your confirmed sessions for the selected day will appear
+                <br />
+                here. Enjoy the downtime or check upcoming dates.
+              </p>
+              <div className="stitch-empty-session-actions">
+                <button type="button" className="primary" onClick={handleClearFilter}>
+                  <FaRedoAlt /> Refresh Schedule
+                </button>
+                <button type="button" onClick={handleViewTomorrow}>View Tomorrow</button>
+              </div>
             </div>
           ) : (
-            sessionAppointments
+            <>
+            <div className="stitch-scheduled-session-list">
+            {[...visibleSessions]
               .sort((a, b) => new Date(a.date) - new Date(b.date))
               .map((apt) => {
                 const anonymousUser = getAppointmentDisplay(apt);
-                const isTodaySession = isToday(apt.date);
-                const isUpcomingSession = isUpcoming(apt.date);
                 const dateObj = new Date(apt.date);
+                const duration = Number(apt.duration || 45);
+                const endDate = new Date(dateObj.getTime() + duration * 60000);
+                const status = String(apt.status || "").toLowerCase();
+                const now = new Date();
+                const sessionInProgress =
+                  ["in-progress", "in_progress", "ongoing"].includes(status) ||
+                  (now >= dateObj && now <= endDate && !["completed", "cancelled", "rejected"].includes(status));
 
                 return (
                   <div key={apt._id} className="stitch-session-card">
-                    <div className="stitch-session-card-header">
+                    <div className="stitch-session-timebar">
+                      <span><FaClock /> {formatTime(dateObj)} - {formatTime(endDate)}</span>
+                      {sessionInProgress && <b>● IN PROGRESS</b>}
+                    </div>
+                    <div className="stitch-session-card-body">
                       <div className="stitch-session-avatar">
                         {anonymousUser.avatarUrl ? (
                           <img
@@ -175,59 +274,16 @@ export default function SessionsTab({
                       </div>
                       <div className="stitch-session-info">
                         <h3>{anonymousUser.name}</h3>
-                        <div className="stitch-session-tags">
-                          <span className={`stitch-session-status ${isTodaySession ? 'today' : isUpcomingSession ? 'upcoming' : 'past'}`}>
-                            {isTodaySession 
-                              ? translate('today', 'Today') 
-                              : isUpcomingSession 
-                                ? translate('upcoming', 'Upcoming') 
-                                : translate('past', 'Past')}
-                          </span>
-                          <span className="stitch-session-type">
-                            {translate('initial_consultation', 'Initial Consultation')}
-                          </span>
-                        </div>
+                        <p><FaUser /> {apt.notes || translate('initial_consultation', 'General Consultation')}</p>
                       </div>
-                    </div>
-
-                    <div className="stitch-session-details">
-                      <div className="stitch-session-detail-item">
-                        <FaCalendarAlt className="stitch-session-detail-icon" />
-                        <span>
-                          {dateObj.toLocaleDateString('en-US', {
-                            weekday: 'short',
-                            month: 'short',
-                            day: 'numeric',
-                            year: 'numeric'
-                          })}
-                        </span>
-                      </div>
-                      <div className="stitch-session-detail-item">
-                        <FaClock className="stitch-session-detail-icon" />
-                        <span>{formatTime(apt.date)}</span>
-                      </div>
-                      <div className="stitch-session-detail-item">
-                        <FaUser className="stitch-session-detail-icon" />
-                        <span>
-                          {translate('session_duration', 'Duration')}: 45 {translate('minutes', 'minutes')}
-                        </span>
-                      </div>
-                    </div>
-
-                    {apt.notes && apt.notes.trim() !== "" && (
-                      <div className="stitch-session-notes">
-                        "{apt.notes}"
-                      </div>
-                    )}
-
-                    <div className="stitch-session-actions">
                       <button
-                        className="stitch-session-action-btn stitch-session-video-btn"
-                        onClick={() => handleInitiateVideoCall(apt)}
+                        className={`stitch-session-action-btn ${sessionInProgress ? "stitch-session-video-btn" : "stitch-session-details-btn"}`}
+                        onClick={() => sessionInProgress ? handleInitiateVideoCall(apt) : setSelectedSession(apt)}
                         title={translate('start_video_call', 'Start Video Call')}
                         aria-label={translate('start_video_call', 'Start Video Call')}
                       >
-                        <FaVideo aria-hidden="true" />
+                        {sessionInProgress && <FaVideo aria-hidden="true" />}
+                        <span>{sessionInProgress ? "Conduct Session" : "View Details"}</span>
                       </button>
                       <button
                         className="stitch-session-action-btn stitch-session-voice-btn"
@@ -251,10 +307,80 @@ export default function SessionsTab({
                     </div>
                   </div>
                 );
-              })
+              })}
+            </div>
+
+            <aside className="stitch-session-day-summary">
+              <h3><FaMagic /> Day Summary</h3>
+              <div><span>Total Sessions</span><b>{daySummary.total}</b></div>
+              <div><span>Completed</span><b>{daySummary.completed}</b></div>
+              <div className="in-progress"><span>In Progress</span><b>{daySummary.inProgress}</b></div>
+              <div><span>Remaining</span><b>{daySummary.remaining}</b></div>
+              <footer><span>System Normal</span></footer>
+            </aside>
+            </>
           )}
         </div>
       </div>
+
+      {selectedSession && (() => {
+        const patient = getAppointmentDisplay(selectedSession);
+        const startDate = new Date(selectedSession.date);
+        const duration = Number(selectedSession.duration || 45);
+        const endDate = new Date(startDate.getTime() + duration * 60000);
+        const status = String(selectedSession.status || "confirmed").toLowerCase();
+        const sessionInProgress = ["in-progress", "in_progress", "ongoing"].includes(status) ||
+          (new Date() >= startDate && new Date() <= endDate && !["completed", "cancelled", "rejected"].includes(status));
+        return (
+          <div className="stitch-session-modal-backdrop" role="presentation" onMouseDown={() => setSelectedSession(null)}>
+            <section
+              className="stitch-session-details-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Session details"
+              onMouseDown={(event) => event.stopPropagation()}
+            >
+              <header>
+                <div className="stitch-session-modal-avatar">
+                  {patient.avatarUrl ? <img src={patient.avatarUrl} alt={patient.name} /> : <span>{patient.avatar}</span>}
+                </div>
+                <div>
+                  <h2>{patient.name}</h2>
+                  <p>{selectedSession.gender || "Patient"} • {selectedSession.age ? `${selectedSession.age} Years` : "Private profile"}</p>
+                  <span><FaShieldAlt /> Returning Patient</span>
+                </div>
+                <button type="button" onClick={() => setSelectedSession(null)} aria-label="Close session details">×</button>
+              </header>
+
+              <div className="stitch-session-modal-content">
+                <div className="stitch-session-detail-pills">
+                  <span className={sessionInProgress ? "progress" : ""}>● {sessionInProgress ? "In Progress" : "Confirmed"}</span>
+                  <span><FaCalendarAlt /> {formatDateForDisplay(selectedSession.date)}</span>
+                  <span><FaClock /> {formatTime(startDate)} – {formatTime(endDate)}</span>
+                  <span><FaVideo /> Video Session</span>
+                </div>
+
+                <div className="stitch-session-reason-card">
+                  <h3><FaBriefcaseMedical /> Reason: {selectedSession.reason || selectedSession.title || "Consultation Follow-up"}</h3>
+                  <blockquote>
+                    <FaQuoteLeft />
+                    <span>{selectedSession.notes || "No additional notes were provided for this session."}</span>
+                  </blockquote>
+                </div>
+              </div>
+
+              <footer>
+                <button type="button" onClick={() => {
+                  setSelectedSession(null);
+                  handleInitiateVideoCall(selectedSession);
+                }}>
+                  <FaVideo /> Start Session
+                </button>
+              </footer>
+            </section>
+          </div>
+        );
+      })()}
     </div>
   );
 }

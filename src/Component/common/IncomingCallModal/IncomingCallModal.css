@@ -327,3 +327,254 @@
     margin-top: 16px;
   }
 }
+
+/* Shared incoming-call design used by both user and counselor portals. */
+.ucm-overlay {
+  align-items: center;
+  padding: 16px;
+  background: rgba(20, 27, 35, 0.22);
+  backdrop-filter: blur(1px);
+}
+
+.ucm-modal,
+.ucm-modal.ucm-video,
+.ucm-modal.ucm-voice {
+  width: min(92vw, 448px);
+  height: min(82dvh, 668px);
+  min-height: 540px;
+  max-height: 720px;
+  color: #152638;
+  background: #fff;
+  border: 1px solid #edf0f2;
+  border-radius: 31px;
+  box-shadow: 0 28px 65px rgba(33, 42, 51, 0.22);
+}
+
+.ucm-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(38px, 6vh, 58px) 30px 34px;
+  overflow: hidden;
+  color: #152638;
+}
+
+.ucm-kicker {
+  margin: 0 0 20px;
+  color: #71747b;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+}
+
+.ucm-name {
+  margin: 0;
+  color: #102236;
+  font-size: clamp(34px, 4vw, 48px);
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+.ucm-location {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 22px;
+  margin: 12px 0 0;
+  color: #5f6268;
+  font-size: 16px;
+}
+
+.ucm-location svg {
+  width: 13px;
+  height: 13px;
+}
+
+.ucm-avatar-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 160px;
+  height: 160px;
+  margin: clamp(55px, 9vh, 78px) 0 45px;
+  background:
+    radial-gradient(circle, transparent 35%, rgba(24, 143, 92, 0.14) 36%, transparent 38%),
+    radial-gradient(circle, transparent 49%, rgba(24, 143, 92, 0.13) 50%, transparent 52%),
+    radial-gradient(circle, transparent 63%, rgba(24, 143, 92, 0.11) 64%, transparent 66%),
+    #fff;
+  border-radius: 50%;
+  box-shadow: 0 14px 28px rgba(44, 58, 70, 0.14);
+}
+
+.ucm-avatar {
+  width: 62px;
+  height: 62px;
+  margin: 0;
+  background: #e9f2ee;
+  border: 3px solid #fff;
+  box-shadow: 0 5px 14px rgba(25, 47, 60, 0.2);
+}
+
+.ucm-avatar-wrap::after {
+  position: absolute;
+  right: 55px;
+  bottom: 28px;
+  padding: 2px 5px 2px 13px;
+  color: #16724b;
+  font-size: 5px;
+  font-weight: 700;
+  content: "ENCRYPTED";
+  background: #edf7f2;
+  border-radius: 999px;
+}
+
+.ucm-encrypted {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 6px 14px;
+  color: #26363c;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.13em;
+  background: #f5faf8;
+  border: 1px solid #adc9bf;
+  border-radius: 999px;
+}
+
+.ucm-encrypted svg {
+  width: 12px;
+  height: 12px;
+}
+
+.ucm-actions {
+  display: flex;
+  justify-content: space-between;
+  width: min(100%, 320px);
+  margin-top: auto;
+  padding-top: 34px;
+  gap: 60px;
+  flex-wrap: nowrap;
+}
+
+.ucm-btn {
+  flex-direction: column;
+  gap: 12px;
+  min-width: 84px;
+  min-height: auto;
+  padding: 0;
+  color: #555;
+  font-size: 16px;
+  font-weight: 400;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ucm-btn svg {
+  width: 64px;
+  height: 64px;
+  padding: 20px;
+  color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 8px 18px rgba(22, 35, 46, 0.18);
+}
+
+.ucm-btn--reject,
+.ucm-btn--accept {
+  color: #555;
+  background: transparent;
+  box-shadow: none;
+}
+
+.ucm-btn--reject svg {
+  background: #d11c24;
+}
+
+.ucm-btn--accept svg {
+  background: #007f3f;
+}
+
+.ucm-btn:hover:not(:disabled) {
+  transform: none;
+}
+
+.ucm-btn:hover:not(:disabled) svg {
+  transform: translateY(-2px) scale(1.03);
+}
+
+@media (max-width: 560px) {
+  .ucm-overlay {
+    align-items: center;
+    padding: 12px;
+  }
+
+  .ucm-modal,
+  .ucm-modal.ucm-video,
+  .ucm-modal.ucm-voice {
+    width: min(100%, 410px);
+    height: min(88dvh, 630px);
+    min-height: 500px;
+    border-radius: 26px;
+  }
+
+  .ucm-body {
+    padding: 34px 20px 28px;
+  }
+
+  .ucm-name {
+    font-size: 34px;
+  }
+
+  .ucm-avatar-wrap {
+    width: 145px;
+    height: 145px;
+    margin: 42px 0 34px;
+  }
+
+  .ucm-avatar {
+    width: 58px;
+    height: 58px;
+  }
+
+  .ucm-actions {
+    flex-direction: row;
+    gap: 30px;
+  }
+
+  .ucm-btn {
+    width: auto;
+    min-width: 80px;
+    min-height: auto;
+    padding: 0;
+    font-size: 15px;
+  }
+}
+
+@media (max-height: 620px) {
+  .ucm-modal,
+  .ucm-modal.ucm-video,
+  .ucm-modal.ucm-voice {
+    height: calc(100dvh - 20px);
+    min-height: 0;
+  }
+
+  .ucm-body {
+    padding-top: 24px;
+  }
+
+  .ucm-kicker {
+    margin-bottom: 10px;
+  }
+
+  .ucm-avatar-wrap {
+    width: 120px;
+    height: 120px;
+    margin: 24px 0 22px;
+  }
+
+  .ucm-actions {
+    padding-top: 18px;
+  }
+}

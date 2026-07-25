@@ -3,7 +3,7 @@ import { FaCheckCircle, FaSpinner, FaArrowLeft, FaEnvelope } from "react-icons/f
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ForgotPasswordOTP.css";
-import logo from "../image/Mediconect Logo-3.png";
+import logo from "../assets/humaeli.png";
 import { API_BASE_URL } from "../axiosConfig";
 
 const ForgotPasswordOTP = () => {
@@ -133,7 +133,6 @@ const ForgotPasswordOTP = () => {
         {/* Logo */}
         <div className="fpotp-logo">
           <img src={logo} alt="Mediconeckt" className="fpotp-logo-img" />
-          <span className="fpotp-logo-text">Mediconeckt ChatBot</span>
         </div>
 
         <div className="fpotp-card">

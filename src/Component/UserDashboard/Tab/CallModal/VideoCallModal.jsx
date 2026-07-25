@@ -21,13 +21,17 @@ import "./VideoCallModal.css";
 import {
   FaDesktop,
   FaCompress,
+  FaCommentAlt,
   FaExpand,
   FaMicrophone,
   FaMicrophoneSlash,
   FaPhoneSlash,
   FaRegSmile,
+  FaSyncAlt,
   FaVideo,
   FaVideoSlash,
+  FaVolumeMute,
+  FaVolumeUp,
 } from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import {
@@ -250,12 +254,23 @@ const resolveDisplayName = (participant, viewerRole) => {
   );
 };
 
-const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
-  const { useCallCallingState, useParticipants, useLocalParticipant } =
-    useCallStateHooks();
+const StreamVideoBody = ({
+  onLeave,
+  localUserId,
+  isVoiceMode,
+  calleeName,
+  elapsedSeconds,
+}) => {
+  const {
+    useCallCallingState,
+    useParticipants,
+    useLocalParticipant,
+    useRemoteParticipants,
+  } = useCallStateHooks();
   const callingState = useCallCallingState();
   const participants = useParticipants();
   const localParticipantFromHook = useLocalParticipant();
+  const remoteParticipantsFromHook = useRemoteParticipants();
   const normalizedLocalUserId = String(localUserId || "").trim();
 
   const localParticipant = useMemo(() => {
@@ -280,23 +295,43 @@ const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
     );
   }, [localParticipantFromHook, normalizedLocalUserId, participants]);
 
-  const remoteParticipants = useMemo(
-    () =>
-      participants.filter((participant) => {
-        if (!participant) {
-          return false;
-        }
+  const remoteParticipants = useMemo(() => {
+    const isActuallyRemote = (participant) => {
+      if (!participant) return false;
+      if (participant?.isLocalParticipant || participant?.isLocal) return false;
+      if (
+        localParticipant?.sessionId &&
+        participant?.sessionId === localParticipant.sessionId
+      ) {
+        return false;
+      }
+      if (
+        localParticipant?.userId &&
+        participant?.userId === localParticipant.userId
+      ) {
+        return false;
+      }
+      if (
+        localParticipant?.videoStream &&
+        participant?.videoStream === localParticipant.videoStream
+      ) {
+        return false;
+      }
+      if (
+        localParticipant?.videoTrack &&
+        participant?.videoTrack === localParticipant.videoTrack
+      ) {
+        return false;
+      }
+      return true;
+    };
 
-        if (participant?.isLocalParticipant) {
-          return false;
-        }
+    if (Array.isArray(remoteParticipantsFromHook)) {
+      return remoteParticipantsFromHook.filter(isActuallyRemote);
+    }
 
-        if (
-          localParticipant?.sessionId &&
-          participant?.sessionId === localParticipant.sessionId
-        ) {
-          return false;
-        }
+    return participants.filter((participant) => {
+        if (!isActuallyRemote(participant)) return false;
 
         if (
           normalizedLocalUserId &&
@@ -306,18 +341,23 @@ const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
         }
 
         return true;
-      }),
-    [localParticipant?.sessionId, normalizedLocalUserId, participants],
-  );
+      });
+  }, [
+    localParticipant?.sessionId,
+    localParticipant?.userId,
+    normalizedLocalUserId,
+    participants,
+    remoteParticipantsFromHook,
+  ]);
 
   const presenter = useMemo(
     () =>
-      participants.find(
+      remoteParticipants.find(
         (p) =>
           p.publishedTracks?.includes("screenShareTrack") ||
           p.screenShareStream,
       ),
-    [participants],
+    [remoteParticipants],
   );
   const mainParticipant = presenter || remoteParticipants[0] || null;
   const isPresentingMain =
@@ -329,6 +369,11 @@ const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
   const voiceParticipantName =
     mainParticipantName || String(calleeName || "Participant").trim();
   const voiceParticipantInitial = buildInitials(voiceParticipantName);
+  const voiceParticipantImage =
+    mainParticipant?.image ||
+    mainParticipant?.user?.image ||
+    mainParticipant?.user?.profilePic ||
+    "";
   const localParticipantName = localParticipant
     ? resolveDisplayName(localParticipant, currentUserRole)
     : "You";
@@ -347,11 +392,38 @@ const StreamVideoBody = ({ onLeave, localUserId, isVoiceMode, calleeName }) => {
             <div className="stream-voice-stage">
               <div className="stream-voice-avatar-wrap">
                 <div className="stream-voice-avatar">
-                  {voiceParticipantInitial}
+                  {voiceParticipantImage ? (
+                    <img src={voiceParticipantImage} alt={voiceParticipantName} />
+                  ) : (
+                    voiceParticipantInitial
+                  )}
                 </div>
               </div>
               <div className="stream-voice-name">{voiceParticipantName}</div>
-              <div className="stream-voice-note">Voice call in progress</div>
+              <div className="stream-voice-badges" aria-label="Call security">
+                <span>▣ HD Audio</span>
+                <span>♙ Encrypted</span>
+                <span>◉ Verified Doctor</span>
+              </div>
+              <div className="stream-voice-activity-card">
+                <div className="stream-voice-status">
+                  <span aria-hidden="true" />
+                  Connected
+                  <b>•</b>
+                  {formatDuration(elapsedSeconds)}
+                </div>
+                <div className="stream-voice-wave" aria-label="Audio is active">
+                  {[16, 28, 20, 34, 24, 30, 16].map((height, index) => (
+                    <i
+                      key={`${height}-${index}`}
+                      style={{ "--wave-height": `${height}px` }}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div className="stream-voice-private-note">
+                ♙ Secure consultation. Your conversation is private.
+              </div>
             </div>
           ) : (
             <div className="stream-empty-state">
@@ -492,6 +564,9 @@ const VideoCallModal = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
+  const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
+  const [isVoiceVideoEnabled, setIsVoiceVideoEnabled] = useState(false);
+  const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false);
   const [connectedAt, setConnectedAt] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
@@ -928,6 +1003,54 @@ const VideoCallModal = ({
       console.error("Failed to toggle camera:", err);
     }
   }, [isVoiceMode]);
+
+  const handleSwitchCamera = useCallback(async () => {
+    if (isVoiceMode || cameraOffRef.current) return;
+
+    try {
+      await callRef.current?.camera?.flip?.();
+    } catch (err) {
+      console.error("Failed to switch camera:", err);
+    }
+  }, [isVoiceMode]);
+
+  const handleToggleSpeaker = useCallback(async () => {
+    const nextMuted = !isSpeakerMuted;
+    const activeCall = callRef.current;
+
+    try {
+      if (activeCall?.speaker) {
+        if (nextMuted) {
+          await activeCall.speaker.disable?.();
+        } else {
+          await activeCall.speaker.enable?.();
+        }
+      }
+
+      modalContainerRef.current
+        ?.querySelectorAll(".stream-main-stage video, .stream-main-stage audio")
+        .forEach((media) => {
+          media.muted = nextMuted;
+        });
+      setIsSpeakerMuted(nextMuted);
+    } catch (err) {
+      console.error("Failed to toggle speaker:", err);
+    }
+  }, [isSpeakerMuted]);
+
+  const handleToggleVoiceVideo = useCallback(async () => {
+    const nextEnabled = !isVoiceVideoEnabled;
+    try {
+      if (nextEnabled) {
+        await callRef.current?.camera?.enable?.();
+      } else {
+        await callRef.current?.camera?.disable?.();
+      }
+      setIsVoiceVideoEnabled(nextEnabled);
+    } catch (err) {
+      console.error("Failed to toggle video during voice call:", err);
+    }
+  }, [isVoiceVideoEnabled]);
 
   const handleToggleScreenShare = useCallback(async () => {
     if (isVoiceMode) return;
@@ -1525,6 +1648,7 @@ const VideoCallModal = ({
                   isVoiceMode={isVoiceMode}
                   localUserId={localUser?.id}
                   onLeave={handleCallLeft}
+                  elapsedSeconds={elapsedSeconds}
                 />
               </StreamCall>
             </StreamVideo>
@@ -1574,63 +1698,66 @@ const VideoCallModal = ({
                 </button>
               )}
 
-              {!isVoiceMode && canShareScreen && (
+              {!isVoiceMode && (
                 <button
                   type="button"
-                  className={`stream-icon-btn ${isScreenSharing ? "stream-icon-btn-active" : ""}`.trim()}
+                  className="stream-icon-btn"
                   onClick={() => {
-                    void handleToggleScreenShare();
+                    void handleSwitchCamera();
                   }}
-                  disabled={screenShareDisabled}
-                  aria-label={
-                    isScreenSharing
-                      ? "Stop screen sharing"
-                      : "Start screen sharing"
-                  }
-                  data-tooltip={isScreenSharing ? "Stop Share" : "Share Screen"}
+                  disabled={isCameraOff || loading || Boolean(error)}
+                  aria-label="Switch camera"
+                  data-tooltip="Switch Camera"
                 >
-                  <FaDesktop aria-hidden="true" />
+                  <FaSyncAlt aria-hidden="true" />
                 </button>
               )}
 
-              {canCreateReactions && (
-                <div
-                  className="stream-reactions-control"
-                  ref={reactionsMenuRef}
+              {isVoiceMode && (
+                <button
+                  type="button"
+                  className={`stream-icon-btn ${isVoiceVideoEnabled ? "stream-icon-btn-active" : ""}`.trim()}
+                  onClick={() => {
+                    void handleToggleVoiceVideo();
+                  }}
+                  aria-label={isVoiceVideoEnabled ? "Turn video off" : "Turn video on"}
+                  data-tooltip={isVoiceVideoEnabled ? "Video Off" : "Video On"}
                 >
-                  <button
-                    type="button"
-                    className={`stream-icon-btn ${isReactionMenuOpen ? "stream-icon-btn-active" : ""}`.trim()}
-                    onClick={handleToggleReactionMenu}
-                    disabled={reactionsDisabled}
-                    aria-label="Open reactions"
-                    aria-haspopup="menu"
-                    aria-expanded={isReactionMenuOpen}
-                    data-tooltip="Reactions"
-                  >
-                    <FaRegSmile aria-hidden="true" />
-                  </button>
-
-                  {isReactionMenuOpen && (
-                    <div className="stream-reactions-menu" role="menu">
-                      {QUICK_REACTIONS.map((reaction) => (
-                        <button
-                          key={reaction.emojiCode}
-                          type="button"
-                          className="stream-reaction-item"
-                          onClick={() => {
-                            void handleSendReaction(reaction);
-                          }}
-                          aria-label={reaction.label}
-                          title={reaction.label}
-                        >
-                          <span aria-hidden="true">{reaction.symbol}</span>
-                        </button>
-                      ))}
-                    </div>
+                  {isVoiceVideoEnabled ? (
+                    <FaVideoSlash aria-hidden="true" />
+                  ) : (
+                    <FaVideo aria-hidden="true" />
                   )}
-                </div>
+                </button>
               )}
+
+              {isVoiceMode && (
+                <button
+                  type="button"
+                  className={`stream-icon-btn ${isVoiceChatOpen ? "stream-icon-btn-active" : ""}`.trim()}
+                  onClick={() => setIsVoiceChatOpen((open) => !open)}
+                  aria-label="Open call chat"
+                  data-tooltip="Chat"
+                >
+                  <FaCommentAlt aria-hidden="true" />
+                </button>
+              )}
+
+              <button
+                type="button"
+                className={`stream-icon-btn ${isSpeakerMuted ? "stream-icon-btn-muted" : ""}`.trim()}
+                onClick={() => {
+                  void handleToggleSpeaker();
+                }}
+                aria-label={isSpeakerMuted ? "Turn speaker on" : "Mute speaker"}
+                data-tooltip={isSpeakerMuted ? "Speaker On" : "Speaker Off"}
+              >
+                {isSpeakerMuted ? (
+                  <FaVolumeMute aria-hidden="true" />
+                ) : (
+                  <FaVolumeUp aria-hidden="true" />
+                )}
+              </button>
 
               <button
                 type="button"
@@ -1645,6 +1772,11 @@ const VideoCallModal = ({
               </button>
             </div>
           </div>
+          {isVoiceMode && isVoiceChatOpen && (
+            <div className="stream-voice-chat-popover" role="status">
+              Chat remains available in this conversation while your call continues.
+            </div>
+          )}
         </div>
       </div>
     </div>

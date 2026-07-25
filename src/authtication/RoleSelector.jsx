@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import "./RoleSelector.css";
-import logo from "../image/Mediconect Logo-3.png";
+import logo from "../assets/humaeli.png";
 
 const RoleSelector = () => {
   const [selectedRole, setSelectedRole] = useState(null);
@@ -57,8 +57,7 @@ const RoleSelector = () => {
       <div className="m7v2-greeting-area">
         <img
           src={logo}
-          height={50}
-          alt="Mediconect Logo"
+          alt="Humaeli Logo"
           className="menthy-logo-icon"
         />
         <h1 className="p4h1-gradient-title">✦ welcome back ✦</h1>

@@ -11,7 +11,7 @@ body {
 /* ---- main container (fully responsive) ---- */
 .x9k3-role-panel {
   width: 100%;
- margin-top: 120px;
+  margin-top: 24px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   background: rgba(255, 255, 255, 0.68);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
@@ -20,7 +20,7 @@ body {
                clamp(25px, 4vw, 40px) clamp(25px, 4vw, 40px);
   box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.3),
               inset 0 1px 2px rgba(255, 255, 255, 0.7);
-  padding: clamp(20px, 4vw, 45px) clamp(15px, 3vw, 40px);
+  padding: clamp(18px, 2.5vw, 30px) clamp(15px, 3vw, 40px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
@@ -44,15 +44,21 @@ body {
 /* ---- heading area (responsive) ---- */
 .m7v2-greeting-area {
   text-align: center;
-  margin-bottom: clamp(20px, 4vw, 50px);
+  margin-bottom: clamp(16px, 2.5vw, 30px);
 }
 
 .menthy-logo-icon {
-  margin-bottom: 10px;
+  width: clamp(190px, 35vw, 260px);
+  height: clamp(68px, 8vw, 90px);
+  object-fit: cover;
+  object-position: center;
+  margin: 0 auto 8px;
+  display: block;
   filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
 .p4h1-gradient-title {
+  margin: 0;
   font-size: clamp(24px, 6vw, 43px);
   font-weight: 600;
   letter-spacing: -0.02em;
@@ -68,7 +74,7 @@ body {
   font-size: clamp(14px, 3vw, 19px);
   color: #2d3748;
   font-weight: 400;
-  margin-top: clamp(5px, 1.5vw, 10px);
+  margin: clamp(5px, 1.5vw, 10px) 0 0;
   border-bottom: 1px dashed rgba(102, 126, 234, 0.3);
   padding-bottom: clamp(8px, 2vw, 16px);
   display: inline-block;
@@ -387,7 +393,8 @@ body {
   }
   
   .menthy-logo-icon {
-    height: 60px;
+    width: 190px;
+    height: 68px;
   }
   
   .z6w9-dual-grid {
@@ -449,7 +456,8 @@ body {
   }
   
   .menthy-logo-icon {
-    height: 70px;
+    width: 210px;
+    height: 74px;
   }
 }
 

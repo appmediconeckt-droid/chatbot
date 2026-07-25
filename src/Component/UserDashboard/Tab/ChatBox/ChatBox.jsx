@@ -4036,7 +4036,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaPhoneAlt, FaSpinner, FaVideo, FaCamera } from "react-icons/fa";
+import { FaArrowLeft, FaPhoneAlt, FaSpinner, FaVideo, FaCamera, FaSearch, FaHistory, FaPaperclip, FaSmile, FaPaperPlane } from "react-icons/fa";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import PhotoPreviewModal from "../../../common/PhotoPreviewModal/PhotoPreviewModal";
@@ -4088,18 +4088,20 @@ const mergeCounselorProfiles = (storedCounselor, freshCounselor) => {
   return normalizeCounselor({ ...stored, ...freshValues });
 };
 
-const ChatBox = () => {
+const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
   const { t, lang } = useUserTranslation();
   const { translate } = useUserApiTranslation();
   const { id: counselorId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
-  const { chatId, counselor: initialCounselor, user: initialUser } = location.state || {};
+  const { chatId, counselor: initialCounselor, user: initialUser } =
+    conversation || location.state || {};
 
   const [currentChat, setCurrentChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [callHistory, setCallHistory] = useState([]);
+  const [conversationSearch, setConversationSearch] = useState("");
   const [currentCounselor, setCurrentCounselor] = useState(() => {
     if (initialCounselor) return normalizeCounselor(initialCounselor);
     return {
@@ -4278,6 +4280,10 @@ const ChatBox = () => {
   }, [currentCounselor]);
 
   const handleBackClick = async () => {
+    if (embedded) {
+      onClose?.();
+      return;
+    }
     const counselorIdResolved = resolveCounselorId();
     const apiChatId = getChatIdForAPI();
 
@@ -6129,6 +6135,8 @@ const ChatBox = () => {
   };
 
   const counselorName = normalizeCounselor(currentCounselor)?.name || "Counselor";
+  const counselorSpecialization =
+    normalizeCounselor(currentCounselor)?.specialization || t('counselor') || "Counsellor";
   const counselorPresence = getPresence(currentCounselor);
   const counselorOnline = counselorPresence.isOnline;
   const counselorPresenceText = formatPresenceText(counselorPresence, {
@@ -6140,10 +6148,37 @@ const ChatBox = () => {
 
   // ─── Render ──────────────────────────────────────────────────────────
   const mergedTimeline = getMergedTimeline();
-
+  const normalizedConversationSearch = conversationSearch.trim().toLowerCase();
+  const visibleTimeline = normalizedConversationSearch
+    ? mergedTimeline.filter((item) =>
+        [
+          item.content,
+          item.message,
+          item.text,
+          item.attachmentName,
+          item.callType,
+          item.type,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedConversationSearch),
+      )
+    : mergedTimeline;
   return (
-    <div className="chatContainerFull">
+    <div className={`chatContainerFull ${embedded ? "chatEmbedded" : ""}`}>
       <div className="chatBoxMain">
+        <div className="chatConversationSearch">
+          <FaSearch aria-hidden="true" />
+          <input
+            type="search"
+            value={conversationSearch}
+            onChange={(event) => setConversationSearch(event.target.value)}
+            placeholder="Search messages in this conversation..."
+            aria-label="Search messages in this conversation"
+          />
+        </div>
+
         <header className="chatBoxHeader">
           <div className="chatBoxHeaderLeft">
             <button onClick={handleBackClick} className={isMobile ? "chatMobileHeaderBack" : "chatDesktopHeaderBack"} aria-label="Go back" title="Go back">
@@ -6157,7 +6192,10 @@ const ChatBox = () => {
               <div className="chatProfileInfo">
                 <h2 className="chatProfileName">{counselorName}</h2>
                 <p className="chatProfileStatus">
-                  {remoteIsTyping ? <span className="chatTypingText" role="status">{t('typing')}</span> : <span className="chatStatusText">{counselorPresenceText}</span>}
+                  <span className="chatStatusText">{counselorSpecialization}</span>
+                  <span className={`chatHeaderPresence ${counselorOnline ? "online" : ""}`}>
+                    {counselorPresenceText}
+                  </span>
                 </p>
               </div>
             </div>
@@ -6173,6 +6211,7 @@ const ChatBox = () => {
             </button>
             <div className="chatMoreOptions" ref={optionsRef}>
               <button className="chatActionBtn" onClick={() => setShowOptions(!showOptions)} aria-label="More options" aria-expanded={showOptions}>
+                <FaHistory className="chatHistoryIcon" aria-hidden="true" />
                 <span className="chatBtnIcon" aria-hidden="true">⋮</span>
               </button>
               {showOptions && (
@@ -6204,15 +6243,15 @@ const ChatBox = () => {
             <div className="chatLoadingMessages">
               <p>{t('loading_messages')}</p>
             </div>
-          ) : mergedTimeline.length === 0 ? (
+          ) : visibleTimeline.length === 0 ? (
             <div className="chatEmptyState">
-              <p>No messages or calls yet. Start a conversation!</p>
+              <p>{normalizedConversationSearch ? "No matching messages found." : "No messages or calls yet. Start a conversation!"}</p>
             </div>
           ) : (
             <>
-              {mergedTimeline.map((item, index) => (
+              {visibleTimeline.map((item, index) => (
                 <React.Fragment key={item.id || `item_${index}`}>
-                  {getMessageDayKey(item) !== getMessageDayKey(mergedTimeline[index - 1]) && formatMessageDay(item) && (
+                  {getMessageDayKey(item) !== getMessageDayKey(visibleTimeline[index - 1]) && formatMessageDay(item) && (
                     <div className="chatDateSeparator">{formatMessageDay(item)}</div>
                   )}
                   
@@ -6232,6 +6271,12 @@ const ChatBox = () => {
                   )}
                 </React.Fragment>
               ))}
+              {remoteIsTyping && (
+                <div className="chatConversationTyping" role="status">
+                  <span></span><span></span><span></span>
+                  <small>{counselorName} is typing...</small>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </>
           )}
@@ -6276,6 +6321,7 @@ const ChatBox = () => {
               disabled={isSending} 
               aria-label="Attach file"
             >
+              <FaPaperclip className="chatCorrectAttachIcon" aria-hidden="true" />
               <span className="attachIcon" aria-hidden="true">📎</span>
             </button>
             
@@ -6296,7 +6342,7 @@ const ChatBox = () => {
                 value={newMessage} 
                 onChange={handleInputChange} 
                 onKeyDown={handleKeyDown} 
-                placeholder={`Message ${counselorName}...`} 
+                placeholder="Type your message..."
                 className="chatTextInput" 
                 autoComplete="off" 
                 enterKeyHint="send" 
@@ -6307,6 +6353,7 @@ const ChatBox = () => {
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)} 
                 aria-label="Open emoji picker"
               >
+                <FaSmile className="chatCorrectEmojiIcon" aria-hidden="true" />
                 <span className="emojiIcon" aria-hidden="true">😊</span>
               </button>
             </div>
@@ -6318,6 +6365,11 @@ const ChatBox = () => {
               className="chatSendBtn" 
               aria-label="Send message"
             >
+              {isSending ? (
+                <FaSpinner className="chatCorrectSendIcon spinning" aria-hidden="true" />
+              ) : (
+                <FaPaperPlane className="chatCorrectSendIcon" aria-hidden="true" />
+              )}
               <span className="sendIcon" aria-hidden="true">
                 {isSending ? "⏳" : "➤"}
               </span>

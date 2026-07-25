@@ -92,7 +92,7 @@ const AGE_GROUPS = ["all", "10s", "20s", "30s", "40s", "50s", "60s", "70s", "80s
 const GENDERS    = ["all", "male", "female"];
 
 const INITIALS_COLORS = [
-  { bg: "#667eea", label: "Purple" },
+  { bg: "#006B2C", label: "Purple" },
   { bg: "#f093fb", label: "Pink"   },
   { bg: "#4facfe", label: "Blue"   },
   { bg: "#43e97b", label: "Green"  },

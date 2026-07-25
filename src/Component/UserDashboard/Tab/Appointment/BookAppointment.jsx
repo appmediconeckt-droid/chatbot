@@ -1161,20 +1161,43 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { FaMapMarkerAlt, FaSearch } from "react-icons/fa";
+import {
+  FaCheckCircle,
+  FaCalendarAlt,
+  FaClock,
+  FaInfoCircle,
+  FaLock,
+  FaMapMarkerAlt,
+  FaSearch,
+  FaShieldAlt,
+  FaUser,
+} from "react-icons/fa";
 import "./BookAppointment.css";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import axios from "axios";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
-import { getPresence } from "../../../../utils/presence";
+import {
+  getPresence,
+  getPresenceUserId,
+  resolveOfflineLastSeen,
+} from "../../../../utils/presence";
 
-const CounselorRequestChat = ({ initialSearch = "" }) => {
+const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const navigate = useNavigate();
   const { t } = useUserTranslation();
   const tr = (key, fallback) => {
     const value = t(key);
     return value && value !== key ? value : fallback;
+  };
+
+  const openCounselorChat = (conversation) => {
+    if (onOpenConversation) {
+      onOpenConversation(conversation);
+      return;
+    }
+
+    navigate("/chat", { state: conversation });
   };
 
   // State for counselors list
@@ -1210,6 +1233,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   // Search state
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [searchLocation, setSearchLocation] = useState("");
+  const [directoryFilter, setDirectoryFilter] = useState("all");
   const [uniqueLocations, setUniqueLocations] = useState([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
 
@@ -1544,10 +1568,11 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
         if (data.success) {
           const formattedCounselors = data.counsellors.map((c) => {
-            // Prefer the token-session presence returned by the backend. It
-            // remains online until logout, unlike a transient socket status.
-            const hasActiveSession = c.hasActiveSession === true || c.presenceStatus === "online";
-            const isOnline = hasActiveSession || (c.isOnline === true && c.isLoggedIn === true);
+            // The directory API returns live socket presence. Do not combine
+            // it with an older login/session value, otherwise an offline
+            // counselor can remain displayed as online.
+            const presence = getPresence(c);
+            const isOnline = presence.isOnline;
             return {
               id: c._id,
               name: c.fullName,
@@ -1556,10 +1581,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
               rating: c.rating || 4.5,
               online: isOnline,
               isOnline,
-              isLoggedIn: hasActiveSession || c.isLoggedIn === true,
-              hasActiveSession,
-              presenceStatus: c.presenceStatus || (isOnline ? "online" : "offline"),
-              socketOnline: c.socketOnline === true,
+              isLoggedIn: isOnline,
+              hasActiveSession: isOnline,
+              presenceStatus: isOnline ? "online" : "offline",
+              socketOnline: isOnline,
               available: c.isActive,
               lastSeen: c.lastSeen || null,
               avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
@@ -1602,39 +1627,31 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
     const updatePresence = (payload = {}) => {
       if (!mounted) return;
       const presence = getPresence(payload);
-      const presenceUserId =
-        payload.userId ||
-        payload.counselorId ||
-        payload.counsellorId ||
-        payload.id ||
-        payload._id ||
-        payload.user?._id ||
-        payload.user?.id;
+      const presenceUserId = getPresenceUserId(payload);
+      if (!presenceUserId) return;
+
       const applyPresence = (list) =>
         list.map((counselor) => {
           if (String(counselor.id) !== String(presenceUserId)) {
             return counselor;
           }
 
-          const isLoggedIn = presence.hasLoginStatus
-            ? presence.isLoggedIn
-            : counselor.isLoggedIn;
-          const sessionOnline =
-            counselor.hasActiveSession === true ||
-            counselor.presenceStatus === "online";
-          const isOnline = sessionOnline || (presence.isOnline === true && isLoggedIn === true);
+          // A presence-update is the newest live state. It must replace every
+          // cached presence field so an explicit offline event is visible.
+          const isOnline = presence.isOnline;
 
           return {
             ...counselor,
             online: isOnline,
             isOnline,
-            isLoggedIn,
-            socketOnline: presence.isOnline === true,
-            lastSeen: presence.lastSeen,
+            isLoggedIn: isOnline,
+            hasActiveSession: isOnline,
+            presenceStatus: isOnline ? "online" : "offline",
+            socketOnline: isOnline,
+            lastSeen: resolveOfflineLastSeen(presence, counselor.lastSeen),
           };
         });
       setCounselors(applyPresence);
-      setFilteredCounselors(applyPresence);
     };
 
     const onChatAccepted = (data) => {
@@ -1785,8 +1802,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
     // Check if chat is already accepted
     if (acceptedChats[counselorId]) {
-      navigate("/chat", {
-        state: {
+      openCounselorChat({
           chatId: acceptedChats[counselorId],
           counselor: {
             id: counselor.id,
@@ -1798,7 +1814,6 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
             profilePhoto: counselor.profilePhoto,
             avatarType: counselor.avatarType,
           },
-        },
       });
       return;
     }
@@ -1909,11 +1924,9 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           return newRejected;
         });
         setShowUserModal(false);
-        navigate("/chat", {
-          state: {
+        openCounselorChat({
             chatId: chatId,
             counselor: selectedCounselorForRequest,
-          },
         });
       } else if (res.data?.chat?.id || res.data?.chatId) {
         // Fallback: navigate to chat
@@ -2047,13 +2060,11 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
   // Navigate to chat interface
   const goToChat = (chat) => {
-    navigate("/chat", {
-      state: {
+    openCounselorChat({
         chatId: chat.chatId || chat.id,
         chatData: chat,
         counselor: chat.counselor,
         user: chat.user,
-      },
     });
   };
 
@@ -2066,8 +2077,24 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
   const clearFilters = () => {
     setSearchTerm("");
     setSearchLocation("");
+    setDirectoryFilter("all");
     setShowLocationDropdown(false);
   };
+
+  const directoryCounselors = filteredCounselors.filter((counselor) => {
+    const specialization = String(counselor.specialization || "").toLowerCase();
+    if (directoryFilter === "online") return counselor.online;
+    if (directoryFilter === "top-rated") return Number(counselor.rating || 0) >= 4;
+    if (directoryFilter === "therapist") return specialization.includes("therap");
+    if (directoryFilter === "nearby") return Boolean(counselor.location);
+    return true;
+  });
+
+  const recommendedCounselor =
+    [...directoryCounselors].sort((a, b) =>
+      Number(b.online) - Number(a.online) ||
+      Number(b.rating || 0) - Number(a.rating || 0),
+    )[0];
 
   return (
     <div className="counselor-request-unique">
@@ -2121,10 +2148,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
       <div className="main-content-unique">
         {/* Counselors Grid */}
         <div className="counselors-section-unique">
-          <h1 className="page-title-unique">{t('online_counselors')}</h1>
-          <p className="page-subtitle-unique">
-            {t('click_chat_now_request')}
-          </p>
+          <div className="directory-hero-unique">
+            <h1 className="page-title-unique">{t('online_counselors')}</h1>
+            <p className="page-subtitle-unique">Send a request and book a counsellor</p>
+          </div>
 
           {/* Search Bar Section */}
           <div className="search-section-unique">
@@ -2135,7 +2162,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                 <input
                   type="text"
                   className="search-input-unique"
-                  placeholder={t('search_counselors')}
+                  placeholder="Search patients, counsellors, or conversations..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -2215,8 +2242,72 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
             </div>
           </div>
 
+          <div className="directory-filter-pills-unique" role="tablist" aria-label="Counsellor filters">
+            {[
+              ["all", "All"],
+              ["online", "Online"],
+              ["nearby", "Nearby"],
+              ["top-rated", "Top Rated"],
+              ["therapist", "Therapist"],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={directoryFilter === value ? "active" : ""}
+                onClick={() => setDirectoryFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {recommendedCounselor && (
+            <section className="recommended-section-unique">
+              <h2>Recommended for you</h2>
+              <div className="recommended-card-unique">
+                <div className="recommended-profile-unique">
+                  <div className="recommended-avatar-unique">
+                    {recommendedCounselor.avatarType === "image" ? (
+                      <img src={recommendedCounselor.avatar} alt={recommendedCounselor.name} />
+                    ) : (
+                      <span>{recommendedCounselor.avatar}</span>
+                    )}
+                  </div>
+                  <div>
+                    <h3>{recommendedCounselor.name} <span>✓</span></h3>
+                    <p>{recommendedCounselor.specialization}</p>
+                    <div className="recommended-stats-unique">
+                      <span>▣ {recommendedCounselor.experience} experience</span>
+                      <span className="rating">★ {recommendedCounselor.rating || "4.9"}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="recommended-actions-unique">
+                  <span className={`recommended-availability-unique ${recommendedCounselor.online ? "available" : ""}`}>
+                    ● {recommendedCounselor.online ? "AVAILABLE" : "OFFLINE"}
+                  </span>
+                  <div>
+                    <button onClick={() => handleBookAppointment(recommendedCounselor)}>Book Appointment</button>
+                    <button
+                      className="outline"
+                      disabled={!recommendedCounselor.online}
+                      onClick={() => handleChatNow(recommendedCounselor)}
+                    >
+                      Chat Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
+
+          <div className="available-heading-unique">
+            <h2>Available Counselors</h2>
+            <button type="button" onClick={() => setDirectoryFilter("all")}>See All</button>
+          </div>
+
           {/* No Results Message */}
-          {filteredCounselors.length === 0 && (
+          {directoryCounselors.length === 0 && (
             <div className="no-results-unique">
               <div className="no-results-icon-unique">🔍</div>
               <h3>No counselors found</h3>
@@ -2232,7 +2323,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
           {/* Desktop View - Cards Grid */}
           <div className="counselors-grid-unique desktop-view">
-            {filteredCounselors.map((counselor) => {
+            {directoryCounselors.map((counselor) => {
               const buttonState = getChatButtonState(counselor);
               
               return (
@@ -2315,7 +2406,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
           {/* Mobile View - Table/List Style */}
           <div className="counselors-table-unique mobile-view">
-            {filteredCounselors.map((counselor) => {
+            {directoryCounselors.map((counselor) => {
               const buttonState = getChatButtonState(counselor);
               
               return (
@@ -2395,7 +2486,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           onClick={() => setShowUserModal(false)}
         >
           <div
-            className="modal-content-unique"
+            className="modal-content-unique chat-request-modal-unique"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header-unique">
@@ -2408,8 +2499,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
               <button
                 className="modal-close-unique"
                 onClick={() => setShowUserModal(false)}
+                type="button"
+                aria-label="Close"
               >
-                ×
+                &times;
               </button>
             </div>
             <form onSubmit={sendChatRequest}>
@@ -2421,10 +2514,10 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
 
               <div className="modal-user-info-unique">
                 <div className="user-info-card-unique">
-                  <div className="user-info-icon-unique">🔒</div>
                   <div className="user-info-details-unique">
                     <div className="user-info-label-unique">
-                      You are chatting anonymously as:
+                      <FaLock aria-hidden="true" />
+                      You're chatting anonymously
                     </div>
                     <div className="user-info-name-unique">
                       {isLoading ? (
@@ -2433,14 +2526,17 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                         </span>
                       ) : (
                         <span className="anonymous-name-unique">
-                          {userAnonymous || "Loading..."}
+                          <FaUser aria-hidden="true" />
+                          Stranger
                         </span>
                       )}
                     </div>
                     <div className="user-info-note-unique">
-                      This anonymous name will be shown to the counselor
+                      Your real identity remains hidden. Only your anonymous
+                      name is visible to the counselor.
                     </div>
                   </div>
+                  <FaLock className="anonymous-watermark-unique" aria-hidden="true" />
                 </div>
               </div>
 
@@ -2463,16 +2559,24 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
                     <div className="counselor-preview-info-unique">
                       <div className="counselor-preview-name-unique">
                         {selectedCounselorForRequest.name}
+                        <FaCheckCircle
+                          className="counselor-verified-unique"
+                          aria-label="Verified"
+                        />
                       </div>
                       <div className="counselor-preview-specialization-unique">
                         {selectedCounselorForRequest.specialization}
                       </div>
-                      {selectedCounselorForRequest.location && (
-                        <div className="counselor-preview-location-unique">
-                          📍 {selectedCounselorForRequest.location}
-                        </div>
-                      )}
                     </div>
+                    <span
+                      className={`preview-presence-unique ${
+                        selectedCounselorForRequest.online ? "online" : "offline"
+                      }`}
+                    >
+                      {selectedCounselorForRequest.online
+                        ? tr("available", "Available")
+                        : tr("offline", "Offline")}
+                    </span>
                   </div>
                 </div>
               )}
@@ -2494,11 +2598,13 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
               )}
 
               <div className="modal-info-unique">
-                <p>⏳ Your request will be sent to the counselor</p>
-                <p>✅ You'll be notified when they accept</p>
+                <p>
+                  <FaInfoCircle aria-hidden="true" />
+                  You can chat once the counselor accepts your request.
+                </p>
                 <p className="privacy-note-unique">
-                  🔒 You are chatting anonymously. Your real identity is
-                  protected.
+                  <FaShieldAlt aria-hidden="true" />
+                  You are chatting anonymously. Your real identity is protected.
                 </p>
               </div>
 
@@ -2509,7 +2615,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
               >
                 {isLoading
                   ? tr("loading", "Loading...")
-                  : tr("send_chat_request", tr("counselor.messageCounselor", "Send Chat Request"))}
+                  : tr("send_request", "Send Request")}
               </button>
             </form>
           </div>
@@ -2523,7 +2629,7 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
           onClick={() => setShowBookingModal(false)}
         >
           <div
-            className="modal-content-unique"
+            className="modal-content-unique booking-appointment-modal-unique"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header-unique">
@@ -2531,46 +2637,80 @@ const CounselorRequestChat = ({ initialSearch = "" }) => {
               <button
                 className="modal-close-unique"
                 onClick={() => setShowBookingModal(false)}
+                type="button"
+                aria-label="Close"
               >
-                ×
+                &times;
               </button>
             </div>
             <form onSubmit={handleConfirmBooking}>
               <div className="booking-form-unique">
-                <div className="form-group-unique">
-                  <label>Select Date and Time</label>
-                  <input
-                    type="datetime-local"
-                    className="form-input-unique"
-                    value={bookingDate}
-                    onChange={(e) => setBookingDate(e.target.value)}
-                    required
-                  />
+                <div className="booking-section-label-unique">
+                  Appointment Date &amp; Time
+                </div>
+                <div className="booking-datetime-row-unique">
+                  <label className="booking-field-card-unique">
+                    <span>
+                      <FaCalendarAlt aria-hidden="true" />
+                      Date
+                    </span>
+                    <input
+                      type="date"
+                      value={bookingDate.split("T")[0] || ""}
+                      onChange={(e) =>
+                        setBookingDate(
+                          `${e.target.value}T${bookingDate.split("T")[1] || ""}`,
+                        )
+                      }
+                      required
+                    />
+                  </label>
+                  <label className="booking-field-card-unique">
+                    <span>
+                      <FaClock aria-hidden="true" />
+                      Time
+                    </span>
+                    <input
+                      type="time"
+                      value={bookingDate.split("T")[1] || ""}
+                      onChange={(e) =>
+                        setBookingDate(
+                          `${bookingDate.split("T")[0] || ""}T${e.target.value}`,
+                        )
+                      }
+                      required
+                    />
+                  </label>
                 </div>
                 <div className="form-group-unique">
-                  <label>Clinical Notes / Reason (Required)</label>
+                  <label>Clinical Notes / Reason</label>
                   <textarea
                     className="form-textarea-unique"
-                    placeholder="Share what you'd like to discuss..."
+                    placeholder="Share what you want to discuss in this session..."
                     value={bookingNotes}
                     onChange={(e) => setBookingNotes(e.target.value)}
                     required
                   ></textarea>
+                  <small>Sent to the counselor for confirmation.</small>
                 </div>
               </div>
 
-              <div className="modal-info-unique">
-                <p>⏳ Appointment will be sent for confirmation</p>
-                <p>✅ Counselor will be notified instantly</p>
+              <div className="booking-modal-footer-unique">
+                <button
+                  type="button"
+                  className="booking-cancel-btn-unique"
+                  onClick={() => setShowBookingModal(false)}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="booking-confirm-btn-unique"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Booking..." : "Confirm"}
+                </button>
               </div>
-
-              <button
-                type="submit"
-                className="modal-submit-btn-unique"
-                disabled={isLoading}
-              >
-                {isLoading ? "Booking..." : "Confirm Appointment"}
-              </button>
             </form>
           </div>
         </div>

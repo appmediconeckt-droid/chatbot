@@ -84,7 +84,7 @@
 }
 
 .notification-item-unique.message {
-  border-left-color: #667eea;
+  border-left-color: #006B2C;
   background: #ebf4ff;
 }
 
@@ -202,9 +202,9 @@
 .search-input-unique:focus,
 .location-input-unique:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #006B2C;
   background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 0 0 3px rgba(0, 107, 44, 0.1);
 }
 
 .clear-search-btn-unique,
@@ -255,7 +255,7 @@
 .location-option-unique:hover {
   background: #f8f9fa;
   padding-left: 20px;
-  color: #667eea;
+  color: #006B2C;
 }
 
 /* Filter Stats */
@@ -316,7 +316,7 @@
 }
 
 .reset-search-btn-unique {
-  background: #667eea;
+  background: #006B2C;
   color: white;
   border: none;
   padding: 12px 24px;
@@ -357,7 +357,7 @@
   left: 0;
   right: 0;
   height: 5px;
-  background: linear-gradient(90deg, #48bb78, #667eea);
+  background: linear-gradient(90deg, #48bb78, #006B2C);
   transform: translateX(-100%);
   transition: transform 0.3s ease;
 }
@@ -365,7 +365,7 @@
 .counselor-card-unique:hover {
   transform: translateY(-5px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-  border-color: #667eea;
+  border-color: #006B2C;
 }
 
 .counselor-card-unique:hover::before {
@@ -406,7 +406,7 @@
 .counselor-avatar-unique span {
   font-size: 2rem;
   font-weight: 600;
-  color: #667eea;
+  color: #006B2C;
 }
 
 .counselor-status-unique {
@@ -449,7 +449,7 @@
 }
 
 .counselor-location-unique {
-  color: #667eea;
+  color: #006B2C;
   font-weight: 600;
   margin-bottom: 15px;
   font-size: 1rem;
@@ -506,7 +506,7 @@
 /* Chat Now Button */
 .chat-now-btn-unique {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006B2C 0%, #01CE54 100%);
   color: white;
   border: none;
   padding: 16px;
@@ -515,14 +515,14 @@
   font-size: 1.1rem;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 107, 44, 0.3);
   position: relative;
   overflow: hidden;
 }
 
 .chat-now-btn-unique:hover:not(.disabled) {
   transform: translateY(-3px);
-  box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 15px 35px rgba(0, 107, 44, 0.4);
 }
 
 .chat-now-btn-unique.disabled {
@@ -561,7 +561,7 @@
   height: 50px;
   border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006B2C 0%, #01CE54 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -597,7 +597,7 @@
 
 .row-location-unique {
   font-size: 11px;
-  color: #667eea;
+  color: #006B2C;
   font-weight: 500;
   margin-top: 2px;
 }
@@ -618,7 +618,7 @@
   padding: 8px 16px;
   border: none;
   border-radius: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006B2C 0%, #01CE54 100%);
   color: white;
   font-size: 12px;
   font-weight: 600;
@@ -655,10 +655,10 @@
 
 .row-book-btn-unique {
   padding: 8px 16px;
-  border: 1.5px solid #667eea;
+  border: 1.5px solid #006B2C;
   border-radius: 20px;
   background: white;
-  color: #667eea;
+  color: #006B2C;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -727,7 +727,7 @@
 }
 
 .user-info-card-unique {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006B2C 0%, #01CE54 100%);
   border-radius: 12px;
   padding: 16px;
   display: flex;
@@ -795,7 +795,7 @@
   height: 60px;
   border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006B2C 0%, #01CE54 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -826,7 +826,7 @@
 
 .counselor-preview-specialization-unique {
   font-size: 12px;
-  color: #667eea;
+  color: #006B2C;
   margin-top: 4px;
 }
 
@@ -865,6 +865,390 @@
   color: #475569;
   font-size: 12px;
   line-height: 1.4;
+}
+
+/* Screenshot-matched counselor directory */
+.counselor-request-unique {
+  background: #f8f9fe;
+}
+
+.main-content-unique {
+  max-width: none;
+  padding: 0;
+}
+
+.counselors-section-unique {
+  padding: 0 20px 28px;
+}
+
+.directory-hero-unique {
+  margin: 0 -20px 14px;
+  padding: 18px 20px 14px;
+  background: #ffffff;
+  border-bottom: 2px solid #01CE54;
+}
+
+.page-title-unique {
+  margin: 0 0 5px;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  color: #172033;
+}
+
+.page-subtitle-unique {
+  margin: 0;
+  font-size: 11px;
+  color: #667085;
+}
+
+.search-section-unique {
+  width: min(600px, 100%);
+  margin: 0 0 12px;
+}
+
+.search-container-unique {
+  padding: 0;
+  gap: 0;
+  background: transparent;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.search-input-wrapper-unique {
+  width: 100%;
+}
+
+.search-input-unique {
+  height: 40px;
+  padding: 0 38px 0 40px;
+  border: 1px solid #d8dee8;
+  border-radius: 22px;
+  background: #ffffff;
+  font-size: 11px;
+}
+
+.search-icon-unique {
+  left: 14px;
+  font-size: 13px;
+}
+
+.location-input-wrapper-unique,
+.filter-stats-unique {
+  display: none;
+}
+
+.directory-filter-pills-unique {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 18px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.directory-filter-pills-unique button {
+  min-width: 48px;
+  padding: 6px 14px;
+  border: 1px solid #d5dce5;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #344054;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.directory-filter-pills-unique button.active {
+  border-color: transparent;
+  background: linear-gradient(90deg, #006B2C, #01CE54);
+  color: #ffffff;
+}
+
+.recommended-section-unique h2,
+.available-heading-unique h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.recommended-card-unique {
+  min-height: 124px;
+  margin: 10px 0 18px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 1px solid #e5e9ef;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+}
+
+.recommended-profile-unique {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.recommended-avatar-unique {
+  width: 68px;
+  height: 68px;
+  flex-shrink: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #006B2C, #01CE54);
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.recommended-avatar-unique img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recommended-profile-unique h3 {
+  margin: 0 0 4px;
+  color: #172033;
+  font-size: 14px;
+}
+
+.recommended-profile-unique h3 span,
+.counselor-name-unique span {
+  color: #009c40;
+}
+
+.recommended-profile-unique p {
+  margin: 0 0 10px;
+  color: #667085;
+  font-size: 10px;
+}
+
+.recommended-stats-unique {
+  display: flex;
+  gap: 14px;
+  color: #667085;
+  font-size: 9px;
+}
+
+.recommended-stats-unique .rating {
+  color: #e5a100;
+}
+
+.recommended-actions-unique {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 16px;
+}
+
+.recommended-availability-unique {
+  color: #667085;
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.recommended-availability-unique.available {
+  color: #009c40;
+}
+
+.recommended-actions-unique > div {
+  display: flex;
+  gap: 10px;
+}
+
+.recommended-actions-unique button {
+  padding: 9px 16px;
+  border: 1px solid #009c40;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #006B2C, #01CE54);
+  color: #ffffff;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.recommended-actions-unique button.outline {
+  background: #ffffff;
+  color: #006B2C;
+}
+
+.available-heading-unique {
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.available-heading-unique button {
+  border: 0;
+  background: transparent;
+  color: #008b39;
+  font-size: 9px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.counselors-grid-unique {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
+}
+
+.counselor-card-unique {
+  min-height: 155px;
+  padding: 16px;
+  border: 1px solid #e5e9ef;
+  border-radius: 18px;
+  box-shadow: 0 7px 18px rgba(15, 23, 42, 0.07);
+  overflow: visible;
+}
+
+.counselor-card-unique::before {
+  display: none;
+}
+
+.counselor-card-unique:hover {
+  transform: translateY(-2px);
+  border-color: #b9e5cd;
+  box-shadow: 0 10px 22px rgba(0, 107, 44, 0.09);
+}
+
+.counselor-card-header-unique {
+  margin-bottom: 8px;
+}
+
+.counselor-avatar-unique {
+  width: 52px;
+  height: 52px;
+  border: 0;
+  box-shadow: none;
+}
+
+.counselor-status-unique {
+  align-self: flex-start;
+  gap: 4px;
+  padding: 4px 7px;
+  background: #f2f4f7;
+}
+
+.status-dot-unique {
+  width: 5px;
+  height: 5px;
+}
+
+.status-text-unique {
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+.counselor-name-unique {
+  position: absolute;
+  top: 19px;
+  left: 82px;
+  max-width: calc(100% - 175px);
+  margin: 0;
+  font-size: 12px;
+}
+
+.counselor-specialization-unique {
+  position: absolute;
+  top: 39px;
+  left: 82px;
+  max-width: calc(100% - 110px);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #667085;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.counselor-location-unique {
+  display: none;
+}
+
+.counselor-experience-unique {
+  position: absolute;
+  top: 61px;
+  left: 82px;
+  margin: 0;
+  color: #667085;
+  font-size: 8px;
+}
+
+.counselor-rating-unique {
+  position: absolute;
+  top: 58px;
+  left: 175px;
+  margin: 0;
+  font-size: 8px;
+}
+
+.stars-unique {
+  font-size: 8px;
+}
+
+.card-actions-unique {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #edf0f3;
+  justify-content: flex-end;
+}
+
+.chat-now-btn-unique,
+.book-apt-btn-unique {
+  width: auto;
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 8px;
+  box-shadow: none;
+}
+
+.chat-now-btn-unique {
+  background: #ffffff;
+  color: #006B2C;
+  border: 1px solid #009c40;
+}
+
+.book-apt-btn-unique {
+  border: 0;
+  background: linear-gradient(90deg, #006B2C, #01CE54);
+  color: #ffffff;
+}
+
+@media (max-width: 760px) {
+  .counselors-section-unique {
+    padding: 0 12px 20px;
+  }
+
+  .directory-hero-unique {
+    margin-inline: -12px;
+    padding-inline: 12px;
+  }
+
+  .recommended-card-unique {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .recommended-actions-unique {
+    width: 100%;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .counselors-grid-unique {
+    grid-template-columns: 1fr;
+  }
 }
 
 .modal-info-unique {
@@ -912,6 +1296,217 @@
 .modal-submit-btn-unique:disabled {
   background: #cbd5e0;
   cursor: not-allowed;
+}
+
+/* Screenshot-matched counselor chat request form */
+.chat-request-modal-unique {
+  width: min(520px, calc(100vw - 32px));
+  max-width: 520px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  padding: 22px 24px 24px;
+  border-radius: 18px;
+  box-shadow: 0 20px 55px rgba(15, 23, 42, 0.24);
+}
+
+.chat-request-modal-unique .modal-header-unique {
+  margin-bottom: 22px;
+}
+
+.chat-request-modal-unique .modal-header-unique h2 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.3;
+  color: #172033;
+}
+
+.chat-request-modal-unique .modal-close-unique {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border-radius: 50%;
+  background: #eef2f6;
+  color: #667085;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.chat-request-modal-unique .modal-close-unique:hover {
+  color: #172033;
+  background: #e4e9ef;
+  transform: none;
+}
+
+.chat-request-modal-unique .modal-user-info-unique {
+  margin-bottom: 18px;
+}
+
+.chat-request-modal-unique .user-info-card-unique {
+  position: relative;
+  min-height: 130px;
+  padding: 20px;
+  overflow: hidden;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #006b2c 0%, #01ce54 100%);
+  border-radius: 12px;
+}
+
+.chat-request-modal-unique .user-info-label-unique {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 12px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  opacity: 1;
+}
+
+.chat-request-modal-unique .user-info-name-unique {
+  margin-bottom: 12px;
+}
+
+.chat-request-modal-unique .anonymous-name-unique {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 13px;
+  background: #fff;
+  color: #1f2937;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.chat-request-modal-unique .user-info-note-unique {
+  max-width: 345px;
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.anonymous-watermark-unique {
+  position: absolute;
+  right: -9px;
+  bottom: -15px;
+  width: 74px;
+  height: 74px;
+  padding: 16px;
+  border: 5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  color: rgba(255, 255, 255, 0.13);
+}
+
+.chat-request-modal-unique .counselor-preview-unique {
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: #effcf4;
+  border: 1px solid #bdeecf;
+  border-radius: 11px;
+}
+
+.chat-request-modal-unique .counselor-preview-header-unique {
+  position: relative;
+  padding-right: 82px;
+}
+
+.chat-request-modal-unique .counselor-preview-avatar-unique {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 58px;
+}
+
+.chat-request-modal-unique .counselor-preview-name-unique {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #172033;
+  font-size: 14px;
+}
+
+.counselor-verified-unique {
+  color: #009b45;
+  font-size: 12px;
+}
+
+.chat-request-modal-unique .counselor-preview-specialization-unique {
+  color: #667085;
+  font-size: 10px;
+}
+
+.preview-presence-unique {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 7px;
+  border-radius: 12px;
+  font-size: 8px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.preview-presence-unique.online {
+  color: #00883b;
+  background: #fff;
+}
+
+.preview-presence-unique.offline {
+  color: #667085;
+  background: #e8edf2;
+}
+
+.chat-request-modal-unique .modal-info-unique {
+  margin: 0 0 20px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+}
+
+.chat-request-modal-unique .modal-info-unique p {
+  margin: 0 0 10px;
+  color: #667085;
+  font-size: 11px;
+}
+
+.chat-request-modal-unique .modal-info-unique svg {
+  flex: 0 0 14px;
+  color: #52677e;
+}
+
+.chat-request-modal-unique .privacy-note-unique {
+  padding: 0;
+  border: 0;
+}
+
+.chat-request-modal-unique .modal-submit-btn-unique {
+  padding: 13px 18px;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #006b2c 0%, #01ce54 100%);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .chat-request-modal-unique {
+    width: calc(100vw - 20px);
+    padding: 18px 16px 20px;
+  }
+
+  .chat-request-modal-unique .modal-header-unique h2 {
+    font-size: 17px;
+  }
+
+  .chat-request-modal-unique .counselor-preview-header-unique {
+    padding-right: 0;
+  }
+
+  .preview-presence-unique {
+    position: static;
+    margin-left: auto;
+  }
 }
 
 /* Loading State */
@@ -1147,8 +1742,8 @@
 .book-apt-btn-unique {
   flex: 1;
   background: white;
-  color: #667eea;
-  border: 2px solid #667eea;
+  color: #006B2C;
+  border: 2px solid #006B2C;
   padding: 16px;
   border-radius: 15px;
   font-weight: 700;
@@ -1164,7 +1759,7 @@
 .book-apt-btn-unique:hover {
   background: #f0f4ff;
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+  box-shadow: 0 5px 15px rgba(0, 107, 44, 0.1);
 }
 
 /* Booking Form Styles */
@@ -1201,8 +1796,8 @@
 .form-input-unique:focus,
 .form-textarea-unique:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #006B2C;
+  box-shadow: 0 0 0 3px rgba(0, 107, 44, 0.1);
 }
 
 .form-textarea-unique {
@@ -1264,4 +1859,831 @@
   background-color: #e0e0e0 !important;
   color: #999 !important;
   cursor: not-allowed !important;
+}
+
+/* Stable card flow: prevents text/button overlap at every desktop width. */
+.counselors-grid-unique {
+  grid-template-columns: repeat(2, minmax(360px, 1fr)) !important;
+  gap: 22px;
+}
+
+.counselor-card-unique {
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+}
+
+.counselor-card-header-unique {
+  min-height: 76px;
+  margin-bottom: 14px;
+}
+
+.counselor-name-unique,
+.counselor-specialization-unique,
+.counselor-experience-unique,
+.counselor-rating-unique {
+  position: static;
+  inset: auto;
+  max-width: 100%;
+}
+
+.counselor-name-unique {
+  margin: 0 0 8px;
+  font-size: 17px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.counselor-specialization-unique {
+  display: block;
+  width: fit-content;
+  margin: 0 0 12px;
+  padding: 5px 10px;
+  border: 1px solid #ccebd9;
+  border-radius: 7px;
+  background: #effaf4;
+  color: #167342;
+  font-size: 11px;
+  line-height: 1.35;
+  white-space: normal;
+}
+
+.counselor-experience-unique,
+.counselor-rating-unique {
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin: 0 14px 12px 0;
+  font-size: 11px;
+}
+
+.counselor-experience-unique {
+  color: #667085;
+}
+
+.counselor-rating-unique {
+  gap: 5px;
+}
+
+.stars-unique {
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.card-actions-unique {
+  width: 100%;
+  min-height: 58px;
+  margin-top: auto;
+  padding-top: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.chat-now-btn-unique {
+  width: 100%;
+}
+
+.book-apt-btn-unique {
+  min-width: 145px;
+}
+
+.chat-now-btn-unique,
+.book-apt-btn-unique {
+  min-height: 42px;
+  padding: 10px 18px;
+  font-size: 11px;
+  border-radius: 8px;
+}
+
+@media (max-width: 1180px) {
+  .counselors-grid-unique {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* One consistent gradient for every counselor-menu action button */
+.reset-search-btn-unique,
+.clear-filters-btn-unique,
+.recommended-actions-unique button,
+.chat-now-btn-unique:not(.disabled),
+.book-apt-btn-unique,
+.row-btn-unique:not(:disabled):not(.disabled),
+.row-book-btn-unique,
+.modal-submit-btn-unique:not(:disabled),
+.booking-cancel-btn-unique,
+.booking-confirm-btn-unique:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(90deg, #006b2c 0%, #01ce54 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 14px rgba(0, 107, 44, 0.16);
+}
+
+.reset-search-btn-unique:hover,
+.clear-filters-btn-unique:hover,
+.recommended-actions-unique button:hover,
+.chat-now-btn-unique:not(.disabled):hover,
+.book-apt-btn-unique:hover,
+.row-btn-unique:not(:disabled):not(.disabled):hover,
+.row-book-btn-unique:hover,
+.modal-submit-btn-unique:not(:disabled):hover,
+.booking-cancel-btn-unique:hover,
+.booking-confirm-btn-unique:not(:disabled):hover {
+  background: linear-gradient(90deg, #01ce54 0%, #006b2c 100%);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0, 107, 44, 0.22);
+}
+
+.chat-now-btn-unique.disabled,
+.row-btn-unique:disabled,
+.row-btn-unique.disabled,
+.modal-submit-btn-unique:disabled,
+.booking-confirm-btn-unique:disabled {
+  background: #d8dee8;
+  color: #8b95a5;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* Readable typography for the counselor directory */
+.counselor-page-title-unique,
+.header-title-unique {
+  font-size: 24px;
+}
+
+.counselor-page-subtitle-unique,
+.header-subtitle-unique {
+  font-size: 14px;
+}
+
+.section-title-unique,
+.recommended-section-unique h2,
+.available-header-unique h2 {
+  font-size: 19px;
+}
+
+.filter-btn-unique,
+.filter-chip-unique {
+  font-size: 13px;
+}
+
+.recommended-profile-unique h3 {
+  font-size: 19px;
+}
+
+.recommended-profile-unique p {
+  font-size: 14px;
+}
+
+.recommended-stats-unique {
+  font-size: 13px;
+}
+
+.recommended-actions-unique button {
+  min-height: 42px;
+  font-size: 13px;
+}
+
+.counselor-name-unique {
+  font-size: 17px;
+}
+
+.counselor-specialization-unique {
+  font-size: 13px;
+}
+
+.counselor-experience-unique,
+.counselor-rating-unique,
+.stars-unique {
+  font-size: 12px;
+}
+
+.status-text-unique {
+  font-size: 10px;
+}
+
+.chat-now-btn-unique,
+.book-apt-btn-unique {
+  min-height: 40px;
+  font-size: 12px;
+}
+
+.availability-text-unique,
+.next-available-unique {
+  font-size: 11px;
+}
+
+@media (max-width: 768px) {
+  .recommended-profile-unique h3 { font-size: 17px; }
+  .recommended-profile-unique p { font-size: 13px; }
+  .counselor-name-unique { font-size: 16px !important; }
+  .counselor-specialization-unique { font-size: 12px; }
+  .counselor-experience-unique,
+  .counselor-rating-unique { font-size: 11px; }
+}
+
+/* Screenshot-matched Book Appointment form */
+.modal-overlay-unique:has(.booking-appointment-modal-unique) {
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.25);
+  backdrop-filter: none;
+}
+
+.modal-content-unique.booking-appointment-modal-unique {
+  width: min(560px, calc(100vw - 40px));
+  max-width: 560px;
+  padding: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.26);
+}
+
+.booking-appointment-modal-unique .modal-header-unique {
+  min-height: 102px;
+  margin: 0;
+  padding: 24px 28px;
+  align-items: flex-start;
+  border-bottom: 1px solid #edf0f5;
+}
+
+.booking-appointment-modal-unique .modal-header-unique h2 {
+  max-width: 430px;
+  margin: 0;
+  color: #111827;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.booking-appointment-modal-unique .modal-close-unique {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  color: #344054;
+  font-size: 20px;
+  line-height: 28px;
+}
+
+.booking-appointment-modal-unique .modal-close-unique:hover {
+  color: #111827;
+  transform: none;
+}
+
+.booking-appointment-modal-unique form {
+  display: block;
+}
+
+.booking-appointment-modal-unique .booking-form-unique {
+  display: block;
+  padding: 26px 28px 22px;
+  background: #fff;
+}
+
+.booking-section-label-unique,
+.booking-appointment-modal-unique .form-group-unique > label {
+  display: block;
+  margin: 0 0 12px;
+  color: #344054;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.booking-datetime-row-unique {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 26px;
+}
+
+.booking-field-card-unique {
+  min-height: 74px;
+  padding: 14px 16px 10px;
+  background: #f0f3ff;
+  border: 1px solid #dbe1f0;
+  border-radius: 8px;
+}
+
+.booking-field-card-unique > span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 5px;
+  color: #009640;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.booking-field-card-unique input {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #344054;
+  font: inherit;
+  font-size: 12px;
+}
+
+.booking-appointment-modal-unique .form-group-unique {
+  margin: 0;
+}
+
+.booking-appointment-modal-unique .form-textarea-unique {
+  width: 100%;
+  min-height: 134px;
+  padding: 16px;
+  resize: vertical;
+  border: 1px solid #dbe1f0;
+  border-radius: 8px;
+  outline: none;
+  background: #f0f3ff;
+  color: #344054;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.booking-appointment-modal-unique .form-textarea-unique::placeholder {
+  color: #98a2b3;
+}
+
+.booking-appointment-modal-unique .form-textarea-unique:focus,
+.booking-field-card-unique:focus-within {
+  border-color: #01a94b;
+  box-shadow: 0 0 0 2px rgba(1, 169, 75, 0.1);
+}
+
+.booking-appointment-modal-unique .form-group-unique small {
+  display: block;
+  margin-top: 12px;
+  color: #667085;
+  font-size: 10px;
+}
+
+.booking-modal-footer-unique {
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 16px 28px 22px;
+  background: #f8f9fd;
+  border-top: 1px solid #edf0f5;
+}
+
+.booking-cancel-btn-unique,
+.booking-confirm-btn-unique {
+  min-width: 94px;
+  min-height: 38px;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.booking-cancel-btn-unique {
+  border: 0;
+  background: #e8edfb;
+  color: #344054;
+}
+
+.booking-confirm-btn-unique {
+  border: 0;
+  background: #008f3d;
+  color: #fff;
+}
+
+.booking-confirm-btn-unique:hover:not(:disabled) {
+  background: #007d35;
+}
+
+.booking-confirm-btn-unique:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+@media (max-width: 600px) {
+  .modal-overlay-unique:has(.booking-appointment-modal-unique) {
+    padding: 10px;
+  }
+
+  .modal-content-unique.booking-appointment-modal-unique {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    overflow-y: auto;
+  }
+
+  .booking-appointment-modal-unique .modal-header-unique {
+    min-height: 86px;
+    padding: 20px;
+  }
+
+  .booking-appointment-modal-unique .modal-header-unique h2 {
+    font-size: 20px;
+  }
+
+  .booking-appointment-modal-unique .booking-form-unique {
+    padding: 22px 20px 18px;
+  }
+
+  .booking-datetime-row-unique {
+    gap: 10px;
+  }
+
+  .booking-modal-footer-unique {
+    padding: 14px 20px 18px;
+  }
+}
+
+/* Final screenshot proportions for the counselor request dialog */
+.modal-overlay-unique:has(.chat-request-modal-unique) {
+  padding: 24px;
+  background: rgba(15, 23, 42, 0.24);
+  backdrop-filter: none;
+}
+
+.modal-content-unique.chat-request-modal-unique {
+  width: min(640px, calc(100vw - 48px));
+  max-width: 640px;
+  max-height: calc(100vh - 48px);
+  padding: 28px 28px 30px;
+  border-radius: 18px;
+  overflow-y: auto;
+}
+
+.chat-request-modal-unique .modal-header-unique {
+  min-height: 34px;
+  margin: 0 0 24px;
+}
+
+.chat-request-modal-unique .modal-header-unique h2 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.chat-request-modal-unique .modal-close-unique {
+  width: 30px;
+  height: 30px;
+  font-size: 21px;
+  line-height: 28px;
+}
+
+.chat-request-modal-unique form {
+  display: block;
+}
+
+.chat-request-modal-unique .modal-user-info-unique {
+  margin: 0 0 20px;
+}
+
+.chat-request-modal-unique .user-info-card-unique {
+  min-height: 178px;
+  padding: 24px;
+  border-radius: 12px;
+}
+
+.chat-request-modal-unique .user-info-label-unique {
+  margin-bottom: 14px;
+  font-size: 15px;
+}
+
+.chat-request-modal-unique .anonymous-name-unique {
+  min-height: 34px;
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+.chat-request-modal-unique .user-info-note-unique {
+  max-width: 410px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.chat-request-modal-unique .counselor-preview-unique {
+  min-height: 112px;
+  margin: 0 0 22px;
+  padding: 18px;
+  border-radius: 11px;
+}
+
+.chat-request-modal-unique .counselor-preview-avatar-unique {
+  width: 72px;
+  height: 72px;
+  flex: 0 0 72px;
+}
+
+.chat-request-modal-unique .counselor-preview-name-unique {
+  font-size: 15px;
+}
+
+.chat-request-modal-unique .counselor-preview-specialization-unique {
+  margin-top: 5px;
+  font-size: 11px;
+}
+
+.chat-request-modal-unique .preview-presence-unique {
+  top: 0;
+  right: 0;
+  padding: 5px 9px;
+  font-size: 9px;
+}
+
+.chat-request-modal-unique .preview-presence-unique::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.chat-request-modal-unique .modal-info-unique {
+  margin: 0 0 24px;
+}
+
+.chat-request-modal-unique .modal-info-unique p {
+  margin-bottom: 12px;
+  font-size: 12px;
+}
+
+.chat-request-modal-unique .modal-submit-btn-unique {
+  min-height: 52px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+@media (max-width: 700px) {
+  .modal-overlay-unique:has(.chat-request-modal-unique) {
+    padding: 10px;
+  }
+
+  .modal-content-unique.chat-request-modal-unique {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    padding: 20px 16px;
+  }
+
+  .chat-request-modal-unique .modal-header-unique {
+    margin-bottom: 18px;
+  }
+
+  .chat-request-modal-unique .modal-header-unique h2 {
+    font-size: 18px;
+  }
+
+  .chat-request-modal-unique .user-info-card-unique {
+    min-height: 150px;
+    padding: 19px;
+  }
+
+  .chat-request-modal-unique .counselor-preview-unique {
+    min-height: 94px;
+    padding: 14px;
+  }
+
+  .chat-request-modal-unique .counselor-preview-avatar-unique {
+    width: 58px;
+    height: 58px;
+    flex-basis: 58px;
+  }
+}
+
+@media (max-width: 768px) {
+  .counselors-grid-unique {
+    padding: 0 12px;
+  }
+
+  .counselor-card-unique {
+    min-height: 245px;
+  }
+
+  .counselor-name-unique,
+  .counselor-specialization-unique,
+  .counselor-experience-unique,
+  .counselor-rating-unique {
+    position: static;
+    inset: auto;
+    max-width: 100%;
+  }
+
+  .card-actions-unique {
+    grid-template-columns: 1fr;
+  }
+
+  .book-apt-btn-unique {
+    width: 100%;
+  }
+}
+
+/* Larger, easier-to-read counselor cards */
+.recommended-card-unique {
+  min-height: 150px;
+  padding: 22px 26px;
+}
+
+.recommended-avatar-unique {
+  width: 82px;
+  height: 82px;
+}
+
+.recommended-profile-unique {
+  gap: 18px;
+}
+
+.recommended-profile-unique h3 {
+  font-size: 17px;
+}
+
+.recommended-profile-unique p {
+  font-size: 12px;
+}
+
+.recommended-stats-unique {
+  font-size: 11px;
+}
+
+.recommended-actions-unique button {
+  min-height: 38px;
+  padding: 10px 19px;
+  font-size: 11px;
+}
+
+.counselors-grid-unique {
+  gap: 20px;
+}
+
+.counselor-card-unique {
+  min-height: 205px;
+  padding: 22px;
+  border-radius: 20px;
+}
+
+.counselor-avatar-unique {
+  width: 68px;
+  height: 68px;
+}
+
+.counselor-card-header-unique {
+  min-height: 74px;
+  margin-bottom: 12px;
+}
+
+.counselor-name-unique {
+  top: 25px;
+  left: 104px;
+  max-width: calc(100% - 205px);
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+.counselor-specialization-unique {
+  top: 50px;
+  left: 104px;
+  max-width: calc(100% - 135px);
+  font-size: 11px;
+}
+
+.counselor-experience-unique {
+  top: 76px;
+  left: 104px;
+  font-size: 10px;
+}
+
+.counselor-rating-unique {
+  top: 73px;
+  left: 220px;
+  font-size: 10px;
+}
+
+.stars-unique {
+  font-size: 10px;
+}
+
+.counselor-status-unique {
+  padding: 5px 9px;
+}
+
+.status-text-unique {
+  font-size: 8px;
+}
+
+.card-actions-unique {
+  min-height: 52px;
+  margin-top: 14px;
+  padding-top: 14px;
+  gap: 10px;
+}
+
+.chat-now-btn-unique,
+.book-apt-btn-unique {
+  min-height: 36px;
+  padding: 9px 17px;
+  font-size: 10px;
+}
+
+@media (max-width: 768px) {
+  .recommended-card-unique {
+    min-height: 0;
+    padding: 18px;
+  }
+
+  .recommended-avatar-unique {
+    width: 70px;
+    height: 70px;
+  }
+
+  .counselor-card-unique {
+    min-height: 190px;
+    padding: 20px !important;
+  }
+
+  .counselor-avatar-unique {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .counselor-name-unique {
+    top: 23px;
+    left: 98px;
+    max-width: calc(100% - 125px);
+    font-size: 14px !important;
+  }
+
+  .counselor-specialization-unique {
+    top: 47px;
+    left: 98px;
+  }
+
+  .counselor-experience-unique {
+    top: 72px;
+    left: 98px;
+  }
+
+  .counselor-rating-unique {
+    top: 70px;
+    left: 205px;
+  }
+
+  .modal-content-unique.chat-request-modal-unique {
+    width: calc(100vw - 20px);
+    max-height: calc(100vh - 20px);
+    padding: 18px 16px 20px;
+    border-radius: 15px;
+  }
+
+  .chat-request-modal-unique .user-info-card-unique {
+    min-height: 122px;
+    padding: 17px;
+  }
+
+  .chat-request-modal-unique .counselor-preview-avatar-unique {
+    width: 52px;
+    height: 52px;
+    flex-basis: 52px;
+  }
+}
+
+/* Keep action gradients last so older component rules cannot override them. */
+.reset-search-btn-unique,
+.clear-filters-btn-unique,
+.recommended-actions-unique button,
+.chat-now-btn-unique:not(.disabled),
+.book-apt-btn-unique,
+.row-btn-unique:not(:disabled):not(.disabled),
+.row-book-btn-unique,
+.modal-submit-btn-unique:not(:disabled),
+.booking-cancel-btn-unique,
+.booking-confirm-btn-unique:not(:disabled) {
+  border-color: transparent;
+  background: linear-gradient(90deg, #006b2c 0%, #01ce54 100%);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(0, 107, 44, 0.16);
+}
+
+.reset-search-btn-unique:hover,
+.clear-filters-btn-unique:hover,
+.recommended-actions-unique button:hover,
+.chat-now-btn-unique:not(.disabled):hover,
+.book-apt-btn-unique:hover,
+.row-btn-unique:not(:disabled):not(.disabled):hover,
+.row-book-btn-unique:hover,
+.modal-submit-btn-unique:not(:disabled):hover,
+.booking-cancel-btn-unique:hover,
+.booking-confirm-btn-unique:not(:disabled):hover {
+  background: linear-gradient(90deg, #01ce54 0%, #006b2c 100%);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0, 107, 44, 0.22);
+}
+
+.chat-now-btn-unique.disabled,
+.row-btn-unique:disabled,
+.row-btn-unique.disabled,
+.modal-submit-btn-unique:disabled,
+.booking-confirm-btn-unique:disabled {
+  background: #d8dee8;
+  color: #8b95a5;
+  border-color: transparent;
+  box-shadow: none;
 }

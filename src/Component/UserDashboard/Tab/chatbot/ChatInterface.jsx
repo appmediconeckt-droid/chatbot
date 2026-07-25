@@ -8,7 +8,7 @@ import { useUserTranslation } from '../../../../i18n/LanguageContext';
 import { getPresence } from '../../../../utils/presence';
 import socketService from '../../../../services/socketService';
 
-const ChatInterface = ({ setActiveTab }) => {
+const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => {
     const navigate = useNavigate();
     const { t, lang, setLang } = useUserTranslation();
     const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
@@ -19,6 +19,7 @@ const ChatInterface = ({ setActiveTab }) => {
     const [loading, setLoading] = useState(true);
     const [initialLoading, setInitialLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [activeFilter, setActiveFilter] = useState('all');
     const [contextMenu, setContextMenu] = useState({
         visible: false,
         x: 0,
@@ -431,24 +432,28 @@ const ChatInterface = ({ setActiveTab }) => {
         // Mark messages as read
         await markChatAsRead(counselor.id);
 
-        // Navigate to chat box
-        navigate("/chat", {
-            state: {
-                chatId: counselor.chatId,
-                counselor: {
-                    id: counselor.id,
-                    name: counselor.name,
-                    specialization: counselor.specialization,
-                    online: counselor.online,
-                    lastSeen: counselor.lastSeen,
-                    avatar: counselor.avatar,
-                    profilePhoto: counselor.avatar,
-                    avatarType: counselor.avatarType
-                },
-                user: counselor.user
-            }
-        });
-    }, [contextMenu.visible, markChatAsRead, navigate]);
+        const conversation = {
+            chatId: counselor.chatId,
+            counselor: {
+                id: counselor.id,
+                name: counselor.name,
+                specialization: counselor.specialization,
+                online: counselor.online,
+                lastSeen: counselor.lastSeen,
+                avatar: counselor.avatar,
+                profilePhoto: counselor.avatar,
+                avatarType: counselor.avatarType
+            },
+            user: counselor.user
+        };
+
+        if (onOpenConversation) {
+            onOpenConversation(conversation);
+            return;
+        }
+
+        navigate("/chat", { state: conversation });
+    }, [contextMenu.visible, markChatAsRead, navigate, onOpenConversation]);
 
     // Handle start new chat
     const handleStartNewChat = useCallback(() => {
@@ -584,10 +589,22 @@ const ChatInterface = ({ setActiveTab }) => {
     }, [closeContextMenu]);
 
     // Filter counselors based on search term
-    const filteredCounselors = counselors.filter(counselor =>
-        counselor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        counselor.specialization.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredCounselors = counselors.filter((counselor) => {
+        const query = searchTerm.trim().toLowerCase();
+        const matchesSearch =
+            counselor.name.toLowerCase().includes(query) ||
+            counselor.specialization.toLowerCase().includes(query) ||
+            String(counselor.lastMessage || '').toLowerCase().includes(query);
+        const isArchived = counselor.status === 'archived' || counselor.isArchived;
+        const matchesFilter =
+            activeFilter === 'all'
+                ? !isArchived
+                : activeFilter === 'unread'
+                    ? counselor.unread > 0 && !isArchived
+                    : isArchived;
+
+        return matchesSearch && matchesFilter;
+    });
 
     // Render avatar with profile photo support
     const renderAvatar = useCallback((counselor, size = 'md') => {
@@ -628,15 +645,34 @@ const ChatInterface = ({ setActiveTab }) => {
             <div className="counselorSidebar">
                 <div className="counselorSidebarHeader">
                     <div className="counselorSearchBox">
+                        <FaSearch className="counselorSearchIcon" aria-hidden="true" />
                         <input
                             type="text"
-                            placeholder={t('search_counselors')}
+                            placeholder="Search patients, counsellors, or conversations..."
                             className="counselorSearchInput"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
-                        <FaSearch className="counselorSearchIcon" aria-hidden="true" />
                     </div>
+                </div>
+
+                <div className="chatFilterBar" role="tablist" aria-label="Chat filters">
+                    {[
+                        { id: 'all', label: 'All Chats' },
+                        { id: 'unread', label: 'Unread' },
+                        { id: 'archived', label: 'Archived' }
+                    ].map((filter) => (
+                        <button
+                            key={filter.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={activeFilter === filter.id}
+                            className={`chatFilterPill ${activeFilter === filter.id ? 'active' : ''}`}
+                            onClick={() => setActiveFilter(filter.id)}
+                        >
+                            {filter.label}
+                        </button>
+                    ))}
                 </div>
 
                 <div className="counselorListContainer">
@@ -661,7 +697,7 @@ const ChatInterface = ({ setActiveTab }) => {
                         filteredCounselors.map(counselor => (
                             <div
                                 key={counselor.id}
-                                className="counselorListItemWrapper"
+                                className={`counselorListItemWrapper ${selectedChatId === counselor.chatId ? "selected" : ""}`}
                                 onClick={(e) => handleItemClick(e, counselor)}
                                 onContextMenu={(e) => handleContextMenu(e, counselor)}
                                 onTouchStart={(e) => handleTouchStart(e, counselor)}
@@ -674,7 +710,7 @@ const ChatInterface = ({ setActiveTab }) => {
                                         <div className="counselorAvatar">
                                             {renderAvatar(counselor, 'md')}
                                         </div>
-                                        {/* <div className={`counselorStatus ${counselor.online ? 'counselorStatusOnline' : 'counselorStatusOffline'}`} /> */}
+                                        <div className={`counselorStatus ${counselor.online ? 'counselorStatusOnline' : 'counselorStatusOffline'}`} />
                                     </div>
 
                                     <div className="counselorInfo">
@@ -693,13 +729,6 @@ const ChatInterface = ({ setActiveTab }) => {
                                         </div>
 
                                         <div className="counselorDetailsRow">
-                                            <div className="counselorLastMessageRow">
-                                                <p className="counselorLastMessage">{counselor.lastMessage}</p>
-                                                {counselor.unread > 0 && (
-                                                    <span className="counselorUnreadBadge">{counselor.unread}</span>
-                                                )}
-                                            </div>
-
                                             <div className="counselorMetaInfo">
                                                 <span className="counselorSpecialization">{counselor.specialization}</span>
                                                 {counselor.status === 'accepted' && (
@@ -709,8 +738,13 @@ const ChatInterface = ({ setActiveTab }) => {
                                                     <span className="counselorStatusBadge expired">{t('expired_status')}</span>
                                                 )}
                                             </div>
+                                            <div className="counselorLastMessageRow">
+                                                <p className="counselorLastMessage">{counselor.lastMessage}</p>
+                                            </div>
                                         </div>
-                                        
+                                        {counselor.unread > 0 && (
+                                            <span className="counselorUnreadBadge">{counselor.unread}</span>
+                                        )}
                                     </div>
                                 </div>
                             </div>

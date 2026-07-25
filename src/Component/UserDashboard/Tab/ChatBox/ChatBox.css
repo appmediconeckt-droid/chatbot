@@ -786,7 +786,7 @@
   margin: 0 auto 1.25rem;
   border-radius: 50%;
   overflow: hidden;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #006B2C 0%, #01CE54 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1271,4 +1271,552 @@
   .chatInputArea {
     padding: 0.625rem 0.75rem;
   }
+}
+
+.chatContainerFull.chatEmbedded,
+.chatEmbedded .chatBoxMain {
+  height: 100%;
+  min-height: 0;
+}
+
+.chatEmbedded .chatDesktopHeaderBack {
+  display: none;
+}
+
+.chatEmbedded .chatBoxHeader {
+  min-height: 64px;
+  padding: 8px 12px;
+}
+
+.chatEmbedded .chatProfilePic {
+  width: 38px;
+  height: 38px;
+}
+
+.chatEmbedded .chatProfileName {
+  font-size: 13px;
+}
+
+.chatEmbedded .chatAiSummary {
+  margin: 10px 10px 0;
+  padding: 11px 12px;
+}
+
+.chatEmbedded .chatMessagesArea {
+  padding: 18px 12px;
+}
+
+@media (max-width: 900px) {
+  .chatEmbedded .chatMobileHeaderBack {
+    display: flex;
+  }
+}
+
+/* Screenshot-matched open conversation */
+.chatContainerFull,
+.chatBoxMain {
+  background: #ffffff;
+}
+
+.chatBoxHeader {
+  min-height: 72px;
+  padding: 10px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #dfe5ec;
+}
+
+.chatProfilePic {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #006B2C, #01CE54);
+}
+
+.chatProfileName {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.chatProfileStatus {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #667085;
+  font-size: 11px;
+}
+
+.chatHeaderPresence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.chatHeaderPresence::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+.chatHeaderPresence.online::before {
+  background: #01CE54;
+}
+
+.chatBoxHeaderRight {
+  gap: 7px;
+}
+
+.chatVideoBtn {
+  order: 2;
+}
+
+.chatAudioBtn {
+  order: 1;
+}
+
+.chatMoreOptions {
+  order: 3;
+}
+
+.chatActionBtn,
+.chatVideoBtn,
+.chatAudioBtn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 7px;
+  border: 1px solid #d6dee8;
+  background: #ffffff;
+  color: #009c40;
+}
+
+.chatActionBtn:hover {
+  background: #effbf4;
+  border-color: #9dddb8;
+}
+
+.chatAiSummary {
+  margin: 12px 14px 0;
+  padding: 14px 16px;
+  border: 1px solid #aee5c5;
+  border-radius: 9px;
+  background: #effcf4;
+  color: #344054;
+  flex-shrink: 0;
+}
+
+.chatAiSummaryTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #006B2C;
+  font-size: 12px;
+}
+
+.chatAiSummaryIcon {
+  font-size: 17px;
+  line-height: 1;
+}
+
+.chatAiBadge {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #daf5e5;
+  color: #278450;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.chatAiSummary p {
+  margin: 7px 0 0 25px;
+  max-width: 680px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #667085;
+}
+
+.chatMessagesArea {
+  gap: 12px;
+  padding: 22px 18px;
+  background: #ffffff;
+}
+
+.chatDateSeparator {
+  margin: 2px auto 8px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f0fbf5;
+  color: #667085;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.chatMsgBubble {
+  max-width: min(62%, 430px);
+}
+
+.chatMsgContent {
+  padding: 10px 12px;
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.chatMsgRight .chatMsgContent {
+  color: #ffffff;
+  background: linear-gradient(135deg, #006B2C 0%, #01CE54 100%);
+  border: 0;
+  border-bottom-right-radius: 3px;
+}
+
+.chatMsgLeft .chatMsgContent {
+  color: #344054;
+  background: #f0fbf5;
+  border: 0;
+  border-bottom-left-radius: 3px;
+}
+
+.chatMsgText {
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.chatMsgFooter {
+  margin-top: 3px;
+}
+
+.chatMsgTimestamp {
+  font-size: 9px;
+}
+
+.chatConversationTyping {
+  align-self: flex-end;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #667085;
+}
+
+.chatConversationTyping > span {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #667085;
+  animation: typingPulse 1.2s infinite;
+}
+
+.chatConversationTyping > span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.chatConversationTyping > span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.chatConversationTyping small {
+  margin-left: 4px;
+  font-size: 9px;
+}
+
+.chatInputArea {
+  padding: 8px 12px;
+  border-top: 1px solid #dfe5ec;
+  background: #ffffff;
+  box-shadow: none;
+}
+
+.chatInputGroup {
+  min-height: 42px;
+  gap: 3px;
+  padding: 3px 4px;
+  border: 1px solid #d7dee8;
+  border-radius: 9px;
+  background: #ffffff;
+}
+
+.chatInputGroup:focus-within {
+  border-color: #76d99f;
+  box-shadow: 0 0 0 2px rgba(1, 206, 84, 0.12);
+}
+
+.chatAttachBtn,
+.chatCameraBtn,
+.chatEmojiBtn {
+  width: 32px;
+  height: 32px;
+  padding: 5px;
+  color: #667085;
+}
+
+.chatCameraBtn {
+  display: none;
+}
+
+.chatTextInput {
+  padding: 8px 42px 8px 6px;
+  font-size: 12px;
+}
+
+.chatSendBtn {
+  width: 32px;
+  height: 32px;
+  border-radius: 7px;
+  background: linear-gradient(135deg, #006B2C 0%, #01CE54 100%);
+  font-size: 15px;
+}
+
+.chatSendBtn:disabled {
+  color: #ffffff;
+  background: #8bcfa7;
+}
+
+@media (max-width: 640px) {
+  .chatAiSummary {
+    margin: 8px 8px 0;
+    padding: 11px 12px;
+  }
+
+  .chatAiSummary p {
+    margin-left: 0;
+  }
+
+  .chatMsgBubble {
+    max-width: 82%;
+  }
+}
+
+/* Shared conversation search used by appointment and counselor chat entry points */
+.chatConversationSearch {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-shrink: 0;
+  min-height: 46px;
+  padding: 7px 14px;
+  color: #667085;
+  background: #ffffff;
+  border-bottom: 1px solid #dfe5ec;
+}
+
+.chatConversationSearch svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.chatConversationSearch input {
+  width: min(560px, 100%);
+  min-width: 0;
+  height: 32px;
+  padding: 6px 12px;
+  color: #344054;
+  font: inherit;
+  font-size: 11px;
+  background: #f0fbf5;
+  border: 1px solid #bde8cf;
+  border-radius: 999px;
+  outline: none;
+}
+
+.chatConversationSearch input:focus {
+  border-color: #01a946;
+  box-shadow: 0 0 0 2px rgba(1, 206, 84, 0.12);
+}
+
+.chatConversationSearch input::placeholder {
+  color: #98a2b3;
+}
+
+.chatEmbedded .chatConversationSearch {
+  min-height: 42px;
+  padding: 5px 10px;
+}
+
+@media (max-width: 640px) {
+  .chatConversationSearch {
+    padding: 6px 10px;
+  }
+
+  .chatConversationSearch input {
+    width: 100%;
+  }
+}
+
+/* Final screenshot alignment */
+.chatBoxMain {
+  position: relative;
+}
+
+.chatConversationSearch {
+  min-height: 44px;
+  padding: 6px 12px;
+}
+
+.chatConversationSearch input {
+  width: min(360px, calc(100% - 24px));
+  height: 30px;
+  padding-inline: 11px;
+}
+
+.chatDesktopHeaderBack {
+  display: none;
+}
+
+.chatBoxHeader {
+  min-height: 52px;
+  padding: 6px 12px;
+}
+
+.chatProfilePic {
+  width: 34px;
+  height: 34px;
+}
+
+.chatProfileName {
+  font-size: 16px;
+}
+
+.chatProfileStatus {
+  margin-top: 0;
+  font-size: 11px;
+}
+
+.chatActionBtn,
+.chatVideoBtn,
+.chatAudioBtn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+}
+
+.chatAiSummary {
+  margin: 8px 7px 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+.chatAiSummaryTitle {
+  font-size: 12px;
+}
+
+.chatAiSummaryIcon {
+  font-size: 14px;
+}
+
+.chatAiSummary p {
+  margin: 5px 0 0 22px;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.chatMessagesArea {
+  padding: 16px 10px;
+}
+
+.chatInputArea {
+  padding: 6px 7px;
+}
+
+.chatInputGroup {
+  min-height: 36px;
+}
+
+/* Desktop embedded conversation proportions. */
+@media (min-width: 901px) {
+  .ud-conversation-pane .chatConversationSearch {
+    display: none;
+  }
+
+  .ud-conversation-pane .chatBoxHeader {
+    min-height: 82px;
+    padding: 12px 16px;
+  }
+
+  .ud-conversation-pane .chatProfilePic {
+    width: 48px;
+    height: 48px;
+  }
+
+  .ud-conversation-pane .chatProfileName {
+    font-size: 20px;
+  }
+
+  .ud-conversation-pane .chatProfileStatus {
+    font-size: 11px;
+  }
+
+  .ud-conversation-pane .chatActionBtn,
+  .ud-conversation-pane .chatVideoBtn,
+  .ud-conversation-pane .chatAudioBtn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    min-height: 38px;
+  }
+
+  .ud-conversation-pane .chatAiSummary {
+    margin: 16px;
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .ud-conversation-pane .chatAiSummaryTitle {
+    font-size: 14px;
+  }
+
+  .ud-conversation-pane .chatAiSummary p {
+    max-width: 620px;
+    margin: 8px 0 0 32px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .ud-conversation-pane .chatMessagesArea {
+    padding: 32px 24px;
+  }
+
+  .ud-conversation-pane .chatInputArea {
+    padding: 10px 16px;
+  }
+
+  .ud-conversation-pane .chatInputGroup {
+    min-height: 52px;
+  }
+}
+
+/* Keep the existing text sizes; only replace the fallback glyphs with clear icons. */
+.chatMoreOptions .chatBtnIcon,
+.chatAttachBtn .attachIcon,
+.chatEmojiBtn .emojiIcon,
+.chatSendBtn .sendIcon {
+  display: none;
+}
+
+.chatHistoryIcon,
+.chatCorrectAttachIcon,
+.chatCorrectEmojiIcon,
+.chatCorrectSendIcon {
+  display: block;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+@media (max-width: 640px) {
+  .chatConversationSearch input {
+    width: 100%;
+  }
+
+  .chatMobileHeaderBack {
+    display: flex;
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+    min-height: 30px;
+  }
+
+  .chatAiSummary p {
+    margin-left: 0;
+  }
+
 }

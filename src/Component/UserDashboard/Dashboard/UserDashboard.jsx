@@ -25,6 +25,16 @@ import {
   FaUser,
   FaCalendarAlt,
   FaBell,
+  FaShieldAlt,
+  FaDownload,
+  FaChevronDown,
+  FaChevronUp,
+  FaRobot,
+  FaSearch,
+  FaExclamationTriangle,
+  FaFileAlt,
+  FaUpload,
+  FaChevronRight,
 } from "react-icons/fa";
 
 import useVibration from "../../../hooks/useVibration";
@@ -42,6 +52,7 @@ import NotificationCenter from "../../common/Notifications/NotificationCenter";
 const AccountSettings = lazy(() => import("../../Settings/AccountSettings"));
 const CallHistory = lazy(() => import("../Tab/Callls/CallHistory"));
 const ChatInterface = lazy(() => import("../Tab/chatbot/ChatInterface"));
+const ChatBox = lazy(() => import("../Tab/ChatBox/ChatBox"));
 const CounselorRequestChat = lazy(() => import("../Tab/Appointment/BookAppointment"));
 const IncomingCallModal = lazy(() => import("../../common/IncomingCallModal/IncomingCallModal"));
 const MyAppointments = lazy(() => import("../Tab/Appointment/MyAppointments"));
@@ -75,9 +86,18 @@ export default function UserDashboard() {
   const { t, lang, setLang } = useUserTranslation();
   const [, setLanguageUpdate] = useState(0);
   const [active, setActive] = useState("Chat");
+  const [openPrivacySection, setOpenPrivacySection] = useState("Chats & Calls");
+  const [helpSearch, setHelpSearch] = useState("");
+  const [openHelpQuestion, setOpenHelpQuestion] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
   const [targetCounselor, setTargetCounselor] = useState("");
   const [newMessage, setNewMessage] = useState("");
+  const [selectedConversation, setSelectedConversation] = useState(null);
+
+  const handleOpenCounselorConversation = (conversation) => {
+    setSelectedConversation(conversation);
+    setActive("Chat");
+  };
 
   // Force re-render when language changes
   useEffect(() => {
@@ -821,10 +841,10 @@ export default function UserDashboard() {
     { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
+    { id: "settings", icon: <FaCog />, label: t('settings') },
+    { id: "Notifications", icon: <FaBell />, label: "Notifications" },
     { id: "help", icon: <FaQuestionCircle />, label: t('help_support') },
     { id: "privacy", icon: <FaLock />, label: t('privacy') },
-    { id: "Notifications", icon: <FaBell />, label: "Notifications" },
-    { id: "settings", icon: <FaCog />, label: t('settings') },
   ];
 
   const bottomMenuItems = allMenuItems.slice(0, 4);
@@ -994,159 +1014,217 @@ export default function UserDashboard() {
     "Use My Profile and Settings to update or review the data stored in your account.",
   ];
 
+  const downloadPrivacyData = () => {
+    const storedUser = localStorage.getItem("userData") || localStorage.getItem("user");
+    let profile = {};
+    try {
+      profile = storedUser ? JSON.parse(storedUser) : {};
+    } catch {
+      profile = {};
+    }
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      profile,
+      notice:
+        "This export contains locally available account data. Contact support for a complete server-side record.",
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "humaeli-privacy-data.json";
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
-  const renderHelpSupport = () => (
-    <section className="ud-content-section ud-info-page">
-      <div className="ud-info-page-header">
-        <span className="ud-info-page-icon">
-          <FaQuestionCircle />
-        </span>
-        <div>
-          <h2 className="ud-section-title">{t('help_support')}</h2>
-          <p>
-            Use this support center to jump to the right MediConeckt feature,
-            troubleshoot common issues, and understand when to contact urgent
-            help outside the app.
-          </p>
-        </div>
-      </div>
 
-      <div className="ud-help-content">
-        {supportOptions.map((item) => (
-          <button
-            type="button"
-            className="ud-support-card"
-            key={item.title}
-            onClick={item.onClick}
-          >
-            <span className="ud-support-icon">{item.icon}</span>
-            <h3>{item.title}</h3>
-            <p>{item.text}</p>
-            <span className="ud-card-link">{item.action}</span>
-          </button>
-        ))}
-      </div>
+  const renderHelpSupport = () => {
+    const faqs = [
+      ["How do I book an appointment?", "Open Appointments, choose a counselor and select an available date and time."],
+      ["How can I cancel or reschedule?", "Open My Appointments and use the available cancel or reschedule action."],
+      ["Is my medical data secure?", "Your sensitive interactions and account data use protected access and encryption."],
+      ["How do I report a fraud?", "Email support with the account details and evidence. Never share your OTP or password."],
+      ["How do I add funds to my Wallet?", "Open Wallet and select Add Funds to complete a secure transaction."],
+    ].filter(([question, answer]) =>
+      `${question} ${answer}`.toLowerCase().includes(helpSearch.trim().toLowerCase()),
+    );
 
-      <div className="ud-role-help-grid ud-role-help-grid-single">
-        <article className="ud-role-help-card">
-          <div className="ud-role-help-title">
-            <FaUser />
-            <h3>Before you contact support</h3>
-          </div>
-          <ul>
-            {helpChecklist.map((item) => (
-              <li key={item}>{item}</li>
+    return (
+      <section className="ud-content-section ud-help-page">
+        <header className="ud-help-page-header">
+          <h2>Help & Supports</h2>
+          <p>Help and support desk for you</p>
+        </header>
+
+        <div className="ud-help-page-body">
+          <h1>How can we help you?</h1>
+          <label className="ud-help-search">
+            <FaSearch />
+            <input value={helpSearch} onChange={(event) => setHelpSearch(event.target.value)} placeholder="Search help articles, guides, and FAQs..." />
+          </label>
+
+          <div className="ud-help-channel-grid">
+            {[
+              [<FaCommentDots />, "Live Chat", "Chat with our support team", "Usually within 2 mins", () => setChatOpen(true)],
+              [<FaPhone />, "Call Support", "Talk directly", "Mon-Sat 9AM–7PM", () => { window.location.href = "tel:+18005550199"; }],
+              [<FaEnvelope />, "Email Support", "Send your questions", "Within 24 hours", () => { window.location.href = "mailto:support@humaeli.com"; }],
+              [<FaRobot />, "AI Assistant", "Get instant answers", "24/7 Available", () => setChatOpen(true)],
+            ].map(([icon, title, text, availability, onClick]) => (
+              <button type="button" key={title} onClick={onClick}>
+                <span>{icon}</span><strong>{title}</strong><p>{text}</p><small>{availability}</small>
+              </button>
             ))}
-          </ul>
-        </article>
-      </div>
+          </div>
 
-      <div className="ud-issue-grid">
-        {commonIssues.map((issue) => (
-          <article className="ud-issue-card" key={issue.title}>
-            <h3>{issue.title}</h3>
-            <p>{issue.text}</p>
-          </article>
-        ))}
-      </div>
+          <div className="ud-help-content-grid">
+            <main className="ud-help-left">
+              <section className="ud-help-faq">
+                <h2>Popular Questions</h2>
+                {faqs.length ? faqs.map(([question, answer]) => {
+                  const isOpen = openHelpQuestion === question;
+                  return (
+                    <article key={question}>
+                      <button type="button" onClick={() => setOpenHelpQuestion(isOpen ? "" : question)}>
+                        <span>{question}</span>{isOpen ? <FaChevronUp /> : <FaChevronDown />}
+                      </button>
+                      {isOpen && <p>{answer}</p>}
+                    </article>
+                  );
+                }) : <p className="ud-help-no-results">No matching help articles found.</p>}
+              </section>
 
-      <div className="ud-support-strip">
-        <div>
-          <h3>Need more help?</h3>
-          <p>
-            Update account details from Profile/Settings, or email support
-            with screenshots, browser name, user email/phone, and the exact
-            time the issue happened. For crisis support in India, call
-            9152987821 or local emergency services.
-          </p>
+              <section className="ud-help-report">
+                <h3>Report a Problem</h3>
+                <p>Encountered a bug or technical issue in the app?</p>
+                <div>
+                  <button type="button" onClick={() => { window.location.href = "mailto:support@humaeli.com?subject=Report%20an%20Issue"; }}>Report Issue</button>
+                  <label><FaUpload /> Screenshot<input type="file" accept="image/*" /></label>
+                </div>
+              </section>
+            </main>
+
+            <aside className="ud-help-right">
+              <section className="ud-help-emergency">
+                <h3><FaExclamationTriangle /> Need Immediate Help?</h3>
+                <p>If you are experiencing a medical emergency, please call your local emergency services immediately.</p>
+                <button type="button" onClick={() => { window.location.href = "tel:112"; }}>Emergency Contact</button>
+                <button type="button" className="outline" onClick={() => { window.location.href = "tel:9152987821"; }}>Crisis Resources</button>
+              </section>
+
+              <section className="ud-help-contact">
+                <small>CONTACT INFORMATION</small>
+                <p><FaEnvelope /><span>support@humaeli.com<small>Email</small></span></p>
+                <p><FaPhone /><span>+1 (800) 555–0199<small>Mon–Sat, 9am–7pm EST</small></span></p>
+              </section>
+
+              <section className="ud-help-legal">
+                <button type="button"><FaFileAlt /> Terms of Service <FaChevronRight /></button>
+                <button type="button" onClick={() => setActive("privacy")}><FaShieldAlt /> Privacy Policy <FaChevronRight /></button>
+              </section>
+            </aside>
+          </div>
+
+          <footer className="ud-help-footer">
+            <p>Humaeli Version 2.1.4</p><p>Last updated: Oct 24, 2023</p><button type="button" onClick={() => window.location.reload()}>Check for Updates</button>
+          </footer>
         </div>
-        <div className="ud-support-strip-actions">
-          <button type="button" className="ud-privacy-btn" onClick={handleProfileClick}>
-            {t('my_profile')}
-          </button>
-          <button type="button" className="ud-privacy-btn" onClick={handleSettingsClick}>
-            {t('settings')}
-          </button>
-          <button
-            type="button"
-            className="ud-privacy-btn ud-privacy-btn-secondary"
-            onClick={() => {
-              window.location.href = "mailto:support@mediconeckt.com?subject=MediConeckt%20Support%20Request";
-            }}
-          >
-            Email support
-          </button>
-        </div>
-      </div>
-    </section>
-  );
+      </section>
+    );
+  };
 
-  const renderPrivacyCenter = () => (
-    <section className="ud-content-section ud-info-page">
-      <div className="ud-info-page-header">
-        <span className="ud-info-page-icon">
-          <FaLock />
-        </span>
-        <div>
-          <h2 className="ud-section-title">{t('privacy')}</h2>
-          <p>
-            This privacy center explains how MediConeckt uses your profile,
-            chat, appointment, wallet, call, location, and security data inside
-            this web dashboard.
-          </p>
-        </div>
-      </div>
+  const renderPrivacyCenter = () => {
+    const sections = [
+      { ...privacyDataGroups[0], title: "Personal Profile" },
+      { ...privacyDataGroups[1], title: "Chats & Calls" },
+      { ...privacyDataGroups[2], title: "Appointments" },
+      { ...privacyDataGroups[3], title: "Wallet & Transactions" },
+    ];
 
-      <div className="ud-privacy-highlight-row">
-        {privacyHighlights.map((item) => (
-          <article className="ud-privacy-highlight" key={item.label}>
-            <span>{item.icon}</span>
-            <div>
-              <p>{item.label}</p>
-              <strong>{item.value}</strong>
+    return (
+      <section className="ud-content-section ud-privacy-page">
+        <header className="ud-privacy-page-header">
+          <h2>Privacy Policy</h2>
+          <p>Learn how Humaeli collects, uses, and protects your personal information.</p>
+        </header>
+
+        <div className="ud-privacy-page-grid">
+          <main className="ud-privacy-main">
+            <section className="ud-protected-banner">
+              <div className="ud-protected-heading">
+                <span><FaShieldAlt /></span>
+                <div><strong>Protected</strong><p>Your data is secure</p></div>
+              </div>
+              <div className="ud-protected-points">
+                <span>⊙ End-to-end encrypted chats</span>
+                <span>⊙ OTP verified account</span>
+                <span>⊙ Anonymous consultation</span>
+                <span>⊙ Secure wallet transactions</span>
+              </div>
+            </section>
+
+            <h3 className="ud-privacy-label">DATA COLLECTION</h3>
+            <div className="ud-privacy-accordions">
+              {sections.map((section) => {
+                const isOpen = openPrivacySection === section.title;
+                return (
+                  <article className={`ud-privacy-accordion ${isOpen ? "is-open" : ""}`} key={section.title}>
+                    <button type="button" onClick={() => setOpenPrivacySection(isOpen ? "" : section.title)}>
+                      <span className="ud-privacy-accordion-icon">{section.icon}</span>
+                      <strong>{section.title}</strong>
+                      {isOpen ? <FaChevronUp /> : <FaChevronDown />}
+                    </button>
+                    {isOpen && (
+                      <div className="ud-privacy-accordion-body">
+                        <b>Information Collected</b>
+                        <p>{section.text}</p>
+                        <b>Purpose</b>
+                        <p>Provide secure, continuous service history and enable appropriate counselor support.</p>
+                        <div className="ud-privacy-encryption-note"><FaLock /> All interactions are encrypted and stored securely.</div>
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
             </div>
-          </article>
-        ))}
-      </div>
+          </main>
 
-      <div className="ud-privacy-content">
-        {privacyDataGroups.map((group) => (
-          <article className="ud-privacy-option" key={group.title}>
-            <span className="ud-privacy-option-icon">{group.icon}</span>
-            <h3>{group.title}</h3>
-            <p>{group.text}</p>
-          </article>
-        ))}
-      </div>
+          <aside className="ud-privacy-side">
+            <h3 className="ud-privacy-label">QUICK ACTIONS</h3>
+            <div className="ud-privacy-quick-grid">
+              <button type="button" onClick={handleProfileClick}><FaUser /><strong>Manage Profile</strong><small>Update details</small></button>
+              <button type="button" onClick={handleSettingsClick}><FaLock /><strong>Security Settings</strong><small>Passwords & OTP</small></button>
+              <button type="button" onClick={downloadPrivacyData}><FaDownload /><strong>Download Data</strong><small>Get your records</small></button>
+              <button type="button" className="danger" onClick={handleSettingsClick}><FaTrash /><strong>Delete Account</strong><small>Permanently remove</small></button>
+            </div>
 
-      <div className="ud-privacy-content">
-        {privacyVisibility.map((item) => (
-          <article className="ud-privacy-option ud-privacy-option-soft" key={item.title}>
-            <h3>{item.title}</h3>
-            <p>{item.text}</p>
-          </article>
-        ))}
-      </div>
+            <h3 className="ud-privacy-label">YOUR PRIVACY CHECKLIST</h3>
+            <div className="ud-privacy-checklist">
+              {[
+                "Never share OTP with anyone",
+                "Enable App Lock in settings",
+                "Keep emergency contact updated",
+                "Review device permissions regularly",
+                "Use anonymous mode",
+              ].map((item, index) => (
+                <div className={index === 4 ? "muted" : ""} key={item}>
+                  <FaCheckCircle /> <span>{item}</span>
+                </div>
+              ))}
+            </div>
 
-      <div className="ud-privacy-policy-panel">
-        <h3>Your privacy checklist</h3>
-        <ul>
-          {privacyChecklist.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="ud-privacy-actions">
-        <button type="button" className="ud-privacy-btn" onClick={handleProfileClick}>
-          Manage profile data
-        </button>
-        <button type="button" className="ud-privacy-btn" onClick={handleSettingsClick}>
-          Security settings
-        </button>
-      </div>
-    </section>
-  );
+            <section className="ud-privacy-help-card">
+              <h3>Need help with privacy?</h3>
+              <p>Our support team is here to answer any questions about your data security.</p>
+              <button type="button" onClick={() => { window.location.href = "mailto:support@humaeli.com?subject=Privacy%20Support"; }}>Contact Support</button>
+              <button type="button" className="outline" onClick={handleSettingsClick}>Privacy Settings</button>
+            </section>
+          </aside>
+        </div>
+      </section>
+    );
+  };
 
   return (
     <div className="user-dashboard">
@@ -1307,14 +1385,16 @@ export default function UserDashboard() {
               </div>
               <div className="ud-sidebar-menu">
                 {allMenuItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => handleMenuItemClick(item.id)}
-                    className={`ud-sidebar-item ${active === item.id ? "ud-active" : ""}`}
-                  >
-                    <span className="ud-sidebar-icon">{item.icon}</span>
-                    <span className="ud-sidebar-text">{item.label}</span>
-                  </button>
+                  <React.Fragment key={item.id}>
+                    {item.id === "settings" && <hr className="ud-sidebar-separator" />}
+                    <button
+                      onClick={() => handleMenuItemClick(item.id)}
+                      className={`ud-sidebar-item ${active === item.id ? "ud-active" : ""}`}
+                    >
+                      <span className="ud-sidebar-icon">{item.icon}</span>
+                      <span className="ud-sidebar-text">{item.label}</span>
+                    </button>
+                  </React.Fragment>
                 ))}
               </div>
               <div className="ud-sidebar-actions">
@@ -1345,9 +1425,32 @@ export default function UserDashboard() {
         <div className={`ud-dashboard-content ${isMobile ? "ud-mobile" : ""}`}>
           <div className="ud-content-scrollable">
             <Suspense fallback={<DashboardPanelLoader />}>
-              {active === "Chat" && <ChatInterface setActiveTab={setActive} />}
+              {active === "Chat" && (
+                <div className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""}`}>
+                  <div className="ud-chat-list-pane">
+                    <ChatInterface
+                      setActiveTab={setActive}
+                      onOpenConversation={setSelectedConversation}
+                      selectedChatId={selectedConversation?.chatId}
+                    />
+                  </div>
+                  {selectedConversation && (
+                    <div className="ud-conversation-pane">
+                      <ChatBox
+                        key={selectedConversation.chatId || selectedConversation.counselor?.id}
+                        embedded
+                        conversation={selectedConversation}
+                        onClose={() => setSelectedConversation(null)}
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
               {active === "Live Chat" && (
-                <CounselorRequestChat initialSearch={targetCounselor} />
+                <CounselorRequestChat
+                  initialSearch={targetCounselor}
+                  onOpenConversation={handleOpenCounselorConversation}
+                />
               )}
               {active === "MyAppointments" && <MyAppointments />}
               {active === "Notifications" && <NotificationsPage />}
@@ -1407,6 +1510,7 @@ export default function UserDashboard() {
           sendQuickReply={sendQuickReply}
           sendChat={sendChat}
           selectedLang={selectedLang}
+          userName={userData?.name}
         />
       )}
 

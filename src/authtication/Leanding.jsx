@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Leanding.css';
-import logo from '../image/Mediconect Logo-3.png';
+import logo from '../assets/humaeli.png';
 import { API_BASE_URL } from '../axiosConfig';
 import { Link } from 'react-router-dom';
 import { SUPPORTED_LANGUAGES, useUserTranslation } from '../i18n/LanguageContext';
@@ -317,8 +317,7 @@ const Header = ({ onLoginClick }) => {
           >
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
-          <img src={logo} height={30} alt="MediConeckt Logo" />
-          <span className="logo-text">Medi<span className="logo-highlight">Coneckt</span></span>
+          <img src={logo} alt="Humaeli Logo" />
         </div>
 
         <nav className={`nav-menu ${menuOpen ? 'active' : ''}`}>
@@ -906,8 +905,7 @@ const Footer = () => (
       <div className="footer-content">
         <div className="footer-about">
           <div className="footer-logo">
-            <img src={logo} height={30} alt="MediConeckt Logo" />
-            <span>Medi<span className="logo-highlight">Coneckt</span></span>
+            <img src={logo} alt="Humaeli Logo" />
           </div>
           <p className="footer-description">
             India's most trusted AI-powered mental health platform with connections to top medical professionals across the country. Available 24/7 in multiple Indian languages.

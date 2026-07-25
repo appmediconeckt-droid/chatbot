@@ -83,7 +83,7 @@
 }
 
 .avatar-tab-btn.active {
-  background: #667eea;
+  background: #006B2C;
   color: #fff;
   font-weight: 600;
 }
@@ -135,15 +135,15 @@
 }
 
 .filter-pill.active {
-  border-color: #667eea;
-  background: #667eea;
+  border-color: #006B2C;
+  background: #006B2C;
   color: #fff;
   font-weight: 600;
 }
 
 .filter-pill:not(.active):hover {
-  border-color: #667eea;
-  color: #667eea;
+  border-color: #006B2C;
+  color: #006B2C;
 }
 
 /* Avatar grid */
@@ -168,16 +168,16 @@
 }
 
 .avatar-grid-item:hover {
-  border-color: #667eea;
+  border-color: #006B2C;
   background: #f0f2ff;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 107, 44, 0.18);
 }
 
 .avatar-grid-item.selected {
-  border-color: #667eea;
+  border-color: #006B2C;
   background: #eef0ff;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 0 0 3px rgba(0, 107, 44, 0.25);
 }
 
 .avatar-grid-item img {
@@ -199,7 +199,7 @@
   position: absolute;
   top: 6px;
   right: 8px;
-  background: #667eea;
+  background: #006B2C;
   color: #fff;
   border-radius: 50%;
   width: 18px;
@@ -316,19 +316,19 @@
 .avatar-apply-btn {
   padding: 9px 24px;
   border: none;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #006B2C, #01CE54);
   color: #fff;
   border-radius: 10px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 3px 10px rgba(102, 126, 234, 0.35);
+  box-shadow: 0 3px 10px rgba(0, 107, 44, 0.35);
 }
 
 .avatar-apply-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 5px 16px rgba(102, 126, 234, 0.45);
+  box-shadow: 0 5px 16px rgba(0, 107, 44, 0.45);
 }
 
 .avatar-apply-btn:disabled {

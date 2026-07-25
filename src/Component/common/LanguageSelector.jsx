@@ -16,6 +16,7 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
   const [open, setOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState('bottom');
   const [searchQuery, setSearchQuery] = useState('');
+  const [pendingLang, setPendingLang] = useState(lang);
   const ref = useRef(null);
   const dropdownRef = useRef(null);
   const current = SUPPORTED_LANGUAGES.find((l) => l.code === lang) || SUPPORTED_LANGUAGES[0];
@@ -29,6 +30,8 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
     l.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
     l.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
+  const recommendedCodes = ['en', 'hi', 'mr', 'gu'];
+  const nativeNames = { en: 'English (UK)', hi: 'हिन्दी', mr: 'मराठी', gu: 'ગુજરાતી', bn: 'বাংলা' };
 
   useEffect(() => {
     if (!open || !ref.current || !dropdownRef.current) return;
@@ -110,6 +113,71 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
       </div>
     );
   }
+
+  return (
+    <div ref={ref} className="language-selector-root">
+      <button
+        type="button"
+        onClick={() => {
+          setPendingLang(lang);
+          setSearchQuery('');
+          setOpen(true);
+        }}
+        title={t ? t('select_language') : 'Select Language'}
+        className="lang-selector-trigger"
+      >
+        <span className="lang-trigger-globe">◎</span>
+        <span>{compact ? current.code.toUpperCase() : current.label}</span>
+      </button>
+
+      {open && (
+        <div className="lang-modal-overlay">
+          <div ref={dropdownRef} className="lang-selector-modal lang-selector-modal-centered" role="dialog" aria-modal="true">
+            <div className="lang-modal-header">
+              <div className="lang-modal-header-left">
+                <div className="lang-modal-icon-wrap">◎</div>
+                <div>
+                  <div className="lang-modal-title">Language</div>
+                  <div className="lang-modal-subtitle">Choose your preferred language for the Mediconnect app</div>
+                </div>
+              </div>
+              <button type="button" className="lang-modal-close" onClick={() => setOpen(false)}>×</button>
+            </div>
+
+            <div className="lang-modal-search">
+              <FaSearch className="lang-modal-search-icon" aria-hidden="true" />
+              <input type="text" placeholder="Search language" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
+            </div>
+
+            <div className="lang-modal-list">
+              {!searchQuery && <div className="lang-modal-section-title">RECOMMENDED</div>}
+              {!searchQuery && filteredLanguages.filter((item) => recommendedCodes.includes(item.code)).map((item) => (
+                <button key={`recommended-${item.code}`} type="button" className={`lang-modal-item ${pendingLang === item.code ? 'lang-modal-item--active' : ''}`} onClick={() => setPendingLang(item.code)}>
+                  <span className="lang-modal-flag">🇮🇳</span>
+                  <span className="lang-modal-labels"><strong>{nativeNames[item.code] || item.label}</strong><small>{item.label}</small></span>
+                  <span className={pendingLang === item.code ? 'lang-modal-check' : 'lang-modal-check-empty'}>{pendingLang === item.code ? '✓' : ''}</span>
+                </button>
+              ))}
+              <div className="lang-modal-section-title">ALL LANGUAGES</div>
+              {filteredLanguages.filter((item) => searchQuery || !recommendedCodes.includes(item.code)).map((item) => (
+                <button key={item.code} type="button" className={`lang-modal-item ${pendingLang === item.code ? 'lang-modal-item--active' : ''}`} onClick={() => setPendingLang(item.code)}>
+                  <span className="lang-modal-flag">🌐</span>
+                  <span className="lang-modal-labels"><strong>{nativeNames[item.code] || item.label}</strong><small>{item.label}</small></span>
+                  <span className={pendingLang === item.code ? 'lang-modal-check' : 'lang-modal-check-empty'}>{pendingLang === item.code ? '✓' : ''}</span>
+                </button>
+              ))}
+              {!filteredLanguages.length && <div className="lang-modal-empty">No languages found</div>}
+            </div>
+
+            <div className="lang-modal-actions">
+              <button type="button" className="lang-modal-cancel" onClick={() => { setPendingLang(lang); setOpen(false); }}>Cancel</button>
+              <button type="button" className="lang-modal-apply" onClick={() => { handleLanguageChange(pendingLang); setOpen(false); }}>Apply Language</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 
   // Beautiful popup version (used in chat footer, mobile modal, settings)
   return (

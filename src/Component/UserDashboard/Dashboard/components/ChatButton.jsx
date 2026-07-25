@@ -5,8 +5,7 @@ const ChatButton = ({ onClick, unreadCount }) => (
     {/* <span className="ud-float-ring ud-float-ring-1" />
     <span className="ud-float-ring ud-float-ring-2" /> */}
     <button className="ud-floating-chat-btn" onClick={onClick} title="Chat with AI Assistant" aria-label="Open AI chat">
-      <span className="ud-floating-ai-star" aria-hidden="true">✨</span>
-      <span className="ud-floating-ai-label">AI</span>
+      <span className="ud-floating-ai-star" aria-hidden="true">✦</span>
       {unreadCount > 0 && <span className="ud-unread-badge">{unreadCount}</span>}
     </button>
   </div>

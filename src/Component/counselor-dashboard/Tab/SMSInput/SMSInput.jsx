@@ -3528,7 +3528,7 @@ import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import TranslatedMessage from "../../../common/TranslatedMessage";
 import { getCallHistoryTone } from "../../../common/callHistoryStyle";
 
-const SMSInput = () => {
+const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack = null }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, lang } = useCounselorTranslation();
@@ -3599,8 +3599,8 @@ const SMSInput = () => {
     setTimeout(() => messageInputRef.current?.focus({ preventScroll: true }), 50);
   };
 
-  const selectedUser = location.state?.selectedUser;
-  const chatId = location.state?.chatId;
+  const selectedUser = embeddedUser || location.state?.selectedUser;
+  const chatId = embeddedChatId || location.state?.chatId;
   const selectedUserPresence = getPresence(selectedUser || {});
   const [remotePresence, setRemotePresence] = useState({
     isOnline: selectedUserPresence.isOnline,
@@ -4839,7 +4839,13 @@ const SMSInput = () => {
     setSelectedCall(null);
     setCallError(null);
   };
-  const handleBack = () => navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
+  const handleBack = () => {
+    if (onEmbeddedBack) {
+      onEmbeddedBack();
+      return;
+    }
+    navigate("/counselor-dashboard", { state: { selectedTab: "messages" } });
+  };
   const getAvatarIcon = (gender) => {
     if (gender === "male") return "👨";
     if (gender === "female") return "👩";
