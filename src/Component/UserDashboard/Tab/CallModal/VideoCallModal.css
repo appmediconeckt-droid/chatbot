@@ -367,6 +367,14 @@
   font-weight: bold;
   color: white;
   box-shadow: 0 10px 30px rgba(66, 117, 244, 0.3);
+  overflow: hidden;
+}
+
+.stream-avatar-glow img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
 }
 
 .stream-callee-name {
@@ -857,7 +865,7 @@
 }
 
 .stream-modal-container-voice .stream-bottom-controls-wrap {
-  bottom: 108px;
+  bottom: calc(108px + env(safe-area-inset-bottom, 0px));
 }
 
 .stream-modal-container-voice .stream-bottom-controls {
@@ -937,7 +945,7 @@
   }
 
   .stream-modal-container-voice .stream-bottom-controls-wrap {
-    bottom: 52px;
+    bottom: calc(52px + env(safe-area-inset-bottom, 0px));
   }
 
   .stream-modal-container-voice .stream-bottom-controls {
