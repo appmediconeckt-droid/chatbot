@@ -60,8 +60,8 @@ const RoleSelector = () => {
           alt="Humaeli Logo"
           className="menthy-logo-icon"
         />
-        <h1 className="p4h1-gradient-title">✦ welcome back ✦</h1>
-        <p className="r8t2-sub-line">choose your path —</p>
+        {/* <h1 className="p4h1-gradient-title">✦ welcome back ✦</h1> */}
+        <p className="r8t2-sub-line">— choose your path —</p>
       </div>
 
       <div className="z6w9-dual-grid">
