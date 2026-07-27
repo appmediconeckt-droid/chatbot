@@ -20,6 +20,12 @@ const normalizeCallType = (callType) => {
   return "video";
 };
 
+const normalizeProfileImage = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value.url || value.secure_url || value.avatarUrl || "";
+};
+
 const formatRequestTime = (value) => {
   if (!value) return "";
 
@@ -143,14 +149,14 @@ const IncomingCallModal = ({
     );
   }, [callData, callerName, fallbackName, isPatientCaller, resolvedAnonymousName]);
 
-  const profilePhoto = isPatientCaller
+  const profilePhoto = normalizeProfileImage(isPatientCaller
     ? anonymousCaller.avatarUrl || anonymousCaller.avatar
     : callData?.from?.profilePhoto ||
       callData?.from?.profilePic ||
       callData?.initiator?.profilePhoto ||
       callData?.initiator?.profilePic ||
       callData?.from?.avatar ||
-      callerImage;
+      callerImage);
 
   const requestedTime = formatRequestTime(
     callData?.requestedAt || callData?.createdAt,

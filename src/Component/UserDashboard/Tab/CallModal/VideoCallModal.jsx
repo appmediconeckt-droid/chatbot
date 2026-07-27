@@ -109,6 +109,25 @@ const buildInitials = (name) => {
   return normalizedName ? normalizedName.charAt(0).toUpperCase() : "?";
 };
 
+const normalizeProfileImage = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value.url || value.secure_url || value.avatarUrl || "";
+};
+
+const resolveParticipantImage = (participant, fallback = "") =>
+  normalizeProfileImage(
+    participant?.image ||
+      participant?.user?.image ||
+      participant?.user?.profilePhoto ||
+      participant?.user?.profilePic ||
+      participant?.user?.avatar ||
+      participant?.profilePhoto ||
+      participant?.profilePic ||
+      participant?.avatar ||
+      fallback,
+  );
+
 const formatDuration = (seconds) => {
   const safeSeconds = Math.max(0, Number(seconds) || 0);
   const hrs = Math.floor(safeSeconds / 3600);
@@ -260,6 +279,7 @@ const StreamVideoBody = ({
   isVoiceMode,
   calleeName,
   elapsedSeconds,
+  remoteProfilePhoto,
 }) => {
   const {
     useCallCallingState,
@@ -369,11 +389,10 @@ const StreamVideoBody = ({
   const voiceParticipantName =
     mainParticipantName || String(calleeName || "Participant").trim();
   const voiceParticipantInitial = buildInitials(voiceParticipantName);
-  const voiceParticipantImage =
-    mainParticipant?.image ||
-    mainParticipant?.user?.image ||
-    mainParticipant?.user?.profilePic ||
-    "";
+  const voiceParticipantImage = resolveParticipantImage(
+    mainParticipant,
+    remoteProfilePhoto,
+  );
   const localParticipantName = localParticipant
     ? resolveDisplayName(localParticipant, currentUserRole)
     : "You";
@@ -667,6 +686,26 @@ const VideoCallModal = ({
     resolvedAnonymousName,
   ]);
   const calleeName = useMemo(() => resolveCalleeName(callData), [callData]);
+  const remoteProfilePhoto = useMemo(
+    () =>
+      normalizeProfileImage(
+        callData?.profilePhoto ||
+          callData?.profilePic ||
+          callData?.avatarUrl ||
+          callData?.avatar ||
+          callData?.receiver?.profilePhoto ||
+          callData?.receiver?.profilePic ||
+          callData?.receiver?.avatar ||
+          callData?.initiator?.profilePhoto ||
+          callData?.initiator?.profilePic ||
+          callData?.initiator?.avatar ||
+          callData?.from?.profilePhoto ||
+          callData?.from?.profilePic ||
+          callData?.from?.avatar ||
+          callData?.image,
+      ),
+    [callData],
+  );
   const calleeInitials = useMemo(() => buildInitials(calleeName), [calleeName]);
   const maskedCalleeName = useMemo(() => {
     if (resolvedUserType === "counsellor" || resolvedUserType === "counselor") {
@@ -1611,7 +1650,11 @@ const VideoCallModal = ({
                   <div className="stream-pulse-ring stream-pulse-ring-2" />
                   <div className="stream-pulse-ring stream-pulse-ring-3" />
                   <div className="stream-avatar-glow">
-                    {maskedCalleeInitials}
+                    {remoteProfilePhoto ? (
+                      <img src={remoteProfilePhoto} alt={maskedCalleeName} />
+                    ) : (
+                      maskedCalleeInitials
+                    )}
                   </div>
                 </div>
                 <h1 className="stream-callee-name">{maskedCalleeName}</h1>
@@ -1649,6 +1692,7 @@ const VideoCallModal = ({
                   localUserId={localUser?.id}
                   onLeave={handleCallLeft}
                   elapsedSeconds={elapsedSeconds}
+                  remoteProfilePhoto={remoteProfilePhoto}
                 />
               </StreamCall>
             </StreamVideo>

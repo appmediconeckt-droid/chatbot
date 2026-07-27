@@ -1394,7 +1394,7 @@ const SMSList = () => {
       </div> */}
 
       {/* Users List */}
-      <div className="smslist-pinned">
+      {/* <div className="smslist-pinned">
         <h3>Pinned</h3>
         <div className="smslist-pinned-row">
           {users.slice(0, 4).map((user) => (
@@ -1407,7 +1407,7 @@ const SMSList = () => {
             </button>
           ))}
         </div>
-      </div>
+      </div> */}
 
       <div className="smslist-users">
         {filteredUsers.length > 0 ? (

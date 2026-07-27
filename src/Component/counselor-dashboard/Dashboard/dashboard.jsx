@@ -716,6 +716,9 @@ export default function CounselorDashboard() {
             currentUser={{
               id: localStorage.getItem("counsellorId"),
               role: "counsellour",
+              name: counselorData?.name,
+              fullName: counselorData?.name,
+              profilePhoto: counselorData?.profilePhoto,
             }}
             onEndCall={handleEndCall}
           />

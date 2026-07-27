@@ -1273,7 +1273,13 @@ export default function UserDashboard() {
             onClose={() => setIsVideoModalOpen(false)}
             callData={selectedCall}
             callMode={selectedCall?.callType || selectedCall?.type || callType}
-            currentUser={{ id: userId, role: "user" }}
+            currentUser={{
+              id: userId,
+              role: "user",
+              name: userData.name,
+              fullName: userData.name,
+              profilePhoto: userData.profilePhoto,
+            }}
             onEndCall={handleEndCall}
           />
         )}
