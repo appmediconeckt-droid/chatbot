@@ -9,7 +9,11 @@ import { API_BASE_URL } from "../axiosConfig";
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const role = location.state?.role === "counsellor" ? "counsellor" : "user";
+  const requestedRole = String(location.state?.role || "").toLowerCase();
+  const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
+    ? "counsellor"
+    : "user";
+  const themeClass = role === "counsellor" ? "auth-theme-counselor" : "auth-theme-user";
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +61,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="fp-wrapper">
+    <div className={`fp-wrapper ${themeClass}`}>
       <div className="fp-container">
         {/* Back Button */}
         {/* <button 

@@ -359,6 +359,7 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
 
   useEffect(() => {
     let removeIncomingListener = null;
+    let removeAcceptedListener = null;
     let cancelled = false;
 
     const handleIncomingCall = (payload = {}) => {
@@ -398,6 +399,20 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
       vibrate([200, 100, 200]);
     };
 
+    const handleCallAccepted = (payload = {}) => {
+      if (cancelled) return;
+      setSelectedCall((previous) =>
+        previous
+          ? {
+              ...previous,
+              roomId: payload.roomId || previous.roomId,
+              status: "active",
+            }
+          : previous,
+      );
+      setIsVideoModalOpen(true);
+    };
+
     void socketService
       .on("incoming_call_request", handleIncomingCall)
       .then((cleanup) => {
@@ -408,9 +423,20 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
         console.warn("Incoming call socket listener unavailable:", error);
       });
 
+    void socketService
+      .on("call_accepted", handleCallAccepted)
+      .then((cleanup) => {
+        if (cancelled) cleanup();
+        else removeAcceptedListener = cleanup;
+      })
+      .catch((error) => {
+        console.warn("Call accepted socket listener unavailable:", error);
+      });
+
     return () => {
       cancelled = true;
       removeIncomingListener?.();
+      removeAcceptedListener?.();
     };
   }, [isVideoModalOpen, vibrate]);
 

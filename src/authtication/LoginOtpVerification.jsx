@@ -15,7 +15,16 @@ const LoginOtpVerification = () => {
   const [resendTimer, setResendTimer] = useState(60);
   const [isResending, setIsResending] = useState(false);
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState(
+    () =>
+      location.state?.role ||
+      localStorage.getItem("userRole") ||
+      "user",
+  );
+  const isCounselor =
+    role === "counselor" ||
+    role === "counsellor" ||
+    role === "counsellour";
 
   useEffect(() => {
     // Get email from location state or localStorage
@@ -181,7 +190,7 @@ const LoginOtpVerification = () => {
   }, [success, navigate, role]);
 
   return (
-    <div className="us-wrapper">
+    <div className={`us-wrapper ${isCounselor ? "auth-theme-counselor" : "auth-theme-user"}`}>
       <div className="us-otp-page-container">
         <button
           onClick={() => navigate(role === "counselor" || role === "counsellor" ? "/counselor-signup" : "/user-signup")}

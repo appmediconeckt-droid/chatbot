@@ -10,7 +10,11 @@ const ForgotPasswordOTP = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
-  const role = location.state?.role === "counsellor" ? "counsellor" : "user";
+  const requestedRole = String(location.state?.role || "").toLowerCase();
+  const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
+    ? "counsellor"
+    : "user";
+  const themeClass = role === "counsellor" ? "auth-theme-counselor" : "auth-theme-user";
 
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
@@ -119,7 +123,7 @@ const ForgotPasswordOTP = () => {
   };
 
   return (
-    <div className="fpotp-wrapper">
+    <div className={`fpotp-wrapper ${themeClass}`}>
       <div className="fpotp-container">
         {/* Back Button */}
         <button 

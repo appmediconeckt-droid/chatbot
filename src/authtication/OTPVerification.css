@@ -255,6 +255,15 @@
   background: #eef2ff;
 }
 
+/* This OTP route is user-only, so its primary actions use the user green. */
+.otp-container.auth-theme-user .otp-card button:not(.otp-page-back-btn):not(:disabled) {
+  background: linear-gradient(135deg, #006b2c, #01ce54);
+  color: #fff;
+}
+.otp-container.auth-theme-user .otp-page-back-btn {
+  color: #008b3b;
+}
+
 /* Header */
 .otp-card h2 {
   margin-bottom: 20px;

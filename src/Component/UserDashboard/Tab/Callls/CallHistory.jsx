@@ -173,6 +173,7 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
   const currentUserType = normalizeRole(
     currentUser?.role || localStorage.getItem("userRole") || "user",
   );
+  const isCounselorView = currentUserType === "counsellor";
 
   const fetchCallHistory = useCallback(async () => {
     if (!currentUserId) {
@@ -437,7 +438,11 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
   };
 
   return (
-    <div className="portal-call-history">
+    <div
+      className={`portal-call-history ${
+        isCounselorView ? "pch-theme-counselor" : "pch-theme-user"
+      }`}
+    >
       {showHeader && (
         <header className="pch-header">
           <h1>Call History</h1>

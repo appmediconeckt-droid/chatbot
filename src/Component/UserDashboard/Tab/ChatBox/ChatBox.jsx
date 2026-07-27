@@ -5384,10 +5384,32 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
     const onCallStatusUpdate = ({ status }) => {
       if (!mounted) return;
       const normalizedStatus = String(status || "").toLowerCase();
+      if (normalizedStatus === "active" || normalizedStatus === "accepted" || normalizedStatus === "connected") {
+        setSelectedCall((previous) =>
+          previous ? { ...previous, status: "active" } : previous,
+        );
+        setIsVideoModalOpen(true);
+        return;
+      }
       if (normalizedStatus === "rejected" || normalizedStatus === "ended" || normalizedStatus === "cancelled" || normalizedStatus === "canceled" || normalizedStatus === "expired") {
         closeCallUi();
         fetchCallHistory();
       }
+    };
+
+    const onCallAccepted = (payload = {}) => {
+      if (!mounted) return;
+      setSelectedCall((previous) =>
+        previous
+          ? {
+              ...previous,
+              roomId: payload.roomId || previous.roomId,
+              status: "active",
+            }
+          : previous,
+      );
+      setCallError(null);
+      setIsVideoModalOpen(true);
     };
 
     const onCallTerminated = (payload = {}) => {
@@ -5434,6 +5456,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
       socket.on("user-typing", onTyping);
       socket.on("messages-read", onMessagesRead);
       socket.on("call_rejected", onCallRejected);
+      socket.on("call_accepted", onCallAccepted);
       socket.on("call-status-update", onCallStatusUpdate);
       socket.on("call_ended", onCallTerminated);
       socket.on("call-ended", onCallTerminated);
@@ -5455,6 +5478,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
         socket.off("user-typing", onTyping);
         socket.off("messages-read", onMessagesRead);
         socket.off("call_rejected", onCallRejected);
+        socket.off("call_accepted", onCallAccepted);
         socket.off("call-status-update", onCallStatusUpdate);
         socket.off("call_ended", onCallTerminated);
         socket.off("call-ended", onCallTerminated);

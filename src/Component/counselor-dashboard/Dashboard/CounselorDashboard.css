@@ -4614,22 +4614,23 @@ button:focus {
   min-height: 100%;
   padding: clamp(18px, 3vw, 36px);
   background:
-    radial-gradient(circle at 100% 0, rgba(159, 122, 234, 0.11), transparent 28rem),
+    radial-gradient(circle at 100% 0, rgba(8, 117, 242, 0.12), transparent 28rem),
     #f7f9fd;
 }
 
 .couns-call-page-header {
   margin-bottom: 18px;
   padding: 22px 24px;
-  background: #fff;
-  border: 1px solid #e6ebf3;
+  color: #fff;
+  background: linear-gradient(112deg, #0875f2 0%, #0753ae 100%);
+  border: 1px solid transparent;
   border-radius: 18px;
   box-shadow: 0 10px 30px rgba(15, 35, 65, 0.06);
 }
 
 .couns-call-page-header h2 {
   margin: 0;
-  color: #0b1c30;
+  color: #fff;
   font-family: 'Manrope', sans-serif;
   font-size: clamp(22px, 2.3vw, 30px);
   font-weight: 750;
@@ -4638,7 +4639,7 @@ button:focus {
 
 .couns-call-page-header p {
   margin: 7px 0 0;
-  color: #64748b;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 13px;
 }
 
@@ -5687,6 +5688,10 @@ button:focus {
   .stitch-apt-toolbar { align-items: stretch; flex-direction: column; }
   .stitch-apt-search { flex-basis: 40px; max-width: none; }
   .stitch-apt-toolbar .stitch-apt-header-tools,.stitch-apt-toolbar .stitch-date-filter { width: 100%; }
+}
+
+.couns-call-page-header .stitch-apt-eyebrow {
+  color: rgba(255, 255, 255, 0.78);
 }
 
 /* Appointments toolbar: mobile search and horizontally scrollable tabs. */
