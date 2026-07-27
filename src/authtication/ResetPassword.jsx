@@ -10,14 +10,18 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ResetPassword.css";
-import logo from "../assets/humaeli.png";
+import logo from "../assets/humaeli logo (2).png";
 import { API_BASE_URL } from "../axiosConfig";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
-  const role = location.state?.role === "counsellor" ? "counsellor" : "user";
+  const requestedRole = String(location.state?.role || "").toLowerCase();
+  const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
+    ? "counsellor"
+    : "user";
+  const themeClass = role === "counsellor" ? "auth-theme-counselor" : "auth-theme-user";
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -85,7 +89,7 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="rp-wrapper">
+    <div className={`rp-wrapper ${themeClass}`}>
       <div className="rp-container">
         {/* Back Button */}
         <button 
@@ -98,7 +102,7 @@ const ResetPassword = () => {
 
         {/* Logo */}
         <div className="rp-logo">
-          <img src={logo} alt="Mediconeckt" className="rp-logo-img" />
+          <img src={logo} alt="Humaeli" className="rp-logo-img" />
         </div>
 
         <div className="rp-card">

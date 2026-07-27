@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 import { getAuthToken, getCounsellorId } from "./counsellorAuth";
 import {
   getAnonymousParticipantId,
@@ -357,9 +358,105 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
   };
 
   useEffect(() => {
+    let removeIncomingListener = null;
+    let removeAcceptedListener = null;
+    let cancelled = false;
+
+    const handleIncomingCall = (payload = {}) => {
+      if (cancelled || isVideoModalOpen) return;
+
+      const fromData =
+        payload.from && typeof payload.from === "object" ? payload.from : {};
+      const anonymousHandle =
+        (typeof payload.from === "string" && payload.from.trim()) ||
+        payload.anonymous ||
+        fromData.anonymous ||
+        fromData.anonymousName ||
+        fromData.displayName ||
+        "Anonymous User";
+      const anonymousCaller = getAnonymousUserDisplay({
+        ...payload,
+        ...fromData,
+        profilePhoto:
+          fromData.profilePhoto ||
+          payload.fromProfilePhoto ||
+          payload.profilePhoto,
+        anonymous: anonymousHandle,
+      });
+
+      setIncomingCallData({
+        callId: payload.callId || payload.id || payload._id,
+        roomId: payload.roomId,
+        name: anonymousCaller.name,
+        image:
+          anonymousCaller.avatarUrl ||
+          anonymousCaller.avatar,
+        callType: payload.callType || payload.type || "video",
+        from: {
+          ...fromData,
+          profilePhoto:
+            fromData.profilePhoto ||
+            payload.fromProfilePhoto ||
+            payload.profilePhoto,
+          anonymous: anonymousHandle,
+          displayName: anonymousHandle,
+        },
+        initiator: payload.initiator,
+      });
+      setShowIncomingCallModal(true);
+      vibrate([200, 100, 200]);
+    };
+
+    const handleCallAccepted = (payload = {}) => {
+      if (cancelled) return;
+      setSelectedCall((previous) => {
+        if (!previous) return previous;
+        const previousId = previous.callId || previous.id || previous._id;
+        if (payload.callId && previousId && String(payload.callId) !== String(previousId)) {
+          return previous;
+        }
+        setIsVideoModalOpen(true);
+        return {
+          ...previous,
+          roomId: payload.roomId || previous.roomId,
+          status: "active",
+        };
+      });
+    };
+
+    void socketService
+      .on("incoming_call_request", handleIncomingCall)
+      .then((cleanup) => {
+        if (cancelled) cleanup();
+        else removeIncomingListener = cleanup;
+      })
+      .catch((error) => {
+        console.warn("Incoming call socket listener unavailable:", error);
+      });
+
+    void socketService
+      .on("call_accepted", handleCallAccepted)
+      .then((cleanup) => {
+        if (cancelled) cleanup();
+        else removeAcceptedListener = cleanup;
+      })
+      .catch((error) => {
+        console.warn("Call accepted socket listener unavailable:", error);
+      });
+
+    return () => {
+      cancelled = true;
+      removeIncomingListener?.();
+      removeAcceptedListener?.();
+    };
+  }, [isVideoModalOpen, vibrate]);
+
+  useEffect(() => {
     if (isPolling && !isVideoModalOpen) {
       fetchWaitingCalls();
-      const interval = setInterval(fetchWaitingCalls, 5000);
+      // Socket events open the popup immediately. This short poll remains as
+      // a fallback for reconnects or temporarily backgrounded browser tabs.
+      const interval = setInterval(fetchWaitingCalls, 2000);
       setPollingInterval(interval);
       return () => clearInterval(interval);
     } else if (pollingInterval) {

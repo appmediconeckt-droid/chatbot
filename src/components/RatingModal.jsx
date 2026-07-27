@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import StarRating from "./StarRating";
 import styles from "./RatingModal.module.css";
@@ -38,6 +38,21 @@ const RatingModal = ({
 }) => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
+  const [photoFailed, setPhotoFailed] = useState(false);
+
+  const counselorPhotoUrl = useMemo(() => {
+    if (typeof counselorPhoto === "string") {
+      const value = counselorPhoto.trim();
+      return value && value !== "[object Object]" ? value : null;
+    }
+
+    return (
+      counselorPhoto?.url ||
+      counselorPhoto?.secure_url ||
+      counselorPhoto?.secureUrl ||
+      null
+    );
+  }, [counselorPhoto]);
 
   if (!visible) return null;
 
@@ -80,11 +95,12 @@ const RatingModal = ({
         ) : (
           <>
             <div className={styles.avatarWrap}>
-              {counselorPhoto ? (
+              {counselorPhotoUrl && !photoFailed ? (
                 <img
-                  src={counselorPhoto}
+                  src={counselorPhotoUrl}
                   alt={counselorName}
                   className={styles.avatar}
+                  onError={() => setPhotoFailed(true)}
                 />
               ) : (
                 <div className={styles.avatarFallback}>{initials}</div>

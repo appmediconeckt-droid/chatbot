@@ -3,14 +3,18 @@ import { FaCheckCircle, FaSpinner, FaArrowLeft, FaEnvelope } from "react-icons/f
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ForgotPasswordOTP.css";
-import logo from "../assets/humaeli.png";
+import logo from "../assets/humaeli logo (2).png";
 import { API_BASE_URL } from "../axiosConfig";
 
 const ForgotPasswordOTP = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const email = location.state?.email || "";
-  const role = location.state?.role === "counsellor" ? "counsellor" : "user";
+  const requestedRole = String(location.state?.role || "").toLowerCase();
+  const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
+    ? "counsellor"
+    : "user";
+  const themeClass = role === "counsellor" ? "auth-theme-counselor" : "auth-theme-user";
 
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
@@ -119,7 +123,7 @@ const ForgotPasswordOTP = () => {
   };
 
   return (
-    <div className="fpotp-wrapper">
+    <div className={`fpotp-wrapper ${themeClass}`}>
       <div className="fpotp-container">
         {/* Back Button */}
         <button 
@@ -132,7 +136,7 @@ const ForgotPasswordOTP = () => {
 
         {/* Logo */}
         <div className="fpotp-logo">
-          <img src={logo} alt="Mediconeckt" className="fpotp-logo-img" />
+          <img src={logo} alt="Humaeli" className="fpotp-logo-img" />
         </div>
 
         <div className="fpotp-card">

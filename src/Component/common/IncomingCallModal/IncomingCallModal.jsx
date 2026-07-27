@@ -55,11 +55,26 @@ const IncomingCallModal = ({
   const fromData = callData?.from || callData?.initiator || {};
   const fromRole = String(
     fromData?.role || fromData?.type || callData?.initiatorType || callData?.fromType || "",
-  ).toLowerCase();
-  const isPatientCaller =
-    fromRole === "user" ||
-    fromRole === "patient" ||
-    Boolean(fromData?.anonymous || fromData?.isAnonymous || callData?.patientName);
+  )
+    .trim()
+    .toLowerCase();
+  const normalizedFromRole = [
+    "counsellor",
+    "counselor",
+    "counsellour",
+    "doctor",
+  ].includes(fromRole)
+    ? "counselor"
+    : ["user", "patient"].includes(fromRole)
+      ? "user"
+      : fromRole;
+  const isPatientCaller = normalizedFromRole
+    ? normalizedFromRole === "user"
+    : Boolean(
+        fromData?.anonymous ||
+          fromData?.isAnonymous ||
+          callData?.patientName,
+      );
   const anonymousCaller = getAnonymousUserDisplay({
     ...callData,
     ...fromData,
@@ -142,8 +157,11 @@ const IncomingCallModal = ({
     }
 
     return (
-      callData?.from?.fullName ||
       callData?.from?.displayName ||
+      callData?.from?.fullName ||
+      callData?.initiator?.displayName ||
+      callData?.initiator?.fullName ||
+      callData?.name ||
       callerName ||
       fallbackName
     );

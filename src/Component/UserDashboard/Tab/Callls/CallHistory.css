@@ -63,6 +63,90 @@
 .pch-main-empty small { font-size: 11px; }
 .portal-call-history .call-error-banner { margin-bottom: 15px; }
 
+/* Role-aware theme for the shared Call History screen. */
+.portal-call-history.pch-theme-user {
+  --pch-accent-start: #006b2c;
+  --pch-accent-end: #01ce54;
+  --pch-accent: #008b3b;
+  --pch-accent-soft: #e8f9ef;
+  --pch-accent-border: #bfe8cf;
+  --pch-accent-shadow: rgba(0, 139, 59, 0.22);
+}
+
+.portal-call-history.pch-theme-counselor {
+  --pch-accent-start: #0875f2;
+  --pch-accent-end: #0753ae;
+  --pch-accent: #0868d5;
+  --pch-accent-soft: #eaf3ff;
+  --pch-accent-border: #bfd8fa;
+  --pch-accent-shadow: rgba(8, 104, 213, 0.22);
+}
+
+.portal-call-history.pch-theme-user,
+.portal-call-history.pch-theme-counselor {
+  background:
+    radial-gradient(circle at 100% 0, var(--pch-accent-soft), transparent 32rem),
+    #f8fafc;
+}
+
+.portal-call-history.pch-theme-user .pch-header,
+.portal-call-history.pch-theme-counselor .pch-header {
+  color: #fff;
+  border-bottom-color: transparent;
+  background: linear-gradient(
+    112deg,
+    var(--pch-accent-start),
+    var(--pch-accent-end)
+  );
+}
+
+.portal-call-history.pch-theme-user .pch-header p,
+.portal-call-history.pch-theme-counselor .pch-header p {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.portal-call-history.pch-theme-user .pch-search,
+.portal-call-history.pch-theme-counselor .pch-search {
+  border-color: var(--pch-accent-border);
+  background: var(--pch-accent-soft);
+}
+
+.portal-call-history.pch-theme-user .pch-filter-row button.active,
+.portal-call-history.pch-theme-counselor .pch-filter-row button.active {
+  border-color: transparent;
+  background: linear-gradient(
+    90deg,
+    var(--pch-accent-start),
+    var(--pch-accent-end)
+  );
+  box-shadow: 0 6px 14px var(--pch-accent-shadow);
+}
+
+.portal-call-history.pch-theme-user .pch-compact-call.selected,
+.portal-call-history.pch-theme-counselor .pch-compact-call.selected {
+  background: var(--pch-accent-soft);
+}
+
+.portal-call-history.pch-theme-user .pch-compact-call.selected::before,
+.portal-call-history.pch-theme-counselor .pch-compact-call.selected::before {
+  background: linear-gradient(
+    180deg,
+    var(--pch-accent-start),
+    var(--pch-accent-end)
+  );
+}
+
+.portal-call-history.pch-theme-user .pch-call-action,
+.portal-call-history.pch-theme-counselor .pch-call-action {
+  color: #fff;
+  background: linear-gradient(
+    135deg,
+    var(--pch-accent-start),
+    var(--pch-accent-end)
+  );
+  box-shadow: 0 6px 14px var(--pch-accent-shadow);
+}
+
 /* Final desktop proportions from the supplied Call History reference. */
 @media (min-width: 851px) {
   .pch-header {

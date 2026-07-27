@@ -3,13 +3,17 @@ import { FaEnvelope, FaArrowLeft, FaSpinner } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ForgotPassword.css";
-import logo from "../assets/humaeli.png";
+import logo from "../assets/humaeli logo (2).png";
 import { API_BASE_URL } from "../axiosConfig";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const role = location.state?.role === "counsellor" ? "counsellor" : "user";
+  const requestedRole = String(location.state?.role || "").toLowerCase();
+  const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
+    ? "counsellor"
+    : "user";
+  const themeClass = role === "counsellor" ? "auth-theme-counselor" : "auth-theme-user";
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -57,7 +61,7 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="fp-wrapper">
+    <div className={`fp-wrapper ${themeClass}`}>
       <div className="fp-container">
         {/* Back Button */}
         {/* <button 
@@ -70,7 +74,7 @@ const ForgotPassword = () => {
 
         {/* Logo */}
         <div className="fp-logo">
-          <img src={logo} alt="Mediconeckt" className="fp-logo-img" />
+          <img src={logo} alt="Humaeli" className="fp-logo-img" />
         </div>
 
         <div className="fp-card">

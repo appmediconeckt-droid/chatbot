@@ -172,7 +172,7 @@ const OTPVerification = () => {
   };
 
   return (
-    <div className="otp-container">
+    <div className="otp-container auth-theme-user">
       <div className="otp-card">
         <button
           type="button"
