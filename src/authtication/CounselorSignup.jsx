@@ -2065,11 +2065,12 @@ import {
   FaSpinner,
   FaTimes,
   FaArrowLeft,
+  FaCamera,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import "./CounselorSignup.css";
-import logo from "../assets/humaeli.png";
+import logo from "../assets/humaeli logo (2).png";
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
@@ -2906,12 +2907,11 @@ const CounselorSignup = () => {
         <div className="cs-brand">
           <div className="cs-brand-content">
             <div className="cs-logo">
-              <img src={logo} alt="Mediconect Logo" className="cs-logo-img" />
-              <span className="cs-logo-text">Counselors</span>
+              <img src={logo} alt="Humaeli" className="cs-logo-img" />
             </div>
-            <h1 className="cs-brand-title">
-              {isLogin ? "Welcome Back!" : "Join Our Community"}
-            </h1>
+            {!isLogin && (
+              <h1 className="cs-brand-title">Join Our Community</h1>
+            )}
             <p className="cs-brand-subtitle">
               {isLogin
                 ? "Connect with expert counselors and find the support you need."
@@ -2927,6 +2927,7 @@ const CounselorSignup = () => {
 
         <div className="cs-form-section">
           <div className="cs-form-header">
+            <img src={logo} alt="Humaeli" className="cs-form-logo" />
             <h2>{isLogin ? "Login to Account" : "Create Account"}</h2>
             <p>
               {isLogin
@@ -3334,14 +3335,30 @@ const CounselorSignup = () => {
 
                 <div className="cs-field">
                   <label className="cs-label">Profile Photo</label>
-                  <input
-                    type="file"
-                    name="profilePhoto"
-                    onChange={handleChange}
-                    accept="image/*"
-                    className="cs-file"
-                    disabled={isLoading}
-                  />
+                  <label className={`cs-photo-upload ${formData.profilePhoto ? "cs-photo-upload--selected" : ""}`}>
+                    <input
+                      type="file"
+                      name="profilePhoto"
+                      onChange={handleChange}
+                      accept="image/png,image/jpeg,image/webp"
+                      className="cs-file"
+                      disabled={isLoading}
+                    />
+                    <span className="cs-photo-icon" aria-hidden="true">
+                      <FaCamera />
+                    </span>
+                    <span className="cs-photo-copy">
+                      <strong>
+                        {formData.profilePhoto ? "Photo selected" : "Upload profile photo"}
+                      </strong>
+                      <small>
+                        {formData.profilePhoto?.name || "PNG, JPG or WEBP image"}
+                      </small>
+                    </span>
+                    <span className="cs-photo-action">
+                      {formData.profilePhoto ? "Change" : "Browse"}
+                    </span>
+                  </label>
                 </div>
 
                 <div className="cs-field">

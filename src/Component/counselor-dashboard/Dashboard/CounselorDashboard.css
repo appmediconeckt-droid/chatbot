@@ -520,12 +520,19 @@ body {
 }
 
 .couns-mobile-nav-item:hover {
-  background: var(--couns-bg-light);
+  background: #f1f5ff;
+  color: var(--couns-sidebar-accent);
 }
 
 .couns-mobile-nav-item.active {
-  background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary));
+  background: linear-gradient(
+    135deg,
+    var(--couns-sidebar-accent),
+    var(--couns-sidebar-accent-dark)
+  );
   color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 10px rgba(11, 90, 227, 0.25);
 }
 
 .couns-mobile-nav-icon {
@@ -555,7 +562,7 @@ body {
 
 .couns-mobile-nav-item.active .couns-mobile-nav-badge {
   background: white;
-  color: var(--couns-primary);
+  color: var(--couns-sidebar-accent);
 }
 
 .couns-mobile-nav-arrow {
@@ -604,7 +611,7 @@ body {
 }
 
 .couns-bottom-nav-item.active {
-  color: var(--couns-primary);
+  color: var(--couns-sidebar-accent);
 }
 
 .couns-bottom-nav-icon {
@@ -5680,4 +5687,96 @@ button:focus {
   .stitch-apt-toolbar { align-items: stretch; flex-direction: column; }
   .stitch-apt-search { flex-basis: 40px; max-width: none; }
   .stitch-apt-toolbar .stitch-apt-header-tools,.stitch-apt-toolbar .stitch-date-filter { width: 100%; }
+}
+
+/* Appointments toolbar: mobile search and horizontally scrollable tabs. */
+@media (max-width: 700px) {
+  .stitch-apt-toolbar {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 12px;
+    gap: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .stitch-apt-search {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .stitch-apt-search input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding-right: 12px;
+    box-sizing: border-box;
+    font-size: 13px;
+  }
+
+  .stitch-apt-toolbar .stitch-apt-header-tools,
+  .stitch-apt-toolbar .stitch-date-filter {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .stitch-date-input {
+    width: 0;
+    min-width: 0;
+    max-width: 100%;
+    flex: 1 1 auto;
+  }
+
+  .stitch-apt-toolbar .stitch-apt-filter-scroll {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    padding: 1px 0 5px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+    touch-action: pan-x;
+    scrollbar-width: none;
+  }
+
+  .stitch-apt-toolbar .stitch-apt-filter-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stitch-apt-toolbar .stitch-apt-filter-tabs {
+    width: max-content;
+    min-width: max-content;
+    max-width: none;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding-right: 10px;
+  }
+
+  .stitch-apt-toolbar .stitch-apt-filter-tab {
+    min-width: max-content;
+    flex: 0 0 auto;
+    min-height: 42px;
+    padding-inline: 13px !important;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .stitch-apt-toolbar {
+    padding: 10px;
+  }
+
+  .stitch-apt-toolbar .stitch-apt-filter-tab {
+    padding-inline: 11px !important;
+    gap: 6px !important;
+  }
 }

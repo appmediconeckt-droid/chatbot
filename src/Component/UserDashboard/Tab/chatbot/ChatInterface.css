@@ -1426,4 +1426,41 @@
     min-height: 88px;
     border-radius: 18px;
   }
+
+  .chatAppContainer .counselorListItemWrapper,
+  .chatAppContainer .counselorListItem {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .chatAppContainer .counselorListItem {
+    overflow: hidden;
+  }
+
+  .chatAppContainer .counselorInfo {
+    width: 0;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    flex: 1 1 auto;
+  }
+
+  .chatAppContainer .counselorDetailsRow,
+  .chatAppContainer .counselorLastMessageRow {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .chatAppContainer .counselorLastMessage {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow-wrap: anywhere;
+  }
 }

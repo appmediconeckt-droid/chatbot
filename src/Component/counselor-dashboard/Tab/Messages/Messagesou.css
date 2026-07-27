@@ -1057,6 +1057,9 @@
 }
 
 .counselor-chat-workspace .smslist-filters {
+  --counselor-message-accent: #075fc6;
+  --counselor-message-accent-start: #0870e5;
+  --counselor-message-accent-end: #0752a8;
   padding: 9px 24px 13px;
   gap: 12px;
   background: #fafbff;
@@ -1074,9 +1077,13 @@
 }
 
 .counselor-chat-workspace .filter-btn.active {
-  border-color: #075fc6;
+  border-color: var(--counselor-message-accent);
   color: #fff;
-  background: linear-gradient(90deg, #0870e5, #0752a8);
+  background: linear-gradient(
+    90deg,
+    var(--counselor-message-accent-start),
+    var(--counselor-message-accent-end)
+  );
 }
 
 .smslist-pinned {
@@ -1284,4 +1291,143 @@
   .counselor-chat-search input { width: 100%; }
   .counselor-chat-workspace.has-open-chat .smslist-container { display: none; }
   .counselor-chat-open-pane { height: calc(100dvh - 64px); }
+
+  .counselor-chat-workspace .smslist-filters {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 9px 12px 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-inline: contain;
+    touch-action: pan-x;
+    scrollbar-width: none;
+  }
+
+  .counselor-chat-workspace .smslist-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .counselor-chat-workspace .smslist-filters .filter-btn {
+    min-width: max-content;
+    height: 38px;
+    min-height: 38px;
+    flex: 0 0 auto;
+    padding: 0 16px;
+    white-space: nowrap;
+    border-color: #cbd4e5;
+    color: #455064;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .counselor-chat-workspace .smslist-filters .filter-btn.active {
+    border-color: var(--counselor-message-accent);
+    color: #fff;
+    background: linear-gradient(
+      90deg,
+      var(--counselor-message-accent-start),
+      var(--counselor-message-accent-end)
+    );
+  }
+
+  .counselor-chat-workspace .smslist-filters .filter-count {
+    color: #fff;
+    background: #ef4444;
+  }
+
+  .counselor-chat-workspace .smslist-filters .filter-btn.active .filter-count {
+    color: var(--counselor-message-accent);
+    background: #fff;
+  }
+
+  .counselor-chat-workspace .smslist-filters .filter-btn:last-child {
+    margin-right: 4px;
+  }
+}
+
+/* Mobile counselor composer: keep every control inside the input pill. */
+@media (max-width: 640px) {
+  .counselor-chat-open-pane .smsinput-form {
+    width: 100%;
+    padding: 9px 10px 11px;
+    box-sizing: border-box;
+  }
+
+  .counselor-chat-open-pane .smsinput-input-wrapper {
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    padding: 4px 4px 4px 8px;
+    gap: 4px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .counselor-chat-open-pane .smsinput-input {
+    width: 0;
+    min-width: 0;
+    padding: 8px 4px;
+    font-size: 13px;
+  }
+
+  .counselor-chat-open-pane .attach-btn,
+  .counselor-chat-open-pane .camera-btn {
+    width: 34px;
+    height: 34px;
+    min-width: 0;
+    min-height: 0;
+    flex: 0 0 34px;
+    padding: 0;
+    font-size: 16px;
+  }
+
+  .counselor-chat-open-pane .send-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 0;
+    min-height: 0;
+    flex: 0 0 40px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .counselor-chat-open-pane .send-btn > svg {
+    display: block;
+    margin: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .counselor-chat-open-pane .smsinput-form {
+    padding-inline: 8px;
+  }
+
+  .counselor-chat-open-pane .smsinput-input-wrapper {
+    gap: 2px;
+    padding-left: 5px;
+  }
+
+  .counselor-chat-open-pane .attach-btn,
+  .counselor-chat-open-pane .camera-btn {
+    width: 31px;
+    height: 31px;
+    flex-basis: 31px;
+    font-size: 14px;
+  }
+
+  .counselor-chat-open-pane .send-btn {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
 }

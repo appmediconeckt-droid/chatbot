@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FaChevronDown, FaChevronUp, FaSearch } from 'react-icons/fa';
 import { SUPPORTED_LANGUAGES } from '../../i18n/LanguageContext';
 import './LanguageSelector.css';
@@ -30,8 +31,14 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
     l.label.toLowerCase().includes(searchQuery.toLowerCase()) ||
     l.code.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const recommendedCodes = ['en', 'hi', 'mr', 'gu'];
-  const nativeNames = { en: 'English (UK)', hi: 'हिन्दी', mr: 'मराठी', gu: 'ગુજરાતી', bn: 'বাংলা' };
+  const recommendedCodes = ['en-US', 'hi-IN', 'mr-IN', 'gu-IN'];
+  const nativeNames = {
+    'en-US': 'English',
+    'hi-IN': 'हिन्दी',
+    'mr-IN': 'मराठी',
+    'gu-IN': 'ગુજરાતી',
+    'bn-IN': 'বাংলা',
+  };
 
   useEffect(() => {
     if (!open || !ref.current || !dropdownRef.current) return;
@@ -57,11 +64,24 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
 
   useEffect(() => {
     const onOutside = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (
+        ref.current &&
+        !ref.current.contains(e.target) &&
+        !dropdownRef.current?.contains(e.target)
+      ) setOpen(false);
     };
     document.addEventListener('mousedown', onOutside);
     return () => document.removeEventListener('mousedown', onOutside);
   }, []);
+
+  useEffect(() => {
+    if (!open || sidebar) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open, sidebar]);
 
   if (sidebar) {
     return (
@@ -130,7 +150,7 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
         <span>{compact ? current.code.toUpperCase() : current.label}</span>
       </button>
 
-      {open && (
+      {open && createPortal(
         <div className="lang-modal-overlay">
           <div ref={dropdownRef} className="lang-selector-modal lang-selector-modal-centered" role="dialog" aria-modal="true">
             <div className="lang-modal-header">
@@ -174,7 +194,8 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
               <button type="button" className="lang-modal-apply" onClick={() => { handleLanguageChange(pendingLang); setOpen(false); }}>Apply Language</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

@@ -1,572 +1,295 @@
+.role-selector-page,
+.role-selector-page * {
+  box-sizing: border-box;
+}
 
-body {
-
-  
-  
+.role-selector-page {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(8px, 1.5vw, 18px);
+  display: flex;
   align-items: center;
   justify-content: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  overflow-x: hidden;
+  color: #22304a;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at 10% 5%, rgba(213, 255, 239, .9), transparent 38%),
+    radial-gradient(circle at 92% 92%, rgba(223, 215, 255, .85), transparent 42%),
+    #f7f9ff;
 }
 
-/* ---- main container (fully responsive) ---- */
 .x9k3-role-panel {
-  width: 100%;
-  margin-top: 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  background: rgba(255, 255, 255, 0.68);
-  -webkit-backdrop-filter: blur(14px) saturate(180%);
-  backdrop-filter: blur(14px) saturate(180%);
-  border-radius: clamp(30px, 5vw, 56px) clamp(30px, 5vw, 56px) 
-               clamp(25px, 4vw, 40px) clamp(25px, 4vw, 40px);
-  box-shadow: 0 25px 50px -10px rgba(0, 0, 0, 0.3),
-              inset 0 1px 2px rgba(255, 255, 255, 0.7);
-  padding: clamp(18px, 2.5vw, 30px) clamp(15px, 3vw, 40px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   position: relative;
+  width: min(900px, 100%);
+  padding: clamp(18px, 3vw, 34px) clamp(24px, 4vw, 48px) clamp(24px, 4vw, 42px);
   overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, .9);
+  border-radius: clamp(28px, 4vw, 46px);
+  background: rgba(255, 255, 255, .72);
+  box-shadow: 0 24px 55px rgba(44, 50, 82, .18);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+  backdrop-filter: blur(18px) saturate(150%);
 }
 
-/* ---- glass morphism enhancement ---- */
 .x9k3-role-panel::before {
-  content: '';
   position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  background: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.3), transparent 60%);
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.58), transparent 48%);
+  content: "";
   pointer-events: none;
-  z-index: -1;
-  opacity: 0.5;
 }
 
-/* ---- heading area (responsive) ---- */
+.m7v2-greeting-area,
+.z6w9-dual-grid,
+.h8k1-bottom-actions {
+  position: relative;
+  z-index: 1;
+}
+
 .m7v2-greeting-area {
+  margin-bottom: clamp(25px, 4vw, 40px);
   text-align: center;
-  margin-bottom: clamp(16px, 2.5vw, 30px);
 }
 
 .menthy-logo-icon {
-  width: clamp(190px, 35vw, 260px);
-  height: clamp(68px, 8vw, 90px);
+  display: block;
+  width: clamp(190px, 28vw, 255px);
+  height: clamp(68px, 8vw, 88px);
+  margin: 5px auto 0;
   object-fit: cover;
   object-position: center;
-  margin: 0 auto 8px;
-  display: block;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
-}
-
-.p4h1-gradient-title {
-  margin: 0;
-  font-size: clamp(24px, 6vw, 43px);
-  font-weight: 600;
-  letter-spacing: -0.02em;
-  background: linear-gradient(145deg, #2d3748, #1a202c);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 2px 5px rgba(255, 255, 255, 0.5);
-  line-height: 1.2;
+  filter: drop-shadow(0 7px 12px rgba(56, 83, 113, .13));
 }
 
 .r8t2-sub-line {
-  font-size: clamp(14px, 3vw, 19px);
-  color: #2d3748;
-  font-weight: 400;
-  margin: clamp(5px, 1.5vw, 10px) 0 0;
-  border-bottom: 1px dashed rgba(102, 126, 234, 0.3);
-  padding-bottom: clamp(8px, 2vw, 16px);
   display: inline-block;
+  margin: 2px 0 0;
+  padding: 0 20px 11px;
+  border-bottom: 1px dashed rgba(106, 102, 211, .3);
+  color: #59657a;
+  font-size: clamp(14px, 2vw, 18px);
 }
 
-/* ---- dual card grid (responsive) ---- */
 .z6w9-dual-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(15px, 3vw, 35px);
-  justify-content: center;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(16px, 3vw, 30px);
+  width: min(620px, 100%);
+  margin: 0 auto;
 }
 
-/* ---- base tile styles (SMALLER BUTTONS) ---- */
 .q5b3-role-tile {
-  flex: 1 1 200px;
-  min-width: 160px;
-  max-width: 280px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 2px solid rgba(255, 255, 255, 0.75);
-  border-radius: clamp(20px, 4vw, 35px);
-  padding: clamp(15px, 3vw, 25px) clamp(12px, 2.5vw, 20px);
+  min-width: 0;
+  padding: clamp(24px, 4vw, 36px) clamp(16px, 3vw, 26px);
+  border: 2px solid rgba(255, 255, 255, .92);
+  border-radius: clamp(22px, 3vw, 32px);
   display: flex;
   flex-direction: column;
   align-items: center;
+  color: #30415b;
   text-align: center;
   cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.1);
-  box-shadow: 0 12px 22px -8px rgba(0, 0, 0, 0.2),
-              inset 0 2px 4px rgba(255,255,255,0.8);
-  color: #1e3f55;
   user-select: none;
+  box-shadow: 0 13px 25px rgba(47, 59, 91, .14), inset 0 1px 2px #fff;
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 
-/* ---- unique variant backgrounds ---- */
 .a2f1-user-tile {
-  background: linear-gradient(145deg, rgba(235, 247, 255, 0.85), rgba(255, 255, 255, 0.9));
+  background: linear-gradient(145deg, rgba(232, 248, 255, .95), rgba(255, 255, 255, .96));
 }
 
 .d4m7-counselor-tile {
-  background: linear-gradient(145deg, rgba(245, 240, 255, 0.9), rgba(255, 250, 255, 0.85));
+  background: linear-gradient(145deg, rgba(246, 239, 255, .96), rgba(255, 255, 255, .96));
 }
 
-/* ---- selected state ---- */
+.q5b3-role-tile:hover,
+.q5b3-role-tile:focus-visible {
+  border-color: rgba(118, 111, 218, .45);
+  box-shadow: 0 20px 34px rgba(78, 73, 146, .2), inset 0 1px 2px #fff;
+  outline: none;
+  transform: translateY(-5px);
+}
+
+.q5b3-role-tile:active,
 .l9p3-selected-state {
-  border: 3px solid #ffffff;
-  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.5), 0 20px 30px -10px #4a2b6e;
-  transform: scale(1.02);
-  filter: drop-shadow(0 8px 12px rgba(102, 126, 234, 0.3));
-  transition: all 0.18s ease-out;
+  border-color: #8176dc;
+  transform: translateY(-1px) scale(.985);
 }
 
-/* ---- hover interaction ---- */
-.q5b3-role-tile:hover {
-  transform: scale(1.02) translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.95);
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 28px 38px -15px rgba(102, 126, 234, 0.4),
-              inset 0 1px 5px white;
-}
-
-.q5b3-role-tile:active {
-  transform: scale(0.98) translateY(0);
-  box-shadow: 0 5px 12px -5px rgba(0, 0, 0, 0.3);
-  transition: 0.08s;
-}
-
-/* ---- icon circle (SMALLER) ---- */
 .n4d2-icon-circle {
-  font-size: clamp(35px, 8vw, 55px);
-  line-height: 1;
-  filter: drop-shadow(2px 8px 12px rgba(102, 126, 234, 0.3));
-  margin-bottom: clamp(8px, 2vw, 15px);
-  background: rgba(255,255,255,0.25);
-  width: clamp(60px, 15vw, 85px);
-  height: clamp(60px, 15vw, 85px);
+  width: clamp(72px, 10vw, 92px);
+  height: clamp(72px, 10vw, 92px);
+  margin-bottom: 15px;
+  border: 2px solid rgba(255, 255, 255, .9);
   border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 2px solid rgba(255,255,255,0.5);
-  transition: 0.2s;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, .62);
+  box-shadow: 0 9px 22px rgba(90, 91, 157, .15);
+  font-size: clamp(38px, 6vw, 54px);
 }
 
-.q5b3-role-tile:hover .n4d2-icon-circle {
-  background: rgba(255,255,255,0.45);
-  border-color: white;
-}
-
-.j7h3-unicode-symbol {
-  font-size: inherit;
-  display: block;
-  transform: translateZ(0);
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
-}
-
-/* ---- typography elements (SMALLER) ---- */
 .c8v6-role-label {
-  font-size: clamp(20px, 5vw, 28px);
-  font-weight: 600;
-  letter-spacing: -0.01em;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  margin-bottom: clamp(4px, 1vw, 8px);
-  text-shadow: 0 2px 5px white;
+  margin: 0 0 7px;
+  color: #7169cc;
+  font-size: clamp(21px, 3vw, 28px);
+  font-weight: 650;
   line-height: 1.2;
 }
 
 .e3w1-role-hint {
-  font-size: clamp(11px, 2.5vw, 14px);
-  font-weight: 400;
-  color: #4a5568;
-  background: rgba(255,255,240,0.4);
-  padding: clamp(4px, 1vw, 6px) clamp(8px, 2vw, 15px);
-  border-radius: 40px;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,0.3);
-  white-space: nowrap;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  margin: 0;
+  color: #566174;
+  font-size: clamp(12px, 1.7vw, 14px);
 }
 
-/* ---- micro divider (smaller) ---- */
 .v9b2-micro-divider {
-  width: min(60px, 15vw);
-  height: 3px;
-  background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.5), transparent);
-  border-radius: 4px;
-  margin: clamp(10px, 2vw, 15px) auto clamp(4px, 1vw, 8px) auto;
-  backdrop-filter: blur(1px);
-  -webkit-backdrop-filter: blur(1px);
+  width: 64px;
+  height: 2px;
+  margin: 20px auto 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, transparent, #a8a2e4, transparent);
 }
 
 .t5n6-footer-note {
-  font-size: clamp(10px, 2vw, 12px);
-  margin-top: clamp(4px, 1vw, 6px);
-  opacity: 0.7;
-  letter-spacing: 0.3px;
-  font-weight: 400;
+  color: #827bd1;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .09em;
   text-transform: uppercase;
-  color: #667eea;
 }
 
-/* ---- bottom action bar (responsive) ---- */
 .h8k1-bottom-actions {
-  margin-top: clamp(20px, 4vw, 40px);
+  margin-top: clamp(25px, 4vw, 38px);
+  padding-top: clamp(18px, 3vw, 25px);
+  border-top: 1px solid rgba(255, 255, 255, .9);
   display: flex;
-  justify-content: center;
-  font-size: clamp(12px, 2.5vw, 15px);
-  color: #2d3748;
-  border-top: 2px solid rgba(255, 255, 255, 0.5);
-  padding-top: clamp(15px, 3vw, 25px);
   flex-wrap: wrap;
-  gap: clamp(8px, 2vw, 15px);
+  justify-content: center;
+  gap: 10px;
 }
 
 .w2p3-action-pill {
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  padding: clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 18px);
-  border-radius: 60px;
-  font-weight: 500;
-  color: #2d3748;
-  transition: all 0.2s;
-  box-shadow: inset 0 0 0 0 rgba(255,255,255,0);
-  cursor: default;
-  font-size: clamp(11px, 2.2vw, 13px);
+  padding: 8px 15px;
+  border: 1px solid rgba(255, 255, 255, .92);
+  border-radius: 999px;
+  color: #4e596e;
+  background: linear-gradient(135deg, rgba(219, 214, 255, .65), rgba(247, 244, 255, .72));
+  box-shadow: 0 5px 13px rgba(74, 68, 139, .09);
+  font-size: clamp(11px, 1.6vw, 13px);
   white-space: nowrap;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
 }
 
-.w2p3-action-pill:hover {
-  background: rgba(255,255,255,0.5);
-  border-color: white;
-  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.2);
-}
+@media (max-width: 560px) {
+  .role-selector-page {
+    align-items: flex-start;
+    padding: 12px;
+  }
 
-/* ---- accessibility focus ---- */
-.q5b3-role-tile:focus-visible {
-  outline: 3px solid #667eea;
-  outline-offset: 3px;
-}
-
-/* ===== RESPONSIVE BREAKPOINTS FOR ALL DEVICES ===== */
-
-/* Extra Small Devices (phones, < 480px) */
-@media (max-width: 480px) {
   .x9k3-role-panel {
-    
-    border-radius: 25px;
-    
+    width: min(430px, 100%);
+    margin: auto;
+    padding: 14px 14px 22px;
+    border-radius: 28px;
   }
-  
+
+  .m7v2-greeting-area {
+    margin-bottom: 22px;
+  }
+
+  .menthy-logo-icon {
+    width: min(220px, 65vw);
+    height: 76px;
+  }
+
   .z6w9-dual-grid {
-    gap: 12px;
+    gap: 11px;
   }
-  
+
   .q5b3-role-tile {
-    min-width: 140px;
-    flex: 1 1 140px;
-    padding: 15px 10px;
+    padding: 20px 8px;
+    border-radius: 22px;
   }
-  
+
   .n4d2-icon-circle {
-    width: 50px;
-    height: 50px;
-    font-size: 30px;
+    width: clamp(58px, 18vw, 72px);
+    height: clamp(58px, 18vw, 72px);
+    font-size: clamp(31px, 10vw, 42px);
   }
-  
-  .c8v6-role-label {
-    font-size: 18px;
-  }
-  
+
   .e3w1-role-hint {
-    font-size: 10px;
-    padding: 3px 8px;
-    white-space: normal;
+    min-height: 31px;
+    display: flex;
+    align-items: center;
     line-height: 1.3;
   }
-  
-  .t5n6-footer-note {
-    font-size: 9px;
-  }
-  
-  .w2p3-action-pill {
-    padding: 5px 10px;
-    font-size: 10px;
-  }
-}
 
-/* Small Devices (phones, 481px - 640px) */
-@media (min-width: 481px) and (max-width: 640px) {
-  .x9k3-role-panel {
-    padding: 20px 15px;
-    margin: 15px;
-  }
-  
-  .q5b3-role-tile {
-    min-width: 180px;
-    padding: 18px 12px;
-  }
-  
-  .n4d2-icon-circle {
-    width: 65px;
-    height: 65px;
-    font-size: 40px;
-  }
-  
-  .c8v6-role-label {
-    font-size: 22px;
-  }
-}
-
-/* Medium Devices (tablets, 641px - 768px) */
-@media (min-width: 641px) and (max-width: 768px) {
-  .x9k3-role-panel {
-    margin: 20px;
-  }
-  
-  .q5b3-role-tile {
-    min-width: 200px;
-    padding: 20px 15px;
-  }
-  
-  .n4d2-icon-circle {
-    width: 75px;
-    height: 75px;
-    font-size: 45px;
-  }
-}
-
-/* Large Devices (tablets/desktops, 769px - 1024px) */
-@media (min-width: 769px) and (max-width: 1024px) {
-  .x9k3-role-panel {
-    max-width: 800px;
-    margin: 30px auto;
-  }
-  
-  .q5b3-role-tile {
-    min-width: 220px;
-  }
-}
-
-/* Extra Large Devices (> 1024px) */
-@media (min-width: 1025px) {
-  .x9k3-role-panel {
-    max-width: 900px;
-    margin: 40px auto;
-  }
-  
-  .q5b3-role-tile {
-    min-width: 240px;
-  }
-}
-
-/* Landscape mode for phones */
-@media (max-height: 500px) and (orientation: landscape) {
-  .x9k3-role-panel {
-    padding: 15px;
-    margin: 10px;
-  }
-  
-  .m7v2-greeting-area {
-    margin-bottom: 15px;
-  }
-  
-  .menthy-logo-icon {
-    width: 190px;
-    height: 68px;
-  }
-  
-  .z6w9-dual-grid {
-    flex-direction: row;
-    gap: 15px;
-  }
-  
-  .q5b3-role-tile {
-    padding: 12px 15px;
-  }
-  
-  .n4d2-icon-circle {
-    width: 45px;
-    height: 45px;
-    font-size: 28px;
-    margin-bottom: 8px;
-  }
-  
-  .c8v6-role-label {
-    font-size: 18px;
-    margin-bottom: 3px;
-  }
-  
-  .e3w1-role-hint {
-    font-size: 9px;
-    padding: 2px 6px;
-  }
-  
   .v9b2-micro-divider {
-    margin: 6px auto 3px auto;
+    margin-top: 13px;
   }
-  
-  .t5n6-footer-note {
-    font-size: 8px;
-    margin-top: 2px;
+
+  .h8k1-bottom-actions {
+    margin-top: 22px;
   }
 }
 
-/* Fix for very small devices */
-@media (max-width: 320px) {
+@media (max-width: 340px) {
+  .role-selector-page {
+    padding: 7px;
+  }
+
   .x9k3-role-panel {
-    padding: 10px;
-    margin: 5px;
+    padding-inline: 9px;
   }
-  
+
   .q5b3-role-tile {
-    min-width: 120px;
-    padding: 12px 8px;
+    padding-inline: 5px;
   }
-  
-  .e3w1-role-hint {
-    font-size: 9px;
-    white-space: normal;
-  }
-  
+
   .w2p3-action-pill {
-    white-space: normal;
-    text-align: center;
+    padding-inline: 10px;
   }
-  
+}
+
+@media (max-height: 620px) and (orientation: landscape) {
+  .role-selector-page {
+    align-items: flex-start;
+  }
+
+  .x9k3-role-panel {
+    padding-block: 18px;
+  }
+
+  .m7v2-greeting-area {
+    margin-bottom: 16px;
+  }
+
   .menthy-logo-icon {
-    width: 210px;
-    height: 74px;
+    width: 180px;
+    margin-bottom: 5px;
   }
-}
 
-/* High-resolution screens */
-@media (min-width: 1440px) {
-  .x9k3-role-panel {
-    max-width: 1000px;
-  }
-  
   .q5b3-role-tile {
-    min-width: 260px;
-    max-width: 300px;
+    padding-block: 15px;
+  }
+
+  .n4d2-icon-circle {
+    width: 55px;
+    height: 55px;
+    margin-bottom: 7px;
+    font-size: 31px;
+  }
+
+  .h8k1-bottom-actions {
+    margin-top: 15px;
+    padding-top: 12px;
   }
 }
 
-/* Print styles */
-@media print {
-  body {
-    background: white;
-  }
-  
-  .x9k3-role-panel {
-    box-shadow: none;
-    border: 1px solid #ccc;
-  }
-}
-/* "Last used" badge — shown on the role the user logged in with last time.
-   Small green pill, top-right of the tile. Includes a × to forget the hint. */
-.q5b3-role-tile {
-  position: relative;
-}
-
-.k1m3-last-used-badge {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 6px 4px 10px;
-  background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  border-radius: 999px;
-  box-shadow: 0 4px 12px rgba(22, 163, 74, 0.35);
-  z-index: 2;
-  animation: k1m3-badge-in 0.35s ease-out;
-}
-
-@keyframes k1m3-badge-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px) scale(0.9);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.k1m3-last-used-clear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  background: rgba(255, 255, 255, 0.22);
-  color: #fff;
-  border: none;
-  border-radius: 50%;
-  font-size: 13px;
-  line-height: 1;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.k1m3-last-used-clear:hover {
-  background: rgba(255, 255, 255, 0.4);
-}
-
-/* Subtle highlight on the last-used tile so it visually stands out
-   without screaming. Just a slight ring + lift. */
-.q5b3-role-tile.k1m3-last-used {
-  box-shadow:
-    0 0 0 2px rgba(22, 163, 74, 0.45),
-    0 12px 28px rgba(22, 163, 74, 0.18);
-  transform: translateY(-2px);
-}
-
-.q5b3-role-tile.k1m3-last-used:hover {
-  box-shadow:
-    0 0 0 2px rgba(22, 163, 74, 0.65),
-    0 16px 36px rgba(22, 163, 74, 0.25);
-}
-
-@media (max-width: 480px) {
-  .k1m3-last-used-badge {
-    font-size: 10px;
-    padding: 3px 5px 3px 8px;
-    top: 8px;
-    right: 8px;
-  }
-  .k1m3-last-used-clear {
-    width: 14px;
-    height: 14px;
-    font-size: 12px;
+@media (prefers-reduced-motion: reduce) {
+  .q5b3-role-tile {
+    transition: none;
   }
 }

@@ -313,16 +313,22 @@ const Header = ({ onLoginClick }) => {
       <div className="header-container">
         <div className="logo">
           <button
+            type="button"
             className="mobile-menu-btn"
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label={t('landing_toggle_menu')}
+            aria-expanded={menuOpen}
+            aria-controls="landing-navigation"
           >
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
           <img src={logo} alt="Humaeli Logo" />
         </div>
 
-        <nav className={`nav-menu ${menuOpen ? 'active' : ''}`}>
+        <nav
+          id="landing-navigation"
+          className={`nav-menu ${menuOpen ? 'active' : ''}`}
+        >
           {navItems.map(item => (
             <a
               key={item.href}
@@ -339,7 +345,7 @@ const Header = ({ onLoginClick }) => {
           <div className="header-language">
             <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
           </div>
-          <button className="btn btn-secondary" onClick={onLoginClick}>
+          <button type="button" className="btn btn-secondary" onClick={onLoginClick}>
             {t('landing_sign_in')}
           </button>
         </div>

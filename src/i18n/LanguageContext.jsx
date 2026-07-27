@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import enUS from './locales/en-US.json';
+import landingHiIN from './locales/landing-hi-IN.json';
 import { translationService } from './translationService';
 
 const USER_LANG_KEY = 'userLang';
@@ -72,7 +73,15 @@ export const SUPPORTED_LANGUAGES = [
 
 const LanguageContext = createContext(null);
 const DEFAULT_TRANSLATIONS = { 'en-US': enUS };
-const localeLoaders = import.meta.glob(['./locales/*.json', '!./locales/en-US.json']);
+const localeLoaders = import.meta.glob([
+  './locales/*.json',
+  '!./locales/en-US.json',
+  '!./locales/landing-*.json',
+]);
+const STATIC_LANDING_TRANSLATIONS = {
+  'hi-IN': landingHiIN,
+};
+const landingTranslationRequests = new Map();
 
 // Map old language codes to new ones for backward compatibility
 const LANGUAGE_CODE_MAP = {
@@ -125,14 +134,57 @@ async function loadLocaleMessages(lang) {
     if (!loader) return DEFAULT_TRANSLATIONS['en-US'];
 
     const module = await loader();
-    return module.default;
+    const localeMessages = {
+      ...(module.default || {}),
+      ...(STATIC_LANDING_TRANSLATIONS[lang] || {}),
+    };
+    return localeMessages;
   } catch (error) {
     console.warn(`[i18n] Unable to load locale ${lang}:`, error);
     return DEFAULT_TRANSLATIONS['en-US'];
   }
 }
 
+async function translateMissingLandingMessages(lang, localeMessages, onProgress) {
+  const landingEntries = Object.entries(enUS).filter(([key]) => key.startsWith('landing_'));
+  const missingEntries = landingEntries.filter(([key]) => !localeMessages[key]);
+  if (!missingEntries.length) return {};
+
+  const requestKey = `${lang}:${missingEntries.map(([key]) => key).join('|')}`;
+  if (!landingTranslationRequests.has(requestKey)) {
+    landingTranslationRequests.set(
+      requestKey,
+      translationService.translateBatch(
+        missingEntries.map(([, value]) => value),
+        lang,
+        'en-US',
+        (updates) => {
+          if (typeof onProgress !== 'function') return;
+          const partialMessages = Object.fromEntries(
+            updates.flatMap(({ index, original, translated }) => (
+              translated && translated !== original
+                ? [[missingEntries[index][0], translated]]
+                : []
+            )),
+          );
+          if (Object.keys(partialMessages).length) onProgress(partialMessages);
+        },
+      ).then((translatedValues) => Object.fromEntries(
+        missingEntries.flatMap(([key, originalValue], index) => {
+          const translatedValue = translatedValues[index];
+          return translatedValue && translatedValue !== originalValue
+            ? [[key, translatedValue]]
+            : [];
+        }),
+      )).finally(() => landingTranslationRequests.delete(requestKey)),
+    );
+  }
+
+  return landingTranslationRequests.get(requestKey);
+}
+
 export function LanguageProvider({ children }) {
+  const siteLanguageRequestRef = useRef(0);
   const [userLang, setUserLangState] = useState(() => {
     const saved = localStorage.getItem(USER_LANG_KEY);
     const normalized = normalizeLanguageCode(saved);
@@ -152,13 +204,43 @@ export function LanguageProvider({ children }) {
 
   const ensureLanguageLoaded = useCallback((lang) => {
     const normalized = normalizeLanguageCode(lang);
-    if (loadedTranslations[normalized]) return;
+    const mergeLandingMessages = (landingMessages) => {
+      if (!Object.keys(landingMessages).length) return;
+      setLoadedTranslations((prev) => ({
+        ...prev,
+        [normalized]: {
+          ...(prev[normalized] || {}),
+          ...landingMessages,
+        },
+      }));
+    };
+
+    if (loadedTranslations[normalized]) {
+      if (normalized !== 'en-US') {
+        translateMissingLandingMessages(
+          normalized,
+          loadedTranslations[normalized],
+          mergeLandingMessages,
+        ).then(mergeLandingMessages);
+      }
+      return;
+    }
 
     loadLocaleMessages(normalized).then((messages) => {
       setLoadedTranslations((prev) => {
         if (prev[normalized]) return prev;
         return { ...prev, [normalized]: messages };
       });
+
+      // Render the locale immediately, then fill only the missing landing keys
+      // through the same translation API used by the rest of the application.
+      if (normalized !== 'en-US') {
+        translateMissingLandingMessages(
+          normalized,
+          messages,
+          mergeLandingMessages,
+        ).then(mergeLandingMessages);
+      }
     });
   }, [loadedTranslations]);
 
@@ -182,15 +264,40 @@ export function LanguageProvider({ children }) {
 
   // Choosing a language on a public page also seeds both portals, so the
   // preference survives sign-up/login instead of resetting to English.
-  const setSiteLang = useCallback((lang) => {
+  const setSiteLang = useCallback(async (lang) => {
     const normalized = normalizeLanguageCode(lang);
     localStorage.setItem(SITE_LANG_KEY, normalized);
     localStorage.setItem(USER_LANG_KEY, normalized);
     localStorage.setItem(COUNSELOR_LANG_KEY, normalized);
-    setSiteLangState(normalized);
     setUserLangState(normalized);
     setCounselorLangState(normalized);
-  }, []);
+
+    const requestId = ++siteLanguageRequestRef.current;
+    if (normalized === 'en-US') {
+      setSiteLangState(normalized);
+      return;
+    }
+
+    // Prepare the complete landing locale before committing the visible site
+    // language. This prevents an intermediate English fallback/mixed-language
+    // render while API translations are still arriving.
+    const baseMessages = loadedTranslations[normalized]
+      || await loadLocaleMessages(normalized);
+    const landingMessages = await translateMissingLandingMessages(
+      normalized,
+      baseMessages,
+    );
+    if (requestId !== siteLanguageRequestRef.current) return;
+
+    setLoadedTranslations((prev) => ({
+      ...prev,
+      [normalized]: {
+        ...baseMessages,
+        ...landingMessages,
+      },
+    }));
+    setSiteLangState(normalized);
+  }, [loadedTranslations]);
 
   return (
     <LanguageContext.Provider

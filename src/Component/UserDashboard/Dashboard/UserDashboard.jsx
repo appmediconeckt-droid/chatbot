@@ -48,6 +48,7 @@ import { LanguageSelector } from "../../common/LanguageSelector";
 import AiChatPopup from "./components/AiChatPopup";
 import ChatButton from "./components/ChatButton";
 import NotificationCenter from "../../common/Notifications/NotificationCenter";
+import humaeliLogo from "../../../assets/humaeli logo (2).png";
 
 const AccountSettings = lazy(() => import("../../Settings/AccountSettings"));
 const CallHistory = lazy(() => import("../Tab/Callls/CallHistory"));
@@ -1272,13 +1273,20 @@ export default function UserDashboard() {
       {isMobile && (
         <div className="ud-mobile-header">
           <div className="ud-mobile-header-left">
-            <h2 className="ud-mobile-logo">MChat</h2>
+            <img
+              src={humaeliLogo}
+              alt="Humaeli"
+              className="ud-mobile-brand-logo"
+            />
           </div>
           <div className="ud-mobile-header-right">
             <NotificationCenter />
             <button
+              type="button"
               className="ud-mobile-profile-btn"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
+              aria-label="Open profile menu"
+              aria-expanded={showProfileMenu}
             >
               {userData.profilePhoto ? (
                 <img
@@ -1515,7 +1523,7 @@ export default function UserDashboard() {
       )}
 
       {isMobile && (
-        <nav className="ud-mobile-bottom-nav">
+        <nav className="ud-mobile-bottom-nav" aria-label="Dashboard navigation">
           {bottomMenuItems.map((item) => (
             <button
               key={item.id}
