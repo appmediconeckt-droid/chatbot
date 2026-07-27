@@ -418,6 +418,15 @@ export default function UserDashboard() {
       }
     };
     fetchUserData();
+
+    const handleProfileUpdated = (event) => {
+      if (!event.detail?.role || event.detail.role === "user") {
+        fetchUserData();
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdated);
   }, []);
 
   // Start empty so the backend's onboarding question (or the user's first
@@ -1271,14 +1280,15 @@ export default function UserDashboard() {
 
       {isMobile && (
         <div className="ud-mobile-header">
-          <div className="ud-mobile-header-left">
-            <h2 className="ud-mobile-logo">MChat</h2>
-          </div>
+          <div className="ud-mobile-header-left" />
           <div className="ud-mobile-header-right">
             <NotificationCenter />
             <button
+              type="button"
               className="ud-mobile-profile-btn"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
+              aria-label="Open profile menu"
+              aria-expanded={showProfileMenu}
             >
               {userData.profilePhoto ? (
                 <img
@@ -1515,7 +1525,7 @@ export default function UserDashboard() {
       )}
 
       {isMobile && (
-        <nav className="ud-mobile-bottom-nav">
+        <nav className="ud-mobile-bottom-nav" aria-label="Dashboard navigation">
           {bottomMenuItems.map((item) => (
             <button
               key={item.id}

@@ -10,6 +10,7 @@
   backdrop-filter: blur(2px);
   display: grid;
   place-items: center;
+  overflow: hidden;
 }
 .lang-selector-modal.lang-selector-modal-centered {
   position: relative;

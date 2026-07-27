@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./RoleSelector.css";
 import logo from "../assets/humaeli.png";
@@ -9,26 +9,16 @@ const RoleSelector = () => {
 
   const clearExistingSession = () => {
     [
-      "accessToken",
-      "token",
-      "refreshToken",
-      "isAuthenticated",
-      "userRole",
-      "userType",
-      "userEmail",
-      "userData",
-      "userId",
-      "counsellorId",
-      "counselorId",
-      "isVerified",
+      "accessToken", "token", "refreshToken", "isAuthenticated", "userRole",
+      "userType", "userEmail", "userData", "userId", "counsellorId",
+      "counselorId", "isVerified",
     ].forEach((key) => localStorage.removeItem(key));
   };
 
   useEffect(() => {
-    const token =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("token");
     const userRole = (localStorage.getItem("userRole") || "").toLowerCase();
-    if (token && (userRole === "counselor" || userRole === "counsellor")) {
+    if (token && ["counselor", "counsellor"].includes(userRole)) {
       navigate("/counselor-dashboard");
     } else if (token && userRole === "user") {
       navigate("/user-dashboard");
@@ -37,83 +27,73 @@ const RoleSelector = () => {
 
   const handleRoleSelect = (role) => {
     setSelectedRole(role);
-
     clearExistingSession();
     localStorage.setItem("role", role);
+    window.setTimeout(() => {
+      navigate(role === "user" ? "/user-signup" : "/counselor-signup", {
+        state: { role },
+      });
+    }, 120);
+  };
 
-    console.log(role + " selected");
-
-    if (role === "user") {
-      navigate("/user-signup", { state: { role } });
-    }
-
-    if (role === "counsellor") {
-      navigate("/counselor-signup", { state: { role } });
+  const handleKeyDown = (event, role) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleRoleSelect(role);
     }
   };
 
   return (
-    <div className="x9k3-role-panel ">
-      <div className="m7v2-greeting-area">
-        <img
-          src={logo}
-          alt="Humaeli Logo"
-          className="menthy-logo-icon"
-        />
-        {/* <h1 className="p4h1-gradient-title">✦ welcome back ✦</h1> */}
-        <p className="r8t2-sub-line">— choose your path —</p>
-      </div>
+    <main className="role-selector-page">
+      <section className="x9k3-role-panel" aria-label="Choose your role">
+        <header className="m7v2-greeting-area">
+          <img src={logo} alt="Humaeli" className="menthy-logo-icon" />
+          <p className="r8t2-sub-line">choose your path —</p>
+        </header>
 
-      <div className="z6w9-dual-grid">
-        {/* USER CARD */}
-        <div
-          className={`q5b3-role-tile a2f1-user-tile ${
-            selectedRole === "user" ? "l9p3-selected-state" : ""
-          }`}
-          onClick={() => handleRoleSelect("user")}
-          role="button"
-          tabIndex={0}
-          onKeyPress={(e) => e.key === "Enter" && handleRoleSelect("user")}
-          aria-label="select user role"
-        >
-          <div className="n4d2-icon-circle">
-            <span className="j7h3-unicode-symbol">🧑‍💼</span>
-          </div>
-          <span className="c8v6-role-label">user</span>
-          <span className="e3w1-role-hint">personal dashboard</span>
-          <div className="v9b2-micro-divider"></div>
-          <span className="t5n6-footer-note">explore</span>
+        <div className="z6w9-dual-grid">
+          <article
+            className={`q5b3-role-tile a2f1-user-tile ${
+              selectedRole === "user" ? "l9p3-selected-state" : ""
+            }`}
+            onClick={() => handleRoleSelect("user")}
+            onKeyDown={(event) => handleKeyDown(event, "user")}
+            role="button"
+            tabIndex={0}
+            aria-label="Continue as user"
+          >
+            <div className="n4d2-icon-circle" aria-hidden="true">🧑‍💼</div>
+            <h2 className="c8v6-role-label">user</h2>
+            <p className="e3w1-role-hint">personal dashboard</p>
+            <div className="v9b2-micro-divider" />
+            <span className="t5n6-footer-note">explore</span>
+          </article>
+
+          <article
+            className={`q5b3-role-tile d4m7-counselor-tile ${
+              selectedRole === "counsellor" ? "l9p3-selected-state" : ""
+            }`}
+            onClick={() => handleRoleSelect("counsellor")}
+            onKeyDown={(event) => handleKeyDown(event, "counsellor")}
+            role="button"
+            tabIndex={0}
+            aria-label="Continue as counsellor"
+          >
+            <div className="n4d2-icon-circle" aria-hidden="true">👩‍⚕️</div>
+            <h2 className="c8v6-role-label">counsellor</h2>
+            <p className="e3w1-role-hint">professional toolkit</p>
+            <div className="v9b2-micro-divider" />
+            <span className="t5n6-footer-note">guide</span>
+          </article>
         </div>
 
-        {/* COUNSELLOR CARD */}
-        <div
-          className={`q5b3-role-tile d4m7-counselor-tile ${
-            selectedRole === "counsellor" ? "l9p3-selected-state" : ""
-          }`}
-          onClick={() => handleRoleSelect("counsellor")}
-          role="button"
-          tabIndex={0}
-          onKeyPress={(e) =>
-            e.key === "Enter" && handleRoleSelect("counsellor")
-          }
-          aria-label="select counsellor role"
-        >
-          <div className="n4d2-icon-circle">
-            <span className="j7h3-unicode-symbol">👩‍⚕️</span>
-          </div>
-          <span className="c8v6-role-label">counsellor</span>
-          <span className="e3w1-role-hint">professional toolkit</span>
-          <div className="v9b2-micro-divider"></div>
-          <span className="t5n6-footer-note">guide</span>
-        </div>
-      </div>
-
-      <div className="h8k1-bottom-actions">
-        <span className="w2p3-action-pill">⚡ both paths</span>
-        <span className="w2p3-action-pill">🧠 Mental Health Guide</span>
-        <span className="w2p3-action-pill">❓ help</span>
-      </div>
-    </div>
+        <footer className="h8k1-bottom-actions" aria-label="Platform highlights">
+          <span className="w2p3-action-pill">⚡ both paths</span>
+          <span className="w2p3-action-pill">🧠 Mental Health Guide</span>
+          <span className="w2p3-action-pill">❓ help</span>
+        </footer>
+      </section>
+    </main>
   );
 };
 

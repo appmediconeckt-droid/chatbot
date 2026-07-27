@@ -137,8 +137,8 @@ class TranslationService {
       let res = null;
       let lastError = null;
       const endpoints = [
-        `${API_BASE_URL}/translate/text`,
         `${API_BASE_URL}/api/translate/text`,
+        `${API_BASE_URL}/translate/text`,
       ];
 
       for (const endpoint of endpoints) {
@@ -183,7 +183,8 @@ class TranslationService {
       return translated;
     } catch (err) {
       console.error('Translation API error:', err);
-      return text;
+      const fallback = await this.fetchPublicFallbackTranslation(text, targetLang);
+      return fallback || text;
     }
   }
 
@@ -219,10 +220,62 @@ class TranslationService {
     }
   }
 
-  async translateBatch(texts, targetLang, sourceLang = 'auto') {
-    const results = await Promise.all(
-      texts.map(text => this.translate(text, targetLang, sourceLang))
-    );
+  async translateBatch(texts, targetLang, sourceLang = 'auto', onProgress) {
+    if (!Array.isArray(texts) || !texts.length) return [];
+    if (this.getShortLang(targetLang) === this.getShortLang(sourceLang)) return texts;
+    const results = new Array(texts.length);
+
+    // Send several UI strings through the application's existing translator in
+    // one request. The unusual markers survive Azure/Google/MyMemory output and
+    // let us safely restore each original translation afterwards.
+    const chunks = [];
+    let currentChunk = [];
+    let currentLength = 0;
+    texts.forEach((text, index) => {
+      if (currentChunk.length >= 18 || (currentChunk.length && currentLength + text.length > 2200)) {
+        chunks.push(currentChunk);
+        currentChunk = [];
+        currentLength = 0;
+      }
+      currentChunk.push({ text, index });
+      currentLength += text.length;
+    });
+    if (currentChunk.length) chunks.push(currentChunk);
+
+    let nextChunk = 0;
+    const worker = async () => {
+      while (nextChunk < chunks.length) {
+        const chunk = chunks[nextChunk++];
+        const packed = chunk
+          .map(({ text }, index) => `${index ? `\nZXQ${index}QXZ\n` : ''}${text}`)
+          .join('');
+        const translatedPacked = await this.translate(packed, targetLang, sourceLang);
+        const parts = translatedPacked.split(/\s*ZXQ\d+QXZ\s*/i);
+
+        if (parts.length === chunk.length) {
+          chunk.forEach(({ text, index }, partIndex) => {
+            results[index] = parts[partIndex]?.trim() || text;
+          });
+        } else {
+          // Provider changed a marker: fall back only for this small chunk.
+          for (const { text, index } of chunk) {
+            results[index] = await this.translate(text, targetLang, sourceLang);
+          }
+        }
+
+        if (typeof onProgress === 'function') {
+          onProgress(
+            chunk.map(({ text, index }) => ({
+              index,
+              original: text,
+              translated: results[index] || text,
+            })),
+          );
+        }
+      }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(4, chunks.length) }, () => worker()));
     return results;
   }
 

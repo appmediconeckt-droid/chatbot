@@ -2008,6 +2008,115 @@
   box-shadow: none;
 }
 
+/* Recommended counselor card: mobile containment and balanced spacing. */
+@media (max-width: 768px) {
+  .recommended-section-unique {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .recommended-section-unique h2 {
+    margin: 4px 0 10px;
+    font-size: clamp(16px, 4.8vw, 19px);
+    line-height: 1.25;
+  }
+
+  .recommended-card-unique {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 0;
+    margin: 0 0 22px;
+    padding: 16px;
+    gap: 14px;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 18px;
+  }
+
+  .recommended-profile-unique {
+    width: 100%;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .recommended-profile-unique > div:last-child {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .recommended-avatar-unique {
+    width: 68px;
+    height: 68px;
+    flex: 0 0 68px;
+  }
+
+  .recommended-profile-unique h3 {
+    max-width: 100%;
+    font-size: 16px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .recommended-profile-unique p {
+    max-width: 100%;
+    margin-bottom: 8px;
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+
+  .recommended-stats-unique {
+    max-width: 100%;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    font-size: 10px;
+  }
+
+  .recommended-actions-unique {
+    width: 100%;
+    min-width: 0;
+    gap: 9px;
+  }
+
+  .recommended-actions-unique > div {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .recommended-actions-unique button {
+    width: 100%;
+    min-width: 0;
+    min-height: 40px;
+    padding: 9px 8px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 360px) {
+  .recommended-card-unique {
+    padding: 14px 12px;
+  }
+
+  .recommended-avatar-unique {
+    width: 60px;
+    height: 60px;
+    flex-basis: 60px;
+  }
+
+  .recommended-profile-unique {
+    gap: 10px;
+  }
+
+  .recommended-actions-unique button {
+    font-size: 9px;
+  }
+}
+
 /* Readable typography for the counselor directory */
 .counselor-page-title-unique,
 .header-title-unique {

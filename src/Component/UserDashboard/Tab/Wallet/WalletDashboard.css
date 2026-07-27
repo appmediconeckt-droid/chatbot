@@ -1206,3 +1206,69 @@
     background: #374151;
   }
 }
+
+/* Add Money panel: occupy the full mobile content width. */
+@media (max-width: 768px) {
+  .wallet-page,
+  .wallet-layout,
+  .wallet-side,
+  .wallet-add-money,
+  .wallet-add-money form {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .wallet-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .wallet-side {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    grid-template-columns: none;
+  }
+
+  .wallet-add-money {
+    align-self: stretch;
+  }
+
+  .wallet-amount-box,
+  .wallet-quick-amounts,
+  .wallet-payment-methods,
+  .wallet-pay-button {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .wallet-layout {
+    padding: 12px;
+  }
+
+  .wallet-add-money {
+    padding: 20px 16px 16px;
+  }
+
+  .wallet-amount-box {
+    padding-inline: 12px;
+  }
+
+  .wallet-amount-box input {
+    width: min(145px, 55vw);
+    min-width: 0;
+    font-size: clamp(30px, 9vw, 36px);
+  }
+
+  .wallet-quick-amounts {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .wallet-quick-amounts button {
+    min-width: 0;
+    padding-inline: 3px;
+  }
+}
