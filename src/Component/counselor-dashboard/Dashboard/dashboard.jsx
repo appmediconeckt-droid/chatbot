@@ -807,7 +807,10 @@ export default function CounselorDashboard() {
                 <p>Review voice and video calls, missed sessions and call duration.</p>
               </div>
             </div>
-            <CallHistory currentUser={{ id: localStorage.getItem("counsellorId"), role: "counsellor" }} />
+            <CallHistory
+              currentUser={{ id: localStorage.getItem("counsellorId"), role: "counsellor" }}
+              showHeader={false}
+            />
           </div>
         )}
 

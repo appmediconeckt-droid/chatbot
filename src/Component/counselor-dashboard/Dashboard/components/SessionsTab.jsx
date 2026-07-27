@@ -165,7 +165,7 @@ export default function SessionsTab({
   return (
     <div className="couns-tab-content-stitch couns-sessions-page">
       <header className="couns-sessions-page-title">
-        <h1>Counselling seasons overview</h1>
+        <h1>Counselling Sessions Overview</h1>
       </header>
 
       <div className="stitch-session-layout">

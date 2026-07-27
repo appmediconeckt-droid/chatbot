@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import socketService from "../../../../services/socketService";
 import { getAuthToken, getCounsellorId } from "./counsellorAuth";
 import {
   getAnonymousParticipantId,
@@ -357,9 +358,68 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
   };
 
   useEffect(() => {
+    let removeIncomingListener = null;
+    let cancelled = false;
+
+    const handleIncomingCall = (payload = {}) => {
+      if (cancelled || isVideoModalOpen) return;
+
+      const fromData =
+        payload.from && typeof payload.from === "object" ? payload.from : {};
+      const anonymousHandle =
+        (typeof payload.from === "string" && payload.from.trim()) ||
+        payload.anonymous ||
+        fromData.anonymous ||
+        fromData.anonymousName ||
+        fromData.displayName ||
+        "Anonymous User";
+      const anonymousCaller = getAnonymousUserDisplay({
+        ...payload,
+        ...fromData,
+        anonymous: anonymousHandle,
+      });
+
+      setIncomingCallData({
+        callId: payload.callId || payload.id || payload._id,
+        roomId: payload.roomId,
+        name: anonymousCaller.name,
+        image:
+          anonymousCaller.avatarUrl ||
+          anonymousCaller.avatar,
+        callType: payload.callType || payload.type || "video",
+        from: {
+          ...fromData,
+          anonymous: anonymousHandle,
+          displayName: anonymousHandle,
+        },
+        initiator: payload.initiator,
+      });
+      setShowIncomingCallModal(true);
+      vibrate([200, 100, 200]);
+    };
+
+    void socketService
+      .on("incoming_call_request", handleIncomingCall)
+      .then((cleanup) => {
+        if (cancelled) cleanup();
+        else removeIncomingListener = cleanup;
+      })
+      .catch((error) => {
+        console.warn("Incoming call socket listener unavailable:", error);
+      });
+
+    return () => {
+      cancelled = true;
+      removeIncomingListener?.();
+    };
+  }, [isVideoModalOpen, vibrate]);
+
+  useEffect(() => {
     if (isPolling && !isVideoModalOpen) {
       fetchWaitingCalls();
-      const interval = setInterval(fetchWaitingCalls, 5000);
+      // Socket events open the popup immediately. This short poll remains as
+      // a fallback for reconnects or temporarily backgrounded browser tabs.
+      const interval = setInterval(fetchWaitingCalls, 2000);
       setPollingInterval(interval);
       return () => clearInterval(interval);
     } else if (pollingInterval) {

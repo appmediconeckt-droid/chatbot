@@ -155,7 +155,7 @@ const isMissedCall = (call) => {
   return status === "missed" || status === "rejected" || status === "cancelled";
 };
 
-const CallHistory = ({ currentUser }) => {
+const CallHistory = ({ currentUser, showHeader = true }) => {
   const { t } = useUserTranslation();
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedDate, setSelectedDate] = useState("");
@@ -438,10 +438,12 @@ const CallHistory = ({ currentUser }) => {
 
   return (
     <div className="portal-call-history">
-      <header className="pch-header">
-        <h1>Call History</h1>
-        <p>Track your call records</p>
-      </header>
+      {showHeader && (
+        <header className="pch-header">
+          <h1>Call History</h1>
+          <p>Track your call records</p>
+        </header>
+      )}
 
       <div className="pch-layout">
         <aside className="pch-sidebar">

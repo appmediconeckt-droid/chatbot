@@ -835,6 +835,37 @@ const SMSList = () => {
     });
   };
 
+  const resolvePatientAge = (patient) => {
+    const directAge = Number(patient?.age);
+    if (Number.isFinite(directAge) && directAge > 0) {
+      return `${directAge} yrs`;
+    }
+
+    if (patient?.dateOfBirth) {
+      const birthDate = new Date(patient.dateOfBirth);
+      if (!Number.isNaN(birthDate.getTime())) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDifference = today.getMonth() - birthDate.getMonth();
+        if (
+          monthDifference < 0 ||
+          (monthDifference === 0 && today.getDate() < birthDate.getDate())
+        ) {
+          age -= 1;
+        }
+        if (age >= 0) return `${age} yrs`;
+      }
+    }
+
+    return "Age not provided";
+  };
+
+  const formatPatientGender = (gender) => {
+    const normalizedGender = String(gender || "").trim();
+    if (!normalizedGender) return "Gender not provided";
+    return normalizedGender.charAt(0).toUpperCase() + normalizedGender.slice(1);
+  };
+
   // Fetch pending requests
   const fetchPendingRequests = useCallback(async () => {
     const token =
@@ -900,6 +931,9 @@ const SMSList = () => {
           gender: anonymousUser.gender,
           avatar: anonymousUser.avatar,
           avatarUrl: anonymousUser.avatarUrl,
+          age: otherParty.age,
+          genderLabel: otherParty.gender,
+          dateOfBirth: otherParty.dateOfBirth,
           isOnline: presence.isOnline,
           online: presence.isOnline,
           lastSeen: presence.lastSeen,
@@ -947,8 +981,8 @@ const SMSList = () => {
           acceptedAt: chat.acceptedAt,
           rejectedAt: chat.rejectedAt,
           cancelledAt: chat.cancelledAt,
-          age: otherParty.age || "N/A",
-          genderLabel: otherParty.gender || "N/A",
+          age: resolvePatientAge(otherParty),
+          genderLabel: formatPatientGender(otherParty.gender),
           priority: chat.priority || "normal",
           condition: chat.condition || "General",
           lastMessagePreview: chat.lastMessage?.content || "No messages",
