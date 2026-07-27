@@ -1772,7 +1772,42 @@
   }
 
   .ud-conversation-pane .chatMessagesArea {
-    padding: 32px 24px;
+    padding: 40px 28px 28px;
+    gap: 16px;
+    background: #ffffff;
+  }
+
+  .ud-conversation-pane .chatMsgBubble {
+    max-width: min(54%, 480px);
+  }
+
+  .ud-conversation-pane .chatMsgContent {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .ud-conversation-pane .chatMsgRight .chatMsgContent {
+    border-bottom-right-radius: 4px;
+  }
+
+  .ud-conversation-pane .chatMsgLeft .chatMsgContent {
+    border-bottom-left-radius: 4px;
+  }
+
+  .ud-conversation-pane .chatMsgText {
+    margin-bottom: 4px;
+    font-size: 15px;
+    line-height: 1.55;
+  }
+
+  .ud-conversation-pane .chatMsgTimestamp,
+  .ud-conversation-pane .chatConversationTyping small {
+    font-size: 11px;
+  }
+
+  .ud-conversation-pane .chatDateSeparator {
+    padding: 5px 10px;
+    font-size: 11px;
   }
 
   .ud-conversation-pane .chatInputArea {

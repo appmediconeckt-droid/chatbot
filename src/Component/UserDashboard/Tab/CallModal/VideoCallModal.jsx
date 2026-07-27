@@ -180,7 +180,12 @@ const resolveCurrentUserType = (currentUser, callData) => {
     "";
   const normalizedType = String(explicitType).trim().toLowerCase();
 
-  if (normalizedType === "counselor" || normalizedType === "counsellor") {
+  if (
+    normalizedType === "counselor" ||
+    normalizedType === "counsellor" ||
+    normalizedType === "counsellour" ||
+    normalizedType === "doctor"
+  ) {
     return "counsellor";
   }
 
@@ -629,18 +634,55 @@ const VideoCallModal = ({
       return {};
     }
   }, []);
+  const participantId = (participant) =>
+    String(
+      participant?._id ||
+        participant?.id ||
+        participant?.userId ||
+        participant?.user?._id ||
+        participant?.user?.id ||
+        "",
+    ).trim();
+  const localIdentityId = String(
+    currentUserId ||
+      currentUserDbId ||
+      callData?.currentUserId ||
+      storedCurrentUser?._id ||
+      storedCurrentUser?.id ||
+      "",
+  ).trim();
+  const remoteParticipant = useMemo(() => {
+    const receiver = callData?.receiver || null;
+    const initiator = callData?.initiator || callData?.from || null;
+    const receiverId = participantId(receiver);
+    const initiatorId = participantId(initiator);
+
+    if (localIdentityId && receiverId === localIdentityId) return initiator;
+    if (localIdentityId && initiatorId === localIdentityId) return receiver;
+    return callData?.isIncoming === true ? initiator : receiver;
+  }, [callData, localIdentityId]);
+  const localParticipantData = useMemo(() => {
+    const receiver = callData?.receiver || null;
+    const initiator = callData?.initiator || callData?.from || null;
+
+    if (localIdentityId && participantId(receiver) === localIdentityId) {
+      return receiver;
+    }
+    if (localIdentityId && participantId(initiator) === localIdentityId) {
+      return initiator;
+    }
+    return null;
+  }, [callData, localIdentityId]);
   const resolvedAnonymousName = useMemo(
     () =>
       currentUser?.anonymous ||
-      callData?.receiver?.anonymous ||
-      callData?.initiator?.anonymous ||
+      localParticipantData?.anonymous ||
       storedCurrentUser?.anonymous ||
       localStorage.getItem("userAnonymousName") ||
       "Anonymous",
     [
       currentUser?.anonymous,
-      callData?.receiver?.anonymous,
-      callData?.initiator?.anonymous,
+      localParticipantData?.anonymous,
       storedCurrentUser?.anonymous,
     ],
   );
@@ -710,15 +752,31 @@ const VideoCallModal = ({
   const maskedCalleeName = useMemo(() => {
     if (resolvedUserType === "counsellor" || resolvedUserType === "counselor") {
       return (
-        callData?.receiver?.anonymous ||
-        callData?.initiator?.anonymous ||
-        localStorage.getItem("userAnonymousName") ||
-        calleeName
+        remoteParticipant?.anonymous ||
+        remoteParticipant?.user?.anonymous ||
+        calleeName ||
+        "Anonymous User"
       );
     }
 
-    return calleeName;
-  }, [calleeName, resolvedUserType, callData]);
+    const counselorName =
+      remoteParticipant?.displayName ||
+      remoteParticipant?.fullName ||
+      remoteParticipant?.name ||
+      remoteParticipant?.user?.displayName ||
+      remoteParticipant?.user?.fullName ||
+      remoteParticipant?.user?.name;
+
+    // A user's anonymous identity belongs only to the patient. Never flash it
+    // as the remote counselor's name while an accepted call is reconnecting.
+    if (calleeName && calleeName !== resolvedAnonymousName) return calleeName;
+    return counselorName || "Counselor";
+  }, [
+    calleeName,
+    remoteParticipant,
+    resolvedAnonymousName,
+    resolvedUserType,
+  ]);
   const maskedCalleeInitials = useMemo(
     () => buildInitials(maskedCalleeName),
     [maskedCalleeName],
@@ -890,6 +948,13 @@ const VideoCallModal = ({
     clearReconnectTimer();
     onCloseRef.current?.();
   }, [clearReconnectTimer]);
+
+  // A stale accepted/status socket event can arrive just after hang-up. Never
+  // leave an empty call shell mounted; close it before rendering an error page.
+  useEffect(() => {
+    if (!isOpen || callId) return;
+    closeModalOnce();
+  }, [isOpen, callId, closeModalOnce]);
 
   const handleCallLeft = useCallback(() => {
     closeModalOnce();
@@ -1364,7 +1429,7 @@ const VideoCallModal = ({
 
     const initCall = async () => {
       if (!callId) {
-        setError("Missing call ID.");
+        closeModalOnce();
         return;
       }
 

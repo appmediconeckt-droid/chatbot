@@ -10,7 +10,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ResetPassword.css";
-import logo from "../assets/humaeli.png";
+import logo from "../assets/humaeli logo (2).png";
 import { API_BASE_URL } from "../axiosConfig";
 
 const ResetPassword = () => {
@@ -102,7 +102,7 @@ const ResetPassword = () => {
 
         {/* Logo */}
         <div className="rp-logo">
-          <img src={logo} alt="Mediconeckt" className="rp-logo-img" />
+          <img src={logo} alt="Humaeli" className="rp-logo-img" />
         </div>
 
         <div className="rp-card">

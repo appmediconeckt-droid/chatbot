@@ -377,6 +377,10 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
       const anonymousCaller = getAnonymousUserDisplay({
         ...payload,
         ...fromData,
+        profilePhoto:
+          fromData.profilePhoto ||
+          payload.fromProfilePhoto ||
+          payload.profilePhoto,
         anonymous: anonymousHandle,
       });
 
@@ -390,6 +394,10 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
         callType: payload.callType || payload.type || "video",
         from: {
           ...fromData,
+          profilePhoto:
+            fromData.profilePhoto ||
+            payload.fromProfilePhoto ||
+            payload.profilePhoto,
           anonymous: anonymousHandle,
           displayName: anonymousHandle,
         },
@@ -401,16 +409,19 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
 
     const handleCallAccepted = (payload = {}) => {
       if (cancelled) return;
-      setSelectedCall((previous) =>
-        previous
-          ? {
-              ...previous,
-              roomId: payload.roomId || previous.roomId,
-              status: "active",
-            }
-          : previous,
-      );
-      setIsVideoModalOpen(true);
+      setSelectedCall((previous) => {
+        if (!previous) return previous;
+        const previousId = previous.callId || previous.id || previous._id;
+        if (payload.callId && previousId && String(payload.callId) !== String(previousId)) {
+          return previous;
+        }
+        setIsVideoModalOpen(true);
+        return {
+          ...previous,
+          roomId: payload.roomId || previous.roomId,
+          status: "active",
+        };
+      });
     };
 
     void socketService

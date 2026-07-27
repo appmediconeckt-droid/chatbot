@@ -5399,17 +5399,20 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
 
     const onCallAccepted = (payload = {}) => {
       if (!mounted) return;
-      setSelectedCall((previous) =>
-        previous
-          ? {
-              ...previous,
-              roomId: payload.roomId || previous.roomId,
-              status: "active",
-            }
-          : previous,
-      );
-      setCallError(null);
-      setIsVideoModalOpen(true);
+      setSelectedCall((previous) => {
+        if (!previous) return previous;
+        const previousId = previous.callId || previous.id || previous._id;
+        if (payload.callId && previousId && String(payload.callId) !== String(previousId)) {
+          return previous;
+        }
+        setCallError(null);
+        setIsVideoModalOpen(true);
+        return {
+          ...previous,
+          roomId: payload.roomId || previous.roomId,
+          status: "active",
+        };
+      });
     };
 
     const onCallTerminated = (payload = {}) => {
