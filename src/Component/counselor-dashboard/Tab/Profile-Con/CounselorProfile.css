@@ -587,6 +587,14 @@
   margin-bottom: 1rem;
 }
 
+.counselor-profile-container__character-count {
+  display: block;
+  margin-top: 6px;
+  color: #718096;
+  font-size: 11px;
+  text-align: right;
+}
+
 .counselor-profile-container__document-type-section {
   margin-bottom: 1rem;
 }
@@ -2250,6 +2258,14 @@
 .counselor-profile-details-card > div > i { width: 20px; color: #4f5764; font-size: 18px; }
 .counselor-profile-details-card span { min-width: 0; color: #505867; display: grid; gap: 5px; font-size: 9px; }
 .counselor-profile-details-card strong { overflow-wrap: anywhere; color: #272b31; font-size: 14px; font-weight: 450; }
+.counselor-profile-details-card strong a,
+.counselor-profile-details-card strong a:visited,
+.counselor-profile-details-card strong a:hover,
+.counselor-profile-details-card strong a:focus,
+.counselor-profile-details-card strong a:active {
+  color: #272b31;
+  text-decoration: none;
+}
 
 .counselor-profile-about-card { min-height: 168px; padding: 26px 24px; }
 .counselor-profile-about-card h2,

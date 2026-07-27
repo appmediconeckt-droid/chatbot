@@ -700,6 +700,9 @@ const PatientProfile = () => {
       if (response.data.success) {
         showNotificationMessage("Profile updated successfully!", "success");
         await fetchPatientProfile({ showSkeleton: false });
+        window.dispatchEvent(
+          new CustomEvent("profile-updated", { detail: { role: "user" } }),
+        );
         setIsEditing(false);
         setProfileImage(null);
         setProfileImageFile(null);

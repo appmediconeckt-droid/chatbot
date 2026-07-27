@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Leanding.css';
 import logo from '../assets/humaeli.png';
+import logos from '../assets/humaeli logo (2).png';
 import { API_BASE_URL } from '../axiosConfig';
 import { Link } from 'react-router-dom';
 import { SUPPORTED_LANGUAGES, useSiteTranslation } from '../i18n/LanguageContext';
@@ -249,7 +250,7 @@ const Leanding = () => {
   };
 
   return (
-    <div className="mediconeckt">
+    <div className="humaeli">
       <Header onLoginClick={() => navigate('/role-selector')} />
       <main>
         <HeroSection />
@@ -322,7 +323,10 @@ const Header = ({ onLoginClick }) => {
           >
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
-          <img src={logo} alt="Humaeli Logo" />
+          <div className="landing-logo-brand">
+            <img src={logo} alt="Humaeli Logo" />
+            <span>Mental Wellness</span>
+          </div>
         </div>
 
         <nav
@@ -746,7 +750,7 @@ const Footer = () => {
       <div className="footer-content">
         <div className="footer-about">
           <div className="footer-logo">
-            <img src={logo} alt="Humaeli Logo" />
+            <img src={logos} alt="Humaeli Logo" />
           </div>
           <p className="footer-description">
             {t('landing_footer_description')}

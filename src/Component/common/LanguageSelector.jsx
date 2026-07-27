@@ -158,7 +158,7 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
                 <div className="lang-modal-icon-wrap">◎</div>
                 <div>
                   <div className="lang-modal-title">Language</div>
-                  <div className="lang-modal-subtitle">Choose your preferred language for the Mediconnect app</div>
+                  <div className="lang-modal-subtitle">Choose your preferred language for the Humaeli app</div>
                 </div>
               </div>
               <button type="button" className="lang-modal-close" onClick={() => setOpen(false)}>×</button>

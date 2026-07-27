@@ -1999,6 +1999,9 @@ const CounselorProfile = () => {
                     profilePhotoUrl: savedPhotoUrl,
                 }));
                 setSuccessMessage('Profile photo saved successfully!');
+                window.dispatchEvent(
+                    new CustomEvent('profile-updated', { detail: { role: 'counselor' } }),
+                );
                 setTimeout(() => setSuccessMessage(''), 3000);
                 closePhotoModal();
             } catch (uploadError) {
@@ -2566,6 +2569,9 @@ const CounselorProfile = () => {
             if (response.data.success) {
                 setSuccessMessage('Profile updated successfully!');
                 await fetchCounselorProfile();
+                window.dispatchEvent(
+                    new CustomEvent('profile-updated', { detail: { role: 'counselor' } }),
+                );
                 setIsEditing(false);
 
                 setTimeout(() => {
@@ -3455,13 +3461,19 @@ const CounselorProfile = () => {
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('about_me')}</h3>
                         {isEditing ? (
+                            <>
                             <textarea
                                 value={editedData.aboutMe || ''}
                                 onChange={(e) => handleInputChange('aboutMe', e.target.value)}
                                 className={`${COUNSELOR_PROFILE_CLASS}__textarea`}
                                 rows="5"
+                                maxLength={2000}
                                 placeholder="Write about your professional background, expertise, and approach to counseling..."
                             />
+                            <small className={`${COUNSELOR_PROFILE_CLASS}__character-count`}>
+                                {(editedData.aboutMe || '').length}/2000
+                            </small>
+                            </>
                         ) : (
                             <p>{counselor?.aboutMe || 'No bio provided'}</p>
                         )}

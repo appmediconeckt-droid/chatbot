@@ -252,9 +252,34 @@ body {
   height: 100%;
 }
 
+.landing-logo-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  line-height: 1;
+  max-height: 100%;
+}
+
 .logo img {
   width: clamp(150px, 16vw, 190px);
   height: auto;
+  display: block;
+}
+
+.landing-logo-brand span {
+  margin-top: 0.05rem;
+  width: 100%;
+  padding-left: 31%;
+  text-align: center;
+  color: #176d86;
+  font-size: clamp(0.58rem, 0.65vw, 0.72rem);
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .logo-text {
@@ -2978,6 +3003,12 @@ html {
     flex: 0 1 auto;
   }
 
+  .landing-logo-brand span {
+    margin-top: 0.02rem;
+    font-size: clamp(0.45rem, 1.7vw, 0.56rem);
+    letter-spacing: 0.12em;
+  }
+
   .mobile-menu-btn {
     width: 36px;
     height: 36px;
@@ -3035,6 +3066,11 @@ html {
     width: clamp(96px, 31vw, 112px);
   }
 
+  .landing-logo-brand span {
+    font-size: 0.43rem;
+    letter-spacing: 0.1em;
+  }
+
   .mobile-menu-btn {
     width: 34px;
     height: 34px;
@@ -3054,6 +3090,29 @@ html {
 
   .header-language .lang-selector-trigger {
     width: 34px;
+    height: 34px;
+  }
+}
+
+/* The source logo has a square transparent canvas. Crop that canvas inside
+   the navbar so the visible brand and its tagline remain within the header. */
+.header .landing-logo-brand img {
+  width: clamp(150px, 16vw, 190px);
+  height: 54px;
+  object-fit: cover;
+  object-position: center;
+}
+
+@media (max-width: 768px) {
+  .header .landing-logo-brand img {
+    width: clamp(108px, 33vw, 138px);
+    height: 40px;
+  }
+}
+
+@media (max-width: 380px) {
+  .header .landing-logo-brand img {
+    width: clamp(96px, 31vw, 112px);
     height: 34px;
   }
 }

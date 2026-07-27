@@ -419,6 +419,15 @@ export default function UserDashboard() {
       }
     };
     fetchUserData();
+
+    const handleProfileUpdated = (event) => {
+      if (!event.detail?.role || event.detail.role === "user") {
+        fetchUserData();
+      }
+    };
+
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdated);
   }, []);
 
   // Start empty so the backend's onboarding question (or the user's first

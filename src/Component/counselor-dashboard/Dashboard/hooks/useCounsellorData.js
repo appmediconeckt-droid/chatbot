@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { getCounsellorId, getAuthToken } from "./counsellorAuth";
@@ -7,8 +7,7 @@ export default function useCounsellorData() {
   const [counselorData, setCounselorData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchCounsellor = async () => {
+  const fetchCounsellor = useCallback(async () => {
       try {
         const counsellorId = getCounsellorId();
         const token = getAuthToken();
@@ -65,10 +64,20 @@ export default function useCounsellorData() {
       } finally {
         setLoading(false);
       }
+  }, []);
+
+  useEffect(() => {
+    fetchCounsellor();
+
+    const handleProfileUpdated = (event) => {
+      if (!event.detail?.role || event.detail.role === "counselor") {
+        fetchCounsellor();
+      }
     };
 
-    fetchCounsellor();
-  }, []);
+    window.addEventListener("profile-updated", handleProfileUpdated);
+    return () => window.removeEventListener("profile-updated", handleProfileUpdated);
+  }, [fetchCounsellor]);
 
   return { counselorData, loading };
 }
