@@ -559,7 +559,7 @@ export default function AiChatPopup({
           <section className="ud-ai-welcome-card">
             <p className="ud-ai-welcome-title">Hello {userName?.trim()?.split(/\s+/)[0] || "there"}! 👋</p>
             <p>
-              I am MediConeckt AI, your personal medical companion. I can help
+              I am Humaeli AI, your personal medical companion. I can help
               you analyze reports, track symptoms, or find the right specialist.
             </p>
             <div className="ud-ai-safety-note">

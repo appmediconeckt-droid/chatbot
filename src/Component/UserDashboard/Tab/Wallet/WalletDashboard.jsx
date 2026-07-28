@@ -359,7 +359,7 @@ const WalletDashboard = ({ userData }) => {
                 key: orderData.key_id,
                 amount: orderData.amount,
                 currency: "INR",
-                name: "Mediconeckt Wallet",
+                name: "Humaeli Wallet",
                 description: t('professional_dashboard'),
                 order_id: orderData.order_id,
                 handler: async function (response) {
@@ -628,7 +628,7 @@ const WalletDashboard = ({ userData }) => {
 
                     <section className="wallet-support">
                         <div><strong>NEED PAYMENT HELP?</strong><p>Support team is available 24/7 for you.</p></div>
-                        <button type="button" onClick={() => { window.location.href = 'mailto:support@mediconeckt.com?subject=Wallet%20Support'; }}>Support</button>
+                        <button type="button" onClick={() => { window.location.href = 'mailto:support@humaeli.com?subject=Wallet%20Support'; }}>Support</button>
                     </section>
                 </aside>
             </main>
