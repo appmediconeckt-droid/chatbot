@@ -1,4 +1,7 @@
 .location-gate-overlay {
+  --location-accent-start: #667eea;
+  --location-accent-end: #764ba2;
+  --location-accent-shadow: rgba(102, 126, 234, 0.32);
   position: fixed;
   inset: 0;
   z-index: 10000;
@@ -9,6 +12,18 @@
   justify-content: center;
   padding: 16px;
   animation: location-gate-fade 0.18s ease-out;
+}
+
+.location-gate-overlay.location-gate-theme-user {
+  --location-accent-start: #006b2c;
+  --location-accent-end: #01ce54;
+  --location-accent-shadow: rgba(0, 151, 62, 0.3);
+}
+
+.location-gate-overlay.location-gate-theme-counselor {
+  --location-accent-start: #1167b1;
+  --location-accent-end: #164b8f;
+  --location-accent-shadow: rgba(17, 103, 177, 0.3);
 }
 
 @keyframes location-gate-fade {
@@ -115,14 +130,18 @@
 }
 
 .location-gate-primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(
+    135deg,
+    var(--location-accent-start),
+    var(--location-accent-end)
+  );
   color: #fff;
-  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.32);
+  box-shadow: 0 6px 16px var(--location-accent-shadow);
 }
 
 .location-gate-primary:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 8px 20px var(--location-accent-shadow);
 }
 
 .location-gate-primary:disabled,
@@ -152,7 +171,7 @@
   width: 36px;
   height: 36px;
   border: 3px solid #e2e8f0;
-  border-top-color: #667eea;
+  border-top-color: var(--location-accent-start);
   border-radius: 50%;
   margin: 0 auto 14px;
   animation: location-gate-spin 0.9s linear infinite;

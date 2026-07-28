@@ -271,32 +271,32 @@ export function LanguageProvider({ children }) {
     localStorage.setItem(COUNSELOR_LANG_KEY, normalized);
     setUserLangState(normalized);
     setCounselorLangState(normalized);
+    setSiteLangState(normalized);
 
     const requestId = ++siteLanguageRequestRef.current;
-    if (normalized === 'en-US') {
-      setSiteLangState(normalized);
-      return;
+    if (normalized === 'en-US') return;
+
+    try {
+      const baseMessages = loadedTranslations[normalized]
+        || await loadLocaleMessages(normalized);
+      const landingMessages = await translateMissingLandingMessages(
+        normalized,
+        baseMessages,
+      );
+      if (requestId !== siteLanguageRequestRef.current) return;
+
+      setLoadedTranslations((prev) => ({
+        ...prev,
+        [normalized]: {
+          ...baseMessages,
+          ...landingMessages,
+        },
+      }));
+    } catch (error) {
+      // Do not undo the user's selection when the translation API is slow or
+      // unavailable. Static messages remain usable and missing keys can retry.
+      console.warn(`[i18n] Unable to prepare landing locale ${normalized}:`, error);
     }
-
-    // Prepare the complete landing locale before committing the visible site
-    // language. This prevents an intermediate English fallback/mixed-language
-    // render while API translations are still arriving.
-    const baseMessages = loadedTranslations[normalized]
-      || await loadLocaleMessages(normalized);
-    const landingMessages = await translateMissingLandingMessages(
-      normalized,
-      baseMessages,
-    );
-    if (requestId !== siteLanguageRequestRef.current) return;
-
-    setLoadedTranslations((prev) => ({
-      ...prev,
-      [normalized]: {
-        ...baseMessages,
-        ...landingMessages,
-      },
-    }));
-    setSiteLangState(normalized);
   }, [loadedTranslations]);
 
   return (

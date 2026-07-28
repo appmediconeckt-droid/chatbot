@@ -262,6 +262,308 @@ body {
   max-height: 100%;
 }
 
+/* Keep the desktop language control as a real interactive button. Earlier
+   screenshot-only styling hid its DOM content behind a pseudo-element. */
+@media (min-width: 769px) {
+  .humaeli .header-language .lang-selector-trigger {
+    gap: 5px;
+    font-size: 9px;
+    pointer-events: auto;
+  }
+
+  .humaeli .header-language .lang-selector-trigger > * {
+    display: inline-flex;
+  }
+
+  .humaeli .header-language .lang-selector-trigger::after {
+    content: none;
+    display: none;
+  }
+
+  .humaeli .header-language .lang-trigger-globe {
+    display: none;
+  }
+
+  .humaeli .header-language .lang-trigger-label {
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .humaeli .header-language .lang-trigger-chevron {
+    width: 8px;
+    height: 8px;
+    color: #fff;
+    flex: 0 0 auto;
+  }
+}
+
+/* Why Choose Humaeli — reference layout */
+.humaeli section.features {
+  padding: 76px 0 82px;
+  background: #eaf7ff;
+}
+
+.humaeli section.features > .container {
+  width: min(1140px, calc(100% - 40px));
+  max-width: none;
+}
+
+.humaeli section.features .features-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(440px, .95fr);
+  align-items: center;
+  gap: 52px;
+}
+
+.humaeli section.features .features-image-wrap {
+  width: 100%;
+  height: 330px;
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.humaeli section.features .features-image-wrap img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+.humaeli section.features .features-content {
+  min-width: 0;
+}
+
+.humaeli section.features .section-header {
+  margin: 0 0 34px;
+  text-align: left;
+}
+
+.humaeli section.features .section-title {
+  margin: 0 0 12px;
+  color: #173640;
+  font-size: clamp(1.75rem, 2.4vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.humaeli section.features .section-description {
+  margin: 0;
+  color: #77878a;
+  font-size: .94rem;
+  line-height: 1.55;
+}
+
+.humaeli section.features .features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px 38px;
+}
+
+.humaeli section.features .feature-card {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.humaeli section.features .feature-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  margin: 0 0 14px;
+  place-items: center;
+  border-radius: 50%;
+  background: #c9f2e8;
+  color: #27a88f;
+  font-size: .92rem;
+}
+
+.humaeli section.features .feature-title {
+  margin: 0 0 7px;
+  color: #173640;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.humaeli section.features .feature-description {
+  margin: 0;
+  color: #53686c;
+  font-size: .78rem;
+  line-height: 1.45;
+}
+
+.humaeli section.features .features-cta {
+  min-width: 188px;
+  margin-top: 34px;
+  padding: 14px 24px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #17ba87, #2c968d);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+@media (max-width: 900px) {
+  .humaeli section.features .features-showcase {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .humaeli section.features .features-image-wrap {
+    height: min(52vw, 390px);
+  }
+}
+
+@media (max-width: 560px) {
+  .humaeli section.features {
+    padding: 52px 0 58px;
+  }
+
+  .humaeli section.features > .container {
+    width: min(100% - 28px, 1140px);
+  }
+
+  .humaeli section.features .features-image-wrap {
+    height: 250px;
+    border-radius: 25px;
+  }
+
+  .humaeli section.features .features-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .humaeli section.features .section-description br {
+    display: none;
+  }
+}
+
+/* Testimonial section — reference layout */
+.humaeli section.testimonials {
+  position: relative;
+  min-height: 480px;
+  padding: 130px 28px 48px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 18% 65%, transparent 0 21%, rgba(218,242,249,.78) 21.5% 31%, transparent 31.5%),
+    radial-gradient(ellipse at 77% 75%, transparent 0 32%, rgba(218,242,249,.7) 32.5% 43%, transparent 43.5%),
+    #eaf8ff;
+  box-sizing: border-box;
+}
+.humaeli section.testimonials::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 86px;
+  background: #fff;
+}
+.humaeli section.testimonials > .container {
+  display: none;
+}
+.humaeli section.testimonials .testimonial-stage {
+  position: relative;
+  z-index: 1;
+  width: min(1040px, 100%);
+  margin: 0 auto;
+  text-align: center;
+}
+.humaeli section.testimonials .testimonial-label {
+  display: inline-flex;
+  min-width: 122px;
+  min-height: 25px;
+  padding: 4px 18px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #202020;
+  color: #fff;
+  font-size: .72rem;
+  line-height: 1;
+}
+.humaeli section.testimonials .testimonial-display-text {
+  max-width: 980px;
+  margin: 26px auto 28px;
+  color: #222526;
+  font-size: clamp(1.85rem, 3.2vw, 3rem);
+  font-weight: 500;
+  line-height: 1.24;
+  letter-spacing: -.035em;
+}
+.humaeli section.testimonials .testimonial-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 54px;
+}
+.humaeli section.testimonials .testimonial-arrow {
+  display: grid;
+  width: 54px;
+  height: 36px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #405457;
+  cursor: pointer;
+  font-size: 1.25rem;
+}
+.humaeli section.testimonials .testimonial-display-author {
+  display: flex;
+  min-width: 240px;
+  align-items: center;
+  gap: 13px;
+  text-align: left;
+}
+.humaeli section.testimonials .testimonial-avatar {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  border: 4px solid #fff;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 78% 34%;
+  box-shadow: 0 2px 8px rgba(25, 72, 74, .12);
+}
+.humaeli section.testimonials .testimonial-display-author .author-name {
+  margin: 0 0 4px;
+  color: #252a2b;
+  font-size: .95rem;
+  font-weight: 700;
+}
+.humaeli section.testimonials .testimonial-display-author .author-role {
+  color: #91a0a3;
+  font-size: .72rem;
+}
+@media (max-width: 700px) {
+  .humaeli section.testimonials {
+    min-height: 440px;
+    padding: 118px 20px 42px;
+  }
+  .humaeli section.testimonials .testimonial-display-text {
+    margin-top: 23px;
+    font-size: clamp(1.45rem, 6vw, 2rem);
+  }
+  .humaeli section.testimonials .testimonial-footer {
+    gap: 8px;
+  }
+  .humaeli section.testimonials .testimonial-display-author {
+    min-width: 0;
+  }
+}
+
 .logo img {
   width: clamp(150px, 16vw, 190px);
   height: auto;
@@ -3033,6 +3335,1690 @@ html {
   }
 }
 
+/* Final isolation for API professional cards (must remain after legacy rules). */
+.humaeli section.doctors .doctor-card .doctor-header {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+
+.humaeli section.doctors .doctor-card .doctor-header > div:last-child {
+  width: 100%;
+}
+
+.humaeli section.doctors .doctor-card .doctor-name,
+.humaeli section.doctors .doctor-card .doctor-specialization,
+.humaeli section.doctors .doctor-card .doctor-rating {
+  color: #133747;
+  background: transparent;
+}
+
+.humaeli section.doctors .doctor-card .doctor-specialization {
+  color: #058b7d;
+}
+
+.humaeli section.doctors .doctor-card .doctor-details {
+  display: flex;
+  width: 100%;
+  margin: 15px 0 14px;
+  padding: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 11px 17px;
+  border: 0;
+  background: transparent;
+}
+
+.humaeli section.doctors .doctor-card .doctor-detail {
+  display: inline-flex;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  gap: 4px;
+  color: #12606a;
+  background: transparent;
+  font-size: .5rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.humaeli section.doctors .doctor-card .doctor-detail span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+
+.humaeli section.doctors .doctor-card .doctor-actions {
+  display: flex;
+  width: 100%;
+  margin-top: auto;
+  padding: 0;
+  grid-template-columns: none;
+  flex-direction: column;
+  gap: 13px;
+  background: transparent;
+}
+
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button {
+  display: flex;
+  width: 100%;
+  min-height: 34px;
+  margin: 0;
+  padding: 8px 12px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 22px;
+  color: #fff;
+  background: linear-gradient(90deg, #18bc82, #29958e);
+  box-shadow: none;
+  font-size: .56rem;
+  font-weight: 650;
+  letter-spacing: .08em;
+}
+
+/* Final popup colour lock: keeps every control aligned with the blue chat
+   header even when shared button styles are loaded later in this stylesheet. */
+.humaeli .chat-popup .chat-popup-header {
+  background: #328cac;
+}
+
+.humaeli .chat-popup .chat-popup-body {
+  background: #f5f7f8;
+  scrollbar-color: #8a8a8a #eef1f2;
+}
+
+.humaeli .chat-popup .chat-popup-body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: #8a8a8a;
+}
+
+.humaeli .chat-popup .chat-message-wrapper.ai .chat-avatar {
+  color: #fff;
+  background: #2387ad;
+}
+
+.humaeli .chat-popup .chat-message-wrapper.ai .chat-bubble {
+  border-left-color: #2498c1;
+}
+
+.humaeli .chat-popup .guest-chat-tts-btn,
+.humaeli .chat-popup .chat-quick-reply-btn {
+  color: #167da5;
+  border-color: #73bdd8;
+  background: #fff;
+}
+
+.humaeli .chat-popup .guest-chat-tts-btn:hover:not(:disabled),
+.humaeli .chat-popup .guest-chat-tts-btn--playing,
+.humaeli .chat-popup .chat-quick-reply-btn:hover:not(:disabled) {
+  color: #fff;
+  border-color: #287f9f;
+  background: #287f9f;
+}
+
+.humaeli .chat-popup .guest-chat-mic-btn {
+  color: #2787aa;
+  border-color: #d5e1e6;
+  background: #fff;
+}
+
+.humaeli .chat-popup .guest-chat-mic-btn:hover:not(:disabled) {
+  color: #fff;
+  border-color: #287f9f;
+  background: #287f9f;
+}
+
+.humaeli .chat-popup .send-btn,
+.humaeli .chat-popup .send-btn:disabled {
+  color: #fff;
+  border-color: #328cac;
+  background: #328cac !important;
+}
+
+.humaeli .chat-popup .send-btn:disabled {
+  opacity: .58;
+}
+
+/* Floating AI chat opened from the bottom-right icon. */
+.humaeli .chat-popup {
+  border-color: rgba(40, 126, 159, .35);
+  background: #f7f9fa;
+}
+
+.humaeli .chat-popup-header {
+  background: linear-gradient(120deg, #2d87a8 0%, #287895 100%);
+}
+
+.humaeli .chat-popup-body {
+  background: #f7f8f9;
+}
+
+.humaeli .chat-message-wrapper.ai .chat-avatar {
+  background: #2b86a7;
+}
+
+.humaeli .chat-message-wrapper.user .chat-avatar {
+  background: #216b87;
+}
+
+.humaeli .chat-message-wrapper.ai .chat-bubble {
+  color: #153b4b;
+  border-color: #dce6ea;
+  border-left: 3px solid #2b98bf;
+  background: #fff;
+}
+
+.humaeli .chat-message-wrapper.user .chat-bubble {
+  color: #fff;
+  background: linear-gradient(135deg, #2d87a8, #287895);
+}
+
+.humaeli .chat-popup-input input:focus,
+.humaeli .guest-chat-language-select:focus {
+  border-color: #2b86a7;
+  box-shadow: 0 0 0 3px rgba(43, 134, 167, .13);
+}
+
+.humaeli .chat-popup .send-btn,
+.humaeli .chat-popup .guest-chat-signup-btn {
+  color: #fff;
+  background: linear-gradient(135deg, #2d87a8, #287895);
+}
+
+.humaeli .chat-popup .chat-quick-reply-btn,
+.humaeli .chat-popup .guest-chat-tts-btn {
+  color: #287895;
+  border-color: #9ac8d8;
+}
+
+/* Final language trigger override: preserve the supplied navbar appearance
+   without replacing the clickable React content with a pseudo-element. */
+@media (min-width: 769px) {
+  .humaeli .header-language .lang-selector-trigger {
+    gap: 5px;
+    font-size: 9px;
+    pointer-events: auto;
+  }
+
+  .humaeli .header-language .lang-selector-trigger > * {
+    display: inline-flex;
+  }
+
+  .humaeli .header-language .lang-selector-trigger::after {
+    content: none;
+    display: none;
+  }
+
+  .humaeli .header-language .lang-trigger-globe {
+    display: none;
+  }
+
+  .humaeli .header-language .lang-trigger-label {
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .humaeli .header-language .lang-trigger-chevron {
+    width: 8px;
+    height: 8px;
+    color: #fff;
+    flex: 0 0 auto;
+  }
+}
+
+/* Final scrolled-header alignment fix. */
+@media (min-width: 769px) {
+  .humaeli .header,
+  .humaeli .header.header-scrolled {
+    top: 0;
+    height: 72px;
+    min-height: 72px;
+    padding: 0;
+    align-items: center;
+    transform: none;
+  }
+  .humaeli .header .header-container,
+  .humaeli .header.header-scrolled .header-container {
+    top: auto;
+    bottom: auto;
+    height: 72px;
+    min-height: 72px;
+    margin: 0 auto;
+    padding-top: 0;
+    padding-bottom: 0;
+    align-items: center;
+    transform: none;
+  }
+  .humaeli .header .logo,
+  .humaeli .header .landing-logo-brand,
+  .humaeli .header .nav-menu,
+  .humaeli .header .header-actions,
+  .humaeli .header.header-scrolled .logo,
+  .humaeli .header.header-scrolled .nav-menu,
+  .humaeli .header.header-scrolled .header-actions {
+    top: auto;
+    bottom: auto;
+    margin-top: 0;
+    margin-bottom: 0;
+    align-self: center;
+    transform: none;
+  }
+  .humaeli .header .landing-logo-brand img {
+    width: 74px;
+    height: 50px;
+  }
+}
+
+/* Compact, vertically centred desktop navbar. */
+@media (min-width: 769px) {
+  .humaeli .header {
+    height: 72px;
+  }
+  .humaeli .header-container {
+    height: 72px;
+    padding-top: 0;
+    padding-bottom: 0;
+    align-items: center;
+  }
+  .humaeli .header .logo,
+  .humaeli .header .landing-logo-brand,
+  .humaeli .nav-menu,
+  .humaeli .header-actions {
+    align-self: center;
+  }
+  .humaeli .header .landing-logo-brand img {
+    width: 74px;
+    height: 50px;
+    display: block;
+    object-fit: contain;
+  }
+  .humaeli .nav-menu {
+    height: 46px;
+  }
+  .humaeli .header-language .lang-selector-trigger,
+  .humaeli .header-actions .btn-secondary {
+    height: 40px;
+  }
+}
+
+/* Footer — reference layout */
+.humaeli footer.footer {
+  position: relative;
+  padding: 0;
+  border-top: 5px solid #20b98c;
+  background: #062631;
+  color: #81999d;
+}
+.humaeli footer.footer > .container {
+  width: min(1120px, calc(100% - 44px));
+  max-width: none;
+  padding: 38px 0 34px;
+}
+.humaeli footer.footer .footer-content {
+  display: grid;
+  padding: 0 0 74px;
+  grid-template-columns: 1.65fr 3.35fr;
+  gap: 58px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+}
+.humaeli footer.footer .footer-about {
+  max-width: 340px;
+}
+.humaeli footer.footer .footer-logo {
+  display: flex;
+  height: auto;
+  margin: 0 0 22px;
+  align-items: center;
+  gap: 10px;
+  color: #4ed99a;
+  font-size: 1.35rem;
+  font-weight: 650;
+}
+.humaeli footer.footer .footer-logo i {
+  font-size: 1.45rem;
+}
+.humaeli footer.footer .footer-description {
+  margin: 0;
+  color: #9aafb2;
+  font-size: .73rem;
+  line-height: 1.55;
+}
+.humaeli footer.footer .social-links {
+  display: flex;
+  margin-top: 28px;
+  gap: 18px;
+}
+.humaeli footer.footer .social-links a {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255,255,255,.055);
+  color: #b8c7c9;
+  font-size: .68rem;
+}
+.humaeli footer.footer .footer-links {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 34px;
+}
+.humaeli footer.footer .footer-column h4 {
+  margin: 0 0 23px;
+  color: #d7e3e4;
+  font-size: .69rem;
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+.humaeli footer.footer .footer-column a {
+  display: block;
+  margin: 0 0 13px;
+  color: #789094;
+  font-size: .7rem;
+  line-height: 1.35;
+  text-decoration: none;
+}
+.humaeli footer.footer .footer-column a:hover,
+.humaeli footer.footer .footer-legal a:hover {
+  color: #4ed99a;
+}
+.humaeli footer.footer .footer-bottom {
+  display: block;
+  padding: 31px 0 0;
+}
+.humaeli footer.footer .footer-copyright > p:first-child {
+  margin: 0 0 23px;
+  color: #a6b7ba;
+  font-size: .7rem;
+  text-align: center;
+}
+.humaeli footer.footer .emergency-notice {
+  display: flex;
+  width: min(760px, 100%);
+  min-height: 45px;
+  margin: 0 auto 11px;
+  padding: 12px 18px;
+  align-items: center;
+  gap: 10px;
+  border-left: 3px solid #ffb62e;
+  border-radius: 0 6px 6px 0;
+  background: rgba(119, 84, 27, .28);
+  color: #aab9bb;
+  box-sizing: border-box;
+  font-size: .69rem;
+}
+.humaeli footer.footer .emergency-notice:nth-of-type(3) {
+  border-left-color: #29d18e;
+  background: rgba(10, 68, 79, .28);
+}
+.humaeli footer.footer .emergency-notice i {
+  width: 22px;
+  color: #ffb62e;
+  font-size: .9rem;
+  text-align: center;
+}
+.humaeli footer.footer .emergency-notice:nth-of-type(3) i {
+  color: #29d18e;
+}
+.humaeli footer.footer .emergency-notice strong {
+  color: #d6e1e2;
+  font-weight: 650;
+}
+.humaeli footer.footer .emergency-notice a {
+  color: #f0b22f;
+  text-decoration: none;
+}
+.humaeli footer.footer .footer-legal {
+  display: flex;
+  margin-top: 31px;
+  padding-top: 21px;
+  justify-content: center;
+  gap: 32px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+.humaeli footer.footer .footer-legal a {
+  color: #91a4a7;
+  font-size: .64rem;
+  text-decoration: none;
+}
+@media (max-width: 850px) {
+  .humaeli footer.footer .footer-content {
+    grid-template-columns: 1fr;
+    gap: 42px;
+  }
+  .humaeli footer.footer .footer-about {
+    max-width: 450px;
+  }
+}
+@media (max-width: 620px) {
+  .humaeli footer.footer > .container {
+    width: min(100% - 32px, 1120px);
+  }
+  .humaeli footer.footer .footer-links {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .humaeli footer.footer .footer-content {
+    padding-bottom: 42px;
+  }
+  .humaeli footer.footer .emergency-notice {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    line-height: 1.5;
+  }
+  .humaeli footer.footer .footer-legal {
+    flex-wrap: wrap;
+    gap: 14px 24px;
+  }
+}
+
+/* CTA banner — reference layout */
+.humaeli section.landing-cta {
+  padding: 108px 0 64px;
+  background: #fff;
+}
+.humaeli section.landing-cta > .container {
+  width: min(1120px, calc(100% - 44px));
+  max-width: none;
+}
+.humaeli section.landing-cta .landing-cta-card {
+  position: relative;
+  display: block;
+  min-height: 356px;
+  padding: 54px 58px 44px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 31px;
+  background: linear-gradient(105deg, #1fbc86 0%, #24a984 52%, #2d9289 100%);
+  box-shadow: none;
+  box-sizing: border-box;
+}
+.humaeli section.landing-cta .landing-cta-content {
+  position: relative;
+  z-index: 2;
+}
+.humaeli section.landing-cta .landing-cta-card h2 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(2rem, 3vw, 2.65rem);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -.025em;
+}
+.humaeli section.landing-cta .landing-cta-button {
+  display: inline-flex;
+  min-width: 263px;
+  min-height: 57px;
+  margin-top: 70px;
+  padding: 14px 30px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: #fff;
+  color: #174c55;
+  box-shadow: none;
+  font-size: .98rem;
+  font-weight: 700;
+}
+.humaeli section.landing-cta .landing-cta-decoration {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.humaeli section.landing-cta .cta-rainbow {
+  position: absolute;
+  top: -1px;
+  right: -11px;
+  width: 166px;
+  height: 125px;
+  overflow: hidden;
+  border: 27px solid #eaf9ed;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 100% 0 0;
+  transform: rotate(1deg);
+}
+.humaeli section.landing-cta .cta-rainbow::before,
+.humaeli section.landing-cta .cta-rainbow::after {
+  content: "";
+  position: absolute;
+  border-style: solid;
+  border-right-color: transparent;
+  border-bottom-color: transparent;
+  border-radius: 100% 0 0;
+}
+.humaeli section.landing-cta .cta-rainbow::before {
+  inset: 9px -28px -28px 9px;
+  border-width: 22px;
+  border-color: #69b588 transparent transparent #69b588;
+}
+.humaeli section.landing-cta .cta-rainbow::after {
+  inset: 39px -28px -28px 39px;
+  border-width: 18px;
+  border-color: #236e78 transparent transparent #236e78;
+}
+.humaeli section.landing-cta .cta-flower {
+  position: absolute;
+  display: block;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(#83dc98 0deg 38deg, transparent 38deg 45deg);
+  filter: drop-shadow(0 2px 0 rgba(255,255,255,.12));
+}
+.humaeli section.landing-cta .cta-flower::after {
+  content: "";
+  position: absolute;
+  inset: 26px;
+  border-radius: 50%;
+  background: #f5f5cf;
+}
+.humaeli section.landing-cta .cta-flower-large {
+  top: 60px;
+  right: 91px;
+}
+.humaeli section.landing-cta .cta-flower-small {
+  top: 129px;
+  right: 43px;
+  width: 57px;
+  height: 57px;
+  background: repeating-conic-gradient(#b9d7ad 0deg 38deg, transparent 38deg 45deg);
+}
+.humaeli section.landing-cta .cta-flower-small::after {
+  inset: 21px;
+  background: #e9edce;
+}
+.humaeli section.landing-cta .cta-flower-gold {
+  top: 220px;
+  right: 108px;
+  width: 54px;
+  height: 54px;
+  background: repeating-conic-gradient(#d5bb52 0deg 38deg, transparent 38deg 45deg);
+}
+.humaeli section.landing-cta .cta-flower-gold::after {
+  inset: 20px;
+  background: #e7cb69;
+}
+.humaeli section.landing-cta .cta-star {
+  position: absolute;
+  color: #80dd92;
+  line-height: 1;
+}
+.humaeli section.landing-cta .cta-star-large {
+  top: 20px;
+  right: 195px;
+  font-size: 4.5rem;
+}
+.humaeli section.landing-cta .cta-star-small {
+  top: 237px;
+  right: 28px;
+  color: #fff;
+  font-size: 1.2rem;
+}
+@media (max-width: 700px) {
+  .humaeli section.landing-cta {
+    padding: 66px 0 48px;
+  }
+  .humaeli section.landing-cta > .container {
+    width: min(100% - 28px, 1120px);
+  }
+  .humaeli section.landing-cta .landing-cta-card {
+    min-height: 390px;
+    padding: 42px 30px 36px;
+  }
+  .humaeli section.landing-cta .landing-cta-card h2 {
+    font-size: 1.85rem;
+  }
+  .humaeli section.landing-cta .landing-cta-button {
+    min-width: 210px;
+    margin-top: 54px;
+  }
+  .humaeli section.landing-cta .landing-cta-decoration {
+    opacity: .72;
+    transform: scale(.78);
+    transform-origin: right top;
+  }
+}
+
+/* FAQ section — reference layout */
+.humaeli section.faq {
+  padding: 84px 0 72px;
+  background: #fff;
+}
+.humaeli section.faq > .container {
+  display: grid;
+  width: min(1120px, calc(100% - 44px));
+  max-width: none;
+  grid-template-columns: .95fr 1.05fr;
+  align-items: start;
+  gap: 72px;
+}
+.humaeli section.faq .faq-intro {
+  min-width: 0;
+}
+.humaeli section.faq .faq-kicker {
+  display: block;
+  margin-bottom: 30px;
+  color: #174c55;
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.humaeli section.faq .section-title {
+  margin: 0 0 30px;
+  color: #084750;
+  font-size: clamp(2.2rem, 3.1vw, 3rem);
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -.025em;
+  text-align: left;
+}
+.humaeli section.faq .section-description {
+  margin: 0;
+  color: #154b55;
+  font-size: 1rem;
+  line-height: 1.55;
+  text-align: left;
+}
+.humaeli section.faq .faq-illustration {
+  display: block;
+  width: min(390px, 94%);
+  height: 350px;
+  margin: 54px 0 0 -20px;
+  border-radius: 40px;
+  object-fit: cover;
+  object-position: center 58%;
+}
+.humaeli section.faq .faq-container {
+  display: flex;
+  width: 100%;
+  margin: 142px 0 0;
+  flex-direction: column;
+  gap: 14px;
+}
+.humaeli section.faq .faq-item {
+  overflow: hidden;
+  border: 1px solid #e5e7e7;
+  border-radius: 21px;
+  background: #fff;
+  box-shadow: 0 5px 13px rgba(27, 42, 44, .16);
+}
+.humaeli section.faq .faq-question {
+  display: flex;
+  width: 100%;
+  min-height: 60px;
+  padding: 14px 24px 14px 34px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border: 0;
+  background: #fff;
+  color: #084750;
+  font-size: .93rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+}
+.humaeli section.faq .faq-question i {
+  display: grid;
+  width: 31px;
+  height: 31px;
+  flex: 0 0 31px;
+  place-items: center;
+  border-radius: 50%;
+  background: #f5f7f7;
+  color: #084750;
+  font-size: .92rem;
+}
+.humaeli section.faq .faq-answer {
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 34px;
+  transition: max-height .25s ease, padding .25s ease;
+}
+.humaeli section.faq .faq-answer.active {
+  max-height: 170px;
+  padding: 0 34px 20px;
+}
+.humaeli section.faq .faq-answer p {
+  margin: 0;
+  color: #5f7478;
+  font-size: .84rem;
+  line-height: 1.55;
+}
+@media (max-width: 850px) {
+  .humaeli section.faq > .container {
+    grid-template-columns: 1fr;
+    gap: 38px;
+  }
+  .humaeli section.faq .faq-illustration {
+    width: min(420px, 100%);
+    margin: 40px auto 0;
+  }
+  .humaeli section.faq .faq-container {
+    margin-top: 0;
+  }
+}
+@media (max-width: 560px) {
+  .humaeli section.faq {
+    padding: 56px 0;
+  }
+  .humaeli section.faq > .container {
+    width: min(100% - 28px, 1120px);
+  }
+  .humaeli section.faq .faq-kicker {
+    margin-bottom: 20px;
+  }
+  .humaeli section.faq .section-title {
+    margin-bottom: 20px;
+    font-size: 2.15rem;
+  }
+  .humaeli section.faq .section-description br {
+    display: none;
+  }
+  .humaeli section.faq .faq-illustration {
+    height: 300px;
+    border-radius: 30px;
+  }
+  .humaeli section.faq .faq-question {
+    min-height: 58px;
+    padding: 13px 16px 13px 20px;
+    font-size: .85rem;
+  }
+}
+
+/* Final Why Choose Humaeli overrides (kept last to beat legacy landing styles). */
+.humaeli section.features {
+  padding: 76px 0 82px;
+  background: #eaf7ff;
+}
+.humaeli section.features > .container {
+  width: min(1140px, calc(100% - 40px));
+  max-width: none;
+}
+.humaeli section.features .features-showcase {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(440px, .95fr);
+  align-items: center;
+  gap: 52px;
+}
+.humaeli section.features .features-image-wrap {
+  width: 100%;
+  height: 330px;
+  border-radius: 36px;
+  overflow: hidden;
+  box-shadow: none;
+}
+.humaeli section.features .features-image-wrap img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+.humaeli section.features .section-header {
+  margin: 0 0 34px;
+  text-align: left;
+}
+.humaeli section.features .section-title {
+  margin: 0 0 12px;
+  color: #173640;
+  font-size: clamp(1.75rem, 2.4vw, 2.2rem);
+  font-weight: 700;
+  line-height: 1.15;
+}
+.humaeli section.features .section-description {
+  margin: 0;
+  color: #77878a;
+  font-size: .94rem;
+  line-height: 1.55;
+}
+.humaeli section.features .features-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 30px 38px;
+}
+.humaeli section.features .feature-card {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.humaeli section.features .feature-icon {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  margin: 0 0 14px;
+  place-items: center;
+  border-radius: 50%;
+  background: #c9f2e8;
+  color: #27a88f;
+  font-size: .92rem;
+}
+.humaeli section.features .feature-title {
+  margin: 0 0 7px;
+  color: #173640;
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.humaeli section.features .feature-description {
+  margin: 0;
+  color: #53686c;
+  font-size: .78rem;
+  line-height: 1.45;
+}
+.humaeli section.features .features-cta {
+  min-width: 188px;
+  margin-top: 34px;
+  padding: 14px 24px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #17ba87, #2c968d);
+  color: #fff;
+  font-size: .9rem;
+  font-weight: 500;
+  box-shadow: none;
+}
+@media (max-width: 900px) {
+  .humaeli section.features .features-showcase {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+  .humaeli section.features .features-image-wrap {
+    height: min(52vw, 390px);
+  }
+}
+@media (max-width: 560px) {
+  .humaeli section.features {
+    padding: 52px 0 58px;
+  }
+  .humaeli section.features > .container {
+    width: min(100% - 28px, 1140px);
+  }
+  .humaeli section.features .features-image-wrap {
+    height: 250px;
+    border-radius: 25px;
+  }
+  .humaeli section.features .features-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .humaeli section.features .section-description br {
+    display: none;
+  }
+}
+
+.humaeli section.doctors .doctors-grid {
+  align-items: start;
+}
+
+.humaeli section.doctors .doctor-card {
+  height: 360px;
+  min-height: 360px;
+  padding-top: 125px;
+  justify-content: flex-start;
+  overflow: visible;
+}
+
+.humaeli section.doctors .doctor-card:nth-of-type(2) {
+  height: 480px;
+  min-height: 480px;
+  padding-top: 162px;
+}
+
+.humaeli section.doctors .doctor-card .doctor-image {
+  z-index: 2;
+}
+
+.humaeli section.doctors .doctor-card .doctor-featured-badge {
+  top: -12px;
+  z-index: 4;
+  display: inline-flex;
+  min-width: 100px;
+  min-height: 25px;
+  padding: 6px 14px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5f7f1;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(20, 139, 108, .08);
+  white-space: nowrap;
+}
+
+.humaeli section.doctors .doctor-card .doctor-details {
+  flex: 0 0 auto;
+}
+
+.humaeli section.doctors .doctor-card .doctor-bio {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 760px) {
+  .humaeli section.doctors .doctor-card,
+  .humaeli section.doctors .doctor-card:nth-of-type(2) {
+    height: auto;
+    min-height: 390px;
+    padding-top: 132px;
+  }
+}
+
+/* Keep every professional profile in the same non-overlapping vertical flow. */
+.humaeli section.doctors .doctor-card,
+.humaeli section.doctors .doctor-card:nth-of-type(2) {
+  padding: 12px 23px 18px;
+}
+
+.humaeli section.doctors .doctor-card {
+  height: 420px;
+  min-height: 420px;
+}
+
+.humaeli section.doctors .doctor-card:nth-of-type(2) {
+  height: 480px;
+  min-height: 480px;
+  padding: 162px 23px 18px;
+}
+
+.humaeli section.doctors .doctor-card .doctor-image,
+.humaeli section.doctors .doctor-card:nth-of-type(2) .doctor-image {
+  position: static;
+  top: auto;
+  left: auto;
+  flex: 0 0 auto;
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  transform: none;
+}
+
+.humaeli section.doctors .doctor-card:nth-of-type(2) .doctor-image {
+  position: absolute;
+  top: 45px;
+  left: 50%;
+  width: 104px;
+  height: 104px;
+  margin: 0;
+  transform: translateX(-50%);
+}
+
+.humaeli section.doctors .doctor-card .doctor-header {
+  flex: 0 0 auto;
+}
+
+.humaeli section.doctors .doctor-card .doctor-name {
+  position: static;
+  margin: 0 0 5px;
+}
+
+.humaeli section.doctors .doctor-card .doctor-bio {
+  max-width: 100%;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.humaeli section.doctors .doctor-card .doctor-actions {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+
+@media (max-width: 760px) {
+  .humaeli section.doctors .doctor-card,
+  .humaeli section.doctors .doctor-card:nth-of-type(2) {
+    padding: 28px 23px 22px;
+  }
+}
+
+/* Final journey-section layout: kept last to prevent legacy landing styles
+   from changing the supplied reference design. */
+.humaeli section.how-it-works {
+  position: relative;
+  min-height: 546px;
+  padding: 47px 0 72px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.humaeli section.how-it-works::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 442px;
+  border-radius: 0 260px 0 0;
+  background: #edf8fe;
+}
+
+.humaeli section.how-it-works > .container {
+  position: relative;
+  z-index: 1;
+  width: calc(100% - 36px);
+  max-width: none;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.humaeli section.how-it-works .section-header {
+  display: block;
+  width: auto;
+  max-width: 460px;
+  margin: 0 0 61px 26px;
+  text-align: left;
+}
+
+.humaeli section.how-it-works .section-title {
+  margin: 0 0 12px;
+  color: #172323;
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -.045em;
+  text-align: left;
+}
+
+.humaeli section.how-it-works .section-description {
+  margin: 0;
+  color: #59696b;
+  font-size: .82rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.humaeli section.how-it-works .steps-container {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  width: 100%;
+  align-items: stretch;
+}
+
+.humaeli section.how-it-works .step {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 268px;
+  padding: 25px 20px 20px;
+  border: 1px solid #dbe5e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 9px 17px rgba(34, 50, 54, .17);
+  text-align: left;
+}
+
+.humaeli section.how-it-works .step:nth-child(even) {
+  transform: translateY(18px);
+}
+
+.humaeli section.how-it-works .step:nth-child(even):hover {
+  transform: translateY(13px);
+}
+
+.humaeli section.how-it-works .step-top {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin: 0 0 16px;
+}
+
+.humaeli section.how-it-works .step-number {
+  position: static;
+  margin: 0;
+  color: #e9f0ea;
+  font-size: 2.55rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.humaeli section.how-it-works .step-icon {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #058e75;
+  background: #f2fffa;
+  font-size: 1rem;
+}
+
+.humaeli section.how-it-works .step-title {
+  width: 100%;
+  margin: 0 0 9px;
+  color: #182424;
+  font-size: 1.02rem;
+  font-weight: 500;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.humaeli section.how-it-works .step-description {
+  width: 100%;
+  margin: 0 0 18px;
+  color: #536063;
+  font-size: .71rem;
+  line-height: 1.48;
+  text-align: left;
+}
+
+.humaeli section.how-it-works .step-action {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 31px;
+  margin-top: auto;
+  padding: 7px 12px;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  border-radius: 5px;
+  color: #fff;
+  background: linear-gradient(90deg, #1cb986, #299b8e);
+  font-size: .66rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .humaeli section.how-it-works .steps-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .humaeli section.how-it-works {
+    min-height: 0;
+    padding: 82px 0 72px;
+  }
+
+  .humaeli section.how-it-works::before {
+    top: 40px;
+    height: calc(100% - 80px);
+    border-radius: 0 110px 0 0;
+  }
+
+  .humaeli section.how-it-works .section-header {
+    margin: 0 0 38px;
+  }
+
+  .humaeli section.how-it-works .steps-container {
+    grid-template-columns: 1fr;
+  }
+
+  .humaeli section.how-it-works .step:nth-child(even),
+  .humaeli section.how-it-works .step:nth-child(even):hover {
+    transform: none;
+  }
+}
+
+/* Professionals section — API-driven cards matching the supplied reference. */
+.humaeli section.doctors {
+  position: relative;
+  min-height: 785px;
+  padding: 66px 0 52px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 8% 78%, rgba(189, 255, 247, .45), transparent 25%),
+    radial-gradient(circle at 91% 86%, rgba(223, 244, 255, .62), transparent 28%),
+    #fff;
+}
+
+.humaeli section.doctors > .container {
+  width: min(960px, calc(100% - 42px));
+}
+
+.humaeli section.doctors .section-header {
+  max-width: 600px;
+  margin: 0 auto 60px;
+  text-align: center;
+}
+
+.humaeli section.doctors .section-title {
+  margin: 0 0 17px;
+  color: #123444;
+  font-size: clamp(2rem, 3.4vw, 2.5rem);
+  font-weight: 750;
+  line-height: 1.03;
+  letter-spacing: -.045em;
+  text-align: center;
+}
+
+.humaeli section.doctors .section-description {
+  margin: 0;
+  color: #52615b;
+  font-size: .85rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
+.humaeli section.doctors .doctors-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  max-width: none;
+  margin: 0;
+  align-items: start;
+}
+
+.humaeli section.doctors .landing-doctors-state {
+  grid-column: 1 / -1;
+  text-align: center;
+}
+
+.humaeli section.doctors .doctor-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 360px;
+  margin-top: 64px;
+  padding: 67px 23px 18px;
+  border: 1px solid rgba(226, 243, 240, .9);
+  border-radius: 0 0 20px 20px;
+  background: rgba(255, 255, 255, .9);
+  box-shadow: 0 12px 34px rgba(26, 88, 83, .035);
+  text-align: center;
+}
+
+.humaeli section.doctors .doctor-card:nth-of-type(2) {
+  min-height: 480px;
+  margin-top: 0;
+  padding-top: 162px;
+  border: 1px solid #d9f4ec;
+  border-radius: 21px;
+  box-shadow: 0 11px 32px rgba(23, 140, 112, .1);
+  transform: none;
+}
+
+.humaeli section.doctors .doctor-featured-badge {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  min-width: 96px;
+  padding: 7px 12px;
+  transform: translateX(-50%);
+  border-radius: 20px;
+  color: #18af84;
+  background: #fff;
+  box-shadow: 0 3px 14px rgba(18, 130, 101, .08);
+  font-size: .49rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.humaeli section.doctors .doctor-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.humaeli section.doctors .doctor-image {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  display: flex;
+  width: 72px;
+  height: 72px;
+  margin: 0;
+  transform: translateX(-50%);
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  color: #138d78;
+  background: #e4faf4;
+  box-shadow: 0 0 24px rgba(35, 205, 153, .24);
+  font-weight: 700;
+}
+
+.humaeli section.doctors .doctor-card:nth-of-type(2) .doctor-image {
+  top: 45px;
+  width: 104px;
+  height: 104px;
+  border-width: 5px;
+}
+
+.humaeli section.doctors .doctor-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.humaeli section.doctors .doctor-name {
+  margin: 0 0 5px;
+  color: #133747;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.humaeli section.doctors .doctor-card:nth-of-type(2) .doctor-name {
+  font-size: 1.45rem;
+}
+
+.humaeli section.doctors .doctor-specialization {
+  margin: 0 0 7px;
+  color: #058b7d;
+  font-size: .72rem;
+}
+
+.humaeli section.doctors .doctor-rating {
+  display: flex;
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #34464a;
+  font-size: .6rem;
+}
+
+.humaeli section.doctors .doctor-stars {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.humaeli section.doctors .doctor-rating i {
+  color: #d77a00;
+  font-size: .62rem;
+}
+
+.humaeli section.doctors .doctor-details {
+  display: flex;
+  margin: 15px 0 14px;
+  padding: 0;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 11px 17px;
+  border: 0;
+}
+
+.humaeli section.doctors .doctor-detail {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  color: #12606a;
+  font-size: .5rem;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+.humaeli section.doctors .doctor-detail i {
+  width: auto;
+  color: #087c79;
+  font-size: .52rem;
+}
+
+.humaeli section.doctors .doctor-bio {
+  display: -webkit-box;
+  margin: 0 0 16px;
+  overflow: hidden;
+  color: #465557;
+  font-size: .72rem;
+  line-height: 1.45;
+  text-align: center;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.humaeli section.doctors .doctor-actions {
+  display: flex;
+  margin-top: auto;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.humaeli section.doctors .doctor-actions .doctor-book-button {
+  display: flex;
+  width: 100%;
+  min-height: 34px;
+  padding: 8px 12px;
+  justify-content: center;
+  border: 0;
+  border-radius: 22px;
+  color: #fff;
+  background: linear-gradient(90deg, #18bc82, #29958e);
+  font-size: .56rem;
+  letter-spacing: .08em;
+}
+
+.humaeli section.doctors .doctor-profile-link {
+  color: #006b70;
+  font-size: .57rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-decoration: none;
+}
+
+@media (max-width: 760px) {
+  .humaeli section.doctors {
+    min-height: 0;
+  }
+
+  .humaeli section.doctors .section-description br {
+    display: none;
+  }
+
+  .humaeli section.doctors .doctors-grid {
+    grid-template-columns: 1fr;
+    max-width: 390px;
+    margin: auto;
+    gap: 24px;
+  }
+
+  .humaeli section.doctors .doctor-card,
+  .humaeli section.doctors .doctor-card:nth-of-type(2) {
+    min-height: 390px;
+    margin-top: 0;
+    padding-top: 132px;
+    border-radius: 20px;
+    transform: none;
+  }
+
+  .humaeli section.doctors .doctor-image,
+  .humaeli section.doctors .doctor-card:nth-of-type(2) .doctor-image {
+    top: 24px;
+    width: 92px;
+    height: 92px;
+  }
+}
+
+/* Mental wellness journey — matched to the supplied section reference. */
+.humaeli .how-it-works {
+  position: relative;
+  min-height: 670px;
+  padding: 168px 0 70px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.humaeli .how-it-works::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  inset: 122px 0 auto;
+  width: 100%;
+  height: 444px;
+  border-radius: 0 260px 0 0;
+  background: #edf8fe;
+}
+
+.humaeli .how-it-works .container {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, calc(100% - 38px));
+}
+
+.humaeli .how-it-works .section-header {
+  max-width: 460px;
+  margin: 0 0 60px 34px;
+  text-align: left;
+}
+
+.humaeli .how-it-works .section-title {
+  margin: 0 0 12px;
+  color: #172323;
+  font-size: clamp(2rem, 3vw, 2.5rem);
+  line-height: 1.1;
+  letter-spacing: -.045em;
+}
+
+.humaeli .how-it-works .section-description {
+  color: #59696b;
+  font-size: .82rem;
+  line-height: 1.5;
+}
+
+.humaeli .how-it-works .steps-container {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  align-items: stretch;
+}
+
+.humaeli .how-it-works .step {
+  display: flex;
+  min-height: 268px;
+  padding: 25px 25px 20px;
+  border: 1px solid #dbe5e8;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 9px 17px rgba(34, 50, 54, .17);
+  text-align: left;
+}
+
+.humaeli .how-it-works .step-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.humaeli .how-it-works .step-number {
+  margin: 0;
+  color: #e9f0ea;
+  font-size: 2.55rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.humaeli .how-it-works .step-icon {
+  width: 34px;
+  height: 34px;
+  margin: 0;
+  color: #058e75;
+  background: #f2fffa;
+  font-size: 1rem;
+}
+
+.humaeli .how-it-works .step:hover .step-icon {
+  color: #058e75;
+  background: #f2fffa;
+  transform: none;
+}
+
+.humaeli .how-it-works .step-title {
+  margin: 0 0 9px;
+  color: #182424;
+  font-size: 1.02rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.humaeli .how-it-works .step-description {
+  margin: 0 0 18px;
+  color: #536063;
+  font-size: .71rem;
+  line-height: 1.48;
+}
+
+.humaeli .how-it-works .step-action {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 8px;
+  min-height: 31px;
+  margin-top: auto;
+  padding: 7px 12px;
+  border-radius: 5px;
+  color: #fff;
+  background: linear-gradient(90deg, #1cb986, #299b8e);
+  font-size: .66rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.humaeli .how-it-works .step-action:hover {
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 900px) {
+  .humaeli .how-it-works .steps-container {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .humaeli .how-it-works::before {
+    height: 75%;
+  }
+}
+
+@media (max-width: 560px) {
+  .humaeli .how-it-works {
+    padding: 60px 0 80px;
+  }
+
+  .humaeli .how-it-works::before {
+    top: 40px;
+    height: 82%;
+    border-radius: 0 120px 0 0;
+  }
+
+  .humaeli .how-it-works .section-header {
+    margin-left: 0;
+  }
+
+  .humaeli .how-it-works .section-description br {
+    display: none;
+  }
+
+  .humaeli .how-it-works .steps-container {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 576px) {
   html {
     scroll-padding-top: 56px;
@@ -3148,4 +5134,1008 @@ html {
       max-height: calc(100dvh - 56px - env(safe-area-inset-top));
     }
   }
+}
+
+/* ================================================================
+   2026 landing page refresh — inspired by the supplied Humaeli brief
+   ================================================================ */
+.humaeli {
+  --hm-green: #1fb28c;
+  --hm-green-dark: #08745f;
+  --hm-ink: #12393b;
+  --hm-mist: #eef9fd;
+  --hm-line: #d9e9e8;
+  color: var(--hm-ink);
+  background: #fff;
+}
+
+.humaeli .container {
+  width: min(1180px, calc(100% - 40px));
+}
+
+.humaeli .section {
+  padding: 78px 0;
+}
+
+.humaeli .header {
+  height: 92px;
+  background: transparent;
+  border-bottom: 0;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.humaeli .header-scrolled {
+  background: rgba(5, 65, 55, .97);
+  box-shadow: 0 8px 30px rgba(4, 42, 36, .18);
+}
+
+.humaeli .header-container { max-width: 1320px; padding-inline: 34px; }
+.humaeli .nav-menu {
+  gap: 3px;
+  padding: 6px;
+  border: 1px solid rgba(255,255,255,.5);
+  border-radius: 32px;
+  background: rgba(9,83,71,.18);
+}
+.humaeli .nav-link {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: rgba(255,255,255,.9);
+  font-size: .78rem;
+}
+.humaeli .nav-link.active {
+  color: #fff;
+  background: var(--hm-green);
+  box-shadow: 0 7px 18px rgba(0,0,0,.12);
+}
+.humaeli .nav-link:hover { color: #fff; }
+.humaeli .header-actions .btn-secondary {
+  border: 1px solid rgba(255,255,255,.65);
+  background: var(--hm-green);
+  color: #fff;
+}
+.humaeli .header-language .lang-selector-trigger {
+  border-color: rgba(255,255,255,.35);
+  background: rgba(255,255,255,.08);
+  color: #fff;
+}
+
+.humaeli main { padding-top: 0; }
+
+.humaeli .hero {
+  position: relative;
+  display: block;
+  align-items: initial;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #083f35;
+}
+
+.humaeli .hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(3,45,38,.96) 0%, rgba(3,55,46,.73) 41%, rgba(3,49,41,.08) 73%);
+}
+
+.humaeli .hero > .container {
+  position: relative;
+  z-index: 2;
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  flex: none;
+  max-width: none;
+  min-height: 670px;
+  padding: 155px 5.6% 65px;
+}
+
+.humaeli .hero-content {
+  position: relative;
+  z-index: 4;
+  width: min(720px, 54%);
+  color: #fff;
+}
+
+.humaeli .hero-badge {
+  color: #b9f5dc;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font-size: .8rem;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+
+.humaeli .hero-title {
+  margin: 12px 0 20px;
+  color: #fff;
+  max-width: 720px;
+  font-size: clamp(3.1rem, 4.25vw, 4.55rem);
+  line-height: 1.08;
+  letter-spacing: -.055em;
+}
+
+.humaeli .text-highlight {
+  color: #fff;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+}
+
+.humaeli .hero-description {
+  max-width: 500px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,.65);
+  color: rgba(255,255,255,.82);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.humaeli .hero-actions { margin-top: 30px; }
+.humaeli .hero-actions .btn {
+  min-height: 50px;
+  padding-inline: 26px;
+  border-radius: 25px;
+  font-size: .78rem;
+}
+.humaeli .btn-primary {
+  border-color: var(--hm-green);
+  background: var(--hm-green);
+  box-shadow: 0 12px 28px rgba(21,178,138,.2);
+}
+.humaeli .btn-primary:hover { background: #159a79; border-color: #159a79; }
+.humaeli .hero .btn-outline {
+  color: #fff;
+  border-color: rgba(255,255,255,.5);
+  background: rgba(255,255,255,.08);
+}
+
+.humaeli .hero-visual {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  max-width: none;
+  height: auto;
+  box-sizing: border-box;
+  border-radius: 0;
+}
+
+.humaeli .hero-wellness-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.humaeli .chat-preview {
+  position: absolute;
+  right: 6.5%;
+  bottom: 48px;
+  width: 325px;
+  z-index: 3;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.5);
+  background: rgba(255,255,255,.94);
+  box-shadow: 0 22px 60px rgba(0,33,27,.25);
+  transform: none;
+}
+
+.humaeli .chat-preview-header { padding: 13px 15px; }
+.humaeli .chat-preview-messages { padding: 12px 14px 16px; gap: 9px; }
+.humaeli .chat-message { font-size: .72rem; line-height: 1.45; }
+
+.humaeli .hero-stats {
+  position: relative;
+  z-index: 8;
+  left: auto;
+  bottom: auto;
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  flex: none;
+  height: 122px;
+  margin: 0;
+  padding-inline: max(20px, calc((100vw - 1180px) / 2));
+  transform: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  align-items: center;
+  background: linear-gradient(90deg, #1fbc8e 0%, #21b48b 48%, #278f82 100%);
+}
+
+.humaeli .hero-stats .stat-item {
+  padding: 0 52px;
+  border: 0;
+  border-right: 1px solid rgba(255,255,255,.25);
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+}
+.humaeli .hero-stats .stat-item:last-child { border-right: 0; }
+.humaeli .hero-stats .stat-item:hover { transform: none; box-shadow: none; }
+.humaeli .stat-number {
+  color: #fff;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  font-size: 2.65rem;
+  line-height: 1.05;
+}
+.humaeli .stat-label {
+  margin-bottom: 13px;
+  color: #fff;
+  font-size: .92rem;
+  font-weight: 500;
+}
+
+.humaeli .section-header { margin-bottom: 42px; }
+.humaeli .section-title {
+  color: var(--hm-ink);
+  font-size: clamp(2rem, 3vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -.04em;
+}
+.humaeli .section-header .section-title::after { display: none; }
+.humaeli .section-description { color: #6e8385; line-height: 1.65; }
+
+.humaeli .services {
+  position: relative;
+  padding-top: 88px;
+  background: linear-gradient(135deg, var(--hm-mist) 0 58%, #fff 58%);
+  overflow: hidden;
+}
+.humaeli .services::before {
+  content: "";
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  left: -130px;
+  top: 30px;
+  border-radius: 50%;
+  background: rgba(215,241,248,.65);
+}
+.humaeli .services .container { position: relative; z-index: 1; }
+.humaeli .services .section-header { max-width: 520px; margin-left: auto; text-align: right; }
+.humaeli .services-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+.humaeli .service-card {
+  min-height: 252px;
+  padding: 25px 21px;
+  border: 1px solid var(--hm-line);
+  border-radius: 16px;
+  background: rgba(255,255,255,.96);
+  box-shadow: 0 10px 26px rgba(15,70,67,.09);
+}
+.humaeli .service-icon,
+.humaeli .feature-icon,
+.humaeli .step-icon {
+  width: 42px;
+  height: 42px;
+  color: var(--hm-green);
+  background: #e8faf5;
+}
+.humaeli .service-title { font-size: 1rem; }
+.humaeli .service-description { color: #718587; font-size: .78rem; line-height: 1.6; }
+.humaeli .service-learn-more {
+  margin-top: auto;
+  padding: 9px 14px;
+  border: 1px solid #9bdac8;
+  border-radius: 7px;
+  color: var(--hm-green-dark);
+  font-size: .72rem;
+}
+
+.humaeli .how-it-works {
+  background: linear-gradient(160deg, #fff 0 38%, #effaff 38%);
+}
+.humaeli .how-it-works .section-header { max-width: 560px; text-align: left; }
+.humaeli .steps-container { gap: 14px; align-items: stretch; }
+.humaeli .step {
+  padding: 26px 20px;
+  border-color: var(--hm-line);
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 22px rgba(15,70,67,.08);
+  text-align: left;
+}
+.humaeli .step-number {
+  position: static;
+  margin-bottom: 18px;
+  color: #dfe9e8;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  font-size: 2.2rem;
+}
+.humaeli .step-icon { margin: 0 0 14px; }
+.humaeli .step-title { font-size: .95rem; }
+.humaeli .step-description { font-size: .75rem; line-height: 1.6; }
+
+.humaeli .doctors { background: #fff; }
+.humaeli .doctors .section-header { text-align: center; }
+.humaeli .doctors-grid { grid-template-columns: repeat(3, 1fr); max-width: 980px; margin: auto; }
+.humaeli .doctor-card {
+  padding: 26px 22px;
+  border-color: #dcebea;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(13,80,71,.08);
+}
+.humaeli .doctor-card:nth-of-type(2) {
+  border-color: #a7e5d5;
+  transform: translateY(-16px) scale(1.035);
+  box-shadow: 0 18px 44px rgba(16,132,105,.15);
+}
+.humaeli .doctor-header { flex-direction: column; text-align: center; }
+.humaeli .doctor-image { width: 86px; height: 86px; margin: auto; border: 6px solid #e6faf4; }
+.humaeli .doctor-rating { justify-content: center; }
+.humaeli .doctor-detail { font-size: .72rem; }
+.humaeli .doctor-actions { grid-template-columns: 1fr; }
+.humaeli .doctor-actions .btn { font-size: .68rem; padding: 9px 7px; }
+
+.humaeli .features {
+  background: #eaf7fd;
+}
+.humaeli .features-showcase {
+  display: grid;
+  grid-template-columns: .95fr 1.05fr;
+  gap: 56px;
+  align-items: center;
+}
+.humaeli .features-image-wrap {
+  height: 390px;
+  overflow: hidden;
+  border-radius: 28px 8px 28px 8px;
+  box-shadow: 0 20px 45px rgba(8,77,65,.16);
+}
+.humaeli .features-image-wrap img { width: 100%; height: 100%; object-fit: cover; object-position: 68% center; }
+.humaeli .features .section-header { margin-bottom: 26px; text-align: left; }
+.humaeli .features-grid { grid-template-columns: repeat(2, 1fr); gap: 22px 24px; }
+.humaeli .feature-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.humaeli .feature-card:hover { transform: none; box-shadow: none; }
+.humaeli .feature-icon { flex: 0 0 36px; width: 36px; height: 36px; }
+.humaeli .feature-title { margin: 0 0 5px; font-size: .84rem; }
+.humaeli .feature-description { margin: 0; color: #698183; font-size: .7rem; line-height: 1.55; }
+.humaeli .features-cta { margin-top: 28px; }
+
+.humaeli .testimonials {
+  padding: 82px 0;
+  background:
+    radial-gradient(circle at 10% 30%, rgba(31,178,140,.08), transparent 28%),
+    radial-gradient(circle at 88% 60%, rgba(78,190,219,.09), transparent 25%),
+    #f2fbfd;
+}
+.humaeli .testimonials .section-header { display: none; }
+.humaeli .testimonial-card {
+  max-width: 900px;
+  padding: 48px 62px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+.humaeli .testimonial-text {
+  color: var(--hm-ink);
+  font-size: clamp(1.6rem, 3vw, 2.6rem);
+  line-height: 1.25;
+  letter-spacing: -.035em;
+}
+.humaeli .quote-icon { color: var(--hm-green); opacity: .4; }
+
+.humaeli .faq { background: #fff; }
+.humaeli .faq > .container {
+  display: grid;
+  grid-template-columns: .72fr 1.28fr;
+  gap: 70px;
+  align-items: start;
+}
+.humaeli .faq .section-header { position: sticky; top: 110px; text-align: left; }
+.humaeli .faq-container { width: 100%; }
+.humaeli .faq-item { margin-bottom: 12px; border-color: var(--hm-line); border-radius: 12px; }
+.humaeli .faq-question { min-height: 58px; padding: 15px 20px; font-size: .84rem; }
+.humaeli .faq-answer p { color: #6d8183; font-size: .78rem; line-height: 1.65; }
+
+.humaeli .landing-cta { padding: 28px 0 76px; background: #fff; }
+.humaeli .landing-cta-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 225px;
+  padding: 46px 52px;
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  color: #fff;
+  background: linear-gradient(125deg, #20b98c, #168d7f);
+}
+.humaeli .landing-cta-card::after {
+  content: "✦  ❉  ✦";
+  position: absolute;
+  right: 5%;
+  top: 20%;
+  color: rgba(217,248,171,.35);
+  font-size: 4rem;
+  transform: rotate(-12deg);
+}
+.humaeli .landing-cta-card > * { position: relative; z-index: 1; }
+.humaeli .landing-cta-kicker { color: #c8f5e7; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
+.humaeli .landing-cta h2 { max-width: 650px; margin: 10px 0 0; color: #fff; font-size: clamp(1.8rem, 3.2vw, 3rem); line-height: 1.05; }
+.humaeli .landing-cta-button { flex: 0 0 auto; border: 0; background: #fff; color: var(--hm-green-dark); }
+
+.humaeli .footer { padding-top: 58px; background: #062e34; }
+.humaeli .footer-content { padding-bottom: 42px; }
+.humaeli .footer-column h4 { color: #fff; }
+.humaeli .footer-column a, .humaeli .footer-description { color: rgba(255,255,255,.6); }
+.humaeli .footer-bottom { border-color: rgba(255,255,255,.1); }
+
+@media (max-width: 992px) {
+  .humaeli .hero-title { font-size: clamp(2.8rem, 6.5vw, 4.2rem); }
+  .humaeli .hero-content { width: 58%; }
+  .humaeli .chat-preview { width: 250px; right: 2%; }
+  .humaeli .services-grid { grid-template-columns: repeat(2, 1fr); }
+  .humaeli .features-showcase { gap: 30px; }
+  .humaeli .features-image-wrap { height: 340px; }
+  .humaeli .faq > .container { gap: 38px; }
+}
+
+@media (max-width: 768px) {
+  .humaeli main { padding-top: 60px; }
+  .humaeli .header { height: 60px; }
+  .humaeli .nav-menu { background: #06483d; }
+  .humaeli .mobile-menu-btn { color: #fff; }
+  .humaeli .section { padding: 66px 0; }
+  .humaeli .container { width: min(100% - 28px, 680px); }
+  .humaeli .hero { min-height: 0; padding-bottom: 0; }
+  .humaeli .hero > .container { min-height: 582px; padding-top: 65px; }
+  .humaeli .hero::after {
+    background: linear-gradient(180deg, rgba(3,45,38,.65), rgba(3,45,38,.35) 43%, rgba(3,45,38,.94) 80%);
+  }
+  .humaeli .hero-wellness-image { object-position: 66% center; }
+  .humaeli .hero-content { width: 100%; max-width: 520px; }
+  .humaeli .hero-title { font-size: clamp(2.65rem, 12vw, 4rem); }
+  .humaeli .hero-description { max-width: 430px; }
+  .humaeli .chat-preview { display: none; }
+  .humaeli .hero-stats {
+    height: 148px;
+    grid-template-columns: repeat(2, 1fr);
+    padding: 16px;
+  }
+  .humaeli .hero-stats .stat-item { padding: 10px 16px; }
+  .humaeli .hero-stats .stat-item:nth-child(2) { border-right: 0; }
+  .humaeli .stat-number { font-size: 1.6rem; }
+  .humaeli .services .section-header { margin-left: 0; text-align: left; }
+  .humaeli .services-grid { grid-template-columns: repeat(2, 1fr); }
+  .humaeli .steps-container { grid-template-columns: repeat(2, 1fr); }
+  .humaeli .doctors-grid { grid-template-columns: 1fr; max-width: 430px; }
+  .humaeli .doctor-card:nth-of-type(2) { transform: none; }
+  .humaeli .features-showcase { grid-template-columns: 1fr; }
+  .humaeli .features-image-wrap { height: 320px; }
+  .humaeli .faq > .container { grid-template-columns: 1fr; }
+  .humaeli .faq .section-header { position: static; margin-bottom: 0; }
+  .humaeli .testimonial-card { padding: 30px 12px; }
+  .humaeli .landing-cta-card { padding: 38px 30px; flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 520px) {
+  .humaeli main { padding-top: 56px; }
+  .humaeli .header { height: 56px; }
+  .humaeli .hero-actions { align-items: stretch; }
+  .humaeli .hero-actions .btn { width: 100%; }
+  .humaeli .services-grid,
+  .humaeli .steps-container,
+  .humaeli .features-grid { grid-template-columns: 1fr; }
+  .humaeli .service-card { min-height: 230px; }
+  .humaeli .features-image-wrap { height: 260px; }
+  .humaeli .landing-cta-card { min-height: 260px; }
+}
+
+/* Hero/header fidelity overrides for the supplied section reference. */
+.humaeli .header .landing-logo-brand img {
+  width: 100px;
+  height: 72px;
+  object-fit: contain;
+}
+.humaeli .header .landing-logo-brand span { display: none; }
+
+@media (max-width: 768px) {
+  .humaeli main { padding-top: 0; }
+  .humaeli .header { height: 64px; background: rgba(4,54,47,.78); }
+  .humaeli .header .landing-logo-brand img { width: 76px; height: 48px; }
+  .humaeli .hero > .container { min-height: 640px; padding: 110px 22px 48px; }
+  .humaeli .hero-content { max-width: 500px; }
+  .humaeli .hero-title { font-size: clamp(2.55rem, 11vw, 4rem); }
+  .humaeli .hero-wellness-image { object-position: 57% center; }
+  .humaeli .hero-stats { height: auto; min-height: 170px; }
+  .humaeli .hero-stats .stat-item { padding: 12px 18px; }
+  .humaeli .stat-label { margin-bottom: 6px; font-size: .76rem; }
+}
+
+@media (max-width: 520px) {
+  .humaeli main { padding-top: 0; }
+  .humaeli .hero > .container { min-height: 650px; }
+  .humaeli .hero-description { font-size: .9rem; }
+}
+
+/* Header — matched to the supplied standalone header reference. */
+@media (min-width: 769px) {
+  .humaeli .header {
+    height: 72px;
+  }
+
+  .humaeli .header-container {
+    width: 100%;
+    max-width: none;
+    padding: 0 36px;
+    gap: 24px;
+    justify-content: space-between;
+  }
+
+  .humaeli .header .logo {
+    display: none;
+  }
+
+  .humaeli .nav-menu {
+    position: static;
+    flex: 0 0 auto;
+    height: 52px;
+    gap: 0;
+    padding: 5px;
+    border: 1px solid rgba(255, 255, 255, .55);
+    border-radius: 28px;
+    background: rgba(8, 91, 77, .16);
+    box-shadow: inset 0 0 0 1px rgba(11, 72, 63, .04);
+  }
+
+  .humaeli .nav-link {
+    min-height: 40px;
+    padding: 0 18px;
+    border-radius: 22px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .humaeli .nav-link.active {
+    min-width: 80px;
+    justify-content: center;
+    background: #1eb493;
+  }
+
+  .humaeli .header-actions {
+    flex: 0 0 auto;
+    gap: 10px;
+  }
+
+  .humaeli .header-language .lang-selector-trigger {
+    width: 112px;
+    height: 42px;
+    padding: 0 12px;
+    border: 1px solid rgba(255, 255, 255, .72);
+    border-radius: 22px;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .humaeli .header-language .lang-selector-trigger > * {
+    display: none;
+  }
+
+  .humaeli .header-language .lang-selector-trigger::after {
+    content: "Choose Language⌄";
+    display: block;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+
+  .humaeli .header-actions .btn-secondary {
+    min-width: 92px;
+    height: 42px;
+    padding: 0 18px;
+    gap: 9px;
+    border-radius: 22px;
+    border-color: rgba(255, 255, 255, .2);
+    font-size: 12px;
+    font-weight: 650;
+  }
+}
+
+/* Final desktop header geometry: logo | centered navigation | actions. */
+@media (min-width: 769px) {
+  .humaeli .header {
+    height: 72px;
+    min-height: 72px;
+    padding: 0;
+    align-items: center;
+  }
+
+  .humaeli .header-container {
+    display: grid;
+    grid-template-columns: 150px 1fr 215px;
+    align-items: center;
+    width: 100%;
+    height: 72px;
+    min-height: 72px;
+    padding: 0 48px;
+    gap: 22px;
+    margin: 0 auto;
+    align-items: center;
+    transform: none;
+  }
+
+  .humaeli .header .logo {
+    display: flex;
+    min-width: 0;
+    justify-self: start;
+  }
+
+  .humaeli .header .landing-logo-brand {
+    display: flex;
+    align-items: center;
+  }
+
+  .humaeli .header .landing-logo-brand img {
+    width: 74px;
+    height: 50px;
+    object-fit: contain;
+  }
+
+  .humaeli .nav-menu {
+    justify-self: center;
+    height: 48px;
+    padding: 4px;
+  }
+
+  .humaeli .nav-link {
+    min-height: 38px;
+    padding-inline: 16px;
+    font-size: 10px;
+  }
+
+  .humaeli .nav-link.active {
+    min-width: 78px;
+  }
+
+  .humaeli .header-actions {
+    justify-self: end;
+    width: 215px;
+    justify-content: flex-end;
+  }
+
+  .humaeli .header-language .lang-selector-trigger {
+    width: 104px;
+    height: 40px;
+  }
+
+  .humaeli .header-actions .btn-secondary {
+    min-width: 88px;
+    height: 40px;
+  }
+
+  /* The translucent scrolled bar is visually taller because the hero remains
+     visible through it; lift the complete row so its optical centre matches
+     the coloured bar instead of adjusting its children independently. */
+  .humaeli .header.header-scrolled .header-container {
+    top: -12px;
+    bottom: auto;
+    transform: none;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1050px) {
+  .humaeli .header-container {
+    grid-template-columns: 105px 1fr 195px;
+    padding-inline: 28px;
+    gap: 12px;
+  }
+
+  .humaeli .header .landing-logo-brand img {
+    width: 68px;
+    height: 58px;
+  }
+
+  .humaeli .nav-link {
+    padding-inline: 12px;
+    font-size: 9px;
+  }
+
+  .humaeli .header-actions {
+    width: 195px;
+    gap: 8px;
+  }
+
+  .humaeli .header-language .lang-selector-trigger {
+    width: 98px;
+  }
+
+  .humaeli .header-actions .btn-secondary {
+    min-width: 82px;
+    padding-inline: 13px;
+  }
+}
+
+/* Hero AI preview — Humaeli green palette from the supplied reference. */
+.humaeli .hero .chat-preview {
+  border-color: rgba(255, 255, 255, .72);
+  background: #f8fbfa;
+}
+
+.humaeli .hero .chat-preview-header {
+  background: linear-gradient(120deg, #24bd8e 0%, #39c777 100%);
+  color: #fff;
+}
+
+.humaeli .hero .chat-preview-avatar {
+  background: rgba(255, 255, 255, .96);
+  color: #20ae84;
+}
+
+.humaeli .hero .chat-preview-status {
+  color: rgba(255, 255, 255, .9);
+}
+
+.humaeli .hero .chat-preview-messages {
+  background: #f7faf9;
+}
+
+.humaeli .hero .chat-message-ai {
+  color: #24484a;
+  background: #fff;
+  border-color: #2db892;
+  box-shadow: 0 5px 14px rgba(8, 79, 65, .09);
+}
+
+.humaeli .hero .chat-message-user {
+  color: #fff;
+  background: linear-gradient(135deg, #24b98b, #32c276);
+  box-shadow: 0 7px 16px rgba(20, 158, 118, .18);
+}
+
+/* Mental health services — matched to the supplied second-section reference. */
+.humaeli .services {
+  position: relative;
+  min-height: 650px;
+  padding: 112px 0 88px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.humaeli .services::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 102px;
+  left: 0;
+  width: 100%;
+  height: 438px;
+  border-radius: 280px 0 0 0;
+  background: #edf8fe;
+}
+
+.humaeli .services .container {
+  position: relative;
+  z-index: 1;
+  width: min(1400px, calc(100% - 32px));
+}
+
+.humaeli .services .section-header {
+  max-width: 620px;
+  margin: 0 0 26px auto;
+  text-align: right;
+}
+
+.humaeli .services .section-title {
+  margin: 0 0 18px;
+  color: #172323;
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  line-height: 1.02;
+  letter-spacing: -.045em;
+}
+
+.humaeli .services .section-description {
+  color: #8b969b;
+  font-size: .92rem;
+  line-height: 1.55;
+}
+
+.humaeli .services-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.humaeli .service-card {
+  display: flex;
+  min-height: 238px;
+  padding: 22px 20px 20px;
+  border: 1px solid #dfe9eb;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 18px rgba(30, 54, 58, .16);
+  text-align: left;
+}
+
+.humaeli .service-card:nth-child(2),
+.humaeli .service-card:nth-child(4) {
+  transform: translateY(-40px);
+}
+
+.humaeli .service-card:nth-child(2):hover,
+.humaeli .service-card:nth-child(4):hover {
+  transform: translateY(-46px);
+}
+
+.humaeli .service-icon {
+  width: 34px;
+  height: 34px;
+  margin: 0 0 16px;
+  border-radius: 50%;
+  color: #22af91;
+  background: #e4f8f3;
+  font-size: .82rem;
+}
+
+.humaeli .service-title {
+  margin: 0 0 14px;
+  color: #17a787;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.humaeli .service-description {
+  margin: 0 0 18px;
+  color: #586568;
+  font-size: .76rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.humaeli .service-learn-more {
+  width: 100%;
+  min-height: 32px;
+  margin-top: auto;
+  padding: 7px 12px;
+  justify-content: center;
+  border: 1px solid #21ad8c;
+  border-radius: 5px;
+  color: #169d7f;
+  background: #fff;
+  font-size: .67rem;
+  font-weight: 600;
+}
+
+.humaeli .service-card:last-child .service-learn-more {
+  color: #fff;
+  border-color: #20b68d;
+  background: linear-gradient(90deg, #20bc8a, #299b8e);
+}
+
+@media (max-width: 768px) {
+  .humaeli .services {
+    min-height: 0;
+    padding: 76px 0;
+  }
+
+  .humaeli .services::before {
+    top: 46px;
+    height: 72%;
+    border-radius: 150px 0 0 0;
+  }
+
+  .humaeli .services .section-header {
+    max-width: 100%;
+    margin-bottom: 44px;
+    text-align: center;
+  }
+
+  .humaeli .services .section-description br {
+    display: none;
+  }
+
+  .humaeli .service-card:nth-child(2),
+  .humaeli .service-card:nth-child(4),
+  .humaeli .service-card:nth-child(2):hover,
+  .humaeli .service-card:nth-child(4):hover {
+    transform: none;
+  }
+}
+
+/* Professionals: override older shared card/header declarations. */
+.humaeli section.doctors .doctor-card .doctor-header {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  align-items: center;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  background: transparent;
+  box-shadow: none;
+  text-align: center;
+}
+.humaeli section.doctors .doctor-card .doctor-header > div:last-child { width: 100%; }
+.humaeli section.doctors .doctor-card .doctor-name { color: #133747; background: transparent; }
+.humaeli section.doctors .doctor-card .doctor-specialization { color: #058b7d; background: transparent; }
+.humaeli section.doctors .doctor-card .doctor-rating { color: #34464a; background: transparent; }
+.humaeli section.doctors .doctor-card .doctor-details {
+  display: flex;
+  width: 100%;
+  margin: 15px 0 14px;
+  padding: 0;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 11px 17px;
+  border: 0;
+  background: transparent;
+}
+.humaeli section.doctors .doctor-card .doctor-detail {
+  display: inline-flex;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  gap: 4px;
+  color: #12606a;
+  background: transparent;
+  font-size: .5rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+}
+.humaeli section.doctors .doctor-card .doctor-detail span {
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+}
+.humaeli section.doctors .doctor-card .doctor-actions {
+  display: flex;
+  width: 100%;
+  margin-top: auto;
+  padding: 0;
+  flex-direction: column;
+  gap: 13px;
+  background: transparent;
+}
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button {
+  display: flex;
+  width: 100%;
+  min-height: 34px;
+  margin: 0;
+  padding: 8px 12px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 22px;
+  color: #fff;
+  background: linear-gradient(90deg, #18bc82, #29958e);
+  box-shadow: none;
+  font-size: .56rem;
+  font-weight: 650;
+  letter-spacing: .08em;
 }

@@ -1461,6 +1461,7 @@ const handleVerify = async () => {
       {pendingNav && (
         <LocationGate
           event={pendingNav.event}
+          role="user"
           onDone={() => {
             const target = pendingNav.path;
             setPendingNav(null);

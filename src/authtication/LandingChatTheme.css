@@ -1,0 +1,67 @@
+/* Loaded after Leanding.css so shared landing styles cannot recolour the chat. */
+.chat-popup {
+  border-color: #20ad8d !important;
+  background: #f7f8f9 !important;
+}
+
+.chat-popup .chat-popup-header {
+  background: linear-gradient(120deg, #20b994 0%, #269b8b 100%) !important;
+}
+
+.chat-popup .chat-popup-body {
+  background: #f5f7f8 !important;
+}
+
+.chat-popup .chat-message-wrapper.ai .chat-avatar {
+  color: #fff !important;
+  background: #20ad8d !important;
+}
+
+.chat-popup .chat-message-wrapper.user .chat-avatar {
+  color: #fff !important;
+  background: #168575 !important;
+}
+
+.chat-popup .chat-message-wrapper.ai .chat-bubble {
+  color: #123747 !important;
+  border-color: #d9e5e9 !important;
+  border-left: 3px solid #20ad8d !important;
+  background: #fff !important;
+}
+
+.chat-popup .chat-message-wrapper.user .chat-bubble {
+  color: #fff !important;
+  background: linear-gradient(120deg, #20b994, #269b8b) !important;
+}
+
+.chat-popup .guest-chat-tts-btn,
+.chat-popup .chat-quick-reply-btn {
+  color: #168b78 !important;
+  border-color: #70cbb7 !important;
+  background: #fff !important;
+}
+
+.chat-popup .guest-chat-tts-btn:hover:not(:disabled),
+.chat-popup .guest-chat-tts-btn--playing,
+.chat-popup .chat-quick-reply-btn:hover:not(:disabled) {
+  color: #fff !important;
+  border-color: #20ad8d !important;
+  background: #20ad8d !important;
+}
+
+.chat-popup .guest-chat-mic-btn {
+  color: #168b78 !important;
+  border-color: #d5e1e6 !important;
+  background: #fff !important;
+}
+
+.chat-popup .send-btn,
+.chat-popup .send-btn:disabled {
+  color: #fff !important;
+  border-color: #20ad8d !important;
+  background: #20ad8d !important;
+}
+
+.chat-popup .send-btn:disabled {
+  opacity: .6;
+}

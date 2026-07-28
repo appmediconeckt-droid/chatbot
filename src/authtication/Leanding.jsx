@@ -2,8 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Leanding.css';
+import './LandingChatTheme.css';
 import logo from '../assets/humaeli.png';
 import logos from '../assets/humaeli logo (2).png';
+import wellnessHero from '../assets/humaeli-wellness-hero.png';
+import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
+import faqWellnessIllustration from '../assets/faq-wellness-illustration.png';
 import { API_BASE_URL } from '../axiosConfig';
 import { Link } from 'react-router-dom';
 import { SUPPORTED_LANGUAGES, useSiteTranslation } from '../i18n/LanguageContext';
@@ -256,10 +260,11 @@ const Leanding = () => {
         <HeroSection />
         <ServicesSection />
         <HowItWorksSection />
-        <FeaturesSection />
         <DoctorsSection />
+        <FeaturesSection />
         <TestimonialsSection />
         <FAQSection />
+        <CTASection />
       </main>
       <Footer />
       
@@ -292,20 +297,33 @@ const Header = ({ onLoginClick }) => {
   const { t, lang, setLang } = useSiteTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeSection, setActiveSection] = useState('home');
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
+
+      const sections = ['home', 'services', 'how-it-works', 'doctors', 'testimonials'];
+      const marker = window.scrollY + 160;
+      let currentSection = 'home';
+
+      sections.forEach((sectionId) => {
+        const section = document.getElementById(sectionId);
+        if (section && section.offsetTop <= marker) currentSection = sectionId;
+      });
+
+      setActiveSection(currentSection);
     };
     window.addEventListener('scroll', handleScroll);
+    handleScroll();
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const navItems = [
+    { href: '#home', label: t('landing_nav_home'), icon: 'home' },
     { href: '#services', label: t('landing_nav_services') },
     { href: '#how-it-works', label: t('landing_nav_how_it_works') },
-    { href: '#features', label: t('landing_nav_features') },
-    { href: '#doctors', label: t('landing_nav_doctors') },
+    { href: '#doctors', label: t('landing_nav_professionals') },
     { href: '#testimonials', label: t('landing_nav_testimonials') }
   ];
 
@@ -324,7 +342,7 @@ const Header = ({ onLoginClick }) => {
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
           <div className="landing-logo-brand">
-            <img src={logo} alt="Humaeli Logo" />
+            <img src={logos} alt="Humaeli Logo" />
             <span>Mental Wellness</span>
           </div>
         </div>
@@ -337,9 +355,14 @@ const Header = ({ onLoginClick }) => {
             <a
               key={item.href}
               href={item.href}
-              className="nav-link"
-              onClick={() => setMenuOpen(false)}
+              className={`nav-link ${activeSection === item.href.slice(1) ? 'active' : ''}`}
+              onClick={() => {
+                setActiveSection(item.href.slice(1));
+                setMenuOpen(false);
+              }}
+              aria-current={activeSection === item.href.slice(1) ? 'page' : undefined}
             >
+              {item.icon && <i className={`fas fa-${item.icon}`}></i>}
               {item.label}
             </a>
           ))}
@@ -347,10 +370,16 @@ const Header = ({ onLoginClick }) => {
 
         <div className="header-actions">
           <div className="header-language">
-            <LanguageSelector lang={lang} setLang={setLang} t={t} compact />
+            <LanguageSelector
+              lang={lang}
+              setLang={setLang}
+              t={t}
+              compact
+              triggerLabel="Choose Language"
+            />
           </div>
           <button type="button" className="btn btn-secondary" onClick={onLoginClick}>
-            {t('landing_sign_in')}
+            <i className="far fa-user"></i> {t('landing_login')}
           </button>
         </div>
       </div>
@@ -361,62 +390,56 @@ const Header = ({ onLoginClick }) => {
 // ========== HERO SECTION ==========
 const HeroSection = () => {
   const { t } = useSiteTranslation();
-
   return (
     <section className="section hero" id="home">
       <div className="container">
         <div className="hero-content">
           <span className="hero-badge">
-            <i className="fas fa-shield-heart"></i>
-            {t('landing_hero_badge')}
+            {t('landing_ui_hero_badge')}
           </span>
           <h1 className="hero-title">
-            {t('landing_hero_title')} <span className="text-highlight">{t('landing_hero_title_highlight')}</span>
+            {t('landing_ui_hero_title_1')}<br />{t('landing_ui_hero_title_2')}<br />{t('landing_ui_hero_title_3')}
           </h1>
           <p className="hero-description">
-            {t('landing_hero_description')}
+            {t('landing_ui_hero_description')}
           </p>
           <div className="hero-actions">
             <Link to="/role-selector" className="btn btn-primary">
               {t('landing_get_started')}
-              <i className="btn-icon fas fa-arrow-right"></i>
             </Link>
-            <button className="btn btn-outline btn-large">
-              <i className="btn-icon fas fa-play"></i>
-              {t('landing_watch_demo')}
-            </button>
-          </div>
-          <div className="hero-stats">
-            <StatItem number="50,000+" label={t('landing_stat_patients_label')} />
-            <StatItem number="500+" label={t('landing_stat_partners_label')} />
-            <StatItem number="24/7" label={t('landing_stat_support_label')} />
-            <StatItem number="98%" label={t('landing_stat_satisfaction_label')} />
           </div>
         </div>
         <div className="hero-visual">
+          <img className="hero-wellness-image" src={wellnessHero} alt="" aria-hidden="true" />
           <div className="chat-preview">
             <div className="chat-preview-header">
               <div className="chat-preview-avatar">
                 <i className="fas fa-robot"></i>
               </div>
               <div className="chat-preview-info">
-                <div className="chat-preview-name">{t('landing_chat_preview_name')}</div>
-                <div className="chat-preview-status">{t('landing_chat_preview_status')}</div>
+                <div className="chat-preview-name">{t('landing_ui_ai_name')}</div>
+                <div className="chat-preview-status">{t('landing_ui_ai_status')}</div>
               </div>
             </div>
             <div className="chat-preview-messages">
               <div className="chat-message chat-message-ai">
-                {t('landing_chat_preview_msg1')}
+                {t('landing_ui_chat_message_1')}
               </div>
               <div className="chat-message chat-message-user">
-                {t('landing_chat_preview_msg2')}
+                {t('landing_ui_chat_message_2')}
               </div>
               <div className="chat-message chat-message-ai">
-                {t('landing_chat_preview_msg3')}
+                {t('landing_ui_chat_message_3')}
               </div>
             </div>
           </div>
         </div>
+      </div>
+      <div className="hero-stats" aria-label="Humaeli impact statistics">
+        <StatItem number="5000+" label={t('landing_ui_stat_patients')} />
+        <StatItem number="500+" label={t('landing_ui_stat_partners')} />
+        <StatItem number="24/7" label={t('landing_ui_stat_supports')} />
+        <StatItem number="98+" label={t('landing_ui_stat_satisfied')} />
       </div>
     </section>
   );
@@ -424,35 +447,60 @@ const HeroSection = () => {
 
 const StatItem = ({ number, label }) => (
   <div className="stat-item">
-    <div className="stat-number">{number}</div>
     <div className="stat-label">{label}</div>
+    <div className="stat-number">{number}</div>
   </div>
 );
 
 // ========== SERVICES SECTION ==========
 const ServicesSection = () => {
   const { t } = useSiteTranslation();
-  const icons = ["comments", "user-md", "chart-line", "mobile-alt", "users", "file-medical-alt"];
+  const services = [
+    {
+      icon: 'comments',
+      title: t('landing_ui_service_1_title'),
+      description: t('landing_ui_service_1_description'),
+      action: t('landing_ui_service_1_action'),
+    },
+    {
+      icon: 'headset',
+      title: t('landing_ui_service_2_title'),
+      description: t('landing_ui_service_2_description'),
+      action: t('landing_ui_service_2_action'),
+    },
+    {
+      icon: 'book-open',
+      title: t('landing_ui_service_3_title'),
+      description: t('landing_ui_service_3_description'),
+      action: t('landing_ui_service_3_action'),
+    },
+    {
+      icon: 'lock',
+      title: t('landing_ui_service_4_title'),
+      description: t('landing_ui_service_4_description'),
+      action: t('landing_get_started'),
+    },
+  ];
 
   return (
     <section className="section services" id="services">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">{t('landing_services_title')}</h2>
+          <h2 className="section-title">{t('landing_ui_services_title')}</h2>
           <p className="section-description">
-            {t('landing_services_description')}
+            {t('landing_ui_services_description')}
           </p>
         </div>
         <div className="services-grid">
-          {icons.map((icon, index) => (
-            <div className="service-card" key={icon}>
+          {services.map((service) => (
+            <div className="service-card" key={service.title}>
               <div className="service-icon">
-                <i className={`fas fa-${icon}`}></i>
+                <i className={`fas fa-${service.icon}`}></i>
               </div>
-              <h3 className="service-title">{t(`landing_service_${index + 1}_title`)}</h3>
-              <p className="service-description">{t(`landing_service_${index + 1}_description`)}</p>
+              <h3 className="service-title">{service.title}</h3>
+              <p className="service-description">{service.description}</p>
               <button className="service-learn-more">
-                {t('landing_learn_more')} <i className="fas fa-arrow-right"></i>
+                {service.action}
               </button>
             </div>
           ))}
@@ -465,26 +513,60 @@ const ServicesSection = () => {
 // ========== HOW IT WORKS SECTION ==========
 const HowItWorksSection = () => {
   const { t } = useSiteTranslation();
-  const icons = ["user-plus", "robot", "chart-bar", "handshake"];
+  const steps = [
+    {
+      id: 'login',
+      icon: 'clipboard-user',
+      title: t('landing_ui_step_1_title'),
+      description: t('landing_ui_step_1_description'),
+      action: t('landing_ui_step_1_action'),
+    },
+    {
+      id: 'ai-chat',
+      icon: 'robot',
+      title: t('landing_ui_step_2_title'),
+      description: t('landing_ui_step_2_description'),
+      action: t('landing_ui_step_2_action'),
+    },
+    {
+      id: 'experts',
+      icon: 'hands-helping',
+      title: t('landing_ui_step_3_title'),
+      description: t('landing_ui_step_3_description'),
+      action: t('landing_ui_step_3_action'),
+    },
+    {
+      id: 'progress',
+      icon: 'chart-line',
+      title: t('landing_ui_step_4_title'),
+      description: t('landing_ui_step_4_description'),
+      action: t('landing_ui_step_4_action'),
+    },
+  ];
 
   return (
     <section className="section how-it-works" id="how-it-works">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">{t('landing_how_title')}</h2>
+          <h2 className="section-title">{t('landing_ui_how_title')}</h2>
           <p className="section-description">
-            {t('landing_how_description')}
+            {t('landing_ui_how_description')}
           </p>
         </div>
         <div className="steps-container">
-          {icons.map((icon, index) => (
-            <div className="step" key={icon}>
-              <div className="step-number">{String(index + 1).padStart(2, '0')}</div>
-              <div className="step-icon">
-                <i className={`fas fa-${icon}`}></i>
+          {steps.map((step, index) => (
+            <div className="step" key={step.id}>
+              <div className="step-top">
+                <div className="step-number">{String(index + 1).padStart(2, '0')}</div>
+                <div className="step-icon">
+                  <i className={`fas fa-${step.icon}`}></i>
+                </div>
               </div>
-              <h3 className="step-title">{t(`landing_step_${index + 1}_title`)}</h3>
-              <p className="step-description">{t(`landing_step_${index + 1}_description`)}</p>
+              <h3 className="step-title">{step.title}</h3>
+              <p className="step-description">{step.description}</p>
+              <Link to="/role-selector" className="step-action">
+                {step.action} <i className="fas fa-arrow-right"></i>
+              </Link>
             </div>
           ))}
         </div>
@@ -496,27 +578,63 @@ const HowItWorksSection = () => {
 // ========== FEATURES SECTION ==========
 const FeaturesSection = () => {
   const { t } = useSiteTranslation();
-  const icons = ["shield-alt", "handshake", "file-medical", "clock", "brain", "mobile-alt"];
+  const features = [
+    {
+      icon: 'universal-access',
+      title: t('landing_ui_feature_1_title'),
+      description: t('landing_ui_feature_1_description'),
+    },
+    {
+      icon: 'question',
+      title: t('landing_ui_feature_2_title'),
+      description: t('landing_ui_feature_2_description'),
+    },
+    {
+      icon: 'comment-alt',
+      title: t('landing_ui_feature_3_title'),
+      description: t('landing_ui_feature_3_description'),
+    },
+    {
+      icon: 'wave-square',
+      title: t('landing_ui_feature_4_title'),
+      description: t('landing_ui_feature_4_description'),
+    },
+  ];
 
   return (
     <section className="section features" id="features">
       <div className="container">
-        <div className="section-header">
-          <h2 className="section-title">{t('landing_features_title')}</h2>
-          <p className="section-description">
-            {t('landing_features_description')}
-          </p>
-        </div>
-        <div className="features-grid">
-          {icons.map((icon, index) => (
-            <div className="feature-card" key={`${icon}-${index}`}>
-              <div className="feature-icon">
-                <i className={`fas fa-${icon}`}></i>
-              </div>
-              <h3 className="feature-title">{t(`landing_feature_${index + 1}_title`)}</h3>
-              <p className="feature-description">{t(`landing_feature_${index + 1}_description`)}</p>
+        <div className="features-showcase">
+          <div className="features-image-wrap">
+            <img
+              src={whyChooseHumaeli}
+              alt="A counsellor having a comfortable conversation with a client"
+            />
+          </div>
+          <div className="features-content">
+            <div className="section-header">
+              <h2 className="section-title">{t('landing_ui_features_title')}</h2>
+              <p className="section-description">
+                {t('landing_ui_features_description')}
+              </p>
             </div>
-          ))}
+            <div className="features-grid">
+              {features.map((feature) => (
+                <div className="feature-card" key={feature.title}>
+                  <div className="feature-icon">
+                    <i className={`fas fa-${feature.icon}`}></i>
+                  </div>
+                  <div>
+                    <h3 className="feature-title">{feature.title}</h3>
+                    <p className="feature-description">{feature.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Link to="/role-selector" className="btn btn-primary features-cta">
+              {t('landing_ui_features_action')}
+            </Link>
+          </div>
         </div>
       </div>
     </section>
@@ -575,27 +693,36 @@ const DoctorsSection = () => {
     .join('')
     .toUpperCase();
 
+  const rankedDoctors = [...doctors]
+    .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
+    .slice(0, 3);
+  const displayedDoctors = rankedDoctors.length === 3
+    ? [rankedDoctors[1], rankedDoctors[0], rankedDoctors[2]]
+    : rankedDoctors;
+
   return (
     <section className="section doctors" id="doctors">
       <div className="container">
         <div className="section-header">
-          <h2 className="section-title">{t('landing_doctors_title')}</h2>
+          <h2 className="section-title">{t('landing_ui_doctors_title')}</h2>
           <p className="section-description">
-            {t('landing_doctors_description')}
+            {t('landing_ui_doctors_description')}
           </p>
         </div>
         <div className="doctors-grid">
           {isLoadingDoctors && <p className="landing-doctors-state">{t('landing_doctors_loading')}</p>}
           {doctorLoadError && <p className="landing-doctors-state">{t('landing_doctors_error')}</p>}
-          {!isLoadingDoctors && !doctorLoadError && doctors.map((doctor) => {
+          {!isLoadingDoctors && !doctorLoadError && displayedDoctors.map((doctor, index) => {
             const name = doctor.fullName || doctor.name || t('landing_doctor_default_name');
             const specializations = asList(doctor.specialization);
-            const languages = asList(doctor.languages);
             const photoUrl = getPhotoUrl(doctor.profilePhoto);
             const consultationModes = asList(doctor.consultationMode);
-            const experience = Number(doctor.experience) || 0;
+            const rating = Number(doctor.rating || 0);
+            const description = doctor.bio || doctor.about ||
+              `${doctor.qualification || t('landing_doctor_default_qualification')} with experience providing personalised mental wellness support.`;
             return (
             <div className="doctor-card" key={doctor._id || doctor.id}>
+              {index === 1 && <span className="doctor-featured-badge">{t('landing_ui_highly_rated')}</span>}
               <div className="doctor-header">
                 <div className="doctor-image">
                   {photoUrl ? <img src={photoUrl} alt={name} /> : getInitials(name)}
@@ -604,45 +731,34 @@ const DoctorsSection = () => {
                   <h3 className="doctor-name">{name}</h3>
                   <p className="doctor-specialization">{specializations[0] || doctor.qualification || t('landing_doctor_default_role')}</p>
                   <div className="doctor-rating">
-                    <i className="fas fa-star"></i>
-                    <span>{Number(doctor.rating || 0).toFixed(1)}</span>
-                    <span className="doctor-patients">({doctor.totalSessions || 0} {t('landing_doctor_sessions')})</span>
+                    <span className="doctor-stars" aria-label={`${rating.toFixed(1)} rating`}>
+                      {[0, 1, 2, 3, 4].map((star) => <i className="fas fa-star" key={star}></i>)}
+                    </span>
+                    <span>{rating.toFixed(1)}</span>
                   </div>
                 </div>
               </div>
               <div className="doctor-details">
                 <div className="doctor-detail">
-                  <i className="fas fa-graduation-cap"></i>
-                  <span>{doctor.qualification || t('landing_doctor_default_qualification')}</span>
+                  <i className="fas fa-head-side-virus"></i>
+                  <span>{specializations[1] || specializations[0] || doctor.qualification || t('landing_doctor_default_role')}</span>
                 </div>
                 <div className="doctor-detail">
-                  <i className="fas fa-briefcase"></i>
-                  <span>{experience} {t('landing_doctor_years_experience')}</span>
-                </div>
-                <div className="doctor-detail">
-                  <i className="fas fa-hospital"></i>
+                  <i className="fas fa-globe"></i>
                   <span>{consultationModes.join(', ') || t('landing_doctor_online_consultation')}</span>
                 </div>
                 <div className="doctor-detail">
                   <i className="fas fa-map-marker-alt"></i>
                   <span>{doctor.location || t('landing_doctor_location_default')}</span>
                 </div>
-                <div className="doctor-detail">
-                  <i className="fas fa-clock"></i>
-                  <span>{doctor.isOnline ? t('landing_doctor_available_now') : t('landing_doctor_view_availability')}</span>
-                </div>
-                <div className="doctor-languages">
-                  {languages.slice(0, 5).map((lang, idx) => (
-                    <span key={idx} className="language-tag">{lang}</span>
-                  ))}
-                </div>
               </div>
+              <p className="doctor-bio">{description}</p>
               <div className="doctor-actions">
-                <Link to="/role-selector" className="btn btn-outline">
-                  <i className="fas fa-calendar"></i> {t('landing_book_appointment')}
+                <Link to="/role-selector" className="btn btn-primary doctor-book-button">
+                  {t('landing_ui_book_consultation')}
                 </Link>
-                <Link to="/role-selector" className="btn btn-primary">
-                  <i className="fas fa-video"></i> {t('landing_consult_online')}
+                <Link to="/role-selector" className="doctor-profile-link">
+                  {index === 1 ? t('landing_ui_view_full_profile') : t('landing_ui_view_profile')}
                 </Link>
               </div>
             </div>
@@ -661,11 +777,49 @@ const DoctorsSection = () => {
 const TestimonialsSection = () => {
   const { t } = useSiteTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
-  const TESTIMONIAL_COUNT = 4;
+  const testimonials = [
+    {
+      quote: t('landing_ui_testimonial_quote'),
+      author: t('landing_ui_testimonial_author'),
+      role: t('landing_ui_testimonial_role'),
+    },
+    ...[2, 3, 4].map((n) => ({
+      quote: t(`landing_testimonial_${n}_quote`),
+      author: t(`landing_testimonial_${n}_author`),
+      role: `${t(`landing_testimonial_${n}_role`)} • ${t(`landing_testimonial_${n}_location`)}`,
+    })),
+  ];
+  const testimonial = testimonials[activeIndex];
+  const showPrevious = () => setActiveIndex((current) => (
+    current === 0 ? testimonials.length - 1 : current - 1
+  ));
+  const showNext = () => setActiveIndex((current) => (
+    current === testimonials.length - 1 ? 0 : current + 1
+  ));
+  const TESTIMONIAL_COUNT = testimonials.length;
   const n = activeIndex + 1;
 
   return (
     <section className="section testimonials" id="testimonials">
+      <div className="testimonial-stage">
+        <span className="testimonial-label">{t('landing_ui_testimonial_label')}</span>
+        <blockquote className="testimonial-display-text">"{testimonial.quote}"</blockquote>
+        <div className="testimonial-footer">
+          <button className="testimonial-arrow" type="button" onClick={showPrevious} aria-label="Previous testimonial">
+            <i className="fas fa-long-arrow-alt-left"></i>
+          </button>
+          <div className="testimonial-display-author">
+            <img src={whyChooseHumaeli} alt="" className="testimonial-avatar" />
+            <div>
+              <div className="author-name">{testimonial.author}</div>
+              <div className="author-role">{testimonial.role}</div>
+            </div>
+          </div>
+          <button className="testimonial-arrow" type="button" onClick={showNext} aria-label="Next testimonial">
+            <i className="fas fa-long-arrow-alt-right"></i>
+          </button>
+        </div>
+      </div>
       <div className="container">
         <div className="section-header">
           <h2 className="section-title">{t('landing_testimonials_title')}</h2>
@@ -707,30 +861,39 @@ const TestimonialsSection = () => {
 const FAQSection = () => {
   const { t } = useSiteTranslation();
   const [openIndex, setOpenIndex] = useState(null);
-  const FAQ_COUNT = 6;
+  const faqs = [1, 2, 3, 4, 5, 6].map((number) => ({
+    question: t(`landing_ui_faq_${number}_question`),
+    answer: t(`landing_ui_faq_${number}_answer`),
+  }));
 
   return (
     <section className="section faq" id="faq">
       <div className="container">
-        <div className="section-header">
+        <div className="faq-intro">
+          <span className="faq-kicker">{t('landing_ui_faq_kicker')}</span>
           <h2 className="section-title">{t('landing_faq_title')}</h2>
           <p className="section-description">
-            {t('landing_faq_description')}
+            {t('landing_ui_faq_description')}
           </p>
+          <img
+            src={faqWellnessIllustration}
+            alt="A cheerful green wellness character with growing leaves"
+            className="faq-illustration"
+          />
         </div>
         <div className="faq-container">
-          {[...Array(FAQ_COUNT)].map((_, index) => (
+          {faqs.map((faq, index) => (
             <div className="faq-item" key={index}>
               <button
                 className="faq-question"
                 onClick={() => setOpenIndex(openIndex === index ? null : index)}
                 aria-expanded={openIndex === index}
               >
-                <span>{t(`landing_faq_${index + 1}_question`)}</span>
+                <span>{faq.question}</span>
                 <i className={`fas fa-${openIndex === index ? 'minus' : 'plus'}`}></i>
               </button>
               <div className={`faq-answer ${openIndex === index ? 'active' : ''}`}>
-                <p>{t(`landing_faq_${index + 1}_answer`)}</p>
+                <p>{faq.answer}</p>
               </div>
             </div>
           ))}
@@ -740,26 +903,52 @@ const FAQSection = () => {
   );
 };
 
+const CTASection = () => {
+  const { t } = useSiteTranslation();
+  return (
+    <section className="section landing-cta">
+      <div className="container">
+        <div className="landing-cta-card">
+          <div className="landing-cta-content">
+            <h2>{t('landing_ui_cta_title')}</h2>
+            <Link to="/role-selector" className="btn landing-cta-button">
+              {t('landing_ui_cta_action')}
+            </Link>
+          </div>
+          <div className="landing-cta-decoration" aria-hidden="true">
+            <span className="cta-rainbow"></span>
+            <span className="cta-flower cta-flower-large"></span>
+            <span className="cta-flower cta-flower-small"></span>
+            <span className="cta-flower cta-flower-gold"></span>
+            <span className="cta-star cta-star-large">✱</span>
+            <span className="cta-star cta-star-small">✦</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 // ========== FOOTER ==========
 const Footer = () => {
   const { t } = useSiteTranslation();
-
   return (
   <footer className="footer">
     <div className="container">
       <div className="footer-content">
         <div className="footer-about">
           <div className="footer-logo">
-            <img src={logos} alt="Humaeli Logo" />
+            <i className="fas fa-seedling"></i>
+            <span>Humaeli</span>
           </div>
           <p className="footer-description">
             {t('landing_footer_description')}
           </p>
           <div className="social-links">
-            <a href="#" aria-label="Facebook"><i className="fab fa-facebook-f"></i></a>
-            <a href="#" aria-label="Twitter"><i className="fab fa-twitter"></i></a>
+            <a href="#" aria-label="Website"><i className="fas fa-globe"></i></a>
+            <a href="#" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
             <a href="#" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-            <a href="#" aria-label="LinkedIn"><i className="fab fa-linkedin-in"></i></a>
+            <a href="#" aria-label="Work"><i className="fas fa-briefcase"></i></a>
           </div>
         </div>
         <div className="footer-links">
@@ -799,7 +988,7 @@ const Footer = () => {
           <p className="emergency-notice">
             <i className="fas fa-exclamation-triangle"></i>
             <strong>{t('landing_footer_crisis_label')}</strong> {t('landing_footer_crisis_text')}
-            <a href="tel:9152987821" style={{color: '#fff', marginLeft: '5px'}}> 9152987821</a> {t('landing_footer_toll_free')}
+            <a href="tel:9152987821"> 9152987821</a> {t('landing_footer_toll_free')}
           </p>
           <p className="emergency-notice">
             <i className="fas fa-map-marker-alt"></i>

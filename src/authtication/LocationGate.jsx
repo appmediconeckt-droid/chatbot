@@ -17,9 +17,14 @@ import "./LocationGate.css";
 //
 // Behavior: on mount, immediately attempts capture. UI only appears if the
 // first attempt fails (so the happy path is invisible).
-const LocationGate = ({ event, onDone }) => {
+const LocationGate = ({ event, onDone, role = "user" }) => {
   const [phase, setPhase] = useState("attempting"); // attempting | retry | sending
   const [errorMsg, setErrorMsg] = useState("");
+  const normalizedRole = String(role || "").toLowerCase();
+  const themeRole =
+    normalizedRole === "counselor" || normalizedRole === "counsellor"
+      ? "counselor"
+      : "user";
 
   useEffect(() => {
     let cancelled = false;
@@ -73,7 +78,10 @@ const LocationGate = ({ event, onDone }) => {
     // Brief "checking" overlay — keeps the page visually steady while the
     // browser shows its own permission prompt.
     return (
-      <div className="location-gate-overlay" role="status">
+      <div
+        className={`location-gate-overlay location-gate-theme-${themeRole}`}
+        role="status"
+      >
         <div className="location-gate-card">
           <div className="location-gate-spinner" />
           <p className="location-gate-title">Checking location access…</p>
@@ -87,7 +95,7 @@ const LocationGate = ({ event, onDone }) => {
 
   return (
     <div
-      className="location-gate-overlay"
+      className={`location-gate-overlay location-gate-theme-${themeRole}`}
       role="dialog"
       aria-modal="true"
       aria-labelledby="location-gate-title"
