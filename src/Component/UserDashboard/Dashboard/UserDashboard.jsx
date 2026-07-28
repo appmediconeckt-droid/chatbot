@@ -852,7 +852,7 @@ export default function UserDashboard() {
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
     { id: "settings", icon: <FaCog />, label: t('settings') },
-    { id: "Notifications", icon: <FaBell />, label: "Notifications" },
+    { id: "Notifications", icon: <FaBell />, label: t('settings.notification') },
     { id: "help", icon: <FaQuestionCircle />, label: t('help_support') },
     { id: "privacy", icon: <FaLock />, label: t('privacy') },
   ];

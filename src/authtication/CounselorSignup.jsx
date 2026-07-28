@@ -3493,6 +3493,7 @@ const CounselorSignup = () => {
       {pendingNav && (
         <LocationGate
           event={pendingNav.event}
+          role="counselor"
           onDone={() => {
             const target = pendingNav.path;
             setPendingNav(null);

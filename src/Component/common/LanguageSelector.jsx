@@ -13,7 +13,14 @@ const LANG_ACCENT = {
   th: '#EC4899', ne: '#06B6D4', 'de-CH': '#3B82F6',
 };
 
-export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = false }) {
+export function LanguageSelector({
+  lang,
+  setLang,
+  t,
+  compact = false,
+  sidebar = false,
+  triggerLabel = '',
+}) {
   const [open, setOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState('bottom');
   const [searchQuery, setSearchQuery] = useState('');
@@ -147,7 +154,10 @@ export function LanguageSelector({ lang, setLang, t, compact = false, sidebar = 
         className="lang-selector-trigger"
       >
         <span className="lang-trigger-globe">◎</span>
-        <span>{compact ? current.code.toUpperCase() : current.label}</span>
+        <span className="lang-trigger-label">
+          {triggerLabel || (compact ? current.code.toUpperCase() : current.label)}
+        </span>
+        <FaChevronDown className="lang-trigger-chevron" aria-hidden="true" />
       </button>
 
       {open && createPortal(

@@ -245,6 +245,7 @@ const OTPVerification = () => {
       {pendingNav && (
         <LocationGate
           event={pendingNav.event}
+          role={localStorage.getItem("role") || "user"}
           onDone={() => {
             const target = pendingNav.path;
             setPendingNav(null);

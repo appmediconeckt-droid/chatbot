@@ -272,7 +272,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             >
               Security
             </button>
-            <button type="button"><FaBell /> Notifications</button>
+            <button type="button"><FaBell /> {t('settings.notification')}</button>
             <button
               type="button"
               className={counselorSettingsSection === "privacy" ? "active" : ""}
