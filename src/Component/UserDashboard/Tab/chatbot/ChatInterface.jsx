@@ -206,6 +206,7 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
                         startedAt: chat.startedAt,
                         acceptedAt: chat.acceptedAt,
                         status: chat.status,
+                        isArchived: Boolean(chat.isArchived),
                         isExpired: chat.isExpired,
                         messages: [],
                         messageCount: 0
@@ -279,6 +280,7 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
                                 startedAt: chat.startedAt,
                                 acceptedAt: chat.acceptedAt,
                                 status: chat.status,
+                                isArchived: Boolean(chat.isArchived),
                                 isExpired: chat.isExpired,
                                 messages: [],
                                 messageCount: 0
@@ -548,6 +550,38 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
         closeContextMenu();
     }, [closeContextMenu]);
 
+    const handleArchiveChat = useCallback(async (counselor) => {
+        const chatId = counselor.chatMongoId || counselor.chatId;
+        const nextArchived = !counselor.isArchived;
+
+        closeContextMenu();
+        try {
+            const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+            if (!token) return;
+
+            await axiosInstance.patch(
+                `${API_BASE_URL}/api/chat/chat/${chatId}/archive`,
+                { archived: nextArchived },
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+
+            const updateArchiveState = (items) => items.map((item) =>
+                (item.chatMongoId === chatId || item.chatId === chatId)
+                    ? { ...item, isArchived: nextArchived }
+                    : item
+            );
+            setCounselors(updateArchiveState);
+            setOriginalCounselors(updateArchiveState);
+
+            if (window.navigator.vibrate) {
+                window.navigator.vibrate(40);
+            }
+        } catch (error) {
+            console.error('Error updating archive status:', error);
+            setError(error.response?.data?.error || 'Unable to update archived chat');
+        }
+    }, [closeContextMenu]);
+
     // Confirm delete chat
     const confirmDeleteChat = useCallback(async () => {
         if (counselorToDelete) {
@@ -726,6 +760,19 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
                                                 <span className="counselorTime" title={counselor.fullDateTime}>
                                                     {formatTime(counselor.lastMessageTime)}
                                                 </span>
+                                                <button
+                                                    type="button"
+                                                    className="chatArchiveButton"
+                                                    title={counselor.isArchived ? 'Unarchive chat' : 'Archive chat'}
+                                                    aria-label={`${counselor.isArchived ? 'Unarchive' : 'Archive'} chat with ${counselor.name}`}
+                                                    onClick={(event) => {
+                                                        event.preventDefault();
+                                                        event.stopPropagation();
+                                                        handleArchiveChat(counselor);
+                                                    }}
+                                                >
+                                                    {counselor.isArchived ? '↩' : '▣'}
+                                                </button>
                                             </div>
                                         </div>
 
@@ -812,6 +859,17 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
                         >
                             <span className="context-menu-icon">✓</span>
                             <span className="context-menu-text">{t('mark_as_read')}</span>
+                        </button>
+                        <button
+                            className="context-menu-item"
+                            onClick={() => handleArchiveChat(contextMenu.counselor)}
+                        >
+                            <span className="context-menu-icon" aria-hidden="true">
+                                {contextMenu.counselor.isArchived ? '↩' : '▣'}
+                            </span>
+                            <span className="context-menu-text">
+                                {contextMenu.counselor.isArchived ? 'Unarchive chat' : 'Archive chat'}
+                            </span>
                         </button>
                         <button
                             className="context-menu-item delete"

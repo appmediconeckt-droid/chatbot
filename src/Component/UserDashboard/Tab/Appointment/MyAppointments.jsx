@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../axiosConfig";
@@ -293,7 +294,7 @@ const MyAppointments = () => {
     const appointmentDuration =
       selectedApt.duration || selectedApt.durationMinutes || 45;
 
-    return (
+    return createPortal(
       <div
         className="appointment-detail-overlay"
         onClick={() => setShowModal(false)}
@@ -413,7 +414,8 @@ const MyAppointments = () => {
             </button>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body,
     );
   };
 

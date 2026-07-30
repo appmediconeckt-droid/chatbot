@@ -4,6 +4,7 @@ import {
   hasStickyLocationBanner,
   setStickyLocationBanner,
   captureAndSendLocation,
+  LOCATION_PERMISSION_DENIED_CODE,
 } from "../../authtication/locationHelper";
 import "./LocationNoticeToast.css";
 
@@ -21,6 +22,14 @@ const LocationNoticeToast = () => {
   useEffect(() => {
     const pending = consumePendingLocationNotice();
     if (pending) {
+      if (
+        String(pending.message || "").includes("Location is blocked for this site")
+      ) {
+        setStickyLocationBanner(false);
+        setNotice(null);
+        setSticky(false);
+        return;
+      }
       setNotice(pending);
       // Only auto-hide the transient toast if the banner isn't already sticky.
       if (!hasStickyLocationBanner()) {
@@ -40,7 +49,11 @@ const LocationNoticeToast = () => {
       setSticky(false);
       setNotice(null);
     } catch (err) {
-      setRetryError(err.message || "Couldn't capture your location");
+      setRetryError(
+        err.code === LOCATION_PERMISSION_DENIED_CODE
+          ? "Click the lock/site icon near the address bar, set Location to Allow, then reload the page"
+          : err.message || "Couldn't capture your location",
+      );
     } finally {
       setRetrying(false);
     }

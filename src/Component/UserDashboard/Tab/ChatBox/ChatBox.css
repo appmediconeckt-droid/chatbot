@@ -1629,6 +1629,11 @@
   box-shadow: 0 0 0 2px rgba(1, 206, 84, 0.12);
 }
 
+/* Keep the conversation page intact while hiding only its top search row. */
+.chatBoxMain > .chatConversationSearch {
+  display: none !important;
+}
+
 .chatConversationSearch input::placeholder {
   color: #98a2b3;
 }
@@ -1665,7 +1670,38 @@
 }
 
 .chatDesktopHeaderBack {
-  display: none;
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 50%;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+.chatDesktopHeaderBack:hover {
+  background: #eef7f2;
+  color: #009b49;
+}
+
+.chatDesktopHeaderBack:active {
+  transform: scale(0.95);
+}
+
+.chatDesktopHeaderBack svg {
+  display: block;
+  width: 16px;
+  height: 16px;
 }
 
 .chatBoxHeader {
@@ -1906,6 +1942,34 @@
     height: 30px;
     min-width: 30px;
     min-height: 30px;
+  }
+
+  /* Keep the compact mobile header to one clean row. The specialization is
+     useful on desktop, but competes with call actions on narrow screens. */
+  .chatProfileStatus {
+    display: none;
+  }
+
+  .chatBoxHeaderLeft,
+  .chatUserDetails,
+  .chatProfileInfo {
+    min-width: 0;
+  }
+
+  .chatProfileInfo {
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+
+  .chatProfileName {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chatBoxHeaderRight {
+    flex: 0 0 auto;
   }
 
   .chatAiSummary p {

@@ -1192,12 +1192,14 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   };
 
   const openCounselorChat = (conversation) => {
-    if (onOpenConversation) {
-      onOpenConversation(conversation);
-      return;
-    }
+    const counselorId =
+      conversation?.counselor?.id ||
+      conversation?.counselor?._id ||
+      selectedCounselorForRequest?.id;
 
-    navigate("/chat", { state: conversation });
+    navigate(counselorId ? `/chat/${counselorId}` : "/chat", {
+      state: conversation,
+    });
   };
 
   // State for counselors list
@@ -1931,11 +1933,9 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       } else if (res.data?.chat?.id || res.data?.chatId) {
         // Fallback: navigate to chat
         setShowUserModal(false);
-        navigate("/user-dashboard", {
-          state: {
-            chatId: chatId,
-            counselor: selectedCounselorForRequest,
-          },
+        openCounselorChat({
+          chatId,
+          counselor: selectedCounselorForRequest,
         });
       } else {
         alert(t('chat_request_sent'));
@@ -1965,11 +1965,9 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
           return newRejected;
         });
         setShowUserModal(false);
-        navigate("/user-dashboard", {
-          state: {
-            chatId: existingChatId,
-            counselor: selectedCounselorForRequest,
-          },
+        openCounselorChat({
+          chatId: existingChatId,
+          counselor: selectedCounselorForRequest,
         });
       } else {
         alert(serverError || t('chat_already_connected'));

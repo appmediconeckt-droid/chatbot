@@ -761,6 +761,18 @@
     background: #e2e8f0;
   }
 
+  .ud-close-modal-btn svg {
+    display: block;
+    width: 16px;
+    height: 16px;
+    min-width: 16px;
+    color: #475569;
+    fill: currentColor;
+    opacity: 1;
+    visibility: visible;
+    pointer-events: none;
+  }
+
   .ud-modal-body {
     padding: 20px 24px;
   }
@@ -2694,6 +2706,17 @@
   background: #ffffff;
 }
 
+/* /chat routes stay inside the user dashboard shell, with the selected
+   conversation using the full content area next to the sidebar. */
+.ud-chat-workspace.direct-conversation .ud-chat-list-pane {
+  display: none;
+}
+
+.ud-chat-workspace.direct-conversation .ud-conversation-pane {
+  width: 100%;
+  flex: 1 1 100%;
+}
+
 @media (max-width: 900px) {
   .ud-chat-workspace.has-conversation .ud-chat-list-pane {
     display: none;
@@ -2786,6 +2809,16 @@
 
   .ud-chat-workspace.has-conversation .ud-conversation-pane > * {
     height: calc(100vh - 80px);
+  }
+
+  /* A direct /chat route does not have the dashboard's top toolbar, so it
+     must begin at the top instead of reserving the toolbar's 80px space. */
+  .ud-chat-workspace.direct-conversation .ud-conversation-pane {
+    padding-top: 0;
+  }
+
+  .ud-chat-workspace.direct-conversation .ud-conversation-pane > * {
+    height: 100vh;
   }
 }
 
@@ -4557,6 +4590,28 @@
 }
 
 @media (max-width: 480px) {
+  .ud-more-modal .ud-close-modal-btn {
+    position: relative;
+    z-index: 2;
+    flex: 0 0 34px;
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+    color: #475569 !important;
+  }
+
+  .ud-more-modal .ud-close-modal-btn svg {
+    display: block !important;
+    width: 16px !important;
+    height: 16px !important;
+    color: #475569 !important;
+    fill: #475569 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
   .ud-content-section {
     margin: 6px;
     padding: 12px;

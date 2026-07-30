@@ -416,11 +416,18 @@ const StreamVideoBody = ({
             <div className="stream-voice-stage">
               <div className="stream-voice-avatar-wrap">
                 <div className="stream-voice-avatar">
+                  <span className="stream-voice-avatar-initial" aria-hidden="true">
+                    {voiceParticipantInitial}
+                  </span>
                   {voiceParticipantImage ? (
-                    <img src={voiceParticipantImage} alt={voiceParticipantName} />
-                  ) : (
-                    voiceParticipantInitial
-                  )}
+                    <img
+                      src={voiceParticipantImage}
+                      alt=""
+                      onError={(event) => {
+                        event.currentTarget.style.display = "none";
+                      }}
+                    />
+                  ) : null}
                 </div>
               </div>
               <div className="stream-voice-name">{voiceParticipantName}</div>
