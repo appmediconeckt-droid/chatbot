@@ -534,7 +534,9 @@ const ServicesSection = () => {
               <h3 className="service-title">{service.title}</h3>
               <p className="service-description">{service.description}</p>
               <button className="service-learn-more">
+                <Link to="/role-selector" >
                 {service.action}
+                </Link>
               </button>
             </div>
           ))}
