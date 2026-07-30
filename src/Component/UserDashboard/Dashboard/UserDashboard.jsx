@@ -62,11 +62,14 @@ const VideoCallModal = lazy(() => import("../Tab/CallModal/VideoCallModal"));
 const WalletDashboard = lazy(() => import("../Tab/Wallet/WalletDashboard"));
 const NotificationsPage = lazy(() => import("../../common/Notifications/NotificationsPage"));
 
-const DashboardPanelLoader = () => (
-  <div className="ud-content-section">
-    <div className="app-loading">Loading...</div>
-  </div>
-);
+const DashboardPanelLoader = () => {
+  const { t } = useUserTranslation();
+  return (
+    <div className="ud-content-section">
+      <div className="app-loading">{t("common.loading")}</div>
+    </div>
+  );
+};
 
 // Map i18n lang codes to VOICE_LANGUAGES codes
 const LANG_TO_VOICE = { en: 'en-IN', hi: 'hi-IN', ta: 'ta-IN', te: 'te-IN', kn: 'kn-IN', ml: 'ml-IN', bn: 'bn-IN', gu: 'gu-IN', mr: 'mr-IN' };
@@ -1063,12 +1066,12 @@ export default function UserDashboard() {
     return (
       <section className="ud-content-section ud-help-page">
         <header className="ud-help-page-header">
-          <h2>Help & Supports</h2>
-          <p>Help and support desk for you</p>
+          <h2>{t("help_support")}</h2>
+          <p>{t("help_support_subtitle")}</p>
         </header>
 
         <div className="ud-help-page-body">
-          <h1>How can we help you?</h1>
+            <h1>{t("how_can_we_help")}</h1>
           <label className="ud-help-search">
             <FaSearch />
             <input value={helpSearch} onChange={(event) => setHelpSearch(event.target.value)} placeholder="Search help articles, guides, and FAQs..." />
@@ -1090,7 +1093,7 @@ export default function UserDashboard() {
           <div className="ud-help-content-grid">
             <main className="ud-help-left">
               <section className="ud-help-faq">
-                <h2>Popular Questions</h2>
+          <h2>{t("popular_questions")}</h2>
                 {faqs.length ? faqs.map(([question, answer]) => {
                   const isOpen = openHelpQuestion === question;
                   return (
@@ -1101,36 +1104,36 @@ export default function UserDashboard() {
                       {isOpen && <p>{answer}</p>}
                     </article>
                   );
-                }) : <p className="ud-help-no-results">No matching help articles found.</p>}
+          }) : <p className="ud-help-no-results">{t("no_help_articles")}</p>}
               </section>
 
               <section className="ud-help-report">
-                <h3>Report a Problem</h3>
-                <p>Encountered a bug or technical issue in the app?</p>
+            <h3>{t("report_problem")}</h3>
+            <p>{t("report_problem_description")}</p>
                 <div>
-                  <button type="button" onClick={() => { window.location.href = "mailto:support@humaeli.com?subject=Report%20an%20Issue"; }}>Report Issue</button>
-                  <label><FaUpload /> Screenshot<input type="file" accept="image/*" /></label>
+              <button type="button" onClick={() => { window.location.href = "mailto:support@humaeli.com?subject=Report%20an%20Issue"; }}>{t("report_issue")}</button>
+              <label><FaUpload /> {t("screenshot")}<input type="file" accept="image/*" /></label>
                 </div>
               </section>
             </main>
 
             <aside className="ud-help-right">
               <section className="ud-help-emergency">
-                <h3><FaExclamationTriangle /> Need Immediate Help?</h3>
-                <p>If you are experiencing a medical emergency, please call your local emergency services immediately.</p>
-                <button type="button" onClick={() => { window.location.href = "tel:112"; }}>Emergency Contact</button>
-                <button type="button" className="outline" onClick={() => { window.location.href = "tel:9152987821"; }}>Crisis Resources</button>
+            <h3><FaExclamationTriangle /> {t("need_immediate_help")}</h3>
+            <p>{t("medical_emergency_notice")}</p>
+            <button type="button" onClick={() => { window.location.href = "tel:112"; }}>{t("emergency_contact")}</button>
+            <button type="button" className="outline" onClick={() => { window.location.href = "tel:9152987821"; }}>{t("crisis_resources")}</button>
               </section>
 
               <section className="ud-help-contact">
-                <small>CONTACT INFORMATION</small>
+              <small>{t("contact_information")}</small>
                 <p><FaEnvelope /><span>support@humaeli.com<small>Email</small></span></p>
                 <p><FaPhone /><span>+1 (800) 555–0199<small>Mon–Sat, 9am–7pm EST</small></span></p>
               </section>
 
               <section className="ud-help-legal">
-                <button type="button"><FaFileAlt /> Terms of Service <FaChevronRight /></button>
-                <button type="button" onClick={() => setActive("privacy")}><FaShieldAlt /> Privacy Policy <FaChevronRight /></button>
+            <button type="button"><FaFileAlt /> {t("terms_of_service")} <FaChevronRight /></button>
+            <button type="button" onClick={() => setActive("privacy")}><FaShieldAlt /> {t("privacy_policy")} <FaChevronRight /></button>
               </section>
             </aside>
           </div>
@@ -1154,8 +1157,8 @@ export default function UserDashboard() {
     return (
       <section className="ud-content-section ud-privacy-page">
         <header className="ud-privacy-page-header">
-          <h2>Privacy Policy</h2>
-          <p>Learn how Humaeli collects, uses, and protects your personal information.</p>
+          <h2>{t("privacy_policy")}</h2>
+          <p>{t("privacy_policy_subtitle")}</p>
         </header>
 
         <div className="ud-privacy-page-grid">
@@ -1163,7 +1166,7 @@ export default function UserDashboard() {
             <section className="ud-protected-banner">
               <div className="ud-protected-heading">
                 <span><FaShieldAlt /></span>
-                <div><strong>Protected</strong><p>Your data is secure</p></div>
+            <div><strong>{t("protected")}</strong><p>{t("data_is_secure")}</p></div>
               </div>
               <div className="ud-protected-points">
                 <span>⊙ End-to-end encrypted chats</span>
@@ -1173,7 +1176,7 @@ export default function UserDashboard() {
               </div>
             </section>
 
-            <h3 className="ud-privacy-label">DATA COLLECTION</h3>
+          <h3 className="ud-privacy-label">{t("data_collection")}</h3>
             <div className="ud-privacy-accordions">
               {sections.map((section) => {
                 const isOpen = openPrivacySection === section.title;
@@ -1186,11 +1189,11 @@ export default function UserDashboard() {
                     </button>
                     {isOpen && (
                       <div className="ud-privacy-accordion-body">
-                        <b>Information Collected</b>
+              <b>{t("information_collected")}</b>
                         <p>{section.text}</p>
-                        <b>Purpose</b>
-                        <p>Provide secure, continuous service history and enable appropriate counselor support.</p>
-                        <div className="ud-privacy-encryption-note"><FaLock /> All interactions are encrypted and stored securely.</div>
+              <b>{t("purpose")}</b>
+              <p>{t("data_collection_purpose")}</p>
+              <div className="ud-privacy-encryption-note"><FaLock /> {t("interactions_encrypted")}</div>
                       </div>
                     )}
                   </article>
@@ -1200,7 +1203,7 @@ export default function UserDashboard() {
           </main>
 
           <aside className="ud-privacy-side">
-            <h3 className="ud-privacy-label">QUICK ACTIONS</h3>
+          <h3 className="ud-privacy-label">{t("quick_actions")}</h3>
             <div className="ud-privacy-quick-grid">
               <button type="button" onClick={handleProfileClick}><FaUser /><strong>Manage Profile</strong><small>Update details</small></button>
               <button type="button" onClick={handleSettingsClick}><FaLock /><strong>Security Settings</strong><small>Passwords & OTP</small></button>
@@ -1208,7 +1211,7 @@ export default function UserDashboard() {
               <button type="button" className="danger" onClick={handleSettingsClick}><FaTrash /><strong>Delete Account</strong><small>Permanently remove</small></button>
             </div>
 
-            <h3 className="ud-privacy-label">YOUR PRIVACY CHECKLIST</h3>
+          <h3 className="ud-privacy-label">{t("your_privacy_checklist")}</h3>
             <div className="ud-privacy-checklist">
               {[
                 "Never share OTP with anyone",
@@ -1224,10 +1227,10 @@ export default function UserDashboard() {
             </div>
 
             <section className="ud-privacy-help-card">
-              <h3>Need help with privacy?</h3>
-              <p>Our support team is here to answer any questions about your data security.</p>
-              <button type="button" onClick={() => { window.location.href = "mailto:support@humaeli.com?subject=Privacy%20Support"; }}>Contact Support</button>
-              <button type="button" className="outline" onClick={handleSettingsClick}>Privacy Settings</button>
+            <h3>{t("need_privacy_help")}</h3>
+            <p>{t("privacy_support_description")}</p>
+            <button type="button" onClick={() => { window.location.href = "mailto:support@humaeli.com?subject=Privacy%20Support"; }}>{t("contact_support")}</button>
+            <button type="button" className="outline" onClick={handleSettingsClick}>{t("privacy_settings")}</button>
             </section>
           </aside>
         </div>
@@ -1561,7 +1564,7 @@ export default function UserDashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="ud-modal-header">
-              <h3 className="ud-modal-title">Menu Options</h3>
+            <h3 className="ud-modal-title">{t("menuOptions")}</h3>
               <button className="ud-close-modal-btn" onClick={handleCloseModal}>
                 <FaTimes />
               </button>
@@ -1613,10 +1616,10 @@ export default function UserDashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="ud-modal-header">
-              <h3 className="ud-modal-title">Confirm Logout</h3>
+            <h3 className="ud-modal-title">{t("confirm_logout")}</h3>
             </div>
             <div className="ud-modal-body">
-              <p>Are you sure you want to logout?</p>
+              <p>{t("settings.logoutConfirm")}</p>
             </div>
             <div className="ud-modal-footer">
               <button
@@ -1646,7 +1649,7 @@ export default function UserDashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="ud-modal-header">
-              <h3 className="ud-modal-title">Delete Account</h3>
+            <h3 className="ud-modal-title">{t("delete_account")}</h3>
             </div>
             <div className="ud-modal-body">
               <p>
@@ -1682,8 +1685,8 @@ export default function UserDashboard() {
               </h3>
             </div>
             <div className="ud-modal-body">
-              <p>Your account has been successfully deleted.</p>
-              <p>Redirecting...</p>
+              <p>{t("account_deleted_successfully")}</p>
+              <p>{t("redirecting")}</p>
             </div>
           </div>
         </div>

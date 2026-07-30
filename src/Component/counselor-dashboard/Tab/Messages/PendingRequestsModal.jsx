@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { FaTimes, FaCheck, FaTrash, FaBell } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import ConfirmActionModal from "./ConfirmActionModal";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import "./PendingRequestsModal.css";
 
 export default function PendingRequestsModal({
@@ -12,6 +13,7 @@ export default function PendingRequestsModal({
   onReject,
   loading,
 }) {
+  const { t } = useCounselorTranslation();
   const [processingId, setProcessingId] = useState(null);
   const [confirmModal, setConfirmModal] = useState({
     isOpen: false,
@@ -59,8 +61,8 @@ export default function PendingRequestsModal({
           <div className="header-left">
             <FaBell className="header-icon" />
             <div>
-              <h2>Pending Requests</h2>
-              <p className="pending-request-count">{requests.length} waiting for response</p>
+              <h2>{t("pending_requests")}</h2>
+              <p className="pending-request-count">{requests.length} {t("waiting_for_response")}</p>
             </div>
           </div>
           <button className="close-button" onClick={onClose}>
@@ -72,7 +74,7 @@ export default function PendingRequestsModal({
           {requests.length === 0 ? (
             <div className="pending-requests-empty">
               <span className="empty-icon">✓</span>
-              <p>No pending requests</p>
+              <p>{t("no_pending_requests")}</p>
             </div>
           ) : (
             <div className="pending-requests-list">
@@ -121,17 +123,17 @@ export default function PendingRequestsModal({
                         className="request-action-btn request-reject-btn"
                         onClick={() => openConfirmModal("reject", request)}
                         disabled={processingId !== null}
-                        title="Reject request"
+                        title={t("reject_request")}
                       >
                         {processingId === request.id ? (
                           <>
                             <span className="spinner"></span>
-                            <span>Rejecting...</span>
+                            <span>{t("rejecting")}</span>
                           </>
                         ) : (
                           <>
                             <FaTrash />
-                            <span>Reject</span>
+                            <span>{t("reject")}</span>
                           </>
                         )}
                       </button>
@@ -139,17 +141,17 @@ export default function PendingRequestsModal({
                         className="request-action-btn request-accept-btn"
                         onClick={() => openConfirmModal("accept", request)}
                         disabled={processingId !== null}
-                        title="Accept request"
+                        title={t("accept_request")}
                       >
                         {processingId === request.id ? (
                           <>
                             <span className="spinner"></span>
-                            <span>Accepting...</span>
+                            <span>{t("accepting")}</span>
                           </>
                         ) : (
                           <>
                             <FaCheck />
-                            <span>Accept</span>
+                            <span>{t("accept")}</span>
                           </>
                         )}
                       </button>

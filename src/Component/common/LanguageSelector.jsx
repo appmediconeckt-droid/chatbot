@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { FaChevronDown, FaChevronUp, FaSearch } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp, FaGlobe, FaSearch } from 'react-icons/fa';
 import { SUPPORTED_LANGUAGES } from '../../i18n/LanguageContext';
 import './LanguageSelector.css';
 
@@ -153,7 +153,7 @@ export function LanguageSelector({
         title={t ? t('select_language') : 'Select Language'}
         className="lang-selector-trigger"
       >
-        <span className="lang-trigger-globe">◎</span>
+        <FaGlobe className="lang-trigger-globe" aria-hidden="true" />
         <span className="lang-trigger-label">
           {triggerLabel || (compact ? current.code.toUpperCase() : current.label)}
         </span>

@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './Leanding.css';
 import './LandingChatTheme.css';
+import './LandingNavbarFix.css';
+import './LandingDoctorCarousel.css';
+import './LandingTestimonialCarousel.css';
 import logo from '../assets/humaeli.png';
 import logos from '../assets/humaeli logo (2).png';
 import wellnessHero from '../assets/humaeli-wellness-hero.png';
@@ -390,6 +393,34 @@ const Header = ({ onLoginClick }) => {
 // ========== HERO SECTION ==========
 const HeroSection = () => {
   const { t } = useSiteTranslation();
+  const [landingStats, setLandingStats] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadLandingStats = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/api/auth/landing-stats`);
+        if (isMounted && response.data?.success) {
+          setLandingStats(response.data.data);
+        }
+      } catch (error) {
+        console.error('Unable to load landing statistics:', error);
+      }
+    };
+
+    loadLandingStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const formatCount = (value) => (
+    Number.isFinite(Number(value))
+      ? new Intl.NumberFormat().format(Number(value))
+      : '—'
+  );
+
   return (
     <section className="section hero" id="home">
       <div className="container">
@@ -436,10 +467,13 @@ const HeroSection = () => {
         </div>
       </div>
       <div className="hero-stats" aria-label="Humaeli impact statistics">
-        <StatItem number="5000+" label={t('landing_ui_stat_patients')} />
-        <StatItem number="500+" label={t('landing_ui_stat_partners')} />
+        <StatItem number={formatCount(landingStats?.patientsHelped)} label={t('landing_ui_stat_patients')} />
+        <StatItem number={formatCount(landingStats?.medicalPartners)} label={t('landing_ui_stat_partners')} />
         <StatItem number="24/7" label={t('landing_ui_stat_supports')} />
-        <StatItem number="98+" label={t('landing_ui_stat_satisfied')} />
+        <StatItem
+          number={landingStats ? `${landingStats.satisfactionRate}%` : '—'}
+          label={t('landing_ui_stat_satisfied')}
+        />
       </div>
     </section>
   );
@@ -500,7 +534,9 @@ const ServicesSection = () => {
               <h3 className="service-title">{service.title}</h3>
               <p className="service-description">{service.description}</p>
               <button className="service-learn-more">
+                <Link to="/role-selector" >
                 {service.action}
+                </Link>
               </button>
             </div>
           ))}
@@ -647,6 +683,8 @@ const DoctorsSection = () => {
   const [doctors, setDoctors] = useState([]);
   const [isLoadingDoctors, setIsLoadingDoctors] = useState(true);
   const [doctorLoadError, setDoctorLoadError] = useState(false);
+  const [activeDoctorIndex, setActiveDoctorIndex] = useState(0);
+  const [isDoctorCarouselPaused, setIsDoctorCarouselPaused] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -695,9 +733,26 @@ const DoctorsSection = () => {
 
   const rankedDoctors = [...doctors]
     .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
-    .slice(0, 3);
-  const displayedDoctors = rankedDoctors.length === 3
-    ? [rankedDoctors[1], rankedDoctors[0], rankedDoctors[2]]
+    .slice(0, 8);
+
+  useEffect(() => {
+    if (rankedDoctors.length < 2 || isDoctorCarouselPaused) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveDoctorIndex((current) => (current + 1) % rankedDoctors.length);
+    }, 4000);
+    return () => window.clearInterval(timer);
+  }, [rankedDoctors.length, isDoctorCarouselPaused]);
+
+  useEffect(() => {
+    if (activeDoctorIndex >= rankedDoctors.length) setActiveDoctorIndex(0);
+  }, [activeDoctorIndex, rankedDoctors.length]);
+
+  const displayedDoctors = rankedDoctors.length > 2
+    ? [
+        rankedDoctors[(activeDoctorIndex - 1 + rankedDoctors.length) % rankedDoctors.length],
+        rankedDoctors[activeDoctorIndex],
+        rankedDoctors[(activeDoctorIndex + 1) % rankedDoctors.length],
+      ]
     : rankedDoctors;
 
   return (
@@ -709,7 +764,20 @@ const DoctorsSection = () => {
             {t('landing_ui_doctors_description')}
           </p>
         </div>
-        <div className="doctors-grid">
+        <div
+          className="doctors-carousel"
+          onMouseEnter={() => setIsDoctorCarouselPaused(true)}
+          onMouseLeave={() => setIsDoctorCarouselPaused(false)}
+          onFocusCapture={() => setIsDoctorCarouselPaused(true)}
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) {
+              setIsDoctorCarouselPaused(false);
+            }
+          }}
+          aria-roledescription="carousel"
+          aria-label="Our professionals"
+        >
+        <div className="doctors-grid" key={`doctor-slide-${activeDoctorIndex}`} aria-live="polite">
           {isLoadingDoctors && <p className="landing-doctors-state">{t('landing_doctors_loading')}</p>}
           {doctorLoadError && <p className="landing-doctors-state">{t('landing_doctors_error')}</p>}
           {!isLoadingDoctors && !doctorLoadError && displayedDoctors.map((doctor, index) => {
@@ -721,7 +789,7 @@ const DoctorsSection = () => {
             const description = doctor.bio || doctor.about ||
               `${doctor.qualification || t('landing_doctor_default_qualification')} with experience providing personalised mental wellness support.`;
             return (
-            <div className="doctor-card" key={doctor._id || doctor.id}>
+            <div className={`doctor-card doctor-slide doctor-slide-${index}`} key={doctor._id || doctor.id}>
               {index === 1 && <span className="doctor-featured-badge">{t('landing_ui_highly_rated')}</span>}
               <div className="doctor-header">
                 <div className="doctor-image">
@@ -768,6 +836,22 @@ const DoctorsSection = () => {
             <p className="landing-doctors-state">{t('landing_doctors_empty')}</p>
           )}
         </div>
+        {!isLoadingDoctors && !doctorLoadError && rankedDoctors.length > 1 && (
+          <div className="doctor-carousel-dots" role="tablist" aria-label="Choose a professional">
+            {rankedDoctors.map((doctor, index) => (
+              <button
+                key={doctor._id || doctor.id || index}
+                type="button"
+                className={`doctor-carousel-dot ${activeDoctorIndex === index ? "active" : ""}`}
+                onClick={() => setActiveDoctorIndex(index)}
+                aria-label={`Show professional ${index + 1}`}
+                aria-selected={activeDoctorIndex === index}
+                role="tab"
+              />
+            ))}
+          </div>
+        )}
+        </div>
       </div>
     </section>
   );
@@ -777,6 +861,7 @@ const DoctorsSection = () => {
 const TestimonialsSection = () => {
   const { t } = useSiteTranslation();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [isTestimonialPaused, setIsTestimonialPaused] = useState(false);
   const testimonials = [
     {
       quote: t('landing_ui_testimonial_quote'),
@@ -790,24 +875,34 @@ const TestimonialsSection = () => {
     })),
   ];
   const testimonial = testimonials[activeIndex];
-  const showPrevious = () => setActiveIndex((current) => (
-    current === 0 ? testimonials.length - 1 : current - 1
-  ));
-  const showNext = () => setActiveIndex((current) => (
-    current === testimonials.length - 1 ? 0 : current + 1
-  ));
   const TESTIMONIAL_COUNT = testimonials.length;
   const n = activeIndex + 1;
 
+  useEffect(() => {
+    if (isTestimonialPaused || TESTIMONIAL_COUNT < 2) return undefined;
+
+    const autoplayTimer = window.setInterval(() => {
+      setActiveIndex((current) => (current + 1) % TESTIMONIAL_COUNT);
+    }, 5000);
+
+    return () => window.clearInterval(autoplayTimer);
+  }, [isTestimonialPaused, TESTIMONIAL_COUNT]);
+
   return (
     <section className="section testimonials" id="testimonials">
-      <div className="testimonial-stage">
+      <div
+        className="testimonial-stage"
+        onMouseEnter={() => setIsTestimonialPaused(true)}
+        onMouseLeave={() => setIsTestimonialPaused(false)}
+        onFocusCapture={() => setIsTestimonialPaused(true)}
+        onBlurCapture={() => setIsTestimonialPaused(false)}
+        aria-roledescription="carousel"
+        aria-label="Client testimonials"
+      >
         <span className="testimonial-label">{t('landing_ui_testimonial_label')}</span>
-        <blockquote className="testimonial-display-text">"{testimonial.quote}"</blockquote>
-        <div className="testimonial-footer">
-          <button className="testimonial-arrow" type="button" onClick={showPrevious} aria-label="Previous testimonial">
-            <i className="fas fa-long-arrow-alt-left"></i>
-          </button>
+        <div className="testimonial-slide" key={activeIndex} aria-live="polite">
+          <blockquote className="testimonial-display-text">"{testimonial.quote}"</blockquote>
+          <div className="testimonial-footer">
           <div className="testimonial-display-author">
             <img src={whyChooseHumaeli} alt="" className="testimonial-avatar" />
             <div>
@@ -815,9 +910,20 @@ const TestimonialsSection = () => {
               <div className="author-role">{testimonial.role}</div>
             </div>
           </div>
-          <button className="testimonial-arrow" type="button" onClick={showNext} aria-label="Next testimonial">
-            <i className="fas fa-long-arrow-alt-right"></i>
-          </button>
+          </div>
+        </div>
+        <div className="testimonial-stage-dots" role="tablist" aria-label="Choose testimonial">
+          {testimonials.map((_, index) => (
+            <button
+              key={index}
+              type="button"
+              className={`testimonial-stage-dot ${index === activeIndex ? 'active' : ''}`}
+              onClick={() => setActiveIndex(index)}
+              aria-label={`${t('landing_testimonial_view')} ${index + 1}`}
+              aria-selected={index === activeIndex}
+              role="tab"
+            />
+          ))}
         </div>
       </div>
       <div className="container">

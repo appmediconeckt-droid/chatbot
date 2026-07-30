@@ -2008,6 +2008,26 @@
   box-shadow: none;
 }
 
+/* Keep long counselor specialties readable on phone-sized cards. */
+@media (max-width: 768px) {
+  .counselor-card-unique .counselor-specialization-unique {
+    position: static;
+    inset: auto;
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 12px;
+    padding: 8px 10px;
+    font-size: 12px !important;
+    line-height: 1.45;
+    white-space: normal;
+    overflow: visible;
+    overflow-wrap: break-word;
+    word-break: normal;
+  }
+}
+
 /* Recommended counselor card: mobile containment and balanced spacing. */
 @media (max-width: 768px) {
   .recommended-section-unique {

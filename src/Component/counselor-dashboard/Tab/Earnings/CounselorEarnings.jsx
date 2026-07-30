@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { FaArrowRight, FaCheckCircle, FaComments, FaPhoneAlt, FaTimes, FaVideo, FaWallet } from "react-icons/fa";
+import { FaArrowRight, FaCalendarAlt, FaCheckCircle, FaComments, FaFilter, FaPhoneAlt, FaTimes, FaUndo, FaVideo, FaWallet } from "react-icons/fa";
 import axiosInstance from "../../../../axiosConfig";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import "./CounselorEarnings.css";
 
 const money = (value) =>
@@ -10,6 +11,7 @@ const money = (value) =>
   })}`;
 
 const CounselorEarnings = () => {
+  const { t } = useCounselorTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -65,6 +67,20 @@ const CounselorEarnings = () => {
     };
   }, [dateFilter.from, dateFilter.to]);
 
+  useEffect(() => {
+    if (!showWithdrawal) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape" && !submitting) setShowWithdrawal(false);
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [showWithdrawal, submitting]);
+
   const applyDateFilter = (event) => {
     event.preventDefault();
     if (dateInputs.from && dateInputs.to && dateInputs.from > dateInputs.to) {
@@ -92,11 +108,21 @@ const CounselorEarnings = () => {
   const submitWithdrawal = async (event) => {
     event.preventDefault();
     setNotice("");
+    const amount = Number(withdrawalForm.amount);
+    const availableBalance = Number(data?.balance || 0);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setNotice("Please enter a valid withdrawal amount.");
+      return;
+    }
+    if (amount > availableBalance) {
+      setNotice("Withdrawal amount cannot exceed your available balance.");
+      return;
+    }
     try {
       setSubmitting(true);
       const response = await axiosInstance.post("/api/wallet/withdraw", {
         ...withdrawalForm,
-        amount: Number(withdrawalForm.amount),
+        amount,
       });
       setNotice(response.data?.message || "Withdrawal request submitted successfully.");
       setWithdrawalForm((current) => ({ ...current, amount: "" }));
@@ -110,7 +136,7 @@ const CounselorEarnings = () => {
   };
 
   if (loading) {
-    return <div className="rounded-2xl bg-white p-10 text-center text-slate-500">Loading earnings...</div>;
+    return <div className="rounded-2xl bg-white p-10 text-center text-slate-500">{t("loading_earnings")}</div>;
   }
 
   if (error) {
@@ -127,27 +153,35 @@ const CounselorEarnings = () => {
   const selectedFeePercent = withdrawalForm.payoutType === "instant" ? Number(instantOption.feePercent || 0) : 0;
   const estimatedFee = Math.round((requestedAmount * selectedFeePercent + Number.EPSILON) * 100) / 100;
   const estimatedPayout = Math.max(0, requestedAmount - estimatedFee);
+  const availableBalance = Number(data?.balance || 0);
+  const canSubmitWithdrawal =
+    requestedAmount > 0 &&
+    requestedAmount <= availableBalance &&
+    !submitting;
 
   return (
     <div className="counselor-earnings-page ml-2 mt-3 space-y-6 p-1 sm:ml-3 sm:mt-4 lg:ml-5 lg:mt-5">
       <header className="earnings-page-title">
-        <h1>Earnings Overview</h1>
+        <h1>{t("earnings_overview")}</h1>
       </header>
 
       <div className="earnings-overview-layout">
         <div className="earnings-overview-main">
           <section className="earnings-balance-card">
-            <div className="earnings-balance-label"><FaWallet /> Total Earning</div>
+            <div className="earnings-balance-label"><FaWallet /> {t("total_earning")}</div>
             <div className="earnings-growth">↗ +12.5%</div>
             <strong>{money(data?.totalEarned)}</strong>
             <p>Across {earnings.length} completed sessions this month</p>
             <div className="earnings-balance-footer">
-              <div><span>Pending</span><b>{money(data?.pendingPayout)}</b></div>
-              <div><span>Withdrawable</span><b>{money(data?.balance)}</b></div>
+              <div><span>{t("pending")}</span><b>{money(data?.pendingPayout)}</b></div>
+              <div><span>{t("withdrawable")}</span><b>{money(data?.balance)}</b></div>
               <button
                 type="button"
-                onClick={() => { setNotice(""); setShowWithdrawal((value) => !value); }}
-                disabled={Number(data?.balance || 0) <= 0}
+                onClick={() => {
+                  setNotice("");
+                  setShowWithdrawal(true);
+                }}
+                aria-haspopup="dialog"
               >
                 <FaArrowRight /> Withdraw
               </button>
@@ -155,15 +189,15 @@ const CounselorEarnings = () => {
           </section>
 
           <div className="earnings-summary-grid">
-            <article><span><FaCheckCircle /> Last 30 Days</span><strong>{money(data?.totalEarned)}</strong></article>
-            <article><span><FaCheckCircle /> Last 30 Days</span><strong>{money(data?.balance)}</strong></article>
-            <article><span>Pending Payout</span><strong>{money(data?.pendingPayout)}</strong><small>◷ Awaiting processing</small></article>
-            <article><span>This Month</span><strong>{money(data?.totalEarned)}</strong><small>{earnings.length} sessions completed</small></article>
+            <article><span><FaCheckCircle /> {t("last_30_days")}</span><strong>{money(data?.totalEarned)}</strong></article>
+            <article><span><FaCheckCircle /> {t("last_30_days")}</span><strong>{money(data?.balance)}</strong></article>
+            <article><span>{t("pending_payout")}</span><strong>{money(data?.pendingPayout)}</strong><small>◷ {t("awaiting_processing")}</small></article>
+            <article><span>{t("this_month")}</span><strong>{money(data?.totalEarned)}</strong><small>{earnings.length} {t("sessions_completed")}</small></article>
           </div>
         </div>
 
         <aside className="earnings-recent-panel">
-          <div className="earnings-recent-header"><h2>Recent Transactions</h2><span>View all</span></div>
+          <div className="earnings-recent-header"><h2>{t("recent_transactions")}</h2><span>{t("view_all")}</span></div>
           <div className="earnings-recent-list">
             {earnings.slice(0, 5).map((earning) => {
               const type = String(earning.sessionType || "chat").toLowerCase();
@@ -180,45 +214,59 @@ const CounselorEarnings = () => {
                 </div>
               );
             })}
-            {!earnings.length && <p className="earnings-recent-empty">No transactions yet.</p>}
+            {!earnings.length && <p className="earnings-recent-empty">{t("no_transactions_yet")}</p>}
           </div>
         </aside>
       </div>
 
-      <form onSubmit={applyDateFilter} className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mr-auto">
-          <h2 className="text-sm font-bold text-slate-900">Filter by date</h2>
-          <p className="mt-1 text-xs text-slate-500">View complete earnings and withdrawals for any selected period.</p>
+      <form onSubmit={applyDateFilter} className="earnings-date-filter-card">
+        <div className="earnings-date-filter-heading">
+          <span className="earnings-date-filter-icon" aria-hidden="true"><FaCalendarAlt /></span>
+          <div>
+            <h2>{t("filter_by_date")}</h2>
+            <p>{t("earnings_filter_description")}</p>
+          </div>
         </div>
-        <label className="flex min-w-[150px] flex-col gap-1 text-xs font-semibold text-slate-600">
-          From date
+
+        <div className="earnings-date-filter-controls">
+        <label className="earnings-date-field">
+          <span>From date</span>
           <input
             type="date"
             value={dateInputs.from}
             max={dateInputs.to || undefined}
             onChange={(event) => setDateInputs((current) => ({ ...current, from: event.target.value }))}
-            className="earnings-date-input rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-800 outline-none"
+            className="earnings-date-input"
           />
         </label>
-        <label className="flex min-w-[150px] flex-col gap-1 text-xs font-semibold text-slate-600">
-          To date
+        <span className="earnings-date-separator" aria-hidden="true">→</span>
+        <label className="earnings-date-field">
+          <span>To date</span>
           <input
             type="date"
             value={dateInputs.to}
             min={dateInputs.from || undefined}
             onChange={(event) => setDateInputs((current) => ({ ...current, to: event.target.value }))}
-            className="earnings-date-input rounded-lg border border-slate-300 px-3 py-2 text-sm font-normal text-slate-800 outline-none"
+            className="earnings-date-input"
           />
         </label>
-        <button type="submit" className="earnings-primary-button rounded-lg px-4 py-2 text-sm font-bold text-white">Apply</button>
+        <button type="submit" className="earnings-primary-button earnings-filter-action">
+          <FaFilter aria-hidden="true" /> {t("apply")}
+        </button>
         {(dateFilter.from || dateFilter.to) && (
-          <button type="button" onClick={clearDateFilter} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-bold text-slate-700 hover:bg-slate-50">Clear</button>
+          <button type="button" onClick={clearDateFilter} className="earnings-filter-clear">
+            <FaUndo aria-hidden="true" /> {t("clear")}
+          </button>
         )}
+        </div>
         {data?.period?.filtered && (
-          <p className="earnings-filter-summary w-full text-xs font-semibold">
+          <p className="earnings-filter-summary">
+            <FaCheckCircle aria-hidden="true" />
+            <span>
             Showing {data.period.earningCount} earning records and {data.period.withdrawalCount} withdrawals
             {data.period.from ? ` from ${new Date(`${data.period.from}T00:00:00`).toLocaleDateString("en-IN")}` : ""}
             {data.period.to ? ` to ${new Date(`${data.period.to}T00:00:00`).toLocaleDateString("en-IN")}` : ""}.
+            </span>
           </p>
         )}
       </form>
@@ -232,14 +280,27 @@ const CounselorEarnings = () => {
       )}
 
       {showWithdrawal && (
-        <form onSubmit={submitWithdrawal} className="withdrawal-card">
+        <div
+          className="withdrawal-modal-overlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !submitting) setShowWithdrawal(false);
+          }}
+        >
+        <form
+          onSubmit={submitWithdrawal}
+          className="withdrawal-card"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="withdrawal-dialog-title"
+        >
           <div className="withdrawal-card-header">
             <div className="withdrawal-card-heading">
               <span className="withdrawal-card-icon" aria-hidden="true">₹</span>
               <div>
-                <span className="withdrawal-card-eyebrow">Secure payout</span>
-                <h2>Withdraw your earnings</h2>
-                <p>Funds will be transferred to the bank account entered below.</p>
+                <span className="withdrawal-card-eyebrow">{t("secure_payout")}</span>
+                <h2 id="withdrawal-dialog-title">{t("withdraw_your_earnings")}</h2>
+                <p>{t("withdrawal_transfer_description")}</p>
               </div>
             </div>
             <button type="button" onClick={() => setShowWithdrawal(false)} className="withdrawal-close" aria-label="Close withdrawal form" title="Close">
@@ -248,18 +309,28 @@ const CounselorEarnings = () => {
           </div>
 
           <div className="withdrawal-balance">
-            <span>Available balance</span>
+            <span>{t("available_balance")}</span>
             <strong>{money(data?.balance)}</strong>
-            <small>You can request up to your available balance.</small>
+            <small>{t("withdrawal_balance_hint")}</small>
           </div>
+
+          {availableBalance <= 0 && (
+            <div className="withdrawal-zero-balance" role="status">
+              Your withdrawal form is ready, but there is currently no withdrawable balance. Completed and cleared session earnings will appear here automatically.
+            </div>
+          )}
+
+          {notice && (
+            <div className="withdrawal-form-notice" role="alert">{notice}</div>
+          )}
 
           <div className="withdrawal-section-title">
             <span>1</span>
-            <div><strong>Withdrawal amount</strong><small>Enter the amount you want to withdraw</small></div>
+            <div><strong>{t("withdrawal_amount")}</strong><small>{t("enter_withdrawal_amount")}</small></div>
           </div>
 
           <label className="withdrawal-field withdrawal-amount-field">
-            <span className="withdrawal-label">Amount</span>
+            <span className="withdrawal-label">{t("amount")}</span>
             <div className="withdrawal-amount-input">
               <b>₹</b>
               <input
@@ -278,7 +349,7 @@ const CounselorEarnings = () => {
 
           <div className="withdrawal-section-title">
             <span>2</span>
-            <div><strong>Choose payout speed</strong><small>Select when you want the money in your bank</small></div>
+            <div><strong>{t("choose_payout_speed")}</strong><small>{t("payout_speed_hint")}</small></div>
           </div>
           <div className="payout-speed-options">
             <button
@@ -287,8 +358,8 @@ const CounselorEarnings = () => {
               onClick={() => setWithdrawalForm((current) => ({ ...current, payoutType: "standard" }))}
             >
               <span className="payout-speed-radio" />
-              <span><strong>Standard payout</strong><small>Free · Within {standardOption.etaDays || 3} business days</small></span>
-              <b>FREE</b>
+              <span><strong>{t("standard_payout")}</strong><small>{t("free")} · {t("within")} {standardOption.etaDays || 3} {t("business_days")}</small></span>
+              <b>{t("free")}</b>
             </button>
             <button
               type="button"
@@ -297,7 +368,7 @@ const CounselorEarnings = () => {
             >
               <span className="payout-speed-radio" />
               <span>
-                <strong>Instant payout</strong>
+                <strong>{t("instant_payout")}</strong>
                 <small>Money arrives within {instantOption.etaMinutes || 30} minutes</small>
               </span>
               <b>{instantOption.isFirstFree ? "FIRST ONE FREE" : `${instantOption.feePercent || 0}% FEE`}</b>
@@ -311,7 +382,7 @@ const CounselorEarnings = () => {
               ) : (
                 <p>Instant payout fee ({selectedFeePercent}%): <strong>-{money(estimatedFee)}</strong></p>
               )}
-              <div><span>You will receive</span><strong>{money(estimatedPayout)}</strong></div>
+              <div><span>{t("you_will_receive")}</span><strong>{money(estimatedPayout)}</strong></div>
             </div>
           )}
 
@@ -319,7 +390,7 @@ const CounselorEarnings = () => {
             <>
               <div className="withdrawal-section-title withdrawal-bank-title">
                 <span>3</span>
-                <div><strong>Verified payout account</strong><small>Your withdrawal will be sent to this saved account</small></div>
+                <div><strong>{t("verified_payout_account")}</strong><small>{t("verified_payout_hint")}</small></div>
               </div>
               <div className="verified-payout-account">
                 <span className="verified-payout-icon">✓</span>
@@ -328,14 +399,14 @@ const CounselorEarnings = () => {
                   <p>{verifiedPayoutAccount.accountName} · Account ending in {verifiedPayoutAccount.last4}</p>
                   <small>IFSC: {verifiedPayoutAccount.ifsc}</small>
                 </div>
-                <span className="verified-payout-badge">Verified</span>
+                <span className="verified-payout-badge">{t("verified")}</span>
               </div>
             </>
           ) : (
             <>
               <div className="withdrawal-section-title withdrawal-bank-title">
                 <span>3</span>
-                <div><strong>Verify bank account</strong><small>Required only for your first withdrawal</small></div>
+                <div><strong>{t("verify_bank_account")}</strong><small>{t("first_withdrawal_requirement")}</small></div>
               </div>
               <div className="withdrawal-fields-grid">
                 {[
@@ -373,17 +444,18 @@ const CounselorEarnings = () => {
           </div>
 
           <div className="withdrawal-actions">
-            <button type="button" onClick={() => setShowWithdrawal(false)} className="withdrawal-cancel">Cancel</button>
-            <button type="submit" disabled={submitting} className="withdrawal-submit">
+            <button type="button" onClick={() => setShowWithdrawal(false)} className="withdrawal-cancel">{t("common.cancel")}</button>
+            <button type="submit" disabled={!canSubmitWithdrawal} className="withdrawal-submit">
               {submitting ? "Submitting request..." : withdrawalForm.payoutType === "instant" ? "Withdraw instantly" : "Request withdrawal"}
             </button>
           </div>
         </form>
+        </div>
       )}
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-5">
-          <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">Counselor share</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">{t("counselor_share")}</p>
           <div className="mt-2">
             <strong className="text-3xl text-indigo-950">{counselorPercentage}%</strong>
           </div>
@@ -392,7 +464,7 @@ const CounselorEarnings = () => {
           </div>
         </div>
         <div className="rounded-2xl border border-amber-100 bg-amber-50 p-5">
-          <p className="text-xs font-bold uppercase tracking-wider text-amber-700">Platform commission</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-amber-700">{t("platform_commission")}</p>
           <div className="mt-2">
             <strong className="text-3xl text-amber-950">{platformPercentage}%</strong>
           </div>
@@ -404,19 +476,19 @@ const CounselorEarnings = () => {
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="font-bold text-slate-900">Earning history</h2>
+          <h2 className="font-bold text-slate-900">{t("earning_history")}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
               <tr>
-                <th className="px-5 py-3">Date</th>
-                <th className="px-4 py-3">User / session</th>
-                <th className="px-4 py-3 text-right">Gross</th>
+                <th className="px-5 py-3">{t("date")}</th>
+                <th className="px-4 py-3">{t("user_session")}</th>
+                <th className="px-4 py-3 text-right">{t("gross")}</th>
                 <th className="px-4 py-3 text-right">Platform ({platformPercentage}%)</th>
                 <th className="px-4 py-3 text-right">Your earning ({counselorPercentage}%)</th>
-                <th className="px-4 py-3">Earning status</th>
-                <th className="px-5 py-3">Payout</th>
+                <th className="px-4 py-3">{t("earning_status")}</th>
+                <th className="px-5 py-3">{t("payout")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -446,7 +518,7 @@ const CounselorEarnings = () => {
                   </td>
                 </tr>
               )) : (
-                <tr><td colSpan="7" className="px-5 py-12 text-center text-slate-500">No paid session earnings yet.</td></tr>
+                <tr><td colSpan="7" className="px-5 py-12 text-center text-slate-500">{t("no_paid_earnings")}</td></tr>
               )}
             </tbody>
           </table>
@@ -455,13 +527,13 @@ const CounselorEarnings = () => {
 
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-5 py-4">
-          <h2 className="font-bold text-slate-900">Withdrawal requests</h2>
+          <h2 className="font-bold text-slate-900">{t("withdrawal_requests")}</h2>
           <p className="mt-1 text-xs text-slate-500">Approved means the payout is being processed. Paid appears after the bank transfer is completed.</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[620px] text-left text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
-              <tr><th className="px-5 py-3">Date</th><th className="px-4 py-3">Bank</th><th className="px-4 py-3">Payout type</th><th className="px-4 py-3 text-right">Amount</th><th className="px-5 py-3">Status</th></tr>
+              <tr><th className="px-5 py-3">{t("date")}</th><th className="px-4 py-3">{t("bank")}</th><th className="px-4 py-3">{t("payout_type")}</th><th className="px-4 py-3 text-right">{t("amount")}</th><th className="px-5 py-3">{t("status")}</th></tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {data?.withdrawals?.length ? data.withdrawals.map((item) => (
@@ -493,7 +565,7 @@ const CounselorEarnings = () => {
                     )}
                   </td>
                 </tr>
-              )) : <tr><td colSpan="5" className="px-5 py-10 text-center text-slate-500">No withdrawal requests yet.</td></tr>}
+              )) : <tr><td colSpan="5" className="px-5 py-10 text-center text-slate-500">{t("no_withdrawal_requests")}</td></tr>}
             </tbody>
           </table>
         </div>

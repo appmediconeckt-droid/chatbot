@@ -144,6 +144,36 @@
   .settings-account-card dl > div { grid-template-columns: 90px minmax(0, 1fr); }
   .settings-profile-row button { width: 30px; padding: 0; justify-content: center; font-size: 0; }
   .settings-profile-row button svg { font-size: 11px; }
+
+  .settings-password-summary {
+    min-height: 0;
+    padding: 18px 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+
+  .settings-password-summary > div:first-child {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .settings-password-actions {
+    display: flex;
+    width: 100%;
+    max-width: 100%;
+    padding: 4px;
+    align-self: stretch;
+  }
+
+  .settings-password-actions button {
+    flex: 1 1 50%;
+    min-width: 0;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 12px;
+    white-space: nowrap;
+  }
 }
 
 .account-settings {

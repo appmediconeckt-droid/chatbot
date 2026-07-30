@@ -16,13 +16,9 @@ import {
   FaChevronRight,
   FaComments,
   FaCog,
-  FaCreditCard,
   FaEnvelope,
   FaExclamationTriangle,
-  FaGlobe,
-  FaHistory,
   FaKey,
-  FaLanguage,
   FaLock,
   FaMapMarkerAlt,
   FaMoneyBillWave,
@@ -36,7 +32,6 @@ import {
   FaSignOutAlt,
   FaUser,
   FaUserEdit,
-  FaWallet,
   FaBoxOpen,
   FaImage,
 } from "react-icons/fa";
@@ -217,17 +212,12 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
           setShowPasswordEditor(true);
         },
       },
-      {
-        icon: <FaHistory />,
-        label: "Login Activity",
-        action: handleLocationRefresh,
-      },
     ];
 
     return (
       <section className={`counselor-security-settings ${counselorSettingsSection === "support" ? "is-support-page" : ""}`}>
         <header className="counselor-security-settings__page-title">
-          <h1>{counselorSettingsSection === "support" ? "Help & Support" : "Settings"}</h1>
+          <h1>{counselorSettingsSection === "support" ? t("help_support") : t("settings.title")}</h1>
         </header>
 
         {notice.message && <div className={`account-settings__notice ${notice.type}`}>{notice.message}</div>}
@@ -242,17 +232,15 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             <strong>{account.specialization}</strong>
             <p>{account.email}</p>
           </div>
-          {onOpenProfile && <button type="button" onClick={onOpenProfile}><FaPencilAlt /> Edit</button>}
+          {onOpenProfile && <button type="button" onClick={onOpenProfile}><FaPencilAlt /> {t("edit")}</button>}
         </section>
 
         <section className="counselor-settings-toolbar">
-          <label><FaSearch /><input type="search" placeholder="Search Setting" aria-label="Search settings" /></label>
+          <label><FaSearch /><input type="search" placeholder={t("search_settings")} aria-label={t("search_settings")} /></label>
           <nav>
-            <button type="button" onClick={() => setCounselorSettingsSection("account")}><FaUser /> Profile</button>
-            <button type="button" onClick={() => setCounselorSettingsSection("account")}><FaCreditCard /> Payout</button>
-            <button type="button" onClick={() => setCounselorSettingsSection("privacy")}><FaShieldAlt /> Privacy</button>
-            <button type="button" onClick={() => setCounselorSettingsSection("support")}><FaQuestionCircle /> Help</button>
-            <button type="button"><FaGlobe /> Language</button>
+            <button type="button" onClick={() => setCounselorSettingsSection("account")}><FaUser /> {t("profile")}</button>
+            <button type="button" onClick={() => setCounselorSettingsSection("privacy")}><FaShieldAlt /> {t("privacy")}</button>
+            <button type="button" onClick={() => setCounselorSettingsSection("support")}><FaQuestionCircle /> {t("help")}</button>
           </nav>
         </section>
 
@@ -263,14 +251,14 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
               className={counselorSettingsSection === "account" ? "active" : ""}
               onClick={() => setCounselorSettingsSection("account")}
             >
-              Account
+              {t("account")}
             </button>
             <button
               type="button"
               className={counselorSettingsSection === "security" ? "active" : ""}
               onClick={() => setCounselorSettingsSection("security")}
             >
-              Security
+              {t("security")}
             </button>
             <button type="button"><FaBell /> {t('settings.notification')}</button>
             <button
@@ -278,30 +266,24 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
               className={counselorSettingsSection === "privacy" ? "active" : ""}
               onClick={() => setCounselorSettingsSection("privacy")}
             >
-              <FaShieldAlt /> Privacy
+              <FaShieldAlt /> {t("privacy")}
             </button>
             <button
               type="button"
               className={counselorSettingsSection === "support" ? "active" : ""}
               onClick={() => setCounselorSettingsSection("support")}
             >
-              <FaQuestionCircle /> Support
+              <FaQuestionCircle /> {t("support")}
             </button>
           </aside>
 
           <main>
             {counselorSettingsSection === "account" ? (
               <>
-                <span className="counselor-settings-section-label">ACCOUNT</span>
+                <span className="counselor-settings-section-label">{t("account")}</span>
                 <div className="counselor-security-list counselor-account-list">
                   <button type="button" onClick={onOpenProfile}>
-                    <i><FaUser /></i><span>Edit Profile</span><FaChevronRight />
-                  </button>
-                  <button type="button">
-                    <i><FaWallet /></i><span>Payout Account</span><FaChevronRight />
-                  </button>
-                  <button type="button">
-                    <i><FaLanguage /></i><span>Language</span><FaChevronRight />
+                    <i><FaUser /></i><span>{t("edit_profile")}</span><FaChevronRight />
                   </button>
                 </div>
 
@@ -390,12 +372,12 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
           <section className={`settings-password-card ${showPasswordEditor ? "is-open" : ""}`}>
             <div className="settings-password-summary">
               <div>
-                <h3>Password Security</h3>
-                <p>Update your current password</p>
+                <h3>{t("password_security")}</h3>
+                <p>{t("update_current_password")}</p>
                 <small>Current: &nbsp;••••••••</small>
               </div>
               <div className="settings-password-actions">
-                <button type="button" onClick={() => { setPasswordEditorMode("set"); setShowPasswordEditor(true); }}>Add</button>
+                <button type="button" onClick={() => { setPasswordEditorMode("set"); setShowPasswordEditor(true); }}>{t("add")}</button>
                 <button type="button" className="active" onClick={() => { setPasswordEditorMode("change"); setShowPasswordEditor((value) => !value); }}>
                   {showPasswordEditor ? "Close" : "Change"}
                 </button>
@@ -415,7 +397,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
           <section className="settings-location-card settings-app-lock-card">
             <span className="settings-round-icon"><FaLock /></span>
-            <div><h3>App Lock</h3><p>Setup a password to lock your website</p></div>
+              <div><h3>{t("app_lock")}</h3><p>{t("app_lock_description")}</p></div>
             <button type="button" onClick={() => setShowPasswordEditor(true)}>
               <span>›</span>
             </button>
@@ -424,11 +406,11 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
         <aside className="settings-screen__side">
           <section className="settings-protected-card">
-            <div className="settings-protected-title"><strong><FaCheck /> Protected</strong><span>Score: {account.hasPassword ? "92%" : "68%"}</span></div>
+              <div className="settings-protected-title"><strong><FaCheck /> {t("protected")}</strong><span>{t("score")}: {account.hasPassword ? "92%" : "68%"}</span></div>
             <ul>
-              <li><FaCheck /> Account authentication active</li>
+                <li><FaCheck /> {t("account_authentication_active")}</li>
               <li><FaCheck /> {account.hasPassword ? "Strong password set" : "Password setup available"}</li>
-              <li><FaCheck /> Profile protection enabled</li>
+                <li><FaCheck /> {t("profile_protection_enabled")}</li>
             </ul>
           </section>
           <button type="button" className="settings-save-button" onClick={() => setShowPasswordEditor(true)}>
@@ -449,7 +431,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         <div className="account-settings__header-copy">
           <span className="account-settings__header-icon"><FaCog /></span>
           <div>
-            <span className="account-settings__eyebrow">ACCOUNT PREFERENCES</span>
+          <span className="account-settings__eyebrow">{t("account_preferences")}</span>
             <h1>{title}</h1>
             <p>{t('manage_account')}</p>
           </div>
@@ -477,7 +459,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         <div className={`account-settings__panel account-settings__panel--account ${!isCounselor ? "account-settings__panel--account-with-language" : ""}`}>
           <div className="account-settings__panel-heading">
             <span className="account-settings__panel-icon account-settings__panel-icon--account"><FaUser /></span>
-            <div><h2>{t('account')}</h2><p>Your personal and contact information</p></div>
+          <div><h2>{t('account')}</h2><p>{t("personal_contact_information")}</p></div>
           </div>
           <dl className="account-settings__details">
             <div>
@@ -536,7 +518,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
       <div className="account-settings__security">
         <div className="account-settings__security-title">
           <span><FaShieldAlt /></span>
-          <div><h2>Security</h2><p>Keep your account protected with a secure password.</p></div>
+          <div><h2>{t("settings.security")}</h2><p>{t("secure_password_description")}</p></div>
         </div>
         <PasswordChangePage
           email={account.email}

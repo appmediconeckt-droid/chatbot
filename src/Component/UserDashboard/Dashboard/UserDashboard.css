@@ -4738,3 +4738,193 @@
     }
   }
 }
+
+/* AI assistant: authoritative phone layout.
+   Keep the sheet between the mobile header and bottom navigation. */
+@media (max-width: 600px) {
+  .ud-chat-popup-overlay {
+    position: fixed;
+    top: calc(60px + env(safe-area-inset-top, 0px));
+    right: 6px;
+    bottom: calc(68px + env(safe-area-inset-bottom, 0px));
+    left: 6px;
+    width: auto;
+    max-width: none;
+    max-height: none;
+    overflow: hidden;
+    box-sizing: border-box;
+  }
+
+  .ud-chat-popup {
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    border: 1px solid #dce8e1;
+    border-radius: 16px;
+    box-shadow: 0 12px 34px rgba(20, 35, 30, 0.22);
+  }
+
+  .ud-chat-popup-header {
+    min-height: 64px;
+    padding: 9px 10px;
+    border-radius: 15px 15px 10px 10px;
+  }
+
+  .ud-chat-header-info {
+    min-width: 0;
+    gap: 8px;
+  }
+
+  .ud-chat-header-info h3 {
+    font-size: clamp(13px, 4.2vw, 16px);
+    line-height: 1.15;
+  }
+
+  .ud-chat-status {
+    font-size: 10px;
+  }
+
+  .ud-chat-header-actions {
+    flex: 0 0 auto;
+    gap: 5px;
+  }
+
+  .ud-chat-icon-btn {
+    width: 30px;
+    height: 30px;
+    flex: 0 0 30px;
+  }
+
+  .ud-chat-popup-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding: 14px 12px;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .ud-ai-welcome-card {
+    padding: 16px 14px;
+    font-size: 13px;
+  }
+
+  .ud-ai-welcome-card .ud-ai-welcome-title {
+    font-size: 14px;
+  }
+
+  .ud-ai-safety-note {
+    margin-top: 13px;
+    padding: 11px 9px;
+    font-size: 10px;
+  }
+
+  .ud-ai-mood-section {
+    margin: 20px 0 14px;
+  }
+
+  .ud-chat-popup-footer {
+    position: relative;
+    inset: auto;
+    flex: 0 0 auto;
+    min-height: 62px;
+    padding: 8px 10px calc(8px + env(safe-area-inset-bottom, 0px));
+    gap: 6px;
+    border-radius: 0 0 15px 15px;
+  }
+
+  .ud-chat-add-btn {
+    width: 38px;
+    height: 38px;
+    flex-basis: 38px;
+  }
+
+  .ud-chat-input-wrap {
+    min-width: 0;
+  }
+
+  .ud-chat-input {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    padding: 0 35px 0 36px;
+    font-size: 12px;
+  }
+
+  .ud-chat-input-wrap::before {
+    left: 11px;
+    font-size: 14px;
+  }
+
+  .ud-mic-btn {
+    right: 5px;
+  }
+
+  .ud-send-btn {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 40px;
+  }
+
+  .ud-floating-chat-wrap {
+    right: 12px;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 360px) {
+  .ud-chat-popup-overlay {
+    right: 3px;
+    left: 3px;
+  }
+
+  .ud-chat-popup-header {
+    padding-inline: 8px;
+  }
+
+  .ud-chat-avatar {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+
+  .ud-chat-icon-btn {
+    width: 28px;
+    height: 28px;
+    flex-basis: 28px;
+  }
+
+  .ud-chat-popup-body {
+    padding-inline: 9px;
+  }
+
+  .ud-chat-popup-footer {
+    padding-inline: 7px;
+  }
+}
+
+/* Mobile conversation viewport: the page itself must not scroll.
+   Only the messages column inside ChatBox is scrollable. */
+@media (max-width: 900px) {
+  .ud-content-scrollable:has(> .ud-chat-workspace) {
+    height: calc(
+      100dvh - 128px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)
+    );
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .ud-chat-workspace,
+  .ud-chat-workspace.has-conversation,
+  .ud-conversation-pane {
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .ud-conversation-pane > .chatContainerFull {
+    height: 100%;
+    min-height: 0;
+  }
+}

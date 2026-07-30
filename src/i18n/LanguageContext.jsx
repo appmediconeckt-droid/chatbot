@@ -81,7 +81,7 @@ const localeLoaders = import.meta.glob([
 const STATIC_LANDING_TRANSLATIONS = {
   'hi-IN': landingHiIN,
 };
-const landingTranslationRequests = new Map();
+const missingTranslationRequests = new Map();
 
 // Map old language codes to new ones for backward compatibility
 const LANGUAGE_CODE_MAP = {
@@ -145,14 +145,15 @@ async function loadLocaleMessages(lang) {
   }
 }
 
-async function translateMissingLandingMessages(lang, localeMessages, onProgress) {
-  const landingEntries = Object.entries(enUS).filter(([key]) => key.startsWith('landing_'));
-  const missingEntries = landingEntries.filter(([key]) => !localeMessages[key]);
+async function translateMissingMessages(lang, localeMessages, onProgress) {
+  const missingEntries = Object.entries(enUS).filter(
+    ([key, value]) => value && !localeMessages[key],
+  );
   if (!missingEntries.length) return {};
 
   const requestKey = `${lang}:${missingEntries.map(([key]) => key).join('|')}`;
-  if (!landingTranslationRequests.has(requestKey)) {
-    landingTranslationRequests.set(
+  if (!missingTranslationRequests.has(requestKey)) {
+    missingTranslationRequests.set(
       requestKey,
       translationService.translateBatch(
         missingEntries.map(([, value]) => value),
@@ -176,11 +177,11 @@ async function translateMissingLandingMessages(lang, localeMessages, onProgress)
             ? [[key, translatedValue]]
             : [];
         }),
-      )).finally(() => landingTranslationRequests.delete(requestKey)),
+      )).finally(() => missingTranslationRequests.delete(requestKey)),
     );
   }
 
-  return landingTranslationRequests.get(requestKey);
+  return missingTranslationRequests.get(requestKey);
 }
 
 export function LanguageProvider({ children }) {
@@ -217,7 +218,7 @@ export function LanguageProvider({ children }) {
 
     if (loadedTranslations[normalized]) {
       if (normalized !== 'en-US') {
-        translateMissingLandingMessages(
+        translateMissingMessages(
           normalized,
           loadedTranslations[normalized],
           mergeLandingMessages,
@@ -235,7 +236,7 @@ export function LanguageProvider({ children }) {
       // Render the locale immediately, then fill only the missing landing keys
       // through the same translation API used by the rest of the application.
       if (normalized !== 'en-US') {
-        translateMissingLandingMessages(
+        translateMissingMessages(
           normalized,
           messages,
           mergeLandingMessages,
@@ -279,7 +280,7 @@ export function LanguageProvider({ children }) {
     try {
       const baseMessages = loadedTranslations[normalized]
         || await loadLocaleMessages(normalized);
-      const landingMessages = await translateMissingLandingMessages(
+      const landingMessages = await translateMissingMessages(
         normalized,
         baseMessages,
       );

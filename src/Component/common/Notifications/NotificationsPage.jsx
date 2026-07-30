@@ -3,6 +3,7 @@ import { FaBell, FaCalendarAlt, FaCheck, FaCommentAlt, FaTrash } from "react-ico
 import { HiSparkles } from "react-icons/hi2";
 import axiosInstance from "../../../axiosConfig";
 import socketService from "../../../services/socketService";
+import { useCounselorTranslation, useUserTranslation } from "../../../i18n/LanguageContext";
 import "./Notifications.css";
 
 const icons = {
@@ -12,15 +13,17 @@ const icons = {
   ai: <HiSparkles />,
 };
 
-const filters = [
-  { value: "all", label: "All" },
-  { value: "unread", label: "Unread" },
-  { value: "appointment", label: "Appointments" },
-  { value: "message", label: "Chats" },
-];
-
 const NotificationsPage = ({ role = "user" }) => {
   const isCounselor = role === "counselor" || role === "counsellor";
+  const userTranslation = useUserTranslation();
+  const counselorTranslation = useCounselorTranslation();
+  const { t } = isCounselor ? counselorTranslation : userTranslation;
+  const filters = [
+    { value: "all", label: t("all") },
+    { value: "unread", label: t("unread") },
+    { value: "appointment", label: t("appointments") },
+    { value: "message", label: t("chats") },
+  ];
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [type, setType] = useState("");
@@ -99,11 +102,11 @@ const NotificationsPage = ({ role = "user" }) => {
     <div className={`notifications-page ${isCounselor ? "notifications-page--counselor" : ""}`}>
       <header className="notifications-hero">
         <div>
-          <h1>Notification</h1>
-          <p>Manage your reminders</p>
+          <h1>{t("notifications")}</h1>
+          <p>{t("manage_reminders")}</p>
         </div>
         <button type="button" onClick={markAll} className="notifications-primary-action" disabled={unreadCount === 0}>
-          Mark all as read
+          {t("mark_all_read")}
         </button>
       </header>
 
@@ -119,12 +122,12 @@ const NotificationsPage = ({ role = "user" }) => {
 
       <section className="notifications-panel">
         {loading ? (
-          <div className="p-12 text-center text-slate-500">Loading notifications...</div>
+          <div className="p-12 text-center text-slate-500">{t("loading_notifications")}</div>
         ) : notifications.length === 0 ? (
           <div className="p-14 text-center">
             <FaBell className="mx-auto mb-3 text-4xl text-slate-300" />
-            <h2 className="font-bold text-slate-700">No notifications found</h2>
-            <p className="mt-1 text-sm text-slate-500">New updates will appear here automatically.</p>
+            <h2 className="font-bold text-slate-700">{t("no_notifications_found")}</h2>
+            <p className="mt-1 text-sm text-slate-500">{t("notification_updates_hint")}</p>
           </div>
         ) : notifications.map((notification) => (
           <article key={notification._id} className={`notifications-page-item ${notification.isRead ? "is-read" : "is-unread"}`}>
@@ -138,7 +141,7 @@ const NotificationsPage = ({ role = "user" }) => {
               <p>{notification.message}</p>
               {!notification.isRead && (
                 <button type="button" onClick={() => markRead(notification._id)} className="notification-inline-action">
-                  <FaCheck /> Mark as read
+                  <FaCheck /> {t("mark_as_read")}
                 </button>
               )}
             </div>

@@ -3592,13 +3592,6 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
     });
   };
 
-  const focusMessageInput = () => {
-    const input = messageInputRef.current;
-    if (!input) return;
-    requestAnimationFrame(() => input.focus({ preventScroll: true }));
-    setTimeout(() => messageInputRef.current?.focus({ preventScroll: true }), 50);
-  };
-
   const selectedUser = embeddedUser || location.state?.selectedUser;
   const chatId = embeddedChatId || location.state?.chatId;
   const selectedUserPresence = getPresence(selectedUser || {});
@@ -4053,7 +4046,6 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       alert(errorMsg);
     } finally {
       setDeletingMessageId(null);
-      focusMessageInput();
     }
   };
 
@@ -4077,7 +4069,6 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
     };
     setMessages((prev) => [...prev, tempMessage]);
     setMessage("");
-    focusMessageInput();
     setIsSending(true);
     setError(null);
     try {
@@ -4120,7 +4111,6 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       setTimeout(() => setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id)), 3000);
     } finally {
       setIsSending(false);
-      focusMessageInput();
     }
   };
 
@@ -4128,13 +4118,8 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
     if (e.key === "Enter" && !e.shiftKey && !isSending) {
       e.preventDefault();
       handleSendMessage(e);
-      focusMessageInput();
     }
   };
-
-  useEffect(() => {
-    if (!isSending) focusMessageInput();
-  }, [isSending]);
 
   const handleFileAttachClick = () => {
     if (isSending) return;
@@ -4539,7 +4524,6 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       alert(errorMsg);
     } finally {
       setDeletingCallId(null);
-      focusMessageInput();
     }
   };
 
@@ -5232,7 +5216,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const renderCallItem = (call) => {
     const isOutgoing = call.direction === "outgoing";
     const callType = normalizeCallType(call.callType || call.type);
-    const callLabel = callType === "video" ? "Video" : "Voice";
+    const callLabel = callType === "video" ? t("video") : t("voice");
     const callIcon = callType === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />;
     
     let statusText = "";
@@ -5241,38 +5225,38 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
     
     if (call.status === "completed" || call.status === "active") {
       if (isOutgoing) {
-        statusText = "Call ended";
+        statusText = t("call_ended");
         statusIcon = <FaPhoneAlt aria-hidden="true" />;
         statusColor = "#667781";
       } else {
-        statusText = "Call ended";
+        statusText = t("call_ended");
         statusIcon = <FaPhoneAlt aria-hidden="true" />;
         statusColor = "#667781";
       }
     } else if (call.status === "missed") {
-      statusText = "Missed call";
+      statusText = t("missed_call");
       statusIcon = "❌";
       statusColor = "#d32f2f";
     } else if (call.status === "rejected") {
       if (isOutgoing) {
-        statusText = "Cancelled";
+        statusText = t("cancelled");
         statusIcon = <FaPhoneAlt aria-hidden="true" />;
         statusColor = "#667781";
       } else {
-        statusText = "Declined";
+        statusText = t("declined");
         statusIcon = <FaPhoneAlt aria-hidden="true" />;
         statusColor = "#667781";
       }
     } else if (call.status === "cancelled" || call.status === "canceled") {
-      statusText = "Cancelled";
+      statusText = t("cancelled");
       statusIcon = <FaPhoneAlt aria-hidden="true" />;
       statusColor = "#667781";
     } else if (call.status === "ringing" || call.status === "waiting" || call.status === "pending" || call.status === "requested") {
-      statusText = "Calling...";
+      statusText = t("calling");
       statusIcon = "⏳";
       statusColor = "#f57c00";
     } else {
-      statusText = call.status || "Call";
+      statusText = call.status || t("call");
       statusIcon = <FaPhoneAlt aria-hidden="true" />;
       statusColor = "#667781";
     }
@@ -5334,8 +5318,8 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
               className="sms-message-delete-btn"
               onClick={() => handleDeleteCall(call)}
               disabled={String(deletingCallId) === String(call.callId || call.id || call._id)}
-              title="Delete call"
-              aria-label="Delete call"
+              title={t("delete_call")}
+              aria-label={t("delete_call")}
             >
               {String(deletingCallId) === String(call.callId || call.id || call._id) ? (
                 <span className="delete-loading">⌛</span>
@@ -5367,9 +5351,9 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       <div className="smsinput-container no-user">
         <div className="smsinput-empty-state">
           <span className="empty-icon">💬</span>
-          <h3>No user selected</h3>
-          <p>Please select a user from the list to start messaging</p>
-          <button className="back-to-list-btn" onClick={handleBack}>← Back to SMS List</button>
+          <h3>{t("no_user_selected")}</h3>
+          <p>{t("select_user_to_message")}</p>
+          <button className="back-to-list-btn" onClick={handleBack}>← {t("back_to_chat_list")}</button>
         </div>
       </div>
     );
@@ -5459,7 +5443,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       {/* Header */}
       <div className="smsinput-header">
         <div className="header-left">
-          <button className="back-button" onClick={handleBack} title="Back to SMS List">
+          <button className="back-button" onClick={handleBack} title={t("back_to_chat_list")}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="currentColor" />
             </svg>
@@ -5484,8 +5468,8 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
             className={`sms-call-btn sms-voice-call-btn ${initiatingCallType === "voice" ? "loading" : ""}`}
             onClick={handleVoiceCall}
             disabled={isInitiatingCall}
-            title="Voice call"
-            aria-label="Voice call"
+            title={t("voice_call")}
+            aria-label={t("voice_call")}
           >
             <span className="call-icon" aria-hidden="true">
               {initiatingCallType === "voice" ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}
@@ -5495,8 +5479,8 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
             className={`sms-call-btn sms-video-call-btn ${initiatingCallType === "video" ? "loading" : ""}`}
             onClick={handleVideoCall}
             disabled={isInitiatingCall}
-            title="Video call"
-            aria-label="Video call"
+            title={t("video_call")}
+            aria-label={t("video_call")}
           >
             <span className="call-icon" aria-hidden="true">
               {initiatingCallType === "video" ? <FaSpinner className="spinning" /> : <FaVideo />}
@@ -5506,8 +5490,8 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
             <button
               className="sms-call-btn sms-more-options-btn"
               onClick={() => setShowOptions((visible) => !visible)}
-              title="More options"
-              aria-label="More options"
+              title={t("more_options")}
+              aria-label={t("more_options")}
               aria-expanded={showOptions}
               aria-haspopup="menu"
             >
@@ -5548,19 +5532,19 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
         {isLoadingMessages && mergedTimeline.length === 0 ? (
           <div className="sms-loading-messages">
             <div className="sms-loading-spinner"></div>
-            <p>Loading messages...</p>
+            <p>{t("loading_messages")}</p>
           </div>
         ) : error && mergedTimeline.length === 0 ? (
           <div className="sms-error-message">
             <span className="error-icon">⚠️</span>
             <p>{error}</p>
-            <button onClick={fetchMessagesFromAPI} className="retry-btn">Retry</button>
+            <button onClick={fetchMessagesFromAPI} className="retry-btn">{t("retry")}</button>
           </div>
         ) : mergedTimeline.length === 0 ? (
           <div className="sms-empty-messages">
             <span className="empty-messages-icon">💬</span>
-            <p>No messages or calls yet</p>
-            <p className="empty-messages-subtext">Start a conversation by sending a message</p>
+            <p>{t("no_messages_or_calls")}</p>
+            <p className="empty-messages-subtext">{t("start_conversation_hint")}</p>
           </div>
         ) : (
           mergedTimeline.map((item, index) => (
@@ -5586,8 +5570,8 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
                           className="sms-message-delete-btn"
                           onClick={() => handleDeleteMessage(item)}
                           disabled={String(deletingMessageId) === String(getMessageIdentifier(item))}
-                          title="Delete message"
-                          aria-label="Delete message"
+                          title={t("delete_message")}
+                          aria-label={t("delete_message")}
                         >
                           {String(deletingMessageId) === String(getMessageIdentifier(item)) ? (
                             <span className="delete-loading">⌛</span>
@@ -5622,13 +5606,13 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
         <div className="smsinput-input-wrapper">
           <input ref={fileInputRef} type="file" style={{ display: "none" }} onChange={handleFileSelected} />
           <input ref={cameraInputRef} type="file" capture="environment" style={{ display: "none" }} onChange={handleFileSelected} />
-          <button type="button" className="attach-btn" title="Attach file" disabled={isSending} onClick={handleFileAttachClick}>📎</button>
-          <button type="button" className="camera-btn" title="Take photo" disabled={isSending} onClick={handleCameraClick}>📷</button>
+          <button type="button" className="attach-btn" title={t("attach_file")} disabled={isSending} onClick={handleFileAttachClick}>📎</button>
+          <button type="button" className="camera-btn" title={t("take_photo")} disabled={isSending} onClick={handleCameraClick}>📷</button>
           <input
             type="text"
             ref={messageInputRef}
             className="smsinput-input"
-            placeholder={isSending ? "Sending..." : "Type your message..."}
+            placeholder={isSending ? t("sending") : t("chat.typePlaceholder")}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={handleInputKeyDown}
@@ -5638,8 +5622,8 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
             type="submit"
             className={`send-btn ${message.trim() && !isSending ? "active" : ""}`}
             disabled={!message.trim() || isSending}
-            aria-label={isSending ? "Sending message" : "Send message"}
-            title={isSending ? "Sending..." : "Send message"}
+            aria-label={isSending ? t("sending_message") : t("chat.sendMessage")}
+            title={isSending ? t("sending") : t("chat.sendMessage")}
           >
             {isSending ? (
               <FaSpinner className="send-btn-spinner" aria-hidden="true" />

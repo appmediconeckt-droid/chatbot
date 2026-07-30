@@ -272,12 +272,12 @@ const CounselorTable = () => {
   return (
     <div className="counselor-directory">
       <div className="directory-header">
-        <div className="header-badge">Mental Health Experts</div>
+        <div className="header-badge">{t("mental_health_experts")}</div>
         <h2 className="directory-title">
-          Find your <span className="title-highlight">counselor</span>
+          {t("find_your")} <span className="title-highlight">{t("counselor_label")}</span>
         </h2>
         <p className="directory-subtitle">
-          Professional therapists specialized in various treatments
+          {t("counselor_directory_subtitle")}
         </p>
       </div>
 

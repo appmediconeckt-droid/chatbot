@@ -4,6 +4,194 @@
   box-shadow: 0 7px 16px rgba(107, 70, 193, .24);
   transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
 }
+
+.earnings-date-filter-card {
+  width: 100%;
+  padding: 20px;
+  border: 1px solid #dfe5ef;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #ffffff 0%, #fafbff 100%);
+  box-shadow: 0 8px 24px rgba(30, 41, 59, .06);
+}
+
+.earnings-date-filter-heading {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: 18px;
+}
+
+.earnings-date-filter-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: #fff;
+  background: linear-gradient(135deg, #2563eb, #4f46e5);
+  box-shadow: 0 7px 15px rgba(37, 99, 235, .2);
+}
+
+.earnings-date-filter-heading h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.earnings-date-filter-heading p {
+  margin: 4px 0 0;
+  color: #718096;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.earnings-date-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(170px, 1fr) auto minmax(170px, 1fr) auto auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.earnings-date-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.earnings-date-field > span {
+  color: #475569;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.earnings-date-input {
+  width: 100%;
+  height: 46px;
+  min-height: 46px;
+  padding: 0 13px;
+  border: 1px solid #d5dce8;
+  border-radius: 11px;
+  outline: none;
+  color: #1e293b;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  box-sizing: border-box;
+  transition: border-color .18s ease, box-shadow .18s ease;
+}
+
+.earnings-date-separator {
+  height: 46px;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  font-size: 18px;
+}
+
+.earnings-filter-action,
+.earnings-filter-clear {
+  height: 46px;
+  min-height: 46px;
+  padding: 0 18px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.earnings-filter-action {
+  color: #fff;
+}
+
+.earnings-filter-clear {
+  border: 1px solid #d5dce8;
+  color: #526075;
+  background: #fff;
+  transition: border-color .18s ease, color .18s ease, background .18s ease;
+}
+
+.earnings-filter-clear:hover {
+  border-color: #aebbd0;
+  color: #253148;
+  background: #f8fafc;
+}
+
+.earnings-filter-summary {
+  margin: 14px 0 0;
+  padding: 10px 13px;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  color: #1e40af;
+  background: #eff6ff;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.earnings-filter-summary svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #2563eb;
+}
+
+@media (max-width: 900px) {
+  .earnings-date-filter-controls {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  }
+
+  .earnings-filter-action,
+  .earnings-filter-clear {
+    grid-row: 2;
+  }
+
+  .earnings-filter-action {
+    grid-column: 1 / 3;
+  }
+
+  .earnings-filter-clear {
+    grid-column: 3;
+  }
+}
+
+@media (max-width: 600px) {
+  .earnings-date-filter-card {
+    padding: 16px;
+    border-radius: 15px;
+  }
+
+  .earnings-date-filter-heading {
+    align-items: flex-start;
+    margin-bottom: 15px;
+  }
+
+  .earnings-date-filter-controls {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 11px;
+  }
+
+  .earnings-date-separator {
+    display: none;
+  }
+
+  .earnings-filter-action,
+  .earnings-filter-clear {
+    width: 100%;
+    grid-column: 1;
+    grid-row: auto;
+  }
+}
+
 .earnings-primary-button:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--couns-primary), var(--couns-primary-dark));
   box-shadow: 0 9px 20px rgba(85, 60, 154, .3);
@@ -20,16 +208,45 @@
 .earnings-filter-summary {
   color: var(--couns-primary-dark);
 }
+.withdrawal-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  padding: clamp(14px, 3vw, 34px);
+  background: rgba(15, 23, 42, .62);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  animation: withdrawal-overlay-in .2s ease-out;
+}
+
 .withdrawal-card {
   width: 100%;
-  max-width: none;
-  margin-inline: 0;
+  max-width: 760px;
+  max-height: calc(100dvh - clamp(28px, 6vw, 68px));
+  margin: auto;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border: 1px solid #dce4ee;
   border-radius: 22px;
   background: #fff;
   box-shadow: 0 18px 45px rgba(15, 23, 42, .11);
+  animation: withdrawal-card-in .24s ease-out;
+}
+
+@keyframes withdrawal-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes withdrawal-card-in {
+  from { opacity: 0; transform: translateY(18px) scale(.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 .withdrawal-card-header {
   position: relative;
@@ -92,6 +309,23 @@
 }
 .withdrawal-balance span, .withdrawal-balance small { display: block; color: #64748b; font-size: 11px; font-weight: 650; }
 .withdrawal-balance strong { display: block; margin: 3px 0; color: #0c4a6e; font-size: 25px; line-height: 1.1; }
+.withdrawal-zero-balance,
+.withdrawal-form-notice {
+  margin: 12px 26px 0;
+  padding: 11px 14px;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  color: #9a3412;
+  background: #fff7ed;
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.withdrawal-form-notice {
+  border-color: #fecaca;
+  color: #b91c1c;
+  background: #fff1f2;
+}
 .withdrawal-section-title { display: flex; align-items: center; gap: 10px; margin: 18px 26px 10px; }
 .withdrawal-section-title > span {
   width: 28px; height: 28px; display: grid; place-items: center; border-radius: 9px;
@@ -220,8 +454,12 @@
 .withdrawal-cancel { border: 1px solid #dce3eb; background: #fff; color: #64748b; }
 .withdrawal-submit { border: 0; background: linear-gradient(135deg, var(--couns-primary-light), var(--couns-primary)); color: #fff; box-shadow: 0 7px 16px rgba(107,70,193,.24); }
 .withdrawal-submit:hover:not(:disabled) { background: linear-gradient(135deg, var(--couns-primary), var(--couns-primary-dark)); }
-.withdrawal-submit:disabled { opacity: .6; cursor: wait; }
+.withdrawal-submit:disabled { opacity: .55; cursor: not-allowed; box-shadow: none; }
 @media (max-width: 640px) {
+  .withdrawal-modal-overlay {
+    padding: 10px;
+    align-items: flex-end;
+  }
   .withdrawal-card { border-radius: 17px; }
   .withdrawal-card-header { padding: 20px 16px; }
   .withdrawal-card-icon { width: 42px; height: 42px; flex-basis: 42px; border-radius: 12px; }
@@ -234,6 +472,8 @@
   .payout-speed-options { grid-template-columns: 1fr; margin: 0 16px; }
   .instant-payout-summary { margin-left: 16px; margin-right: 16px; }
   .withdrawal-security-note { margin-left: 16px; margin-right: 16px; }
+  .withdrawal-zero-balance,
+  .withdrawal-form-notice { margin-left: 16px; margin-right: 16px; }
   .verified-payout-account { margin-left: 16px; margin-right: 16px; }
   .verified-payout-badge { display: none; }
   .withdrawal-actions { padding: 18px 16px 20px; }

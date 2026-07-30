@@ -8,7 +8,9 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  max-width: 100%;
   min-height: 44px;
+  overflow: hidden;
 }
 
 .g-auth-wrap-disabled {
@@ -37,7 +39,7 @@
    so it lines up with the form's primary submit button. */
 .g-auth-wrap > div {
   width: 100% !important;
-  max-width: 360px;
+  max-width: 400px;
   display: flex;
   justify-content: center;
 }
@@ -48,7 +50,7 @@
 
 .g-auth-wrap iframe {
   width: 100% !important;
-  max-width: 360px !important;
+  max-width: 400px !important;
   margin: 0 auto !important;
 }
 
@@ -73,6 +75,10 @@
 }
 
 @media (max-width: 480px) {
+  .g-auth-wrap {
+    min-height: 40px;
+  }
+
   .g-auth-wrap > div,
   .g-auth-wrap iframe {
     max-width: 100% !important;

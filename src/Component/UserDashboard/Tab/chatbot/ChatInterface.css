@@ -1352,10 +1352,25 @@
 }
 
 .chatAppContainer .counselorSidebarHeader {
+  position: relative;
   min-height: 80px;
   padding: 15px 24px;
   background: #fff;
-  border-bottom: 1px solid #d9dee8;
+  border-bottom: 0;
+}
+
+/* The search header overlaps the inbox and conversation columns on desktop.
+   Draw its divider independently so it reaches the full workspace edge. */
+.chatAppContainer .counselorSidebarHeader::after {
+  content: "";
+  position: absolute;
+  right: auto;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 1px;
+  background: #d9dee8;
+  pointer-events: none;
 }
 
 .chatAppContainer .counselorSearchBox {
@@ -1370,6 +1385,8 @@
 .chatAppContainer .chatFilterBar {
   min-height: 72px;
   padding: 20px 8px;
+  border-top: 0;
+  border-bottom: 1px solid #d9dee8;
 }
 
 .chatAppContainer .counselorListContainer {
