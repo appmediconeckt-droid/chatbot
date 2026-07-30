@@ -20,6 +20,7 @@ import "./LocationGate.css";
 const LocationGate = ({ event, onDone, role = "user" }) => {
   const [phase, setPhase] = useState("attempting"); // attempting | retry | sending
   const [errorMsg, setErrorMsg] = useState("");
+  const [permissionBlocked, setPermissionBlocked] = useState(false);
   const normalizedRole = String(role || "").toLowerCase();
   const themeRole =
     normalizedRole === "counselor" || normalizedRole === "counsellor"
@@ -35,8 +36,14 @@ const LocationGate = ({ event, onDone, role = "user" }) => {
 
       if (result.ok) {
         onDone?.({ ok: true, skipped: false });
+      } else if (result.code === "LOCATION_PERMISSION_DENIED") {
+        // Location is optional. If the browser has already blocked it, let the
+        // auth flow continue silently instead of showing an unfixable error.
+        setStickyLocationBanner(false);
+        onDone?.({ ok: false, skipped: true });
       } else {
         setErrorMsg(result.error);
+        setPermissionBlocked(result.code === "LOCATION_PERMISSION_DENIED");
         setPhase("retry");
       }
     };
@@ -48,6 +55,12 @@ const LocationGate = ({ event, onDone, role = "user" }) => {
   }, [event, onDone]);
 
   const handleRetry = async () => {
+    if (permissionBlocked) {
+      setErrorMsg(
+        "Click the lock/site icon near the address bar, change Location to Allow, then reload this page",
+      );
+      return;
+    }
     setPhase("sending");
     const result = await tryCaptureLocation(event);
     if (result.ok) {
@@ -129,6 +142,8 @@ const LocationGate = ({ event, onDone, role = "user" }) => {
               <>
                 <span className="location-gate-btn-spinner" /> Asking again…
               </>
+            ) : permissionBlocked ? (
+              "How to enable"
             ) : (
               "Allow location"
             )}

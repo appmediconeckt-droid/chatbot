@@ -1682,6 +1682,55 @@
   }
 }
 
+@media (max-width: 480px) {
+  .appointment-detail-overlay {
+    top: 64px;
+    bottom: 68px;
+    left: 0;
+    right: 0;
+    width: 100%;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 8px 10px;
+    background: transparent;
+    box-sizing: border-box;
+  }
+
+  .appointment-detail-modal {
+    width: calc(100% - 20px);
+    margin-right: auto;
+    margin-left: auto;
+    max-height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    box-sizing: border-box;
+  }
+
+  .appointment-detail-counselor {
+    min-height: 96px;
+    padding: 14px 72px 14px 14px;
+  }
+
+  .appointment-detail-counselor .appointment-detail-avatar-wrap {
+    width: 54px;
+    height: 54px;
+    margin-right: 12px;
+    flex: 0 0 54px;
+  }
+
+  .appointment-detail-heading h3 {
+    line-height: 1.25;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .appointment-detail-status {
+    position: absolute;
+    top: 14px;
+    right: 12px;
+  }
+}
+
 /* Readable typography for appointments list and details */
 .user-appointments-hero h1 { font-size: 26px; }
 .user-appointments-hero p { font-size: 14px; }

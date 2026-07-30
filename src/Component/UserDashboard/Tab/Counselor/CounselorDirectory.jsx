@@ -62,10 +62,6 @@ const CounselorTable = () => {
   const handleChatNow = async (counselor) => {
     const counselorId = counselor._id || counselor.id;
 
-    if (!isCounselorOnline(counselor)) {
-      return;
-    }
-
     try {
       setStartingChatId(counselorId);
 
@@ -73,15 +69,18 @@ const CounselorTable = () => {
         counselorId,
       });
       const chatId = response.data?.chat?.id || response.data?.chatId;
+      const serverCounselor = response.data?.chat?.counselor;
 
       navigate(`/chat/${counselorId}`, {
         state: {
           chatId,
           counselor: {
             id: counselorId,
-            name: counselor.fullName || counselor.name,
-            specialization: counselor.specialization,
-            profilePhoto: counselor.profilePhoto,
+            name: serverCounselor?.name || counselor.fullName || counselor.name,
+            specialization:
+              serverCounselor?.specialization || counselor.specialization,
+            profilePhoto:
+              serverCounselor?.avatar || counselor.profilePhoto,
             isOnline: counselor.isOnline,
             isLoggedIn: counselor.isLoggedIn,
             lastSeen: counselor.lastSeen,
@@ -459,12 +458,12 @@ const CounselorTable = () => {
                   </div>
                   <div className="card-actions">
                     <button
-                      className={`chat-now-btn ${!online ? "disabled" : ""}`}
+                      className="chat-now-btn"
                       onClick={() => handleChatNow(counselor)}
-                      disabled={!online || isStartingChat}
-                      title={online ? t('chat_now') : t('offline')}
+                      disabled={isStartingChat}
+                      title={t('chat_now')}
                     >
-                      {online ? t('chat_now') : t('unavailable')}
+                      {t('chat_now')}
                     </button>
                     <button
                       className="book-btn"

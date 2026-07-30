@@ -1,5 +1,9 @@
 import axiosInstance from "../axiosConfig";
 
+export const LOCATION_PERMISSION_DENIED_CODE = "LOCATION_PERMISSION_DENIED";
+export const LOCATION_PERMISSION_HELP =
+  "Location is blocked for this site. Click the lock/site icon near the address bar, set Location to Allow, then try again.";
+
 // Ask the browser for current GPS coordinates. Resolves with { latitude, longitude }
 // or rejects with a descriptive Error. Does NOT throw if permissions are denied —
 // callers decide whether the failure is fatal (GPS is optional in this app).
@@ -20,11 +24,16 @@ export const getCurrentPosition = (options = {}) =>
       },
       (err) => {
         const messages = {
-          1: "Location permission denied",
-          2: "Location unavailable",
+          1: LOCATION_PERMISSION_HELP,
+          2: "Location unavailable. Please turn on your device location and try again",
           3: "Location request timed out",
         };
-        reject(new Error(messages[err.code] || err.message || "Location error"));
+        const locationError = new Error(
+          messages[err.code] || err.message || "Location error",
+        );
+        locationError.code =
+          err.code === 1 ? LOCATION_PERMISSION_DENIED_CODE : `GEOLOCATION_${err.code}`;
+        reject(locationError);
       },
       {
         enableHighAccuracy: true,
@@ -140,6 +149,12 @@ export const sendLocationSilently = async (event) => {
     return true;
   } catch (err) {
     console.warn(`[location] ${event} location capture skipped:`, err.message);
+    // A browser-level denial is an optional preference in this app. Do not
+    // turn it into a dashboard error/banner; users can enable it manually.
+    if (err.code === LOCATION_PERMISSION_DENIED_CODE) {
+      setStickyLocationBanner(false);
+      return false;
+    }
     setPendingLocationNotice({
       message: err.message || "Couldn't capture your location",
       event,
@@ -184,6 +199,7 @@ export const tryCaptureLocation = async (event) => {
     return {
       ok: false,
       error: err.message || "Couldn't capture your location",
+      code: err.code || "",
     };
   }
 };

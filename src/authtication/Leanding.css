@@ -2198,13 +2198,13 @@ main {
   height: 76px;
   border-radius: 50%;
   background:
-    radial-gradient(circle at 70% 27%, rgba(255, 243, 213, 0.82), transparent 30%),
-    linear-gradient(145deg, #f7fdff 0%, #ffffff 62%, #ecf8fb 100%);
-  border: 2.5px solid #287896;
+    radial-gradient(circle at 70% 27%, rgba(210, 255, 241, 0.88), transparent 30%),
+    linear-gradient(145deg, #f4fffb 0%, #ffffff 62%, #e6faf4 100%);
+  border: 2.5px solid #20ad8d;
   box-shadow:
     0 12px 22px rgba(15, 23, 42, 0.18),
     inset 0 0 0 1px rgba(255, 255, 255, 0.82),
-    inset 0 -8px 16px rgba(40, 120, 150, 0.08);
+    inset 0 -8px 16px rgba(32, 173, 141, 0.1);
   overflow: hidden;
   animation: landingChatBreath 2.8s ease-in-out infinite;
 }
@@ -2233,11 +2233,11 @@ main {
   height: 31px;
   left: 25px;
   top: 15px;
-  background: linear-gradient(145deg, #38b6d0 0%, #227f9b 100%);
+  background: linear-gradient(145deg, #4bd5b5 0%, #269b8b 100%);
   opacity: 0.88;
   z-index: 1;
   box-shadow:
-    0 4px 8px rgba(31, 142, 170, 0.12),
+    0 4px 8px rgba(32, 173, 141, 0.14),
     inset 8px 8px 16px rgba(255, 255, 255, 0.16);
   animation: landingBubbleBack 3.9s ease-in-out infinite;
 }
@@ -2247,11 +2247,11 @@ main {
   height: 36px;
   left: 14px;
   top: 28px;
-  background: linear-gradient(145deg, #43c8df 0%, #1f8eaa 100%);
+  background: linear-gradient(145deg, #62dfc0 0%, #20b994 100%);
   opacity: 0.9;
   z-index: 2;
   box-shadow:
-    0 5px 10px rgba(31, 142, 170, 0.16),
+    0 5px 10px rgba(32, 185, 148, 0.18),
     inset 8px 8px 16px rgba(255, 255, 255, 0.2);
   animation: landingBubbleLeft 3.6s ease-in-out 0.2s infinite;
 }
@@ -2262,10 +2262,10 @@ main {
   left: 44px;
   top: 31px;
   transform: translate(-50%, -4px);
-  background: linear-gradient(145deg, #277f9d 0%, #155d75 100%);
+  background: linear-gradient(145deg, #269b8b 0%, #168575 100%);
   z-index: 3;
   box-shadow:
-    0 8px 14px rgba(9, 75, 98, 0.26),
+    0 8px 14px rgba(22, 133, 117, 0.28),
     inset 10px 10px 18px rgba(255, 255, 255, 0.12);
   animation: landingBubbleFront 3.3s ease-in-out 0.05s infinite;
 }
@@ -2275,10 +2275,10 @@ main {
   height: 17px;
   right: 13px;
   top: 28px;
-  background: linear-gradient(145deg, #ffb15f 0%, #f27b22 100%);
+  background: linear-gradient(145deg, #7be4c9 0%, #20ad8d 100%);
   z-index: 4;
   box-shadow:
-    0 5px 12px rgba(242, 123, 34, 0.38),
+    0 5px 12px rgba(32, 173, 141, 0.34),
     inset 5px 5px 8px rgba(255, 255, 255, 0.22);
   animation: landingBubbleAccent 2.7s ease-in-out 0.15s infinite;
 }
@@ -2290,7 +2290,7 @@ main {
   height: 76px;
   border-radius: 50%;
   background: transparent;
-  border: 2px solid rgba(40, 120, 150, 0.24);
+  border: 2px solid rgba(32, 173, 141, 0.26);
 }
 
 @keyframes landingChatFloat {
@@ -2299,8 +2299,8 @@ main {
 }
 
 @keyframes landingChatBreath {
-  0%, 100% { transform: scale(1); box-shadow: 0 12px 22px rgba(15, 23, 42, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.82), inset 0 -8px 16px rgba(40, 120, 150, 0.08); }
-  50% { transform: scale(1.025); box-shadow: 0 16px 28px rgba(15, 23, 42, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.88), inset 0 -8px 16px rgba(40, 120, 150, 0.1); }
+  0%, 100% { transform: scale(1); box-shadow: 0 12px 22px rgba(15, 23, 42, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.82), inset 0 -8px 16px rgba(32, 173, 141, 0.1); }
+  50% { transform: scale(1.025); box-shadow: 0 16px 28px rgba(15, 23, 42, 0.22), inset 0 0 0 1px rgba(255, 255, 255, 0.88), inset 0 -8px 16px rgba(32, 173, 141, 0.13); }
 }
 
 @keyframes landingBubbleFront {

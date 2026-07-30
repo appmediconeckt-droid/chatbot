@@ -753,7 +753,7 @@
   height: 100%;
   align-content: center;
   gap: 0;
-  padding: 20px 18px 110px;
+  padding: 18px 18px 126px;
   color: #15263d;
 }
 
@@ -766,15 +766,25 @@
 }
 
 .stream-modal-container-voice .stream-voice-avatar {
-  width: clamp(132px, 21vw, 210px);
-  height: clamp(132px, 21vw, 210px);
+  position: relative;
+  width: clamp(124px, 17vw, 170px);
+  height: clamp(124px, 17vw, 170px);
   overflow: hidden;
   animation: none;
   border: 0;
   box-shadow: none;
 }
 
+.stream-voice-avatar-initial {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+}
+
 .stream-modal-container-voice .stream-voice-avatar img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
@@ -783,8 +793,8 @@
 
 .stream-modal-container-voice .stream-voice-name {
   font-family: Georgia, "Times New Roman", serif;
-  margin-top: 24px;
-  font-size: clamp(2rem, 4.5vw, 3rem);
+  margin-top: 14px;
+  font-size: clamp(1.8rem, 3.5vw, 2.5rem);
   color: #14243a;
 }
 
@@ -793,7 +803,7 @@
   justify-content: center;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 25px;
+  margin-top: 14px;
   color: #16894a;
   font-size: 10px;
   font-weight: 700;
@@ -809,8 +819,8 @@
   display: grid;
   place-items: center;
   width: min(88vw, 576px);
-  min-height: clamp(150px, 20vh, 204px);
-  margin-top: 46px;
+  min-height: clamp(116px, 16vh, 150px);
+  margin-top: 24px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid #fff;
   border-radius: 14px;
@@ -861,13 +871,13 @@
 
 .stream-voice-private-note {
   position: absolute;
-  bottom: 30px;
+  bottom: 14px;
   color: #8b96a5;
   font-size: 9px;
 }
 
 .stream-modal-container-voice .stream-bottom-controls-wrap {
-  bottom: calc(108px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(54px + env(safe-area-inset-bottom, 0px));
 }
 
 .stream-modal-container-voice .stream-bottom-controls {

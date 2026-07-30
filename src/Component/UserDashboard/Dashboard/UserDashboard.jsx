@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useState, useEffect, useRef } from "react";
 import "./UserDashboard.css";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axiosInstance, { API_BASE_URL } from "../../../axiosConfig";
 import {
   FaCommentDots,
@@ -86,6 +86,9 @@ const getAiChatLanguage = (language) => {
 const AI_CHAT_ENDPOINT = `${API_BASE_URL}/api/ai-chat/send-message`;
 
 export default function UserDashboard() {
+  const location = useLocation();
+  const { id: routeCounselorId } = useParams();
+  const isDirectChatRoute = location.pathname === "/chat" || location.pathname.startsWith("/chat/");
   const { t, lang, setLang } = useUserTranslation();
   const [, setLanguageUpdate] = useState(0);
   const [active, setActive] = useState("Chat");
@@ -95,7 +98,30 @@ export default function UserDashboard() {
   const [chatOpen, setChatOpen] = useState(false);
   const [targetCounselor, setTargetCounselor] = useState("");
   const [newMessage, setNewMessage] = useState("");
-  const [selectedConversation, setSelectedConversation] = useState(null);
+  const [selectedConversation, setSelectedConversation] = useState(() => {
+    if (!isDirectChatRoute) return null;
+    const routeState = location.state || {};
+    return {
+      ...routeState,
+      counselor: {
+        ...(routeState.counselor || {}),
+        id: routeState.counselor?.id || routeState.counselor?._id || routeCounselorId,
+      },
+    };
+  });
+
+  useEffect(() => {
+    if (!isDirectChatRoute) return;
+    const routeState = location.state || {};
+    setActive("Chat");
+    setSelectedConversation({
+      ...routeState,
+      counselor: {
+        ...(routeState.counselor || {}),
+        id: routeState.counselor?.id || routeState.counselor?._id || routeCounselorId,
+      },
+    });
+  }, [isDirectChatRoute, location.key, location.state, routeCounselorId]);
 
   const handleOpenCounselorConversation = (conversation) => {
     setSelectedConversation(conversation);
@@ -218,7 +244,14 @@ export default function UserDashboard() {
           },
         },
       );
-      if (response.data && response.data.success) return response.data;
+      if (response.data && response.data.success) {
+        // Keep an already-mounted wallet/history view in sync as soon as call
+        // billing finishes on the server.
+        window.dispatchEvent(new CustomEvent("wallet-balance-updated", {
+          detail: { callId },
+        }));
+        return response.data;
+      }
       return null;
     } catch (error) {
       console.error("Error ending call:", error);
@@ -1445,7 +1478,7 @@ export default function UserDashboard() {
           <div className="ud-content-scrollable">
             <Suspense fallback={<DashboardPanelLoader />}>
               {active === "Chat" && (
-                <div className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""}`}>
+                <div className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""} ${isDirectChatRoute ? "direct-conversation" : ""}`}>
                   <div className="ud-chat-list-pane">
                     <ChatInterface
                       setActiveTab={setActive}
@@ -1459,7 +1492,13 @@ export default function UserDashboard() {
                         key={selectedConversation.chatId || selectedConversation.counselor?.id}
                         embedded
                         conversation={selectedConversation}
-                        onClose={() => setSelectedConversation(null)}
+                        onClose={() => {
+                          if (isDirectChatRoute) {
+                            navigate(-1);
+                          } else {
+                            setSelectedConversation(null);
+                          }
+                        }}
                       />
                     </div>
                   )}

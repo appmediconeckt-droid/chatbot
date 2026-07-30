@@ -39,6 +39,13 @@ const SMSInput = lazy(
 );
 const OTPVerification = lazy(() => import("./authtication/OTPVerification"));
 
+const UserAwareChatRoute = () => {
+  const role = String(localStorage.getItem("userRole") || "").toLowerCase();
+  return role === "counsellor" || role === "counselor"
+    ? <ChatBox />
+    : <UserDashboard />;
+};
+
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -143,7 +150,7 @@ function App() {
             path="/chat/:id"
             element={
               <ProtectedRoute allowedRoles={["user", "counsellor", "counselor"]}>
-                <ChatBox />
+                <UserAwareChatRoute />
               </ProtectedRoute>
             }
           />
@@ -151,7 +158,7 @@ function App() {
             path="/chat"
             element={
               <ProtectedRoute allowedRoles={["user", "counsellor", "counselor"]}>
-                <ChatBox />
+                <UserAwareChatRoute />
               </ProtectedRoute>
             }
           />
