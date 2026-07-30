@@ -186,7 +186,7 @@
   }
 
   .humaeli .hero-wellness-image {
-    object-position: 56% center !important;
+    object-position: center center !important;
   }
 }
 
@@ -221,7 +221,7 @@
     height: 100% !important;
     max-height: none !important;
     object-fit: cover !important;
-    object-position: 56% center !important;
+    object-position: center center !important;
   }
 
   .humaeli .hero > .container {
@@ -563,7 +563,7 @@
     height: 100% !important;
     max-height: none !important;
     object-fit: cover !important;
-    object-position: 56% center !important;
+    object-position: center center !important;
   }
 
   .humaeli .hero > .container {
