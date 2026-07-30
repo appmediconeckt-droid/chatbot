@@ -3433,6 +3433,96 @@ html {
   letter-spacing: .08em;
 }
 
+/* Prominent landing-page brand mark (final override). */
+@media (min-width: 1051px) {
+  .humaeli .header-container {
+    grid-template-columns: 250px 1fr 215px;
+  }
+
+  .humaeli .header .landing-logo-brand img {
+    width: 220px !important;
+    height: 70px !important;
+    max-width: 220px !important;
+    object-fit: contain !important;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1050px) {
+  .humaeli .header-container {
+    grid-template-columns: 180px 1fr 195px;
+  }
+
+  .humaeli .header .landing-logo-brand img {
+    width: 155px !important;
+    height: 64px !important;
+    max-width: 155px !important;
+    object-fit: contain !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .humaeli .header .landing-logo-brand img {
+    width: 135px !important;
+    height: 60px !important;
+    max-width: 135px !important;
+    object-fit: contain !important;
+  }
+}
+
+/* Scrolled navbar: keep the complete row optically and mathematically centred.
+   This intentionally overrides the older -12px screenshot-alignment offset. */
+@media (min-width: 769px) {
+  .humaeli .header.header-scrolled {
+    top: 0 !important;
+    height: 82px !important;
+    min-height: 82px !important;
+    padding: 0 !important;
+    display: flex;
+    align-items: center !important;
+  }
+
+  .humaeli .header.header-scrolled .header-container {
+    position: relative;
+    top: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    height: 82px !important;
+    min-height: 82px !important;
+    margin: 0 auto !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    align-items: center !important;
+    transform: none !important;
+  }
+
+  .humaeli .header.header-scrolled .logo,
+  .humaeli .header.header-scrolled .landing-logo-brand,
+  .humaeli .header.header-scrolled .nav-menu,
+  .humaeli .header.header-scrolled .header-actions {
+    position: relative;
+    top: 0 !important;
+    bottom: auto !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    align-self: center !important;
+    transform: none !important;
+  }
+
+  .humaeli .header.header-scrolled .logo,
+  .humaeli .header.header-scrolled .landing-logo-brand {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  .humaeli .header.header-scrolled .nav-menu,
+  .humaeli .header.header-scrolled .header-actions {
+    margin-block: auto !important;
+  }
+}
+
 /* Final popup colour lock: keeps every control aligned with the blue chat
    header even when shared button styles are loaded later in this stylesheet. */
 .humaeli .chat-popup .chat-popup-header {

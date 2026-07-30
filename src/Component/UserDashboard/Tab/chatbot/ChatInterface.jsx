@@ -588,7 +588,7 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
         return () => document.removeEventListener('keydown', handleEscKey);
     }, [closeContextMenu]);
 
-    // Filter counselors based on search term
+    // Filter counselors by search and inbox status.
     const filteredCounselors = counselors.filter((counselor) => {
         const query = searchTerm.trim().toLowerCase();
         const matchesSearch =
@@ -647,20 +647,21 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
                     <div className="counselorSearchBox">
                         <FaSearch className="counselorSearchIcon" aria-hidden="true" />
                         <input
-                            type="text"
-                            placeholder="Search patients, counsellors, or conversations..."
+                            type="search"
+                            placeholder="Search chats..."
                             className="counselorSearchInput"
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(event) => setSearchTerm(event.target.value)}
+                            aria-label="Search chats"
                         />
                     </div>
                 </div>
 
                 <div className="chatFilterBar" role="tablist" aria-label="Chat filters">
                     {[
-                        { id: 'all', label: 'All Chats' },
-                        { id: 'unread', label: 'Unread' },
-                        { id: 'archived', label: 'Archived' }
+                        { id: 'all', label: t('all_chats') },
+                        { id: 'unread', label: t('unread') },
+                        { id: 'archived', label: t('archived') }
                     ].map((filter) => (
                         <button
                             key={filter.id}
@@ -756,9 +757,9 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
                         <div className="no-chats-message">
                             {searchTerm ? (
                                 <>
-                                    <p>{t('search')} "{searchTerm}"</p>
+                                    <p>No chats match “{searchTerm}”.</p>
                                     <button onClick={() => setSearchTerm('')} className="start-chat-link">
-                                        {t('clear_search')}
+                                        Clear search
                                     </button>
                                 </>
                             ) : (

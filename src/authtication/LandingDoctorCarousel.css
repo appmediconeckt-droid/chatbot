@@ -1,0 +1,87 @@
+.humaeli .doctors-carousel {
+  width: 100%;
+}
+
+.humaeli .doctors-carousel .doctors-grid {
+  animation: doctorCarouselIn .55s cubic-bezier(.22, .75, .25, 1) both;
+}
+
+.humaeli .doctor-carousel-dots {
+  min-height: 30px;
+  margin-top: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+}
+
+.humaeli .doctor-carousel-dot {
+  width: 8px;
+  height: 8px;
+  min-width: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #c9ded9;
+  box-shadow: none;
+  cursor: pointer;
+  transition: width .3s ease, background .3s ease, transform .25s ease;
+}
+
+.humaeli .doctor-carousel-dot:hover,
+.humaeli .doctor-carousel-dot:focus-visible {
+  background: #65bda8;
+  outline: 3px solid rgba(31, 178, 140, .15);
+  outline-offset: 2px;
+  transform: scale(1.15);
+}
+
+.humaeli .doctor-carousel-dot.active {
+  width: 28px;
+  background: linear-gradient(90deg, #19bc8a, #268f89);
+}
+
+@keyframes doctorCarouselIn {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .humaeli .doctors-carousel .doctors-grid {
+    display: block;
+    max-width: 430px;
+    margin-inline: auto;
+  }
+
+  .humaeli .doctors-carousel .doctor-slide:not(.doctor-slide-1) {
+    display: none;
+  }
+
+  .humaeli .doctors-carousel .doctor-slide-1,
+  .humaeli .doctors-carousel .doctor-card:nth-of-type(2) {
+    width: 100%;
+    min-height: 460px;
+    margin-top: 0;
+    transform: none;
+  }
+
+  .humaeli .doctor-carousel-dots {
+    margin-top: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .humaeli .doctors-carousel .doctors-grid {
+    animation: none;
+  }
+
+  .humaeli .doctor-carousel-dot {
+    transition: none;
+  }
+}

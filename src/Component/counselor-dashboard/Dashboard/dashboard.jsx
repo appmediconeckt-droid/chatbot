@@ -802,14 +802,15 @@ export default function CounselorDashboard() {
           <div className="couns-tab-content couns-call-page">
             <div className="couns-call-page-header">
               <div>
-                <span className="stitch-apt-eyebrow">Communication log</span>
+                <span className="stitch-apt-eyebrow">{t("communication")}</span>
                 <h2>{t('call_history')}</h2>
-                <p>Review voice and video calls, missed sessions and call duration.</p>
+                <p>{t("call_history_subtitle")}</p>
               </div>
             </div>
             <CallHistory
               currentUser={{ id: localStorage.getItem("counsellorId"), role: "counsellor" }}
               showHeader={false}
+              translationRole="counsellor"
             />
           </div>
         )}

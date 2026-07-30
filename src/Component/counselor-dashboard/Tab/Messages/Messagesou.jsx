@@ -1274,21 +1274,21 @@ const SMSList = () => {
       <div className="smslist-container">
         <div className="smslist-header">
           <div className="smslist-welcome">
-            <h1>Welcome back,</h1>
-            <p>Good Afternoon, Dr. Vivek</p>
+            <h1>{t("welcome_back")}</h1>
+            <p>{t("good_afternoon")}</p>
           </div>
         </div>
         <div className="smslist-filters">
-          <button className="filter-btn active">All</button>
-          <button className="filter-btn">Unread</button>
-          <button className="filter-btn">Online</button>
-          <button className="filter-btn">Recent</button>
+          <button className="filter-btn active">{t("all")}</button>
+          <button className="filter-btn">{t("unread")}</button>
+          <button className="filter-btn">{t("online")}</button>
+          <button className="filter-btn">{t("recent")}</button>
         </div>
         <ChatListSkeleton rows={6} />
         <div className="smslist-footer">
-          <button className="footer-btn">English</button>
-          <button className="footer-btn">My Profile</button>
-          <button className="footer-btn logout-btn">Logout</button>
+          <button className="footer-btn">{t("language")}</button>
+          <button className="footer-btn">{t("profile.myProfile")}</button>
+          <button className="footer-btn logout-btn">{t("common.logout")}</button>
         </div>
       </div>
     );
@@ -1305,7 +1305,7 @@ const SMSList = () => {
             onClick={() => window.location.reload()}
             className="retry-button"
           >
-            Retry
+            {t("retry")}
           </button>
         </div>
       </div>
@@ -1320,8 +1320,8 @@ const SMSList = () => {
           type="search"
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
-          placeholder="Search patients, counsellors, or conversations..."
-          aria-label="Search conversations"
+          placeholder={t("search_conversations")}
+          aria-label={t("search_conversations")}
         />
       </div>
 
@@ -1329,8 +1329,8 @@ const SMSList = () => {
       {/* Header with Welcome */}
       <div className="smslist-header">
         <div className="smslist-welcome">
-          <h1>Welcome back,</h1>
-          <p>Good Afternoon, Dr. Vivek</p>
+          <h1>{t("welcome_back")}</h1>
+          <p>{t("good_afternoon")}</p>
         </div>
         <div className="smslist-header-actions">
           <NotificationBell
@@ -1356,25 +1356,25 @@ const SMSList = () => {
           className={`filter-btn ${activeFilter === 'all' ? 'active' : ''}`}
           onClick={() => setActiveFilter('all')}
         >
-          All
+          {t("all")}
         </button>
         <button 
           className={`filter-btn ${activeFilter === 'unread' ? 'active' : ''}`}
           onClick={() => setActiveFilter('unread')}
         >
-          Unread {totalUnread > 0 && <span className="filter-count">{totalUnread}</span>}
+          {t("unread")} {totalUnread > 0 && <span className="filter-count">{totalUnread}</span>}
         </button>
         <button 
           className={`filter-btn ${activeFilter === 'online' ? 'active' : ''}`}
           onClick={() => setActiveFilter('online')}
         >
-          Online
+          {t("online")}
         </button>
         <button 
           className={`filter-btn ${activeFilter === 'recent' ? 'active' : ''}`}
           onClick={() => setActiveFilter('recent')}
         >
-          Recent
+          {t("recent")}
         </button>
       </div>
 
@@ -1519,7 +1519,7 @@ const SMSList = () => {
           <div className="smslist-empty">
             <span className="empty-icon">🔍</span>
             <h4>{t('no_chats')}</h4>
-            <p>Try searching with a different name</p>
+            <p>{t("try_different_search")}</p>
           </div>
         )}
       </div>
@@ -1538,16 +1538,16 @@ const SMSList = () => {
             className="smslist-context-delete"
             onClick={(event) => handleDeleteChat(event, contextMenu.user)}
           >
-            Delete chat
+            {t("delete_chat")}
           </button>
         </div>
       )}
 
       {/* Footer */}
       <div className="smslist-footer">
-        <button className="footer-btn">English</button>
-        <button className="footer-btn">My Profile</button>
-        <button className="footer-btn logout-btn">Logout</button>
+        <button className="footer-btn">{t("language")}</button>
+        <button className="footer-btn">{t("profile.myProfile")}</button>
+        <button className="footer-btn logout-btn">{t("common.logout")}</button>
       </div>
       </div>
 

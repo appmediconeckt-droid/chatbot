@@ -1597,6 +1597,13 @@
   border-bottom: 1px solid #dfe5ec;
 }
 
+/* On phones, search belongs to the chat-list screen only—not inside a conversation. */
+@media (max-width: 768px) {
+  .chatConversationSearch {
+    display: none !important;
+  }
+}
+
 .chatConversationSearch svg {
   width: 14px;
   height: 14px;
@@ -1837,6 +1844,57 @@
   flex: 0 0 auto;
 }
 
+/* Keep the paper-plane visible in both active and disabled states. */
+.chatSendBtn .chatCorrectSendIcon {
+  display: block !important;
+  width: 15px;
+  height: 15px;
+  color: #ffffff !important;
+  fill: currentColor !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.chatSendBtn .chatCorrectSendIcon path {
+  fill: #ffffff !important;
+  stroke: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Final visual fallback: render the send mark from CSS itself. This keeps it
+   visible even if another stylesheet suppresses inline SVG elements. */
+.chatSendBtn {
+  position: relative;
+  isolation: isolate;
+}
+
+.chatSendBtn::after {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: 17px;
+  height: 17px;
+  background: #ffffff;
+  clip-path: polygon(4% 8%, 96% 50%, 4% 92%, 22% 56%, 64% 50%, 22% 44%);
+  transform: translate(-50%, -50%);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: none;
+}
+
+.chatSendBtn:disabled {
+  opacity: 1;
+  background: #b8e2ca;
+}
+
+.chatSendBtn .chatCorrectSendIcon {
+  display: none !important;
+}
+
 @media (max-width: 640px) {
   .chatConversationSearch input {
     width: 100%;
@@ -1854,4 +1912,52 @@
     margin-left: 0;
   }
 
+}
+
+/* Authoritative embedded mobile chat structure:
+   fixed header/footer with one independently scrolling message viewport. */
+@media (max-width: 900px) {
+  .chatContainerFull.chatEmbedded,
+  .chatEmbedded .chatBoxMain {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
+  }
+
+  .chatEmbedded .chatBoxMain {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chatEmbedded .chatBoxHeader {
+    position: relative;
+    top: auto;
+    flex: 0 0 auto;
+    width: 100%;
+    z-index: 10;
+  }
+
+  .chatEmbedded .chatMessagesArea {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .chatEmbedded .chatInputArea {
+    position: relative;
+    inset: auto;
+    z-index: 12;
+    flex: 0 0 auto;
+    width: 100%;
+    padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
+    background: #fff;
+  }
 }

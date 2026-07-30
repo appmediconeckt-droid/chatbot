@@ -5,7 +5,7 @@ import { FaCalendarAlt, FaPhoneAlt, FaSearch, FaVideo } from "react-icons/fa";
 import "./CallHistory.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import { API_BASE_URL } from "../../../../axiosConfig";
-import { useUserTranslation } from "../../../../i18n/LanguageContext";
+import { useCounselorTranslation, useUserTranslation } from "../../../../i18n/LanguageContext";
 import {
   getAnonymousUserAvatar,
   getAnonymousUserAvatarUrl,
@@ -81,11 +81,11 @@ const getApiParticipantDisplay = (call, currentUserType) => {
   };
 };
 
-const formatDateLabel = (value) => {
+const formatDateLabel = (value, t) => {
   const date = value ? new Date(value) : null;
 
   if (!date || Number.isNaN(date.getTime())) {
-    return "Unknown";
+    return t("unknown");
   }
 
   const today = new Date();
@@ -102,11 +102,11 @@ const formatDateLabel = (value) => {
   const diffDays = Math.floor((startOfToday - startOfInput) / 86400000);
 
   if (diffDays === 0) {
-    return "Today";
+    return t("today");
   }
 
   if (diffDays === 1) {
-    return "Yesterday";
+    return t("yesterday");
   }
 
   return date.toLocaleDateString([], {
@@ -155,8 +155,13 @@ const isMissedCall = (call) => {
   return status === "missed" || status === "rejected" || status === "cancelled";
 };
 
-const CallHistory = ({ currentUser, showHeader = true }) => {
-  const { t } = useUserTranslation();
+const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" }) => {
+  const userTranslation = useUserTranslation();
+  const counselorTranslation = useCounselorTranslation();
+  const { t, lang } =
+    translationRole === "counselor" || translationRole === "counsellor"
+      ? counselorTranslation
+      : userTranslation;
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedDate, setSelectedDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -265,7 +270,7 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
             type: normalizedType,
             status: missed ? "missed" : direction,
             rawStatus: String(call.status || "").toLowerCase(),
-            date: formatDateLabel(timestamp),
+            date: formatDateLabel(timestamp, t),
             dateKey: getDateInputValue(timestamp),
             time:
               dateValue && !Number.isNaN(dateValue.getTime())
@@ -299,7 +304,7 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
     } finally {
       setIsLoadingCalls(false);
     }
-  }, [currentUserId, currentUserType]);
+  }, [currentUserId, currentUserType, lang]);
 
   useEffect(() => {
     void fetchCallHistory();
@@ -445,8 +450,8 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
     >
       {showHeader && (
         <header className="pch-header">
-          <h1>Call History</h1>
-          <p>Track your call records</p>
+          <h1>{t("call_history")}</h1>
+          <p>{t("track_call_records")}</p>
         </header>
       )}
 
@@ -459,7 +464,7 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
               {searchTerm && <button type="button" onClick={() => setSearchTerm("")} aria-label="Clear search">×</button>}
             </div>
             <div className="pch-filter-row">
-              {[["all", t("all")], ["missed", t("missed")], ["incoming", "Incoming"], ["outgoing", "Outgoing"]].map(([value, label]) => (
+        {[["all", t("all")], ["missed", t("missed")], ["incoming", t("incoming")], ["outgoing", t("outgoing")]].map(([value, label]) => (
                 <button type="button" key={value} className={activeFilter === value ? "active" : ""} onClick={() => setActiveFilter(value)}>{label}</button>
               ))}
             </div>
@@ -498,7 +503,10 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
                     </span>
                     <div className="pch-card-info">
                       <strong>{call.name}</strong>
-                      <span>{call.role || "Clinical Psychologist"}</span>
+                      <span className="pch-call-role">
+                        {getCallIcon(call.type)}
+                        <span>{call.role || "Clinical Psychologist"}</span>
+                      </span>
                       <small>{call.time}{call.duration ? ` | ${call.duration}` : ""}</small>
                     </div>
                     {call.missed ? (
@@ -514,7 +522,7 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
             </section>
           ))}
           {isLoadingCalls && <div className="pch-main-empty"><p>{t("loading_calls")}</p></div>}
-          {!isLoadingCalls && !filteredCalls.length && <div className="pch-main-empty"><FaPhoneAlt /><p>{t("no_calls")}</p><small>Try changing your search, date, or filter</small></div>}
+          {!isLoadingCalls && !filteredCalls.length && <div className="pch-main-empty"><FaPhoneAlt /><p>{t("no_calls")}</p><small>{t("adjust_call_filters")}</small></div>}
         </main>
       </div>
 
@@ -538,13 +546,13 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
       <div className="call-history-header-fixed">
         <div className="call-history-hero">
           <div>
-            <span className="call-history-eyebrow">COMMUNICATION</span>
-            <h1>Call History</h1>
-            <p>Review your voice and video calls in one place.</p>
+          <span className="call-history-eyebrow">{t("communication")}</span>
+          <h1>{t("call_history")}</h1>
+          <p>{t("call_history_subtitle")}</p>
           </div>
           <div className="call-history-count">
             <FaPhoneAlt aria-hidden="true" />
-            <span>{filteredCalls.length} calls</span>
+            <span>{filteredCalls.length} {t("calls")}</span>
           </div>
         </div>
 
@@ -717,7 +725,7 @@ const CallHistory = ({ currentUser, showHeader = true }) => {
           <div className="call-no-results">
             <FaPhoneAlt className="call-no-results-icon" aria-hidden="true" />
             <p>{t('no_calls')}</p>
-            <small>Try changing your search, date, or filter</small>
+                <small>{t("adjust_call_filters")}</small>
           </div>
         )}
       </div>

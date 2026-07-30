@@ -1290,7 +1290,68 @@
   .counselor-chat-search svg { left: 30px; }
   .counselor-chat-search input { width: 100%; }
   .counselor-chat-workspace.has-open-chat .smslist-container { display: none; }
-  .counselor-chat-open-pane { height: calc(100dvh - 64px); }
+
+  /*
+   * Open conversations live between the fixed mobile header and bottom nav.
+   * Keeping this shell out of the document scroll makes the chat header and
+   * composer permanently visible while only the timeline scrolls.
+   */
+  .counselor-chat-workspace.has-open-chat {
+    position: fixed;
+    top: calc(56px + env(safe-area-inset-top));
+    right: 0;
+    bottom: calc(68px + env(safe-area-inset-bottom));
+    left: 0;
+    z-index: 40;
+    width: 100%;
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    display: block;
+    overflow: hidden;
+    background: #f7f7f7;
+  }
+
+  .counselor-chat-workspace.has-open-chat .counselor-chat-search {
+    display: none;
+  }
+
+  .counselor-chat-workspace.has-open-chat .counselor-chat-open-pane {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .counselor-chat-workspace.has-open-chat .smsinput-container {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .counselor-chat-workspace.has-open-chat .smsinput-header {
+    position: relative;
+    z-index: 3;
+    flex: 0 0 auto;
+    background: #fff;
+  }
+
+  .counselor-chat-workspace.has-open-chat .smsinput-messages {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .counselor-chat-workspace.has-open-chat .smsinput-form {
+    position: relative;
+    z-index: 3;
+    flex: 0 0 auto;
+    background: #fff;
+  }
 
   .counselor-chat-workspace .smslist-filters {
     display: flex;

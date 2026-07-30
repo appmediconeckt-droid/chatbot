@@ -165,7 +165,7 @@ export default function SessionsTab({
   return (
     <div className="couns-tab-content-stitch couns-sessions-page">
       <header className="couns-sessions-page-title">
-        <h1>Counselling Sessions Overview</h1>
+        <h1>{t("counselling_sessions_overview")}</h1>
       </header>
 
       <div className="stitch-session-layout">
@@ -235,7 +235,7 @@ export default function SessionsTab({
                 <button type="button" className="primary" onClick={handleClearFilter}>
                   <FaRedoAlt /> Refresh Schedule
                 </button>
-                <button type="button" onClick={handleViewTomorrow}>View Tomorrow</button>
+                <button type="button" onClick={handleViewTomorrow}>{t("view_tomorrow")}</button>
               </div>
             </div>
           ) : (
@@ -311,12 +311,12 @@ export default function SessionsTab({
             </div>
 
             <aside className="stitch-session-day-summary">
-              <h3><FaMagic /> Day Summary</h3>
-              <div><span>Total Sessions</span><b>{daySummary.total}</b></div>
-              <div><span>Completed</span><b>{daySummary.completed}</b></div>
-              <div className="in-progress"><span>In Progress</span><b>{daySummary.inProgress}</b></div>
-              <div><span>Remaining</span><b>{daySummary.remaining}</b></div>
-              <footer><span>System Normal</span></footer>
+              <h3><FaMagic /> {t("day_summary")}</h3>
+              <div><span>{t("total_sessions")}</span><b>{daySummary.total}</b></div>
+              <div><span>{t("completed")}</span><b>{daySummary.completed}</b></div>
+              <div className="in-progress"><span>{t("in_progress")}</span><b>{daySummary.inProgress}</b></div>
+              <div><span>{t("remaining")}</span><b>{daySummary.remaining}</b></div>
+              <footer><span>{t("system_normal")}</span></footer>
             </aside>
             </>
           )}
@@ -347,7 +347,7 @@ export default function SessionsTab({
                 <div>
                   <h2>{patient.name}</h2>
                   <p>{selectedSession.gender || "Patient"} • {selectedSession.age ? `${selectedSession.age} Years` : "Private profile"}</p>
-                  <span><FaShieldAlt /> Returning Patient</span>
+                  <span><FaShieldAlt /> {t("returning_patient")}</span>
                 </div>
                 <button type="button" onClick={() => setSelectedSession(null)} aria-label="Close session details">×</button>
               </header>
@@ -357,7 +357,7 @@ export default function SessionsTab({
                   <span className={sessionInProgress ? "progress" : ""}>● {sessionInProgress ? "In Progress" : "Confirmed"}</span>
                   <span><FaCalendarAlt /> {formatDateForDisplay(selectedSession.date)}</span>
                   <span><FaClock /> {formatTime(startDate)} – {formatTime(endDate)}</span>
-                  <span><FaVideo /> Video Session</span>
+                  <span><FaVideo /> {t("video_session")}</span>
                 </div>
 
                 <div className="stitch-session-reason-card">

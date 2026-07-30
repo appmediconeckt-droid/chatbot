@@ -316,7 +316,7 @@ const MyAppointments = () => {
 
           <div className="appointment-detail-title">
             <h2>{t('appointment_details')}</h2>
-            <p>View your session information</p>
+          <p>{t("view_session_information")}</p>
           </div>
 
           <div className="appointment-detail-counselor">
@@ -343,11 +343,11 @@ const MyAppointments = () => {
           <div className="appointment-detail-countdown">
             <span className="countdown-icon"><FaClock /></span>
             <div>
-              <small>Session starts in</small>
+                  <small>{t("session_starts_in")}</small>
               <strong>{countdown}</strong>
             </div>
             <div className="countdown-time">
-              <small>Today</small>
+                  <small>{t("today")}</small>
               <strong>{appointmentSchedule.time || "N/A"}</strong>
             </div>
           </div>
@@ -370,14 +370,14 @@ const MyAppointments = () => {
             <div className="appointment-detail-card mode">
               <FaLaptop />
               <div>
-                <small>Mode</small>
+                <small>{t("mode")}</small>
                 <strong>{appointmentMode}</strong>
               </div>
             </div>
             <div className="appointment-detail-card duration">
               <FaStopwatch />
               <div>
-                <small>Duration</small>
+                <small>{t("duration")}</small>
                 <strong>{appointmentDuration} Minutes</strong>
               </div>
             </div>
@@ -428,20 +428,25 @@ const MyAppointments = () => {
         <header className="user-appointments-hero">
           <div>
             <h1>{t('my_appointments')}</h1>
-            <p>View your past and upcoming Appointments</p>
+          <p>{t("appointments_subtitle")}</p>
           </div>
         </header>
 
         <div className="user-appointments-filterbar">
           <div className="user-appointments-status-pills">
-            {["All", "Pending", "Confirmed", "Completed"].map((filter) => (
+            {[
+              ["All", t("all")],
+              ["Pending", t("pending")],
+              ["Confirmed", t("confirmed")],
+              ["Completed", t("completed")],
+            ].map(([filter, label]) => (
               <button
                 key={filter}
                 type="button"
                 className={statusFilter === filter ? "active" : ""}
                 onClick={() => setStatusFilter(filter)}
               >
-                {filter}
+                {label}
               </button>
             ))}
           </div>

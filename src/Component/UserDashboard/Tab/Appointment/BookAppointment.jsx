@@ -2150,7 +2150,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
         <div className="counselors-section-unique">
           <div className="directory-hero-unique">
             <h1 className="page-title-unique">{t('online_counselors')}</h1>
-            <p className="page-subtitle-unique">Send a request and book a counsellor</p>
+            <p className="page-subtitle-unique">{t("book_counselor_subtitle")}</p>
           </div>
 
           {/* Search Bar Section */}
@@ -2228,14 +2228,14 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               {(searchTerm || searchLocation) && (
                 <div className="filter-stats-unique">
                   <span className="filter-count-unique">
-                    Found {filteredCounselors.length} counselor
-                    {filteredCounselors.length !== 1 ? "s" : ""}
+                    {t("found")} {filteredCounselors.length}{" "}
+                    {t(filteredCounselors.length === 1 ? "counselor_label" : "counselors_found")}
                   </span>
                   <button
                     className="clear-filters-btn-unique"
                     onClick={clearFilters}
                   >
-                    Clear Filters
+                    {t("clear_filters")}
                   </button>
                 </div>
               )}
@@ -2244,11 +2244,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
           <div className="directory-filter-pills-unique" role="tablist" aria-label="Counsellor filters">
             {[
-              ["all", "All"],
-              ["online", "Online"],
-              ["nearby", "Nearby"],
-              ["top-rated", "Top Rated"],
-              ["therapist", "Therapist"],
+              ["all", t("all")],
+              ["online", t("online")],
+              ["nearby", t("nearby")],
+              ["top-rated", t("top_rated")],
+              ["therapist", t("therapist")],
             ].map(([value, label]) => (
               <button
                 key={value}
@@ -2263,7 +2263,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
           {recommendedCounselor && (
             <section className="recommended-section-unique">
-              <h2>Recommended for you</h2>
+              <h2>{t("recommended_for_you")}</h2>
               <div className="recommended-card-unique">
                 <div className="recommended-profile-unique">
                   <div className="recommended-avatar-unique">
@@ -2287,7 +2287,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                     ● {recommendedCounselor.online ? "AVAILABLE" : "OFFLINE"}
                   </span>
                   <div>
-                    <button onClick={() => handleBookAppointment(recommendedCounselor)}>Book Appointment</button>
+                    <button onClick={() => handleBookAppointment(recommendedCounselor)}>{t("book_appointment")}</button>
                     <button
                       className="outline"
                       disabled={!recommendedCounselor.online}
@@ -2302,16 +2302,16 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
           )}
 
           <div className="available-heading-unique">
-            <h2>Available Counselors</h2>
-            <button type="button" onClick={() => setDirectoryFilter("all")}>See All</button>
+            <h2>{t("available_counselors")}</h2>
+            <button type="button" onClick={() => setDirectoryFilter("all")}>{t("see_all")}</button>
           </div>
 
           {/* No Results Message */}
           {directoryCounselors.length === 0 && (
             <div className="no-results-unique">
               <div className="no-results-icon-unique">🔍</div>
-              <h3>No counselors found</h3>
-              <p>Try adjusting your search or location filters</p>
+              <h3>{t("no_counselors_found")}</h3>
+              <p>{t("adjust_search_filters")}</p>
               <button
                 className="reset-search-btn-unique"
                 onClick={clearFilters}
@@ -2584,11 +2584,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               {paymentConfig.enabled && (
                 <div className="paid-session-preview-unique">
                   <div>
-                    <span>Chat Session</span>
+                        <span>{t("chat_session")}</span>
                     <strong>₹{paymentConfig.fees?.chat || 100} / {paymentConfig.durationMinutes || 30} min</strong>
                   </div>
                   <div>
-                    <span>Wallet Balance</span>
+                        <span>{t("wallet_balance")}</span>
                     <strong>₹{Number(walletBalance || 0).toFixed(2)}</strong>
                   </div>
                   <p>
@@ -2683,7 +2683,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   </label>
                 </div>
                 <div className="form-group-unique">
-                  <label>Clinical Notes / Reason</label>
+                    <label>{t("clinical_notes_reason")}</label>
                   <textarea
                     className="form-textarea-unique"
                     placeholder="Share what you want to discuss in this session..."
@@ -2691,7 +2691,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                     onChange={(e) => setBookingNotes(e.target.value)}
                     required
                   ></textarea>
-                  <small>Sent to the counselor for confirmation.</small>
+                    <small>{t("sent_for_counselor_confirmation")}</small>
                 </div>
               </div>
 

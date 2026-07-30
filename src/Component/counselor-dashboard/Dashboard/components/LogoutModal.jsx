@@ -1,11 +1,13 @@
 import React from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 
 export default function LogoutModal({
   showLogoutConfirm,
   setShowLogoutConfirm,
   handleLogout,
 }) {
+  const { t } = useCounselorTranslation();
   if (!showLogoutConfirm) return null;
 
   return (
@@ -19,17 +21,17 @@ export default function LogoutModal({
       >
         <div className="couns-logout-modal">
           <FaExclamationTriangle className="couns-warning-icon" />
-          <h3>Confirm Logout</h3>
-          <p>Are you sure you want to logout?</p>
+          <h3>{t("confirm_logout")}</h3>
+          <p>{t("settings.logoutConfirm")}</p>
           <div className="couns-modal-actions">
             <button
               className="couns-cancel-btn"
               onClick={() => setShowLogoutConfirm(false)}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button className="couns-confirm-btn" onClick={handleLogout}>
-              Logout
+              {t("common.logout")}
             </button>
           </div>
         </div>

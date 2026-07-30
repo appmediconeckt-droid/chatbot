@@ -93,12 +93,12 @@ export default function AppointmentsTab({
 
   return (
     <div className="couns-tab-content-stitch">
-      <div className="stitch-apt-page-title">Appointments Section</div>
+      <div className="stitch-apt-page-title">{t("appointments")}</div>
       <div className="stitch-apt-layout stitch-apt-layout-cards-only">
         <div className="stitch-apt-left">
           <section className="stitch-apt-summary">
             <div className="stitch-apt-summary-copy">
-              <span>Good Afternoon,</span>
+              <span>{t("good_afternoon")}</span>
               <h2>Dr. VIVEK Singh</h2>
               <p>{counts.all} total appointment(s)</p>
             </div>
@@ -106,9 +106,9 @@ export default function AppointmentsTab({
               <FaSyncAlt />
             </button>
             <div className="stitch-apt-metrics">
-              <div><strong>{counts.pending}</strong><span>Pending</span></div>
-              <div><strong>{counts.confirmed}</strong><span>Confirmed</span></div>
-              <div><strong>{counts.today}</strong><span>Today</span></div>
+              <div><strong>{counts.pending}</strong><span>{t("pending")}</span></div>
+              <div><strong>{counts.confirmed}</strong><span>{t("confirmed")}</span></div>
+              <div><strong>{counts.today}</strong><span>{t("today")}</span></div>
             </div>
           </section>
 
@@ -119,7 +119,7 @@ export default function AppointmentsTab({
                 type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder="Search patients..."
+                placeholder={t("search_patients")}
                 aria-label="Search patients"
               />
             </label>
@@ -198,7 +198,7 @@ export default function AppointmentsTab({
                       )}
 
                       <div className="stitch-apt-time">
-                        <span className="stitch-apt-time-label">Appointment Date</span>
+                        <span className="stitch-apt-time-label">{t("appointment_date")}</span>
                         <span className="stitch-apt-time-value">
                           {new Date(apt.date).toLocaleDateString("en-US", {
                             weekday: "short",

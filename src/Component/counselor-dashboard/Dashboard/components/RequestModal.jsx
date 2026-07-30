@@ -1,6 +1,7 @@
 import React from "react";
 import { FaUsers, FaCheck, FaTimes as FaClose } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 
 export default function RequestModal({
   showRequestModal,
@@ -10,6 +11,7 @@ export default function RequestModal({
   handleAcceptRequest,
   handleRejectRequest,
 }) {
+  const { t } = useCounselorTranslation();
   if (!showRequestModal || !currentRequest) return null;
   const anonymousUser = getAnonymousUserDisplay({
     ...currentRequest,
@@ -28,9 +30,9 @@ export default function RequestModal({
               <FaUsers />
             </div>
             <div>
-              <h3>New Chat Request</h3>
+              <h3>{t("new_chat_request")}</h3>
               <p className="couns-request-timer">
-                Auto-closes in {modalCountdown}s
+                {t("auto_closes_in")} {modalCountdown}s
               </p>
             </div>
           </div>
@@ -51,7 +53,7 @@ export default function RequestModal({
               </div>
             </div>
             <div className="couns-request-type">
-              <span className="couns-request-type-badge">Chat Request</span>
+              <span className="couns-request-type-badge">{t("chat_request")}</span>
             </div>
           </div>
 
@@ -65,7 +67,7 @@ export default function RequestModal({
 
           <div className="couns-request-meta">
             <span className="couns-request-time">
-              Requested:{" "}
+              {t("requested")}:{" "}
               {new Date(currentRequest.requestedAt).toLocaleTimeString()}
             </span>
           </div>
@@ -78,7 +80,7 @@ export default function RequestModal({
             disabled={loadingRequests}
           >
             <FaClose />
-            Reject
+            {t("reject")}
           </button>
           <button
             className="couns-request-btn couns-request-accept"
@@ -86,7 +88,7 @@ export default function RequestModal({
             disabled={loadingRequests}
           >
             <FaCheck />
-            Accept
+            {t("accept")}
           </button>
         </div>
 

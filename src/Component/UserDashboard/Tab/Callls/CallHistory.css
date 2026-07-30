@@ -50,10 +50,50 @@
 .pch-card-info { min-width: 0; flex: 1; display: flex; flex-direction: column; }
 .pch-card-info strong { font-size: 14px; }
 .pch-card-info > span { margin-top: 2px; color: #697482; font-size: 11px; }
+.pch-card-info .pch-call-role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pch-call-role > svg {
+  display: block;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  color: var(--pch-accent, #008b3b);
+  fill: currentColor;
+}
 .pch-card-info small { margin-top: 4px; color: #384454; font-size: 10px; }
 .pch-call-card.missed .pch-card-info small { color: #db2834; }
-.pch-call-action { flex: 0 0 42px; width: 42px; height: 42px; border: 0; border-radius: 50%; color: #00813a; background: #eef3ff; display: grid; place-items: center; cursor: pointer; }
-.pch-call-action svg { font-size: 16px; }
+.pch-call-action {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: #00813a;
+  background: #eef3ff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+  text-align: center;
+  cursor: pointer;
+}
+.pch-call-action svg {
+  display: block;
+  width: 19px;
+  height: 19px;
+  min-width: 19px;
+  min-height: 19px;
+  margin: 0;
+  position: static;
+  transform: none;
+  color: inherit;
+  fill: currentColor;
+  flex: 0 0 19px;
+}
 .pch-missed-label { color: #d51f2d; font-size: 11px; white-space: nowrap; }
 .pch-empty, .pch-main-empty { color: #7e8997; text-align: center; }
 .pch-empty { padding: 30px 12px; font-size: 12px; }
@@ -286,6 +326,23 @@
   .pch-records { padding: 20px 16px 30px; }
   .pch-call-card { padding: 12px; }
   .pch-missed-label { font-size: 9px; }
+  .pch-call-action {
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+  }
+  .pch-call-action svg {
+    width: 21px;
+    height: 21px;
+    min-width: 21px;
+    min-height: 21px;
+    flex-basis: 21px;
+  }
+  .pch-call-role > svg {
+    width: 15px;
+    height: 15px;
+    min-width: 15px;
+  }
 }
 
 /* CallHistory.css */

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
@@ -21,7 +21,27 @@ const GoogleAuthButton = ({
   gateDriven = false,
 }) => {
   const [busy, setBusy] = useState(false);
+  const [buttonWidth, setButtonWidth] = useState(320);
+  const wrapperRef = useRef(null);
   const hasGoogleClientId = Boolean(import.meta.env.VITE_GOOGLE_CLIENT_ID);
+
+  useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return undefined;
+
+    const updateWidth = () => {
+      const availableWidth = Math.floor(wrapper.getBoundingClientRect().width);
+      if (availableWidth > 0) {
+        setButtonWidth(Math.max(200, Math.min(400, availableWidth)));
+      }
+    };
+
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(wrapper);
+
+    return () => observer.disconnect();
+  }, []);
 
   // text overrides — "mode" prop is the friendly API; we map it to the
   // library's enum.
@@ -118,7 +138,7 @@ const GoogleAuthButton = ({
 
   if (!hasGoogleClientId) {
     return (
-      <div className="g-auth-wrap g-auth-wrap-disabled">
+      <div ref={wrapperRef} className="g-auth-wrap g-auth-wrap-disabled">
         <button type="button" className="g-auth-missing-btn" disabled>
           Google sign-in unavailable
         </button>
@@ -128,6 +148,7 @@ const GoogleAuthButton = ({
 
   return (
     <div
+      ref={wrapperRef}
       className={`g-auth-wrap ${disabled ? "g-auth-wrap-disabled" : ""} ${busy ? "g-auth-wrap-busy" : ""}`}
     >
       <GoogleLogin
@@ -137,7 +158,7 @@ const GoogleAuthButton = ({
         shape="rectangular"
         theme="outline"
         size="large"
-        width="320"
+        width={String(buttonWidth)}
         auto_select={false}
         context="use"
         logo_alignment="left"

@@ -457,35 +457,35 @@ const WalletDashboard = ({ userData }) => {
         return (
             <div className="wallet-page wallet-history-page">
                 <header className="wallet-page__header">
-                    <h1>Your Wallet</h1>
-                    <p>Track your transaction and withdrawal</p>
+                    <h1>{t("your_wallet")}</h1>
+                    <p>{t("wallet_tracking_subtitle")}</p>
                 </header>
                 <main className="wallet-history-content">
                     <button className="wallet-history-back" type="button" onClick={() => setShowHistory(false)}>
                         <span className="material-symbols-outlined">arrow_back</span>
-                        Wallet / Transaction History
+                        {t("wallet_transaction_history")}
                     </button>
 
                     <div className="wallet-history-overview">
                         <section className="wallet-history-total">
                             <div>
-                                <span>Total Spent</span>
+                                <span>{t("total_spent")}</span>
                                 <strong>₹{historySpent.toLocaleString('en-IN')}</strong>
                             </div>
                             <span className="material-symbols-outlined">monitoring</span>
-                            <p><span className="material-symbols-outlined">south</span> Your wallet transaction summary</p>
+                            <p><span className="material-symbols-outlined">south</span> {t("wallet_transaction_summary")}</p>
                         </section>
                         <section className="wallet-history-tools">
                             <label>
                                 <span className="material-symbols-outlined">search</span>
-                                <input value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder="Search transactions, doctors..." />
+                                <input value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder={t("search_transactions")} />
                             </label>
                             <div>
                                 {[
-                                    ['all', 'All'],
-                                    ['added', 'Added'],
-                                    ['doctor', 'Doctor'],
-                                    ['withdrawals', 'Withdrawals']
+                                    ['all', t('all')],
+                                    ['added', t('added')],
+                                    ['doctor', t('doctor')],
+                                    ['withdrawals', t('withdrawals')]
                                 ].map(([value, label]) => (
                                     <button type="button" key={value} className={historyFilter === value ? 'is-active' : ''} onClick={() => setHistoryFilter(value)}>
                                         {value === 'all' && <span className="material-symbols-outlined">done</span>}
@@ -497,13 +497,13 @@ const WalletDashboard = ({ userData }) => {
                     </div>
 
                     <section className="wallet-history-list">
-                        <h3><i /> Transaction History</h3>
+                        <h3><i /> {t("transaction_history")}</h3>
                         <div className="wallet-history-table-wrap">
                             <table>
-                                <thead><tr><th>Transaction Details</th><th>Date</th><th>Category</th><th>Status</th><th>Amount</th></tr></thead>
+                                <thead><tr><th>{t("transaction_details")}</th><th>{t("date")}</th><th>{t("category")}</th><th>{t("status")}</th><th>{t("amount")}</th></tr></thead>
                                 <tbody>
                                     {historyLoading ? (
-                                        <tr><td colSpan="5" className="wallet-empty">Loading transaction history...</td></tr>
+                                        <tr><td colSpan="5" className="wallet-empty">{t("loading_transaction_history")}</td></tr>
                                     ) : visibleHistory.length ? visibleHistory.map((tx) => {
                                         const isCredit = tx.type === 'credit';
                                         const category = isCredit ? 'Bank' : (tx.metadata?.sessionType || (tx.counselorId ? 'General Checkup' : 'Wallet'));
@@ -534,8 +534,8 @@ const WalletDashboard = ({ userData }) => {
     return (
         <div className="wallet-page">
             <header className="wallet-page__header">
-                <h1>Your Wallet</h1>
-                <p>Track your transaction and withdrawal</p>
+                <h1>{t("your_wallet")}</h1>
+                <p>{t("wallet_tracking_subtitle")}</p>
             </header>
 
             <main className="wallet-layout">
@@ -549,7 +549,7 @@ const WalletDashboard = ({ userData }) => {
                             <span className="material-symbols-outlined wallet-card-mark">data_usage</span>
                         </div>
                         <div>
-                            <p className="wallet-muted-light">Available Balance</p>
+                            <p className="wallet-muted-light">{t("available_balance")}</p>
                             <h2>₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
                             <p className="wallet-card-number">**** &nbsp;**** &nbsp;4242</p>
                         </div>
@@ -560,7 +560,7 @@ const WalletDashboard = ({ userData }) => {
                             </button>
                             <button type="button" className="wallet-history-button" onClick={openTransactionHistory}>
                                 <span className="material-symbols-outlined">history</span>
-                                View History
+                                {t("view_history")}
                             </button>
                         </div>
                     </section>
@@ -593,7 +593,7 @@ const WalletDashboard = ({ userData }) => {
                         <h3>{t('add_money')}</h3>
                         <form onSubmit={handlePayment}>
                             <label className="wallet-amount-box" htmlFor="amount-input">
-                                <span>Enter Amount</span>
+                                <span>{t("enter_amount")}</span>
                                 <div><b>₹</b><input id="amount-input" type="number" min="1" placeholder="1,000" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div>
                             </label>
                             <div className="wallet-quick-amounts">
@@ -602,14 +602,14 @@ const WalletDashboard = ({ userData }) => {
                                         ₹{value}
                                     </button>
                                 ))}
-                                <button type="button" onClick={() => { setAmount(''); document.getElementById('amount-input')?.focus(); }}>Custom</button>
+                                <button type="button" onClick={() => { setAmount(''); document.getElementById('amount-input')?.focus(); }}>{t("custom_amount")}</button>
                             </div>
                             <p className="wallet-field-title">{t('payment_method')}</p>
                             <div className="wallet-payment-methods">
                                 {[
-                                    { id: 'upi', label: 'UPI / QR', icon: 'UPI' },
-                                    { id: 'visa', label: 'Credit / Debit Card', icon: 'credit_card' },
-                                    { id: 'bank', label: 'Net Banking', icon: 'account_balance' }
+                                    { id: 'upi', label: t('upi_qr'), icon: 'UPI' },
+                                    { id: 'visa', label: t('credit_debit_card'), icon: 'credit_card' },
+                                    { id: 'bank', label: t('net_banking'), icon: 'account_balance' }
                                 ].map((method) => (
                                     <label key={method.id} className={paymentMethod === method.id ? 'is-selected' : ''}>
                                         <input type="radio" name="payment" checked={paymentMethod === method.id} onChange={() => setPaymentMethod(method.id)} />
@@ -622,13 +622,13 @@ const WalletDashboard = ({ userData }) => {
                             <button className="wallet-pay-button" type="submit" disabled={loading}>
                                 {loading ? t('sending') : `Proceed to Pay${amount ? ` ₹${Number(amount).toLocaleString('en-IN')}` : ''}`}
                             </button>
-                            <p className="wallet-secure"><span className="material-symbols-outlined">lock</span> Secure 256-bit encryption</p>
+                            <p className="wallet-secure"><span className="material-symbols-outlined">lock</span> {t("secure_encryption")}</p>
                         </form>
                     </section>
 
                     <section className="wallet-support">
-                        <div><strong>NEED PAYMENT HELP?</strong><p>Support team is available 24/7 for you.</p></div>
-                        <button type="button" onClick={() => { window.location.href = 'mailto:support@mediconeckt.com?subject=Wallet%20Support'; }}>Support</button>
+                        <div><strong>{t("need_payment_help")}</strong><p>{t("support_available_24_7")}</p></div>
+                        <button type="button" onClick={() => { window.location.href = 'mailto:support@mediconeckt.com?subject=Wallet%20Support'; }}>{t("support")}</button>
                     </section>
                 </aside>
             </main>

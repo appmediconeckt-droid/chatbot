@@ -630,6 +630,108 @@
   }
 }
 
+/* Final phone/tablet layout authority. */
+@media (max-width: 968px) {
+  .cs-wrapper {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 12px;
+    align-items: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .cs-container {
+    width: min(100%, 620px);
+    height: auto;
+    min-height: calc(100dvh - 24px);
+    max-height: none;
+    margin: 0 auto;
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .cs-form-section {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: calc(100dvh - 24px);
+    padding: 76px clamp(22px, 6vw, 44px) 28px;
+    overflow: visible;
+  }
+
+  .cs-form {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .cs-form-logo {
+    width: clamp(145px, 28vw, 180px);
+    max-width: 55%;
+  }
+
+  .cs-input,
+  .cs-select,
+  .cs-textarea,
+  .cs-submit {
+    min-height: 46px;
+  }
+}
+
+@media (max-width: 600px) {
+  .cs-wrapper {
+    padding: 0;
+    background: #fff;
+  }
+
+  .cs-container {
+    width: 100%;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .cs-form-section {
+    min-height: 100dvh;
+    padding: 72px 18px 28px;
+  }
+
+  .cs-mobile-header-back {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: 14px;
+  }
+
+  .cs-form-header {
+    margin-bottom: 18px;
+  }
+
+  .cs-form-header h2 {
+    font-size: clamp(1.45rem, 7vw, 1.75rem);
+  }
+
+  .cs-options,
+  .cs-checkbox-group {
+    width: 100%;
+  }
+}
+
+@media (max-width: 360px) {
+  .cs-form-section {
+    padding-inline: 14px;
+  }
+
+  .cs-form-logo {
+    width: 135px;
+  }
+}
+
 .cs-options {
   display: flex;
   justify-content: space-between;
@@ -1087,4 +1189,97 @@
 .google-auth-button-wrapper iframe {
   width: 100% !important;
   margin: 0 auto !important;
+}
+
+/* Keep responsive geometry last so legacy breakpoints cannot restore 95vh. */
+@media (max-width: 968px) {
+  .cs-wrapper {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 12px;
+    align-items: flex-start;
+    overflow-x: hidden;
+    overflow-y: auto;
+  }
+
+  .cs-container {
+    width: min(100%, 620px);
+    height: auto;
+    min-height: calc(100dvh - 24px);
+    max-height: none;
+    margin: 0 auto;
+    grid-template-columns: minmax(0, 1fr);
+    border-radius: 24px;
+    overflow: hidden;
+  }
+
+  .cs-brand {
+    display: none;
+  }
+
+  .cs-form-section {
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    min-height: calc(100dvh - 24px);
+    padding: 76px clamp(22px, 6vw, 44px) 28px;
+    overflow: visible;
+  }
+
+  .cs-form {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .cs-wrapper {
+    padding: 0;
+    background: #fff;
+  }
+
+  .cs-container {
+    width: 100%;
+    min-height: 100dvh;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .cs-form-section {
+    min-height: 100dvh;
+    padding: 72px 18px 28px;
+  }
+
+  .cs-mobile-header-back {
+    position: fixed;
+    top: max(14px, env(safe-area-inset-top));
+    left: 14px;
+  }
+
+  .cs-form-header h2 {
+    font-size: clamp(1.45rem, 7vw, 1.75rem);
+  }
+
+  .cs-form {
+    gap: 14px;
+  }
+
+  .cs-divider {
+    width: 100%;
+    margin: 0.75rem 0 0.5rem;
+  }
+
+  .cs-divider span {
+    padding-inline: 0.6rem;
+    white-space: nowrap;
+  }
+
+  .g-auth-wrap {
+    width: 100%;
+    margin: 0;
+  }
 }

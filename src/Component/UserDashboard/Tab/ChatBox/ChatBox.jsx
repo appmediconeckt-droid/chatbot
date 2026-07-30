@@ -4036,7 +4036,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import axios from "axios";
 import { Link, useParams, useLocation, useNavigate } from "react-router-dom";
-import { FaArrowLeft, FaPhoneAlt, FaSpinner, FaVideo, FaCamera, FaSearch, FaHistory, FaPaperclip, FaSmile, FaPaperPlane } from "react-icons/fa";
+import { FaArrowLeft, FaPhoneAlt, FaSpinner, FaVideo, FaCamera, FaSearch, FaHistory, FaPaperclip, FaSmile } from "react-icons/fa";
 import "./ChatBox.css";
 import VideoCallModal from "../CallModal/VideoCallModal";
 import PhotoPreviewModal from "../../../common/PhotoPreviewModal/PhotoPreviewModal";
@@ -4101,7 +4101,6 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
   const [currentChat, setCurrentChat] = useState(null);
   const [messages, setMessages] = useState([]);
   const [callHistory, setCallHistory] = useState([]);
-  const [conversationSearch, setConversationSearch] = useState("");
   const [currentCounselor, setCurrentCounselor] = useState(() => {
     if (initialCounselor) return normalizeCounselor(initialCounselor);
     return {
@@ -4132,6 +4131,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
   const { startRinging, stopRinging } = useRingtone();
 
   const [newMessage, setNewMessage] = useState("");
+  const [conversationSearch, setConversationSearch] = useState("");
   const [showOptions, setShowOptions] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
@@ -6312,7 +6312,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
         {showEmojiPicker && (
           <div className="chatEmojiBox" ref={emojiPickerRef} role="dialog" aria-label="Emoji picker">
             <div className="emojiBoxHeader">
-              <span className="emojiBoxTitle">Emoji</span>
+              <span className="emojiBoxTitle">{t("emoji")}</span>
               <button className="emojiBoxClose" onClick={() => setShowEmojiPicker(false)} aria-label="Close emoji picker">×</button>
             </div>
             <div className="emojiBoxGrid">
@@ -6395,7 +6395,14 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
               {isSending ? (
                 <FaSpinner className="chatCorrectSendIcon spinning" aria-hidden="true" />
               ) : (
-                <FaPaperPlane className="chatCorrectSendIcon" aria-hidden="true" />
+                <svg
+                  className="chatCorrectSendIcon"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  <path d="M3.4 20.4 21.85 12 3.4 3.6l-.02 6.53L16.55 12 3.38 13.87z" />
+                </svg>
               )}
               <span className="sendIcon" aria-hidden="true">
                 {isSending ? "⏳" : "➤"}
