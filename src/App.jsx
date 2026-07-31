@@ -6,6 +6,9 @@ import ProtectedRoute from "./Component/common/ProtectedRoute";
 import axiosInstance from "./axiosConfig";
 
 const Leanding = lazy(() => import("./authtication/Leanding"));
+const LandingPrivacyPolicy = lazy(
+  () => import("./authtication/LandingPrivacyPolicy"),
+);
 const UserDashboard = lazy(
   () => import("./Component/UserDashboard/Dashboard/UserDashboard"),
 );
@@ -125,6 +128,7 @@ function App() {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Leanding />} />
+          <Route path="/privacy-policy" element={<LandingPrivacyPolicy />} />
           <Route path="/role-selector" element={<RoleSelector />} />
           <Route path="/otp-verification" element={<OTPVerification />} />
           <Route path="/user-signup" element={<UserSignup />} />
