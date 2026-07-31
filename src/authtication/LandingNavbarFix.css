@@ -72,6 +72,19 @@
     font-size: 18px !important;
   }
 
+  .humaeli .header .mobile-menu-btn,
+  .humaeli .header .mobile-menu-btn:hover,
+  .humaeli .header .mobile-menu-btn:focus,
+  .humaeli .header .mobile-menu-btn:focus-visible,
+  .humaeli .header.header-scrolled .mobile-menu-btn,
+  .humaeli .header.header-scrolled .mobile-menu-btn:hover,
+  .humaeli .header.header-scrolled .mobile-menu-btn:focus,
+  .humaeli .header.header-scrolled .mobile-menu-btn:focus-visible {
+    color: #fff !important;
+    background: rgba(32, 189, 154, .2) !important;
+    border-color: rgba(255, 255, 255, .8) !important;
+  }
+
   .humaeli .header .landing-logo-brand,
   .humaeli .header.header-scrolled .landing-logo-brand {
     min-width: 0 !important;
@@ -506,6 +519,23 @@
 
 /* This remains last so the shared desktop trigger cannot expand on phones. */
 @media (max-width: 768px) {
+  .humaeli .header .nav-menu .nav-link,
+  .humaeli .header.header-scrolled .nav-menu .nav-link {
+    color: rgba(255, 255, 255, .92) !important;
+  }
+
+  .humaeli .header .nav-menu .nav-link:hover,
+  .humaeli .header .nav-menu .nav-link:focus,
+  .humaeli .header .nav-menu .nav-link:focus-visible,
+  .humaeli .header .nav-menu .nav-link.active,
+  .humaeli .header.header-scrolled .nav-menu .nav-link:hover,
+  .humaeli .header.header-scrolled .nav-menu .nav-link:focus,
+  .humaeli .header.header-scrolled .nav-menu .nav-link:focus-visible,
+  .humaeli .header.header-scrolled .nav-menu .nav-link.active {
+    color: #fff !important;
+    background: #20bd9a !important;
+  }
+
   .humaeli .header .header-language .lang-selector-trigger,
   .humaeli .header.header-scrolled .header-language .lang-selector-trigger {
     width: 40px !important;

@@ -5324,7 +5324,7 @@ html {
   box-sizing: border-box;
   flex: none;
   max-width: none;
-  min-height: 670px;
+  min-height: max(700px, calc(100vh + 24px));
   padding: 155px 5.6% 65px;
 }
 
@@ -5748,7 +5748,7 @@ html {
   .humaeli main { padding-top: 0; }
   .humaeli .header { height: 64px; background: rgba(4,54,47,.78); }
   .humaeli .header .landing-logo-brand img { width: 76px; height: 48px; }
-  .humaeli .hero > .container { min-height: 640px; padding: 110px 22px 48px; }
+  .humaeli .hero > .container { min-height: 670px; padding: 110px 22px 48px; }
   .humaeli .hero-content { max-width: 500px; }
   .humaeli .hero-title { font-size: clamp(2.55rem, 11vw, 4rem); }
   .humaeli .hero-wellness-image { object-position: 57% center; }
@@ -5759,7 +5759,7 @@ html {
 
 @media (max-width: 520px) {
   .humaeli main { padding-top: 0; }
-  .humaeli .hero > .container { min-height: 650px; }
+  .humaeli .hero > .container { min-height: 680px; }
   .humaeli .hero-description { font-size: .9rem; }
 }
 
