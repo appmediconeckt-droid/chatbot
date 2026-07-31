@@ -8,7 +8,7 @@ import './LandingDoctorCarousel.css';
 import './LandingTestimonialCarousel.css';
 import logo from '../assets/humaeli.png';
 import logos from '../assets/humaeli logo (2).png';
-import wellnessHero from '../assets/humaeli-wellness-hero.png';
+import wellnessHero from '../assets/landing-page-hero.png';
 import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
 import faqWellnessIllustration from '../assets/faq-wellness-illustration.png';
 import { API_BASE_URL } from '../axiosConfig';
