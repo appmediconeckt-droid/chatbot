@@ -1102,7 +1102,7 @@ const Footer = () => {
           </p>
         </div>
         <div className="footer-legal">
-          <a href="#">{t('landing_footer_legal_privacy')}</a>
+          <Link to="/privacy-policy">{t('landing_footer_legal_privacy')}</Link>
           <a href="#">{t('landing_footer_legal_terms')}</a>
           <a href="#">{t('landing_footer_legal_disclaimer')}</a>
           <a href="#">{t('landing_footer_legal_grievance')}</a>

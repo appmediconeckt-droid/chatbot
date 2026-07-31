@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   FaCloud,
   FaLock,
@@ -19,27 +19,10 @@ import {
 import "./PrivacyPolicy.css";
 
 const PrivacyPolicy = () => {
-  const [expandedSections, setExpandedSections] = useState({
-    collect: true,
-    use: true,
-    professional: false,
-    responsibilities: false,
-    sharing: false,
-    choices: false,
-  });
-
-  const toggleSection = (section) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
-
-  const ExpandableSection = ({ icon, title, sectionKey, children }) => (
+  const ExpandableSection = ({ icon, title, defaultOpen = false, children }) => (
     <details
       className="privacy-policy-expandable"
-      open={expandedSections[sectionKey]}
-      onToggle={() => toggleSection(sectionKey)}
+      defaultOpen={defaultOpen}
     >
       <summary>
         <span className="privacy-policy-expandable-header">
@@ -122,7 +105,7 @@ const PrivacyPolicy = () => {
         <ExpandableSection
           icon={<FaServer />}
           title="Information We Collect"
-          sectionKey="collect"
+          defaultOpen
         >
           <p>
             When you register for MediConnect, we collect specific personal and
@@ -149,7 +132,7 @@ const PrivacyPolicy = () => {
         <ExpandableSection
           icon={<FaEye />}
           title="How We Use Information"
-          sectionKey="use"
+          defaultOpen
         >
           <p>
             Your data is strictly utilized to provide, maintain, and improve the
@@ -167,7 +150,6 @@ const PrivacyPolicy = () => {
         <ExpandableSection
           icon={<FaUserShield />}
           title="Professional Privacy"
-          sectionKey="professional"
         >
           <p>
             We maintain strict professional boundaries to protect your privacy
@@ -187,7 +169,6 @@ const PrivacyPolicy = () => {
         <ExpandableSection
           icon={<FaCheckCircle />}
           title="Your Responsibilities"
-          sectionKey="responsibilities"
         >
           <p>
             As a healthcare provider using MediConnect, you have important
@@ -215,7 +196,6 @@ const PrivacyPolicy = () => {
         <ExpandableSection
           icon={<FaLock />}
           title="Sharing & Security"
-          sectionKey="sharing"
         >
           <p>
             We implement comprehensive security measures to protect your data
@@ -247,7 +227,6 @@ const PrivacyPolicy = () => {
         <ExpandableSection
           icon={<FaGavel />}
           title="Your Choices"
-          sectionKey="choices"
         >
           <p>
             You have control over how your information is used and shared. You
