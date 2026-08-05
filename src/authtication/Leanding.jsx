@@ -6,7 +6,6 @@ import './LandingChatTheme.css';
 import './LandingNavbarFix.css';
 import './LandingDoctorCarousel.css';
 import './LandingTestimonialCarousel.css';
-import logo from '../assets/humaeli.png';
 import logos from '../assets/humaeli logo (2).png';
 import wellnessHero from '../assets/landing-page-hero.png';
 import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
@@ -19,7 +18,11 @@ import { translationService } from '../i18n/translationService';
 
 const GUEST_CHAT_LIMIT_MS = 5 * 60 * 1000;
 
-const containsNativeScript = (text) => /[^\u0000-\u024f\u2000-\u206f]/u.test(text);
+const containsNativeScript = (text) =>
+  Array.from(text).some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint > 0x024f && (codePoint < 0x2000 || codePoint > 0x206f);
+  });
 
 const translateTypedMessage = async (text, targetLanguage) => {
   const targetBaseLanguage = String(targetLanguage || 'en-US').split('-')[0].toLowerCase();
@@ -1068,13 +1071,13 @@ const Footer = () => {
           <div className="footer-column">
             <h4>{t('landing_footer_resources_heading')}</h4>
             <a href="#">{t('landing_footer_link_blog')}</a>
-            <a href="#">{t('landing_footer_link_help')}</a>
+            <Link to="/support">{t('landing_footer_link_help')}</Link>
             <a href="#">{t('landing_footer_link_forum')}</a>
             <a href="#">{t('landing_footer_link_research')}</a>
           </div>
           <div className="footer-column">
             <h4>{t('landing_footer_contact_heading')}</h4>
-            <a href="#">{t('landing_footer_link_support')}</a>
+            <Link to="/support">{t('landing_footer_link_support')}</Link>
             <a href="#">{t('landing_footer_link_partner')}</a>
             <a href="#">{t('landing_footer_link_become_doctor')}</a>
             <a href="#">{t('landing_footer_link_corporate')}</a>
@@ -1190,7 +1193,7 @@ const ChatPopup = ({
         setSpeakingId(null);
         URL.revokeObjectURL(url);
       };
-    } catch (error) {
+    } catch {
       // Browser speech is a reliable fallback when the server voice is
       // temporarily unavailable, and uses the language selected in the chat.
       if (window.speechSynthesis) {

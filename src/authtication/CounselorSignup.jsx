@@ -19,7 +19,7 @@
 // import { useNavigate } from "react-router-dom";
 // import { useLocation } from "react-router-dom";
 // import "./CounselorSignup.css";
-// import logo from "../image/Mediconect Logo-3.png";
+// import logo from "../assets/humaeli.png";
 // import axios from "axios";
 // import { API_BASE_URL } from "../axiosConfig";
 // import GoogleAuthButton from "./GoogleAuthButton";
@@ -1472,7 +1472,7 @@
 //         <div className="cs-brand">
 //           <div className="cs-brand-content">
 //             <div className="cs-logo">
-//               <img src={logo} alt="Mediconect Logo" className="cs-logo-img" />
+//               <img src={logo} alt="Humaeli Logo" className="cs-logo-img" />
 //               <span className="cs-logo-text">Counselors</span>
 //             </div>
 //             <h1 className="cs-brand-title">

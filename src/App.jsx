@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import "./App.css";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import "../setupAxios";
@@ -9,6 +9,7 @@ const Leanding = lazy(() => import("./authtication/Leanding"));
 const LandingPrivacyPolicy = lazy(
   () => import("./authtication/LandingPrivacyPolicy"),
 );
+const LandingSupport = lazy(() => import("./authtication/LandingSupport"));
 const UserDashboard = lazy(
   () => import("./Component/UserDashboard/Dashboard/UserDashboard"),
 );
@@ -52,12 +53,10 @@ const UserAwareChatRoute = () => {
 function App() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     const checkScreenSize = () => {
       const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
 
       const currentPath = location.pathname;
 
@@ -129,6 +128,7 @@ function App() {
           {/* Public Routes */}
           <Route path="/" element={<Leanding />} />
           <Route path="/privacy-policy" element={<LandingPrivacyPolicy />} />
+          <Route path="/support" element={<LandingSupport />} />
           <Route path="/role-selector" element={<RoleSelector />} />
           <Route path="/otp-verification" element={<OTPVerification />} />
           <Route path="/user-signup" element={<UserSignup />} />

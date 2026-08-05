@@ -979,7 +979,7 @@ const handleVerify = async () => {
             <div className="us-logo">
               <img
                 src={logo}
-                alt="Mediconeckt ChatBot Logo"
+                alt="Humaeli Logo"
                 className="us-logo-img"
               />
             </div>
