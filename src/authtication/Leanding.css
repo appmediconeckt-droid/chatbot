@@ -1905,7 +1905,8 @@ main {
 
 .chat-popup-input input {
   flex: 1;
-  padding: 0.75rem 0rem;
+  min-width: 0;
+  padding: 0.75rem 0.875rem;
   border: 2px solid var(--gray-200);
   border-radius: var(--radius-md);
   font-size: 0.95rem;

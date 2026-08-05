@@ -13,7 +13,7 @@ import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
 import faqWellnessIllustration from '../assets/faq-wellness-illustration.png';
 import { API_BASE_URL } from '../axiosConfig';
 import { Link } from 'react-router-dom';
-import { SUPPORTED_LANGUAGES, useSiteTranslation } from '../i18n/LanguageContext';
+import { useSiteTranslation } from '../i18n/LanguageContext';
 import { LanguageSelector } from '../Component/common/LanguageSelector';
 import { translationService } from '../i18n/translationService';
 
@@ -34,7 +34,7 @@ const translateTypedMessage = async (text, targetLanguage) => {
 };
 
 const Leanding = () => {
-  const { t, lang, setLang } = useSiteTranslation();
+  const { t, lang } = useSiteTranslation();
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -250,12 +250,6 @@ const Leanding = () => {
     setChatOpen(true);
   };
 
-  const handleLanguageChange = (event) => {
-    const nextLanguage = event.target.value;
-    setSelectedLanguage(nextLanguage);
-    setLang(nextLanguage);
-  };
-
   return (
     <div className="humaeli">
       <Header onLoginClick={() => navigate('/role-selector')} />
@@ -284,7 +278,6 @@ const Leanding = () => {
           chatBodyRef={chatBodyRef}
           sendQuickReply={sendQuickReply}
           selectedLanguage={selectedLanguage}
-          onLanguageChange={handleLanguageChange}
           guestChatExpired={guestChatExpired}
         />
       )}
@@ -1125,7 +1118,6 @@ const ChatPopup = ({
   chatBodyRef,
   sendQuickReply,
   selectedLanguage,
-  onLanguageChange,
   guestChatExpired,
 }) => {
   const { t } = useSiteTranslation();
@@ -1316,17 +1308,6 @@ const ChatPopup = ({
       </div>
 
       <div className="chat-popup-input">
-        <select
-          className="guest-chat-language-select"
-          value={selectedLanguage}
-          onChange={onLanguageChange}
-          disabled={isLoading || guestChatExpired}
-          aria-label={t('landing_chat_select_language')}
-        >
-          {SUPPORTED_LANGUAGES.map((language) => (
-            <option key={language.code} value={language.code}>{language.label}</option>
-          ))}
-        </select>
         <input
           type="text"
           placeholder={isRecording ? t('landing_chat_listening') : t('landing_chat_placeholder')}

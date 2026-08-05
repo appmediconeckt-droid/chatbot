@@ -6,6 +6,7 @@ import { CardSkeleton } from "../../../common/Skeletons/Skeletons";
 
 export default function AppointmentsTab({
   appointments = [],
+  counselorName = "",
   selectedDate,
   setSelectedDate,
   clearDateFilter,
@@ -15,6 +16,14 @@ export default function AppointmentsTab({
   const { t } = useCounselorTranslation();
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [searchTerm, setSearchTerm] = React.useState("");
+  const displayCounselorName = React.useMemo(() => {
+    const normalizedName = String(counselorName || "").trim();
+    if (!normalizedName) return "Counselor";
+
+    return /^dr\.?\s/i.test(normalizedName)
+      ? normalizedName
+      : `Dr. ${normalizedName}`;
+  }, [counselorName]);
 
   const getAppointmentDisplay = (appointment) =>
     getAnonymousUserDisplay({
@@ -99,7 +108,7 @@ export default function AppointmentsTab({
           <section className="stitch-apt-summary">
             <div className="stitch-apt-summary-copy">
               <span>{t("good_afternoon")}</span>
-              <h2>Dr. VIVEK Singh</h2>
+              <h2>{displayCounselorName}</h2>
               <p>{counts.all} total appointment(s)</p>
             </div>
             <button type="button" className="stitch-apt-refresh" aria-label="Refresh appointments">

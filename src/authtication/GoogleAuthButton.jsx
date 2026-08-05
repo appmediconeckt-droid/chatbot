@@ -151,18 +151,20 @@ const GoogleAuthButton = ({
       ref={wrapperRef}
       className={`g-auth-wrap ${disabled ? "g-auth-wrap-disabled" : ""} ${busy ? "g-auth-wrap-busy" : ""}`}
     >
-      <GoogleLogin
-        onSuccess={handleSuccess}
-        onError={() => onError?.("Google sign-in was cancelled or failed")}
-        text={buttonText}
-        shape="rectangular"
-        theme="outline"
-        size="large"
-        width={String(buttonWidth)}
-        auto_select={false}
-        context="use"
-        logo_alignment="left"
-      />
+      <div className="g-auth-surface">
+        <GoogleLogin
+          onSuccess={handleSuccess}
+          onError={() => onError?.("Google sign-in was cancelled or failed")}
+          text={buttonText}
+          shape="rectangular"
+          theme="outline"
+          size="large"
+          width={String(buttonWidth)}
+          auto_select={false}
+          context="use"
+          logo_alignment="left"
+        />
+      </div>
       {busy && <span className="g-auth-wrap-spinner" aria-hidden="true" />}
     </div>
   );

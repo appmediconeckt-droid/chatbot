@@ -774,12 +774,13 @@ export default function CounselorDashboard() {
         {activeTab === "appointments" && (
           <AppointmentsTab
             appointments={appointments}
+            counselorName={counselorData?.name}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
             clearDateFilter={clearDateFilter} // ✅ Pass clear function
             handleUpdateAppointmentStatus={handleUpdateAppointmentStatus}
             handleInitiateVideoCall={handleInitiateVideoCall}
-            loading={appointmentsLoading}
+            loading={appointmentsLoading || loading}
           />
         )}
 
