@@ -7,8 +7,9 @@
 .humaeli .header .header-language .lang-selector-trigger,
 .humaeli .header.header-scrolled .header-language .lang-selector-trigger {
   display: inline-flex !important;
-  width: 128px !important;
+  width: auto !important;
   min-width: 128px !important;
+  max-width: 190px !important;
   height: 44px !important;
   padding: 0 14px !important;
   align-items: center !important;
@@ -419,7 +420,7 @@
     position: relative !important;
     inset: auto !important;
     display: grid !important;
-    grid-template-columns: 180px minmax(560px, 1fr) 230px !important;
+    grid-template-columns: 180px minmax(520px, 1fr) minmax(260px, auto) !important;
     width: 100% !important;
     max-width: none !important;
     height: 72px !important;
@@ -479,6 +480,18 @@
     align-self: center !important;
     justify-self: end !important;
     transform: none !important;
+    width: max-content !important;
+    overflow: visible !important;
+  }
+
+  .humaeli .header .header-actions .btn-secondary,
+  .humaeli .header.header-scrolled .header-actions .btn-secondary {
+    width: auto !important;
+    min-width: max-content !important;
+    padding-inline: 18px !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: nowrap !important;
   }
 }
 
@@ -496,7 +509,7 @@
 
   .humaeli .header .header-container,
   .humaeli .header.header-scrolled .header-container {
-    grid-template-columns: 140px minmax(430px, 1fr) 195px !important;
+    grid-template-columns: 140px minmax(390px, 1fr) minmax(245px, auto) !important;
     padding: 0 24px !important;
   }
 

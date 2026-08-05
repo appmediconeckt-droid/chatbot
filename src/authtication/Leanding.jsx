@@ -17,6 +17,49 @@ import { LanguageSelector } from '../Component/common/LanguageSelector';
 import { translationService } from '../i18n/translationService';
 
 const GUEST_CHAT_LIMIT_MS = 5 * 60 * 1000;
+const browserVoiceCache = new Map();
+
+const getBrowserVoices = async () => {
+  if (!window.speechSynthesis) return [];
+
+  // Safari and mobile browsers often populate voices after the first call.
+  // Wait before speaking so the device cannot choose an arbitrary default.
+  for (let attempt = 0; attempt < 12; attempt += 1) {
+    const voices = window.speechSynthesis.getVoices();
+    if (voices.length) return voices;
+    await new Promise((resolve) => window.setTimeout(resolve, 75));
+  }
+  return window.speechSynthesis.getVoices();
+};
+
+const getConsistentBrowserVoice = async (language) => {
+  const voices = await getBrowserVoices();
+  if (!voices.length) return null;
+
+  const locale = String(language || 'en-IN').toLowerCase();
+  const baseLanguage = locale.split('-')[0];
+  const cachedVoiceUri = browserVoiceCache.get(locale);
+  const cachedVoice = voices.find((voice) => voice.voiceURI === cachedVoiceUri);
+  if (cachedVoice) return cachedVoice;
+
+  const qualityPattern = /natural|enhanced|premium|google|microsoft|samantha|veena|lekha|aditi/i;
+  const rankedVoices = [...voices].sort((a, b) => {
+    const score = (voice) => {
+      const voiceLocale = String(voice.lang || '').toLowerCase();
+      let value = 0;
+      if (voiceLocale === locale) value += 100;
+      else if (voiceLocale.split('-')[0] === baseLanguage) value += 70;
+      if (qualityPattern.test(`${voice.name} ${voice.voiceURI}`)) value += 20;
+      if (voice.default) value += 2;
+      return value;
+    };
+    return score(b) - score(a) || a.voiceURI.localeCompare(b.voiceURI);
+  });
+
+  const selectedVoice = rankedVoices[0] || null;
+  if (selectedVoice) browserVoiceCache.set(locale, selectedVoice.voiceURI);
+  return selectedVoice;
+};
 
 const containsNativeScript = (text) =>
   Array.from(text).some((character) => {
@@ -42,7 +85,6 @@ const Leanding = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState(lang);
   const [guestChatStartedAt, setGuestChatStartedAt] = useState(null);
   const [guestChatExpired, setGuestChatExpired] = useState(false);
   // Echo this back to the backend so guest turns thread into one session
@@ -51,8 +93,18 @@ const Leanding = () => {
   const chatBodyRef = useRef(null);
   const navigate = useNavigate();
 
+  const previousSiteLanguageRef = useRef(lang);
+
+  // The landing-page selector is the single source of truth for guest chat.
+  // Start a fresh AI session when it changes so existing replies and quick
+  // replies cannot remain in the previously selected language.
   useEffect(() => {
-    setSelectedLanguage(lang);
+    if (previousSiteLanguageRef.current === lang) return;
+    previousSiteLanguageRef.current = lang;
+    setAiSessionId(null);
+    setChatMessages([]);
+    setNewMessage('');
+    setIsLoading(false);
   }, [lang]);
 
   // The UI cutoff is paired with API enforcement, so guests cannot extend
@@ -74,9 +126,11 @@ const Leanding = () => {
     if (!chatOpen || chatMessages.length > 0 || isLoading || guestChatExpired) return;
 
     const startChat = async () => {
+      const requestLanguage = lang;
       setIsLoading(true);
       try {
         const response = await sendMessageToAPI('hello');
+        if (previousSiteLanguageRef.current !== requestLanguage) return;
         if (response?.success && response?.data) {
           if (response.data.sessionId) setAiSessionId(response.data.sessionId);
           setChatMessages([{
@@ -87,6 +141,7 @@ const Leanding = () => {
           }]);
         }
       } catch (error) {
+        if (previousSiteLanguageRef.current !== requestLanguage) return;
         console.error('Error starting guest chat:', error);
         setChatMessages([{
           id: Date.now(),
@@ -94,7 +149,9 @@ const Leanding = () => {
           sender: 'ai',
         }]);
       } finally {
-        setIsLoading(false);
+        if (previousSiteLanguageRef.current === requestLanguage) {
+          setIsLoading(false);
+        }
       }
     };
 
@@ -102,7 +159,7 @@ const Leanding = () => {
     // sendMessageToAPI is recreated on render; the state guards above make
     // this effect safe and avoid restarting an existing conversation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatOpen, chatMessages.length, isLoading, guestChatExpired, selectedLanguage]);
+  }, [chatOpen, chatMessages.length, isLoading, guestChatExpired, lang]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -133,7 +190,7 @@ const Leanding = () => {
           message: message,
           history: [], // Guest: server threads via sessionId, history is fallback
           sessionId: aiSessionId,
-          language: selectedLanguage,
+          language: lang,
         },
         {
           headers: {
@@ -155,10 +212,11 @@ const Leanding = () => {
   const sendChat = async (text) => {
     const trimmed = (text || '').trim();
     if (!trimmed || guestChatExpired) return;
+    const requestLanguage = lang;
     setIsLoading(true);
     let outgoingText = trimmed;
     try {
-      outgoingText = await translateTypedMessage(trimmed, selectedLanguage);
+      outgoingText = await translateTypedMessage(trimmed, lang);
     } catch (error) {
       console.warn('Outgoing message translation failed:', error);
     }
@@ -170,6 +228,7 @@ const Leanding = () => {
 
     try {
       const response = await sendMessageToAPI(outgoingText);
+      if (previousSiteLanguageRef.current !== requestLanguage) return;
 
       let aiResponseText = t('landing_chat_fallback_reply');
       let quickReplies = null;
@@ -201,6 +260,7 @@ const Leanding = () => {
 
       setChatMessages(prev => [...prev, aiMessage]);
     } catch (error) {
+      if (previousSiteLanguageRef.current !== requestLanguage) return;
       if (error.response?.data?.code === 'GUEST_CHAT_LIMIT_REACHED') {
         setGuestChatExpired(true);
         return;
@@ -225,7 +285,9 @@ const Leanding = () => {
 
       setChatMessages(prev => [...prev, errorMessage]);
     } finally {
-      setIsLoading(false);
+      if (previousSiteLanguageRef.current === requestLanguage) {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -280,7 +342,7 @@ const Leanding = () => {
           onClose={() => setChatOpen(false)}
           chatBodyRef={chatBodyRef}
           sendQuickReply={sendQuickReply}
-          selectedLanguage={selectedLanguage}
+          selectedLanguage={lang}
           guestChatExpired={guestChatExpired}
         />
       )}
@@ -374,7 +436,7 @@ const Header = ({ onLoginClick }) => {
               setLang={setLang}
               t={t}
               compact
-              triggerLabel="Choose Language"
+              triggerLabel={t('select_language')}
             />
           </div>
           <button type="button" className="btn btn-secondary" onClick={onLoginClick}>
@@ -1186,6 +1248,8 @@ const ChatPopup = ({
 
       const url = URL.createObjectURL(await response.blob());
       const audio = new Audio(url);
+      audio.preload = 'auto';
+      audio.volume = 1;
       audioRef.current = audio;
       setSpeakingId(messageId);
       await audio.play();
@@ -1199,7 +1263,11 @@ const ChatPopup = ({
       if (window.speechSynthesis) {
         const speech = new SpeechSynthesisUtterance(text);
         speech.lang = selectedLanguage || 'en-IN';
-        speech.rate = 0.9;
+        speech.rate = 0.88;
+        speech.pitch = 1;
+        speech.volume = 1;
+        const voice = await getConsistentBrowserVoice(speech.lang);
+        if (voice) speech.voice = voice;
         speech.onstart = () => setSpeakingId(messageId);
         speech.onend = speech.onerror = () => setSpeakingId(null);
         window.speechSynthesis.speak(speech);
