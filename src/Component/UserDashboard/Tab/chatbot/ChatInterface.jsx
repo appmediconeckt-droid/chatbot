@@ -760,19 +760,6 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
                                                 <span className="counselorTime" title={counselor.fullDateTime}>
                                                     {formatTime(counselor.lastMessageTime)}
                                                 </span>
-                                                <button
-                                                    type="button"
-                                                    className="chatArchiveButton"
-                                                    title={counselor.isArchived ? 'Unarchive chat' : 'Archive chat'}
-                                                    aria-label={`${counselor.isArchived ? 'Unarchive' : 'Archive'} chat with ${counselor.name}`}
-                                                    onClick={(event) => {
-                                                        event.preventDefault();
-                                                        event.stopPropagation();
-                                                        handleArchiveChat(counselor);
-                                                    }}
-                                                >
-                                                    {counselor.isArchived ? '↩' : '▣'}
-                                                </button>
                                             </div>
                                         </div>
 
