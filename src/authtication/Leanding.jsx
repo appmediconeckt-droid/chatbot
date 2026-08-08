@@ -6,7 +6,7 @@ import './LandingChatTheme.css';
 import './LandingNavbarFix.css';
 import './LandingDoctorCarousel.css';
 import './LandingTestimonialCarousel.css';
-import logos from '../assets/humaeli logo (2).png';
+import { logoHorizontal, logoIcon } from '../assets/brandAssets';
 import wellnessHero from '../assets/landing-page-hero.png';
 import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
 import faqWellnessIllustration from '../assets/faq-wellness-illustration.png';
@@ -403,7 +403,7 @@ const Header = ({ onLoginClick }) => {
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
           <div className="landing-logo-brand">
-            <img src={logos} alt="Humaeli Logo" />
+            <img src={logoHorizontal} alt="Humaeli Logo" />
             <span>Mental Wellness</span>
           </div>
         </div>
@@ -1034,16 +1034,18 @@ const FAQSection = () => {
     <section className="section faq" id="faq">
       <div className="container">
         <div className="faq-intro">
-          <span className="faq-kicker">{t('landing_ui_faq_kicker')}</span>
-          <h2 className="section-title">{t('landing_faq_title')}</h2>
-          <p className="section-description">
-            {t('landing_ui_faq_description')}
-          </p>
           <img
             src={faqWellnessIllustration}
             alt="A cheerful green wellness character with growing leaves"
             className="faq-illustration"
           />
+          <div className="faq-copy">
+            <span className="faq-kicker">{t('landing_ui_faq_kicker')}</span>
+            <h2 className="section-title">{t('landing_faq_title')}</h2>
+            <p className="section-description">
+              {t('landing_ui_faq_description')}
+            </p>
+          </div>
         </div>
         <div className="faq-container">
           {faqs.map((faq, index) => (
@@ -1102,8 +1104,7 @@ const Footer = () => {
       <div className="footer-content">
         <div className="footer-about">
           <div className="footer-logo">
-            <i className="fas fa-seedling"></i>
-            <span>Humaeli</span>
+            <img src={logoHorizontal} alt="Humaeli" />
           </div>
           <p className="footer-description">
             {t('landing_footer_description')}
@@ -1418,12 +1419,7 @@ const ChatButton = ({ onClick }) => {
   return (
   <button className="chat-button" onClick={onClick} aria-label={t('landing_chat_open')}>
     <span className="landing-chat-logo" aria-hidden="true">
-      <span className="landing-chat-ring">
-        <span className="landing-chat-bubble bubble-back" />
-        <span className="landing-chat-bubble bubble-left" />
-        <span className="landing-chat-bubble bubble-front" />
-        <span className="landing-chat-bubble bubble-accent" />
-      </span>
+      <img src={logoIcon} alt="" />
     </span>
     <span className="pulse-indicator"></span>
   </button>

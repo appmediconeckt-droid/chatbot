@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./UserSignup.css";
-import logo from "../assets/humaeli logo (2).png";
+import { logoHorizontal } from "../assets/brandAssets";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
 import LocationGate from "./LocationGate";
@@ -978,7 +978,7 @@ const handleVerify = async () => {
           <div className="us-brand-content">
             <div className="us-logo">
               <img
-                src={logo}
+                src={logoHorizontal}
                 alt="Humaeli Logo"
                 className="us-logo-img"
               />
@@ -1003,7 +1003,7 @@ const handleVerify = async () => {
 
         <div className="us-form-section">
           <div className="us-form-header">
-            <img src={logo} alt="Humaeli" className="us-form-logo" />
+            <img src={logoHorizontal} alt="Humaeli" className="us-form-logo" />
             <h2>{isLogin ? "Login to Account" : "Create Account"}</h2>
             <p>
               {isLogin

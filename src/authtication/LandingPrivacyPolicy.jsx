@@ -1,12 +1,13 @@
 import { Link } from "react-router-dom";
 import PrivacyPolicy from "../Component/Settings/PrivacyPolicy";
+import { logoIcon } from "../assets/brandAssets";
 import "./LandingPrivacyPolicy.css";
 
 const LandingPrivacyPolicy = () => (
   <div className="landing-privacy-page">
     <header className="landing-privacy-nav">
       <Link to="/" className="landing-privacy-brand" aria-label="Humaeli home">
-        <i className="fas fa-seedling" aria-hidden="true" />
+        <img src={logoIcon} alt="" aria-hidden="true" />
         <span>Humaeli</span>
       </Link>
       <Link to="/" className="landing-privacy-back">

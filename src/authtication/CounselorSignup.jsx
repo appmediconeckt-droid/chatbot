@@ -19,7 +19,6 @@
 // import { useNavigate } from "react-router-dom";
 // import { useLocation } from "react-router-dom";
 // import "./CounselorSignup.css";
-// import logo from "../assets/humaeli.png";
 // import axios from "axios";
 // import { API_BASE_URL } from "../axiosConfig";
 // import GoogleAuthButton from "./GoogleAuthButton";
@@ -1472,7 +1471,6 @@
 //         <div className="cs-brand">
 //           <div className="cs-brand-content">
 //             <div className="cs-logo">
-//               <img src={logo} alt="Humaeli Logo" className="cs-logo-img" />
 //               <span className="cs-logo-text">Counselors</span>
 //             </div>
 //             <h1 className="cs-brand-title">
@@ -2070,7 +2068,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import "./CounselorSignup.css";
-import logo from "../assets/humaeli logo (2).png";
+import { logoHorizontal } from "../assets/brandAssets";
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
@@ -2906,7 +2904,7 @@ const CounselorSignup = () => {
         <div className="cs-brand">
           <div className="cs-brand-content">
             <div className="cs-logo">
-              <img src={logo} alt="Humaeli" className="cs-logo-img" />
+              <img src={logoHorizontal} alt="Humaeli" className="cs-logo-img" />
             </div>
             {!isLogin && (
               <h1 className="cs-brand-title">Join Our Community</h1>
@@ -2926,7 +2924,7 @@ const CounselorSignup = () => {
 
         <div className="cs-form-section">
           <div className="cs-form-header">
-            <img src={logo} alt="Humaeli" className="cs-form-logo" />
+            <img src={logoHorizontal} alt="Humaeli" className="cs-form-logo" />
             <h2>{isLogin ? "Login to Account" : "Create Account"}</h2>
             <p>
               {isLogin
