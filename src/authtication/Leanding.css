@@ -565,7 +565,7 @@ body {
 }
 
 .logo img {
-  width: clamp(150px, 16vw, 190px);
+  width: clamp(200px, 18vw, 240px);
   height: auto;
   display: block;
 }
@@ -3437,35 +3437,35 @@ html {
 /* Prominent landing-page brand mark (final override). */
 @media (min-width: 1051px) {
   .humaeli .header-container {
-    grid-template-columns: 250px 1fr 215px;
+    grid-template-columns: 280px 1fr 215px;
   }
 
   .humaeli .header .landing-logo-brand img {
-    width: 220px !important;
-    height: 70px !important;
-    max-width: 220px !important;
+    width: 260px !important;
+    height: 80px !important;
+    max-width: 260px !important;
     object-fit: contain !important;
   }
 }
 
 @media (min-width: 769px) and (max-width: 1050px) {
   .humaeli .header-container {
-    grid-template-columns: 180px 1fr 195px;
+    grid-template-columns: 200px 1fr 195px;
   }
 
   .humaeli .header .landing-logo-brand img {
-    width: 155px !important;
-    height: 64px !important;
-    max-width: 155px !important;
+    width: 180px !important;
+    height: 72px !important;
+    max-width: 180px !important;
     object-fit: contain !important;
   }
 }
 
 @media (max-width: 768px) {
   .humaeli .header .landing-logo-brand img {
-    width: 135px !important;
-    height: 60px !important;
-    max-width: 135px !important;
+    width: 155px !important;
+    height: 70px !important;
+    max-width: 155px !important;
     object-fit: contain !important;
   }
 }

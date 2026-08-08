@@ -6,7 +6,7 @@ import './LandingChatTheme.css';
 import './LandingNavbarFix.css';
 import './LandingDoctorCarousel.css';
 import './LandingTestimonialCarousel.css';
-import logos from '../assets/humaeli logo (2).png';
+import logos from '../assets/Humaeli final logo-06.png';
 import wellnessHero from '../assets/landing-page-hero.png';
 import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
 import faqWellnessIllustration from '../assets/faq-wellness-illustration.png';
@@ -1109,10 +1109,10 @@ const Footer = () => {
             {t('landing_footer_description')}
           </p>
           <div className="social-links">
-            <span aria-hidden="true"><i className="fas fa-globe"></i></span>
-            <span aria-hidden="true"><i className="fab fa-youtube"></i></span>
-            <span aria-hidden="true"><i className="fab fa-instagram"></i></span>
-            <span aria-hidden="true"><i className="fas fa-briefcase"></i></span>
+            <a href="#" aria-label="Website"><i className="fas fa-globe"></i></a>
+            <a href="#" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
+            <a href="#" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
+            <a href="#" aria-label="Work"><i className="fas fa-briefcase"></i></a>
           </div>
         </div>
         <div className="footer-links">
@@ -1125,24 +1125,24 @@ const Footer = () => {
           </div>
           <div className="footer-column">
             <h4>{t('landing_footer_company_heading')}</h4>
-            <span>{t('landing_footer_link_about')}</span>
-            <span>{t('landing_footer_link_careers')}</span>
-            <span>{t('landing_footer_link_press')}</span>
-            <span>{t('landing_footer_link_hospital_partners')}</span>
+            <a href="#">{t('landing_footer_link_about')}</a>
+            <a href="#">{t('landing_footer_link_careers')}</a>
+            <a href="#">{t('landing_footer_link_press')}</a>
+            <a href="#">{t('landing_footer_link_hospital_partners')}</a>
           </div>
           <div className="footer-column">
             <h4>{t('landing_footer_resources_heading')}</h4>
-            <span>{t('landing_footer_link_blog')}</span>
+            <a href="#">{t('landing_footer_link_blog')}</a>
             <Link to="/support">{t('landing_footer_link_help')}</Link>
-            <span>{t('landing_footer_link_forum')}</span>
-            <span>{t('landing_footer_link_research')}</span>
+            <a href="#">{t('landing_footer_link_forum')}</a>
+            <a href="#">{t('landing_footer_link_research')}</a>
           </div>
           <div className="footer-column">
             <h4>{t('landing_footer_contact_heading')}</h4>
             <Link to="/support">{t('landing_footer_link_support')}</Link>
-            <span>{t('landing_footer_link_partner')}</span>
-            <span>{t('landing_footer_link_become_doctor')}</span>
-            <span>{t('landing_footer_link_corporate')}</span>
+            <a href="#">{t('landing_footer_link_partner')}</a>
+            <a href="#">{t('landing_footer_link_become_doctor')}</a>
+            <a href="#">{t('landing_footer_link_corporate')}</a>
           </div>
         </div>
       </div>
@@ -1156,13 +1156,14 @@ const Footer = () => {
           </p>
           <p className="emergency-notice">
             <i className="fas fa-map-marker-alt"></i>
-            <strong>{t('landing_footer_office_label')}</strong> {t('landing_footer_office_address')}</p>
+            <strong>{t('landing_footer_office_label')}</strong> {t('landing_footer_office_address')}
+          </p>
         </div>
         <div className="footer-legal">
           <Link to="/privacy-policy">{t('landing_footer_legal_privacy')}</Link>
-          <span>{t('landing_footer_legal_terms')}</span>
-          <span>{t('landing_footer_legal_disclaimer')}</span>
-          <span>{t('landing_footer_legal_grievance')}</span>
+          <a href="#">{t('landing_footer_legal_terms')}</a>
+          <a href="#">{t('landing_footer_legal_disclaimer')}</a>
+          <a href="#">{t('landing_footer_legal_grievance')}</a>
         </div>
       </div>
     </div>

@@ -171,7 +171,7 @@ const PrivacyPolicy = () => {
           title="Your Responsibilities"
         >
           <p>
-            As a healthcare provider using MediConnect, you have important
+            As a healthcare provider using Humaeli, you have important
             responsibilities to maintain patient privacy and comply with
             applicable healthcare regulations.
           </p>
