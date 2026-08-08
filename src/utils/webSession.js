@@ -1,4 +1,4 @@
-const WEB_SESSION_MARKER = "mediconnectWebSession";
+const WEB_SESSION_MARKER = "humaeliWebSession";
 
 const WEB_AUTH_KEYS = [
   "accessToken",
@@ -28,4 +28,3 @@ export const initializeWebSession = () => {
   WEB_AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
   sessionStorage.setItem(WEB_SESSION_MARKER, String(Date.now()));
 };
-

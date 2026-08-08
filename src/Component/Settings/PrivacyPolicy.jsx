@@ -43,7 +43,7 @@ const PrivacyPolicy = () => {
           <div>
             <h1>Privacy & Security</h1>
             <p>
-              Learn how MediConnect protects your professional information,
+              Learn how Humaeli protects your professional information,
               patient conversations, appointments, earnings, and account data.
             </p>
           </div>
@@ -108,7 +108,7 @@ const PrivacyPolicy = () => {
           defaultOpen
         >
           <p>
-            When you register for MediConnect, we collect specific personal and
+            When you register for Humaeli, we collect specific personal and
             professional information to verify your identity and medical
             credentials. This is necessary to maintain the integrity of our
             platform.
@@ -136,7 +136,7 @@ const PrivacyPolicy = () => {
         >
           <p>
             Your data is strictly utilized to provide, maintain, and improve the
-            MediConnect service. We do not sell your personal data to
+            Humaeli service. We do not sell your personal data to
             third-party advertisers under any circumstances.
           </p>
           <h4>Primary use cases include:</h4>
@@ -171,7 +171,7 @@ const PrivacyPolicy = () => {
           title="Your Responsibilities"
         >
           <p>
-            As a healthcare provider using MediConnect, you have important
+            As a healthcare provider using Humaeli, you have important
             responsibilities to maintain patient privacy and comply with
             applicable healthcare regulations.
           </p>
@@ -262,7 +262,13 @@ const PrivacyPolicy = () => {
           </p>
         </div>
         <div className="privacy-policy-support-buttons">
-          <button type="button" className="support-btn support-btn--primary">
+          <button
+            type="button"
+            className="support-btn support-btn--primary"
+            onClick={() => {
+              window.location.href = "mailto:support@humaeli.com?subject=Privacy%20Support";
+            }}
+          >
             <FaEnvelope /> Email Support
           </button>
           <button type="button" className="support-btn support-btn--secondary">

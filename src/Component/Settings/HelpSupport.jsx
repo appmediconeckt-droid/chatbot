@@ -246,7 +246,7 @@ const HelpSupport = () => {
             <li>
               <strong>What should I do if I receive a suspicious email?</strong>{" "}
               Don't click links or provide information. Forward it to
-              security@mediconnect.com.
+              support@humaeli.com.
             </li>
           </ul>
         </ExpandableSection>
@@ -317,7 +317,13 @@ const HelpSupport = () => {
           <button type="button" className="support-action-btn support-action-btn--secondary">
             <FaCommentDots /> Live Chat
           </button>
-          <button type="button" className="support-action-btn support-action-btn--tertiary">
+          <button
+            type="button"
+            className="support-action-btn support-action-btn--tertiary"
+            onClick={() => {
+              window.location.href = "mailto:support@humaeli.com?subject=Support%20Request";
+            }}
+          >
             <FaEnvelope /> Email Support
           </button>
         </div>

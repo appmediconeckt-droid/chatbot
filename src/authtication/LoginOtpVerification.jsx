@@ -25,12 +25,15 @@ const LoginOtpVerification = () => {
     role === "counselor" ||
     role === "counsellor" ||
     role === "counsellour";
+  const normalizedEmail = String(email || "").trim().toLowerCase();
 
   useEffect(() => {
     // Get email from location state or localStorage
     const emailFromState = location.state?.email;
     const emailFromStorage = localStorage.getItem("userEmail");
-    const emailToUse = emailFromState || emailFromStorage || "";
+    const emailToUse = String(emailFromState || emailFromStorage || "")
+      .trim()
+      .toLowerCase();
     setEmail(emailToUse);
 
     // Get role from location state or localStorage
@@ -69,7 +72,7 @@ const LoginOtpVerification = () => {
 
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/verify-login-otp`,
-        { email, otp: loginOtp },
+        { email: normalizedEmail, otp: loginOtp },
         { withCredentials: true }
       );
 
@@ -137,7 +140,7 @@ const LoginOtpVerification = () => {
       // First, logout other devices and send new OTP
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/logout-other-devices`,
-        { email },
+        { email: normalizedEmail },
         { withCredentials: true }
       );
 
