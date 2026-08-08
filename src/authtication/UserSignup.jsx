@@ -436,14 +436,12 @@ const UserSignup = () => {
 
   const handleLogin = async () => {
     try {
-      // Always send role for login to match backend expectation
-      const role = roleFromState || localStorage.getItem("role") || "user";
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/login`,
         {
-          email: formData.email,
+          email: String(formData.email || "").trim().toLowerCase(),
           password: formData.password,
-          role,
+          role: "user",
         },
         { withCredentials: true },
       );
@@ -654,22 +652,23 @@ const handleVerify = async () => {
   try {
     setIsVerifying(true);
     setVerifySuccess(false);
+    const loginEmail = String(formData.email || "").trim().toLowerCase();
     
     // First, send the OTP and logout other devices
     const verifyResponse = await axios.post(
       `${API_BASE_URL}/api/auth/logout-other-devices`,
-      { email: formData.email },
+      { email: loginEmail },
       { withCredentials: true },
     );
     
     if (verifyResponse.data?.success) {
       // Store email in localStorage for the OTP page to use
-      localStorage.setItem("userEmail", formData.email);
+      localStorage.setItem("userEmail", loginEmail);
       
       // Navigate to OTP verification page
       navigate("/verify-login-otp", { 
         state: { 
-          email: formData.email 
+          email: loginEmail
         } 
       });
     }
@@ -692,9 +691,10 @@ const handleVerify = async () => {
     }
     try {
       setIsOtpVerifyLoading(true);
+      const loginEmail = String(formData.email || "").trim().toLowerCase();
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/verify-login-otp`,
-        { email: formData.email, otp: loginOtp },
+        { email: loginEmail, otp: loginOtp },
         { withCredentials: true },
       );
 
