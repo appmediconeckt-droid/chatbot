@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { logoIcon } from "../assets/brandAssets";
 import "./LandingSupport.css";
 
 const SUPPORT_EMAIL = "support@humaeli.com";
@@ -10,7 +11,7 @@ const LandingSupport = () => (
   <div className="landing-support-page">
     <header className="landing-support-nav">
       <Link to="/" className="landing-support-brand" aria-label="Humaeli home">
-        <i className="fas fa-seedling" aria-hidden="true" />
+        <img src={logoIcon} alt="" aria-hidden="true" />
         <span>Humaeli</span>
       </Link>
       <Link to="/" className="landing-support-back">

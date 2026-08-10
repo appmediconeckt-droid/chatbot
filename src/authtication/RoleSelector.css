@@ -98,8 +98,8 @@
 .role-brand {
   width: fit-content;
   height: auto;
-  margin: -4px auto 15px;
-  border-radius: 18px;
+  margin: 0 auto 14px;
+  border-radius: 16px;
   display: block;
   overflow: visible;
   transition: transform .3s ease;
@@ -109,14 +109,15 @@
   transform: scale(1.025);
 }
 
-.menthy-logo-icon {
+.role-brand-logo {
   display: block;
-  width: 380px;
-  height: auto;
-  max-width: 84vw;
-  margin: -116px 0 -108px;
+  width: clamp(112px, 12vw, 150px);
+  height: clamp(112px, 12vw, 150px);
+  max-width: 150px;
+  max-height: 150px;
+  margin: 0 auto;
   object-fit: contain;
-  filter: drop-shadow(0 9px 16px rgba(13, 104, 60, .12));
+  filter: drop-shadow(0 8px 14px rgba(13, 104, 60, .12));
 }
 
 .role-eyebrow {
@@ -356,11 +357,11 @@
     height: auto;
   }
 
-  .menthy-logo-icon {
-    width: 330px;
-    max-width: 88vw;
-    margin-top: -100px;
-    margin-bottom: -94px;
+  .role-brand-logo {
+    width: clamp(96px, 30vw, 120px);
+    height: clamp(96px, 30vw, 120px);
+    max-width: 120px;
+    max-height: 120px;
   }
   .z6w9-dual-grid { grid-template-columns: 1fr; }
   .q5b3-role-tile { min-height: 0; padding: 24px; }

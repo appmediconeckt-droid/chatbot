@@ -2193,6 +2193,12 @@ main {
   filter: drop-shadow(0 14px 20px rgba(15, 23, 42, 0.2));
 }
 
+.landing-chat-logo img {
+  width: 78px;
+  height: 78px;
+  object-fit: contain;
+}
+
 .landing-chat-ring {
   position: relative;
   width: 76px;
@@ -3773,7 +3779,7 @@ html {
   border-bottom: 1px solid rgba(255,255,255,.07);
 }
 .humaeli footer.footer .footer-about {
-  max-width: 340px;
+  max-width: 390px;
 }
 .humaeli footer.footer .footer-logo {
   display: flex;
@@ -3790,16 +3796,17 @@ html {
 }
 .humaeli footer.footer .footer-description {
   margin: 0;
-  color: #9aafb2;
-  font-size: .73rem;
-  line-height: 1.55;
+  color: #b0c2c5;
+  font-size: .84rem;
+  line-height: 1.72;
 }
 .humaeli footer.footer .social-links {
   display: flex;
   margin-top: 28px;
   gap: 18px;
 }
-.humaeli footer.footer .social-links a {
+.humaeli footer.footer .social-links a,
+.humaeli footer.footer .social-links span {
   display: grid;
   width: 24px;
   height: 24px;
@@ -3817,17 +3824,20 @@ html {
 .humaeli footer.footer .footer-column h4 {
   margin: 0 0 23px;
   color: #d7e3e4;
-  font-size: .69rem;
+  font-size: .82rem;
   font-weight: 600;
   letter-spacing: .08em;
 }
-.humaeli footer.footer .footer-column a {
+.humaeli footer.footer .footer-column a,
+.humaeli footer.footer .footer-column span {
   display: block;
-  margin: 0 0 13px;
-  color: #789094;
-  font-size: .7rem;
-  line-height: 1.35;
+  margin: 0 0 12px;
+  color: #9fb2b5;
+  font-size: .84rem;
+  line-height: 1.48;
   text-decoration: none;
+  white-space: normal;
+  word-break: normal;
 }
 .humaeli footer.footer .footer-column a:hover,
 .humaeli footer.footer .footer-legal a:hover {
@@ -3887,10 +3897,13 @@ html {
   gap: 32px;
   border-top: 1px solid rgba(255,255,255,.06);
 }
-.humaeli footer.footer .footer-legal a {
+.humaeli footer.footer .footer-legal a,
+.humaeli footer.footer .footer-legal span {
   color: #91a4a7;
-  font-size: .64rem;
+  font-size: .78rem;
+  line-height: 1.4;
   text-decoration: none;
+  white-space: nowrap;
 }
 @media (max-width: 850px) {
   .humaeli footer.footer .footer-content {
@@ -4106,18 +4119,39 @@ html {
   gap: 72px;
 }
 .humaeli section.faq .faq-intro {
+  position: relative;
   min-width: 0;
+  min-height: 650px;
+  overflow: hidden;
+  border-radius: 34px;
+  background: #eff9f1;
+  box-shadow: 0 22px 55px rgba(8, 71, 80, .08);
+}
+.humaeli section.faq .faq-intro::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.94) 0%, rgba(255,255,255,.78) 26%, rgba(255,255,255,.08) 58%),
+    linear-gradient(90deg, rgba(255,255,255,.72), rgba(255,255,255,0) 72%);
+  pointer-events: none;
+}
+.humaeli section.faq .faq-copy {
+  position: relative;
+  z-index: 1;
+  max-width: 460px;
+  padding: 38px 36px;
 }
 .humaeli section.faq .faq-kicker {
   display: block;
-  margin-bottom: 30px;
+  margin-bottom: 18px;
   color: #174c55;
   font-size: .65rem;
   font-weight: 700;
   letter-spacing: .02em;
 }
 .humaeli section.faq .section-title {
-  margin: 0 0 30px;
+  margin: 0 0 22px;
   color: #084750;
   font-size: clamp(2.2rem, 3.1vw, 3rem);
   font-weight: 700;
@@ -4134,12 +4168,14 @@ html {
 }
 .humaeli section.faq .faq-illustration {
   display: block;
-  width: min(390px, 94%);
-  height: 350px;
-  margin: 54px 0 0 -20px;
-  border-radius: 40px;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: inherit;
   object-fit: cover;
-  object-position: center 58%;
+  object-position: center 55%;
 }
 .humaeli section.faq .faq-container {
   display: flex;
@@ -4204,9 +4240,12 @@ html {
     grid-template-columns: 1fr;
     gap: 38px;
   }
+  .humaeli section.faq .faq-intro {
+    min-height: 620px;
+  }
   .humaeli section.faq .faq-illustration {
-    width: min(420px, 100%);
-    margin: 40px auto 0;
+    width: 100%;
+    margin: 0;
   }
   .humaeli section.faq .faq-container {
     margin-top: 0;
@@ -4219,6 +4258,13 @@ html {
   .humaeli section.faq > .container {
     width: min(100% - 28px, 1120px);
   }
+  .humaeli section.faq .faq-intro {
+    min-height: 540px;
+    border-radius: 26px;
+  }
+  .humaeli section.faq .faq-copy {
+    padding: 26px 24px;
+  }
   .humaeli section.faq .faq-kicker {
     margin-bottom: 20px;
   }
@@ -4230,8 +4276,8 @@ html {
     display: none;
   }
   .humaeli section.faq .faq-illustration {
-    height: 300px;
-    border-radius: 30px;
+    height: 100%;
+    border-radius: inherit;
   }
   .humaeli section.faq .faq-question {
     min-height: 58px;

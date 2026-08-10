@@ -3,7 +3,7 @@ import { FaEnvelope, FaArrowLeft, FaSpinner } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import "./ForgotPassword.css";
-import logo from "../assets/humaeli logo (2).png";
+import { logoHorizontal } from "../assets/brandAssets";
 import { API_BASE_URL } from "../axiosConfig";
 
 const ForgotPassword = () => {
@@ -74,7 +74,7 @@ const ForgotPassword = () => {
 
         {/* Logo */}
         <div className="fp-logo">
-          <img src={logo} alt="Humaeli" className="fp-logo-img" />
+          <img src={logoHorizontal} alt="Humaeli" className="fp-logo-img" />
         </div>
 
         <div className="fp-card">

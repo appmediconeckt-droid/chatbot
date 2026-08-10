@@ -9,7 +9,7 @@ import {
   FaUserMd,
 } from "react-icons/fa";
 import "./RoleSelector.css";
-import logo from "../assets/humaeli.png";
+import { logoIcon } from "../assets/brandAssets";
 
 const RoleSelector = () => {
   const [selectedRole, setSelectedRole] = useState(null);
@@ -53,7 +53,7 @@ const RoleSelector = () => {
       <section className="x9k3-role-panel" aria-label="Choose your role">
         <header className="m7v2-greeting-area">
           <a className="role-brand" href="/" aria-label="Humaeli home">
-            <img src={logo} alt="Humaeli" className="menthy-logo-icon" />
+            <img src={logoIcon} alt="Humaeli" className="role-brand-logo" />
           </a>
           <span className="role-eyebrow">
             <FaHeart aria-hidden="true" />

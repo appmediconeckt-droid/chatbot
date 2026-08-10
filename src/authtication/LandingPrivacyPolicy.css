@@ -32,6 +32,12 @@
   font-size: 1.35rem;
 }
 
+.landing-privacy-brand img {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
 .landing-privacy-back {
   padding: 0.65rem 1rem;
   border: 1px solid #d9e2ec;
