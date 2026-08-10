@@ -1,9 +1,57 @@
 .humaeli .doctors-carousel {
+  position: relative;
   width: 100%;
 }
 
 .humaeli .doctors-carousel .doctors-grid {
   animation: doctorCarouselIn .55s cubic-bezier(.22, .75, .25, 1) both;
+}
+
+.humaeli .doctor-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: inline-flex;
+  width: 46px;
+  height: 46px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  border: 1px solid rgba(30, 176, 140, .2);
+  border-radius: 50%;
+  color: #0d736f;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 12px 28px rgba(12, 94, 82, .14);
+  cursor: pointer;
+  transition: transform .25s ease, background .25s ease, color .25s ease, box-shadow .25s ease;
+}
+
+.humaeli .doctor-carousel-arrow:hover,
+.humaeli .doctor-carousel-arrow:focus-visible {
+  color: #fff;
+  background: linear-gradient(135deg, #18bc82, #29958e);
+  box-shadow: 0 14px 34px rgba(22, 144, 118, .24);
+  outline: 3px solid rgba(31, 178, 140, .18);
+  outline-offset: 3px;
+}
+
+.humaeli .doctor-carousel-arrow-left {
+  left: -70px;
+}
+
+.humaeli .doctor-carousel-arrow-left:hover,
+.humaeli .doctor-carousel-arrow-left:focus-visible {
+  transform: translate(-4px, -50%);
+}
+
+.humaeli .doctor-carousel-arrow-right {
+  right: -70px;
+}
+
+.humaeli .doctor-carousel-arrow-right:hover,
+.humaeli .doctor-carousel-arrow-right:focus-visible {
+  transform: translate(4px, -50%);
 }
 
 .humaeli .doctor-carousel-dots {
@@ -52,6 +100,16 @@
   }
 }
 
+@media (max-width: 1120px) {
+  .humaeli .doctor-carousel-arrow-left {
+    left: -20px;
+  }
+
+  .humaeli .doctor-carousel-arrow-right {
+    right: -20px;
+  }
+}
+
 @media (max-width: 768px) {
   .humaeli .doctors-carousel .doctors-grid {
     display: block;
@@ -74,6 +132,33 @@
   .humaeli .doctor-carousel-dots {
     margin-top: 18px;
   }
+
+  .humaeli .doctor-carousel-arrow {
+    top: auto;
+    bottom: 4px;
+    width: 42px;
+    height: 42px;
+    transform: none;
+  }
+
+  .humaeli .doctor-carousel-arrow-left {
+    left: calc(50% - 95px);
+  }
+
+  .humaeli .doctor-carousel-arrow-right {
+    right: calc(50% - 95px);
+  }
+
+  .humaeli .doctor-carousel-arrow-left:hover,
+  .humaeli .doctor-carousel-arrow-left:focus-visible,
+  .humaeli .doctor-carousel-arrow-right:hover,
+  .humaeli .doctor-carousel-arrow-right:focus-visible {
+    transform: translateY(-2px);
+  }
+
+  .humaeli .doctor-carousel-dots {
+    padding-inline: 56px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -81,7 +166,8 @@
     animation: none;
   }
 
-  .humaeli .doctor-carousel-dot {
+  .humaeli .doctor-carousel-dot,
+  .humaeli .doctor-carousel-arrow {
     transition: none;
   }
 }

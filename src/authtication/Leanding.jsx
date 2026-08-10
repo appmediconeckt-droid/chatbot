@@ -18,6 +18,65 @@ import { translationService } from '../i18n/translationService';
 
 const GUEST_CHAT_LIMIT_MS = 5 * 60 * 1000;
 const browserVoiceCache = new Map();
+const TOP_LANDING_DOCTOR_LIMIT = 5;
+const DEFAULT_LANDING_STATS = {
+  patientsHelped: 0,
+  medicalPartners: 0,
+  activeSupports: 0,
+  completedPatients: 0,
+};
+
+const extractCounsellorList = (data) => (
+  data?.counsellors || data?.counselors || []
+);
+
+const buildFallbackLandingStats = (counsellors) => {
+  const completedPatients = counsellors.reduce(
+    (total, counsellor) => total + (Number(counsellor?.totalSessions) || 0),
+    0,
+  );
+
+  return {
+    patientsHelped: completedPatients,
+    medicalPartners: counsellors.length,
+    activeSupports: counsellors.filter((counsellor) => counsellor?.isOnline).length,
+    completedPatients,
+  };
+};
+
+const backendSupportsLandingStats = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/health`, { timeout: 5000 });
+    return response.data?.features?.landingStats === true;
+  } catch {
+    return true;
+  }
+};
+
+const getNumericMetric = (...values) => {
+  for (const value of values) {
+    const number = Number(value);
+    if (Number.isFinite(number)) return number;
+  }
+  return 0;
+};
+
+const getDoctorPatientConversationCount = (doctor) => getNumericMetric(
+  doctor?.patientConversationCount,
+  doctor?.conversationCount,
+  doctor?.chatCount,
+  doctor?.totalConversations,
+  doctor?.totalChats,
+  doctor?.patientsTalked,
+  doctor?.patientsHelped,
+  doctor?.activeClients,
+  doctor?.totalSessions,
+);
+
+const getDoctorRating = (doctor) => getNumericMetric(
+  doctor?.rating,
+  doctor?.averageRating,
+);
 
 const getBrowserVoices = async () => {
   if (!window.speechSynthesis) return [];
@@ -451,19 +510,31 @@ const Header = ({ onLoginClick }) => {
 // ========== HERO SECTION ==========
 const HeroSection = () => {
   const { t } = useSiteTranslation();
-  const [landingStats, setLandingStats] = useState(null);
+  const [landingStats, setLandingStats] = useState(DEFAULT_LANDING_STATS);
 
   useEffect(() => {
     let isMounted = true;
 
     const loadLandingStats = async () => {
       try {
-        const response = await axios.get(`${API_BASE_URL}/api/auth/landing-stats`);
-        if (isMounted && response.data?.success) {
-          setLandingStats(response.data.data);
+        if (await backendSupportsLandingStats()) {
+          const response = await axios.get(`${API_BASE_URL}/api/auth/landing-stats`);
+          if (isMounted && response.data?.success) {
+            setLandingStats(response.data.data);
+            return;
+          }
+        }
+
+        const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors`);
+        const counsellors = extractCounsellorList(response.data);
+        if (isMounted) {
+          setLandingStats(buildFallbackLandingStats(counsellors));
         }
       } catch (error) {
         console.error('Unable to load landing statistics:', error);
+        if (isMounted) {
+          setLandingStats(DEFAULT_LANDING_STATS);
+        }
       }
     };
 
@@ -478,6 +549,12 @@ const HeroSection = () => {
       ? new Intl.NumberFormat().format(Number(value))
       : '—'
   );
+  const completedPatients =
+    landingStats?.completedPatients ??
+    landingStats?.satisfiedPatients ??
+    landingStats?.satisfactionRate ??
+    0;
+  const patientsHelped = landingStats?.patientsHelped ?? completedPatients;
 
   return (
     <section className="section hero" id="home">
@@ -525,11 +602,11 @@ const HeroSection = () => {
         </div>
       </div>
       <div className="hero-stats" aria-label="Humaeli impact statistics">
-        <StatItem number={formatCount(landingStats?.patientsHelped)} label={t('landing_ui_stat_patients')} />
+        <StatItem number={formatCount(patientsHelped)} label={t('landing_ui_stat_patients')} />
         <StatItem number={formatCount(landingStats?.medicalPartners)} label={t('landing_ui_stat_partners')} />
         <StatItem number="24/7" label={t('landing_ui_stat_supports')} />
         <StatItem
-          number={landingStats ? `${landingStats.satisfactionRate}%` : '—'}
+          number={formatCount(completedPatients)}
           label={t('landing_ui_stat_satisfied')}
         />
       </div>
@@ -750,7 +827,7 @@ const DoctorsSection = () => {
     const loadDoctors = async () => {
       try {
         const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors`);
-        const counselorList = response.data?.counsellors || response.data?.counselors || [];
+        const counselorList = extractCounsellorList(response.data);
 
         if (isMounted) {
           setDoctors(counselorList);
@@ -790,8 +867,13 @@ const DoctorsSection = () => {
     .toUpperCase();
 
   const rankedDoctors = [...doctors]
-    .sort((a, b) => Number(b.rating || 0) - Number(a.rating || 0))
-    .slice(0, 8);
+    .sort((a, b) => (
+      getDoctorPatientConversationCount(b) - getDoctorPatientConversationCount(a) ||
+      getDoctorRating(b) - getDoctorRating(a) ||
+      getNumericMetric(b.ratingCount, b.totalRatings) - getNumericMetric(a.ratingCount, a.totalRatings) ||
+      String(a.fullName || a.name || '').localeCompare(String(b.fullName || b.name || ''))
+    ))
+    .slice(0, TOP_LANDING_DOCTOR_LIMIT);
 
   useEffect(() => {
     if (rankedDoctors.length < 2 || isDoctorCarouselPaused) return undefined;
@@ -805,13 +887,31 @@ const DoctorsSection = () => {
     if (activeDoctorIndex >= rankedDoctors.length) setActiveDoctorIndex(0);
   }, [activeDoctorIndex, rankedDoctors.length]);
 
-  const displayedDoctors = rankedDoctors.length > 2
-    ? [
-        rankedDoctors[(activeDoctorIndex - 1 + rankedDoctors.length) % rankedDoctors.length],
-        rankedDoctors[activeDoctorIndex],
-        rankedDoctors[(activeDoctorIndex + 1) % rankedDoctors.length],
-      ]
-    : rankedDoctors;
+  let displayedDoctors = rankedDoctors;
+  if (rankedDoctors.length > 2) {
+    displayedDoctors = [
+      rankedDoctors[(activeDoctorIndex - 1 + rankedDoctors.length) % rankedDoctors.length],
+      rankedDoctors[activeDoctorIndex],
+      rankedDoctors[(activeDoctorIndex + 1) % rankedDoctors.length],
+    ];
+  } else if (rankedDoctors.length === 2) {
+    displayedDoctors = [
+      rankedDoctors[(activeDoctorIndex - 1 + rankedDoctors.length) % rankedDoctors.length],
+      rankedDoctors[activeDoctorIndex],
+    ];
+  }
+
+  const showPreviousDoctor = () => {
+    if (rankedDoctors.length < 2) return;
+    setActiveDoctorIndex((current) => (
+      current - 1 + rankedDoctors.length
+    ) % rankedDoctors.length);
+  };
+
+  const showNextDoctor = () => {
+    if (rankedDoctors.length < 2) return;
+    setActiveDoctorIndex((current) => (current + 1) % rankedDoctors.length);
+  };
 
   return (
     <section className="section doctors" id="doctors">
@@ -835,80 +935,100 @@ const DoctorsSection = () => {
           aria-roledescription="carousel"
           aria-label="Our professionals"
         >
-        <div className="doctors-grid" key={`doctor-slide-${activeDoctorIndex}`} aria-live="polite">
-          {isLoadingDoctors && <p className="landing-doctors-state">{t('landing_doctors_loading')}</p>}
-          {doctorLoadError && <p className="landing-doctors-state">{t('landing_doctors_error')}</p>}
-          {!isLoadingDoctors && !doctorLoadError && displayedDoctors.map((doctor, index) => {
-            const name = doctor.fullName || doctor.name || t('landing_doctor_default_name');
-            const specializations = asList(doctor.specialization);
-            const photoUrl = getPhotoUrl(doctor.profilePhoto);
-            const consultationModes = asList(doctor.consultationMode);
-            const rating = Number(doctor.rating || 0);
-            const description = doctor.bio || doctor.about ||
-              `${doctor.qualification || t('landing_doctor_default_qualification')} with experience providing personalised mental wellness support.`;
-            return (
-            <div className={`doctor-card doctor-slide doctor-slide-${index}`} key={doctor._id || doctor.id}>
-              {index === 1 && <span className="doctor-featured-badge">{t('landing_ui_highly_rated')}</span>}
-              <div className="doctor-header">
-                <div className="doctor-image">
-                  {photoUrl ? <img src={photoUrl} alt={name} /> : getInitials(name)}
-                </div>
-                <div>
-                  <h3 className="doctor-name">{name}</h3>
-                  <p className="doctor-specialization">{specializations[0] || doctor.qualification || t('landing_doctor_default_role')}</p>
-                  <div className="doctor-rating">
-                    <span className="doctor-stars" aria-label={`${rating.toFixed(1)} rating`}>
-                      {[0, 1, 2, 3, 4].map((star) => <i className="fas fa-star" key={star}></i>)}
-                    </span>
-                    <span>{rating.toFixed(1)}</span>
+          {!isLoadingDoctors && !doctorLoadError && rankedDoctors.length > 1 && (
+            <>
+              <button
+                type="button"
+                className="doctor-carousel-arrow doctor-carousel-arrow-left"
+                onClick={showPreviousDoctor}
+                aria-label="Show previous professional"
+              >
+                <i className="fas fa-chevron-left" aria-hidden="true"></i>
+              </button>
+              <button
+                type="button"
+                className="doctor-carousel-arrow doctor-carousel-arrow-right"
+                onClick={showNextDoctor}
+                aria-label="Show next professional"
+              >
+                <i className="fas fa-chevron-right" aria-hidden="true"></i>
+              </button>
+            </>
+          )}
+          <div className="doctors-grid" key={`doctor-slide-${activeDoctorIndex}`} aria-live="polite">
+            {isLoadingDoctors && <p className="landing-doctors-state">{t('landing_doctors_loading')}</p>}
+            {doctorLoadError && <p className="landing-doctors-state">{t('landing_doctors_error')}</p>}
+            {!isLoadingDoctors && !doctorLoadError && displayedDoctors.map((doctor, index) => {
+              const name = doctor.fullName || doctor.name || t('landing_doctor_default_name');
+              const specializations = asList(doctor.specialization);
+              const photoUrl = getPhotoUrl(doctor.profilePhoto);
+              const consultationModes = asList(doctor.consultationMode);
+              const rating = getDoctorRating(doctor);
+              const description = doctor.bio || doctor.about ||
+                `${doctor.qualification || t('landing_doctor_default_qualification')} with experience providing personalised mental wellness support.`;
+              return (
+                <div className={`doctor-card doctor-slide doctor-slide-${index}`} key={doctor._id || doctor.id}>
+                  {index === 1 && <span className="doctor-featured-badge">{t('landing_ui_highly_rated')}</span>}
+                  <div className="doctor-header">
+                    <div className="doctor-image">
+                      {photoUrl ? <img src={photoUrl} alt={name} /> : getInitials(name)}
+                    </div>
+                    <div>
+                      <h3 className="doctor-name">{name}</h3>
+                      <p className="doctor-specialization">{specializations[0] || doctor.qualification || t('landing_doctor_default_role')}</p>
+                      <div className="doctor-rating">
+                        <span className="doctor-stars" aria-label={`${rating.toFixed(1)} rating`}>
+                          {[0, 1, 2, 3, 4].map((star) => <i className="fas fa-star" key={star}></i>)}
+                        </span>
+                        <span>{rating.toFixed(1)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="doctor-details">
+                    <div className="doctor-detail">
+                      <i className="fas fa-head-side-virus"></i>
+                      <span>{specializations[1] || specializations[0] || doctor.qualification || t('landing_doctor_default_role')}</span>
+                    </div>
+                    <div className="doctor-detail">
+                      <i className="fas fa-globe"></i>
+                      <span>{consultationModes.join(', ') || t('landing_doctor_online_consultation')}</span>
+                    </div>
+                    <div className="doctor-detail">
+                      <i className="fas fa-map-marker-alt"></i>
+                      <span>{doctor.location || t('landing_doctor_location_default')}</span>
+                    </div>
+                  </div>
+                  <p className="doctor-bio">{description}</p>
+                  <div className="doctor-actions">
+                    <Link to="/role-selector" className="btn btn-primary doctor-book-button">
+                      {t('landing_ui_book_consultation')}
+                    </Link>
+                    <Link to="/role-selector" className="doctor-profile-link">
+                      {index === 1 ? t('landing_ui_view_full_profile') : t('landing_ui_view_profile')}
+                    </Link>
                   </div>
                 </div>
-              </div>
-              <div className="doctor-details">
-                <div className="doctor-detail">
-                  <i className="fas fa-head-side-virus"></i>
-                  <span>{specializations[1] || specializations[0] || doctor.qualification || t('landing_doctor_default_role')}</span>
-                </div>
-                <div className="doctor-detail">
-                  <i className="fas fa-globe"></i>
-                  <span>{consultationModes.join(', ') || t('landing_doctor_online_consultation')}</span>
-                </div>
-                <div className="doctor-detail">
-                  <i className="fas fa-map-marker-alt"></i>
-                  <span>{doctor.location || t('landing_doctor_location_default')}</span>
-                </div>
-              </div>
-              <p className="doctor-bio">{description}</p>
-              <div className="doctor-actions">
-                <Link to="/role-selector" className="btn btn-primary doctor-book-button">
-                  {t('landing_ui_book_consultation')}
-                </Link>
-                <Link to="/role-selector" className="doctor-profile-link">
-                  {index === 1 ? t('landing_ui_view_full_profile') : t('landing_ui_view_profile')}
-                </Link>
-              </div>
-            </div>
-          );
-          })}
-          {!isLoadingDoctors && !doctorLoadError && doctors.length === 0 && (
-            <p className="landing-doctors-state">{t('landing_doctors_empty')}</p>
-          )}
-        </div>
-        {!isLoadingDoctors && !doctorLoadError && rankedDoctors.length > 1 && (
-          <div className="doctor-carousel-dots" role="tablist" aria-label="Choose a professional">
-            {rankedDoctors.map((doctor, index) => (
-              <button
-                key={doctor._id || doctor.id || index}
-                type="button"
-                className={`doctor-carousel-dot ${activeDoctorIndex === index ? "active" : ""}`}
-                onClick={() => setActiveDoctorIndex(index)}
-                aria-label={`Show professional ${index + 1}`}
-                aria-selected={activeDoctorIndex === index}
-                role="tab"
-              />
-            ))}
+              );
+            })}
+            {!isLoadingDoctors && !doctorLoadError && doctors.length === 0 && (
+              <p className="landing-doctors-state">{t('landing_doctors_empty')}</p>
+            )}
           </div>
-        )}
+          {!isLoadingDoctors && !doctorLoadError && rankedDoctors.length > 1 && (
+            <div className="doctor-carousel-dots" role="tablist" aria-label="Choose a professional">
+              {rankedDoctors.map((doctor, index) => (
+                <button
+                  key={doctor._id || doctor.id || index}
+                  type="button"
+                  className={`doctor-carousel-dot ${activeDoctorIndex === index ? "active" : ""}`}
+                  onClick={() => setActiveDoctorIndex(index)}
+                  aria-label={`Show professional ${index + 1}`}
+                  aria-selected={activeDoctorIndex === index}
+                  role="tab"
+                />
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </section>
