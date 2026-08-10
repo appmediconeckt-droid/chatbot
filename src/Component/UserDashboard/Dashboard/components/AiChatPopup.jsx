@@ -504,7 +504,7 @@ export default function AiChatPopup({
               <span className="ud-chat-avatar-dot" />
             </div>
             <div>
-              <h3>AI Health Assistant</h3>
+              <h3>Humaelio AI Assistant</h3>
               <p className="ud-chat-status">
                 <span className="ud-status-dot" />
                 Online · Secure

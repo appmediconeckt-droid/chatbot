@@ -6276,3 +6276,64 @@ html {
   font-weight: 650;
   letter-spacing: .08em;
 }
+
+/* FAQ: final alignment pass for balanced left/right and top/bottom spacing. */
+.humaeli section.faq {
+  padding: 72px 0;
+}
+
+.humaeli section.faq > .container {
+  width: min(1180px, calc(100% - 40px));
+  max-width: none;
+  grid-template-columns: minmax(360px, .92fr) minmax(520px, 1.08fr);
+  align-items: center;
+  gap: clamp(42px, 5vw, 76px);
+}
+
+.humaeli section.faq .faq-intro {
+  min-height: clamp(560px, 48vw, 650px);
+}
+
+.humaeli section.faq .faq-copy {
+  padding: clamp(30px, 3vw, 38px) clamp(28px, 3vw, 36px);
+}
+
+.humaeli section.faq .faq-container {
+  margin: 0;
+  align-self: center;
+  gap: 16px;
+}
+
+@media (max-width: 850px) {
+  .humaeli section.faq {
+    padding: 62px 0;
+  }
+
+  .humaeli section.faq > .container {
+    width: min(100% - 32px, 680px);
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .humaeli section.faq .faq-intro {
+    min-height: 560px;
+  }
+}
+
+@media (max-width: 560px) {
+  .humaeli section.faq {
+    padding: 50px 0;
+  }
+
+  .humaeli section.faq > .container {
+    width: min(100% - 28px, 680px);
+  }
+
+  .humaeli section.faq .faq-intro {
+    min-height: 500px;
+  }
+
+  .humaeli section.faq .section-title {
+    font-size: 2.05rem;
+  }
+}
