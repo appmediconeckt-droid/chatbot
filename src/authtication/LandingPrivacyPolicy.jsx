@@ -1,30 +1,34 @@
 import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { FaArrowLeft } from "react-icons/fa";
 import PrivacyPolicy from "../Component/Settings/PrivacyPolicy";
 import { logoIcon } from "../assets/brandAssets";
 import "./LandingPrivacyPolicy.css";
 
-const LandingPrivacyPolicy = () => (
-  <div className="landing-privacy-page">
-    <header className="landing-privacy-nav">
-      <Link to="/" className="landing-privacy-brand" aria-label="Humaeli home">
-        <img src={logoIcon} alt="" aria-hidden="true" />
-        <span>Humaeli</span>
-      </Link>
-      <Link to="/" className="landing-privacy-back">
-        <i className="fas fa-arrow-left" aria-hidden="true" />
-        Back to home
-      </Link>
-    </header>
+const LandingPrivacyPolicy = () => {
+  useEffect(() => {
+    document.title = "Privacy Policy | Humaeli";
+  }, []);
 
-    <main className="landing-privacy-main">
-      <PrivacyPolicy />
-    </main>
+  return (
+    <div className="landing-privacy-page">
+      <header className="landing-privacy-nav">
+        <Link to="/" className="landing-privacy-brand" aria-label="Humaeli home">
+          <img src={logoIcon} alt="" aria-hidden="true" />
+          <span>Humaeli</span>
+        </Link>
+        <Link to="/" className="landing-privacy-back">
+          <FaArrowLeft aria-hidden="true" />
+          Back to home
+        </Link>
+      </header>
 
-    <footer className="landing-privacy-footer">
-      <span>&copy; {new Date().getFullYear()} Humaeli. All rights reserved.</span>
-      <Link to="/">Home</Link>
-    </footer>
-  </div>
-);
+      <main className="landing-privacy-main">
+        <h1 className="landing-privacy-title">Privacy Policy</h1>
+        <PrivacyPolicy variant="public" />
+      </main>
+    </div>
+  );
+};
 
 export default LandingPrivacyPolicy;
