@@ -38,6 +38,7 @@ const UserSignup = () => {
 
   // Verification states
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerificationToken, setEmailVerificationToken] = useState("");
   const [phoneVerified, setPhoneVerified] = useState(false);
   const [showEmailOtpModal, setShowEmailOtpModal] = useState(false);
   const [showPhoneOtpModal, setShowPhoneOtpModal] = useState(false);
@@ -50,6 +51,7 @@ const UserSignup = () => {
   const [emailOtpError, setEmailOtpError] = useState("");
   const [phoneOtpError, setPhoneOtpError] = useState("");
   const [emailOtpSuccess, setEmailOtpSuccess] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [phoneOtpSuccess, setPhoneOtpSuccess] = useState(false);
   const [emailResendTimer, setEmailResendTimer] = useState(0);
   const [phoneResendTimer, setPhoneResendTimer] = useState(0);
@@ -135,7 +137,10 @@ const UserSignup = () => {
       setApiError("");
     }
 
-    if (name === "email") setEmailVerified(false);
+    if (name === "email") {
+      setEmailVerified(false);
+      setEmailVerificationToken("");
+    }
     if (name === "phoneNumber") setPhoneVerified(false);
   };
 
@@ -233,8 +238,6 @@ const UserSignup = () => {
       newErrors.phoneNumber = "Phone number is required";
     } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
       newErrors.phoneNumber = "Phone number must be 10 digits";
-    } else if (!phoneVerified) {
-      newErrors.phoneNumber = "Please verify your phone number first";
     }
 
     if (!formData.age) {
@@ -269,6 +272,7 @@ const UserSignup = () => {
     try {
       setIsSendingEmailOtp(true);
       setEmailOtpError("");
+      setEmailOtpSent(false);
 
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/send-email-otp`,
@@ -278,12 +282,15 @@ const UserSignup = () => {
       );
 
       if (response.data.success) {
+        setEmailOtpSent(true);
         setEmailResendTimer(60);
         showNotification("OTP sent to email successfully!", "success");
       } else {
+        setEmailOtpSent(false);
         setEmailOtpError(response.data.message || "Failed to send OTP");
       }
     } catch (error) {
+      setEmailOtpSent(false);
       setEmailOtpError(error.response?.data?.message || "Something went wrong");
     } finally {
       setIsSendingEmailOtp(false);
@@ -306,6 +313,7 @@ const UserSignup = () => {
       if (response.data.success) {
         setEmailOtpSuccess(true);
         setEmailVerified(true);
+        setEmailVerificationToken(response.data.emailVerificationToken || "");
         showNotification("Email verified successfully!", "success");
         setTimeout(() => {
           setShowEmailOtpModal(false);
@@ -325,6 +333,7 @@ const UserSignup = () => {
     setEmailOtp("");
     setEmailOtpError("");
     setEmailOtpSuccess(false);
+    setEmailOtpSent(false);
     setEmailResendTimer(0);
   };
 
@@ -512,28 +521,19 @@ const UserSignup = () => {
       showNotification("Please verify your email first", "error");
       return;
     }
-    if (!phoneVerified) {
-      setErrors((prev) => ({
-        ...prev,
-        phoneNumber: "Please verify your phone number first",
-      }));
-      showNotification("Please verify your phone number first", "error");
-      return;
-    }
-
     try {
       const signupData = {
         fullName: formData.fullName,
         email: formData.email,
         anonymous: formData.anonymous,
-        phoneNum: formData.phoneNumber,
+        phoneNumber: formData.phoneNumber,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         age: parseInt(formData.age),
         gender: formData.gender,
         role: "user",
         isEmailVerified: true,
-        isPhoneVerified: true,
+        emailVerificationToken,
       };
 
       console.log("Sending signup data:", signupData);
@@ -547,33 +547,26 @@ const UserSignup = () => {
         response.data &&
         (response.data.message?.includes("success") || response.data.success)
       ) {
-        const token = response.data?.token || response.data?.accessToken;
+        const registeredEmail = formData.email.trim().toLowerCase();
+        setEmailVerified(false);
+        setEmailVerificationToken("");
+        setErrors({});
+        setApiError("");
+        setFormData({
+          email: registeredEmail,
+          password: "",
+          fullName: "",
+          anonymous: "",
+          phoneNumber: "",
+          age: "",
+          gender: "",
+          confirmPassword: "",
+        });
+        setIsLogin(true);
 
-        if (token) {
-          localStorage.setItem("isAuthenticated", "true");
-          localStorage.setItem("userType", "user");
-          localStorage.setItem("userRole", "user");
-          localStorage.setItem("userEmail", formData.email);
-          localStorage.setItem("token", token);
-          localStorage.setItem("accessToken", token);
-        }
-
-        if (response.data.user?._id) {
-          localStorage.setItem("userId", response.data.user._id);
-        }
-
-        if (response.data.user) {
-          localStorage.setItem("userData", JSON.stringify(response.data.user));
-        }
-
-        showNotification("Account created! One last step…", "success");
-        setPendingNav({ path: "/user-dashboard", event: "signup" });
+        showNotification("Account created successfully. Please log in.", "success");
       } else {
-        showNotification(
-          "Account created! One last step…",
-          "success",
-        );
-        setPendingNav({ path: "/user-dashboard", event: "signup" });
+        showNotification(response.data?.message || "Registration failed", "error");
       }
     } catch (error) {
       console.error("Signup error:", error);
@@ -734,6 +727,7 @@ const handleVerify = async () => {
       setOtpSentForLogin(false);
       setLoginOtp("");
       setEmailVerified(false);
+      setEmailVerificationToken("");
       setPhoneVerified(false);
       setFormData({
         email: "",
@@ -780,6 +774,17 @@ const handleVerify = async () => {
             <FaTimes />
           </button>
         </div>
+        {!emailOtpSent ? (
+          <div className="us-otp-body">
+            {emailOtpError ? (
+              <div className="us-otp-error">{emailOtpError}</div>
+            ) : (
+              <div className="us-otp-success">
+                <FaSpinner className="us-spin" /> Sending OTP…
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="us-otp-body">
           <p>Enter the 6-digit code sent to</p>
           <div className="us-otp-recipient">{formData.email}</div>
@@ -841,6 +846,7 @@ const handleVerify = async () => {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
@@ -958,7 +964,6 @@ const handleVerify = async () => {
       )}
 
       {showEmailOtpModal && EmailOtpModal()}
-      {showPhoneOtpModal && PhoneOtpModal()}
 
       <div
         className={`us-container ${isLogin ? "us-login-layout" : "us-signup-layout"}`}
@@ -1248,32 +1253,11 @@ const handleVerify = async () => {
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleChange}
-                        className={`us-input ${errors.phoneNumber ? "us-input-error" : ""} ${phoneVerified ? "us-verified-input" : ""}`}
+                        className={`us-input ${errors.phoneNumber ? "us-input-error" : ""}`}
                         placeholder="10 digit mobile number"
                         maxLength="10"
-                        disabled={isLoading || phoneVerified}
+                        disabled={isLoading}
                       />
-                      {!phoneVerified &&
-                        formData.phoneNumber &&
-                        /^\d{10}$/.test(formData.phoneNumber) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              resetPhoneOtpState();
-                              setShowPhoneOtpModal(true);
-                              handleSendPhoneOtp();
-                            }}
-                            className="us-verify-btn-sm"
-                            disabled={isLoading}
-                          >
-                            Verify
-                          </button>
-                        )}
-                      {phoneVerified && (
-                        <span className="us-verified-badge">
-                          <FaCheckCircle /> Verified
-                        </span>
-                      )}
                     </div>
                     {errors.phoneNumber && (
                       <span className="us-error">{errors.phoneNumber}</span>

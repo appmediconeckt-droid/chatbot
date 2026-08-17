@@ -25,8 +25,8 @@
   --gray-300: #dee2e6;
   
   /* Typography */
-  --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-heading: 'Poppins', 'Inter', sans-serif;
+  --font-main: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-heading: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
   
   /* Spacing */
   --spacing-xs: 0.5rem;
@@ -5506,6 +5506,11 @@ html {
   font-size: 2.65rem;
   line-height: 1.05;
 }
+.humaeli .hero-stats .stat-item-compact .stat-number {
+  font-size: 1.75rem;
+  line-height: 1.15;
+  white-space: nowrap;
+}
 .humaeli .stat-label {
   margin-bottom: 13px;
   color: #fff;
@@ -6164,6 +6169,63 @@ html {
   color: #fff;
   border-color: #20b68d;
   background: linear-gradient(90deg, #20bc8a, #299b8e);
+}
+
+/* Keep every service CTA readable. The nested router link otherwise inherits
+   the application's global blue link colour, which disappears on the green
+   Get Started button. */
+.humaeli .service-learn-more {
+  min-height: 42px;
+  font-size: 16px;
+}
+
+.humaeli .service-learn-more a,
+.humaeli .service-learn-more a:hover,
+.humaeli .service-learn-more a:focus,
+.humaeli .service-learn-more a:visited {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.humaeli .service-card:last-child .service-learn-more,
+.humaeli .service-card:last-child .service-learn-more a,
+.humaeli .service-card:last-child .service-learn-more a:hover,
+.humaeli .service-card:last-child .service-learn-more a:focus,
+.humaeli .service-card:last-child .service-learn-more a:visited {
+  color: #fff;
+}
+
+/* Readable typography for the four How It Works cards. */
+.humaeli section.how-it-works .section-description,
+.humaeli .how-it-works .section-description {
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.humaeli section.how-it-works .step-title,
+.humaeli .how-it-works .step-title {
+  font-size: 20px;
+  line-height: 1.3;
+}
+
+.humaeli section.how-it-works .step-description,
+.humaeli .how-it-works .step-description {
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.humaeli section.how-it-works .step-action,
+.humaeli .how-it-works .step-action {
+  min-height: 42px;
+  padding: 10px 15px;
+  font-size: 16px;
 }
 
 @media (max-width: 768px) {

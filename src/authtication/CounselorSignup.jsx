@@ -2099,6 +2099,7 @@ const CounselorSignup = () => {
 
   // Verification states
   const [emailVerified, setEmailVerified] = useState(false);
+  const [emailVerificationToken, setEmailVerificationToken] = useState("");
   const [phoneVerified, setPhoneVerified] = useState(false);
   // Mandatory-location gate state.
   const [pendingNav, setPendingNav] = useState(null); // { path, event }
@@ -2113,6 +2114,7 @@ const CounselorSignup = () => {
   const [emailOtpError, setEmailOtpError] = useState("");
   const [phoneOtpError, setPhoneOtpError] = useState("");
   const [emailOtpSuccess, setEmailOtpSuccess] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [phoneOtpSuccess, setPhoneOtpSuccess] = useState(false);
   const [emailResendTimer, setEmailResendTimer] = useState(0);
   const [phoneResendTimer, setPhoneResendTimer] = useState(0);
@@ -2221,7 +2223,10 @@ const CounselorSignup = () => {
     }
 
     if (errors[name]) setErrors({ ...errors, [name]: "" });
-    if (name === "email") setEmailVerified(false);
+    if (name === "email") {
+      setEmailVerified(false);
+      setEmailVerificationToken("");
+    }
     if (name === "phoneNumber") setPhoneVerified(false);
   };
 
@@ -2250,8 +2255,6 @@ const CounselorSignup = () => {
       newErrors.phoneNumber = "Phone number is required";
     else if (!/^\d{10}$/.test(formData.phoneNumber))
       newErrors.phoneNumber = "Phone number must be 10 digits";
-    else if (!phoneVerified)
-      newErrors.phoneNumber = "Please verify your phone number first";
 
     if (!formData.age) newErrors.age = "Age is required";
     else if (formData.age < 18 || formData.age > 100)
@@ -2287,20 +2290,24 @@ const CounselorSignup = () => {
     }
     setIsSendingEmailOtp(true);
     setEmailOtpError("");
+    setEmailOtpSent(false);
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/send-email-otp`,
         { email: formData.email },
       );
       if (response.data.success) {
+        setEmailOtpSent(true);
         showNotification("OTP sent to your email!", "success");
         setEmailResendTimer(60);
         setEmailOtpSuccess(false);
         setEmailOtp("");
       } else {
+        setEmailOtpSent(false);
         setEmailOtpError(response.data.message || "Failed to send OTP");
       }
     } catch (error) {
+      setEmailOtpSent(false);
       setEmailOtpError(error.response?.data?.message || "Failed to send OTP");
     } finally {
       setIsSendingEmailOtp(false);
@@ -2321,6 +2328,7 @@ const CounselorSignup = () => {
       );
       if (response.data.success) {
         setEmailVerified(true);
+        setEmailVerificationToken(response.data.emailVerificationToken || "");
         setEmailOtpSuccess(true);
         showNotification("Email verified successfully!", "success");
         setTimeout(() => {
@@ -2341,6 +2349,7 @@ const CounselorSignup = () => {
     setEmailOtp("");
     setEmailOtpError("");
     setEmailOtpSuccess(false);
+    setEmailOtpSent(false);
     setEmailResendTimer(0);
   };
 
@@ -2544,15 +2553,6 @@ const CounselorSignup = () => {
       showNotification("Please verify your email first", "error");
       return;
     }
-    if (!phoneVerified) {
-      setErrors((prev) => ({
-        ...prev,
-        phoneNumber: "Please verify your phone number first",
-      }));
-      showNotification("Please verify your phone number first", "error");
-      return;
-    }
-
     try {
       const fd = new FormData();
       fd.append("fullName", formData.fullName.trim());
@@ -2578,6 +2578,7 @@ const CounselorSignup = () => {
       fd.append("password", formData.password);
       fd.append("confirmPassword", formData.confirmPassword);
       fd.append("role", "counsellor");
+      fd.append("emailVerificationToken", emailVerificationToken);
       if (formData.profilePhoto instanceof File) {
         fd.append("profilePhoto", formData.profilePhoto);
       }
@@ -2589,26 +2590,33 @@ const CounselorSignup = () => {
       );
 
       if (response.data.success) {
+        const registeredEmail = formData.email.trim().toLowerCase();
+        setEmailVerified(false);
+        setEmailVerificationToken("");
+        setErrors({});
+        setApiError("");
+        setFormData({
+          email: registeredEmail,
+          password: "",
+          fullName: "",
+          phoneNumber: "",
+          age: "",
+          gender: "",
+          qualification: "",
+          specialization: "",
+          experience: "",
+          location: "",
+          consultationMode: [],
+          languages: [],
+          aboutMe: "",
+          profilePhoto: null,
+          confirmPassword: "",
+        });
+        setIsLogin(true);
         showNotification(
-          "Counselor registered successfully! Redirecting...",
+          "Counselor account created successfully. Please log in.",
           "success",
         );
-        const token = response.data?.token || response.data?.accessToken;
-        if (token) {
-          localStorage.setItem("accessToken", token);
-          localStorage.setItem("token", token);
-          localStorage.setItem("userRole", "counsellor");
-          localStorage.setItem("userEmail", formData.email);
-          localStorage.setItem("isAuthenticated", "true");
-          if (response.data.user) {
-            localStorage.setItem(
-              "userData",
-              JSON.stringify(response.data.user),
-            );
-            localStorage.setItem("counsellorId", response.data.user._id);
-          }
-        }
-        setPendingNav({ path: "/counselor-dashboard", event: "signup" });
       } else {
         showNotification(
           response.data.message || "Registration failed",
@@ -2665,6 +2673,7 @@ const CounselorSignup = () => {
       setShowDeviceConflict(false);
       setVerifySuccess(false);
       setEmailVerified(false);
+      setEmailVerificationToken("");
       setPhoneVerified(false);
       setFormData({
         email: "",
@@ -2716,6 +2725,17 @@ const CounselorSignup = () => {
             <FaTimes />
           </button>
         </div>
+        {!emailOtpSent ? (
+          <div className="cs-otp-body">
+            {emailOtpError ? (
+              <div className="cs-otp-error">{emailOtpError}</div>
+            ) : (
+              <div className="cs-otp-success">
+                <FaSpinner className="cs-spin" /> Sending OTP…
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="cs-otp-body">
           <p>Enter the verification code sent to</p>
           <div className="cs-otp-recipient">{formData.email}</div>
@@ -2773,6 +2793,7 @@ const CounselorSignup = () => {
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );
@@ -2887,7 +2908,6 @@ const CounselorSignup = () => {
       )}
 
       {showEmailOtpModal && <EmailOtpModal />}
-      {showPhoneOtpModal && <PhoneOtpModal />}
 
       <div className="cs-container">
         {isMobile && (
@@ -3109,32 +3129,11 @@ const CounselorSignup = () => {
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleChange}
-                        className={`cs-input ${errors.phoneNumber ? "cs-input-error" : ""} ${phoneVerified ? "cs-verified-input" : ""}`}
+                        className={`cs-input ${errors.phoneNumber ? "cs-input-error" : ""}`}
                         placeholder="10 digit mobile number"
                         maxLength="10"
-                        disabled={isLoading || phoneVerified}
+                        disabled={isLoading}
                       />
-                      {!phoneVerified &&
-                        formData.phoneNumber &&
-                        /^\d{10}$/.test(formData.phoneNumber) && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              resetPhoneOtpState();
-                              setShowPhoneOtpModal(true);
-                              handleSendPhoneOtp();
-                            }}
-                            className="cs-verify-btn"
-                            disabled={isLoading}
-                          >
-                            Verify
-                          </button>
-                        )}
-                      {phoneVerified && (
-                        <span className="cs-verified-badge">
-                          <FaCheckCircle /> Verified
-                        </span>
-                      )}
                     </div>
                     {errors.phoneNumber && (
                       <span className="cs-error">{errors.phoneNumber}</span>

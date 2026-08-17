@@ -6,11 +6,7 @@ import './LandingChatTheme.css';
 import './LandingNavbarFix.css';
 import './LandingDoctorCarousel.css';
 import './LandingTestimonialCarousel.css';
-<<<<<<< HEAD
-import logos from '../assets/Humaeli final logo-06.png';
-=======
 import { logoHorizontal, logoIcon } from '../assets/brandAssets';
->>>>>>> 3b11c5c6b32b152aeb3787089c98d62785239777
 import wellnessHero from '../assets/landing-page-hero.png';
 import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
 import faqWellnessIllustration from '../assets/faq-wellness-illustration.png';
@@ -608,7 +604,11 @@ const HeroSection = () => {
       <div className="hero-stats" aria-label="Humaeli impact statistics">
         <StatItem number={formatCount(patientsHelped)} label={t('landing_ui_stat_patients')} />
         <StatItem number={formatCount(landingStats?.medicalPartners)} label={t('landing_ui_stat_partners')} />
-        <StatItem number="24/7" label={t('landing_ui_stat_supports')} />
+        <StatItem
+          number="Live Chat"
+          label={t('landing_ui_stat_supports')}
+          compact
+        />
         <StatItem
           number={formatCount(completedPatients)}
           label={t('landing_ui_stat_satisfied')}
@@ -618,8 +618,8 @@ const HeroSection = () => {
   );
 };
 
-const StatItem = ({ number, label }) => (
-  <div className="stat-item">
+const StatItem = ({ number, label, compact = false }) => (
+  <div className={`stat-item${compact ? ' stat-item-compact' : ''}`}>
     <div className="stat-label">{label}</div>
     <div className="stat-number">{number}</div>
   </div>
@@ -690,8 +690,8 @@ const HowItWorksSection = () => {
   const { t } = useSiteTranslation();
   const steps = [
     {
-      id: 'login',
-      icon: 'clipboard-user',
+      id: 'download-app',
+      icon: 'mobile-alt',
       title: t('landing_ui_step_1_title'),
       description: t('landing_ui_step_1_description'),
       action: t('landing_ui_step_1_action'),

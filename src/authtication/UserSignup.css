@@ -437,7 +437,7 @@
   right: 12px;
   top: 50%;
   transform: translateY(-50%);
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #006b2c, #01ce54);
   color: white;
   border: none;
   padding: 6px 12px;
@@ -895,14 +895,14 @@
 .us-otp-verify {
   flex: 1;
   padding: 12px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #006b2c, #01ce54);
   color: white;
   border: none;
   border-radius: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 107, 44, 0.28);
 }
 
 .us-otp-modal-phone .us-otp-verify {
@@ -924,7 +924,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  color: #667eea;
+  color: #008b3b;
 }
 
 .us-otp-modal-phone .us-otp-resend {
@@ -933,7 +933,7 @@
 
 .us-otp-resend:hover:not(:disabled) {
   background: #f9fafb;
-  border-color: #667eea;
+  border-color: #008b3b;
   transform: translateY(-1px);
 }
 
@@ -1033,7 +1033,7 @@
 }
 
 .us-verify-btn {
-  background-color: #667eea;
+  background: linear-gradient(135deg, #006b2c, #01ce54);
   color: white;
   border: none;
   padding: 12px 24px;
@@ -1047,7 +1047,7 @@
   justify-content: center;
   gap: 8px;
   width: 100%;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 107, 44, 0.3);
 }
 
 .us-verify-btn:hover:not(:disabled) {

@@ -1,5 +1,19 @@
 /* Authoritative landing-navbar geometry.
    Imported after Leanding.css so legacy screenshot overrides cannot shift it. */
+.humaeli,
+.humaeli button,
+.humaeli input,
+.humaeli select,
+.humaeli textarea {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.humaeli .header .nav-menu .nav-link,
+.humaeli .header.header-scrolled .nav-menu .nav-link {
+  font-size: 1.08rem !important;
+  font-weight: 500 !important;
+}
+
 .humaeli .hero .hero-badge {
   color: #fff !important;
 }
@@ -32,6 +46,11 @@
 
 /* Final mobile/tablet authority over legacy landing rules. */
 @media (max-width: 768px) {
+  .humaeli .header .nav-menu .nav-link,
+  .humaeli .header.header-scrolled .nav-menu .nav-link {
+    font-size: 1.05rem !important;
+  }
+
   .humaeli .header,
   .humaeli .header.header-scrolled {
     top: 0 !important;
@@ -269,6 +288,90 @@
   .humaeli .hero-description {
     font-size: .82rem !important;
     line-height: 1.55 !important;
+  }
+}
+
+/* Final navbar sizing: keep the brand and actions proportional to the larger
+   menu typography in both the normal and scrolled header states. */
+@media (min-width: 769px) {
+  .humaeli .header .header-container,
+  .humaeli .header.header-scrolled .header-container {
+    grid-template-columns: 240px minmax(430px, 1fr) minmax(300px, auto) !important;
+  }
+
+  .humaeli .header .logo,
+  .humaeli .header.header-scrolled .logo {
+    width: 240px !important;
+  }
+
+  .humaeli .header .landing-logo-brand img,
+  .humaeli .header.header-scrolled .landing-logo-brand img {
+    width: 190px !important;
+    max-width: 190px !important;
+    height: 76px !important;
+    max-height: 76px !important;
+  }
+
+  .humaeli .header .header-actions,
+  .humaeli .header.header-scrolled .header-actions {
+    gap: 12px !important;
+  }
+
+  .humaeli .header .header-language .lang-selector-trigger,
+  .humaeli .header.header-scrolled .header-language .lang-selector-trigger {
+    min-width: 148px !important;
+    height: 48px !important;
+    padding: 0 16px !important;
+    font-size: 1rem !important;
+    border-radius: 24px !important;
+  }
+
+  .humaeli .header .header-language .lang-trigger-globe,
+  .humaeli .header.header-scrolled .header-language .lang-trigger-globe {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  .humaeli .header .header-actions .btn-secondary,
+  .humaeli .header.header-scrolled .header-actions .btn-secondary {
+    min-width: 112px !important;
+    height: 48px !important;
+    padding: 0 20px !important;
+    gap: 8px !important;
+    border-radius: 24px !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .humaeli .header .landing-logo-brand img,
+  .humaeli .header.header-scrolled .landing-logo-brand img {
+    width: 150px !important;
+    max-width: 150px !important;
+  }
+
+  .humaeli .header .header-language .lang-selector-trigger,
+  .humaeli .header.header-scrolled .header-language .lang-selector-trigger {
+    width: 42px !important;
+    min-width: 42px !important;
+    height: 42px !important;
+  }
+
+  .humaeli .header .header-language .lang-trigger-globe,
+  .humaeli .header.header-scrolled .header-language .lang-trigger-globe {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  .humaeli .header .header-actions .btn-secondary,
+  .humaeli .header.header-scrolled .header-actions .btn-secondary {
+    min-width: 76px !important;
+    height: 42px !important;
+    padding: 0 13px !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
   }
 }
 
