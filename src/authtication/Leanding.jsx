@@ -441,7 +441,7 @@ const Header = ({ onLoginClick }) => {
   }, []);
 
   const navItems = [
-    { href: '#home', label: t('landing_nav_home'), icon: 'home' },
+    { href: '#home', label: t('landing_nav_home'),},
     { href: '#services', label: t('landing_nav_services') },
     { href: '#how-it-works', label: t('landing_nav_how_it_works') },
     { href: '#doctors', label: t('landing_nav_professionals') },
@@ -462,8 +462,10 @@ const Header = ({ onLoginClick }) => {
           >
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
-          <div className="landing-logo-brand">
+          <div className="landing-logo-brand" >
+           <a href="/" aria-label={t('landing_logo_alt')}>
             <img src={logoHorizontal} alt="Humaeli Logo" />
+           </a>
             <span>Mental Wellness</span>
           </div>
         </div>

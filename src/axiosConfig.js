@@ -2,7 +2,7 @@ import axios from "axios";
 
 const envApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://chatbot-backend-production-82fb.up.railway.app";
+  "https://s5jl7g4z-5001.inc1.devtunnels.ms/";
 if (!envApiBaseUrl) {
   throw new Error(
     "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",

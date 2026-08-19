@@ -15,7 +15,7 @@ const LandingPrivacyPolicy = () => {
       <header className="landing-privacy-nav">
         <Link to="/" className="landing-privacy-brand" aria-label="Humaeli home">
           <img src={logoIcon} alt="" aria-hidden="true" />
-          <span>Humaeli</span>
+          {/* <span>Humaeli</span> */}
         </Link>
         <Link to="/" className="landing-privacy-back">
           <FaArrowLeft aria-hidden="true" />
