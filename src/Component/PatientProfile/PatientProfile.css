@@ -11,16 +11,20 @@
 /* Notification */
 .notification {
   position: fixed;
-  top: 24px;
+  top: 88px;
   right: 24px;
-  padding: 14px 24px;
+  width: min(420px, calc(100vw - 32px));
+  padding: 16px 20px;
   border-radius: 12px;
   color: white;
   font-weight: 600;
-  z-index: 2000;
+  z-index: 11000;
   animation: slideInRight 0.3s ease;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
   font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  text-align: left;
   backdrop-filter: blur(8px);
 }
 

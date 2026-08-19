@@ -1451,23 +1451,7 @@ const ChatPopup = ({
                   <span>{speakingId === message.id ? t('landing_chat_stop') : t('landing_chat_listen')}</span>
                 </button>
               )}
-              {message.sender === 'ai' &&
-                Array.isArray(message.quickReplies) &&
-                message.quickReplies.length > 0 && (
-                  <div className="chat-quick-replies">
-                    {message.quickReplies.map((qr) => (
-                      <button
-                        key={qr}
-                        type="button"
-                        className="chat-quick-reply-btn"
-                        disabled={isLoading || guestChatExpired}
-                        onClick={() => sendQuickReply && sendQuickReply(qr)}
-                      >
-                        {qr}
-                      </button>
-                    ))}
-                  </div>
-                )}
+              
             </div>
             {message.sender === 'user' && (
               <div className="chat-avatar small">

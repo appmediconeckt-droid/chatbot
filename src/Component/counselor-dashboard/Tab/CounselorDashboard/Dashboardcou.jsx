@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import "./Dashboardcou.css";
 import axiosInstance from "../../../../axiosConfig";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
+import { getTimeGreetingKey } from "../../../../utils/timeGreeting";
 
 /**
  * Dashboard Component – Sirf Dashboard ka data/content
  * Koi side menu nahi, sirf dashboard statistics aur cards
  */
 const Dashboard = () => {
+    const { t } = useCounselorTranslation();
     const [loading, setLoading] = useState(true);
     const [monthlyEarnings, setMonthlyEarnings] = useState(0);
 
@@ -87,7 +90,7 @@ const Dashboard = () => {
             {/* Header Section */}
             <div className="dashboard-header">
                 <div>
-                    <h1 className="welcome-title">Welcome back, Dr. Sharma 👋</h1>
+                    <h1 className="welcome-title">{t(getTimeGreetingKey())}, Dr. Sharma 👋</h1>
                     <p className="date-info">{new Date().toLocaleDateString('en-IN', {
                         weekday: 'long',
                         year: 'numeric',

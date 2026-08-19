@@ -37,9 +37,9 @@
 /* Override legacy landing navbar logo sizing with larger, final dimensions. */
 .humaeli .header .landing-logo-brand img,
 .humaeli .header.header-scrolled .landing-logo-brand img {
-  width: clamp(180px, 18vw, 240px) !important;
-  max-width: 240px !important;
-  height: 60px !important;
+  width: clamp(170px, 20vw, 220px) !important;
+  max-width: 220px !important;
+  height: auto !important;
   object-fit: contain !important;
   object-position: center !important;
 }
@@ -125,9 +125,9 @@
 
   .humaeli .header .landing-logo-brand img,
   .humaeli .header.header-scrolled .landing-logo-brand img {
-    width: 160px !important;
-    max-width: 160px !important;
-    height: 56px !important;
+    width: clamp(150px, 46vw, 190px) !important;
+    max-width: 190px !important;
+    height: auto !important;
     object-fit: contain !important;
   }
 
@@ -289,6 +289,16 @@
     font-size: .82rem !important;
     line-height: 1.55 !important;
   }
+}
+
+/* Keep the navbar logo identical to the Footer logo after all responsive rules. */
+.humaeli .header .landing-logo-brand img,
+.humaeli .header.header-scrolled .landing-logo-brand img {
+  width: clamp(170px, 20vw, 220px) !important;
+  max-width: 220px !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain !important;
 }
 
 /* Final navbar sizing: keep the brand and actions proportional to the larger

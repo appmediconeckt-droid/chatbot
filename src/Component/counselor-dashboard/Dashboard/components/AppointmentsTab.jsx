@@ -3,6 +3,7 @@ import { FaBrain, FaCalendarAlt, FaCheckCircle, FaClock, FaHistory, FaSearch, Fa
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { CardSkeleton } from "../../../common/Skeletons/Skeletons";
+import { getTimeGreetingKey } from "../../../../utils/timeGreeting";
 
 export default function AppointmentsTab({
   appointments = [],
@@ -107,7 +108,7 @@ export default function AppointmentsTab({
         <div className="stitch-apt-left">
           <section className="stitch-apt-summary">
             <div className="stitch-apt-summary-copy">
-              <span>{t("good_afternoon")}</span>
+              <span>{t(getTimeGreetingKey())}</span>
               <h2>{displayCounselorName}</h2>
               <p>{counts.all} total appointment(s)</p>
             </div>

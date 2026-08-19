@@ -2357,21 +2357,11 @@ const CounselorProfile = () => {
     const isEmailDirty = () =>
       String(editedData?.email || "").trim().toLowerCase() !==
       String(counselor?.email || "").trim().toLowerCase();
-    const isPhoneDirty = () =>
-      String(editedData?.phoneNumber || "").replace(/\D/g, "") !==
-      String(counselor?.phoneNumber || "").replace(/\D/g, "");
-
     const emailReady =
       !isEmailDirty() ||
       (emailChange.verified &&
         emailChange.verifiedValue ===
           String(editedData?.email || "").trim().toLowerCase());
-    const phoneReady =
-      !isPhoneDirty() ||
-      (phoneChange.verified &&
-        phoneChange.verifiedValue ===
-          String(editedData?.phoneNumber || "").replace(/\D/g, ""));
-
     const sendChangeOtp = async (field) => {
       const setState = field === "email" ? setEmailChange : setPhoneChange;
       const newValue =
@@ -3038,7 +3028,7 @@ const CounselorProfile = () => {
                             <button
                                 onClick={handleSave}
                                 className={`${COUNSELOR_PROFILE_CLASS}__btn ${COUNSELOR_PROFILE_CLASS}__btn--save`}
-                                disabled={loading || !emailReady || !phoneReady}
+                                disabled={loading || !emailReady}
                             >
                                 {loading ? t('saving') : t('save_changes')}
                             </button>
@@ -3132,62 +3122,12 @@ const CounselorProfile = () => {
                                 <div style={{ flex: 1 }}>
                                     <label>{t('phone')}</label>
                                     {isEditing ? (
-                                        <>
-                                            <div className="otp-field-row">
-                                                <input
-                                                    type="tel"
-                                                    value={editedData.phoneNumber || ''}
-                                                    onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                                                    className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                                />
-                                                {isPhoneDirty() && !phoneChange.verified && (
-                                                    <button
-                                                        type="button"
-                                                        className="otp-verify-btn"
-                                                        onClick={() => sendChangeOtp('phone')}
-                                                        disabled={phoneChange.sending}
-                                                    >
-                                                        {phoneChange.sending ? 'Sending…' : phoneChange.sent ? 'Resend' : 'Verify'}
-                                                    </button>
-                                                )}
-                                                {phoneChange.verified && (
-                                                    <span className="otp-verified-badge">✓ Verified</span>
-                                                )}
-                                            </div>
-                                            {isPhoneDirty() && phoneChange.sent && !phoneChange.verified && (
-                                                <div className="otp-input-row">
-                                                    <input
-                                                        type="text"
-                                                        inputMode="numeric"
-                                                        maxLength={6}
-                                                        placeholder="Enter 6-digit OTP"
-                                                        value={phoneChange.otp}
-                                                        onChange={(e) =>
-                                                            setPhoneChange((s) => ({
-                                                                ...s,
-                                                                otp: e.target.value.replace(/\D/g, ''),
-                                                            }))
-                                                        }
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        className="otp-confirm-btn"
-                                                        onClick={() => verifyChangeOtp('phone')}
-                                                        disabled={phoneChange.verifying}
-                                                    >
-                                                        {phoneChange.verifying ? 'Verifying…' : 'Confirm'}
-                                                    </button>
-                                                </div>
-                                            )}
-                                            {phoneChange.error && (
-                                                <div className="otp-error">{phoneChange.error}</div>
-                                            )}
-                                            {isPhoneDirty() && !phoneChange.verified && !phoneChange.sent && (
-                                                <div className="otp-hint">
-                                                    OTP will be sent to the new phone via SMS.
-                                                </div>
-                                            )}
-                                        </>
+                                        <input
+                                            type="tel"
+                                            value={editedData.phoneNumber || ''}
+                                            onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+                                            className={`${COUNSELOR_PROFILE_CLASS}__input`}
+                                        />
                                     ) : (
                                         <p>{counselor?.phoneNumber || 'Not specified'}</p>
                                     )}

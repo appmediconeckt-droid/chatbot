@@ -723,6 +723,7 @@ import NotificationBell from "./NotificationBell";
 import PendingRequestsModal from "./PendingRequestsModal";
 import { translateMessage } from "../../../../services/messageTranslationService";
 import { ChatListSkeleton } from "../../../common/Skeletons/Skeletons";
+import { getTimeGreetingKey } from "../../../../utils/timeGreeting";
 import SMSInput from "../SMSInput/SMSInput";
 
 /**
@@ -1274,8 +1275,7 @@ const SMSList = () => {
       <div className="smslist-container">
         <div className="smslist-header">
           <div className="smslist-welcome">
-            <h1>{t("welcome_back")}</h1>
-            <p>{t("good_afternoon")}</p>
+            <h1>{t(getTimeGreetingKey())}</h1>
           </div>
         </div>
         <div className="smslist-filters">
@@ -1329,8 +1329,7 @@ const SMSList = () => {
       {/* Header with Welcome */}
       <div className="smslist-header">
         <div className="smslist-welcome">
-          <h1>{t("welcome_back")}</h1>
-          <p>{t("good_afternoon")}</p>
+          <h1>{t(getTimeGreetingKey())}</h1>
         </div>
         <div className="smslist-header-actions">
           <NotificationBell

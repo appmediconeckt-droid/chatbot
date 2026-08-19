@@ -374,21 +374,11 @@ const PatientProfile = () => {
   const isEmailDirty = () =>
     String(editFormData?.email || "").trim().toLowerCase() !==
     String(patientData?.personalInfo?.email || "").trim().toLowerCase();
-  const isPhoneDirty = () =>
-    String(editFormData?.phone || "").replace(/\D/g, "") !==
-    String(patientData?.personalInfo?.phone || "").replace(/\D/g, "");
-
   const emailReady =
     !isEmailDirty() ||
     (emailChange.verified &&
       emailChange.verifiedValue ===
         String(editFormData?.email || "").trim().toLowerCase());
-  const phoneReady =
-    !isPhoneDirty() ||
-    (phoneChange.verified &&
-      phoneChange.verifiedValue ===
-        String(editFormData?.phone || "").replace(/\D/g, ""));
-
   const sendChangeOtp = async (field) => {
     const setState = field === "email" ? setEmailChange : setPhoneChange;
     const newValue =
@@ -554,7 +544,7 @@ const PatientProfile = () => {
     setShowNotification({ show: true, message, type });
     setTimeout(() => {
       setShowNotification({ show: false, message: "", type: "" });
-    }, 3000);
+    }, type === "error" ? 6000 : 3000);
   };
 
   const handleRemoveImage = () => {
@@ -1317,69 +1307,13 @@ const PatientProfile = () => {
                   </div>
                   <div className="form-group">
                     <label>Phone *</label>
-                    <div className="otp-field-row">
-                      <input
-                        type="tel"
-                        name="phone"
-                        value={editFormData.phone}
-                        onChange={handleEditFormChange}
-                        required
-                      />
-                      {isPhoneDirty() && !phoneChange.verified && (
-                        <button
-                          type="button"
-                          className="otp-verify-btn"
-                          onClick={() => sendChangeOtp("phone")}
-                          disabled={phoneChange.sending}
-                        >
-                          {phoneChange.sending
-                            ? "Sending…"
-                            : phoneChange.sent
-                              ? "Resend"
-                              : "Verify"}
-                        </button>
-                      )}
-                      {phoneChange.verified && (
-                        <span className="otp-verified-badge" title="Verified">
-                          ✓ Verified
-                        </span>
-                      )}
-                    </div>
-                    {isPhoneDirty() &&
-                      phoneChange.sent &&
-                      !phoneChange.verified && (
-                        <div className="otp-input-row">
-                          <input
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={6}
-                            placeholder="Enter 6-digit OTP"
-                            value={phoneChange.otp}
-                            onChange={(e) =>
-                              setPhoneChange((s) => ({
-                                ...s,
-                                otp: e.target.value.replace(/\D/g, ""),
-                              }))
-                            }
-                          />
-                          <button
-                            type="button"
-                            className="otp-confirm-btn"
-                            onClick={() => verifyChangeOtp("phone")}
-                            disabled={phoneChange.verifying}
-                          >
-                            {phoneChange.verifying ? "Verifying…" : "Confirm"}
-                          </button>
-                        </div>
-                      )}
-                    {phoneChange.error && (
-                      <div className="otp-error">{phoneChange.error}</div>
-                    )}
-                    {isPhoneDirty() && !phoneChange.verified && !phoneChange.sent && (
-                      <div className="otp-hint">
-                        OTP will be sent to the new phone via SMS.
-                      </div>
-                    )}
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={editFormData.phone}
+                      onChange={handleEditFormChange}
+                      required
+                    />
                   </div>
                 </div>
               </div>
@@ -1641,13 +1575,11 @@ const PatientProfile = () => {
               <button
                 className="btn-primary"
                 onClick={handleSaveProfile}
-                disabled={isSaving || !emailReady || !phoneReady}
+                disabled={isSaving || !emailReady}
                 title={
                   !emailReady
                     ? "Verify your new email via OTP first"
-                    : !phoneReady
-                      ? "Verify your new phone via OTP first"
-                      : ""
+                    : ""
                 }
               >
                 {isSaving ? "Saving..." : "Save Changes"}
