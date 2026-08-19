@@ -291,6 +291,27 @@
   }
 }
 
+/* Increase only the language label text; keep the existing button dimensions. */
+@media (min-width: 769px) {
+  .humaeli .header .header-language .lang-trigger-label,
+  .humaeli .header.header-scrolled .header-language .lang-trigger-label {
+    display: inline-flex !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    min-width: 0 !important;
+    white-space: nowrap !important;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 768px) {
+  .humaeli .header .header-language .lang-trigger-label,
+  .humaeli .header.header-scrolled .header-language .lang-trigger-label {
+    display: inline-flex !important;
+    font-size: .9rem !important;
+    font-weight: 600 !important;
+  }
+}
+
 /* Keep the navbar logo identical to the Footer logo after all responsive rules. */
 .humaeli .header .landing-logo-brand img,
 .humaeli .header.header-scrolled .landing-logo-brand img {
@@ -299,6 +320,16 @@
   height: auto !important;
   max-height: none !important;
   object-fit: contain !important;
+}
+
+/* Last cascade rule: enlarge only the Select Language text. */
+@media (min-width: 769px) {
+  .humaeli .header .header-actions .header-language .lang-selector-trigger .lang-trigger-label,
+  .humaeli .header.header-scrolled .header-actions .header-language .lang-selector-trigger .lang-trigger-label {
+    font-size: 1.08rem !important;
+    font-weight: 500 !important;
+    line-height: 1.1 !important;
+  }
 }
 
 /* Final navbar sizing: keep the brand and actions proportional to the larger

@@ -1,0 +1,153 @@
+.humaeli {
+  --landing-body-size: 1rem;
+  --landing-body-line: 1.6;
+  --landing-muted-size: .95rem;
+  --landing-small-size: .84rem;
+}
+
+.humaeli .section-title {
+  font-size: clamp(2rem, 3.2vw, 2.7rem) !important;
+  line-height: 1.18 !important;
+  margin-bottom: 1rem !important;
+}
+
+.humaeli .section-description {
+  max-width: 680px !important;
+  font-size: var(--landing-body-size) !important;
+  line-height: var(--landing-body-line) !important;
+  margin-bottom: 2.5rem !important;
+}
+
+.humaeli .hero-title {
+  font-size: clamp(2.5rem, 5vw, 4.6rem) !important;
+  line-height: 1.08 !important;
+}
+
+.humaeli .hero-description {
+  max-width: 590px !important;
+  font-size: 1.05rem !important;
+  line-height: 1.6 !important;
+}
+
+.humaeli .hero-badge,
+.humaeli .doctor-featured-badge,
+.humaeli .faq-kicker {
+  font-size: .72rem !important;
+  line-height: 1.3 !important;
+}
+
+.humaeli .btn,
+.humaeli .service-learn-more,
+.humaeli .step-action,
+.humaeli .features-cta {
+  font-size: .9rem !important;
+  line-height: 1.25 !important;
+}
+
+.humaeli .service-title,
+.humaeli .step-title,
+.humaeli .feature-title {
+  font-size: 1.15rem !important;
+  line-height: 1.3 !important;
+}
+
+.humaeli .service-description,
+.humaeli .step-description,
+.humaeli .feature-description {
+  font-size: var(--landing-muted-size) !important;
+  line-height: 1.6 !important;
+}
+
+.humaeli .stat-label {
+  font-size: .78rem !important;
+  line-height: 1.35 !important;
+}
+
+.humaeli .stat-number {
+  font-size: 1.35rem !important;
+  line-height: 1.2 !important;
+}
+
+.humaeli .testimonial-display-text {
+  font-size: clamp(1.15rem, 2vw, 1.65rem) !important;
+  line-height: 1.5 !important;
+}
+
+.humaeli .testimonial-display-author,
+.humaeli .testimonial-author {
+  font-size: .9rem !important;
+  line-height: 1.4 !important;
+}
+
+.humaeli .testimonial-text {
+  font-size: var(--landing-muted-size) !important;
+  line-height: 1.6 !important;
+}
+
+.humaeli .faq-question {
+  font-size: 1rem !important;
+  line-height: 1.4 !important;
+}
+
+.humaeli .faq-answer,
+.humaeli .faq-copy .section-description {
+  font-size: var(--landing-muted-size) !important;
+  line-height: 1.6 !important;
+}
+
+.humaeli .footer-description,
+.humaeli .footer-column a,
+.humaeli .footer-contact,
+.humaeli .footer-copyright,
+.humaeli .footer-legal a {
+  font-size: .88rem !important;
+  line-height: 1.55 !important;
+}
+
+.humaeli .chat-preview-name {
+  font-size: .9rem !important;
+  line-height: 1.3 !important;
+}
+
+.humaeli .chat-preview-status,
+.humaeli .chat-message {
+  font-size: .8rem !important;
+  line-height: 1.45 !important;
+}
+
+@media (max-width: 768px) {
+  .humaeli .section-title {
+    font-size: clamp(1.8rem, 7vw, 2.3rem) !important;
+  }
+
+  .humaeli .section-description,
+  .humaeli .hero-description {
+    font-size: .94rem !important;
+    line-height: 1.58 !important;
+  }
+
+  .humaeli .hero-title {
+    font-size: clamp(2.25rem, 10vw, 3.4rem) !important;
+  }
+
+  .humaeli .service-title,
+  .humaeli .step-title,
+  .humaeli .feature-title {
+    font-size: 1.08rem !important;
+  }
+
+  .humaeli .service-description,
+  .humaeli .step-description,
+  .humaeli .feature-description,
+  .humaeli .testimonial-text,
+  .humaeli .faq-answer {
+    font-size: .9rem !important;
+  }
+
+  .humaeli .btn,
+  .humaeli .service-learn-more,
+  .humaeli .step-action,
+  .humaeli .features-cta {
+    font-size: .84rem !important;
+  }
+}

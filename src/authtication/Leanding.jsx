@@ -6,6 +6,7 @@ import './LandingChatTheme.css';
 import './LandingNavbarFix.css';
 import './LandingDoctorCarousel.css';
 import './LandingTestimonialCarousel.css';
+import './LandingTypography.css';
 import { logoHorizontal, logoIcon } from '../assets/brandAssets';
 import wellnessHero from '../assets/landing-page-hero.png';
 import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
@@ -872,12 +873,14 @@ const DoctorsSection = () => {
 
   const rankedDoctors = [...doctors]
     .sort((a, b) => (
-      getDoctorPatientConversationCount(b) - getDoctorPatientConversationCount(a) ||
       getDoctorRating(b) - getDoctorRating(a) ||
       getNumericMetric(b.ratingCount, b.totalRatings) - getNumericMetric(a.ratingCount, a.totalRatings) ||
+      getDoctorPatientConversationCount(b) - getDoctorPatientConversationCount(a) ||
       String(a.fullName || a.name || '').localeCompare(String(b.fullName || b.name || ''))
     ))
     .slice(0, TOP_LANDING_DOCTOR_LIMIT);
+
+  const highestRatedDoctor = rankedDoctors[0];
 
   useEffect(() => {
     if (rankedDoctors.length < 2 || isDoctorCarouselPaused) return undefined;
@@ -972,7 +975,9 @@ const DoctorsSection = () => {
                 `${doctor.qualification || t('landing_doctor_default_qualification')} with experience providing personalised mental wellness support.`;
               return (
                 <div className={`doctor-card doctor-slide doctor-slide-${index}`} key={doctor._id || doctor.id}>
-                  {index === 1 && <span className="doctor-featured-badge">{t('landing_ui_highly_rated')}</span>}
+                  {doctor === highestRatedDoctor && (
+                    <span className="doctor-featured-badge">{t('landing_ui_highly_rated')}</span>
+                  )}
                   <div className="doctor-header">
                     <div className="doctor-image">
                       {photoUrl ? <img src={photoUrl} alt={name} /> : getInitials(name)}

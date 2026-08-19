@@ -7,6 +7,58 @@
   animation: doctorCarouselIn .55s cubic-bezier(.22, .75, .25, 1) both;
 }
 
+/* Keep professional details readable at the card sizes used on the landing page. */
+.humaeli section.doctors .doctor-card .doctor-name {
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+
+.humaeli section.doctors .doctor-card:nth-of-type(2) .doctor-name {
+  font-size: 1.55rem;
+}
+
+.humaeli section.doctors .doctor-card .doctor-specialization {
+  font-size: .86rem;
+  line-height: 1.35;
+}
+
+.humaeli section.doctors .doctor-card .doctor-rating {
+  font-size: .75rem;
+}
+
+.humaeli section.doctors .doctor-card .doctor-rating i {
+  font-size: .78rem;
+}
+
+.humaeli section.doctors .doctor-card .doctor-detail {
+  font-size: .66rem;
+  line-height: 1.35;
+}
+
+.humaeli section.doctors .doctor-card .doctor-detail i {
+  font-size: .68rem;
+}
+
+.humaeli section.doctors .doctor-card .doctor-bio {
+  font-size: .84rem;
+  line-height: 1.5;
+  -webkit-line-clamp: 3;
+}
+
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button {
+  min-height: 40px;
+  padding: 9px 14px;
+  font-size: .68rem;
+}
+
+.humaeli section.doctors .doctor-card .doctor-profile-link {
+  font-size: .68rem;
+}
+
+.humaeli section.doctors .doctor-card .doctor-featured-badge {
+  font-size: .58rem;
+}
+
 .humaeli .doctor-carousel-arrow {
   position: absolute;
   top: 50%;
