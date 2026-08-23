@@ -72,13 +72,31 @@ const MyAppointments = () => {
     fetchCounselors();
   }, []);
 
-  // Filter by tab
-  const upcomingApts = appointments.filter(
-    (apt) => apt.status !== "completed" && apt.status !== "canceled",
-  );
-  const pastApts = appointments.filter(
-    (apt) => apt.status === "completed" || apt.status === "canceled",
-  );
+  // Split appointments by their actual scheduled date/time. Status alone is
+  // not reliable because an old appointment can remain pending/confirmed.
+  const now = Date.now();
+  const getAppointmentTimestamp = (apt) => {
+    const timestamp = new Date(apt?.date).getTime();
+    return Number.isNaN(timestamp) ? null : timestamp;
+  };
+  const isTerminalAppointment = (apt) =>
+    ["completed", "canceled", "cancelled", "rejected"].includes(
+      String(apt?.status || "").toLowerCase(),
+    );
+
+  const upcomingApts = appointments
+    .filter((apt) => {
+      const timestamp = getAppointmentTimestamp(apt);
+      return timestamp !== null && timestamp > now && !isTerminalAppointment(apt);
+    })
+    .sort((a, b) => getAppointmentTimestamp(a) - getAppointmentTimestamp(b));
+
+  const pastApts = appointments
+    .filter((apt) => {
+      const timestamp = getAppointmentTimestamp(apt);
+      return isTerminalAppointment(apt) || (timestamp !== null && timestamp <= now);
+    })
+    .sort((a, b) => (getAppointmentTimestamp(b) || 0) - (getAppointmentTimestamp(a) || 0));
   let displayApts = activeTab === "Upcoming" ? upcomingApts : pastApts;
 
   // Filter by status
@@ -329,7 +347,7 @@ const MyAppointments = () => {
               />
             </div>
             <div className="appointment-detail-heading">
-              <h3>Dr. {counselorName}</h3>
+              <h3> {counselorName}</h3>
               <p>{counselorSpecialization}</p>
               <div>
                 <span><FaBriefcase /> {selectedApt.counselor?.experience || 0} years</span>
@@ -501,8 +519,8 @@ const MyAppointments = () => {
                     />
                     <div className="user-appointment-person">
                       <h2>
-                        Dr. {apt.counselor?.fullName || "Counselor"}
-                        <FaCheckCircle aria-label="Verified" />
+                        {apt.counselor?.fullName || "Counselor"}
+                        {/* <FaCheckCircle aria-label="Verified" /> */}
                       </h2>
                       <p>
                         {Array.isArray(apt.counselor?.specialization)

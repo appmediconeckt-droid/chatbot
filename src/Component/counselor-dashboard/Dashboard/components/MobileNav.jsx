@@ -86,7 +86,7 @@ export function MobileMenuOverlay({
               </p>
             </div>
             <div style={{ marginTop: 10 }}>
-              <LanguageSelector lang={lang} setLang={setLang} t={t} />
+              <LanguageSelector lang={lang} setLang={setLang} t={t} theme="counselor" />
             </div>
           </div>
         </div>

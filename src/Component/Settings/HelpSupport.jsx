@@ -61,11 +61,11 @@ const HelpSupport = () => {
             </p>
           </div>
         </div>
-        <div className="help-support-header-meta">
+        {/* <div className="help-support-header-meta">
           <span className="help-support-updated">
-            <FaCheckCircle /> We're here to help 24/7
+            <FaCheckCircle /> We're here to help 
           </span>
-        </div>
+        </div> */}
       </header>
 
       <div className="help-support-features">
@@ -257,8 +257,8 @@ const HelpSupport = () => {
           <div className="help-support-contact-main">
             <h2>Still Need Help?</h2>
             <p>
-              Can't find the answer you're looking for? Our dedicated support team is available
-              24/7 to assist you with any issues or questions.
+              Can't find the answer you're looking for? Our dedicated support
+              team is available to assist you with any issues or questions.
             </p>
             <div className="help-support-contact-info">
               <div className="help-support-contact-item">
@@ -267,7 +267,7 @@ const HelpSupport = () => {
                 </i>
                 <div>
                   <h4>Call Support</h4>
-                  <p>Available 24/7 • Response time: 2-5 min</p>
+                  <p>Response time: 2-5 min</p>
                 </div>
               </div>
               <div className="help-support-contact-item">
@@ -276,7 +276,7 @@ const HelpSupport = () => {
                 </i>
                 <div>
                   <h4>Live Chat</h4>
-                  <p>Available 24/7 • Response time: 2-5 min</p>
+                  <p>Response time: 2-5 min</p>
                 </div>
               </div>
               <div className="help-support-contact-item">
@@ -304,7 +304,14 @@ const HelpSupport = () => {
               <li>Crisis Text Line: Text HOME to 741741</li>
               <li>International Association for Suicide Prevention: https://www.iasp.info/resources/Crisis_Centres/</li>
             </ul>
-            <button type="button" className="help-support-crisis-btn">
+            <button
+              type="button"
+              className="help-support-crisis-btn"
+              onClick={() => {
+                window.location.href = "tel:112";
+              }}
+              title="Call India's emergency response number 112"
+            >
               <FaPhone /> Report Crisis
             </button>
           </div>
@@ -313,9 +320,6 @@ const HelpSupport = () => {
         <div className="help-support-action-buttons">
           <button type="button" className="support-action-btn support-action-btn--primary">
             <FaPhone /> Call Support
-          </button>
-          <button type="button" className="support-action-btn support-action-btn--secondary">
-            <FaCommentDots /> Live Chat
           </button>
           <button
             type="button"

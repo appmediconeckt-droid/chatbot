@@ -417,6 +417,7 @@ const TabLoading = () => (
 export default function CounselorDashboard() {
   const { t } = useCounselorTranslation();
   const [activeTab, setActiveTab] = useState("messages"); // ✅ Default appointments
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set(["messages"]));
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -553,19 +554,48 @@ export default function CounselorDashboard() {
     };
   }, []);
 
+  useEffect(() => {
+    setVisitedTabs((current) => {
+      if (current.has(activeTab)) return current;
+      const next = new Set(current);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
+
+  useEffect(() => {
+    const preloadTabs = () => Promise.allSettled([
+      import("../../Settings/AccountSettings"),
+      import("./components/AppointmentsTab"),
+      import("../../UserDashboard/Tab/Callls/CallHistory"),
+      import("../Tab/Profile-Con/CounselorProfile"),
+      import("../Tab/CounselorDashboard/Dashboardcou"),
+      import("../Tab/Messages/Messagesou"),
+      import("./components/SessionsTab"),
+      import("../Tab/Earnings/CounselorEarnings"),
+      import("../../common/Notifications/NotificationsPage"),
+    ]);
+    const idleId = window.requestIdleCallback
+      ? window.requestIdleCallback(preloadTabs, { timeout: 1500 })
+      : window.setTimeout(preloadTabs, 300);
+    return () => window.requestIdleCallback
+      ? window.cancelIdleCallback(idleId)
+      : window.clearTimeout(idleId);
+  }, []);
+
   if (loading) {
     return <CounselorSkeleton />;
   }
 
   const navItems = [
-    { id: "messages", icon: <FaComments />, label: t('messages'), badge: pendingRequests.length },
+    { id: "messages", icon: <FaComments />, label: t('chats'), badge: pendingRequests.length },
     { id: "appointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "sessions", icon: <FaVideo />, label: t('sessions'), badge: 0 },
     { id: "call_history", icon: <FaHistory />, label: t('call_history'), badge: 0 },
     // { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
     { id: "earnings", icon: <FaMoneyBillWave />, label: t('earnings'), badge: 0 },
     // Profile moved to the sidebar actions group as "My Profile"
-    // Notifications moved into Settings
+    { id: "notifications", icon: <FaBell />, label: t('notifications'), badge: 0 },
     { id: "settings", icon: <FaCog />, label: t('settings'), badge: 0 },
   ];
 
@@ -763,16 +793,16 @@ export default function CounselorDashboard() {
 
       <div className={`couns-main-content ${isMobile ? "mobile" : ""}`}>
         <Suspense fallback={<TabLoading />}>
-        {activeTab === "dashboard" && (
-          <div className="couns-tab-content">
+        {visitedTabs.has("dashboard") && (
+          <div hidden={activeTab !== "dashboard"} className="couns-tab-content">
             <div className="couns-tab-header">
               <Dashboard />
             </div>
           </div>
         )}
 
-        {activeTab === "appointments" && (
-          <AppointmentsTab
+        {visitedTabs.has("appointments") && (
+          <div hidden={activeTab !== "appointments"}><AppointmentsTab
             appointments={appointments}
             counselorName={counselorData?.name}
             selectedDate={selectedDate}
@@ -781,11 +811,11 @@ export default function CounselorDashboard() {
             handleUpdateAppointmentStatus={handleUpdateAppointmentStatus}
             handleInitiateVideoCall={handleInitiateVideoCall}
             loading={appointmentsLoading || loading}
-          />
+          /></div>
         )}
 
-       {activeTab === "sessions" && (
-  <SessionsTab
+       {visitedTabs.has("sessions") && (
+  <div hidden={activeTab !== "sessions"}><SessionsTab
     sessionAppointments={sessionAppointments}
     sessionSelectedDate={sessionSelectedDate}
     setSessionSelectedDate={setSessionSelectedDate}
@@ -796,11 +826,11 @@ export default function CounselorDashboard() {
     }
     handleOpenAppointmentChat={handleOpenAppointmentChat}
     loading={appointmentsLoading}
-  />
+  /></div>
 )}
 
-        {activeTab === "call_history" && (
-          <div className="couns-tab-content couns-call-page">
+        {visitedTabs.has("call_history") && (
+          <div hidden={activeTab !== "call_history"} className="couns-tab-content couns-call-page">
             <div className="couns-call-page-header">
               <div>
                 <span className="stitch-apt-eyebrow">{t("communication")}</span>
@@ -824,34 +854,34 @@ export default function CounselorDashboard() {
           </div>
         )} */}
 
-        {activeTab === "earnings" && (
-          <div className="couns-tab-content">
+        {visitedTabs.has("earnings") && (
+          <div hidden={activeTab !== "earnings"} className="couns-tab-content">
             <CounselorEarnings />
           </div>
         )}
 
-        {activeTab === "notifications" && (
-          <div className="couns-tab-content">
+        {visitedTabs.has("notifications") && (
+          <div hidden={activeTab !== "notifications"} className="couns-tab-content">
             <NotificationsPage role="counsellor" />
           </div>
         )}
 
-        {activeTab === "messages" && (
-          <div className="couns-tab-content">
+        {visitedTabs.has("messages") && (
+          <div hidden={activeTab !== "messages"} className="couns-tab-content">
             <div className="couns-tab-header">
               <Messagesou />
             </div>
           </div>
         )}
 
-        {activeTab === "profile" && (
-          <div className="couns-tab-content">
+        {visitedTabs.has("profile") && (
+          <div hidden={activeTab !== "profile"} className="couns-tab-content">
             <CounselorProfile />
           </div>
         )}
 
-        {activeTab === "settings" && (
-          <div className="couns-tab-content">
+        {visitedTabs.has("settings") && (
+          <div hidden={activeTab !== "settings"} className="couns-tab-content">
             <AccountSettings
               role="counsellor"
               onOpenProfile={() => handleTabChange("profile")}

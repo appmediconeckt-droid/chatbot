@@ -9,22 +9,24 @@ import {
   FaCheckCircle,
   FaSpinner,
   FaTimes,
-  FaArrowLeft,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import "./UserSignup.css";
 import { logoHorizontal } from "../assets/brandAssets";
+import logoHorizontalDarkText from "../assets/humaeli-logo-horizontal-tagline.png";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
 import LocationGate from "./LocationGate";
+import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
 
 const UserSignup = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 968);
   const [isLogin, setIsLogin] = useState(true);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [phoneCountry, setPhoneCountry] = useState("IN");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -35,6 +37,10 @@ const UserSignup = () => {
     gender: "",
     confirmPassword: "",
   });
+  const completePhoneNumber = () => {
+    const country = PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0];
+    return `${country.dial}${String(formData.phoneNumber || "").replace(/\D/g, "")}`;
+  };
 
   // Verification states
   const [emailVerified, setEmailVerified] = useState(false);
@@ -236,8 +242,8 @@ const UserSignup = () => {
 
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
-    } else if (!/^\d{10}$/.test(formData.phoneNumber)) {
-      newErrors.phoneNumber = "Phone number must be 10 digits";
+    } else if (!/^\d{6,14}$/.test(formData.phoneNumber)) {
+      newErrors.phoneNumber = "Enter a valid phone number";
     }
 
     if (!formData.age) {
@@ -350,7 +356,7 @@ const UserSignup = () => {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/send-phone-otp`,
         {
-          phoneNumber: `+${formData.phoneNumber}`,
+          phoneNumber: completePhoneNumber(),
           email: formData.email,
         },
       );
@@ -381,7 +387,7 @@ const UserSignup = () => {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/verify-phone-otp`,
         {
-          phoneNumber: `+${formData.phoneNumber}`,
+          phoneNumber: completePhoneNumber(),
           otp: phoneOtp,
           email: formData.email,
         },
@@ -526,7 +532,7 @@ const UserSignup = () => {
         fullName: formData.fullName,
         email: formData.email,
         anonymous: formData.anonymous,
-        phoneNumber: formData.phoneNumber,
+        phoneNumber: completePhoneNumber(),
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         age: parseInt(formData.age),
@@ -968,17 +974,6 @@ const handleVerify = async () => {
       <div
         className={`us-container ${isLogin ? "us-login-layout" : "us-signup-layout"}`}
       >
-        {isMobile && (
-          <button
-            onClick={() => navigate(-1)}
-            className="us-mobile-header-back"
-            aria-label="Go back"
-            title="Go back"
-          >
-            <FaArrowLeft />
-          </button>
-        )}
-
         <div className="us-brand">
           <div className="us-brand-content">
             <div className="us-logo">
@@ -1007,8 +1002,23 @@ const handleVerify = async () => {
         </div>
 
         <div className="us-form-section">
+          {isMobile && (
+            <button
+              type="button"
+              className="us-mobile-text-back"
+              onClick={() => navigate(-1)}
+            >
+              ← Back
+            </button>
+          )}
           <div className="us-form-header">
-            <img src={logoHorizontal} alt="Humaeli" className="us-form-logo" />
+            <picture>
+              <source
+                media="(max-width: 968px) and (prefers-color-scheme: light)"
+                srcSet={logoHorizontalDarkText}
+              />
+              <img src={logoHorizontal} alt="Humaeli" className="us-form-logo" />
+            </picture>
             <h2>{isLogin ? "Login to Account" : "Create Account"}</h2>
             <p>
               {isLogin
@@ -1247,15 +1257,31 @@ const handleVerify = async () => {
                       <FaPhone className="us-field-icon" />
                       Phone Number <span className="us-required">*</span>
                     </label>
-                    <div className="us-verify-group">
+                    <div className={`us-phone-country-field ${errors.phoneNumber ? "us-phone-country-field-error" : ""}`}>
+                      <select
+                        value={phoneCountry}
+                        onChange={(e) => {
+                          setPhoneCountry(e.target.value);
+                          setPhoneVerified(false);
+                        }}
+                        className="us-phone-country-select"
+                        disabled={isLoading}
+                        aria-label="Phone country code"
+                      >
+                        {PHONE_COUNTRIES.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.label} ({country.dial})
+                          </option>
+                        ))}
+                      </select>
                       <input
                         type="tel"
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleChange}
-                        className={`us-input ${errors.phoneNumber ? "us-input-error" : ""}`}
-                        placeholder="10 digit mobile number"
-                        maxLength="10"
+                        className="us-input us-phone-number-input"
+                        placeholder="Phone number"
+                        maxLength="14"
                         disabled={isLoading}
                       />
                     </div>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { FaCheckCircle, FaSpinner, FaArrowLeft, FaEnvelope } from "react-icons/fa";
+import { FaCheckCircle, FaSpinner, FaEnvelope } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import "./ForgotPasswordOTP.css";
@@ -126,13 +126,7 @@ const ForgotPasswordOTP = () => {
     <div className={`fpotp-wrapper ${themeClass}`}>
       <div className="fpotp-container">
         {/* Back Button */}
-        <button 
-          className="fpotp-back-btn"
-          onClick={() => navigate("/forgot-password", { state: { role } })}
-          aria-label="Go back"
-        >
-          <FaArrowLeft />
-        </button>
+       
 
         {/* Logo */}
         <div className="fpotp-logo">

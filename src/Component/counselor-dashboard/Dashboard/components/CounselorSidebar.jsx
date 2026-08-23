@@ -90,7 +90,7 @@ export default function CounselorSidebar({
 
         {/* Actions Section */}
         <div className="couns-sidebar-actions">
-          <LanguageSelector lang={lang} setLang={setLang} t={t} />
+          <LanguageSelector lang={lang} setLang={setLang} t={t} theme="counselor" />
           <button
             className={`couns-sidebar-item ${activeTab === "profile" ? "couns-active" : ""}`}
             onClick={() => handleTabChange("profile")}

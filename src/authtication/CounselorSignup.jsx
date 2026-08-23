@@ -2062,23 +2062,25 @@ import {
   FaCheckCircle,
   FaSpinner,
   FaTimes,
-  FaArrowLeft,
   FaCamera,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import "./CounselorSignup.css";
 import { logoHorizontal } from "../assets/brandAssets";
+import logoHorizontalDarkText from "../assets/humaeli-logo-horizontal-tagline.png";
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
 import LocationGate from "./LocationGate";
+import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
   
 const CounselorSignup = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 968);
   const [isLogin, setIsLogin] = useState(true);
   const [slideAnim, setSlideAnim] = useState("");
+  const [phoneCountry, setPhoneCountry] = useState("IN");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -2096,6 +2098,10 @@ const CounselorSignup = () => {
     profilePhoto: null,
     confirmPassword: "",
   });
+  const completePhoneNumber = () => {
+    const country = PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0];
+    return `${country.dial}${String(formData.phoneNumber || "").replace(/\D/g, "")}`;
+  };
 
   // Verification states
   const [emailVerified, setEmailVerified] = useState(false);
@@ -2253,8 +2259,8 @@ const CounselorSignup = () => {
 
     if (!formData.phoneNumber)
       newErrors.phoneNumber = "Phone number is required";
-    else if (!/^\d{10}$/.test(formData.phoneNumber))
-      newErrors.phoneNumber = "Phone number must be 10 digits";
+    else if (!/^\d{6,14}$/.test(formData.phoneNumber))
+      newErrors.phoneNumber = "Enter a valid phone number";
 
     if (!formData.age) newErrors.age = "Age is required";
     else if (formData.age < 18 || formData.age > 100)
@@ -2354,8 +2360,8 @@ const CounselorSignup = () => {
   };
 
   const handleSendPhoneOtp = async () => {
-    if (!formData.phoneNumber || !/^\d{10}$/.test(formData.phoneNumber)) {
-      setPhoneOtpError("Please enter a valid 10-digit phone number");
+    if (!formData.phoneNumber || !/^\d{6,14}$/.test(formData.phoneNumber)) {
+      setPhoneOtpError("Please enter a valid phone number");
       return;
     }
     setIsSendingPhoneOtp(true);
@@ -2363,7 +2369,7 @@ const CounselorSignup = () => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/send-phone-otp`,
-        { phoneNumber: formData.phoneNumber, email: formData.email },
+        { phoneNumber: completePhoneNumber(), email: formData.email },
       );
       if (response.data.success) {
         showNotification("OTP sent to your phone!", "success");
@@ -2390,7 +2396,7 @@ const CounselorSignup = () => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/verify-phone-otp`,
-        { phoneNumber: formData.phoneNumber, otp: phoneOtp },
+        { phoneNumber: completePhoneNumber(), otp: phoneOtp },
       );
       if (response.data.success) {
         setPhoneVerified(true);
@@ -2557,7 +2563,7 @@ const CounselorSignup = () => {
       const fd = new FormData();
       fd.append("fullName", formData.fullName.trim());
       fd.append("email", formData.email.trim());
-      fd.append("phoneNumber", formData.phoneNumber.trim());
+      fd.append("phoneNumber", completePhoneNumber());
       fd.append("age", String(Number(formData.age)));
       fd.append("gender", formData.gender.toLowerCase());
       fd.append("qualification", formData.qualification.trim());
@@ -2910,17 +2916,6 @@ const CounselorSignup = () => {
       {showEmailOtpModal && <EmailOtpModal />}
 
       <div className="cs-container">
-        {isMobile && (
-          <button
-            onClick={() => navigate(-1)}
-            className="cs-mobile-header-back"
-            aria-label="Go back"
-            title="Go back"
-          >
-            <FaArrowLeft />
-          </button>
-        )}
-
         <div className="cs-brand">
           <div className="cs-brand-content">
             <div className="cs-logo">
@@ -2943,8 +2938,23 @@ const CounselorSignup = () => {
         </div>
 
         <div className="cs-form-section">
+          {isMobile && (
+            <button
+              type="button"
+              className="cs-mobile-text-back"
+              onClick={() => navigate(-1)}
+            >
+              ← Back
+            </button>
+          )}
           <div className="cs-form-header">
-            <img src={logoHorizontal} alt="Humaeli" className="cs-form-logo" />
+            <picture>
+              <source
+                media="(max-width: 968px) and (prefers-color-scheme: light)"
+                srcSet={logoHorizontalDarkText}
+              />
+              <img src={logoHorizontal} alt="Humaeli" className="cs-form-logo" />
+            </picture>
             <h2>{isLogin ? "Login to Account" : "Create Account"}</h2>
             <p>
               {isLogin
@@ -3123,15 +3133,31 @@ const CounselorSignup = () => {
                       <FaPhone className="cs-field-icon" />
                       Phone Number <span className="cs-required">*</span>
                     </label>
-                    <div className="cs-verify-group">
+                    <div className={`cs-phone-country-field ${errors.phoneNumber ? "cs-phone-country-field-error" : ""}`}>
+                      <select
+                        value={phoneCountry}
+                        onChange={(e) => {
+                          setPhoneCountry(e.target.value);
+                          setPhoneVerified(false);
+                        }}
+                        className="cs-phone-country-select"
+                        disabled={isLoading}
+                        aria-label="Phone country code"
+                      >
+                        {PHONE_COUNTRIES.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.label} ({country.dial})
+                          </option>
+                        ))}
+                      </select>
                       <input
                         type="tel"
                         name="phoneNumber"
                         value={formData.phoneNumber}
                         onChange={handleChange}
-                        className={`cs-input ${errors.phoneNumber ? "cs-input-error" : ""}`}
-                        placeholder="10 digit mobile number"
-                        maxLength="10"
+                        className="cs-input cs-phone-number-input"
+                        placeholder="Phone number"
+                        maxLength="14"
                         disabled={isLoading}
                       />
                     </div>

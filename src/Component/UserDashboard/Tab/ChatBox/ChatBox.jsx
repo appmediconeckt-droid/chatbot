@@ -4228,16 +4228,17 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
     setTimeout(() => input.focus({ preventScroll: true }), 50);
   }, []);
 
-  // ─── Merge Messages and Call History ──────────────────────────────────
+  // Keep this conversation timeline chat-only. Call records remain
+  // available from the portal's dedicated Call History page.
   const getMergedTimeline = useCallback(() => {
-    const allItems = [...messages, ...callHistory];
+    const allItems = [...messages];
     
     return allItems.sort((a, b) => {
       const timeA = a.fullTime || a.createdAt || a.timestamp || a.time;
       const timeB = b.fullTime || b.createdAt || b.timestamp || b.time;
       return new Date(timeA) - new Date(timeB);
     });
-  }, [messages, callHistory]);
+  }, [messages]);
 
   const getMessageDayKey = (item) => {
     const timestamp = item?.fullTime || item?.createdAt || item?.timestamp;
@@ -4817,14 +4818,18 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
   }, [stopRinging]);
 
   // ─── GET messages from API ──────────────────────────────────────────────
-  const fetchMessagesFromAPI = async () => {
+  const fetchMessagesFromAPI = async ({ forceRefresh = false } = {}) => {
     try {
       const apiChatId = getChatIdForAPI();
       const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
       setIsLoadingMessages(true);
       
       const response = await axios.get(`${API_BASE_URL}/api/chat/chat/${apiChatId}/messages`, {
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        params: forceRefresh ? { _refresh: Date.now() } : undefined,
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
       
       if (response.data && response.data.messages) {
@@ -4854,12 +4859,20 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
         }
       }
       
-      await fetchCallHistory();
+      // Call history is supplementary; its failure must never make a
+      // successful message refresh look like it failed.
+      Promise.resolve(fetchCallHistory()).catch((callHistoryError) => {
+        console.warn("Call history refresh failed:", callHistoryError);
+      });
+      return true;
       
     } catch (error) {
       console.error("Error fetching messages from API:", error);
       loadMessagesFromLocalStorage();
-      await fetchCallHistory();
+      Promise.resolve(fetchCallHistory()).catch((callHistoryError) => {
+        console.warn("Call history refresh failed:", callHistoryError);
+      });
+      return false;
     } finally {
       setIsLoadingMessages(false);
     }
@@ -5062,7 +5075,21 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
   const handleMenuItemClick = async (item) => {
     switch (item.id) {
       case 1:
-        fetchMessagesFromAPI();
+        {
+          const refreshed = await fetchMessagesFromAPI({ forceRefresh: true });
+          if (refreshed) {
+            window.dispatchEvent(new CustomEvent('chat:refresh-list'));
+            setShouldScrollToBottom(true);
+            requestAnimationFrame(() => scrollToBottom("smooth", true));
+          } else {
+            const translatedError = t('refresh_failed');
+            alert(
+              translatedError && translatedError !== 'refresh_failed'
+                ? translatedError
+                : 'Unable to refresh chat. Please check your connection and try again.',
+            );
+          }
+        }
         break;
       case 2:
         handleClearChat();
@@ -6243,7 +6270,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
               </button>
               {showOptions && (
                 <div className="chatDropdownMenu" role="menu">
-                  {optionsMenuItems.filter((item) => item.id <= 2).map((item) => (
+                  {optionsMenuItems.filter((item) => item.id === 2).map((item) => (
                     <button key={item.id} className="chatDropdownItem" onClick={() => { setShowOptions(false); handleMenuItemClick(item); }} role="menuitem">
                       <span className="chatDropdownIcon" aria-hidden="true">{item.icon}</span>
                       <span className="chatDropdownText">{item.label}</span>
@@ -6272,7 +6299,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
             </div>
           ) : visibleTimeline.length === 0 ? (
             <div className="chatEmptyState">
-              <p>{normalizedConversationSearch ? "No matching messages found." : "No messages or calls yet. Start a conversation!"}</p>
+              <p>{normalizedConversationSearch ? "No matching messages found." : "No messages yet. Start a conversation!"}</p>
             </div>
           ) : (
             <>

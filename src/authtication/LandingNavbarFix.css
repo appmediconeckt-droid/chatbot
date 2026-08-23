@@ -8,6 +8,119 @@
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
+/* Final mobile hero layout: show the complete portrait video first and keep
+   all hero copy in its own section below the video. */
+@media (max-width: 600px) {
+  .humaeli .hero {
+    min-height: 0 !important;
+    padding: 0 !important;
+    background: #083f35 !important;
+  }
+
+  .humaeli .hero::after {
+    display: none !important;
+  }
+
+  .humaeli .hero > .container {
+    width: 100% !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 64px 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .humaeli .hero-visual {
+    position: relative !important;
+    inset: auto !important;
+    order: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: hidden !important;
+    background: #083f35 !important;
+  }
+
+  .humaeli .hero-visual .hero-desktop-video {
+    display: none !important;
+  }
+
+  .humaeli .hero-visual .hero-mobile-video {
+    position: relative !important;
+    inset: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background: #083f35 !important;
+  }
+
+  .humaeli .hero-content {
+    position: relative !important;
+    order: 2 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 30px 20px 38px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    background: #083f35 !important;
+  }
+
+  .humaeli .hero-title {
+    margin: 12px auto 18px !important;
+  }
+
+  .humaeli .hero-description {
+    margin-inline: auto !important;
+  }
+
+  .humaeli .hero-actions {
+    width: 100% !important;
+    margin-top: 24px !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .humaeli .hero-actions .btn {
+    width: min(260px, 100%) !important;
+    margin-inline: auto !important;
+  }
+}
+
+/* The supplied hero asset is a portrait/mobile video. Keep its complete
+   frame visible instead of applying the old image-specific cover crop. */
+.humaeli .hero-visual .hero-wellness-video {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  object-fit: fill !important;
+  object-position: center center !important;
+  background: #083f35;
+}
+
+.humaeli .hero-visual .hero-mobile-video {
+  display: none !important;
+}
+
+@media (max-width: 600px) {
+  .humaeli .hero-visual .hero-desktop-video {
+    display: none !important;
+  }
+
+  .humaeli .hero-visual .hero-mobile-video {
+    display: block !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+  }
+}
+
 .humaeli .header .nav-menu .nav-link,
 .humaeli .header.header-scrolled .nav-menu .nav-link {
   font-size: 1.08rem !important;
@@ -46,6 +159,11 @@
 
 /* Final mobile/tablet authority over legacy landing rules. */
 @media (max-width: 768px) {
+  .humaeli .header .nav-menu,
+  .humaeli .header.header-scrolled .nav-menu {
+    border-radius: 0 0 18px 18px !important;
+  }
+
   .humaeli .header .nav-menu .nav-link,
   .humaeli .header.header-scrolled .nav-menu .nav-link {
     font-size: 1.05rem !important;
@@ -233,6 +351,61 @@
   }
 }
 
+/* Crisp navbar wordmark: real text stays readable without increasing header height. */
+.humaeli .header .landing-logo-brand > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #fff;
+  text-decoration: none;
+}
+
+.humaeli .header .landing-logo-brand .landing-brand-icon,
+.humaeli .header.header-scrolled .landing-logo-brand .landing-brand-icon {
+  width: 58px !important;
+  height: 58px !important;
+  max-width: 58px !important;
+  max-height: 58px !important;
+  flex: 0 0 58px;
+  object-fit: contain !important;
+}
+
+.landing-brand-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.landing-brand-copy strong {
+  color: #fff;
+  font-size: 28px;
+  font-weight: 500;
+  letter-spacing: -.035em;
+}
+
+.landing-brand-copy small {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, .96);
+  font-size: 8px;
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+
+@media (max-width: 768px) {
+  .humaeli .header .landing-logo-brand .landing-brand-icon,
+  .humaeli .header.header-scrolled .landing-logo-brand .landing-brand-icon {
+    width: 42px !important;
+    height: 42px !important;
+    max-width: 42px !important;
+    max-height: 42px !important;
+    flex-basis: 42px;
+  }
+  .landing-brand-copy strong { font-size: 21px; }
+  .landing-brand-copy small { margin-top: 2px; font-size: 6px; }
+}
+
 /* On phones keep the subject's face clear and begin copy underneath it. */
 @media (max-width: 600px) {
   .humaeli .hero {
@@ -288,6 +461,233 @@
   .humaeli .hero-description {
     font-size: .82rem !important;
     line-height: 1.55 !important;
+  }
+}
+
+/* Authoritative phone layout. This must remain after the legacy mobile rules. */
+@media (max-width: 600px) {
+  .humaeli .hero.hero-mobile-stacked {
+    min-height: 0 !important;
+    padding: 0 !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked::after { display: none !important; }
+
+  .humaeli .hero.hero-mobile-stacked > .container {
+    min-height: 0 !important;
+    padding: 64px 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-visual {
+    position: relative !important;
+    inset: auto !important;
+    order: 1 !important;
+    height: auto !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-mobile-video {
+    position: relative !important;
+    inset: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    object-fit: contain !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-content {
+    position: relative !important;
+    order: 2 !important;
+    margin: 0 !important;
+    padding: 30px 20px 38px !important;
+    background: transparent !important;
+  }
+
+  /* Keep the copy visually joined to the video instead of creating a second
+     coloured panel below it. */
+  .humaeli .hero.hero-mobile-stacked > .container {
+    position: relative !important;
+    height: max(800px, 100svh) !important;
+    min-height: max(800px, 100svh) !important;
+    padding: 56px 0 0 !important;
+    overflow: hidden !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-visual {
+    position: absolute !important;
+    inset: 56px 0 0 !important;
+    width: 100% !important;
+    height: calc(100% - 56px) !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-mobile-video {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    object-position: center top !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent 36%, rgba(3, 45, 38, .16) 48%, rgba(3, 45, 38, .82) 78%, rgba(3, 45, 38, .94) 100%);
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-content {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 10px !important;
+    z-index: 4 !important;
+    padding: 0 20px !important;
+    background: transparent !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-badge {
+    font-size: .58rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-title {
+    margin: 9px auto 13px !important;
+    font-size: clamp(1.75rem, 8.5vw, 2.15rem) !important;
+    line-height: 1.04 !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-description {
+    max-width: 330px !important;
+    padding-top: 13px !important;
+    font-size: .76rem !important;
+    line-height: 1.42 !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-actions {
+    margin-top: 17px !important;
+  }
+
+  .humaeli .hero.hero-mobile-stacked .hero-actions .btn {
+    min-height: 42px !important;
+  }
+
+  .humaeli .header,
+  .humaeli .header.header-scrolled,
+  .humaeli .header .header-container,
+  .humaeli .header.header-scrolled .header-container {
+    height: 56px !important;
+    min-height: 56px !important;
+    max-height: 56px !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .humaeli .hero {
+    min-height: 0 !important;
+    padding: 0 !important;
+    background: #083f35 !important;
+  }
+
+  .humaeli .hero::after { display: none !important; }
+
+  .humaeli .hero > .container {
+    width: 100% !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 64px 0 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .humaeli .hero-visual {
+    position: relative !important;
+    inset: auto !important;
+    order: 1 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: hidden !important;
+    background: #083f35 !important;
+  }
+
+  .humaeli .hero-visual .hero-desktop-video { display: none !important; }
+
+  .humaeli .hero-visual .hero-mobile-video {
+    position: relative !important;
+    inset: auto !important;
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    object-fit: contain !important;
+    object-position: center !important;
+    background: #083f35 !important;
+  }
+
+  .humaeli .hero-content {
+    position: relative !important;
+    order: 2 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 30px 20px 38px !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    background: #083f35 !important;
+  }
+
+  .humaeli .hero-title { margin: 12px auto 18px !important; }
+  .humaeli .hero-description { margin-inline: auto !important; }
+
+  .humaeli .hero-actions {
+    width: 100% !important;
+    margin-top: 24px !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .humaeli .hero-actions .btn {
+    width: min(260px, 100%) !important;
+    margin-inline: auto !important;
+  }
+}
+
+/* Mobile hero: keep the video visible above the copy and center the CTA. */
+@media (max-width: 600px) {
+  .humaeli .hero,
+  .humaeli .hero > .container {
+    min-height: 760px !important;
+  }
+
+  .humaeli .hero > .container {
+    padding: 330px 18px 36px !important;
+  }
+
+  .humaeli .hero-content {
+    width: 100% !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
+    text-align: center !important;
+  }
+
+  .humaeli .hero-actions {
+    width: 100% !important;
+    margin-top: 24px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+
+  .humaeli .hero-actions .btn {
+    width: min(260px, 100%) !important;
+    margin-inline: auto !important;
   }
 }
 
@@ -714,10 +1114,10 @@
 
   .humaeli .header .landing-logo-brand img,
   .humaeli .header.header-scrolled .landing-logo-brand img {
-    width: 150px !important;
-    max-width: 150px !important;
-    height: 164px !important;
-    max-height: 130px !important;
+    width: 180px !important;
+    max-width: 180px !important;
+    height: auto !important;
+    max-height: none !important;
     object-fit: contain !important;
   }
 }

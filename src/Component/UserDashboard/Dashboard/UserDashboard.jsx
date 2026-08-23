@@ -2,6 +2,7 @@ import React, { lazy, Suspense, useState, useEffect, useRef } from "react";
 import "./UserDashboard.css";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import axiosInstance, { API_BASE_URL } from "../../../axiosConfig";
+import { logoIcon } from "../../../assets/brandAssets";
 import {
   FaCommentDots,
   FaUserMd,
@@ -29,7 +30,6 @@ import {
   FaDownload,
   FaChevronDown,
   FaChevronUp,
-  FaRobot,
   FaSearch,
   FaExclamationTriangle,
   FaFileAlt,
@@ -91,7 +91,8 @@ export default function UserDashboard() {
   const isDirectChatRoute = location.pathname === "/chat" || location.pathname.startsWith("/chat/");
   const { t, lang, setLang } = useUserTranslation();
   const [, setLanguageUpdate] = useState(0);
-  const [active, setActive] = useState("Chat");
+  const [active, setActive] = useState(() => location.state?.activePortalTab || "Chat");
+  const [visitedTabs, setVisitedTabs] = useState(() => new Set([location.state?.activePortalTab || "Chat"]));
   const [openPrivacySection, setOpenPrivacySection] = useState("Chats & Calls");
   const [helpSearch, setHelpSearch] = useState("");
   const [openHelpQuestion, setOpenHelpQuestion] = useState("");
@@ -720,6 +721,16 @@ export default function UserDashboard() {
 
   const handleMenuItemClick = (id) => {
     vibrate(30);
+    // A counselor conversation opened from Appointments uses /chat/:id.
+    // Once the user navigates through the sidebar, discard that direct-chat
+    // context so returning to Chat shows the original conversation list.
+    setSelectedConversation(null);
+    if (isDirectChatRoute) {
+      navigate("/user-dashboard", {
+        replace: true,
+        state: { activePortalTab: id },
+      });
+    }
     setActive(id);
     setTargetCounselor(""); // Reset search when navigating manually
     if (isMobile) {
@@ -730,6 +741,13 @@ export default function UserDashboard() {
 
   const handleProfileClick = () => {
     vibrate(30);
+    setSelectedConversation(null);
+    if (isDirectChatRoute) {
+      navigate("/user-dashboard", {
+        replace: true,
+        state: { activePortalTab: "profile" },
+      });
+    }
     setActive("profile");
     setTargetCounselor("");
     if (isMobile) {
@@ -739,6 +757,13 @@ export default function UserDashboard() {
 
   const handleSettingsClick = () => {
     vibrate(30);
+    setSelectedConversation(null);
+    if (isDirectChatRoute) {
+      navigate("/user-dashboard", {
+        replace: true,
+        state: { activePortalTab: "settings" },
+      });
+    }
     setActive("settings");
     setTargetCounselor("");
     if (isMobile) {
@@ -882,7 +907,7 @@ export default function UserDashboard() {
 
   const allMenuItems = [
     { id: "Chat", icon: <FaCommentDots />, label: t('chat') },
-    { id: "Live Chat", icon: <FaUserMd />, label: t('counselor') },
+    { id: "Live Chat", icon: <FaUserMd />, label: "Consultants" },
     { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
@@ -1084,6 +1109,50 @@ export default function UserDashboard() {
     URL.revokeObjectURL(url);
   };
 
+  useEffect(() => {
+    setVisitedTabs((current) => {
+      if (current.has(active)) return current;
+      const next = new Set(current);
+      next.add(active);
+      return next;
+    });
+  }, [active]);
+
+  // Warm sidebar chunks while the user is reading the current screen. This
+  // removes the blank/skeleton pause on the first visit to another tab.
+  useEffect(() => {
+    const preloadTabs = () => Promise.allSettled([
+      import("../../Settings/AccountSettings"),
+      import("../Tab/Callls/CallHistory"),
+      import("../Tab/Appointment/BookAppointment"),
+      import("../Tab/Appointment/MyAppointments"),
+      import("../../PatientProfile/PatientProfile"),
+      import("../Tab/Wallet/WalletDashboard"),
+      import("../../common/Notifications/NotificationsPage"),
+    ]);
+    const idleId = window.requestIdleCallback
+      ? window.requestIdleCallback(preloadTabs, { timeout: 1500 })
+      : window.setTimeout(preloadTabs, 300);
+    return () => window.requestIdleCallback
+      ? window.cancelIdleCallback(idleId)
+      : window.clearTimeout(idleId);
+  }, []);
+
+  const handleDeleteAccountEmail = () => {
+    vibrate(30);
+    const subject = "Humaeli account and data deletion request";
+    const body = [
+      "Please delete my Humaeli account and associated personal data.",
+      "",
+      `Registered email: ${userData.email || ""}`,
+      `Registered phone: ${userData.phone || ""}`,
+      `User ID: ${userId || ""}`,
+      "Account type: user",
+    ].join("\r\n");
+
+    window.location.href = `mailto:support@humaeli.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
 
   const renderHelpSupport = () => {
     const faqs = [
@@ -1115,7 +1184,7 @@ export default function UserDashboard() {
               [<FaCommentDots />, "Live Chat", "Chat with our support team", "Usually within 2 mins", () => setChatOpen(true)],
               [<FaPhone />, "Call Support", "Talk directly", "Mon-Sat 9AM–7PM", () => { window.location.href = "tel:+18005550199"; }],
               [<FaEnvelope />, "Email Support", "Send your questions", "Within 24 hours", () => { window.location.href = "mailto:support@humaeli.com"; }],
-              [<FaRobot />, "AI Assistant", "Get instant answers", "24/7 Available", () => setChatOpen(true)],
+              [<img src={logoIcon} alt="" aria-hidden="true" />, "AI Assistant", "Get instant answers", "24/7 Available", () => setChatOpen(true)],
             ].map(([icon, title, text, availability, onClick]) => (
               <button type="button" key={title} onClick={onClick}>
                 <span>{icon}</span><strong>{title}</strong><p>{text}</p><small>{availability}</small>
@@ -1140,14 +1209,14 @@ export default function UserDashboard() {
           }) : <p className="ud-help-no-results">{t("no_help_articles")}</p>}
               </section>
 
-              <section className="ud-help-report">
+              {/* <section className="ud-help-report">
             <h3>{t("report_problem")}</h3>
             <p>{t("report_problem_description")}</p>
                 <div>
               <button type="button" onClick={() => { window.location.href = "mailto:support@humaeli.com?subject=Report%20an%20Issue"; }}>{t("report_issue")}</button>
               <label><FaUpload /> {t("screenshot")}<input type="file" accept="image/*" /></label>
                 </div>
-              </section>
+              </section> */}
             </main>
 
             <aside className="ud-help-right">
@@ -1158,11 +1227,11 @@ export default function UserDashboard() {
             <button type="button" className="outline" onClick={() => { window.location.href = "tel:9152987821"; }}>{t("crisis_resources")}</button>
               </section>
 
-              <section className="ud-help-contact">
+              {/* <section className="ud-help-contact">
               <small>{t("contact_information")}</small>
                 <p><FaEnvelope /><span>support@humaeli.com<small>Email</small></span></p>
                 <p><FaPhone /><span>+1 (800) 555–0199<small>Mon–Sat, 9am–7pm EST</small></span></p>
-              </section>
+              </section> */}
 
               <section className="ud-help-legal">
             <button type="button"><FaFileAlt /> {t("terms_of_service")} <FaChevronRight /></button>
@@ -1171,9 +1240,7 @@ export default function UserDashboard() {
             </aside>
           </div>
 
-          <footer className="ud-help-footer">
-            <p>Humaeli Version 2.1.4</p><p>Last updated: Oct 24, 2023</p><button type="button" onClick={() => window.location.reload()}>Check for Updates</button>
-          </footer>
+          
         </div>
       </section>
     );
@@ -1241,7 +1308,7 @@ export default function UserDashboard() {
               <button type="button" onClick={handleProfileClick}><FaUser /><strong>Manage Profile</strong><small>Update details</small></button>
               <button type="button" onClick={handleSettingsClick}><FaLock /><strong>Security Settings</strong><small>Passwords & OTP</small></button>
               <button type="button" onClick={downloadPrivacyData}><FaDownload /><strong>Download Data</strong><small>Get your records</small></button>
-              <button type="button" className="danger" onClick={handleSettingsClick}><FaTrash /><strong>Delete Account</strong><small>Permanently remove</small></button>
+              <button type="button" className="danger" onClick={handleDeleteAccountEmail}><FaTrash /><strong>Delete Account</strong><small>Email deletion request</small></button>
             </div>
 
           <h3 className="ud-privacy-label">{t("your_privacy_checklist")}</h3>
@@ -1438,7 +1505,6 @@ export default function UserDashboard() {
               <div className="ud-sidebar-menu">
                 {allMenuItems.map((item) => (
                   <React.Fragment key={item.id}>
-                    {item.id === "settings" && <hr className="ud-sidebar-separator" />}
                     <button
                       onClick={() => handleMenuItemClick(item.id)}
                       className={`ud-sidebar-item ${active === item.id ? "ud-active" : ""}`}
@@ -1477,8 +1543,8 @@ export default function UserDashboard() {
         <div className={`ud-dashboard-content ${isMobile ? "ud-mobile" : ""}`}>
           <div className="ud-content-scrollable">
             <Suspense fallback={<DashboardPanelLoader />}>
-              {active === "Chat" && (
-                <div className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""} ${isDirectChatRoute ? "direct-conversation" : ""}`}>
+              {visitedTabs.has("Chat") && (
+                <div style={{ display: active === "Chat" ? undefined : "none" }} className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""} ${isDirectChatRoute ? "direct-conversation" : ""}`}>
                   <div className="ud-chat-list-pane">
                     <ChatInterface
                       setActiveTab={setActive}
@@ -1504,24 +1570,23 @@ export default function UserDashboard() {
                   )}
                 </div>
               )}
-              {active === "Live Chat" && (
-                <CounselorRequestChat
-                  initialSearch={targetCounselor}
-                  onOpenConversation={handleOpenCounselorConversation}
-                />
+              {visitedTabs.has("Live Chat") && (
+                <div style={{ display: active === "Live Chat" ? undefined : "none" }}>
+                  <CounselorRequestChat initialSearch={targetCounselor} onOpenConversation={handleOpenCounselorConversation} />
+                </div>
               )}
-              {active === "MyAppointments" && <MyAppointments />}
-              {active === "Notifications" && <NotificationsPage />}
-              {active === "Wallet" && <WalletDashboard userData={userData} />}
-              {active === "Video" && (
-                <CallHistory currentUser={{ id: userId, role: "user" }} />
+              {visitedTabs.has("MyAppointments") && <div style={{ display: active === "MyAppointments" ? undefined : "none" }}><MyAppointments /></div>}
+              {visitedTabs.has("Notifications") && <div style={{ display: active === "Notifications" ? undefined : "none" }}><NotificationsPage /></div>}
+              {visitedTabs.has("Wallet") && <div style={{ display: active === "Wallet" ? undefined : "none" }}><WalletDashboard userData={userData} /></div>}
+              {visitedTabs.has("Video") && (
+                <div style={{ display: active === "Video" ? undefined : "none" }}><CallHistory currentUser={{ id: userId, role: "user" }} /></div>
               )}
-              {active === "profile" && <PatientProfile />}
-              {active === "settings" && (
-                <AccountSettings role="user" onOpenProfile={handleProfileClick} />
+              {visitedTabs.has("profile") && <div style={{ display: active === "profile" ? undefined : "none" }}><PatientProfile /></div>}
+              {visitedTabs.has("settings") && (
+                <div style={{ display: active === "settings" ? undefined : "none" }}><AccountSettings role="user" onOpenProfile={handleProfileClick} /></div>
               )}
-              {active === "help" && <div key={`help-${lang}`}>{renderHelpSupport()}</div>}
-              {active === "privacy" && <div key={`privacy-${lang}`}>{renderPrivacyCenter()}</div>}
+              {visitedTabs.has("help") && <div style={{ display: active === "help" ? undefined : "none" }} key={`help-${lang}`}>{renderHelpSupport()}</div>}
+              {visitedTabs.has("privacy") && <div style={{ display: active === "privacy" ? undefined : "none" }} key={`privacy-${lang}`}>{renderPrivacyCenter()}</div>}
             </Suspense>
           </div>
         </div>
@@ -1692,7 +1757,7 @@ export default function UserDashboard() {
             </div>
             <div className="ud-modal-body">
               <p>
-                This action cannot be undone. All your data will be permanently
+                This action cannot be delete. All your data will be permanently
                 deleted.
               </p>
             </div>

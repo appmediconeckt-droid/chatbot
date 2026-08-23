@@ -567,7 +567,9 @@
   left: 100%;
 }
 
-.us-submit:hover {
+.us-submit:hover:not(:disabled) {
+  background: linear-gradient(145deg, #006f73, #084b83);
+  color: #fff;
   transform: translateY(-2px);
   box-shadow: 0 10px 25px rgba(0, 127, 131, 0.32);
 }
@@ -1470,7 +1472,8 @@
 
   .us-form-section {
     min-height: 100dvh;
-    padding: 72px 18px 28px;
+    padding: 24px 18px 28px;
+    position: relative;
   }
 
   .us-mobile-header-back {
@@ -1483,13 +1486,61 @@
     margin-bottom: 18px;
   }
 
+  .us-form-header picture {
+    display: block;
+    width: 180px;
+    height: 64px;
+    margin: 30px auto 6px;
+    overflow: hidden;
+    line-height: 0;
+  }
+
+  .us-form-header picture .us-form-logo {
+    display: block;
+    width: 180px;
+    max-width: none;
+    margin: 0;
+    transform: translateY(-58px);
+  }
+
   .us-form-header h2 {
     font-size: clamp(1.45rem, 7vw, 1.75rem);
   }
 
   .us-options {
     width: 100%;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
   }
+
+  .us-mobile-text-back {
+    position: absolute;
+    top: 14px;
+    left: 16px;
+    z-index: 2;
+    display: inline-flex;
+    width: auto;
+    min-height: 32px;
+    margin: 0;
+    padding: 5px 9px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    border-radius: 7px;
+    background: rgba(241, 245, 249, .86);
+    color: #475569;
+    font: inherit;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: none;
+  }
+
+  .us-mobile-text-back:hover { background: #e2e8f0; }
+
+  .us-mobile-text-back:active { transform: scale(.97); }
 
   .us-form {
     gap: 14px;
@@ -1542,4 +1593,36 @@
 .google-auth-button-wrapper iframe {
   width: 100% !important;
   margin: 0 auto !important;
+}
+.us-phone-country-field {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color .2s, box-shadow .2s;
+}
+.us-phone-country-field:focus-within { border-color: #01a944; box-shadow: 0 0 0 3px rgba(1, 206, 84, .12); }
+.us-phone-country-field-error { border-color: #ff4444; }
+.us-phone-country-select {
+  flex: 0 0 112px;
+  width: 112px;
+  max-width: 112px;
+  padding: 0 22px 0 8px;
+  border: 0;
+  border-right: 1px solid #d1d5db;
+  background-color: #f8fafc;
+  color: #334155;
+  cursor: pointer;
+  outline: none;
+  font-size: 14px;
+}
+.us-phone-country-field .us-phone-number-input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }

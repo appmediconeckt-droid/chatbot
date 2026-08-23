@@ -6,13 +6,11 @@ import { captureAndSendLocation } from "../../authtication/locationHelper";
 import { useUserTranslation } from "../../i18n/LanguageContext";
 import AvatarBuilder from "./AvatarBuilder";
 import {
-  FaBriefcaseMedical,
   FaCamera,
   FaEdit,
   FaHome,
   FaMapMarkerAlt,
   FaPhoneAlt,
-  FaShieldAlt,
   FaStarOfLife,
   FaUser,
 } from "react-icons/fa";
@@ -42,6 +40,93 @@ const calculateAge = (dateOfBirth) => {
 
   if (!hasHadBirthdayThisYear) age -= 1;
   return age >= 0 ? age : "";
+};
+
+const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
+
+export const PHONE_COUNTRIES = [
+  ["AF", "+93", "Afghanistan"], ["AL", "+355", "Albania"], ["DZ", "+213", "Algeria"],
+  ["AD", "+376", "Andorra"], ["AO", "+244", "Angola"], ["AG", "+1268", "Antigua and Barbuda"],
+  ["AR", "+54", "Argentina"], ["AM", "+374", "Armenia"], ["AU", "+61", "Australia"],
+  ["AT", "+43", "Austria"], ["AZ", "+994", "Azerbaijan"], ["BS", "+1242", "Bahamas"],
+  ["BH", "+973", "Bahrain"], ["BD", "+880", "Bangladesh"], ["BB", "+1246", "Barbados"],
+  ["BY", "+375", "Belarus"], ["BE", "+32", "Belgium"], ["BZ", "+501", "Belize"],
+  ["BJ", "+229", "Benin"], ["BT", "+975", "Bhutan"], ["BO", "+591", "Bolivia"],
+  ["BA", "+387", "Bosnia and Herzegovina"], ["BW", "+267", "Botswana"], ["BR", "+55", "Brazil"],
+  ["BN", "+673", "Brunei"], ["BG", "+359", "Bulgaria"], ["BF", "+226", "Burkina Faso"],
+  ["BI", "+257", "Burundi"], ["CV", "+238", "Cabo Verde"], ["KH", "+855", "Cambodia"],
+  ["CM", "+237", "Cameroon"], ["CA", "+1", "Canada"], ["CF", "+236", "Central African Republic"],
+  ["TD", "+235", "Chad"], ["CL", "+56", "Chile"], ["CN", "+86", "China"],
+  ["CO", "+57", "Colombia"], ["KM", "+269", "Comoros"], ["CG", "+242", "Congo"],
+  ["CD", "+243", "Congo (DRC)"], ["CR", "+506", "Costa Rica"], ["CI", "+225", "Cote d'Ivoire"],
+  ["HR", "+385", "Croatia"], ["CU", "+53", "Cuba"], ["CY", "+357", "Cyprus"],
+  ["CZ", "+420", "Czechia"], ["DK", "+45", "Denmark"], ["DJ", "+253", "Djibouti"],
+  ["DM", "+1767", "Dominica"], ["DO", "+1809", "Dominican Republic"], ["EC", "+593", "Ecuador"],
+  ["EG", "+20", "Egypt"], ["SV", "+503", "El Salvador"], ["GQ", "+240", "Equatorial Guinea"],
+  ["ER", "+291", "Eritrea"], ["EE", "+372", "Estonia"], ["SZ", "+268", "Eswatini"],
+  ["ET", "+251", "Ethiopia"], ["FJ", "+679", "Fiji"], ["FI", "+358", "Finland"],
+  ["FR", "+33", "France"], ["GA", "+241", "Gabon"], ["GM", "+220", "Gambia"],
+  ["GE", "+995", "Georgia"], ["DE", "+49", "Germany"], ["GH", "+233", "Ghana"],
+  ["GR", "+30", "Greece"], ["GD", "+1473", "Grenada"], ["GT", "+502", "Guatemala"],
+  ["GN", "+224", "Guinea"], ["GW", "+245", "Guinea-Bissau"], ["GY", "+592", "Guyana"],
+  ["HT", "+509", "Haiti"], ["HN", "+504", "Honduras"], ["HU", "+36", "Hungary"],
+  ["IS", "+354", "Iceland"], ["IN", "+91", "India"], ["ID", "+62", "Indonesia"],
+  ["IR", "+98", "Iran"], ["IQ", "+964", "Iraq"], ["IE", "+353", "Ireland"],
+  ["IL", "+972", "Israel"], ["IT", "+39", "Italy"], ["JM", "+1876", "Jamaica"],
+  ["JP", "+81", "Japan"], ["JO", "+962", "Jordan"], ["KZ", "+7", "Kazakhstan"],
+  ["KE", "+254", "Kenya"], ["KI", "+686", "Kiribati"], ["KP", "+850", "North Korea"],
+  ["KR", "+82", "South Korea"], ["KW", "+965", "Kuwait"], ["KG", "+996", "Kyrgyzstan"],
+  ["LA", "+856", "Laos"], ["LV", "+371", "Latvia"], ["LB", "+961", "Lebanon"],
+  ["LS", "+266", "Lesotho"], ["LR", "+231", "Liberia"], ["LY", "+218", "Libya"],
+  ["LI", "+423", "Liechtenstein"], ["LT", "+370", "Lithuania"], ["LU", "+352", "Luxembourg"],
+  ["MG", "+261", "Madagascar"], ["MW", "+265", "Malawi"], ["MY", "+60", "Malaysia"],
+  ["MV", "+960", "Maldives"], ["ML", "+223", "Mali"], ["MT", "+356", "Malta"],
+  ["MH", "+692", "Marshall Islands"], ["MR", "+222", "Mauritania"], ["MU", "+230", "Mauritius"],
+  ["MX", "+52", "Mexico"], ["FM", "+691", "Micronesia"], ["MD", "+373", "Moldova"],
+  ["MC", "+377", "Monaco"], ["MN", "+976", "Mongolia"], ["ME", "+382", "Montenegro"],
+  ["MA", "+212", "Morocco"], ["MZ", "+258", "Mozambique"], ["MM", "+95", "Myanmar"],
+  ["NA", "+264", "Namibia"], ["NR", "+674", "Nauru"], ["NP", "+977", "Nepal"],
+  ["NL", "+31", "Netherlands"], ["NZ", "+64", "New Zealand"], ["NI", "+505", "Nicaragua"],
+  ["NE", "+227", "Niger"], ["NG", "+234", "Nigeria"], ["MK", "+389", "North Macedonia"],
+  ["NO", "+47", "Norway"], ["OM", "+968", "Oman"], ["PK", "+92", "Pakistan"],
+  ["PW", "+680", "Palau"], ["PS", "+970", "Palestine"], ["PA", "+507", "Panama"],
+  ["PG", "+675", "Papua New Guinea"], ["PY", "+595", "Paraguay"], ["PE", "+51", "Peru"],
+  ["PH", "+63", "Philippines"], ["PL", "+48", "Poland"], ["PT", "+351", "Portugal"],
+  ["QA", "+974", "Qatar"], ["RO", "+40", "Romania"], ["RU", "+7", "Russia"],
+  ["RW", "+250", "Rwanda"], ["KN", "+1869", "Saint Kitts and Nevis"], ["LC", "+1758", "Saint Lucia"],
+  ["VC", "+1784", "Saint Vincent and the Grenadines"], ["WS", "+685", "Samoa"], ["SM", "+378", "San Marino"],
+  ["ST", "+239", "Sao Tome and Principe"], ["SA", "+966", "Saudi Arabia"], ["SN", "+221", "Senegal"],
+  ["RS", "+381", "Serbia"], ["SC", "+248", "Seychelles"], ["SL", "+232", "Sierra Leone"],
+  ["SG", "+65", "Singapore"], ["SK", "+421", "Slovakia"], ["SI", "+386", "Slovenia"],
+  ["SB", "+677", "Solomon Islands"], ["SO", "+252", "Somalia"], ["ZA", "+27", "South Africa"],
+  ["SS", "+211", "South Sudan"], ["ES", "+34", "Spain"], ["LK", "+94", "Sri Lanka"],
+  ["SD", "+249", "Sudan"], ["SR", "+597", "Suriname"], ["SE", "+46", "Sweden"],
+  ["CH", "+41", "Switzerland"], ["SY", "+963", "Syria"], ["TW", "+886", "Taiwan"],
+  ["TJ", "+992", "Tajikistan"], ["TZ", "+255", "Tanzania"], ["TH", "+66", "Thailand"],
+  ["TL", "+670", "Timor-Leste"], ["TG", "+228", "Togo"], ["TO", "+676", "Tonga"],
+  ["TT", "+1868", "Trinidad and Tobago"], ["TN", "+216", "Tunisia"], ["TR", "+90", "Turkey"],
+  ["TM", "+993", "Turkmenistan"], ["TV", "+688", "Tuvalu"], ["UG", "+256", "Uganda"],
+  ["UA", "+380", "Ukraine"], ["AE", "+971", "United Arab Emirates"], ["GB", "+44", "United Kingdom"],
+  ["US", "+1", "United States"], ["UY", "+598", "Uruguay"], ["UZ", "+998", "Uzbekistan"],
+  ["VU", "+678", "Vanuatu"], ["VA", "+39", "Vatican City"], ["VE", "+58", "Venezuela"],
+  ["VN", "+84", "Vietnam"], ["YE", "+967", "Yemen"], ["ZM", "+260", "Zambia"],
+  ["ZW", "+263", "Zimbabwe"],
+].map(([code, dial, label]) => ({ code, dial, label }));
+
+export const splitPhoneNumber = (value) => {
+  const raw = String(value || "").trim();
+  if (raw.startsWith("+")) {
+    const country = [...PHONE_COUNTRIES]
+      .sort((a, b) => b.dial.length - a.dial.length)
+      .find(({ dial }) => raw.startsWith(dial));
+    if (country) {
+      return {
+        countryCode: country.code,
+        localNumber: raw.slice(country.dial.length).replace(/\D/g, ""),
+      };
+    }
+  }
+  return { countryCode: "IN", localNumber: raw.replace(/\D/g, "") };
 };
 
 
@@ -107,8 +192,8 @@ const PatientProfile = () => {
       name: "",
       age: null,
       gender: "",
-      dateOfBirth: "",
       bloodGroup: "",
+      dateOfBirth: "",
       email: "",
       phone: "",
       profilePhoto: "",
@@ -126,23 +211,6 @@ const PatientProfile = () => {
         phone: "",
       },
     },
-    medicalInfo: {
-      height: "",
-      weight: "",
-      allergies: [],
-      chronicConditions: [],
-      currentMedications: [],
-    },
-    insuranceInfo: {
-      provider: "",
-      policyNumber: "",
-      groupNumber: "",
-      coverageAmount: "",
-      validityDate: "",
-      nominee: "",
-      relationship: "",
-      insuranceType: "",
-    },
     security: {
       hasPassword: false,
       authProvider: "",
@@ -150,37 +218,16 @@ const PatientProfile = () => {
     },
   });
 
-  const insuranceProviders = [
-    "Star Health Insurance",
-    "ICICI Lombard",
-    "HDFC ERGO",
-    "Bajaj Allianz",
-    "New India Assurance",
-    "National Insurance",
-    "Oriental Insurance",
-    "United India Insurance",
-    "Max Bupa Health Insurance",
-    "Care Health Insurance",
-  ];
-
-  const insuranceTypes = [
-    "Individual",
-    "Family Floater",
-    "Senior Citizen",
-    "Critical Illness",
-    "Group Health Insurance",
-    "Maternity Insurance",
-  ];
-
   const [editFormData, setEditFormData] = useState({
     name: "",
     anonymous: "",
     age: "",
     gender: "",
-    dateOfBirth: "",
     bloodGroup: "",
+    dateOfBirth: "",
     email: "",
     phone: "",
+    phoneCountry: "IN",
     address: {
       line1: "",
       line2: "",
@@ -190,19 +237,6 @@ const PatientProfile = () => {
       country: "India",
     },
     emergencyContact: { name: "", relation: "", phone: "" },
-    height: "",
-    weight: "",
-    allergies: "",
-    chronicConditions: "",
-    currentMedications: "",
-    insuranceProvider: "",
-    policyNumber: "",
-    groupNumber: "",
-    coverageAmount: "",
-    validityDate: "",
-    nominee: "",
-    relationship: "",
-    insuranceType: "",
   });
 
   useEffect(() => {
@@ -270,10 +304,10 @@ const PatientProfile = () => {
             anonymous: userData.anonymous || "",
             age: userData.age || null,
             gender: userData.gender || "",
+            bloodGroup: userData.bloodGroup || "",
             dateOfBirth: userData.dateOfBirth
               ? userData.dateOfBirth.split("T")[0]
               : "",
-            bloodGroup: userData.bloodGroup || "",
             email: userData.email || "",
             phone: userData.phoneNumber || "",
             profilePhoto: profilePhotoUrl,
@@ -290,35 +324,6 @@ const PatientProfile = () => {
               relation: "",
               phone: "",
             },
-          },
-          medicalInfo: {
-            height: userData.medicalInfo?.height || "",
-            weight: userData.medicalInfo?.weight || "",
-            allergies: Array.isArray(userData.medicalInfo?.allergies)
-              ? userData.medicalInfo.allergies
-              : [],
-            chronicConditions: Array.isArray(
-              userData.medicalInfo?.chronicConditions,
-            )
-              ? userData.medicalInfo.chronicConditions
-              : [],
-            currentMedications: Array.isArray(
-              userData.medicalInfo?.currentMedications,
-            )
-              ? userData.medicalInfo.currentMedications
-              : [],
-          },
-          insuranceInfo: {
-            provider: userData.insuranceInfo?.provider || "",
-            policyNumber: userData.insuranceInfo?.policyNumber || "",
-            groupNumber: userData.insuranceInfo?.groupNumber || "",
-            coverageAmount: userData.insuranceInfo?.coverageAmount || "",
-            validityDate: userData.insuranceInfo?.validityDate
-              ? userData.insuranceInfo.validityDate.split("T")[0]
-              : "",
-            nominee: userData.insuranceInfo?.nominee || "",
-            relationship: userData.insuranceInfo?.relationship || "",
-            insuranceType: userData.insuranceInfo?.insuranceType || "",
           },
           security: {
             hasPassword:
@@ -374,6 +379,15 @@ const PatientProfile = () => {
   const isEmailDirty = () =>
     String(editFormData?.email || "").trim().toLowerCase() !==
     String(patientData?.personalInfo?.email || "").trim().toLowerCase();
+  const getCompletePhoneNumber = () => {
+    const localNumber = String(editFormData?.phone || "").replace(/\D/g, "");
+    if (!localNumber) return "";
+
+    const country =
+      PHONE_COUNTRIES.find(({ code }) => code === editFormData?.phoneCountry) ||
+      PHONE_COUNTRIES[0];
+    return `${country.dial}${localNumber}`;
+  };
   const emailReady =
     !isEmailDirty() ||
     (emailChange.verified &&
@@ -384,7 +398,7 @@ const PatientProfile = () => {
     const newValue =
       field === "email"
         ? String(editFormData.email || "").trim().toLowerCase()
-        : String(editFormData.phone || "").replace(/\D/g, "");
+        : getCompletePhoneNumber().replace(/\D/g, "");
     setState((s) => ({ ...s, sending: true, error: "" }));
     try {
       const res = await axios.post(
@@ -419,7 +433,7 @@ const PatientProfile = () => {
     const newValue =
       field === "email"
         ? String(editFormData.email || "").trim().toLowerCase()
-        : String(editFormData.phone || "").replace(/\D/g, "");
+        : getCompletePhoneNumber().replace(/\D/g, "");
     if (!state.otp || state.otp.length < 4) {
       setState((s) => ({ ...s, error: "Enter the OTP first" }));
       return;
@@ -469,12 +483,12 @@ const PatientProfile = () => {
     if (
       phoneChange.verified &&
       phoneChange.verifiedValue !==
-        String(editFormData?.phone || "").replace(/\D/g, "")
+        getCompletePhoneNumber().replace(/\D/g, "")
     ) {
       setPhoneChange(blankChange);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editFormData?.phone]);
+  }, [editFormData?.phone, editFormData?.phoneCountry]);
 
   // Reset everything when exiting edit mode.
   useEffect(() => {
@@ -487,15 +501,17 @@ const PatientProfile = () => {
 
   const initializeEditForm = (data) => {
     const dateOfBirth = data.personalInfo.dateOfBirth || "";
+    const phoneParts = splitPhoneNumber(data.personalInfo.phone);
     setEditFormData({
       name: data.personalInfo.name || "",
       anonymous: data.personalInfo.anonymous || "",
       age: calculateAge(dateOfBirth),
       gender: data.personalInfo.gender || "",
-      dateOfBirth,
       bloodGroup: data.personalInfo.bloodGroup || "",
+      dateOfBirth,
       email: data.personalInfo.email || "",
-      phone: data.personalInfo.phone || "",
+      phone: phoneParts.localNumber,
+      phoneCountry: phoneParts.countryCode,
       address: {
         line1: data.personalInfo.address?.line1 || "",
         line2: data.personalInfo.address?.line2 || "",
@@ -509,25 +525,6 @@ const PatientProfile = () => {
         relation: data.personalInfo.emergencyContact?.relation || "",
         phone: data.personalInfo.emergencyContact?.phone || "",
       },
-      height: data.medicalInfo.height || "",
-      weight: data.medicalInfo.weight || "",
-      allergies: Array.isArray(data.medicalInfo.allergies)
-        ? data.medicalInfo.allergies.join(", ")
-        : "",
-      chronicConditions: Array.isArray(data.medicalInfo.chronicConditions)
-        ? data.medicalInfo.chronicConditions.join(", ")
-        : "",
-      currentMedications: Array.isArray(data.medicalInfo.currentMedications)
-        ? data.medicalInfo.currentMedications.join(", ")
-        : "",
-      insuranceProvider: data.insuranceInfo.provider || "",
-      policyNumber: data.insuranceInfo.policyNumber || "",
-      groupNumber: data.insuranceInfo.groupNumber || "",
-      coverageAmount: data.insuranceInfo.coverageAmount || "",
-      validityDate: data.insuranceInfo.validityDate || "",
-      nominee: data.insuranceInfo.nominee || "",
-      relationship: data.insuranceInfo.relationship || "",
-      insuranceType: data.insuranceInfo.insuranceType || "",
     });
   };
 
@@ -603,10 +600,10 @@ const PatientProfile = () => {
       formData.append("fullName", editFormData.name);
       formData.append("anonymous", editFormData.anonymous || "");
       formData.append("email", editFormData.email);
-      formData.append("phoneNumber", editFormData.phone);
+      formData.append("phoneNumber", getCompletePhoneNumber());
       formData.append("age", String(calculatedAge));
       formData.append("gender", editFormData.gender);
-      formData.append("bloodGroup", editFormData.bloodGroup);
+      formData.append("bloodGroup", editFormData.bloodGroup || "");
       formData.append("dateOfBirth", editFormData.dateOfBirth);
 
       const addressObj = {
@@ -618,42 +615,6 @@ const PatientProfile = () => {
         "emergencyContact",
         JSON.stringify(editFormData.emergencyContact),
       );
-
-      const medicalObj = {
-        height: editFormData.height,
-        weight: editFormData.weight,
-        allergies: editFormData.allergies
-          ? editFormData.allergies
-              .split(",")
-              .map((item) => item.trim())
-              .filter((item) => item)
-          : [],
-        chronicConditions: editFormData.chronicConditions
-          ? editFormData.chronicConditions
-              .split(",")
-              .map((item) => item.trim())
-              .filter((item) => item)
-          : [],
-        currentMedications: editFormData.currentMedications
-          ? editFormData.currentMedications
-              .split(",")
-              .map((item) => item.trim())
-              .filter((item) => item)
-          : [],
-      };
-      formData.append("medicalInfo", JSON.stringify(medicalObj));
-
-      const insuranceObj = {
-        provider: editFormData.insuranceProvider,
-        policyNumber: editFormData.policyNumber,
-        groupNumber: editFormData.groupNumber,
-        coverageAmount: editFormData.coverageAmount,
-        validityDate: editFormData.validityDate,
-        nominee: editFormData.nominee,
-        relationship: editFormData.relationship,
-        insuranceType: editFormData.insuranceType,
-      };
-      formData.append("insuranceInfo", JSON.stringify(insuranceObj));
 
       if (profileImageFile) {
         formData.append("profilePhoto", profileImageFile);
@@ -762,49 +723,8 @@ const PatientProfile = () => {
     });
   };
 
-  if (isInitialLoading && !patientData.personalInfo.id) {
-    return (
-      <div className="profile-container">
-        <div className="profile-skeleton" aria-label="Loading profile">
-          <div className="profile-header profile-skeleton-header">
-            <div className="skeleton-avatar shimmer" />
-            <div className="skeleton-profile-copy">
-              <div className="skeleton-line shimmer skeleton-name" />
-              <div className="skeleton-line shimmer skeleton-email" />
-              <div className="skeleton-badge-row">
-                <div className="skeleton-badge shimmer" />
-                <div className="skeleton-badge shimmer" />
-                <div className="skeleton-badge shimmer" />
-              </div>
-            </div>
-            <div className="skeleton-actions">
-              <div className="skeleton-button shimmer" />
-              <div className="skeleton-button shimmer" />
-            </div>
-          </div>
-
-          <div className="profile-content">
-            {[0, 1, 2].map((card) => (
-              <div className="info-card-modern skeleton-card" key={card}>
-                <div className="skeleton-line shimmer skeleton-card-title" />
-                <div className="skeleton-grid">
-                  {[0, 1, 2, 3, 4, 5].map((item) => (
-                    <div className="skeleton-field" key={item}>
-                      <div className="skeleton-line shimmer skeleton-label" />
-                      <div className="skeleton-line shimmer skeleton-value" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="profile-container">
+    <div className="profile-container" aria-busy={isInitialLoading}>
       {showNotification.show && (
         <div className={`notification ${showNotification.type}`}>
           {showNotification.message}
@@ -845,9 +765,6 @@ const PatientProfile = () => {
             ID: #{patientData.personalInfo.id?.slice(-8).toUpperCase()}
           </p>
           <div className="badge-group">
-            <span className="badge">
-              Blood - {patientData.personalInfo.bloodGroup || "--"}
-            </span>
             <span className="badge">
               Gender - {patientData.personalInfo.gender || "--"}
             </span>
@@ -896,6 +813,10 @@ const PatientProfile = () => {
             <div className="info-item">
               <label>{t('profile.gender')}</label>
               <span>{patientData.personalInfo.gender || t('profile.notSpecified')}</span>
+            </div>
+            <div className="info-item">
+              <label>{t('profile.bloodGroup')}</label>
+              <span>{patientData.personalInfo.bloodGroup || t('profile.notSpecified')}</span>
             </div>
             <div className="info-item">
               <label>{t('profile.email')}</label>
@@ -981,114 +902,6 @@ const PatientProfile = () => {
           </div>
         </div>
 
-        {/* Medical Information */}
-        <div className="info-card-modern">
-          <div className="card-header">
-            <h2><FaBriefcaseMedical /> {t('profile.medicalInformation')}</h2>
-          </div>
-          <div className="medical-grid">
-            <div className="vital-stats">
-              <h3>{t('profile.vitalStats')}</h3>
-              <div className="vital-row">
-                <span>{t('profile.height')}</span>
-                <strong>{patientData.medicalInfo?.height || "--"} cm</strong>
-              </div>
-              <div className="vital-row">
-                <span>{t('profile.weight')}</span>
-                <strong>{patientData.medicalInfo?.weight || "--"} kg</strong>
-              </div>
-            </div>
-            <div className="conditions-list">
-              {patientData.medicalInfo?.allergies?.length > 0 && (
-                <div>
-                  <h4>{t('profile.allergies')}</h4>
-                  <div className="tags">
-                    {patientData.medicalInfo.allergies.map((a, i) => (
-                      <span key={i} className="tag">
-                        {a}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {patientData.medicalInfo?.chronicConditions?.length > 0 && (
-                <div>
-                  <h4>{t('profile.chronicConditions')}</h4>
-                  <div className="tags">
-                    {patientData.medicalInfo.chronicConditions.map((c, i) => (
-                      <span key={i} className="tag">
-                        {c}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {patientData.medicalInfo?.currentMedications?.length > 0 && (
-                <div>
-                  <h4>{t('profile.currentMedications')}</h4>
-                  <div className="tags">
-                    {patientData.medicalInfo.currentMedications.map((m, i) => (
-                      <span key={i} className="tag">
-                        {m}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {!patientData.medicalInfo?.allergies?.length &&
-                !patientData.medicalInfo?.chronicConditions?.length &&
-                !patientData.medicalInfo?.currentMedications?.length && (
-                  <p className="no-data">No medical information provided</p>
-                )}
-            </div>
-          </div>
-        </div>
-
-        {/* Insurance Information */}
-        <div className="info-card-modern">
-          <div className="card-header">
-            <h2><FaShieldAlt /> {t('profile.insuranceInformation')}</h2>
-          </div>
-          {patientData.insuranceInfo?.provider ? (
-            <div className="insurance-display">
-              <div className="insurance-header">
-                <h3>{patientData.insuranceInfo.provider}</h3>
-                <span className="insurance-badge">
-                  {patientData.insuranceInfo.insuranceType}
-                </span>
-              </div>
-              <div className="insurance-details">
-                <div>
-                  <span>Policy Number:</span>{" "}
-                  <strong>{patientData.insuranceInfo.policyNumber}</strong>
-                </div>
-                <div>
-                  <span>Group Number:</span>{" "}
-                  <strong>{patientData.insuranceInfo.groupNumber}</strong>
-                </div>
-                <div>
-                  <span>Coverage Amount:</span>{" "}
-                  <strong>{patientData.insuranceInfo.coverageAmount}</strong>
-                </div>
-                <div>
-                  <span>Validity:</span>{" "}
-                  <strong>
-                    {formatDate(patientData.insuranceInfo.validityDate)}
-                  </strong>
-                </div>
-                <div>
-                  <span>Nominee:</span>{" "}
-                  <strong>
-                    {patientData.insuranceInfo.nominee} (
-                    {patientData.insuranceInfo.relationship})
-                  </strong>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <p className="no-data">No insurance information added yet.</p>
-          )}
-        </div>
         </aside>
       </div>
 
@@ -1162,13 +975,19 @@ const PatientProfile = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Patient ID</label>
-                    <input
-                      type="text"
-                      value={patientData.personalInfo.id}
-                      readOnly
-                      className="readonly"
-                    />
+                    <label>Blood Group</label>
+                    <select
+                      name="bloodGroup"
+                      value={editFormData.bloodGroup}
+                      onChange={handleEditFormChange}
+                    >
+                      <option value="">Select Blood Group</option>
+                      {BLOOD_GROUPS.map((bloodGroup) => (
+                        <option key={bloodGroup} value={bloodGroup}>
+                          {bloodGroup}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
                 <div className="form-row">
@@ -1181,6 +1000,20 @@ const PatientProfile = () => {
                       onChange={handleEditFormChange}
                       placeholder="Display name for anonymous chats"
                     />
+                  </div>
+                  <div className="form-group">
+                    <label>Gender *</label>
+                    <select
+                      name="gender"
+                      value={editFormData.gender}
+                      onChange={handleEditFormChange}
+                      required
+                    >
+                      <option value="">Select</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
                   </div>
                 </div>
                 <div className="form-row">
@@ -1202,40 +1035,6 @@ const PatientProfile = () => {
                       value={calculateAge(editFormData.dateOfBirth)}
                       readOnly
                     />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Gender *</label>
-                    <select
-                      name="gender"
-                      value={editFormData.gender}
-                      onChange={handleEditFormChange}
-                      required
-                    >
-                      <option value="">Select</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Blood Group</label>
-                    <select
-                      name="bloodGroup"
-                      value={editFormData.bloodGroup}
-                      onChange={handleEditFormChange}
-                    >
-                      <option value="">Select</option>
-                      <option>A+</option>
-                      <option>A-</option>
-                      <option>B+</option>
-                      <option>B-</option>
-                      <option>O+</option>
-                      <option>O-</option>
-                      <option>AB+</option>
-                      <option>AB-</option>
-                    </select>
                   </div>
                 </div>
                 <div className="form-row">
@@ -1307,13 +1106,36 @@ const PatientProfile = () => {
                   </div>
                   <div className="form-group">
                     <label>Phone *</label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={editFormData.phone}
-                      onChange={handleEditFormChange}
-                      required
-                    />
+                    <div className="phone-country-field">
+                      <select
+                        className="phone-country-select"
+                        name="phoneCountry"
+                        value={editFormData.phoneCountry}
+                        onChange={handleEditFormChange}
+                        aria-label="Phone country code"
+                      >
+                        {PHONE_COUNTRIES.map((country) => (
+                          <option key={country.code} value={country.code}>
+                            {country.label} ({country.dial})
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        className="phone-local-input"
+                        type="tel"
+                        name="phone"
+                        inputMode="tel"
+                        value={editFormData.phone}
+                        onChange={(event) =>
+                          setEditFormData((previous) => ({
+                            ...previous,
+                            phone: event.target.value.replace(/[^\d\s()-]/g, ""),
+                          }))
+                        }
+                        placeholder="Phone number"
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1321,23 +1143,25 @@ const PatientProfile = () => {
               {/* Address */}
               <div className="form-section">
                 <h4>Address</h4>
-                <div className="form-group">
-                  <label>Line 1</label>
-                  <input
-                    type="text"
-                    name="address.line1"
-                    value={editFormData.address.line1}
-                    onChange={handleEditFormChange}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Line 2</label>
-                  <input
-                    type="text"
-                    name="address.line2"
-                    value={editFormData.address.line2}
-                    onChange={handleEditFormChange}
-                  />
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Line 1</label>
+                    <input
+                      type="text"
+                      name="address.line1"
+                      value={editFormData.address.line1}
+                      onChange={handleEditFormChange}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Line 2</label>
+                    <input
+                      type="text"
+                      name="address.line2"
+                      value={editFormData.address.line2}
+                      onChange={handleEditFormChange}
+                    />
+                  </div>
                 </div>
                 <div className="form-row">
                   <div className="form-group">
@@ -1415,154 +1239,6 @@ const PatientProfile = () => {
                 </div>
               </div>
 
-              {/* Medical */}
-              <div className="form-section">
-                <h4>Medical Information</h4>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Height (cm)</label>
-                    <input
-                      type="text"
-                      name="height"
-                      value={editFormData.height}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Weight (kg)</label>
-                    <input
-                      type="text"
-                      name="weight"
-                      value={editFormData.weight}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>Allergies (comma separated)</label>
-                  <input
-                    type="text"
-                    name="allergies"
-                    value={editFormData.allergies}
-                    onChange={handleEditFormChange}
-                    placeholder="e.g., Penicillin, Dust"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Chronic Conditions</label>
-                  <input
-                    type="text"
-                    name="chronicConditions"
-                    value={editFormData.chronicConditions}
-                    onChange={handleEditFormChange}
-                    placeholder="e.g., Diabetes, Hypertension"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Current Medications</label>
-                  <input
-                    type="text"
-                    name="currentMedications"
-                    value={editFormData.currentMedications}
-                    onChange={handleEditFormChange}
-                    placeholder="e.g., Metformin 500mg"
-                  />
-                </div>
-              </div>
-
-              {/* Insurance */}
-              <div className="form-section">
-                <h4>Insurance Information</h4>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Provider</label>
-                    <select
-                      name="insuranceProvider"
-                      value={editFormData.insuranceProvider}
-                      onChange={handleEditFormChange}
-                    >
-                      <option value="">Select</option>
-                      {insuranceProviders.map((p) => (
-                        <option key={p}>{p}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Insurance Type</label>
-                    <select
-                      name="insuranceType"
-                      value={editFormData.insuranceType}
-                      onChange={handleEditFormChange}
-                    >
-                      <option value="">Select</option>
-                      {insuranceTypes.map((t) => (
-                        <option key={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Policy Number</label>
-                    <input
-                      type="text"
-                      name="policyNumber"
-                      value={editFormData.policyNumber}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Group Number</label>
-                    <input
-                      type="text"
-                      name="groupNumber"
-                      value={editFormData.groupNumber}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Coverage Amount</label>
-                    <input
-                      type="text"
-                      name="coverageAmount"
-                      value={editFormData.coverageAmount}
-                      onChange={handleEditFormChange}
-                      placeholder="₹5,00,000"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Validity Date</label>
-                    <input
-                      type="date"
-                      name="validityDate"
-                      value={editFormData.validityDate}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Nominee</label>
-                    <input
-                      type="text"
-                      name="nominee"
-                      value={editFormData.nominee}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label>Relationship</label>
-                    <input
-                      type="text"
-                      name="relationship"
-                      value={editFormData.relationship}
-                      onChange={handleEditFormChange}
-                    />
-                  </div>
-                </div>
-              </div>
             </div>
             <div className="patient-profile-modal-footer">
               <button

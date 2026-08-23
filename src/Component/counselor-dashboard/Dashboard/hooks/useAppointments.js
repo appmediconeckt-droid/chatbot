@@ -198,6 +198,11 @@ export default function useAppointments(activeTab) {
 
   // ✅ Fetch appointments when tab changes
   useEffect(() => {
+    fetchAppointments("");
+    fetchSessionAppointments(sessionSelectedDate);
+  }, [fetchAppointments, fetchSessionAppointments]);
+
+  useEffect(() => {
     if (activeTab === 'appointments') {
       fetchAppointments(selectedDate);
     } else if (activeTab === 'sessions') {

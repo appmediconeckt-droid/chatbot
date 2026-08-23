@@ -701,7 +701,7 @@
 
 
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
 import "./Messagesou.css";
@@ -722,9 +722,10 @@ import {
 import NotificationBell from "./NotificationBell";
 import PendingRequestsModal from "./PendingRequestsModal";
 import { translateMessage } from "../../../../services/messageTranslationService";
-import { ChatListSkeleton } from "../../../common/Skeletons/Skeletons";
 import { getTimeGreetingKey } from "../../../../utils/timeGreeting";
 import SMSInput from "../SMSInput/SMSInput";
+
+const LAST_OPEN_COUNSELOR_CHAT_KEY = "humaeli:last-open-chat:counselor";
 
 /**
  * SMSList Component - Fetches and displays users/patients list from API
@@ -735,7 +736,9 @@ const SMSList = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState([]);
   const [originalUsers, setOriginalUsers] = useState([]);
-  const [selectedChatId, setSelectedChatId] = useState(null);
+  const [selectedChatId, setSelectedChatId] = useState(() =>
+    localStorage.getItem(LAST_OPEN_COUNSELOR_CHAT_KEY),
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
@@ -745,6 +748,7 @@ const SMSList = () => {
   const [contextMenu, setContextMenu] = useState(null);
   const [activeFilter, setActiveFilter] = useState("all");
   const [selectedConversation, setSelectedConversation] = useState(null);
+  const initialConversationOpened = useRef(false);
   const navigate = useNavigate();
 
   const handleSessionExpired = useCallback(() => {
@@ -890,7 +894,7 @@ const SMSList = () => {
   }, []);
 
   // Fetch chats from API
-  const fetchChats = useCallback(async () => {
+  const fetchChats = useCallback(async ({ showLoader = true } = {}) => {
     const token =
       localStorage.getItem("token") || localStorage.getItem("accessToken");
     if (!token) {
@@ -898,7 +902,7 @@ const SMSList = () => {
       return;
     }
     try {
-      setLoading(true);
+      if (showLoader) setLoading(true);
       const response = await fetch(`${API_BASE_URL}/api/chat/chats`, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -1024,6 +1028,7 @@ const SMSList = () => {
 
   useEffect(() => {
     let mounted = true;
+    const refreshChatListSilently = () => fetchChats({ showLoader: false });
 
     const onPresenceUpdate = (payload = {}) => {
       if (!mounted) return;
@@ -1063,7 +1068,7 @@ const SMSList = () => {
     socketService.connect().then((socket) => {
       if (!mounted) return;
       socket.on("presence-update", onPresenceUpdate);
-      socket.on("chat-list-update", fetchChats);
+      socket.on("chat-list-update", refreshChatListSilently);
       socket.on("connect_error", onConnectError);
     }).catch((err) => {
       console.error("[Messagesou] Socket connect failed:", err.message);
@@ -1072,7 +1077,7 @@ const SMSList = () => {
     return () => {
       mounted = false;
       socketService.off("presence-update", onPresenceUpdate);
-      socketService.off("chat-list-update", fetchChats);
+      socketService.off("chat-list-update", refreshChatListSilently);
       socketService.off("connect_error", onConnectError);
     };
   }, [fetchChats]);
@@ -1151,7 +1156,29 @@ const SMSList = () => {
   const handleUserClick = (user) => {
     setSelectedChatId(user.chatId);
     setSelectedConversation(user);
+    localStorage.setItem(LAST_OPEN_COUNSELOR_CHAT_KEY, user.chatId);
   };
+
+  // Restore the last open patient after the API list is ready. If that chat is
+  // no longer present, open the most recently active conversation instead.
+  useEffect(() => {
+    if (initialConversationOpened.current || loading || users.length === 0) {
+      return;
+    }
+
+    const lastChatId = localStorage.getItem(LAST_OPEN_COUNSELOR_CHAT_KEY);
+    const conversationToOpen =
+      users.find((user) => String(user.chatId) === String(lastChatId)) || users[0];
+
+    if (!conversationToOpen) return;
+    initialConversationOpened.current = true;
+    setSelectedChatId(conversationToOpen.chatId);
+    setSelectedConversation(conversationToOpen);
+    localStorage.setItem(
+      LAST_OPEN_COUNSELOR_CHAT_KEY,
+      conversationToOpen.chatId,
+    );
+  }, [loading, users]);
 
   const handleDeleteChat = async (event, user) => {
     event.stopPropagation();
@@ -1177,6 +1204,12 @@ const SMSList = () => {
         items.filter((item) => item.chatId !== user.chatId);
       setUsers(removeHiddenChat);
       setOriginalUsers(removeHiddenChat);
+      if (String(selectedChatId) === String(user.chatId)) {
+        setSelectedChatId(null);
+        setSelectedConversation(null);
+        localStorage.removeItem(LAST_OPEN_COUNSELOR_CHAT_KEY);
+        initialConversationOpened.current = false;
+      }
     } catch (err) {
       console.error("Error hiding chat:", err);
       setError(err.message);
@@ -1270,30 +1303,6 @@ const SMSList = () => {
     return "NORMAL";
   };
 
-  if (loading) {
-    return (
-      <div className="smslist-container">
-        <div className="smslist-header">
-          <div className="smslist-welcome">
-            <h1>{t(getTimeGreetingKey())}</h1>
-          </div>
-        </div>
-        <div className="smslist-filters">
-          <button className="filter-btn active">{t("all")}</button>
-          <button className="filter-btn">{t("unread")}</button>
-          <button className="filter-btn">{t("online")}</button>
-          <button className="filter-btn">{t("recent")}</button>
-        </div>
-        <ChatListSkeleton rows={6} />
-        <div className="smslist-footer">
-          <button className="footer-btn">{t("language")}</button>
-          <button className="footer-btn">{t("profile.myProfile")}</button>
-          <button className="footer-btn logout-btn">{t("common.logout")}</button>
-        </div>
-      </div>
-    );
-  }
-
   if (error) {
     return (
       <div className="smslist-container">
@@ -1313,7 +1322,7 @@ const SMSList = () => {
   }
 
   return (
-    <div className={`counselor-chat-workspace ${selectedConversation ? "has-open-chat" : ""}`}>
+    <div aria-busy={loading} className={`counselor-chat-workspace ${selectedConversation ? "has-open-chat" : ""}`}>
       <div className="counselor-chat-search">
         <FaSearch aria-hidden="true" />
         <input

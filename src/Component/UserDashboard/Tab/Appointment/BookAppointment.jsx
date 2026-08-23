@@ -1236,6 +1236,12 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [searchLocation, setSearchLocation] = useState("");
   const [directoryFilter, setDirectoryFilter] = useState("all");
+  const [showAllCounselors, setShowAllCounselors] = useState(false);
+  const [directoryColumnCount, setDirectoryColumnCount] = useState(() => {
+    if (window.innerWidth <= 800) return 1;
+    if (window.innerWidth <= 1300) return 2;
+    return 3;
+  });
   const [uniqueLocations, setUniqueLocations] = useState([]);
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
 
@@ -1244,6 +1250,20 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       setSearchTerm(initialSearch);
     }
   }, [initialSearch]);
+
+  useEffect(() => {
+    const updateColumnCount = () => {
+      if (window.innerWidth <= 800) setDirectoryColumnCount(1);
+      else if (window.innerWidth <= 1300) setDirectoryColumnCount(2);
+      else setDirectoryColumnCount(3);
+    };
+    window.addEventListener("resize", updateColumnCount);
+    return () => window.removeEventListener("resize", updateColumnCount);
+  }, []);
+
+  useEffect(() => {
+    setShowAllCounselors(false);
+  }, [directoryFilter, searchTerm, searchLocation]);
 
   // Get user ID and token from localStorage
   const userId = localStorage.getItem("userId");
@@ -1575,10 +1595,13 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             // counselor can remain displayed as online.
             const presence = getPresence(c);
             const isOnline = presence.isOnline;
+            const specialization = Array.isArray(c.specialization)
+              ? c.specialization.join(" , ")
+              : String(c.specialization || "General");
             return {
               id: c._id,
               name: c.fullName,
-              specialization: c.specialization?.join(" , ") || "General",
+              specialization,
               experience: `${c.experience || 0} years`,
               rating: c.rating || 4.5,
               online: isOnline,
@@ -1591,7 +1614,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               lastSeen: c.lastSeen || null,
               avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
               avatarType: getProfilePhotoUrl(c) ? "image" : "text",
-              expertise: c.specialization || [],
+              expertise: Array.isArray(c.specialization)
+                ? c.specialization
+                : c.specialization
+                  ? [c.specialization]
+                  : [],
               responseTime: "< 10 seconds",
               profilePhoto: c.profilePhoto,
               email: c.email,
@@ -1621,6 +1648,15 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
     };
 
     fetchCounselors();
+    const presenceRefreshInterval = window.setInterval(fetchCounselors, 20_000);
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") fetchCounselors();
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(presenceRefreshInterval);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, []);
 
   useEffect(() => {
@@ -2093,6 +2129,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       Number(b.online) - Number(a.online) ||
       Number(b.rating || 0) - Number(a.rating || 0),
     )[0];
+  const collapsedCounselorLimit = directoryColumnCount * 3;
+  const visibleDirectoryCounselors = showAllCounselors
+    ? directoryCounselors
+    : directoryCounselors.slice(0, collapsedCounselorLimit);
 
   return (
     <div className="counselor-request-unique">
@@ -2272,7 +2312,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                     )}
                   </div>
                   <div>
-                    <h3>{recommendedCounselor.name} <span>✓</span></h3>
+                    <h3>{recommendedCounselor.name}</h3>
                     <p>{recommendedCounselor.specialization}</p>
                     <div className="recommended-stats-unique">
                       <span>▣ {recommendedCounselor.experience} experience</span>
@@ -2301,7 +2341,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
           <div className="available-heading-unique">
             <h2>{t("available_counselors")}</h2>
-            <button type="button" onClick={() => setDirectoryFilter("all")}>{t("see_all")}</button>
+            {directoryCounselors.length > collapsedCounselorLimit && (
+              <button type="button" onClick={() => setShowAllCounselors((current) => !current)}>
+                {showAllCounselors ? "See Less" : t("see_all")}
+              </button>
+            )}
           </div>
 
           {/* No Results Message */}
@@ -2321,7 +2365,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
           {/* Desktop View - Cards Grid */}
           <div className="counselors-grid-unique desktop-view">
-            {directoryCounselors.map((counselor) => {
+            {visibleDirectoryCounselors.map((counselor) => {
               const buttonState = getChatButtonState(counselor);
               
               return (
@@ -2404,7 +2448,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
           {/* Mobile View - Table/List Style */}
           <div className="counselors-table-unique mobile-view">
-            {directoryCounselors.map((counselor) => {
+            {visibleDirectoryCounselors.map((counselor) => {
               const buttonState = getChatButtonState(counselor);
               
               return (

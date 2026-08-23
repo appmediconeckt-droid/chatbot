@@ -1,4 +1,33 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600&family=Poppins:wght@400;500;600;700&display=swap');
+
 /* CounselorDashboard.css */
+
+/* Keep typography consistent across every counselor-portal screen. */
+.couns-dashboard,
+.couns-dashboard *:not(.material-symbols-outlined) {
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+}
+
+/* Figma sidebar label typography. Text width remains content-driven. */
+.couns-dashboard .couns-sidebar-text {
+  display: flex;
+  align-items: center;
+  width: auto;
+  min-height: 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  font-style: normal;
+  line-height: 14px !important;
+  letter-spacing: 0 !important;
+  vertical-align: middle;
+}
+
+/* Sidebar navigation icons stay black in normal and active states. */
+.couns-dashboard .couns-sidebar-menu .couns-sidebar-icon,
+.couns-dashboard .couns-sidebar-menu .couns-sidebar-item.couns-active .couns-sidebar-icon {
+  color: #111111 !important;
+}
 
 :root {
   --couns-primary: #6B46C1;
@@ -4612,7 +4641,7 @@ button:focus {
 /* Counselor call history — scoped so the user portal stays unchanged */
 .couns-call-page {
   min-height: 100%;
-  padding: clamp(18px, 3vw, 36px);
+  padding: 10px clamp(18px, 3vw, 36px) clamp(18px, 3vw, 36px);
   background:
     radial-gradient(circle at 100% 0, rgba(8, 117, 242, 0.12), transparent 28rem),
     #f7f9fd;
@@ -4622,7 +4651,7 @@ button:focus {
   margin-bottom: 18px;
   padding: 22px 24px;
   color: #fff;
-  background: linear-gradient(112deg, #0875f2 0%, #0753ae 100%);
+  /* background: linear-gradient(112deg, #0875f2 0%, #0753ae 100%); */
   border: 1px solid transparent;
   border-radius: 18px;
   box-shadow: 0 10px 30px rgba(15, 35, 65, 0.06);
@@ -4630,7 +4659,7 @@ button:focus {
 
 .couns-call-page-header h2 {
   margin: 0;
-  color: #fff;
+  color: #000;
   font-family: 'Manrope', sans-serif;
   font-size: clamp(22px, 2.3vw, 30px);
   font-weight: 750;
@@ -4639,7 +4668,7 @@ button:focus {
 
 .couns-call-page-header p {
   margin: 7px 0 0;
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(10, 10, 10, 0.82);
   font-size: 13px;
 }
 
@@ -4798,7 +4827,7 @@ button:focus {
 
 @media (max-width: 680px) {
   .couns-call-page {
-    padding: 14px;
+    padding: 8px 14px 14px;
   }
 
   .couns-call-page-header {
@@ -5783,5 +5812,23 @@ button:focus {
   .stitch-apt-toolbar .stitch-apt-filter-tab {
     padding-inline: 11px !important;
     gap: 6px !important;
+  }
+}
+
+/* Figma sidebar profile frame: Vertical / Fill 231px / Hug / bottom 24px. */
+@media (min-width: 769px) {
+  .couns-sidebar-header {
+    display: flex;
+    justify-content: center;
+  }
+
+  .couns-profile-section {
+    width: 231px;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    flex-direction: column;
+    padding-bottom: 24px;
+    box-sizing: border-box;
   }
 }

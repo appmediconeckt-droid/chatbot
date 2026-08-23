@@ -429,9 +429,11 @@
 @media (max-width: 640px) {
   .us-wrapper {
     place-items: start center;
-    padding: max(12px, env(safe-area-inset-top)) 12px max(18px, env(safe-area-inset-bottom));
+    padding: max(6px, env(safe-area-inset-top)) 12px max(18px, env(safe-area-inset-bottom));
     scrollbar-width: thin;
   }
+
+  .us-otp-page-container { margin-top: 0; }
 
   .us-wrapper::-webkit-scrollbar { width: 5px; }
 

@@ -3688,13 +3688,14 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   });
 
   const getMergedTimeline = useCallback(() => {
-    const allItems = [...messages, ...callHistory];
-    return allItems.sort((a, b) => {
+    // Keep the counselor Chat menu message-only. Call records remain available
+    // in the dedicated Call History menu and must not be mixed into chats.
+    return [...messages].sort((a, b) => {
       const timeA = a.fullTime || a.createdAt || a.timestamp || a.time;
       const timeB = b.fullTime || b.createdAt || b.timestamp || b.time;
       return new Date(timeA) - new Date(timeB);
     });
-  }, [messages, callHistory]);
+  }, [messages]);
 
   const getMessageDayKey = (item) => {
     const timestamp = item?.fullTime || item?.createdAt || item?.timestamp;
@@ -4050,7 +4051,8 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   };
 
   const handleSendMessage = async (e) => {
-    e.preventDefault();
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
     if (!message.trim() || !selectedUser || isSending) return;
     const messageText = message.trim();
     const tempMessage = {
@@ -5602,7 +5604,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       </div>
 
       {/* Input Form */}
-      <form className="smsinput-form" onSubmit={handleSendMessage}>
+      <div className="smsinput-form" role="group" aria-label={t("chat.typePlaceholder")}>
         <div className="smsinput-input-wrapper">
           <input ref={fileInputRef} type="file" style={{ display: "none" }} onChange={handleFileSelected} />
           <input ref={cameraInputRef} type="file" capture="environment" style={{ display: "none" }} onChange={handleFileSelected} />
@@ -5619,9 +5621,10 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
             disabled={isSending}
           />
           <button
-            type="submit"
+            type="button"
             className={`send-btn ${message.trim() && !isSending ? "active" : ""}`}
             disabled={!message.trim() || isSending}
+            onClick={handleSendMessage}
             aria-label={isSending ? t("sending_message") : t("chat.sendMessage")}
             title={isSending ? t("sending") : t("chat.sendMessage")}
           >
@@ -5632,7 +5635,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
             )}
           </button>
         </div>
-      </form>
+      </div>
 
       {/* Call Modals */}
       <VideoCallModal

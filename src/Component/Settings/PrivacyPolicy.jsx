@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   FaCloud,
   FaLock,
@@ -26,22 +26,7 @@ const SUPPORT_PHONE = "9152987821";
 
 const PrivacyPolicy = ({ variant = "dashboard" }) => {
   const isPublic = variant === "public";
-
-  const ExpandableSection = ({ icon, title, defaultOpen = false, children }) => (
-    <details
-      className="privacy-policy-expandable"
-      defaultOpen={defaultOpen}
-    >
-      <summary>
-        <span className="privacy-policy-expandable-header">
-          <i>{icon}</i>
-          {title}
-        </span>
-        <FaChevronDown />
-      </summary>
-      <div className="privacy-policy-expandable-content">{children}</div>
-    </details>
-  );
+  const [openSection, setOpenSection] = useState(isPublic ? null : 0);
 
   const sections = [
     {
@@ -365,14 +350,27 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
 
       <div className="privacy-policy-content">
         {sections.map((section, index) => (
-          <ExpandableSection
+          <details
             key={section.title}
-            icon={section.icon}
-            title={section.title}
-            defaultOpen={!isPublic && index === 0}
+            className="privacy-policy-expandable"
+            open={openSection === index}
           >
-            {section.content}
-          </ExpandableSection>
+            <summary
+              onClick={(event) => {
+                event.preventDefault();
+                setOpenSection(index);
+              }}
+            >
+              <span className="privacy-policy-expandable-header">
+                <i>{section.icon}</i>
+                {section.title}
+              </span>
+              <FaChevronDown />
+            </summary>
+            <div className="privacy-policy-expandable-content">
+              {section.content}
+            </div>
+          </details>
         ))}
       </div>
 
@@ -403,9 +401,6 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
               }}
             >
               <FaPhone /> Call
-            </button>
-            <button type="button" className="support-btn support-btn--tertiary">
-              <FaCommentDots /> Live Chat
             </button>
           </div>
         </section>

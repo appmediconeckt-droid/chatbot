@@ -21,7 +21,6 @@ import "./VideoCallModal.css";
 import {
   FaDesktop,
   FaCompress,
-  FaCommentAlt,
   FaExpand,
   FaMicrophone,
   FaMicrophoneSlash,
@@ -285,6 +284,7 @@ const StreamVideoBody = ({
   calleeName,
   elapsedSeconds,
   remoteProfilePhoto,
+  muteRemoteAudio,
 }) => {
   const {
     useCallCallingState,
@@ -431,11 +431,6 @@ const StreamVideoBody = ({
                 </div>
               </div>
               <div className="stream-voice-name">{voiceParticipantName}</div>
-              <div className="stream-voice-badges" aria-label="Call security">
-                <span>▣ HD Audio</span>
-                <span>♙ Encrypted</span>
-                <span>◉ Verified Doctor</span>
-              </div>
               <div className="stream-voice-activity-card">
                 <div className="stream-voice-status">
                   <span aria-hidden="true" />
@@ -467,6 +462,7 @@ const StreamVideoBody = ({
             <ParticipantView
               className="stream-hidden-media-probe"
               participant={mainParticipant}
+              muteAudio={muteRemoteAudio}
             />
           )}
 
@@ -492,6 +488,7 @@ const StreamVideoBody = ({
                 className="stream-main-participant"
                 participant={mainParticipant}
                 trackType={isPresentingMain ? "screenShareTrack" : "videoTrack"}
+                muteAudio={muteRemoteAudio}
               />
              
             </>
@@ -596,14 +593,13 @@ const VideoCallModal = ({
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
   const [isSpeakerMuted, setIsSpeakerMuted] = useState(false);
-  const [isVoiceVideoEnabled, setIsVoiceVideoEnabled] = useState(false);
-  const [isVoiceChatOpen, setIsVoiceChatOpen] = useState(false);
   const [connectedAt, setConnectedAt] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isReactionMenuOpen, setIsReactionMenuOpen] = useState(false);
   const micMutedRef = useRef(false);
   const cameraOffRef = useRef(false);
+  const speakerMutedRef = useRef(false);
   const reactionsMenuRef = useRef(null);
 
   const callId = useMemo(() => resolveCallId(callData), [callData]);
@@ -1126,42 +1122,20 @@ const VideoCallModal = ({
   }, [isVoiceMode]);
 
   const handleToggleSpeaker = useCallback(async () => {
-    const nextMuted = !isSpeakerMuted;
-    const activeCall = callRef.current;
+    const nextMuted = !speakerMutedRef.current;
 
     try {
-      if (activeCall?.speaker) {
-        if (nextMuted) {
-          await activeCall.speaker.disable?.();
-        } else {
-          await activeCall.speaker.enable?.();
-        }
-      }
-
       modalContainerRef.current
-        ?.querySelectorAll(".stream-main-stage video, .stream-main-stage audio")
+        ?.querySelectorAll("video, audio")
         .forEach((media) => {
           media.muted = nextMuted;
         });
+      speakerMutedRef.current = nextMuted;
       setIsSpeakerMuted(nextMuted);
     } catch (err) {
       console.error("Failed to toggle speaker:", err);
     }
-  }, [isSpeakerMuted]);
-
-  const handleToggleVoiceVideo = useCallback(async () => {
-    const nextEnabled = !isVoiceVideoEnabled;
-    try {
-      if (nextEnabled) {
-        await callRef.current?.camera?.enable?.();
-      } else {
-        await callRef.current?.camera?.disable?.();
-      }
-      setIsVoiceVideoEnabled(nextEnabled);
-    } catch (err) {
-      console.error("Failed to toggle video during voice call:", err);
-    }
-  }, [isVoiceVideoEnabled]);
+  }, []);
 
   const handleToggleScreenShare = useCallback(async () => {
     if (isVoiceMode) return;
@@ -1765,6 +1739,7 @@ const VideoCallModal = ({
                   onLeave={handleCallLeft}
                   elapsedSeconds={elapsedSeconds}
                   remoteProfilePhoto={remoteProfilePhoto}
+                  muteRemoteAudio={isSpeakerMuted}
                 />
               </StreamCall>
             </StreamVideo>
@@ -1817,7 +1792,7 @@ const VideoCallModal = ({
               {!isVoiceMode && (
                 <button
                   type="button"
-                  className="stream-icon-btn"
+                  className="stream-icon-btn stream-switch-camera-mobile-only"
                   onClick={() => {
                     void handleSwitchCamera();
                   }}
@@ -1826,36 +1801,6 @@ const VideoCallModal = ({
                   data-tooltip="Switch Camera"
                 >
                   <FaSyncAlt aria-hidden="true" />
-                </button>
-              )}
-
-              {isVoiceMode && (
-                <button
-                  type="button"
-                  className={`stream-icon-btn ${isVoiceVideoEnabled ? "stream-icon-btn-active" : ""}`.trim()}
-                  onClick={() => {
-                    void handleToggleVoiceVideo();
-                  }}
-                  aria-label={isVoiceVideoEnabled ? "Turn video off" : "Turn video on"}
-                  data-tooltip={isVoiceVideoEnabled ? "Video Off" : "Video On"}
-                >
-                  {isVoiceVideoEnabled ? (
-                    <FaVideoSlash aria-hidden="true" />
-                  ) : (
-                    <FaVideo aria-hidden="true" />
-                  )}
-                </button>
-              )}
-
-              {isVoiceMode && (
-                <button
-                  type="button"
-                  className={`stream-icon-btn ${isVoiceChatOpen ? "stream-icon-btn-active" : ""}`.trim()}
-                  onClick={() => setIsVoiceChatOpen((open) => !open)}
-                  aria-label="Open call chat"
-                  data-tooltip="Chat"
-                >
-                  <FaCommentAlt aria-hidden="true" />
                 </button>
               )}
 
@@ -1888,11 +1833,6 @@ const VideoCallModal = ({
               </button>
             </div>
           </div>
-          {isVoiceMode && isVoiceChatOpen && (
-            <div className="stream-voice-chat-popover" role="status">
-              Chat remains available in this conversation while your call continues.
-            </div>
-          )}
         </div>
       </div>
     </div>

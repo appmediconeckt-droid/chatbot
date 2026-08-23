@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import { useEffect } from "react";
 import { FaArrowLeft } from "react-icons/fa";
 import PrivacyPolicy from "../Component/Settings/PrivacyPolicy";
-import { logoIcon } from "../assets/brandAssets";
-import "./LandingPrivacyPolicy.css";
+import { logoIconCompact } from "../assets/brandAssets";
+import "./LandingPrivacyPolicy.css";   // updated styles applied
 
 const LandingPrivacyPolicy = () => {
   useEffect(() => {
@@ -14,8 +14,12 @@ const LandingPrivacyPolicy = () => {
     <div className="landing-privacy-page">
       <header className="landing-privacy-nav">
         <Link to="/" className="landing-privacy-brand" aria-label="Humaeli home">
-          <img src={logoIcon} alt="" aria-hidden="true" />
-          <span>Humaeli</span>
+          <img
+            src={logoIconCompact}
+            alt="Humaeli Logo"
+            className="landing-privacy-logo"
+          />
+          {/* optional: <span>Humaeli</span> if you want text next to logo */}
         </Link>
         <Link to="/" className="landing-privacy-back">
           <FaArrowLeft aria-hidden="true" />

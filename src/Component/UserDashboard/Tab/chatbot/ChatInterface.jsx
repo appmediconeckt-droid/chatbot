@@ -8,6 +8,8 @@ import { useUserTranslation } from '../../../../i18n/LanguageContext';
 import { getPresence } from '../../../../utils/presence';
 import socketService from '../../../../services/socketService';
 
+const LAST_OPEN_USER_CHAT_KEY = 'humaeli:last-open-chat:user';
+
 const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => {
     const navigate = useNavigate();
     const { t, lang, setLang } = useUserTranslation();
@@ -35,6 +37,7 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
     const longPressTimer = useRef(null);
     const pressedItem = useRef(null);
     const touchMoved = useRef(false);
+    const initialConversationOpened = useRef(false);
 
     // Function to get profile photo URL
     const getProfilePhotoUrl = (counselor) => {
@@ -387,11 +390,15 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
             }
         };
 
+        const handleManualRefresh = () => fetchChats(false);
+
         window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('chat:refresh-list', handleManualRefresh);
 
         return () => {
             clearInterval(intervalId);
             window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('chat:refresh-list', handleManualRefresh);
         };
     }, [fetchChats]);
 
@@ -449,6 +456,8 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
             user: counselor.user
         };
 
+        localStorage.setItem(LAST_OPEN_USER_CHAT_KEY, counselor.chatId);
+
         if (onOpenConversation) {
             onOpenConversation(conversation);
             return;
@@ -456,6 +465,29 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
 
         navigate("/chat", { state: conversation });
     }, [contextMenu.visible, markChatAsRead, navigate, onOpenConversation]);
+
+    // Keep the most recently opened conversation visible whenever the Chat tab
+    // is revisited. On a fresh account/browser, the newest conversation is used.
+    useEffect(() => {
+        if (
+            initialConversationOpened.current ||
+            loading ||
+            selectedChatId ||
+            counselors.length === 0
+        ) {
+            return;
+        }
+
+        const lastChatId = localStorage.getItem(LAST_OPEN_USER_CHAT_KEY);
+        const conversationToOpen =
+            counselors.find((item) => String(item.chatId) === String(lastChatId)) ||
+            counselors.find((item) => !item.isArchived && item.status !== 'archived') ||
+            counselors[0];
+
+        if (!conversationToOpen) return;
+        initialConversationOpened.current = true;
+        handleCounselorSelect(conversationToOpen);
+    }, [counselors, handleCounselorSelect, loading, selectedChatId]);
 
     // Handle start new chat
     const handleStartNewChat = useCallback(() => {

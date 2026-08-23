@@ -1,8 +1,7 @@
 import React from "react";
-import { FaBrain, FaCalendarAlt, FaCheckCircle, FaClock, FaHistory, FaSearch, FaSyncAlt, FaTimes } from "react-icons/fa";
+import { FaBrain, FaCalendarAlt, FaCheckCircle, FaClock, FaHistory, FaSearch, FaTimes } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
-import { CardSkeleton } from "../../../common/Skeletons/Skeletons";
 import { getTimeGreetingKey } from "../../../../utils/timeGreeting";
 
 export default function AppointmentsTab({
@@ -93,16 +92,8 @@ export default function AppointmentsTab({
     });
   };
 
-  if (loading) {
-    return (
-      <div className="couns-tab-content-stitch">
-        <CardSkeleton cards={6} />
-      </div>
-    );
-  }
-
   return (
-    <div className="couns-tab-content-stitch">
+    <div className="couns-tab-content-stitch" aria-busy={loading}>
       <div className="stitch-apt-page-title">{t("appointments")}</div>
       <div className="stitch-apt-layout stitch-apt-layout-cards-only">
         <div className="stitch-apt-left">
@@ -112,9 +103,6 @@ export default function AppointmentsTab({
               <h2>{displayCounselorName}</h2>
               <p>{counts.all} total appointment(s)</p>
             </div>
-            <button type="button" className="stitch-apt-refresh" aria-label="Refresh appointments">
-              <FaSyncAlt />
-            </button>
             <div className="stitch-apt-metrics">
               <div><strong>{counts.pending}</strong><span>{t("pending")}</span></div>
               <div><strong>{counts.confirmed}</strong><span>{t("confirmed")}</span></div>

@@ -20,6 +20,7 @@ export function LanguageSelector({
   compact = false,
   sidebar = false,
   triggerLabel = '',
+  theme = 'user',
 }) {
   const [open, setOpen] = useState(false);
   const [dropdownPos, setDropdownPos] = useState('bottom');
@@ -161,7 +162,7 @@ export function LanguageSelector({
       </button>
 
       {open && createPortal(
-        <div className="lang-modal-overlay">
+        <div className={`lang-modal-overlay lang-theme-${theme}`}>
           <div ref={dropdownRef} className="lang-selector-modal lang-selector-modal-centered" role="dialog" aria-modal="true">
             <div className="lang-modal-header">
               <div className="lang-modal-header-left">

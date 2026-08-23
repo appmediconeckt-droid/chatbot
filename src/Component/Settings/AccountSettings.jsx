@@ -6,11 +6,11 @@ import { captureAndSendLocation } from "../../authtication/locationHelper";
 import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
 import PrivacyPolicy from "./PrivacyPolicy";
 import HelpSupport from "./HelpSupport";
+import CounselorProfile from "../counselor-dashboard/Tab/Profile-Con/CounselorProfile";
 import "./AccountSettings.css";
 import { useUserTranslation, useCounselorTranslation } from "../../i18n/LanguageContext";
 import { LanguageSelector } from "../common/LanguageSelector";
 import {
-  FaBell,
   FaCalendarAlt,
   FaCheck,
   FaChevronRight,
@@ -22,7 +22,6 @@ import {
   FaLock,
   FaMapMarkerAlt,
   FaMoneyBillWave,
-  FaMobileAlt,
   FaPencilAlt,
   FaPhoneAlt,
   FaQuestionCircle,
@@ -32,7 +31,6 @@ import {
   FaSignOutAlt,
   FaUser,
   FaUserEdit,
-  FaBoxOpen,
   FaImage,
 } from "react-icons/fa";
 
@@ -48,6 +46,29 @@ const emptyAccount = {
   specialization: "",
 };
 
+const resolveCounselorProfilePhoto = (data = {}) => {
+  const candidates = [
+    data.profilePhoto,
+    data.profilePhotoUrl,
+    data.profileImage,
+    data.profilePicture,
+    data.avatar,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) return candidate;
+    if (candidate && typeof candidate === "object") {
+      const url = candidate.url || candidate.secureUrl || candidate.secure_url;
+      if (url) return url;
+      if (candidate.publicId || candidate.public_id) {
+        return `https://res.cloudinary.com/dfll8lwos/image/upload/${candidate.publicId || candidate.public_id}`;
+      }
+    }
+  }
+
+  return "";
+};
+
 const AccountSettings = ({ role = "user", onOpenProfile }) => {
   const navigate = useNavigate();
   const isCounselor = role === "counsellor" || role === "counselor";
@@ -61,6 +82,8 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
   const [showPasswordEditor, setShowPasswordEditor] = useState(false);
   const [passwordEditorMode, setPasswordEditorMode] = useState("change");
   const [counselorSettingsSection, setCounselorSettingsSection] = useState("account");
+  const [showCounselorProfileEditor, setShowCounselorProfileEditor] = useState(false);
+  const [profileImageError, setProfileImageError] = useState(false);
 
   const title = isCounselor ? t('counselor_settings') : t('settings');
 
@@ -99,6 +122,11 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         throw new Error(response.data?.message || t('failed_load_settings'));
       }
 
+      const specialization = Array.isArray(data.specialization)
+        ? data.specialization.filter(Boolean).join(" • ")
+        : data.specialization || data.professionalTitle || "Psychologist";
+
+      setProfileImageError(false);
       setAccount({
         name: data.fullName || data.name || "",
         email: data.email || "",
@@ -110,8 +138,8 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             ? data.hasPassword
             : data.authProvider !== "google" || !data.googleId,
         profileCompleted: Boolean(data.profileCompleted),
-        profileImage: data.profileImage || data.profilePicture || data.avatar || "",
-        specialization: data.specialization || data.professionalTitle || "Psychologist",
+        profileImage: resolveCounselorProfilePhoto(data),
+        specialization,
       });
       setNotice({ type: "", message: "" });
     } catch (err) {
@@ -172,14 +200,6 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
     }
   };
 
-  if (loading) {
-    return (
-      <section className="account-settings">
-        <div className="account-settings__loading">{t('loading_settings')}</div>
-      </section>
-    );
-  }
-
   if (isCounselor) {
     const securityRows = [
       {
@@ -198,20 +218,6 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
           setShowPasswordEditor(true);
         },
       },
-      {
-        icon: <FaMobileAlt />,
-        label: "App Lock",
-        action: () => setShowPasswordEditor(true),
-      },
-      {
-        icon: <FaShieldAlt />,
-        label: "Two-Factor Authentication",
-        badge: account.hasPassword ? "Enabled" : "Setup",
-        action: () => {
-          setPasswordEditorMode(account.hasPassword ? "change" : "set");
-          setShowPasswordEditor(true);
-        },
-      },
     ];
 
     return (
@@ -224,25 +230,47 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
         <section className="counselor-security-profile">
           <div className="counselor-security-profile__avatar">
-            {account.profileImage ? <img src={account.profileImage} alt={account.name} /> : <FaUser />}
-            <i><FaCog /></i>
+            {account.profileImage && !profileImageError ? (
+              <img
+                src={account.profileImage}
+                alt={account.name || "Counselor profile"}
+                onError={() => setProfileImageError(true)}
+              />
+            ) : (
+              <FaUser />
+            )}
+            <button
+              type="button"
+              className="counselor-security-profile__avatar-edit"
+              onClick={() => setShowCounselorProfileEditor(true)}
+              title="Update profile photo"
+              aria-label="Open profile editor to update profile photo"
+            >
+              <FaUserEdit />
+            </button>
           </div>
           <div>
             <h2>{account.name || "Counselor"}</h2>
             <strong>{account.specialization}</strong>
             <p>{account.email}</p>
           </div>
-          {onOpenProfile && <button type="button" onClick={onOpenProfile}><FaPencilAlt /> {t("edit")}</button>}
+          <button type="button" onClick={() => setShowCounselorProfileEditor(true)}><FaPencilAlt /> {t("edit")}</button>
         </section>
 
-        <section className="counselor-settings-toolbar">
-          <label><FaSearch /><input type="search" placeholder={t("search_settings")} aria-label={t("search_settings")} /></label>
-          <nav>
-            <button type="button" onClick={() => setCounselorSettingsSection("account")}><FaUser /> {t("profile")}</button>
-            <button type="button" onClick={() => setCounselorSettingsSection("privacy")}><FaShieldAlt /> {t("privacy")}</button>
-            <button type="button" onClick={() => setCounselorSettingsSection("support")}><FaQuestionCircle /> {t("help")}</button>
-          </nav>
-        </section>
+        {showCounselorProfileEditor && (
+          <div className="counselor-profile-editor-modal" role="dialog" aria-modal="true" aria-label="Edit counselor profile">
+            <div className="counselor-profile-editor-modal__panel">
+              <CounselorProfile
+                initialEditing
+                onRequestClose={() => setShowCounselorProfileEditor(false)}
+                onSaved={() => {
+                  setShowCounselorProfileEditor(false);
+                  fetchAccount();
+                }}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="counselor-settings-body">
           <aside>
@@ -260,7 +288,6 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             >
               {t("security")}
             </button>
-            <button type="button"><FaBell /> {t('settings.notification')}</button>
             <button
               type="button"
               className={counselorSettingsSection === "privacy" ? "active" : ""}
@@ -282,15 +309,9 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
               <>
                 <span className="counselor-settings-section-label">{t("account")}</span>
                 <div className="counselor-security-list counselor-account-list">
-                  <button type="button" onClick={onOpenProfile}>
+                  <button type="button" onClick={() => setShowCounselorProfileEditor(true)}>
                     <i><FaUser /></i><span>{t("edit_profile")}</span><FaChevronRight />
                   </button>
-                </div>
-
-                <div className="counselor-app-version">
-                  <i><FaBoxOpen /></i>
-                  <div><strong>App Version</strong><span>Humaeli v1.2.4 (Build 248)</span></div>
-                  <b>Latest</b>
                 </div>
 
                 <button
@@ -406,16 +427,16 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
         <aside className="settings-screen__side">
           <section className="settings-protected-card">
-              <div className="settings-protected-title"><strong><FaCheck /> {t("protected")}</strong><span>{t("score")}: {account.hasPassword ? "92%" : "68%"}</span></div>
+              <div className="settings-protected-title"><strong><FaCheck /> {t("protected")}</strong></div>
             <ul>
                 <li><FaCheck /> {t("account_authentication_active")}</li>
               <li><FaCheck /> {account.hasPassword ? "Strong password set" : "Password setup available"}</li>
                 <li><FaCheck /> {t("profile_protection_enabled")}</li>
             </ul>
           </section>
-          <button type="button" className="settings-save-button" onClick={() => setShowPasswordEditor(true)}>
+          {/* <button type="button" className="settings-save-button" onClick={() => setShowPasswordEditor(true)}>
             <FaLock /> Save Security Settings
-          </button>
+          </button> */}
           <button type="button" className="settings-location-update" onClick={handleLocationRefresh} disabled={locationLoading}>
             <FaMapMarkerAlt /> {locationLoading ? t("updating") : t("update_location")}
           </button>

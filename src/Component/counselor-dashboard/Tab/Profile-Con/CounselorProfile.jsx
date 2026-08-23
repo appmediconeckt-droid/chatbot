@@ -1595,6 +1595,7 @@ import './CounselorProfile.css';
 import { API_BASE_URL } from '../../../../axiosConfig';
 import { captureAndSendLocation } from '../../../../authtication/locationHelper';
 import { useCounselorTranslation } from '../../../../i18n/LanguageContext';
+import { PHONE_COUNTRIES, splitPhoneNumber } from '../../../PatientProfile/PatientProfile';
 import {
     FaBriefcase,
     FaCalendarAlt,
@@ -1607,7 +1608,6 @@ import {
     FaPencilAlt,
     FaPhoneAlt,
     FaStar,
-    FaTint,
     FaUser,
     FaUserFriends,
     FaVideo,
@@ -1627,7 +1627,7 @@ const VERIFICATION_DOCUMENT_OPTIONS = [
     'Clinic / Hospital Affiliation Proof'
 ];
 
-const CounselorProfile = () => {
+const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) => {
    const { t } = useCounselorTranslation();
    const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -1657,6 +1657,8 @@ const CounselorProfile = () => {
     };
     const [emailChange, setEmailChange] = useState(blankChange);
     const [phoneChange, setPhoneChange] = useState(blankChange);
+    const [phoneCountry, setPhoneCountry] = useState('IN');
+    const [phoneLocalNumber, setPhoneLocalNumber] = useState('');
 
     const handleUpdateLocation = async () => {
         setIsUpdatingLocation(true);
@@ -1700,7 +1702,6 @@ const CounselorProfile = () => {
         age: null,
         gender: '',
         dateOfBirth: null,
-        bloodGroup: '',
         address: {
             line1: '',
             line2: '',
@@ -1723,7 +1724,7 @@ const CounselorProfile = () => {
         }
     });
 
-    const [isEditing, setIsEditing] = useState(false);
+    const [isEditing, setIsEditing] = useState(initialEditing);
     const [editedData, setEditedData] = useState(counselor);
     const [newLanguage, setNewLanguage] = useState('');
     const [newSpecialization, setNewSpecialization] = useState('');
@@ -1867,7 +1868,6 @@ const CounselorProfile = () => {
                     age: userData.age || null,
                     gender: userData.gender || '',
                     dateOfBirth: userData.dateOfBirth || null,
-                    bloodGroup: userData.bloodGroup || '',
                     address: userData.address || {
                         line1: '',
                         line2: '',
@@ -1892,6 +1892,9 @@ const CounselorProfile = () => {
 
                 setCounselor(formattedData);
                 setEditedData(formattedData);
+                const phoneParts = splitPhoneNumber(formattedData.phoneNumber);
+                setPhoneCountry(phoneParts.countryCode);
+                setPhoneLocalNumber(phoneParts.localNumber);
             } else {
                 setError(response.data.message || 'Failed to load profile data');
             }
@@ -2357,6 +2360,12 @@ const CounselorProfile = () => {
     const isEmailDirty = () =>
       String(editedData?.email || "").trim().toLowerCase() !==
       String(counselor?.email || "").trim().toLowerCase();
+    const getCompletePhoneNumber = () => {
+      const localNumber = String(phoneLocalNumber || '').replace(/\D/g, '');
+      if (!localNumber) return '';
+      const country = PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0];
+      return `${country.dial}${localNumber}`;
+    };
     const emailReady =
       !isEmailDirty() ||
       (emailChange.verified &&
@@ -2367,7 +2376,7 @@ const CounselorProfile = () => {
       const newValue =
         field === "email"
           ? String(editedData.email || "").trim().toLowerCase()
-          : String(editedData.phoneNumber || "").replace(/\D/g, "");
+          : getCompletePhoneNumber().replace(/\D/g, "");
       setState((s) => ({ ...s, sending: true, error: "" }));
       try {
         const res = await axios.post(
@@ -2403,7 +2412,7 @@ const CounselorProfile = () => {
       const newValue =
         field === "email"
           ? String(editedData.email || "").trim().toLowerCase()
-          : String(editedData.phoneNumber || "").replace(/\D/g, "");
+          : getCompletePhoneNumber().replace(/\D/g, "");
       if (!state.otp || state.otp.length < 4) {
         setState((s) => ({ ...s, error: "Enter the OTP first" }));
         return;
@@ -2453,11 +2462,11 @@ const CounselorProfile = () => {
       if (
         phoneChange.verified &&
         phoneChange.verifiedValue !==
-          String(editedData?.phoneNumber || "").replace(/\D/g, "")
+          getCompletePhoneNumber().replace(/\D/g, "")
       ) {
         setPhoneChange(blankChange);
       }
-    }, [editedData?.phoneNumber]);
+    }, [phoneCountry, phoneLocalNumber]);
 
     useEffect(() => {
       if (!isEditing) {
@@ -2476,7 +2485,7 @@ const CounselorProfile = () => {
 
             formData.append('fullName', editedData.fullName);
             formData.append('email', editedData.email);
-            formData.append('phoneNumber', editedData.phoneNumber);
+            formData.append('phoneNumber', getCompletePhoneNumber());
             formData.append('qualification', editedData.qualification || editedData.education);
             formData.append('experience', editedData.experience.toString());
             formData.append('location', editedData.location);
@@ -2485,7 +2494,6 @@ const CounselorProfile = () => {
 
             if (editedData.age) formData.append('age', editedData.age.toString());
             if (editedData.gender) formData.append('gender', editedData.gender);
-            if (editedData.bloodGroup) formData.append('bloodGroup', editedData.bloodGroup);
 
             if (editedData.address) {
                 formData.append('address[line1]', editedData.address.line1 || '');
@@ -2563,6 +2571,7 @@ const CounselorProfile = () => {
                     new CustomEvent('profile-updated', { detail: { role: 'counselor' } }),
                 );
                 setIsEditing(false);
+                onSaved?.();
 
                 setTimeout(() => {
                     setSuccessMessage('');
@@ -2584,6 +2593,9 @@ const CounselorProfile = () => {
 
     const handleCancel = () => {
         setEditedData(counselor);
+        const phoneParts = splitPhoneNumber(counselor.phoneNumber);
+        setPhoneCountry(phoneParts.countryCode);
+        setPhoneLocalNumber(phoneParts.localNumber);
         setNewLanguage('');
         setNewSpecialization('');
         setNewConsultationMode('');
@@ -2599,6 +2611,7 @@ const CounselorProfile = () => {
         setError('');
         setSuccessMessage('');
         closePhotoModal();
+        onRequestClose?.();
     };
 
     const formatDate = (dateString) => {
@@ -2609,6 +2622,51 @@ const CounselorProfile = () => {
             day: 'numeric'
         });
     };
+
+    const hasText = (value) => String(value || '').trim().length > 0;
+    const hasItems = (value) => Array.isArray(value) && value.length > 0;
+    const hasSelection = (value) => hasItems(value) || (!Array.isArray(value) && hasText(value));
+    const profilePhotoValue =
+        counselor?.profilePhotoUrl ||
+        counselor?.profilePhoto?.url ||
+        (typeof counselor?.profilePhoto === 'string' ? counselor.profilePhoto : '');
+    const hasRealProfilePhoto =
+        hasText(profilePhotoValue) &&
+        !String(profilePhotoValue).includes('via.placeholder.com');
+    const counselorAddress = counselor?.address || {};
+    const hasAddress = [
+        counselorAddress.line1,
+        counselorAddress.line2,
+        counselorAddress.street,
+        counselorAddress.city,
+        counselorAddress.state,
+        counselorAddress.pincode,
+    ].some(hasText);
+    const counselorLocation = counselor?.location;
+    const hasLocation =
+        hasText(typeof counselorLocation === 'string' ? counselorLocation : '') ||
+        [counselorLocation?.city, counselorLocation?.state, counselor?.city, counselor?.state].some(hasText);
+    const completionChecks = [
+        hasRealProfilePhoto,
+        hasText(counselor?.fullName),
+        hasText(counselor?.email),
+        hasText(counselor?.phoneNumber || counselor?.phone),
+        hasText(counselor?.dateOfBirth) || Number(counselor?.age) > 0,
+        hasText(counselor?.gender),
+        hasLocation,
+        hasAddress,
+        hasText(counselor?.education || counselor?.qualification),
+        Number(counselor?.experience) > 0,
+        hasText(counselor?.aboutMe),
+        hasSelection(counselor?.specialization),
+        hasSelection(counselor?.languages),
+        hasSelection(counselor?.consultationMode),
+        hasItems(counselor?.certifications),
+    ];
+    const completedProfileFields = completionChecks.filter(Boolean).length;
+    const profileCompletionPercentage = Math.round(
+        (completedProfileFields / completionChecks.length) * 100,
+    );
 
     // Single Photo Modal with Camera Support
     const PhotoUploadModal = () => {
@@ -2798,8 +2856,16 @@ const CounselorProfile = () => {
                         </section>
 
                         <section className="counselor-profile-completion-card">
-                            <div><span><FaCheckCircle /> Profile Completion</span><strong>{counselor?.profileCompleted === false ? '85%' : '100%'}</strong></div>
-                            <i><b style={{ width: counselor?.profileCompleted === false ? '85%' : '100%' }} /></i>
+                            <div><span><FaCheckCircle /> Profile Completion</span><strong>{profileCompletionPercentage}%</strong></div>
+                            <i
+                                role="progressbar"
+                                aria-label="Profile completion"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                                aria-valuenow={profileCompletionPercentage}
+                            >
+                                <b style={{ width: `${profileCompletionPercentage}%` }} />
+                            </i>
                         </section>
                     </aside>
 
@@ -2808,7 +2874,6 @@ const CounselorProfile = () => {
                             {[
                                 [<FaCalendarAlt />, 'AGE', counselor?.age || 'Not specified'],
                                 [<FaUser />, 'GENDER', counselor?.gender || 'Not specified'],
-                                [<FaTint />, 'BLOOD GROUP', counselor?.bloodGroup || 'Not specified'],
                                 [<FaEnvelope />, 'EMAIL', counselor?.email || 'Not specified'],
                                 [<FaPhoneAlt />, 'PHONE', counselor?.phoneNumber || counselor?.phone || 'Not specified'],
                                 [<FaMapMarkerAlt />, 'LOCATION', locationText || 'Not specified'],
@@ -3122,12 +3187,28 @@ const CounselorProfile = () => {
                                 <div style={{ flex: 1 }}>
                                     <label>{t('phone')}</label>
                                     {isEditing ? (
-                                        <input
-                                            type="tel"
-                                            value={editedData.phoneNumber || ''}
-                                            onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-                                            className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                        />
+                                        <div className={`${COUNSELOR_PROFILE_CLASS}__phone-country-field`}>
+                                            <select
+                                                value={phoneCountry}
+                                                onChange={(e) => setPhoneCountry(e.target.value)}
+                                                className={`${COUNSELOR_PROFILE_CLASS}__input ${COUNSELOR_PROFILE_CLASS}__phone-country-select`}
+                                                aria-label="Phone country code"
+                                            >
+                                                {PHONE_COUNTRIES.map((country) => (
+                                                    <option key={country.code} value={country.code}>
+                                                        {country.label} ({country.dial})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <input
+                                                type="tel"
+                                                inputMode="tel"
+                                                value={phoneLocalNumber}
+                                                onChange={(e) => setPhoneLocalNumber(e.target.value.replace(/[^\d\s()-]/g, ''))}
+                                                className={`${COUNSELOR_PROFILE_CLASS}__input`}
+                                                placeholder="Phone number"
+                                            />
+                                        </div>
                                     ) : (
                                         <p>{counselor?.phoneNumber || 'Not specified'}</p>
                                     )}
@@ -3184,20 +3265,6 @@ const CounselorProfile = () => {
                                     </select>
                                 ) : (
                                     <p>{counselor?.gender ? counselor.gender.charAt(0).toUpperCase() + counselor.gender.slice(1) : 'Not specified'}</p>
-                                )}
-                            </div>
-                            <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
-                                <label>{t('blood_group')}:</label>
-                                {isEditing ? (
-                                    <input
-                                        type="text"
-                                        value={editedData.bloodGroup || ''}
-                                        onChange={(e) => handleInputChange('bloodGroup', e.target.value)}
-                                        className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                        placeholder="e.g., A+, B-, O+"
-                                    />
-                                ) : (
-                                    <p>{counselor?.bloodGroup || 'Not specified'}</p>
                                 )}
                             </div>
                             {counselor?.dateOfBirth && (

@@ -31,7 +31,6 @@ const loadRazorpayScript = () =>
 const WalletDashboard = ({ userData }) => {
     const { t, lang } = useUserTranslation();
     const [amount, setAmount] = useState('');
-    const [paymentMethod, setPaymentMethod] = useState('upi');
     const [balance, setBalance] = useState(0);
     const [transactions, setTransactions] = useState([]);
     const [spendingSummary, setSpendingSummary] = useState({ total: 0, breakdown: [] });
@@ -546,7 +545,7 @@ const WalletDashboard = ({ userData }) => {
                                 <span className="material-symbols-outlined">account_balance_wallet</span>
                                 PREMIUM HEALTH
                             </span>
-                            <span className="material-symbols-outlined wallet-card-mark">data_usage</span>
+                            {/* <span className="material-symbols-outlined wallet-card-mark">data_usage</span> */}
                         </div>
                         <div>
                             <p className="wallet-muted-light">{t("available_balance")}</p>
@@ -571,7 +570,7 @@ const WalletDashboard = ({ userData }) => {
                         <article><span>COMPLETED</span><strong className="wallet-stat--completed">{completedTransactions}</strong></article>
                     </section>
 
-                    <section className="wallet-panel wallet-spending">
+                    {/* <section className="wallet-panel wallet-spending">
                         <h3>{t('spending_summary')}</h3>
                         <div className="wallet-spending__items">
                             {spendingSummary.breakdown.length > 0 ? spendingSummary.breakdown.map((item, index) => (
@@ -585,7 +584,7 @@ const WalletDashboard = ({ userData }) => {
                             <span>{t('total_spent_this_month')}</span>
                             <strong>₹{Number(spendingSummary.total || 0).toLocaleString('en-IN')}</strong>
                         </div>
-                    </section>
+                    </section> */}
                 </div>
 
                 <aside className="wallet-side">
@@ -604,21 +603,6 @@ const WalletDashboard = ({ userData }) => {
                                 ))}
                                 <button type="button" onClick={() => { setAmount(''); document.getElementById('amount-input')?.focus(); }}>{t("custom_amount")}</button>
                             </div>
-                            <p className="wallet-field-title">{t('payment_method')}</p>
-                            <div className="wallet-payment-methods">
-                                {[
-                                    { id: 'upi', label: t('upi_qr'), icon: 'UPI' },
-                                    { id: 'visa', label: t('credit_debit_card'), icon: 'credit_card' },
-                                    { id: 'bank', label: t('net_banking'), icon: 'account_balance' }
-                                ].map((method) => (
-                                    <label key={method.id} className={paymentMethod === method.id ? 'is-selected' : ''}>
-                                        <input type="radio" name="payment" checked={paymentMethod === method.id} onChange={() => setPaymentMethod(method.id)} />
-                                        {method.icon === 'UPI' ? <span className="wallet-upi-icon">UPI</span> : <span className="material-symbols-outlined">{method.icon}</span>}
-                                        <span>{method.label}</span>
-                                        <i />
-                                    </label>
-                                ))}
-                            </div>
                             <button className="wallet-pay-button" type="submit" disabled={loading}>
                                 {loading ? t('sending') : `Proceed to Pay${amount ? ` ₹${Number(amount).toLocaleString('en-IN')}` : ''}`}
                             </button>
@@ -626,10 +610,10 @@ const WalletDashboard = ({ userData }) => {
                         </form>
                     </section>
 
-                    <section className="wallet-support">
+                    {/* <section className="wallet-support">
                         <div><strong>{t("need_payment_help")}</strong><p>{t("support_available_24_7")}</p></div>
                         <button type="button" onClick={() => { window.location.href = 'mailto:support@humaeli.com?subject=Wallet%20Support'; }}>{t("support")}</button>
-                    </section>
+                    </section> */}
                 </aside>
             </main>
 

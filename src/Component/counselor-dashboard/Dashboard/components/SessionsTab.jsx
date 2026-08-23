@@ -16,7 +16,6 @@ import {
 } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
-import { CardSkeleton } from "../../../common/Skeletons/Skeletons";
 
 export default function SessionsTab({
   sessionAppointments,
@@ -154,16 +153,8 @@ export default function SessionsTab({
     };
   }, [visibleSessions]);
 
-  if (loading) {
-    return (
-      <div className="couns-tab-content-stitch">
-        <CardSkeleton cards={6} />
-      </div>
-    );
-  }
-
   return (
-    <div className="couns-tab-content-stitch couns-sessions-page">
+    <div className="couns-tab-content-stitch couns-sessions-page" aria-busy={loading}>
       <header className="couns-sessions-page-title">
         <h1>{t("counselling_sessions_overview")}</h1>
       </header>

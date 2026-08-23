@@ -32,7 +32,9 @@
 .pch-avatar { position: relative; flex: 0 0 43px; width: 43px; min-width: 43px; max-width: 43px; height: 43px; min-height: 43px; max-height: 43px; aspect-ratio: 1 / 1; border-radius: 50%; background: #e4f3ed; display: grid; place-items: center; }
 .pch-avatar img { display: block; width: 100% !important; min-width: 100%; max-width: none; height: 100% !important; min-height: 100%; border-radius: inherit; object-fit: cover; object-position: center; }
 .pch-avatar > span { font-size: 18px; }
-.pch-avatar i { position: absolute; right: 0; bottom: 1px; width: 9px; height: 9px; border: 2px solid #fff; border-radius: 50%; background: #009a43; }
+.pch-avatar i { position: absolute; right: 0; bottom: 1px; width: 9px; height: 9px; border: 2px solid #fff; border-radius: 50%; }
+.pch-avatar i.online { background: #009a43; }
+.pch-avatar i.offline { background: #98a2b3; }
 .pch-compact-info { min-width: 0; flex: 1; }
 .pch-compact-info strong { overflow: hidden; display: block; font-size: 12px; white-space: nowrap; text-overflow: ellipsis; }
 .pch-compact-info small { margin-top: 5px; color: #536575; display: flex; align-items: center; gap: 4px; font-size: 10px; white-space: nowrap; }
@@ -131,18 +133,14 @@
 
 .portal-call-history.pch-theme-user .pch-header,
 .portal-call-history.pch-theme-counselor .pch-header {
-  color: #fff;
-  border-bottom-color: transparent;
-  background: linear-gradient(
-    112deg,
-    var(--pch-accent-start),
-    var(--pch-accent-end)
-  );
+  color: #000;
+  border-bottom-color:1px solid #d9dee8;;
+ 
 }
 
 .portal-call-history.pch-theme-user .pch-header p,
 .portal-call-history.pch-theme-counselor .pch-header p {
-  color: rgba(255, 255, 255, 0.82);
+  color: rgba(8, 8, 8, 0.82);
 }
 
 .portal-call-history.pch-theme-user .pch-search,

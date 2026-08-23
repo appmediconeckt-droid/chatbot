@@ -109,6 +109,18 @@
 
 .earnings-filter-action {
   color: #fff;
+  background: #667eea;
+  box-shadow: 0 7px 16px rgba(102, 126, 234, .25);
+}
+
+.earnings-filter-action:hover:not(:disabled) {
+  background: #5a67d8;
+  box-shadow: 0 9px 20px rgba(90, 103, 216, .3);
+}
+
+.earnings-filter-action:focus-visible {
+  outline: 3px solid rgba(102, 126, 234, .25);
+  outline-offset: 2px;
 }
 
 .earnings-filter-clear {
@@ -197,6 +209,10 @@
   box-shadow: 0 9px 20px rgba(85, 60, 154, .3);
   transform: translateY(-1px);
 }
+.earnings-primary-button.earnings-filter-action:hover:not(:disabled) {
+  background: #5a67d8;
+  box-shadow: 0 9px 20px rgba(90, 103, 216, .3);
+}
 .earnings-primary-button:disabled {
   background: #cbd5e1;
   box-shadow: none;
@@ -256,7 +272,7 @@
   gap: 18px;
   padding: 22px 26px;
   color: #fff;
-  background: linear-gradient(120deg, #0f3d5c, #0369a1 55%, #0d9488);
+  background: linear-gradient(112deg, #0873ec, #0757b8 70%, #064896);
 }
 .withdrawal-card-header::after {
   content: "";
@@ -281,17 +297,17 @@
   font-size: 24px;
   font-weight: 800;
 }
-.withdrawal-card-eyebrow { color: #bae6fd; font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+.withdrawal-card-eyebrow { color: #ede9fe; font-size: 10px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
 .withdrawal-card-heading h2 { margin: 3px 0 0; font-size: 21px; line-height: 1.2; font-weight: 800; }
-.withdrawal-card-heading p { margin: 6px 0 0; color: #e0f2fe; font-size: 12px; }
+.withdrawal-card-heading p { margin: 6px 0 0; color: #f3e8ff; font-size: 12px; }
 .withdrawal-close {
   position: relative; z-index: 3; width: 38px; height: 38px; flex: 0 0 38px;
   display: grid; place-items: center; padding: 0; border: 1px solid rgba(255,255,255,.8);
-  border-radius: 50%; background: #fff; color: #075985; font-size: 16px; cursor: pointer;
+  border-radius: 50%; background: #fff; color: var(--couns-primary-dark, #553c9a); font-size: 16px; cursor: pointer;
   box-shadow: 0 6px 18px rgba(0,0,0,.18); transition: transform .16s ease, background .16s ease;
 }
 .withdrawal-close:hover {
-  background: #f0f9ff;
+  background: #f5f3ff;
   transform: rotate(90deg) scale(1.05);
 }
 .withdrawal-close svg {

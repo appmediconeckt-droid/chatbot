@@ -412,10 +412,11 @@
 @media (max-width: 480px) {
   .otp-container {
     align-items: flex-start;
-    padding: calc(env(safe-area-inset-top, 0px) + 14px) 12px 18px;
+    padding: calc(env(safe-area-inset-top, 0px) + 6px) 12px 18px;
   }
 
   .otp-card {
+    margin: 0;
     padding: 24px 18px;
   }
 

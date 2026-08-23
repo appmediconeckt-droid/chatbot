@@ -46,6 +46,13 @@
 .lang-modal-actions button { height: 40px; border: 0; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
 .lang-modal-cancel { color: #007e36; background: #eaf7ee; }
 .lang-modal-apply { color: #fff; background: linear-gradient(90deg, #007d35, #00c956); }
+.lang-theme-counselor .lang-modal-apply {
+  background: #2563eb;
+  box-shadow: 0 6px 14px rgba(37, 99, 235, .24);
+}
+.lang-theme-counselor .lang-modal-apply:hover {
+  background: #1d4ed8;
+}
 
 /* Language Selector Trigger Button */
 .lang-selector-trigger {

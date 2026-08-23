@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { 
   FaLock, 
-  FaArrowLeft, 
   FaSpinner, 
   FaCheckCircle,
   FaEye,
@@ -92,13 +91,13 @@ const ResetPassword = () => {
     <div className={`rp-wrapper ${themeClass}`}>
       <div className="rp-container">
         {/* Back Button */}
-        <button 
+        {/* <button 
           className="rp-back-btn"
           onClick={() => navigate("/forgot-password-otp", { state: { email, role } })}
           aria-label="Go back"
         >
-          <FaArrowLeft />
-        </button>
+          ×
+        </button> */}
 
         {/* Logo */}
         <div className="rp-logo">

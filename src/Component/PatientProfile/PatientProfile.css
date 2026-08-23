@@ -677,6 +677,18 @@
   box-shadow: 0 0 0 3px rgba(0, 107, 44, 0.1);
 }
 
+.phone-country-field {
+  display: grid;
+  grid-template-columns: minmax(118px, 0.8fr) minmax(0, 1.35fr);
+  gap: 8px;
+}
+
+.phone-country-field .phone-country-select,
+.phone-country-field .phone-local-input {
+  width: 100%;
+  min-width: 0;
+}
+
 .readonly {
   background: #f8fafc;
   color: #64748b;

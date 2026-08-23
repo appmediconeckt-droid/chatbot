@@ -135,10 +135,6 @@ const CounselorEarnings = () => {
     }
   };
 
-  if (loading) {
-    return <div className="rounded-2xl bg-white p-10 text-center text-slate-500">{t("loading_earnings")}</div>;
-  }
-
   if (error) {
     return <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-rose-700">{error}</div>;
   }
@@ -160,7 +156,7 @@ const CounselorEarnings = () => {
     !submitting;
 
   return (
-    <div className="counselor-earnings-page ml-2 mt-3 space-y-6 p-1 sm:ml-3 sm:mt-4 lg:ml-5 lg:mt-5">
+    <div className="counselor-earnings-page ml-2 mt-3 space-y-6 p-1 sm:ml-3 sm:mt-4 lg:ml-5 lg:mt-5" aria-busy={loading}>
       <header className="earnings-page-title">
         <h1>{t("earnings_overview")}</h1>
       </header>
@@ -197,7 +193,7 @@ const CounselorEarnings = () => {
         </div>
 
         <aside className="earnings-recent-panel">
-          <div className="earnings-recent-header"><h2>{t("recent_transactions")}</h2><span>{t("view_all")}</span></div>
+          <div className="earnings-recent-header"><h2>{t("recent_transactions")}</h2></div>
           <div className="earnings-recent-list">
             {earnings.slice(0, 5).map((earning) => {
               const type = String(earning.sessionType || "chat").toLowerCase();

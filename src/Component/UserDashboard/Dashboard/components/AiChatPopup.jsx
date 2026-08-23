@@ -3,11 +3,9 @@ import {
   FaMicrophone,
   FaMicrophoneSlash,
   FaPaperPlane,
-  FaPhone,
   FaPhoneSlash,
   FaPlus,
   FaRedoAlt,
-  FaRobot,
   FaSpinner,
   FaStop,
   FaTimes,
@@ -16,8 +14,8 @@ import {
   FaVolumeUp,
   FaWaveSquare,
 } from "react-icons/fa";
-import { HiSparkles } from "react-icons/hi2";
 import { API_BASE_URL } from "../../../../axiosConfig";
+import { logoIconCompact } from "../../../../assets/brandAssets";
 const VOICE_LANGUAGES = [
   { label: 'English (India)', code: 'en-IN' },
   { label: 'English (US)',    code: 'en-US' },
@@ -499,7 +497,7 @@ export default function AiChatPopup({
           <div className="ud-chat-header-info">
             <div className="ud-chat-avatar-wrap">
               <div className="ud-chat-avatar ud-chat-avatar--bounce">
-                <HiSparkles />
+                <img src={logoIconCompact} alt="" aria-hidden="true" />
               </div>
               <span className="ud-chat-avatar-dot" />
             </div>
@@ -512,20 +510,6 @@ export default function AiChatPopup({
             </div>
           </div>
           <div className="ud-chat-header-actions">
-            <button
-              type="button"
-              className="ud-chat-icon-btn ud-chat-voice-call-btn"
-              onClick={startAiVoiceCall}
-              disabled={aiVoiceStatus === "connecting" || (aiVoiceOpen && aiVoiceStatus !== "error")}
-              title="AI Voice Call"
-              aria-label="Start AI voice call"
-            >
-              {aiVoiceStatus === "connecting" ? (
-                <FaSpinner className="ud-tts-spinner" aria-hidden="true" />
-              ) : (
-                <FaPhone aria-hidden="true" />
-              )}
-            </button>
             {onReset && (
               <button
                 type="button"
@@ -601,7 +585,7 @@ export default function AiChatPopup({
             >
               {message.sender === "ai" && (
                 <div className="ud-chat-avatar ud-small">
-                  <HiSparkles />
+                  <img src={logoIconCompact} alt="" aria-hidden="true" />
                 </div>
               )}
               <div className="ud-chat-bubble">
@@ -652,7 +636,7 @@ export default function AiChatPopup({
           {isLoading && (
             <div className="ud-chat-message-wrapper ai">
               <div className="ud-chat-avatar ud-small">
-                <HiSparkles />
+                <img src={logoIconCompact} alt="" aria-hidden="true" />
               </div>
               <div className="ud-chat-bubble">
                 <div className="ud-loading-dots">
@@ -672,7 +656,7 @@ export default function AiChatPopup({
                 {aiVoiceStatus === "connecting" ? (
                   <FaSpinner className="ud-tts-spinner" />
                 ) : (
-                  <FaRobot />
+                  <img src={logoIconCompact} alt="" aria-hidden="true" />
                 )}
               </div>
               <h3>AI Assistant</h3>

@@ -102,7 +102,7 @@ const RoleSelector = () => {
             <span className="n4d2-icon-circle" aria-hidden="true"><FaUserMd /></span>
             <span className="role-card-copy">
               <span className="role-card-kicker">For care professionals</span>
-              <span className="c8v6-role-label">I’m a counsellor</span>
+              <span className="c8v6-role-label">I’m a consultant</span>
               <span className="e3w1-role-hint">
                 Support more people with a calm, organised professional workspace.
               </span>
@@ -113,7 +113,7 @@ const RoleSelector = () => {
               <span><FaCheck /> Grow your practice</span>
             </span>
             <span className="role-card-action">
-              Continue as counsellor <FaArrowRight aria-hidden="true" />
+              Continue as consultant <FaArrowRight aria-hidden="true" />
             </span>
           </button>
         </div>

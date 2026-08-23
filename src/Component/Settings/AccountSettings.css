@@ -527,7 +527,7 @@
   object-fit: cover;
 }
 
-.counselor-security-profile__avatar > i {
+.counselor-security-profile__avatar-edit {
   position: absolute;
   right: -4px;
   bottom: -3px;
@@ -539,7 +539,21 @@
   background: #12a56e;
   display: grid;
   place-items: center;
+  padding: 0;
   font-size: 10px;
+  cursor: pointer;
+  transition: transform .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.counselor-security-profile__avatar-edit:hover {
+  background: #0b8f60;
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(2, 80, 54, .28);
+}
+
+.counselor-security-profile__avatar-edit:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, .8);
+  outline-offset: 2px;
 }
 
 .counselor-security-profile > div:nth-child(2) {
@@ -578,6 +592,33 @@
   gap: 8px;
   font-size: 14px;
   cursor: pointer;
+}
+
+.counselor-profile-editor-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px;
+  overflow-y: auto;
+  background: rgba(15, 23, 42, .65);
+  backdrop-filter: blur(5px);
+}
+
+.counselor-profile-editor-modal__panel {
+  width: min(1180px, 100%);
+  margin: auto;
+  overflow: hidden;
+  border-radius: 22px;
+  background: #f8fafc;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, .3);
+}
+
+@media (max-width: 768px) {
+  .counselor-profile-editor-modal { padding: 10px; }
+  .counselor-profile-editor-modal__panel { border-radius: 16px; }
 }
 
 .counselor-settings-toolbar {

@@ -6,8 +6,11 @@ import './LandingChatTheme.css';
 import './LandingNavbarFix.css';
 import './LandingDoctorCarousel.css';
 import './LandingTestimonialCarousel.css';
+import './LandingTypography.css';
 import { logoHorizontal, logoIcon } from '../assets/brandAssets';
-import wellnessHero from '../assets/landing-page-hero.png';
+import logoHorizontalDarkText from '../assets/humaeli-logo-horizontal-tagline.png';
+import mobileHeroVideo from '../assets/mobile-hero-section.mp4';
+import mobileHeroPortraitVideo from '../assets/mobile-hero-portrait.mp4';
 import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
 import faqWellnessIllustration from '../assets/faq-wellness-illustration.png';
 import { API_BASE_URL } from '../axiosConfig';
@@ -440,7 +443,7 @@ const Header = ({ onLoginClick }) => {
   }, []);
 
   const navItems = [
-    { href: '#home', label: t('landing_nav_home'), icon: 'home' },
+    { href: '#home', label: t('landing_nav_home'),},
     { href: '#services', label: t('landing_nav_services') },
     { href: '#how-it-works', label: t('landing_nav_how_it_works') },
     { href: '#doctors', label: t('landing_nav_professionals') },
@@ -461,8 +464,16 @@ const Header = ({ onLoginClick }) => {
           >
             <i className={`fas fa-${menuOpen ? 'times' : 'bars'}`}></i>
           </button>
-          <div className="landing-logo-brand">
-            <img src={logoHorizontal} alt="Humaeli Logo" />
+          <div className="landing-logo-brand" >
+           <a href="/" aria-label={t('landing_logo_alt')}>
+            <picture>
+              <source
+                media="(max-width: 768px) and (prefers-color-scheme: light)"
+                srcSet={logoHorizontalDarkText}
+              />
+              <img src={logoHorizontal} alt="Humaeli Logo" />
+            </picture>
+           </a>
             <span>Mental Wellness</span>
           </div>
         </div>
@@ -557,7 +568,7 @@ const HeroSection = () => {
   const patientsHelped = landingStats?.patientsHelped ?? completedPatients;
 
   return (
-    <section className="section hero" id="home">
+    <section className="section hero hero-mobile-stacked" id="home">
       <div className="container">
         <div className="hero-content">
           <span className="hero-badge">
@@ -576,7 +587,26 @@ const HeroSection = () => {
           </div>
         </div>
         <div className="hero-visual">
-          <img className="hero-wellness-image" src={wellnessHero} alt="" aria-hidden="true" />
+          <video
+            className="hero-wellness-image hero-wellness-video hero-desktop-video"
+            src={mobileHeroVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          />
+          <video
+            className="hero-wellness-image hero-wellness-video hero-mobile-video"
+            src={mobileHeroPortraitVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-hidden="true"
+          />
           <div className="chat-preview">
             <div className="chat-preview-header">
               <div className="chat-preview-avatar">
@@ -872,12 +902,14 @@ const DoctorsSection = () => {
 
   const rankedDoctors = [...doctors]
     .sort((a, b) => (
-      getDoctorPatientConversationCount(b) - getDoctorPatientConversationCount(a) ||
       getDoctorRating(b) - getDoctorRating(a) ||
       getNumericMetric(b.ratingCount, b.totalRatings) - getNumericMetric(a.ratingCount, a.totalRatings) ||
+      getDoctorPatientConversationCount(b) - getDoctorPatientConversationCount(a) ||
       String(a.fullName || a.name || '').localeCompare(String(b.fullName || b.name || ''))
     ))
     .slice(0, TOP_LANDING_DOCTOR_LIMIT);
+
+  const highestRatedDoctor = rankedDoctors[0];
 
   useEffect(() => {
     if (rankedDoctors.length < 2 || isDoctorCarouselPaused) return undefined;
@@ -972,7 +1004,9 @@ const DoctorsSection = () => {
                 `${doctor.qualification || t('landing_doctor_default_qualification')} with experience providing personalised mental wellness support.`;
               return (
                 <div className={`doctor-card doctor-slide doctor-slide-${index}`} key={doctor._id || doctor.id}>
-                  {index === 1 && <span className="doctor-featured-badge">{t('landing_ui_highly_rated')}</span>}
+                  {doctor === highestRatedDoctor && (
+                    <span className="doctor-featured-badge">{t('landing_ui_highly_rated')}</span>
+                  )}
                   <div className="doctor-header">
                     <div className="doctor-image">
                       {photoUrl ? <img src={photoUrl} alt={name} /> : getInitials(name)}
@@ -1275,11 +1309,6 @@ const Footer = () => {
         <div className="footer-copyright">
           <p>&copy; {new Date().getFullYear()} {t('landing_footer_rights')}</p>
           <p className="emergency-notice">
-            <i className="fas fa-exclamation-triangle"></i>
-            <strong>{t('landing_footer_crisis_label')}</strong> {t('landing_footer_crisis_text')}
-            <a href="tel:9152987821"> 9152987821</a> {t('landing_footer_toll_free')}
-          </p>
-          <p className="emergency-notice">
             <i className="fas fa-map-marker-alt"></i>
             <strong>{t('landing_footer_office_label')}</strong> {t('landing_footer_office_address')}
           </p>
@@ -1451,23 +1480,7 @@ const ChatPopup = ({
                   <span>{speakingId === message.id ? t('landing_chat_stop') : t('landing_chat_listen')}</span>
                 </button>
               )}
-              {/* {message.sender === 'ai' &&
-                Array.isArray(message.quickReplies) &&
-                message.quickReplies.length > 0 && (
-                  <div className="chat-quick-replies">
-                    {message.quickReplies.map((qr) => (
-                      <button
-                        key={qr}
-                        type="button"
-                        className="chat-quick-reply-btn"
-                        disabled={isLoading || guestChatExpired}
-                        onClick={() => sendQuickReply && sendQuickReply(qr)}
-                      >
-                        {qr}
-                      </button>
-                    ))}
-                  </div>
-                )} */}
+              
             </div>
             {message.sender === 'user' && (
               <div className="chat-avatar small">

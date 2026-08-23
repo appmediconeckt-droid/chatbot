@@ -75,18 +75,8 @@ const Dashboard = () => {
         { day: "Sat", sessions: 3, patients: 4 },
     ];
 
-    if (loading) {
-        return (
-            <div className="Coun-dashboard-content" style={{ padding: "15px" }}>
-                <div className="loading-container">
-                    <div className="loading-spinner"></div>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="Coun-dashboard-content" style={{ padding: "15px" }}>
+        <div className="Coun-dashboard-content" style={{ padding: "15px" }} aria-busy={loading}>
             {/* Header Section */}
             <div className="dashboard-header">
                 <div>

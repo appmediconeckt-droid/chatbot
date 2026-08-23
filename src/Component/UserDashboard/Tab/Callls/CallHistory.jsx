@@ -287,6 +287,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
             missed,
             counterPartyId: call.withId,
             counterPartyType,
+            isOnline: call.withIsOnline === true,
             role: call.role,
             timestamp,
             apiCallData: call,
@@ -476,7 +477,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
               <button type="button" key={`${call.id}-compact-${index}`} className={`pch-compact-call ${index === 0 ? "selected" : ""}`} onClick={() => openCallModal(call)}>
                 <span className="pch-avatar">
                   {isImageUrl(call.avatarUrl || call.profilePic) ? <img src={call.avatarUrl || call.profilePic} alt="" /> : <span>{call.avatar || call.profilePic || FALLBACK_AVATAR}</span>}
-                  <i />
+                  <i className={call.isOnline ? "online" : "offline"} aria-label={call.isOnline ? "Online" : "Offline"} />
                 </span>
                 <span className="pch-compact-info">
                   <strong>{call.name}</strong>
@@ -499,7 +500,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                   <article className={`pch-call-card ${call.missed ? "missed" : ""}`} key={call.id}>
                     <span className="pch-avatar">
                       {isImageUrl(call.avatarUrl || call.profilePic) ? <img src={call.avatarUrl || call.profilePic} alt={call.name} /> : <span>{call.avatar || call.profilePic || FALLBACK_AVATAR}</span>}
-                      <i />
+                      <i className={call.isOnline ? "online" : "offline"} aria-label={call.isOnline ? "Online" : "Offline"} />
                     </span>
                     <div className="pch-card-info">
                       <strong>{call.name}</strong>

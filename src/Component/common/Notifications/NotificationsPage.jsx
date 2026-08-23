@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { FaBell, FaCalendarAlt, FaCheck, FaCommentAlt, FaTrash } from "react-icons/fa";
-import { HiSparkles } from "react-icons/hi2";
 import axiosInstance from "../../../axiosConfig";
 import socketService from "../../../services/socketService";
 import { useCounselorTranslation, useUserTranslation } from "../../../i18n/LanguageContext";
@@ -10,7 +9,7 @@ const icons = {
   appointment: <FaCalendarAlt />,
   message: <FaCommentAlt />,
   chat: <FaCommentAlt />,
-  ai: <HiSparkles />,
+  ai: <i className="fas fa-robot" aria-hidden="true" />,
 };
 
 const NotificationsPage = ({ role = "user" }) => {

@@ -587,6 +587,25 @@
   margin-bottom: 1rem;
 }
 
+.counselor-profile-container__phone-country-field {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.9fr) minmax(0, 1.2fr);
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+}
+
+.counselor-profile-container__phone-country-field .counselor-profile-container__input {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 520px) {
+  .counselor-profile-container__phone-country-field {
+    grid-template-columns: 1fr;
+  }
+}
+
 .counselor-profile-container__character-count {
   display: block;
   margin-top: 6px;
@@ -2149,14 +2168,15 @@
     align-items: center;
     justify-content: center;
     gap: 4px;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    opacity: 1;
+    transition: background-color 0.2s ease;
     cursor: pointer;
     border-radius: 50%;
 }
 
 .counselor-profile-container__profile-photo-container:hover .counselor-profile-container__photo-edit-overlay {
     opacity: 1;
+    background: rgba(0, 0, 0, 0.68);
 }
 
 .counselor-profile-container__edit-icon {
@@ -2251,7 +2271,7 @@
 .counselor-profile-completion-card > div span { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .counselor-profile-completion-card > div strong { font-size: 17px; }
 .counselor-profile-completion-card > i { height: 8px; margin-top: 13px; overflow: hidden; border-radius: 5px; background: #e2e8f2; display: block; }
-.counselor-profile-completion-card > i b { height: 100%; border-radius: inherit; background: #0759bd; display: block; }
+.counselor-profile-completion-card > i b { height: 100%; border-radius: inherit; background: #0759bd; display: block; transition: width 320ms ease; }
 
 .counselor-profile-details-card { min-height: 265px; padding: 26px 24px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-content: start; gap: 17px 38px; }
 .counselor-profile-details-card > div { min-width: 0; display: flex; gap: 13px; }

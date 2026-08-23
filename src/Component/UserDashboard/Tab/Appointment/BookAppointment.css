@@ -1863,7 +1863,7 @@
 
 /* Stable card flow: prevents text/button overlap at every desktop width. */
 .counselors-grid-unique {
-  grid-template-columns: repeat(2, minmax(360px, 1fr)) !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   gap: 22px;
 }
 
@@ -1958,7 +1958,13 @@
   border-radius: 8px;
 }
 
-@media (max-width: 1180px) {
+@media (max-width: 1300px) {
+  .counselors-grid-unique {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 800px) {
   .counselors-grid-unique {
     grid-template-columns: 1fr !important;
   }
@@ -2006,6 +2012,20 @@
   color: #8b95a5;
   border-color: transparent;
   box-shadow: none;
+}
+
+/* Book uses one solid surface; the previous gradient looked like separate
+   left/right borders on wide buttons. */
+.book-apt-btn-unique,
+.book-apt-btn-unique:hover {
+  border: 0 !important;
+  background: #00b84a !important;
+  color: #fff !important;
+  background-image: none !important;
+}
+
+.book-apt-btn-unique:hover {
+  background: #009f40 !important;
 }
 
 /* Keep long counselor specialties readable on phone-sized cards. */

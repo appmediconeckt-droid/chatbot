@@ -13,10 +13,6 @@
   line-height: 1.2;
 }
 
-.humaeli section.doctors .doctor-card:nth-of-type(2) .doctor-name {
-  font-size: 1.55rem;
-}
-
 .humaeli section.doctors .doctor-card .doctor-specialization {
   font-size: .86rem;
   line-height: 1.35;
@@ -221,5 +217,32 @@
   .humaeli .doctor-carousel-dot,
   .humaeli .doctor-carousel-arrow {
     transition: none;
+  }
+}
+
+/* Keep variable-length professional content and both actions inside the card. */
+.humaeli section.doctors .doctors-grid {
+  align-items: stretch;
+}
+
+.humaeli section.doctors .doctor-card,
+.humaeli section.doctors .doctor-card:nth-of-type(2) {
+  height: auto !important;
+  min-height: 560px;
+  overflow: visible;
+  box-sizing: border-box;
+}
+
+.humaeli section.doctors .doctor-card .doctor-actions {
+  position: static;
+  flex: 0 0 auto;
+  margin-top: auto;
+  padding-top: 14px;
+}
+
+@media (max-width: 768px) {
+  .humaeli section.doctors .doctor-card,
+  .humaeli section.doctors .doctor-card:nth-of-type(2) {
+    min-height: 0;
   }
 }

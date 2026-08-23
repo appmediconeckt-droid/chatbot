@@ -1,8 +1,8 @@
 .humaeli {
   --landing-body-size: 1rem;
   --landing-body-line: 1.6;
-  --landing-muted-size: .95rem;
-  --landing-small-size: .84rem;
+  --landing-muted-size: 1rem;
+  --landing-small-size: .875rem;
 }
 
 .humaeli .section-title {
@@ -19,7 +19,7 @@
 }
 
 .humaeli .hero-title {
-  font-size: clamp(2.5rem, 5vw, 4.6rem) !important;
+  font-size: clamp(2.5rem, 5vw, 4rem) !important;
   line-height: 1.08 !important;
 }
 
@@ -40,7 +40,7 @@
 .humaeli .service-learn-more,
 .humaeli .step-action,
 .humaeli .features-cta {
-  font-size: .9rem !important;
+  font-size: 1rem !important;
   line-height: 1.25 !important;
 }
 
@@ -53,13 +53,30 @@
 
 .humaeli .service-description,
 .humaeli .step-description,
-.humaeli .feature-description {
+.humaeli .feature-description,
+.humaeli .doctor-specialization,
+.humaeli .doctor-bio,
+.humaeli .landing-doctors-state {
   font-size: var(--landing-muted-size) !important;
   line-height: 1.6 !important;
 }
 
+/* Every professional card uses the same type scale, regardless of position. */
+.humaeli section.doctors .doctor-card .doctor-name {
+  font-size: 1.35rem !important;
+  line-height: 1.3 !important;
+}
+
+.humaeli section.doctors .doctor-card .doctor-rating,
+.humaeli section.doctors .doctor-card .doctor-detail,
+.humaeli section.doctors .doctor-card .doctor-book-button,
+.humaeli section.doctors .doctor-card .doctor-profile-link {
+  font-size: var(--landing-small-size) !important;
+  line-height: 1.4 !important;
+}
+
 .humaeli .stat-label {
-  font-size: .78rem !important;
+  font-size: 1.08rem !important;
   line-height: 1.35 !important;
 }
 
@@ -139,15 +156,18 @@
   .humaeli .service-description,
   .humaeli .step-description,
   .humaeli .feature-description,
+  .humaeli .doctor-specialization,
+  .humaeli .doctor-bio,
+  .humaeli .landing-doctors-state,
   .humaeli .testimonial-text,
   .humaeli .faq-answer {
-    font-size: .9rem !important;
+    font-size: var(--landing-muted-size) !important;
   }
 
   .humaeli .btn,
   .humaeli .service-learn-more,
   .humaeli .step-action,
   .humaeli .features-cta {
-    font-size: .84rem !important;
+    font-size: var(--landing-small-size) !important;
   }
 }

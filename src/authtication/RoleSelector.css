@@ -349,8 +349,22 @@
 }
 
 @media (max-width: 720px) {
-  .role-selector-page { align-items: start; padding: 14px; overflow-y: auto; }
-  .x9k3-role-panel { padding: 24px 16px; border-radius: 24px; }
+  .role-selector-page {
+    min-height: 100dvh;
+    padding: 14px;
+    display: block;
+    overflow: visible;
+    touch-action: pan-y;
+    overscroll-behavior-y: auto;
+  }
+  .role-selector-glow { display: none; }
+  .x9k3-role-panel {
+    padding: 24px 16px;
+    border-radius: 24px;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    animation: none;
+  }
   .m7v2-greeting-area { margin-bottom: 24px; }
   .role-brand {
     width: fit-content;
@@ -364,7 +378,11 @@
     max-height: 120px;
   }
   .z6w9-dual-grid { grid-template-columns: 1fr; }
-  .q5b3-role-tile { min-height: 0; padding: 24px; }
+  .q5b3-role-tile {
+    min-height: 0;
+    padding: 24px;
+    animation: none;
+  }
   .e3w1-role-hint { min-height: 0; }
   .h8k1-bottom-actions { flex-direction: column; gap: 8px; }
   .role-trust-divider { display: none; }
