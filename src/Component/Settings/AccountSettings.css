@@ -941,6 +941,31 @@
   background: #fff;
 }
 
+/* Keep the password editor consistent with the counselor dashboard theme. */
+.counselor-security-password-editor .password-security-panel {
+  --password-button-bg: linear-gradient(135deg, #0875f1 0%, #0757b7 67%, #064694 100%);
+  --password-button-bg-hover: linear-gradient(135deg, #075fd0 0%, #064694 100%);
+  --password-button-shadow: 0 8px 18px rgba(7, 87, 183, 0.24);
+}
+
+.counselor-security-password-editor .password-email-input-row button {
+  background: var(--password-button-bg);
+  box-shadow: var(--password-button-shadow);
+}
+
+.counselor-security-password-editor .password-email-input-row button:hover:not(:disabled) {
+  background: var(--password-button-bg-hover);
+}
+
+.counselor-security-password-editor .password-security-panel__switch button.active {
+  color: #075bc4;
+}
+
+.counselor-security-password-editor .password-security-panel input:focus {
+  border-color: #0875f1;
+  box-shadow: 0 0 0 3px rgba(8, 117, 241, 0.14);
+}
+
 .counselor-account-list {
   border-radius: 22px;
 }

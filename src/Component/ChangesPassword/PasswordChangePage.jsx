@@ -22,6 +22,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
   const [mode, setMode] = useState(hasPassword ? "change" : "set");
   const [form, setForm] = useState(initialForm);
   const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -99,6 +100,8 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
       console.log('✅ OTP Response:', response.data);
       if (response.data?.success) {
         setOtpSent(true);
+        setOtpVerified(false);
+        setForm((prev) => ({ ...prev, otp: "", password: "", confirmPassword: "" }));
         setMessage(response.data.message || t('otp_sent_check_email'));
       } else {
         throw new Error(response.data?.message || t('otp_send_failed'));
@@ -126,6 +129,33 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
       } else {
         setError(errorMsg || t('error_try_again'));
       }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    clearStatus();
+    if (!form.otp || form.otp.length !== 6) {
+      setError(t('enter_6_digit_otp'));
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/api/auth/verify-password-otp`,
+        { email: normalizedEmail, otp: form.otp },
+        { headers: authHeaders() },
+      );
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || "OTP verification failed");
+      }
+      setOtpVerified(true);
+      setMessage(response.data.message || "OTP verified successfully");
+    } catch (err) {
+      setOtpVerified(false);
+      setError(err.response?.data?.message || err.message || "OTP verification failed");
     } finally {
       setLoading(false);
     }
@@ -163,6 +193,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
         setMessage(`✅ ${t('password_set_success')} ${t('redirecting_in')} 2 ${t('seconds')}`);
         setForm(initialForm);
         setOtpSent(false);
+        setOtpVerified(false);
         setRedirectCountdown(2);
         onPasswordUpdated?.({ hasPassword: true, requiresLogin: true });
       } else {
@@ -257,6 +288,9 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
             className={mode === "set" ? "active" : ""}
             onClick={() => {
               setMode("set");
+              setForm(initialForm);
+              setOtpSent(false);
+              setOtpVerified(false);
               clearStatus();
             }}
           >
@@ -267,6 +301,9 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
             className={mode === "change" ? "active" : ""}
             onClick={() => {
               setMode("change");
+              setForm(initialForm);
+              setOtpSent(false);
+              setOtpVerified(false);
               clearStatus();
             }}
           >
@@ -286,12 +323,17 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
               </button>
             </div>
           </label>
-          {otpSent && (
+          {otpSent && !otpVerified && (
             <label className="password-field password-otp-field">
               <span>Verification Code</span>
               <input type="text" inputMode="numeric" maxLength={6} name="otp" value={form.otp} onChange={handleChange} placeholder={t("enter_6_digit_otp")} />
+              <button type="button" className="password-security-panel__primary" onClick={handleVerifyOtp} disabled={loading || form.otp.length !== 6}>
+                {loading ? "Verifying..." : "Verify OTP"}
+              </button>
             </label>
           )}
+          {otpVerified && <div className="password-security-panel__message">OTP verified. You can now create your password.</div>}
+          {otpVerified && <>
           <label className="password-field password-new-field">
             <span>New Password</span>
             <input
@@ -332,8 +374,9 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
             <button type="submit" className="password-security-panel__primary" disabled={loading}>
               {loading ? t("saving") : "Save Changes"}
             </button>
-            <button type="button" className="password-change-cancel" onClick={() => { setForm(initialForm); setOtpSent(false); clearStatus(); onCancel?.(); }}>Cancel Changes</button>
+            <button type="button" className="password-change-cancel" onClick={() => { setForm(initialForm); setOtpSent(false); setOtpVerified(false); clearStatus(); onCancel?.(); }}>Cancel Changes</button>
           </div>
+          </>}
         </form>
       ) : (
         <form className="password-security-panel__form" onSubmit={handleChangePassword}>
