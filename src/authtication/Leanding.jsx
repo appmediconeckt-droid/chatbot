@@ -12,6 +12,7 @@ import logoHorizontalDarkText from '../assets/humaeli-logo-horizontal-tagline.pn
 import mobileHeroVideo from '../assets/mobile-hero-section.mp4';
 import mobileHeroPortraitVideo from '../assets/mobile-hero-portrait.mp4';
 import whyChooseHumaeli from '../assets/why-choose-humaeli.png';
+import whyChooseHumaeliVideo from '../assets/counselling-video-2.mp4';
 import faqWellnessIllustration from '../assets/faq-wellness-illustration.png';
 import { API_BASE_URL } from '../axiosConfig';
 import { Link } from 'react-router-dom';
@@ -811,9 +812,15 @@ const FeaturesSection = () => {
       <div className="container">
         <div className="features-showcase">
           <div className="features-image-wrap">
-            <img
-              src={whyChooseHumaeli}
-              alt="A counsellor having a comfortable conversation with a client"
+            <video
+              className="features-video"
+              src={whyChooseHumaeliVideo}
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              aria-label="A counsellor having a comfortable conversation with a client"
             />
           </div>
           <div className="features-content">
