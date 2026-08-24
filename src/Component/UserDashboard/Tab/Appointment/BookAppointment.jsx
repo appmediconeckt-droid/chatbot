@@ -2559,23 +2559,22 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   <div className="user-info-details-unique">
                     <div className="user-info-label-unique">
                       <FaLock aria-hidden="true" />
-                      You're chatting anonymously
+                      {t("chat_request.anonymousTitle")}
                     </div>
                     <div className="user-info-name-unique">
                       {isLoading ? (
                         <span className="loading-text-unique">
-                          Loading your info...
+                          {t("chat_request.loadingInfo")}
                         </span>
                       ) : (
                         <span className="anonymous-name-unique">
                           <FaUser aria-hidden="true" />
-                          Stranger
+                          {t("chat_request.stranger")}
                         </span>
                       )}
                     </div>
                     <div className="user-info-note-unique">
-                      Your real identity remains hidden. Only your anonymous
-                      name is visible to the counselor.
+                      {t("chat_request.anonymousDescription")}
                     </div>
                   </div>
                   <FaLock className="anonymous-watermark-unique" aria-hidden="true" />
@@ -2634,7 +2633,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                     <strong>₹{Number(walletBalance || 0).toFixed(2)}</strong>
                   </div>
                   <p>
-                    Amount will be kept on hold. If counselor does not accept within {paymentConfig.requestExpiryHours || 24} hours, it will be refunded automatically.
+                    {t("chat_request.paymentHold")
+                      .replace("{hours}", paymentConfig.requestExpiryHours || 24)}
                   </p>
                 </div>
               )}
@@ -2642,11 +2642,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               <div className="modal-info-unique">
                 <p>
                   <FaInfoCircle aria-hidden="true" />
-                  You can chat once the counselor accepts your request.
+                  {t("chat_request.acceptanceInfo")}
                 </p>
                 <p className="privacy-note-unique">
                   <FaShieldAlt aria-hidden="true" />
-                  You are chatting anonymously. Your real identity is protected.
+                  {t("chat_request.privacyInfo")}
                 </p>
               </div>
 
@@ -2657,7 +2657,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               >
                 {isLoading
                   ? tr("loading", "Loading...")
-                  : tr("send_request", "Send Request")}
+                  : t("chat_request.sendRequest")}
               </button>
             </form>
           </div>

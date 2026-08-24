@@ -146,18 +146,29 @@ async function loadLocaleMessages(lang) {
 }
 
 async function translateMissingMessages(lang, localeMessages, onProgress) {
-  const missingEntries = Object.entries(enUS).filter(
-    ([key, value]) => value && !localeMessages[key],
-  );
+  const normalizedLang = normalizeLanguageCode(lang);
+  if (normalizedLang === 'en-US') return {};
+
+  // Several older locale files contain a complete key set but leave some
+  // values copied verbatim from English. Treat those values as untranslated,
+  // just like absent/blank keys, so every supported language benefits from
+  // newly added menus, pages, cards, and modals without per-language patches.
+  const missingEntries = Object.entries(enUS).filter(([key, englishValue]) => {
+    if (!englishValue || typeof englishValue !== 'string') return false;
+    const localizedValue = localeMessages?.[key];
+    if (!localizedValue || typeof localizedValue !== 'string') return true;
+    return localizedValue.trim().toLocaleLowerCase()
+      === englishValue.trim().toLocaleLowerCase();
+  });
   if (!missingEntries.length) return {};
 
-  const requestKey = `${lang}:${missingEntries.map(([key]) => key).join('|')}`;
+  const requestKey = `${normalizedLang}:${missingEntries.map(([key]) => key).join('|')}`;
   if (!missingTranslationRequests.has(requestKey)) {
     missingTranslationRequests.set(
       requestKey,
       translationService.translateBatch(
         missingEntries.map(([, value]) => value),
-        lang,
+        normalizedLang,
         'en-US',
         (updates) => {
           if (typeof onProgress !== 'function') return;

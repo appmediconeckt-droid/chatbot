@@ -16,8 +16,12 @@ import {
   FaCheckCircle,
 } from "react-icons/fa";
 import "./HelpSupport.css";
+import { useCounselorTranslation, useUserTranslation } from "../../i18n/LanguageContext";
 
-const HelpSupport = () => {
+const HelpSupport = ({ role = "user" }) => {
+  const userTranslation = useUserTranslation();
+  const counselorTranslation = useCounselorTranslation();
+  const { t } = role === "counselor" || role === "counsellor" ? counselorTranslation : userTranslation;
   const [expandedSections, setExpandedSections] = useState({
     appointments: true,
     earnings: true,
@@ -55,7 +59,7 @@ const HelpSupport = () => {
         <div className="help-support-header-badge">
           <FaHeadset />
           <div>
-            <h1>Help & Support</h1>
+            <h1>{t("help_support")}</h1>
             <p>
               Find answers, contact support, or explore helpful resources for your counselling practice.
             </p>
@@ -73,7 +77,7 @@ const HelpSupport = () => {
           <i className="help-support-feature-icon">
             <FaCalendarAlt />
           </i>
-          <h3>Appointment Issues</h3>
+          <h3>{t("support.appointmentIssues")}</h3>
           <p>Reschedule, Cancel, Conflicts & Availability Management</p>
         </article>
 
@@ -81,7 +85,7 @@ const HelpSupport = () => {
           <i className="help-support-feature-icon">
             <FaMoneyBillWave />
           </i>
-          <h3>Earnings & Payments</h3>
+          <h3>{t("support.earningsPayments")}</h3>
           <p>Wallet, Payout Status, Transactions & Commission Details</p>
         </article>
 
@@ -89,7 +93,7 @@ const HelpSupport = () => {
           <i className="help-support-feature-icon">
             <FaShieldAlt />
           </i>
-          <h3>Account & Verification</h3>
+          <h3>{t("support.accountVerification")}</h3>
           <p>Update Profile, Upload Documents, Credentials</p>
         </article>
 
@@ -97,7 +101,7 @@ const HelpSupport = () => {
           <i className="help-support-feature-icon">
             <FaLock />
           </i>
-          <h3>Security & Password</h3>
+          <h3>{t("support.securityPassword")}</h3>
           <p>Login Issues, Password Reset, Two-Factor Authentication</p>
         </article>
       </div>
@@ -105,7 +109,7 @@ const HelpSupport = () => {
       <div className="help-support-content">
         <ExpandableSection
           icon={<FaCalendarAlt />}
-          title="Appointment Issues"
+          title={t("support.appointmentIssues")}
           sectionKey="appointments"
         >
           <p>
@@ -139,7 +143,7 @@ const HelpSupport = () => {
 
         <ExpandableSection
           icon={<FaMoneyBillWave />}
-          title="Earnings & Payments"
+          title={t("support.earningsPayments")}
           sectionKey="earnings"
         >
           <p>
@@ -177,7 +181,7 @@ const HelpSupport = () => {
 
         <ExpandableSection
           icon={<FaShieldAlt />}
-          title="Account & Verification"
+          title={t("support.accountVerification")}
           sectionKey="account"
         >
           <p>
@@ -215,7 +219,7 @@ const HelpSupport = () => {
 
         <ExpandableSection
           icon={<FaLock />}
-          title="Security & Password"
+          title={t("support.securityPassword")}
           sectionKey="security"
         >
           <p>
@@ -255,7 +259,7 @@ const HelpSupport = () => {
       <section className="help-support-contact">
         <div className="help-support-contact-content">
           <div className="help-support-contact-main">
-            <h2>Still Need Help?</h2>
+            <h2>{t("support.stillNeedHelp")}</h2>
             <p>
               Can't find the answer you're looking for? Our dedicated support
               team is available to assist you with any issues or questions.
@@ -266,7 +270,7 @@ const HelpSupport = () => {
                   <FaPhone />
                 </i>
                 <div>
-                  <h4>Call Support</h4>
+                  <h4>{t("support.callSupport")}</h4>
                   <p>Response time: 2-5 min</p>
                 </div>
               </div>
@@ -275,7 +279,7 @@ const HelpSupport = () => {
                   <FaCommentDots />
                 </i>
                 <div>
-                  <h4>Live Chat</h4>
+                  <h4>{t("support.liveChat")}</h4>
                   <p>Response time: 2-5 min</p>
                 </div>
               </div>
@@ -284,7 +288,7 @@ const HelpSupport = () => {
                   <FaEnvelope />
                 </i>
                 <div>
-                  <h4>Email Support</h4>
+                  <h4>{t("support.emailSupport")}</h4>
                   <p>Available anytime • Response time: Within 24 hrs</p>
                 </div>
               </div>
@@ -293,7 +297,7 @@ const HelpSupport = () => {
 
           <div className="help-support-contact-emergency">
             <h3>
-              <FaExclamationTriangle /> Crisis Resources
+              <FaExclamationTriangle /> {t("crisis_resources")}
             </h3>
             <p>
               If a patient is in crisis or experiencing a mental health emergency,
@@ -312,14 +316,14 @@ const HelpSupport = () => {
               }}
               title="Call India's emergency response number 112"
             >
-              <FaPhone /> Report Crisis
+              <FaPhone /> {t("support.reportCrisis")}
             </button>
           </div>
         </div>
 
         <div className="help-support-action-buttons">
           <button type="button" className="support-action-btn support-action-btn--primary">
-            <FaPhone /> Call Support
+            <FaPhone /> {t("support.callSupport")}
           </button>
           <button
             type="button"
@@ -328,7 +332,7 @@ const HelpSupport = () => {
               window.location.href = "mailto:support@humaeli.com?subject=Support%20Request";
             }}
           >
-            <FaEnvelope /> Email Support
+            <FaEnvelope /> {t("support.emailSupport")}
           </button>
         </div>
       </section>

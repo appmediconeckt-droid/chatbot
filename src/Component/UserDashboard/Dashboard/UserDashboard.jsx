@@ -907,7 +907,7 @@ export default function UserDashboard() {
 
   const allMenuItems = [
     { id: "Chat", icon: <FaCommentDots />, label: t('chat') },
-    { id: "Live Chat", icon: <FaUserMd />, label: "Consultants" },
+    { id: "Live Chat", icon: <FaUserMd />, label: t("consultants") },
     { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
@@ -1156,11 +1156,11 @@ export default function UserDashboard() {
 
   const renderHelpSupport = () => {
     const faqs = [
-      ["How do I book an appointment?", "Open Appointments, choose a counselor and select an available date and time."],
-      ["How can I cancel or reschedule?", "Open My Appointments and use the available cancel or reschedule action."],
-      ["Is my medical data secure?", "Your sensitive interactions and account data use protected access and encryption."],
-      ["How do I report a fraud?", "Email support with the account details and evidence. Never share your OTP or password."],
-      ["How do I add funds to my Wallet?", "Open Wallet and select Add Funds to complete a secure transaction."],
+      [t("support.faq.bookQuestion"), t("support.faq.bookAnswer")],
+      [t("support.faq.rescheduleQuestion"), t("support.faq.rescheduleAnswer")],
+      [t("support.faq.securityQuestion"), t("support.faq.securityAnswer")],
+      [t("support.faq.fraudQuestion"), t("support.faq.fraudAnswer")],
+      [t("support.faq.walletQuestion"), t("support.faq.walletAnswer")],
     ].filter(([question, answer]) =>
       `${question} ${answer}`.toLowerCase().includes(helpSearch.trim().toLowerCase()),
     );
@@ -1176,15 +1176,15 @@ export default function UserDashboard() {
             <h1>{t("how_can_we_help")}</h1>
           <label className="ud-help-search">
             <FaSearch />
-            <input value={helpSearch} onChange={(event) => setHelpSearch(event.target.value)} placeholder="Search help articles, guides, and FAQs..." />
+            <input value={helpSearch} onChange={(event) => setHelpSearch(event.target.value)} placeholder={t("support.searchPlaceholder")} />
           </label>
 
           <div className="ud-help-channel-grid">
             {[
-              [<FaCommentDots />, "Live Chat", "Chat with our support team", "Usually within 2 mins", () => setChatOpen(true)],
-              [<FaPhone />, "Call Support", "Talk directly", "Mon-Sat 9AM–7PM", () => { window.location.href = "tel:+18005550199"; }],
-              [<FaEnvelope />, "Email Support", "Send your questions", "Within 24 hours", () => { window.location.href = "mailto:support@humaeli.com"; }],
-              [<img src={logoIcon} alt="" aria-hidden="true" />, "AI Assistant", "Get instant answers", "24/7 Available", () => setChatOpen(true)],
+              [<FaCommentDots />, t("support.liveChat"), t("support.chatDescription"), t("support.twoMinutes"), () => setChatOpen(true)],
+              [<FaPhone />, t("support.callSupport"), t("support.talkDirectly"), t("support.callHours"), () => { window.location.href = "tel:+18005550199"; }],
+              [<FaEnvelope />, t("support.emailSupport"), t("support.sendQuestions"), t("support.within24Hours"), () => { window.location.href = "mailto:support@humaeli.com"; }],
+              [<img src={logoIcon} alt="" aria-hidden="true" />, t("support.aiAssistant"), t("support.instantAnswers"), t("support.available247"), () => setChatOpen(true)],
             ].map(([icon, title, text, availability, onClick]) => (
               <button type="button" key={title} onClick={onClick}>
                 <span>{icon}</span><strong>{title}</strong><p>{text}</p><small>{availability}</small>
@@ -1248,10 +1248,10 @@ export default function UserDashboard() {
 
   const renderPrivacyCenter = () => {
     const sections = [
-      { ...privacyDataGroups[0], title: "Personal Profile" },
-      { ...privacyDataGroups[1], title: "Chats & Calls" },
-      { ...privacyDataGroups[2], title: "Appointments" },
-      { ...privacyDataGroups[3], title: "Wallet & Transactions" },
+      { ...privacyDataGroups[0], title: t("privacy.personalProfile"), text: t("privacy.personalProfileDescription") },
+      { ...privacyDataGroups[1], title: t("privacy.chatsCalls"), text: t("privacy.chatsCallsDescription") },
+      { ...privacyDataGroups[2], title: t("privacy.appointments"), text: t("privacy.appointmentsDescription") },
+      { ...privacyDataGroups[3], title: t("privacy.walletTransactions"), text: t("privacy.walletTransactionsDescription") },
     ];
 
     return (
@@ -1269,10 +1269,10 @@ export default function UserDashboard() {
             <div><strong>{t("protected")}</strong><p>{t("data_is_secure")}</p></div>
               </div>
               <div className="ud-protected-points">
-                <span>⊙ End-to-end encrypted chats</span>
-                <span>⊙ OTP verified account</span>
-                <span>⊙ Anonymous consultation</span>
-                <span>⊙ Secure wallet transactions</span>
+                <span>⊙ {t("privacy.encryptedChats")}</span>
+                <span>⊙ {t("privacy.otpVerified")}</span>
+                <span>⊙ {t("privacy.anonymousConsultation")}</span>
+                <span>⊙ {t("privacy.secureWallet")}</span>
               </div>
             </section>
 
@@ -1305,20 +1305,20 @@ export default function UserDashboard() {
           <aside className="ud-privacy-side">
           <h3 className="ud-privacy-label">{t("quick_actions")}</h3>
             <div className="ud-privacy-quick-grid">
-              <button type="button" onClick={handleProfileClick}><FaUser /><strong>Manage Profile</strong><small>Update details</small></button>
-              <button type="button" onClick={handleSettingsClick}><FaLock /><strong>Security Settings</strong><small>Passwords & OTP</small></button>
-              <button type="button" onClick={downloadPrivacyData}><FaDownload /><strong>Download Data</strong><small>Get your records</small></button>
-              <button type="button" className="danger" onClick={handleDeleteAccountEmail}><FaTrash /><strong>Delete Account</strong><small>Email deletion request</small></button>
+              <button type="button" onClick={handleProfileClick}><FaUser /><strong>{t("privacy.manageProfile")}</strong><small>{t("privacy.updateDetails")}</small></button>
+              <button type="button" onClick={handleSettingsClick}><FaLock /><strong>{t("security_settings")}</strong><small>{t("privacy.passwordsOtp")}</small></button>
+              <button type="button" onClick={downloadPrivacyData}><FaDownload /><strong>{t("privacy.downloadData")}</strong><small>{t("privacy.getRecords")}</small></button>
+              <button type="button" className="danger" onClick={handleDeleteAccountEmail}><FaTrash /><strong>{t("delete_account")}</strong><small>{t("privacy.emailDeletionRequest")}</small></button>
             </div>
 
           <h3 className="ud-privacy-label">{t("your_privacy_checklist")}</h3>
             <div className="ud-privacy-checklist">
               {[
-                "Never share OTP with anyone",
-                "Enable App Lock in settings",
-                "Keep emergency contact updated",
-                "Review device permissions regularly",
-                "Use anonymous mode",
+                t("privacy.checklistNeverShareOtp"),
+                t("privacy.checklistEnableLock"),
+                t("privacy.checklistEmergencyContact"),
+                t("privacy.checklistPermissions"),
+                t("privacy.checklistAnonymousMode"),
               ].map((item, index) => (
                 <div className={index === 4 ? "muted" : ""} key={item}>
                   <FaCheckCircle /> <span>{item}</span>

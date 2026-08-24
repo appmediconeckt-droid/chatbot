@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FaBell, FaCalendarAlt, FaCheck, FaCommentAlt, FaTrash } from "react-icons/fa";
 import axiosInstance from "../../../axiosConfig";
 import socketService from "../../../services/socketService";
-import { useCounselorTranslation, useUserTranslation } from "../../../i18n/LanguageContext";
+import { useCounselorTranslation, useUserTranslation, useCounselorApiTranslation, useUserApiTranslation } from "../../../i18n/LanguageContext";
 import "./Notifications.css";
 
 const icons = {
@@ -16,7 +16,10 @@ const NotificationsPage = ({ role = "user" }) => {
   const isCounselor = role === "counselor" || role === "counsellor";
   const userTranslation = useUserTranslation();
   const counselorTranslation = useCounselorTranslation();
-  const { t } = isCounselor ? counselorTranslation : userTranslation;
+  const userApiTranslation = useUserApiTranslation();
+  const counselorApiTranslation = useCounselorApiTranslation();
+  const { t, lang } = isCounselor ? counselorTranslation : userTranslation;
+  const { translate } = isCounselor ? counselorApiTranslation : userApiTranslation;
   const filters = [
     { value: "all", label: t("all") },
     { value: "unread", label: t("unread") },
@@ -35,7 +38,13 @@ const NotificationsPage = ({ role = "user" }) => {
       const response = await axiosInstance.get("/api/notifications", {
         params: { page: 1, limit: 100, ...(type ? { type } : {}), ...(unreadOnly ? { unread: true } : {}) },
       });
-      setNotifications(response.data?.notifications || []);
+      const items = response.data?.notifications || [];
+      const localizedItems = lang === "en-US" ? items : await Promise.all(items.map(async (item) => ({
+        ...item,
+        title: item.title ? await translate(item.title) : item.title,
+        message: item.message ? await translate(item.message) : item.message,
+      })));
+      setNotifications(localizedItems);
       setUnreadCount(Number(response.data?.unreadCount || 0));
     } catch (error) {
       console.error("Notifications page load failed:", error);
@@ -46,7 +55,7 @@ const NotificationsPage = ({ role = "user" }) => {
 
   useEffect(() => {
     void load();
-  }, [type, unreadOnly]);
+  }, [type, unreadOnly, lang]);
 
   useEffect(() => {
     let cleanup;
@@ -144,10 +153,10 @@ const NotificationsPage = ({ role = "user" }) => {
                 </button>
               )}
             </div>
-            <time className="notifications-page-item-time">{new Date(notification.createdAt).toLocaleString("en-IN")}</time>
-            {!notification.isRead && <span className="notifications-page-unread-dot" aria-label="Unread" />}
+            <time className="notifications-page-item-time">{new Date(notification.createdAt).toLocaleString(lang || "en-IN")}</time>
+            {!notification.isRead && <span className="notifications-page-unread-dot" aria-label={t("unread")} />}
             <div className="notification-item-actions">
-              <button type="button" onClick={() => remove(notification._id)} className="notification-action-delete" title="Delete notification"><FaTrash /></button>
+              <button type="button" onClick={() => remove(notification._id)} className="notification-action-delete" title={t("notification.delete")}><FaTrash /></button>
             </div>
           </article>
         ))}

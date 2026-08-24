@@ -350,9 +350,9 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
                 )}
               </>
             ) : counselorSettingsSection === 'privacy' ? (
-              <PrivacyPolicy />
+              <PrivacyPolicy role={role} />
             ) : counselorSettingsSection === 'support' ? (
-              <HelpSupport />
+              <HelpSupport role={role} />
             ) : null}
           </main>
         </div>

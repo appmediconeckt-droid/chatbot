@@ -2827,7 +2827,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     style={{ display: 'none' }}
                 />
                 {PhotoUploadModal()}
-                <header className="counselor-profile-reference__title"><h1>Profile Page</h1></header>
+                <header className="counselor-profile-reference__title"><h1>{t('profile.title')}</h1></header>
 
                 {successMessage && <div className={`${COUNSELOR_PROFILE_CLASS}__alert ${COUNSELOR_PROFILE_CLASS}__alert--success`}>{successMessage}</div>}
                 {error && <div className={`${COUNSELOR_PROFILE_CLASS}__alert ${COUNSELOR_PROFILE_CLASS}__alert--error`}>{error}</div>}
@@ -2843,23 +2843,23 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                             <h2>{counselor?.fullName || 'Counselor'} <FaCheckCircle /></h2>
                             <p>{counselor?.uniqueCode || t('not_assigned')}</p>
                             <div className="counselor-profile-reference__tags">
-                                {(specializations.length ? specializations : ['Not specified']).slice(0, 3).map((item) => <span key={item}>{item}</span>)}
+                                {(specializations.length ? specializations : [t('not_specified')]).slice(0, 3).map((item) => <span key={item}>{item}</span>)}
                             </div>
-                            <button type="button" onClick={() => setIsEditing(true)}><FaPencilAlt /> Edit Profile</button>
+                            <button type="button" onClick={() => setIsEditing(true)}><FaPencilAlt /> {t('profile.editProfile')}</button>
                         </section>
 
                         <section className="counselor-profile-stats-card">
-                            <div><FaStar /><strong>{(Math.round((counselor?.rating || 0) * 10) / 10).toFixed(1)}</strong><span>RATING</span></div>
-                            <div><FaVideo /><strong>{counselor?.totalSessions || 0}</strong><span>SESSIONS</span></div>
-                            <div><FaUserFriends /><strong>{counselor?.activeClients || 0}</strong><span>CLIENTS</span></div>
-                            <div><FaBriefcase /><strong>{counselor?.experience || 0}y</strong><span>EXPERIENCE</span></div>
+                            <div><FaStar /><strong>{(Math.round((counselor?.rating || 0) * 10) / 10).toFixed(1)}</strong><span>{t('rating')}</span></div>
+                            <div><FaVideo /><strong>{counselor?.totalSessions || 0}</strong><span>{t('sessions')}</span></div>
+                            <div><FaUserFriends /><strong>{counselor?.activeClients || 0}</strong><span>{t('active_clients')}</span></div>
+                            <div><FaBriefcase /><strong>{counselor?.experience || 0}y</strong><span>{t('experience')}</span></div>
                         </section>
 
                         <section className="counselor-profile-completion-card">
-                            <div><span><FaCheckCircle /> Profile Completion</span><strong>{profileCompletionPercentage}%</strong></div>
+                            <div><span><FaCheckCircle /> {t('profile.completion')}</span><strong>{profileCompletionPercentage}%</strong></div>
                             <i
                                 role="progressbar"
-                                aria-label="Profile completion"
+                                aria-label={t('profile.completion')}
                                 aria-valuemin="0"
                                 aria-valuemax="100"
                                 aria-valuenow={profileCompletionPercentage}
@@ -2872,46 +2872,46 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     <main className="counselor-profile-reference__right">
                         <section className="counselor-profile-details-card">
                             {[
-                                [<FaCalendarAlt />, 'AGE', counselor?.age || 'Not specified'],
-                                [<FaUser />, 'GENDER', counselor?.gender || 'Not specified'],
-                                [<FaEnvelope />, 'EMAIL', counselor?.email || 'Not specified'],
-                                [<FaPhoneAlt />, 'PHONE', counselor?.phoneNumber || counselor?.phone || 'Not specified'],
-                                [<FaMapMarkerAlt />, 'LOCATION', locationText || 'Not specified'],
-                                [<FaHome />, 'ADDRESS', addressText || 'Not specified'],
+                                [<FaCalendarAlt />, t('age'), counselor?.age || t('not_specified')],
+                                [<FaUser />, t('gender'), counselor?.gender || t('not_specified')],
+                                [<FaEnvelope />, t('email'), counselor?.email || t('not_specified')],
+                                [<FaPhoneAlt />, t('phone'), counselor?.phoneNumber || counselor?.phone || t('not_specified')],
+                                [<FaMapMarkerAlt />, t('location'), locationText || t('not_specified')],
+                                [<FaHome />, t('address'), addressText || t('not_specified')],
                             ].map(([icon, label, value]) => (
                                 <div key={label}><i>{icon}</i><span>{label}<strong>{value}</strong></span></div>
                             ))}
                         </section>
 
                         <section className="counselor-profile-about-card">
-                            <h2>About Me</h2>
-                            <p>{counselor?.aboutMe || 'No bio provided'}</p>
+                            <h2>{t('about_me')}</h2>
+                            <p>{counselor?.aboutMe || t('profile.noBioProvided')}</p>
                         </section>
 
                         <div className="counselor-profile-mini-grid">
-                            <section><i><FaGraduationCap /></i><span>EDUCATION<strong>{counselor?.education || 'Not specified'}</strong></span></section>
-                            <section><i><FaBriefcase /></i><span>EXPERIENCE<strong>{counselor?.experience || 0} years</strong></span></section>
-                            <section className="modes"><span>CONSULTATION MODE</span><div>{(modes.length ? modes : ['Not specified']).map((mode) => <b key={mode}><FaWifi /> {mode}</b>)}</div></section>
-                            <section className="languages"><span>LANGUAGES SPOKEN</span><div>{(languages.length ? languages : ['Not specified']).map((language) => <b key={language}>{language}</b>)}</div></section>
+                            <section><i><FaGraduationCap /></i><span>{t('education')}<strong>{counselor?.education || t('not_specified')}</strong></span></section>
+                            <section><i><FaBriefcase /></i><span>{t('experience')}<strong>{counselor?.experience || 0} {t('years')}</strong></span></section>
+                            <section className="modes"><span>{t('consultation_mode')}</span><div>{(modes.length ? modes : [t('not_specified')]).map((mode) => <b key={mode}><FaWifi /> {mode}</b>)}</div></section>
+                            <section className="languages"><span>{t('profile.languagesSpoken')}</span><div>{(languages.length ? languages : [t('not_specified')]).map((language) => <b key={language}>{language}</b>)}</div></section>
                         </div>
 
                         <section className="counselor-profile-specializations-card">
-                            <h2>Specializations</h2>
-                            <div>{(specializations.length ? specializations : ['Not specified']).map((item) => <span key={item}>{item}</span>)}</div>
+                            <h2>{t('profile.specializations')}</h2>
+                            <div>{(specializations.length ? specializations : [t('not_specified')]).map((item) => <span key={item}>{item}</span>)}</div>
                         </section>
 
                         <section className="counselor-profile-certificates-card">
-                            <h2>Licenses &amp; Certificates</h2>
+                            <h2>{t('profile.licensesCertificates')}</h2>
                             {certifications.length ? certifications.map((cert) => (
                                 <article key={cert._id || cert.name}>
                                     <i><FaCheckCircle /></i>
                                     <div>
                                         <strong>{cert.name}</strong>
-                                        <span>Issued by: {cert.issuedBy || 'Not specified'}</span>
-                                        <small>Issue Date: {formatDate(cert.issueDate)}<br />Expiry Date: {formatDate(cert.expiryDate)}</small>
+                                        <span>{t('profile.issuedBy')}: {cert.issuedBy || t('not_specified')}</span>
+                                        <small>{t('profile.issueDate')}: {formatDate(cert.issueDate)}<br />{t('profile.expiryDate')}: {formatDate(cert.expiryDate)}</small>
                                     </div>
                                 </article>
-                            )) : <p>No certificates added.</p>}
+                            )) : <p>{t('profile.noCertificatesAdded')}</p>}
                         </section>
                     </main>
                 </div>

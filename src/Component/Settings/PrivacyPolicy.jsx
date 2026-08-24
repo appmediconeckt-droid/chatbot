@@ -20,18 +20,23 @@ import {
   FaChild,
 } from "react-icons/fa";
 import "./PrivacyPolicy.css";
+import { useCounselorTranslation, useUserTranslation } from "../../i18n/LanguageContext";
 
 const SUPPORT_EMAIL = "support@humaeli.com";
 const SUPPORT_PHONE = "9152987821";
 
-const PrivacyPolicy = ({ variant = "dashboard" }) => {
+const PrivacyPolicy = ({ variant = "dashboard", role = "user" }) => {
   const isPublic = variant === "public";
+  const isCounselor = role === "counselor" || role === "counsellor";
+  const userTranslation = useUserTranslation();
+  const counselorTranslation = useCounselorTranslation();
+  const { t } = isCounselor ? counselorTranslation : userTranslation;
   const [openSection, setOpenSection] = useState(isPublic ? null : 0);
 
   const sections = [
     {
       icon: <FaServer />,
-      title: "Information We Collect",
+      title: t("privacy.sections.informationCollect"),
       content: (
         <>
           <p>
@@ -67,7 +72,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaEye />,
-      title: "How We Use Information",
+      title: t("privacy.sections.howWeUse"),
       content: (
         <>
           <p>
@@ -88,7 +93,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaCloud />,
-      title: "Data Storage",
+      title: t("privacy.sections.dataStorage"),
       content: (
         <>
           <p>
@@ -107,7 +112,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaUserClock />,
-      title: "Data Retention and Deletion",
+      title: t("privacy.sections.retentionDeletion"),
       content: (
         <>
           <p>
@@ -126,7 +131,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaUserFriends />,
-      title: "Information Sharing",
+      title: t("privacy.sections.informationSharing"),
       content: (
         <>
           <p>
@@ -145,7 +150,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaLock />,
-      title: "Security",
+      title: t("security"),
       content: (
         <>
           <p>
@@ -164,7 +169,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaCheckCircle />,
-      title: "User Privacy Choices / Rights",
+      title: t("privacy.sections.choicesRights"),
       content: (
         <>
           <p>
@@ -183,7 +188,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaChild />,
-      title: "Children's Privacy",
+      title: t("privacy.sections.childrenPrivacy"),
       content: (
         <>
           <p>
@@ -201,7 +206,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaGavel />,
-      title: "Changes to Privacy Policy",
+      title: t("privacy.sections.policyChanges"),
       content: (
         <>
           <p>
@@ -218,7 +223,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
     },
     {
       icon: <FaEnvelope />,
-      title: "Contact / Privacy Assistance",
+      title: t("privacy.sections.contactAssistance"),
       content: (
         <>
           <p>
@@ -297,12 +302,8 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
             <div className="privacy-policy-header-badge">
               <FaShieldAlt />
               <div>
-                <h1>Privacy & Security</h1>
-                <p>
-                  Learn how Humaeli protects your account information,
-                  conversations, appointments, wallet activity, professional
-                  records, and support requests.
-                </p>
+                <h1>{t("privacy.securityTitle")}</h1>
+                <p>{t("privacy.securityDescription")}</p>
               </div>
             </div>
             <div className="privacy-policy-header-meta">
@@ -317,32 +318,32 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
               <i className="privacy-feature-icon">
                 <FaDatabase />
               </i>
-              <h3>Responsible Collection</h3>
-              <p>We collect data needed to run accounts, care, support, and safety workflows.</p>
+              <h3>{t("privacy.responsibleCollection")}</h3>
+              <p>{t("privacy.responsibleCollectionDescription")}</p>
             </article>
 
             <article className="privacy-feature-card">
               <i className="privacy-feature-icon">
                 <FaComments />
               </i>
-              <h3>Private Conversations</h3>
-              <p>Chats, calls, and session records are handled with strong access controls.</p>
+              <h3>{t("privacy.privateConversations")}</h3>
+              <p>{t("privacy.privateConversationsDescription")}</p>
             </article>
 
             <article className="privacy-feature-card">
               <i className="privacy-feature-icon">
                 <FaCreditCard />
               </i>
-              <h3>Protected Payments</h3>
-              <p>Wallet, transaction, and payout data are used for billing and account records.</p>
+              <h3>{t("privacy.protectedPayments")}</h3>
+              <p>{t("privacy.protectedPaymentsDescription")}</p>
             </article>
 
             <article className="privacy-feature-card">
               <i className="privacy-feature-icon">
                 <FaBriefcase />
               </i>
-              <h3>Professional Privacy</h3>
-              <p>Contact details and sensitive professional data are shared only when necessary.</p>
+              <h3>{t("privacy.professionalPrivacy")}</h3>
+              <p>{t("privacy.professionalPrivacyDescription")}</p>
             </article>
           </div>
         </>
@@ -377,11 +378,8 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
       {!isPublic && (
         <section className="privacy-policy-support">
           <div className="privacy-policy-support-content">
-            <h2>Need Privacy Assistance?</h2>
-            <p>
-              Our support team can help with privacy questions, account data
-              requests, corrections, deletion, or legal/grievance assistance.
-            </p>
+            <h2>{t("privacy.needAssistance")}</h2>
+            <p>{t("privacy.assistanceDescription")}</p>
           </div>
           <div className="privacy-policy-support-buttons">
             <button
@@ -391,7 +389,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
                 window.location.href = `mailto:${SUPPORT_EMAIL}?subject=Privacy%20Support`;
               }}
             >
-              <FaEnvelope /> Email Support
+              <FaEnvelope /> {t("privacy.emailSupport")}
             </button>
             <button
               type="button"
@@ -400,7 +398,7 @@ const PrivacyPolicy = ({ variant = "dashboard" }) => {
                 window.location.href = "tel:9152987821";
               }}
             >
-              <FaPhone /> Call
+              <FaPhone /> {t("privacy.callSupport")}
             </button>
           </div>
         </section>

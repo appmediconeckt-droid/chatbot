@@ -27,7 +27,7 @@ export default function SessionsTab({
   handleOpenAppointmentChat,
   loading = false,
 }) {
-  const { t } = useCounselorTranslation();
+  const { t, lang } = useCounselorTranslation();
   const [sessionFilter, setSessionFilter] = React.useState("all");
   const [selectedSession, setSelectedSession] = React.useState(null);
 
@@ -67,7 +67,7 @@ export default function SessionsTab({
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(lang || 'en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -78,7 +78,7 @@ export default function SessionsTab({
   // ✅ Format time
   const formatTime = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
+    return date.toLocaleTimeString(lang || 'en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -99,7 +99,7 @@ export default function SessionsTab({
   // ✅ Get today's date for display
   const getTodayDate = () => {
     const today = new Date();
-    return today.toLocaleDateString('en-US', {
+    return today.toLocaleDateString(lang || 'en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -181,7 +181,7 @@ export default function SessionsTab({
               className="stitch-date-input"
               value={sessionSelectedDate || ""}
               onChange={handleDateChange}
-              title="Filter by date"
+              title={t("sessions.filterByDate")}
             />
           </div>
         </div>
@@ -216,15 +216,11 @@ export default function SessionsTab({
               <div className="stitch-empty-session-icon" aria-hidden="true">
                 <FaVideoSlash />
               </div>
-              <h3>{isToday(sessionSelectedDate || new Date()) ? "No sessions today" : "No sessions for this day"}</h3>
-              <p>
-                Your confirmed sessions for the selected day will appear
-                <br />
-                here. Enjoy the downtime or check upcoming dates.
-              </p>
+              <h3>{isToday(sessionSelectedDate || new Date()) ? t("sessions.noSessionsToday") : t("sessions.noSessionsDay")}</h3>
+              <p>{t("sessions.emptyDescription")}</p>
               <div className="stitch-empty-session-actions">
                 <button type="button" className="primary" onClick={handleClearFilter}>
-                  <FaRedoAlt /> Refresh Schedule
+                  <FaRedoAlt /> {t("sessions.refreshSchedule")}
                 </button>
                 <button type="button" onClick={handleViewTomorrow}>{t("view_tomorrow")}</button>
               </div>
@@ -249,7 +245,7 @@ export default function SessionsTab({
                   <div key={apt._id} className="stitch-session-card">
                     <div className="stitch-session-timebar">
                       <span><FaClock /> {formatTime(dateObj)} - {formatTime(endDate)}</span>
-                      {sessionInProgress && <b>● IN PROGRESS</b>}
+                      {sessionInProgress && <b>● {t("in_progress")}</b>}
                     </div>
                     <div className="stitch-session-card-body">
                       <div className="stitch-session-avatar">
@@ -274,7 +270,7 @@ export default function SessionsTab({
                         aria-label={translate('start_video_call', 'Start Video Call')}
                       >
                         {sessionInProgress && <FaVideo aria-hidden="true" />}
-                        <span>{sessionInProgress ? "Conduct Session" : "View Details"}</span>
+                        <span>{sessionInProgress ? t("sessions.conductSession") : t("sessions.viewDetails")}</span>
                       </button>
                       <button
                         className="stitch-session-action-btn stitch-session-voice-btn"
@@ -328,7 +324,7 @@ export default function SessionsTab({
               className="stitch-session-details-modal"
               role="dialog"
               aria-modal="true"
-              aria-label="Session details"
+              aria-label={t("sessions.sessionDetails")}
               onMouseDown={(event) => event.stopPropagation()}
             >
               <header>
@@ -337,25 +333,25 @@ export default function SessionsTab({
                 </div>
                 <div>
                   <h2>{patient.name}</h2>
-                  <p>{selectedSession.gender || "Patient"} • {selectedSession.age ? `${selectedSession.age} Years` : "Private profile"}</p>
+                  <p>{selectedSession.gender || t("sessions.patient")} • {selectedSession.age ? `${selectedSession.age} ${t("years")}` : t("sessions.privateProfile")}</p>
                   <span><FaShieldAlt /> {t("returning_patient")}</span>
                 </div>
-                <button type="button" onClick={() => setSelectedSession(null)} aria-label="Close session details">×</button>
+                <button type="button" onClick={() => setSelectedSession(null)} aria-label={t("sessions.closeDetails")}>×</button>
               </header>
 
               <div className="stitch-session-modal-content">
                 <div className="stitch-session-detail-pills">
-                  <span className={sessionInProgress ? "progress" : ""}>● {sessionInProgress ? "In Progress" : "Confirmed"}</span>
+                  <span className={sessionInProgress ? "progress" : ""}>● {sessionInProgress ? t("in_progress") : t("confirmed")}</span>
                   <span><FaCalendarAlt /> {formatDateForDisplay(selectedSession.date)}</span>
                   <span><FaClock /> {formatTime(startDate)} – {formatTime(endDate)}</span>
                   <span><FaVideo /> {t("video_session")}</span>
                 </div>
 
                 <div className="stitch-session-reason-card">
-                  <h3><FaBriefcaseMedical /> Reason: {selectedSession.reason || selectedSession.title || "Consultation Follow-up"}</h3>
+                  <h3><FaBriefcaseMedical /> {t("sessions.reason")}: {selectedSession.reason || selectedSession.title || t("sessions.consultationFollowUp")}</h3>
                   <blockquote>
                     <FaQuoteLeft />
-                    <span>{selectedSession.notes || "No additional notes were provided for this session."}</span>
+                    <span>{selectedSession.notes || t("sessions.noAdditionalNotes")}</span>
                   </blockquote>
                 </div>
               </div>
@@ -365,7 +361,7 @@ export default function SessionsTab({
                   setSelectedSession(null);
                   handleInitiateVideoCall(selectedSession);
                 }}>
-                  <FaVideo /> Start Session
+                  <FaVideo /> {t("sessions.startSession")}
                 </button>
               </footer>
             </section>

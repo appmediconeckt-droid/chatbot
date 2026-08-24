@@ -20,7 +20,7 @@ export function MobileHeader({ showMobileMenu, setShowMobileMenu }) {
       >
         {showMobileMenu ? <FaTimes /> : <FaBars />}
       </button>
-      <NotificationCenter />
+      <NotificationCenter role="counselor" />
     </div>
   );
 }
