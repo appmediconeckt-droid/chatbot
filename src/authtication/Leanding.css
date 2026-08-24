@@ -6348,6 +6348,25 @@ html {
   letter-spacing: .08em;
 }
 
+/* Keep the appointment CTA edge clean: shared button hover/ripple styles can
+   otherwise appear as dark vertical strips at the rounded left/right sides. */
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button,
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button:hover,
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button:focus,
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button:active {
+  border: none;
+  outline: none;
+  box-shadow: none;
+  transform: none;
+  background: linear-gradient(90deg, #18bc82, #08783c);
+}
+
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button::before,
+.humaeli section.doctors .doctor-card .doctor-actions .doctor-book-button::after {
+  content: none;
+  display: none;
+}
+
 /* FAQ: final alignment pass for balanced left/right and top/bottom spacing. */
 .humaeli section.faq {
   padding: 72px 0;

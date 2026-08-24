@@ -960,7 +960,7 @@
 }
 
 .directory-filter-pills-unique button.active {
-  border-color: transparent;
+  /* border-color: transparent; */
   background: linear-gradient(90deg, #006B2C, #01CE54);
   color: #ffffff;
 }
@@ -1981,7 +1981,7 @@
 .modal-submit-btn-unique:not(:disabled),
 .booking-cancel-btn-unique,
 .booking-confirm-btn-unique:not(:disabled) {
-  border-color: transparent;
+  /* border-color: transparent; */
   background: linear-gradient(90deg, #006b2c 0%, #01ce54 100%);
   color: #ffffff;
   box-shadow: 0 6px 14px rgba(0, 107, 44, 0.16);
@@ -2804,7 +2804,7 @@
 .modal-submit-btn-unique:not(:disabled),
 .booking-cancel-btn-unique,
 .booking-confirm-btn-unique:not(:disabled) {
-  border-color: transparent;
+  /* border-color: transparent; */
   background: linear-gradient(90deg, #006b2c 0%, #01ce54 100%);
   color: #fff;
   box-shadow: 0 6px 14px rgba(0, 107, 44, 0.16);

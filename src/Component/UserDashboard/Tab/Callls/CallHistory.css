@@ -151,7 +151,7 @@
 
 .portal-call-history.pch-theme-user .pch-filter-row button.active,
 .portal-call-history.pch-theme-counselor .pch-filter-row button.active {
-  border-color: transparent;
+  /* border-color: transparent; */
   background: linear-gradient(
     90deg,
     var(--pch-accent-start),

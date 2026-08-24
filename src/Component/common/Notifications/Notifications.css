@@ -261,7 +261,7 @@
 }
 .notifications-page .notification-filter.active,
 .notifications-page--counselor .notification-filter.active {
-  border-color: transparent;
+  /* border-color: transparent; */
   color: #fff;
   background: linear-gradient(100deg, #00843d 0%, #00c95a 100%);
   box-shadow: 0 5px 12px rgba(0, 156, 70, .2);
@@ -449,4 +449,52 @@
   .notifications-page .notifications-page-item-copy p {
     font-size: 13px;
   }
+}
+
+/* Counselor notification actions use the counselor blue theme. User
+   notification actions intentionally keep the existing green theme. */
+.notifications-page--counselor .notifications-primary-action,
+.notifications-page--counselor .notifications-hero .notifications-primary-action {
+  color: #2563eb;
+}
+
+.notifications-page--counselor .notifications-primary-action:hover:not(:disabled),
+.notifications-page--counselor .notifications-hero .notifications-primary-action:hover:not(:disabled) {
+  color: #1d4ed8;
+}
+
+.notifications-page--counselor .notification-filter:hover:not(.active) {
+  color: #2563eb;
+  border-color: #93b4f5;
+  background: #eff6ff;
+}
+
+.notifications-page--counselor .notification-filter.active {
+  border-color: transparent;
+  color: #fff;
+  background: linear-gradient(100deg, #1d4ed8 0%, #3b82f6 100%);
+  box-shadow: 0 5px 12px rgba(37, 99, 235, .22);
+}
+
+.notifications-page--counselor .notification-inline-action {
+  border-color: #2563eb;
+  color: #fff;
+  background: linear-gradient(100deg, #1d4ed8 0%, #3b82f6 100%);
+}
+
+/* Notification category icons use one neutral color across user and
+   counselor views while retaining their existing soft backgrounds. */
+.notification-popover .notification-type-icon,
+.notification-popover .notification-type-icon.type-call,
+.notification-popover .notification-type-icon.type-appointment,
+.notification-popover .notification-type-icon.type-payment,
+.notifications-page .notifications-page-item-icon,
+.notifications-page .notifications-page-item-icon.type-call,
+.notifications-page .notifications-page-item-icon.type-appointment,
+.notifications-page .notifications-page-item-icon.type-payment,
+.notifications-page .notifications-page-item-icon.type-message,
+.notifications-page .notifications-page-item-icon.type-chat,
+.notifications-page .notifications-page-item-icon.type-ai,
+.notifications-page .notifications-page-item-icon.type-system {
+  color: #111827;
 }

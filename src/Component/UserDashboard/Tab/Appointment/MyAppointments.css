@@ -180,7 +180,7 @@
 
 .user-appointments-status-pills button.active,
 .user-appointments-tab.active {
-  border-color: transparent;
+  /* border-color: transparent; */
   background: linear-gradient(90deg, var(--user-apt-dark), var(--user-apt-light));
   color: #fff;
   box-shadow: 0 5px 12px rgba(0, 107, 44, 0.18);
