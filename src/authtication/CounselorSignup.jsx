@@ -2074,6 +2074,8 @@ import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
 import LocationGate from "./LocationGate";
 import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
+import StrongPasswordChecklist from "../Component/common/StrongPasswordChecklist";
+import { isStrongPassword, STRONG_PASSWORD_ERROR } from "../utils/passwordStrength";
   
 const CounselorSignup = () => {
   const navigate = useNavigate();
@@ -2280,8 +2282,8 @@ const CounselorSignup = () => {
       newErrors.languages = "Select at least one language";
     if (!formData.aboutMe) newErrors.aboutMe = "About me is required";
     if (!formData.password) newErrors.password = "Password is required";
-    else if (formData.password.length < 6)
-      newErrors.password = "Password must be at least 6 characters";
+    else if (!isStrongPassword(formData.password))
+      newErrors.password = STRONG_PASSWORD_ERROR;
     if (!formData.confirmPassword)
       newErrors.confirmPassword = "Please confirm password";
     else if (formData.password !== formData.confirmPassword)
@@ -3410,6 +3412,7 @@ const CounselorSignup = () => {
                   {errors.password && (
                     <span className="cs-error">{errors.password}</span>
                   )}
+                  <StrongPasswordChecklist password={formData.password} />
                 </div>
 
                 <div className="cs-field">
@@ -3503,7 +3506,7 @@ const CounselorSignup = () => {
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="#" className={isLoading ? "cs-disabled" : ""}>
+                <a href="/privacy-policy" className={isLoading ? "cs-disabled" : ""}>
                   Privacy Policy
                 </a>
               </p>

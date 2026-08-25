@@ -20,6 +20,8 @@ import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
 import LocationGate from "./LocationGate";
 import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
+import StrongPasswordChecklist from "../Component/common/StrongPasswordChecklist";
+import { isStrongPassword, STRONG_PASSWORD_ERROR } from "../utils/passwordStrength";
 
 const UserSignup = () => {
   const navigate = useNavigate();
@@ -256,8 +258,8 @@ const UserSignup = () => {
 
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 3) {
-      newErrors.password = "Password must be at least 3 characters";
+    } else if (!isStrongPassword(formData.password)) {
+      newErrors.password = STRONG_PASSWORD_ERROR;
     }
 
     if (!formData.confirmPassword) {
@@ -1364,6 +1366,7 @@ const handleVerify = async () => {
                   {errors.password && (
                     <span className="us-error">{errors.password}</span>
                   )}
+                  <StrongPasswordChecklist password={formData.password} />
                 </div>
 
                 <div className="us-field">
@@ -1459,7 +1462,7 @@ const handleVerify = async () => {
                   Terms of Service
                 </a>{" "}
                 and{" "}
-                <a href="#" className={isLoading ? "us-disabled" : ""}>
+                <a href="/privacy-policy" className={isLoading ? "us-disabled" : ""}>
                   Privacy Policy
                 </a>
               </p>

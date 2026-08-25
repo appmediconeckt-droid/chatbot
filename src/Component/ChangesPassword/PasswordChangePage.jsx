@@ -3,6 +3,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../../axiosConfig";
 import "./PasswordChangePage.css";
 import { useUserTranslation, useCounselorTranslation } from "../../i18n/LanguageContext";
+import { getPasswordChecks, isStrongPassword, STRONG_PASSWORD_ERROR } from "../../utils/passwordStrength";
 
 const initialForm = {
   otp: "",
@@ -71,18 +72,9 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
     }));
   };
 
-  const passwordChecks = (value) => {
-    const password = String(value || "");
-    return {
-      length: password.length >= 8,
-      uppercase: /[A-Z]/.test(password),
-      number: /\d/.test(password),
-      special: /[^A-Za-z0-9]/.test(password),
-    };
-  };
-  const passwordIsValid = (value) => Object.values(passwordChecks(value)).every(Boolean);
-  const newPasswordChecks = passwordChecks(form.newPassword);
-  const setPasswordChecks = passwordChecks(form.password);
+  const passwordIsValid = isStrongPassword;
+  const newPasswordChecks = getPasswordChecks(form.newPassword);
+  const setPasswordChecks = getPasswordChecks(form.password);
 
   const handleSendOtp = async () => {
     clearStatus();
@@ -166,7 +158,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
     clearStatus();
 
     if (!passwordIsValid(form.password)) {
-      setError("Password must be at least 8 characters and include an uppercase letter, number, and special character.");
+      setError(STRONG_PASSWORD_ERROR);
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -219,7 +211,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
       return;
     }
     if (!passwordIsValid(form.newPassword)) {
-      setError("New password must be at least 8 characters and include an uppercase letter, number, and special character.");
+      setError(STRONG_PASSWORD_ERROR);
       return;
     }
     if (form.newPassword !== form.confirmNewPassword) {
@@ -348,13 +340,14 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           <div className="password-strength">
             <div className="password-strength-row">
               <div className="password-strength-bar">
-                {[0, 1, 2, 3].map((part) => <i key={part} className={Object.values(setPasswordChecks).filter(Boolean).length > part ? "passed" : ""} />)}
+                {[0, 1, 2, 3, 4].map((part) => <i key={part} className={Object.values(setPasswordChecks).filter(Boolean).length > part ? "passed" : ""} />)}
               </div>
               <strong>{t("strong_password")}</strong>
             </div>
             <ul>
               <li className={setPasswordChecks.length ? "passed" : ""}>8+ chars</li>
               <li className={setPasswordChecks.uppercase ? "passed" : ""}>Uppercase</li>
+              <li className={setPasswordChecks.lowercase ? "passed" : ""}>Lowercase</li>
               <li className={setPasswordChecks.number ? "passed" : ""}>Number</li>
               <li className={setPasswordChecks.special ? "passed" : ""}>Special char</li>
             </ul>
@@ -408,13 +401,14 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           <div className="password-strength">
             <div className="password-strength-row">
               <div className="password-strength-bar">
-                {[0, 1, 2, 3].map((part) => <i key={part} className={Object.values(newPasswordChecks).filter(Boolean).length > part ? "passed" : ""} />)}
+                {[0, 1, 2, 3, 4].map((part) => <i key={part} className={Object.values(newPasswordChecks).filter(Boolean).length > part ? "passed" : ""} />)}
               </div>
               <strong>{t("strong_password")}</strong>
             </div>
             <ul>
               <li className={newPasswordChecks.length ? "passed" : ""}>8+ chars</li>
               <li className={newPasswordChecks.uppercase ? "passed" : ""}>Uppercase</li>
+              <li className={newPasswordChecks.lowercase ? "passed" : ""}>Lowercase</li>
               <li className={newPasswordChecks.number ? "passed" : ""}>Number</li>
               <li className={newPasswordChecks.special ? "passed" : ""}>Special char</li>
             </ul>

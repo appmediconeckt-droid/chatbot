@@ -11,6 +11,8 @@ import axios from "axios";
 import "./ResetPassword.css";
 import { logoHorizontal } from "../assets/brandAssets";
 import { API_BASE_URL } from "../axiosConfig";
+import StrongPasswordChecklist from "../Component/common/StrongPasswordChecklist";
+import { isStrongPassword, STRONG_PASSWORD_ERROR } from "../utils/passwordStrength";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
@@ -43,8 +45,8 @@ const ResetPassword = () => {
       setError("Please enter a new password");
       return;
     }
-    if (newPassword.length < 3) {
-      setError("Password must be at least 3 characters");
+    if (!isStrongPassword(newPassword)) {
+      setError(STRONG_PASSWORD_ERROR);
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -156,6 +158,7 @@ const ResetPassword = () => {
                   {showNewPassword ? <FaEyeSlash /> : <FaEye />}
                 </button>
               </div>
+              <StrongPasswordChecklist password={newPassword} />
             </div>
 
             <div className="rp-field">
