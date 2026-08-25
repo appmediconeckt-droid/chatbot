@@ -81,7 +81,7 @@ const getApiParticipantDisplay = (call, currentUserType) => {
   };
 };
 
-const formatDateLabel = (value, t) => {
+const formatDateLabel = (value, t, lang) => {
   const date = value ? new Date(value) : null;
 
   if (!date || Number.isNaN(date.getTime())) {
@@ -109,7 +109,7 @@ const formatDateLabel = (value, t) => {
     return t("yesterday");
   }
 
-  return date.toLocaleDateString([], {
+  return date.toLocaleDateString(lang, {
     day: "2-digit",
     month: "short",
   });
@@ -270,11 +270,11 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
             type: normalizedType,
             status: missed ? "missed" : direction,
             rawStatus: String(call.status || "").toLowerCase(),
-            date: formatDateLabel(timestamp, t),
+            date: formatDateLabel(timestamp, t, lang),
             dateKey: getDateInputValue(timestamp),
             time:
               dateValue && !Number.isNaN(dateValue.getTime())
-                ? dateValue.toLocaleTimeString([], {
+                ? dateValue.toLocaleTimeString(lang, {
                     hour: "2-digit",
                     minute: "2-digit",
                   })
@@ -465,7 +465,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
               {searchTerm && <button type="button" onClick={() => setSearchTerm("")} aria-label="Clear search">×</button>}
             </div>
             <div className="pch-filter-row">
-        {[["all", t("all")], ["missed", t("missed")], ["incoming", t("incoming")], ["outgoing", t("outgoing")]].map(([value, label]) => (
+        {[["all", t("all")], ["missed", t("missed")], ["incoming", `↓ ${t("incoming")}`], ["outgoing", `↑ ${t("outgoing")}`]].map(([value, label]) => (
                 <button type="button" key={value} className={activeFilter === value ? "active" : ""} onClick={() => setActiveFilter(value)}>{label}</button>
               ))}
             </div>
@@ -481,7 +481,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                 </span>
                 <span className="pch-compact-info">
                   <strong>{call.name}</strong>
-                  <small className={call.missed ? "missed" : ""}>{getCallIcon(call.type)} {call.missed ? "Missed Call" : (call.type === "video" ? t("video_call") : t("voice_call"))}{call.duration ? ` · ${call.duration}` : ""}</small>
+                  <small className={call.missed ? "missed" : ""}>{getCallIcon(call.type)} {call.missed ? `${t("missed")} ${t("calls")}` : (call.type === "video" ? t("video_call") : t("voice_call"))}{call.duration ? ` · ${call.duration}` : ""}</small>
                 </span>
                 <time>{call.time || call.date}</time>
               </button>
@@ -506,12 +506,12 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                       <strong>{call.name}</strong>
                       <span className="pch-call-role">
                         {getCallIcon(call.type)}
-                        <span>{call.role || "Clinical Psychologist"}</span>
+                        <span>{t(call.role === "receiver" ? "incoming" : "outgoing")}</span>
                       </span>
                       <small>{call.time}{call.duration ? ` | ${call.duration}` : ""}</small>
                     </div>
                     {call.missed ? (
-                      <span className="pch-missed-label">↙&nbsp; {t("missed")} Call</span>
+                      <span className="pch-missed-label">↙&nbsp; {t("missed")} {t("calls")}</span>
                     ) : (
                       <button type="button" className="pch-call-action" onClick={() => openCallModal(call)} aria-label={`Call ${call.name}`}>
                         {call.type === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />}

@@ -13,7 +13,7 @@ export default function AppointmentsTab({
   handleUpdateAppointmentStatus,
   loading = false,
 }) {
-  const { t } = useCounselorTranslation();
+  const { t, lang } = useCounselorTranslation();
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [searchTerm, setSearchTerm] = React.useState("");
   const displayCounselorName = React.useMemo(() => {
@@ -76,16 +76,16 @@ export default function AppointmentsTab({
   }, [appointments]);
 
   const tabs = [
-    { key: "all", label: "All", icon: FaCalendarAlt },
-    { key: "pending", label: "Pending", icon: FaClock },
-    { key: "confirmed", label: "Confirmed", icon: FaCheckCircle },
-    { key: "past", label: "Past", icon: FaHistory },
+    { key: "all", label: t("all"), icon: FaCalendarAlt },
+    { key: "pending", label: t("pending"), icon: FaClock },
+    { key: "confirmed", label: t("confirmed"), icon: FaCheckCircle },
+    { key: "past", label: t("past"), icon: FaHistory },
   ];
 
   const formatDateForDisplay = (dateString) => {
     if (!dateString) return "";
 
-    return new Date(dateString).toLocaleDateString("en-US", {
+    return new Date(dateString).toLocaleDateString(lang || undefined, {
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -101,7 +101,7 @@ export default function AppointmentsTab({
             <div className="stitch-apt-summary-copy">
               <span>{t(getTimeGreetingKey())}</span>
               <h2>{displayCounselorName}</h2>
-              <p>{counts.all} total appointment(s)</p>
+              <p>{counts.all} {t("appointments")}</p>
             </div>
             <div className="stitch-apt-metrics">
               <div><strong>{counts.pending}</strong><span>{t("pending")}</span></div>
@@ -118,15 +118,15 @@ export default function AppointmentsTab({
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder={t("search_patients")}
-                aria-label="Search patients"
+                aria-label={t("search_patients")}
               />
             </label>
             <div className="stitch-apt-header-tools">
               <div className="stitch-date-filter">
                 <FaCalendarAlt />
-                <input type="date" className="stitch-date-input" value={selectedDate || ""} onChange={handleDateChange} title="Filter by date" />
+                <input type="date" className="stitch-date-input" value={selectedDate || ""} onChange={handleDateChange} title={t("filter_by_date")} />
                 {selectedDate && (
-                  <button className="stitch-clear-filter" onClick={handleClearFilter} title="Clear date filter" type="button">
+                  <button className="stitch-clear-filter" onClick={handleClearFilter} title={t("clear")} type="button">
                     <FaTimes size={10} />
                   </button>
                 )}
@@ -186,7 +186,7 @@ export default function AppointmentsTab({
                       </div>
 
                       <div className={`status-badge-stitch ${apt.status || "pending"}`}>
-                        {String(apt.status || "pending").toUpperCase()}
+                        {t(String(apt.status || "pending").toLowerCase()).toUpperCase()}
                       </div>
 
                       {apt.notes && apt.notes.trim() !== "" && (
@@ -198,14 +198,14 @@ export default function AppointmentsTab({
                       <div className="stitch-apt-time">
                         <span className="stitch-apt-time-label">{t("appointment_date")}</span>
                         <span className="stitch-apt-time-value">
-                          {new Date(apt.date).toLocaleDateString("en-US", {
+                          {new Date(apt.date).toLocaleDateString(lang || undefined, {
                             weekday: "short",
                             month: "short",
                             day: "numeric",
                             year: "numeric",
                           })}
                           {" • "}
-                          {new Date(apt.date).toLocaleTimeString([], {
+                          {new Date(apt.date).toLocaleTimeString(lang || undefined, {
                             hour: "2-digit",
                             minute: "2-digit",
                           })}

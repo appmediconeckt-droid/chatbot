@@ -810,17 +810,17 @@ const SMSList = () => {
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
     if (diffMins < 1) return t('just_now');
-    if (diffHours < 1) return `${diffMins}m ago`;
+    if (diffHours < 1) return `${diffMins} ${t("min_ago")}`;
     if (diffDays === 0) {
-      return messageTime.toLocaleTimeString([], {
+      return messageTime.toLocaleTimeString(lang || undefined, {
         hour: "2-digit",
         minute: "2-digit",
       });
     }
     if (diffDays === 1) return t('yesterday');
     if (diffDays < 7)
-      return messageTime.toLocaleDateString([], { weekday: "short" });
-    return messageTime.toLocaleDateString([], {
+      return messageTime.toLocaleDateString(lang || undefined, { weekday: "short" });
+    return messageTime.toLocaleDateString(lang || undefined, {
       month: "short",
       day: "numeric",
     });
@@ -831,7 +831,7 @@ const SMSList = () => {
     const date = new Date(timeString);
     if (Number.isNaN(date.getTime())) return "";
 
-    return date.toLocaleString([], {
+    return date.toLocaleString(lang || undefined, {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -843,7 +843,7 @@ const SMSList = () => {
   const resolvePatientAge = (patient) => {
     const directAge = Number(patient?.age);
     if (Number.isFinite(directAge) && directAge > 0) {
-      return `${directAge} yrs`;
+      return `${directAge} ${t("years")}`;
     }
 
     if (patient?.dateOfBirth) {
@@ -858,17 +858,17 @@ const SMSList = () => {
         ) {
           age -= 1;
         }
-        if (age >= 0) return `${age} yrs`;
+        if (age >= 0) return `${age} ${t("years")}`;
       }
     }
 
-    return "Age not provided";
+    return t("age_not_provided");
   };
 
   const formatPatientGender = (gender) => {
     const normalizedGender = String(gender || "").trim();
-    if (!normalizedGender) return "Gender not provided";
-    return normalizedGender.charAt(0).toUpperCase() + normalizedGender.slice(1);
+    if (!normalizedGender) return t("gender_not_provided");
+    return t(normalizedGender.toLowerCase());
   };
 
   // Fetch pending requests
@@ -967,7 +967,7 @@ const SMSList = () => {
           gender: anonymousUser.gender,
           avatar: anonymousUser.avatar,
           avatarUrl: anonymousUser.avatarUrl,
-          lastMessage: chat.lastMessage?.content || "No messages",
+          lastMessage: chat.lastMessage?.content || t("no_messages"),
           time: formatTime(lastMessageTime),
           fullDateTime: formatFullDateTime(lastMessageTime),
           lastActivityAt: lastMessageTime,
@@ -988,9 +988,11 @@ const SMSList = () => {
           cancelledAt: chat.cancelledAt,
           age: resolvePatientAge(otherParty),
           genderLabel: formatPatientGender(otherParty.gender),
+          ageSource: otherParty,
+          genderValue: otherParty.gender,
           priority: chat.priority || "normal",
-          condition: chat.condition || "General",
-          lastMessagePreview: chat.lastMessage?.content || "No messages",
+          condition: chat.condition || "general",
+          lastMessagePreview: chat.lastMessage?.content || t("no_messages"),
         };
       });
 
@@ -1298,9 +1300,9 @@ const SMSList = () => {
   };
 
   const getPriorityLabel = (priority) => {
-    if (priority === "urgent") return "URGENT";
-    if (priority === "follow-up") return "FOLLOW UP";
-    return "NORMAL";
+    if (priority === "urgent") return t("urgent").toUpperCase();
+    if (priority === "follow-up") return t("follow_up").toUpperCase();
+    return t("normal").toUpperCase();
   };
 
   if (error) {
@@ -1389,7 +1391,7 @@ const SMSList = () => {
       {/* Pinned Section */}
       {/* <div className="smslist-section">
         <div className="smslist-section-header">
-          <span>Pinned</span>
+          <span>{t("pinned")}</span>
         </div>
         {filteredUsers.slice(0, 2).map((user) => (
           <div
@@ -1437,7 +1439,7 @@ const SMSList = () => {
 
       {/* Users List */}
       {/* <div className="smslist-pinned">
-        <h3>Pinned</h3>
+        <h3>{t("pinned")}</h3>
         <div className="smslist-pinned-row">
           {users.slice(0, 4).map((user) => (
             <button type="button" key={`pinned-${user.id}`} onClick={() => handleUserClick(user)}>
@@ -1510,10 +1512,10 @@ const SMSList = () => {
                     {getPriorityLabel(user.priority)}
                   </span>
                   <span className="user-age-gender">
-                    {user.age}, {user.genderLabel}
+                    {resolvePatientAge(user.ageSource || user)}, {formatPatientGender(user.genderValue || user.gender)}
                   </span>
                   <span className="user-condition">
-                    • {user.condition}
+                    • {t(String(user.condition || "general").toLowerCase().replaceAll(" ", "_"))}
                   </span>
                 </div>
 

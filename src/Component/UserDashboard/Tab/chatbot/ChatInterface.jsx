@@ -714,18 +714,18 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
                         <FaSearch className="counselorSearchIcon" aria-hidden="true" />
                         <input
                             type="search"
-                            placeholder="Search chats..."
+                            placeholder={t('search_chats')}
                             className="counselorSearchInput"
                             value={searchTerm}
                             onChange={(event) => setSearchTerm(event.target.value)}
-                            aria-label="Search chats"
+                            aria-label={t('search_chats')}
                         />
                     </div>
                 </div>
 
-                <div className="chatFilterBar" role="tablist" aria-label="Chat filters">
+                <div className="chatFilterBar" role="tablist" aria-label={t('search_chats')}>
                     {[
-                        { id: 'all', label: t('all_chats') },
+                        { id: 'all', label: `${t('all')} ${t('chat')}` },
                         { id: 'unread', label: t('unread') },
                         { id: 'archived', label: t('archived') }
                     ].map((filter) => (

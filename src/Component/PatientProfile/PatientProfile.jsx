@@ -861,7 +861,7 @@ const PatientProfile = () => {
         <div className="profile-location-card">
           <FaMapMarkerAlt />
           <div>
-            <strong>Share my current location</strong>
+            <strong>{t('update_location')}</strong>
             <span>{[
               patientData.personalInfo.address?.city,
               patientData.personalInfo.address?.state,
@@ -918,7 +918,7 @@ const PatientProfile = () => {
             <div className="patient-profile-modal-body">
               {/* Profile Picture */}
               <div className="form-section">
-                <h4>Profile Picture</h4>
+                <h4>{t('profile')}</h4>
                 <div className="profile-picture-edit">
                   <div className="avatar-preview">
                     {!profileImageRemoved && (profileImage || patientData.personalInfo.profilePhoto) ? (
@@ -962,7 +962,7 @@ const PatientProfile = () => {
 
               {/* Personal Info */}
               <div className="form-section">
-                <h4>Personal Information</h4>
+                <h4>{t('personal_information')}</h4>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Full Name *</label>
@@ -975,13 +975,13 @@ const PatientProfile = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Blood Group</label>
+                    <label>{t('blood_group')}</label>
                     <select
                       name="bloodGroup"
                       value={editFormData.bloodGroup}
                       onChange={handleEditFormChange}
                     >
-                      <option value="">Select Blood Group</option>
+                      <option value="">{t('select')} {t('blood_group')}</option>
                       {BLOOD_GROUPS.map((bloodGroup) => (
                         <option key={bloodGroup} value={bloodGroup}>
                           {bloodGroup}
@@ -1009,10 +1009,10 @@ const PatientProfile = () => {
                       onChange={handleEditFormChange}
                       required
                     >
-                      <option value="">Select</option>
-                      <option value="male">Male</option>
-                      <option value="female">Female</option>
-                      <option value="other">Other</option>
+                      <option value="">{t('select')}</option>
+                      <option value="male">{t('male')}</option>
+                      <option value="female">{t('female')}</option>
+                      <option value="other">{t('other')}</option>
                     </select>
                   </div>
                 </div>
@@ -1028,7 +1028,7 @@ const PatientProfile = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Age</label>
+                    <label>{t('age')}</label>
                     <input
                       type="number"
                       name="age"
@@ -1142,7 +1142,7 @@ const PatientProfile = () => {
 
               {/* Address */}
               <div className="form-section">
-                <h4>Address</h4>
+                <h4>{t('address')}</h4>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Line 1</label>
@@ -1165,7 +1165,7 @@ const PatientProfile = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>City</label>
+                    <label>{t('city')}</label>
                     <input
                       type="text"
                       name="address.city"
@@ -1174,7 +1174,7 @@ const PatientProfile = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>State</label>
+                    <label>{t('state')}</label>
                     <input
                       type="text"
                       name="address.state"
@@ -1185,7 +1185,7 @@ const PatientProfile = () => {
                 </div>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Pincode</label>
+                    <label>{t('pincode')}</label>
                     <input
                       type="text"
                       name="address.pincode"
@@ -1194,7 +1194,7 @@ const PatientProfile = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Country</label>
+                    <label>{t('country')}</label>
                     <input
                       type="text"
                       name="address.country"
@@ -1207,10 +1207,10 @@ const PatientProfile = () => {
 
               {/* Emergency Contact */}
               <div className="form-section">
-                <h4>Emergency Contact</h4>
+                <h4>{t('emergency_contact')}</h4>
                 <div className="form-row">
                   <div className="form-group">
-                    <label>Name</label>
+                    <label>{t('name')}</label>
                     <input
                       type="text"
                       name="emergencyContact.name"
@@ -1219,7 +1219,7 @@ const PatientProfile = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>Relation</label>
+                    <label>{t('relation')}</label>
                     <input
                       type="text"
                       name="emergencyContact.relation"
@@ -1229,7 +1229,7 @@ const PatientProfile = () => {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Phone</label>
+                  <label>{t('phone')}</label>
                   <input
                     type="tel"
                     name="emergencyContact.phone"

@@ -18,8 +18,8 @@
 .pch-search > svg { flex: 0 0 auto; color: #62706a; font-size: 13px; }
 .pch-search input { min-width: 0; width: 100%; border: 0; outline: 0; color: #273144; background: transparent; font-size: 11px; }
 .pch-search button { border: 0; color: #6e7884; background: transparent; font-size: 17px; cursor: pointer; }
-.pch-filter-row { display: grid; grid-template-columns: repeat(4, auto); gap: 7px; margin-top: 12px; }
-.pch-filter-row button { height: 29px; padding: 0 12px; border: 1px solid #d7e2da; border-radius: 999px; color: #526159; background: #f8fffa; font-size: 10px; cursor: pointer; }
+.pch-filter-row { display: flex; gap: 7px; margin-top: 12px; overflow-x: auto; overflow-y: hidden; padding-bottom: 4px; scrollbar-width: thin; }
+.pch-filter-row button { flex: 0 0 auto; min-width: max-content; height: 29px; padding: 0 12px; border: 1px solid #d7e2da; border-radius: 999px; color: #526159; background: #f8fffa; font-size: 10px; white-space: nowrap; cursor: pointer; }
 .pch-filter-row button.active { border-color: #00863a; color: #fff; background: linear-gradient(90deg, #007d35, #00bd50); }
 .pch-date-filter { height: 30px; margin-top: 10px; padding: 0 10px; border: 1px solid #dfe5eb; border-radius: 7px; background: #fff; display: flex; align-items: center; gap: 7px; }
 .pch-date-filter > svg { color: #768291; font-size: 12px; }

@@ -19,7 +19,7 @@ import {
 } from "react-icons/fa";
 import './MyAppointments.css'; // Import the CSS file for styling
 const MyAppointments = () => {
-  const { t } = useUserTranslation();
+  const { t, lang } = useUserTranslation();
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [counselors, setCounselors] = useState([]);
@@ -133,17 +133,17 @@ const MyAppointments = () => {
   const formatAppointmentDateTime = (date) => {
     const appointmentDate = new Date(date);
     if (Number.isNaN(appointmentDate.getTime())) {
-      return { date: "Date not available", time: "" };
+      return { date: t('unavailable'), time: "" };
     }
 
     return {
-      date: appointmentDate.toLocaleDateString("en-US", {
+      date: appointmentDate.toLocaleDateString(lang, {
         weekday: "short",
         month: "short",
         day: "numeric",
         year: "numeric",
       }),
-      time: appointmentDate.toLocaleTimeString([], {
+      time: appointmentDate.toLocaleTimeString(lang, {
         hour: "2-digit",
         minute: "2-digit",
       }),
@@ -350,12 +350,12 @@ const MyAppointments = () => {
               <h3> {counselorName}</h3>
               <p>{counselorSpecialization}</p>
               <div>
-                <span><FaBriefcase /> {selectedApt.counselor?.experience || 0} years</span>
+                <span><FaBriefcase /> {selectedApt.counselor?.experience || 0} {t('years')}</span>
                 <span className="rating">★ {selectedApt.counselor?.rating || 4.9}</span>
               </div>
             </div>
             <span className={`appointment-detail-status ${appointmentStatus}`}>
-              <i></i>{appointmentStatus}
+              <i></i>{t(appointmentStatus)}
             </span>
           </div>
 
@@ -397,7 +397,7 @@ const MyAppointments = () => {
               <FaStopwatch />
               <div>
                 <small>{t("duration")}</small>
-                <strong>{appointmentDuration} Minutes</strong>
+                <strong>{appointmentDuration} {t('minutes')}</strong>
               </div>
             </div>
           </div>
@@ -410,7 +410,7 @@ const MyAppointments = () => {
               disabled={actionLoading === `video-${selectedApt._id}`}
             >
               <FaVideo />
-              {actionLoading === `video-${selectedApt._id}` ? "Starting..." : "Join Video Session"}
+              {actionLoading === `video-${selectedApt._id}` ? t('loading') : t('start_video_call')}
             </button>
             <button
               type="button"
@@ -419,7 +419,7 @@ const MyAppointments = () => {
               disabled={actionLoading === `chat-${selectedApt._id}`}
             >
               <FaCommentDots />
-              {actionLoading === `chat-${selectedApt._id}` ? "Opening..." : "Chat"}
+              {actionLoading === `chat-${selectedApt._id}` ? t('loading') : t('chat')}
             </button>
             <button
               type="button"
@@ -428,7 +428,7 @@ const MyAppointments = () => {
               disabled={actionLoading === `voice-${selectedApt._id}`}
             >
               <FaPhoneAlt />
-              {actionLoading === `voice-${selectedApt._id}` ? "Starting..." : "Call"}
+              {actionLoading === `voice-${selectedApt._id}` ? t('loading') : t('voice_call')}
             </button>
           </div>
         </div>
@@ -528,12 +528,12 @@ const MyAppointments = () => {
                           : apt.counselor?.specialization || t('medical_specialist')}
                       </p>
                       <div className="user-appointment-meta">
-                        <span><FaBriefcase /> {apt.counselor?.experience || 0} years</span>
+                        <span><FaBriefcase /> {apt.counselor?.experience || 0} {t('years')}</span>
                         <span className="rating">★ {apt.counselor?.rating || 4.9}</span>
                       </div>
                     </div>
                     <span className={`user-appointment-status ${apt.status || "pending"}`}>
-                      <i></i>{apt.status || "pending"}
+                      <i></i>{t(apt.status || "pending")}
                     </span>
                   </div>
 

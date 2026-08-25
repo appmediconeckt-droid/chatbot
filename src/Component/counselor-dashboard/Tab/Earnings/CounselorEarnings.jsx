@@ -11,7 +11,7 @@ const money = (value) =>
   })}`;
 
 const CounselorEarnings = () => {
-  const { t } = useCounselorTranslation();
+  const { t, lang } = useCounselorTranslation();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -48,7 +48,7 @@ const CounselorEarnings = () => {
         setError("");
       } catch (requestError) {
         console.error("Counselor earnings load failed:", requestError);
-        setError(requestError.response?.data?.message || "Earnings could not be loaded.");
+        setError(requestError.response?.data?.message || t("earnings_load_failed"));
       } finally {
         if (!silent) setLoading(false);
       }
@@ -84,7 +84,7 @@ const CounselorEarnings = () => {
   const applyDateFilter = (event) => {
     event.preventDefault();
     if (dateInputs.from && dateInputs.to && dateInputs.from > dateInputs.to) {
-      setError("From date cannot be after To date.");
+      setError(t("invalid_date_range"));
       return;
     }
     setError("");
@@ -111,11 +111,11 @@ const CounselorEarnings = () => {
     const amount = Number(withdrawalForm.amount);
     const availableBalance = Number(data?.balance || 0);
     if (!Number.isFinite(amount) || amount <= 0) {
-      setNotice("Please enter a valid withdrawal amount.");
+      setNotice(t("invalid_withdrawal_amount"));
       return;
     }
     if (amount > availableBalance) {
-      setNotice("Withdrawal amount cannot exceed your available balance.");
+      setNotice(t("withdrawal_exceeds_balance"));
       return;
     }
     try {
@@ -124,12 +124,12 @@ const CounselorEarnings = () => {
         ...withdrawalForm,
         amount,
       });
-      setNotice(response.data?.message || "Withdrawal request submitted successfully.");
+      setNotice(response.data?.message || t("withdrawal_submitted"));
       setWithdrawalForm((current) => ({ ...current, amount: "" }));
       setShowWithdrawal(false);
       await loadEarnings();
     } catch (requestError) {
-      setNotice(requestError.response?.data?.message || "Withdrawal request could not be submitted.");
+      setNotice(requestError.response?.data?.message || t("withdrawal_submit_failed"));
     } finally {
       setSubmitting(false);
     }
@@ -167,7 +167,7 @@ const CounselorEarnings = () => {
             <div className="earnings-balance-label"><FaWallet /> {t("total_earning")}</div>
             <div className="earnings-growth">↗ +12.5%</div>
             <strong>{money(data?.totalEarned)}</strong>
-            <p>Across {earnings.length} completed sessions this month</p>
+            <p>{earnings.length} {t("sessions_completed")} · {t("this_month")}</p>
             <div className="earnings-balance-footer">
               <div><span>{t("pending")}</span><b>{money(data?.pendingPayout)}</b></div>
               <div><span>{t("withdrawable")}</span><b>{money(data?.balance)}</b></div>
@@ -179,7 +179,7 @@ const CounselorEarnings = () => {
                 }}
                 aria-haspopup="dialog"
               >
-                <FaArrowRight /> Withdraw
+                <FaArrowRight /> {t("withdraw")}
               </button>
             </div>
           </section>
@@ -202,9 +202,9 @@ const CounselorEarnings = () => {
                 <div className="earnings-recent-item" key={earning._id}>
                   <i><Icon /></i>
                   <div>
-                    <strong>{earning.userId?.anonymous || "Anonymous User"}</strong>
-                    <span>{type} session •</span>
-                    <small>{new Date(earning.createdAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</small>
+                    <strong>{earning.userId?.anonymous || t("anonymous_user")}</strong>
+                    <span>{t(type)} · {t("sessions")}</span>
+                    <small>{new Date(earning.createdAt).toLocaleString(lang || undefined, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</small>
                   </div>
                   <b>+ {money(earning.earningAmount)}</b>
                 </div>
@@ -226,7 +226,7 @@ const CounselorEarnings = () => {
 
         <div className="earnings-date-filter-controls">
         <label className="earnings-date-field">
-          <span>From date</span>
+          <span>{t("from_date")}</span>
           <input
             type="date"
             value={dateInputs.from}
@@ -237,7 +237,7 @@ const CounselorEarnings = () => {
         </label>
         <span className="earnings-date-separator" aria-hidden="true">→</span>
         <label className="earnings-date-field">
-          <span>To date</span>
+          <span>{t("to_date")}</span>
           <input
             type="date"
             value={dateInputs.to}
@@ -259,9 +259,9 @@ const CounselorEarnings = () => {
           <p className="earnings-filter-summary">
             <FaCheckCircle aria-hidden="true" />
             <span>
-            Showing {data.period.earningCount} earning records and {data.period.withdrawalCount} withdrawals
-            {data.period.from ? ` from ${new Date(`${data.period.from}T00:00:00`).toLocaleDateString("en-IN")}` : ""}
-            {data.period.to ? ` to ${new Date(`${data.period.to}T00:00:00`).toLocaleDateString("en-IN")}` : ""}.
+            {data.period.earningCount} {t("earning_records")} · {data.period.withdrawalCount} {t("withdrawal_requests")}
+            {data.period.from ? ` ${t("from_date")} ${new Date(`${data.period.from}T00:00:00`).toLocaleDateString(lang || undefined)}` : ""}
+            {data.period.to ? ` ${t("to_date")} ${new Date(`${data.period.to}T00:00:00`).toLocaleDateString(lang || undefined)}` : ""}.
             </span>
           </p>
         )}
@@ -299,7 +299,7 @@ const CounselorEarnings = () => {
                 <p>{t("withdrawal_transfer_description")}</p>
               </div>
             </div>
-            <button type="button" onClick={() => setShowWithdrawal(false)} className="withdrawal-close" aria-label="Close withdrawal form" title="Close">
+            <button type="button" onClick={() => setShowWithdrawal(false)} className="withdrawal-close" aria-label={t("close")} title={t("close")}>
               <FaTimes aria-hidden="true" />
             </button>
           </div>
@@ -312,7 +312,7 @@ const CounselorEarnings = () => {
 
           {availableBalance <= 0 && (
             <div className="withdrawal-zero-balance" role="status">
-              Your withdrawal form is ready, but there is currently no withdrawable balance. Completed and cleared session earnings will appear here automatically.
+              {t("no_withdrawable_balance")}
             </div>
           )}
 
@@ -339,7 +339,7 @@ const CounselorEarnings = () => {
                 value={withdrawalForm.amount}
                 onChange={(event) => setWithdrawalForm((current) => ({ ...current, amount: event.target.value }))}
               />
-              <button type="button" onClick={() => setWithdrawalForm((current) => ({ ...current, amount: String(data?.balance || "") }))}>MAX</button>
+              <button type="button" onClick={() => setWithdrawalForm((current) => ({ ...current, amount: String(data?.balance || "") }))}>{t("maximum")}</button>
             </div>
           </label>
 
@@ -481,8 +481,8 @@ const CounselorEarnings = () => {
                 <th className="px-5 py-3">{t("date")}</th>
                 <th className="px-4 py-3">{t("user_session")}</th>
                 <th className="px-4 py-3 text-right">{t("gross")}</th>
-                <th className="px-4 py-3 text-right">Platform ({platformPercentage}%)</th>
-                <th className="px-4 py-3 text-right">Your earning ({counselorPercentage}%)</th>
+                <th className="px-4 py-3 text-right">{t("platform_commission")} ({platformPercentage}%)</th>
+                <th className="px-4 py-3 text-right">{t("your_earning")} ({counselorPercentage}%)</th>
                 <th className="px-4 py-3">{t("earning_status")}</th>
                 <th className="px-5 py-3">{t("payout")}</th>
               </tr>
@@ -490,17 +490,17 @@ const CounselorEarnings = () => {
             <tbody className="divide-y divide-slate-100">
               {earnings.length ? earnings.map((earning) => (
                 <tr key={earning._id} className="hover:bg-slate-50">
-                  <td className="px-5 py-4 text-slate-600">{new Date(earning.createdAt).toLocaleDateString("en-IN")}</td>
+                  <td className="px-5 py-4 text-slate-600">{new Date(earning.createdAt).toLocaleDateString(lang || undefined)}</td>
                   <td className="px-4 py-4">
-                    <p className="font-semibold capitalize text-slate-900">{earning.userId?.anonymous || "Anonymous User"}</p>
-                    <p className="text-xs capitalize text-slate-500">{earning.sessionType} session</p>
+                    <p className="font-semibold capitalize text-slate-900">{earning.userId?.anonymous || t("anonymous_user")}</p>
+                    <p className="text-xs capitalize text-slate-500">{t(String(earning.sessionType || "chat").toLowerCase())} · {t("sessions")}</p>
                   </td>
                   <td className="px-4 py-4 text-right font-medium">{money(earning.totalAmount)}</td>
                   <td className="px-4 py-4 text-right font-medium text-amber-700">-{money(earning.commission)}</td>
                   <td className="px-4 py-4 text-right font-bold text-emerald-700">+{money(earning.earningAmount)}</td>
                   <td className="px-4 py-4">
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold capitalize text-emerald-700">
-                      {earning.earningStatus || "completed"}
+                      {t(String(earning.earningStatus || "completed").toLowerCase())}
                     </span>
                   </td>
                   <td className="px-5 py-4">
@@ -509,7 +509,7 @@ const CounselorEarnings = () => {
                         ? "bg-emerald-50 text-emerald-700"
                         : "bg-amber-50 text-amber-700"
                     }`}>
-                      {earning.payoutStatus === "pending" ? "Available" : earning.payoutStatus}
+                      {t(earning.payoutStatus === "pending" ? "available" : String(earning.payoutStatus || "pending").toLowerCase())}
                     </span>
                   </td>
                 </tr>
@@ -524,7 +524,7 @@ const CounselorEarnings = () => {
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-100 px-5 py-4">
           <h2 className="font-bold text-slate-900">{t("withdrawal_requests")}</h2>
-          <p className="mt-1 text-xs text-slate-500">Approved means the payout is being processed. Paid appears after the bank transfer is completed.</p>
+          <p className="mt-1 text-xs text-slate-500">{t("withdrawal_status_description")}</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[620px] text-left text-sm">
@@ -534,22 +534,22 @@ const CounselorEarnings = () => {
             <tbody className="divide-y divide-slate-100">
               {data?.withdrawals?.length ? data.withdrawals.map((item) => (
                 <tr key={item._id}>
-                  <td className="px-5 py-4 text-slate-600">{new Date(item.createdAt).toLocaleDateString("en-IN")}</td>
+                  <td className="px-5 py-4 text-slate-600">{new Date(item.createdAt).toLocaleDateString(lang || undefined)}</td>
                   <td className="px-4 py-4">
-                    <p className="font-semibold text-slate-800">{item.metadata?.bankName || "Bank account"}</p>
+                    <p className="font-semibold text-slate-800">{item.metadata?.bankName || t("bank_account")}</p>
                     <p className="text-xs text-slate-500">•••• {String(item.metadata?.accountNumber || "").slice(-4)}</p>
                   </td>
                   <td className="px-4 py-4">
-                    <p className="font-semibold capitalize text-slate-800">{item.metadata?.payoutType || "standard"}</p>
-                    <p className="text-xs text-slate-500">{item.metadata?.estimatedArrival || "Standard processing"}</p>
+                    <p className="font-semibold capitalize text-slate-800">{t(String(item.metadata?.payoutType || "standard").toLowerCase())}</p>
+                    <p className="text-xs text-slate-500">{item.metadata?.estimatedArrival || t("standard_processing")}</p>
                   </td>
                   <td className="px-4 py-4 text-right">
                     <p className="font-bold text-slate-900">{money(item.metadata?.netAmount ?? item.amount)}</p>
                     {Number(item.metadata?.feeAmount || 0) > 0 && <p className="text-xs text-rose-600">Fee {money(item.metadata.feeAmount)}</p>}
                   </td>
                   <td className="px-5 py-4">
-                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${withdrawalStatusClass(item.status)}`}>{item.status}</span>
-                    {item.status === "approved" && <p className="mt-1 text-[10px] text-sky-700">Payment processing</p>}
+                    <span className={`rounded-full px-2.5 py-1 text-xs font-bold capitalize ${withdrawalStatusClass(item.status)}`}>{t(String(item.status || "pending").toLowerCase())}</span>
+                    {item.status === "approved" && <p className="mt-1 text-[10px] text-sky-700">{t("payment_processing")}</p>}
                     {item.status === "paid" && (
                       <div className="mt-1 text-[10px] text-emerald-700">
                         <p>Sent to bank{item.metadata?.paidAt ? ` on ${new Date(item.metadata.paidAt).toLocaleDateString("en-IN")}` : ""}</p>

@@ -430,7 +430,7 @@ const CounselorTable = () => {
                           showValue={true}
                         />
                       ) : (
-                        <span style={{ color: "#2c50cd", fontSize: 12 }}>✨ New</span>
+                        <span style={{ color: "#2c50cd", fontSize: 12 }}>✨ {t('new')}</span>
                       )}
                     </span>
                   </div>

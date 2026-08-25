@@ -12,6 +12,26 @@ const icons = {
   ai: <i className="fas fa-robot" aria-hidden="true" />,
 };
 
+const localizeKnownNotification = (item, t) => {
+  const title = String(item.title || "");
+  const message = String(item.message || "");
+  const amount = message.match(/₹\s*[\d,.]+/)?.[0] || "";
+  const isPayment = /payment deducted|deducted from|deducted for/i.test(`${title} ${message}`);
+
+  if (!isPayment) return null;
+
+  const channel = /video/i.test(title)
+    ? t("video_call")
+    : /voice/i.test(title)
+      ? t("voice_call")
+      : t("chat");
+
+  return {
+    title: `${channel} · ${t("wallet_payments")}`,
+    message: [amount, channel, t("wallet")].filter(Boolean).join(" · "),
+  };
+};
+
 const NotificationsPage = ({ role = "user" }) => {
   const isCounselor = role === "counselor" || role === "counsellor";
   const userTranslation = useUserTranslation();
@@ -39,11 +59,15 @@ const NotificationsPage = ({ role = "user" }) => {
         params: { page: 1, limit: 100, ...(type ? { type } : {}), ...(unreadOnly ? { unread: true } : {}) },
       });
       const items = response.data?.notifications || [];
-      const localizedItems = lang === "en-US" ? items : await Promise.all(items.map(async (item) => ({
-        ...item,
-        title: item.title ? await translate(item.title) : item.title,
-        message: item.message ? await translate(item.message) : item.message,
-      })));
+      const localizedItems = lang === "en-US" ? items : await Promise.all(items.map(async (item) => {
+        const knownTranslation = localizeKnownNotification(item, t);
+        if (knownTranslation) return { ...item, ...knownTranslation };
+        return {
+          ...item,
+          title: item.title ? await translate(item.title) : item.title,
+          message: item.message ? await translate(item.message) : item.message,
+        };
+      }));
       setNotifications(localizedItems);
       setUnreadCount(Number(response.data?.unreadCount || 0));
     } catch (error) {

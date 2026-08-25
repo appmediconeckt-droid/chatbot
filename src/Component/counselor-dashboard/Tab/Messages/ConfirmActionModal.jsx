@@ -1,6 +1,7 @@
 import React from "react";
 import { FaCheck, FaTimes, FaExclamationCircle } from "react-icons/fa";
 import "./ConfirmActionModal.css";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 
 export default function ConfirmActionModal({
   isOpen,
@@ -10,6 +11,7 @@ export default function ConfirmActionModal({
   onCancel,
   loading,
 }) {
+  const { t } = useCounselorTranslation();
   if (!isOpen) return null;
 
   const isAccept = action === "accept";
@@ -25,20 +27,17 @@ export default function ConfirmActionModal({
         </div>
 
         <h3 className="confirm-action-title">
-          {isAccept ? "Accept Request?" : "Reject Request?"}
+          {isAccept ? t("accept_request") : t("reject_request")}
         </h3>
 
         <p className="confirm-action-message">
           {isAccept ? (
             <>
-              You are about to <strong>accept</strong> the chat request from{" "}
-              <strong>{userName}</strong>. The conversation will start
-              immediately.
+              {t("accept_request_confirmation")} <strong>{userName}</strong>
             </>
           ) : (
             <>
-              You are about to <strong>reject</strong> the request from{" "}
-              <strong>{userName}</strong>. They will be notified.
+              {t("reject_request_confirmation")} <strong>{userName}</strong>
             </>
           )}
         </p>
@@ -49,7 +48,7 @@ export default function ConfirmActionModal({
             onClick={onCancel}
             disabled={loading}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button
             className={`confirm-proceed-btn ${
@@ -61,12 +60,12 @@ export default function ConfirmActionModal({
             {loading ? (
               <>
                 <span className="spinner-small"></span>
-                {isAccept ? "Accepting..." : "Rejecting..."}
+                {isAccept ? t("accepting") : t("rejecting")}
               </>
             ) : (
               <>
                 {isAccept ? <FaCheck /> : <FaTimes />}
-                {isAccept ? "Yes, Accept" : "Yes, Reject"}
+                {isAccept ? t("accept") : t("reject")}
               </>
             )}
           </button>

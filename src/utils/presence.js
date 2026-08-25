@@ -125,24 +125,28 @@ export const formatLastSeen = (value, options = {}) => {
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
 
-  const time = date.toLocaleTimeString([], {
+  const time = date.toLocaleTimeString(options.locale || undefined, {
     hour: "2-digit",
     minute: "2-digit",
   });
 
-  if (isSameDay(date, now)) return `last seen today at ${time}`;
-  if (isSameDay(date, yesterday)) return `last seen yesterday at ${time}`;
+  const lastSeenText = options.lastSeenText || "last seen";
+  const todayText = options.todayText || "today";
+  const yesterdayText = options.yesterdayText || "yesterday";
+  const atText = options.atText || "at";
+  if (isSameDay(date, now)) return `${lastSeenText} ${todayText} ${atText} ${time}`;
+  if (isSameDay(date, yesterday)) return `${lastSeenText} ${yesterdayText} ${atText} ${time}`;
 
-  return `last seen ${date.toLocaleDateString([], {
+  return `${lastSeenText} ${date.toLocaleDateString(options.locale || undefined, {
     month: "short",
     day: "numeric",
-  })} at ${time}`;
+  })} ${atText} ${time}`;
 };
 
 export const formatPresenceText = (
   presence,
-  { onlineText = "Online", offlineText = "Offline" } = {},
+  { onlineText = "Online", offlineText = "Offline", ...lastSeenOptions } = {},
 ) => {
   if (presence?.isOnline) return onlineText;
-  return formatLastSeen(presence?.lastSeen) || offlineText;
+  return formatLastSeen(presence?.lastSeen, lastSeenOptions) || offlineText;
 };

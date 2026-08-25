@@ -505,18 +505,18 @@ const WalletDashboard = ({ userData }) => {
                                         <tr><td colSpan="5" className="wallet-empty">{t("loading_transaction_history")}</td></tr>
                                     ) : visibleHistory.length ? visibleHistory.map((tx) => {
                                         const isCredit = tx.type === 'credit';
-                                        const category = isCredit ? 'Bank' : (tx.metadata?.sessionType || (tx.counselorId ? 'General Checkup' : 'Wallet'));
+                                        const category = isCredit ? t('bank') : (tx.metadata?.sessionType || (tx.counselorId ? t('general_checkup') : t('wallet')));
                                         return (
                                             <tr key={tx._id}>
                                                 <td>
                                                     <span className={`wallet-history-icon ${isCredit ? 'is-credit' : ''}`}>
                                                         <span className="material-symbols-outlined">{isCredit ? 'account_balance_wallet' : (tx.counselorId ? 'medical_services' : 'receipt_long')}</span>
                                                     </span>
-                                                    <div><strong>{tx.description || (isCredit ? 'Wallet Top-up' : 'Wallet Payment')}</strong><small>{tx.counselorId?.fullName || tx.razorpayPaymentId || 'Transaction'}</small></div>
+                                                    <div><strong>{tx.description || (isCredit ? t('wallet_top_up') : t('wallet_payment'))}</strong><small>{tx.counselorId?.fullName || tx.razorpayPaymentId || t('transaction')}</small></div>
                                                 </td>
-                                                <td>{new Date(tx.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</td>
+                                                <td>{new Date(tx.createdAt).toLocaleDateString(lang, { day: '2-digit', month: 'short', year: 'numeric' })}</td>
                                                 <td>{category}</td>
-                                                <td><span className={`wallet-history-status wallet-history-status--${tx.status}`}>{tx.status}</span></td>
+                                                <td><span className={`wallet-history-status wallet-history-status--${tx.status}`}>{t(tx.status)}</span></td>
                                                 <td className={isCredit ? 'is-credit' : ''}>{isCredit ? '+' : '-'}₹{Number(tx.amount || 0).toFixed(2)}</td>
                                             </tr>
                                         );
@@ -543,7 +543,7 @@ const WalletDashboard = ({ userData }) => {
                         <div className="wallet-balance-card__top">
                             <span className="wallet-premium-pill">
                                 <span className="material-symbols-outlined">account_balance_wallet</span>
-                                PREMIUM HEALTH
+                                {t('premium_health')}
                             </span>
                             {/* <span className="material-symbols-outlined wallet-card-mark">data_usage</span> */}
                         </div>
@@ -565,9 +565,9 @@ const WalletDashboard = ({ userData }) => {
                     </section>
 
                     <section className="wallet-stat-grid">
-                        <article><span>CREDITS</span><strong>₹{totalCredits.toLocaleString('en-IN')}</strong></article>
-                        <article><span>SPENT</span><strong className="wallet-stat--spent">₹{totalSpent.toLocaleString('en-IN')}</strong></article>
-                        <article><span>COMPLETED</span><strong className="wallet-stat--completed">{completedTransactions}</strong></article>
+                        <article><span>{t('credits')}</span><strong>₹{totalCredits.toLocaleString('en-IN')}</strong></article>
+                        <article><span>{t('spent')}</span><strong className="wallet-stat--spent">₹{totalSpent.toLocaleString('en-IN')}</strong></article>
+                        <article><span>{t('completed')}</span><strong className="wallet-stat--completed">{completedTransactions}</strong></article>
                     </section>
 
                     {/* <section className="wallet-panel wallet-spending">
@@ -604,7 +604,7 @@ const WalletDashboard = ({ userData }) => {
                                 <button type="button" onClick={() => { setAmount(''); document.getElementById('amount-input')?.focus(); }}>{t("custom_amount")}</button>
                             </div>
                             <button className="wallet-pay-button" type="submit" disabled={loading}>
-                                {loading ? t('sending') : `Proceed to Pay${amount ? ` ₹${Number(amount).toLocaleString('en-IN')}` : ''}`}
+                                {loading ? t('sending') : `${t('proceed_to_pay')}${amount ? ` ₹${Number(amount).toLocaleString('en-IN')}` : ''}`}
                             </button>
                             <p className="wallet-secure"><span className="material-symbols-outlined">lock</span> {t("secure_encryption")}</p>
                         </form>

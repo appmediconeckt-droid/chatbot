@@ -3685,6 +3685,11 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const remotePresenceText = formatPresenceText(remotePresence, {
     onlineText: t('online') || "Online",
     offlineText: t('offline') || "Offline",
+    lastSeenText: t('last_seen'),
+    todayText: t('today'),
+    yesterdayText: t('yesterday'),
+    atText: t('time'),
+    locale: lang,
   });
 
   const getMergedTimeline = useCallback(() => {
@@ -3710,9 +3715,9 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(today.getDate() - 1);
-    if (date.toDateString() === today.toDateString()) return "Today";
-    if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
-    return date.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    if (date.toDateString() === today.toDateString()) return t("today");
+    if (date.toDateString() === yesterday.toDateString()) return t("yesterday");
+    return date.toLocaleDateString(lang || undefined, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   };
 
   useEffect(() => {

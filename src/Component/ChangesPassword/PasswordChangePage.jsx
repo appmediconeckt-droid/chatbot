@@ -275,11 +275,11 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
     <section className="password-security-panel">
       <div className="password-security-panel__header">
         <div>
-          <h2>Password Security</h2>
+          <h2>{t("password_security")}</h2>
           <p>
             {mode === "set"
               ? t('add_reset_password_otp')
-              : "Update your current password"}
+              : t("update_current_password")}
           </p>
         </div>
         <div className="password-security-panel__switch">
@@ -315,9 +315,9 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
       {mode === "set" ? (
         <form className="password-security-panel__form" onSubmit={handleSetPassword}>
           <label className="password-field password-email-field">
-            <span>Your Mail</span>
+            <span>{t("email")}</span>
             <div className="password-email-input-row">
-              <input type="email" value={normalizedEmail} placeholder="Enter your mail id" readOnly />
+              <input type="email" value={normalizedEmail} placeholder={t("email")} readOnly />
               <button type="button" onClick={handleSendOtp} disabled={loading || !normalizedEmail}>
                 {otpSent ? t("resend_otp") : t("send_otp")}
               </button>
@@ -325,23 +325,23 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           </label>
           {otpSent && !otpVerified && (
             <label className="password-field password-otp-field">
-              <span>Verification Code</span>
+              <span>{t("verification_code")}</span>
               <input type="text" inputMode="numeric" maxLength={6} name="otp" value={form.otp} onChange={handleChange} placeholder={t("enter_6_digit_otp")} />
               <button type="button" className="password-security-panel__primary" onClick={handleVerifyOtp} disabled={loading || form.otp.length !== 6}>
-                {loading ? "Verifying..." : "Verify OTP"}
+                {loading ? t("verifying") : t("verify_otp")}
               </button>
             </label>
           )}
-          {otpVerified && <div className="password-security-panel__message">OTP verified. You can now create your password.</div>}
+          {otpVerified && <div className="password-security-panel__message">{t("otp_verified")}</div>}
           {otpVerified && <>
           <label className="password-field password-new-field">
-            <span>New Password</span>
+            <span>{t("new_password")}</span>
             <input
               type="password"
               name="password"
               value={form.password}
               onChange={handleChange}
-              placeholder="Minimum 8 characters"
+              placeholder={t("minimum_8_characters")}
               autoComplete="new-password"
             />
           </label>
@@ -350,7 +350,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
               <div className="password-strength-bar">
                 {[0, 1, 2, 3].map((part) => <i key={part} className={Object.values(setPasswordChecks).filter(Boolean).length > part ? "passed" : ""} />)}
               </div>
-              <strong>Strong Password</strong>
+              <strong>{t("strong_password")}</strong>
             </div>
             <ul>
               <li className={setPasswordChecks.length ? "passed" : ""}>8+ chars</li>
@@ -360,48 +360,48 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
             </ul>
           </div>
           <label className="password-field password-confirm-field">
-            <span>Confirm Password</span>
+            <span>{t("confirm_password")}</span>
             <input
               type="password"
               name="confirmPassword"
               value={form.confirmPassword}
               onChange={handleChange}
-              placeholder="Re-enter new password"
+              placeholder={t("confirm_password")}
               autoComplete="new-password"
             />
           </label>
           <div className="password-change-actions">
             <button type="submit" className="password-security-panel__primary" disabled={loading}>
-              {loading ? t("saving") : "Save Changes"}
+              {loading ? t("saving") : t("save_changes")}
             </button>
-            <button type="button" className="password-change-cancel" onClick={() => { setForm(initialForm); setOtpSent(false); setOtpVerified(false); clearStatus(); onCancel?.(); }}>Cancel Changes</button>
+            <button type="button" className="password-change-cancel" onClick={() => { setForm(initialForm); setOtpSent(false); setOtpVerified(false); clearStatus(); onCancel?.(); }}>{t("cancel")}</button>
           </div>
           </>}
         </form>
       ) : (
         <form className="password-security-panel__form" onSubmit={handleChangePassword}>
           <div className="password-current-meta">
-            <span>Current:</span><strong>••••••••</strong><small>Updated 2 mos ago</small>
+            <span>{t("current_password")}:</span><strong>••••••••</strong>
           </div>
           <label className="password-field">
-            <span>Current Password</span>
+            <span>{t("current_password")}</span>
             <input
               type="password"
               name="oldPassword"
               value={form.oldPassword}
               onChange={handleChange}
-              placeholder="Enter current password"
+              placeholder={t("current_password")}
               autoComplete="current-password"
             />
           </label>
           <label className="password-field">
-            <span>New Password</span>
+            <span>{t("new_password")}</span>
             <input
               type="password"
               name="newPassword"
               value={form.newPassword}
               onChange={handleChange}
-              placeholder="Minimum 8 characters"
+              placeholder={t("minimum_8_characters")}
               autoComplete="new-password"
             />
           </label>
@@ -410,7 +410,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
               <div className="password-strength-bar">
                 {[0, 1, 2, 3].map((part) => <i key={part} className={Object.values(newPasswordChecks).filter(Boolean).length > part ? "passed" : ""} />)}
               </div>
-              <strong>Strong Password</strong>
+              <strong>{t("strong_password")}</strong>
             </div>
             <ul>
               <li className={newPasswordChecks.length ? "passed" : ""}>8+ chars</li>
@@ -420,21 +420,21 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
             </ul>
           </div>
           <label className="password-field">
-            <span>Confirm Password</span>
+            <span>{t("confirm_password")}</span>
             <input
               type="password"
               name="confirmNewPassword"
               value={form.confirmNewPassword}
               onChange={handleChange}
-              placeholder="Re-enter new password"
+              placeholder={t("confirm_password")}
               autoComplete="new-password"
             />
           </label>
           <div className="password-change-actions">
             <button type="submit" className="password-security-panel__primary" disabled={loading}>
-              {loading ? t('updating') : "Save Changes"}
+              {loading ? t('updating') : t("save_changes")}
             </button>
-            <button type="button" className="password-change-cancel" onClick={() => { setForm(initialForm); clearStatus(); onCancel?.(); }}>Cancel Changes</button>
+            <button type="button" className="password-change-cancel" onClick={() => { setForm(initialForm); clearStatus(); onCancel?.(); }}>{t("cancel")}</button>
           </div>
         </form>
       )}

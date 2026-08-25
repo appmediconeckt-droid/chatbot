@@ -168,8 +168,8 @@ export function LanguageSelector({
               <div className="lang-modal-header-left">
                 <div className="lang-modal-icon-wrap">◎</div>
                 <div>
-                  <div className="lang-modal-title">Language</div>
-                  <div className="lang-modal-subtitle">Choose your preferred language for the Humaeli app</div>
+                  <div className="lang-modal-title">{t ? t('language') : 'Language'}</div>
+                  <div className="lang-modal-subtitle">{t ? t('select_language') : 'Choose your preferred language'}</div>
                 </div>
               </div>
               <button type="button" className="lang-modal-close" onClick={() => setOpen(false)}>×</button>
@@ -177,11 +177,11 @@ export function LanguageSelector({
 
             <div className="lang-modal-search">
               <FaSearch className="lang-modal-search-icon" aria-hidden="true" />
-              <input type="text" placeholder="Search language" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
+              <input type="text" placeholder={t ? `${t('search')} ${t('language')}` : 'Search language'} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
             </div>
 
             <div className="lang-modal-list">
-              {!searchQuery && <div className="lang-modal-section-title">RECOMMENDED</div>}
+              {!searchQuery && <div className="lang-modal-section-title">{t ? t('recommended') : 'RECOMMENDED'}</div>}
               {!searchQuery && filteredLanguages.filter((item) => recommendedCodes.includes(item.code)).map((item) => (
                 <button key={`recommended-${item.code}`} type="button" className={`lang-modal-item ${pendingLang === item.code ? 'lang-modal-item--active' : ''}`} onClick={() => setPendingLang(item.code)}>
                   <span className="lang-modal-flag">🇮🇳</span>
@@ -189,7 +189,7 @@ export function LanguageSelector({
                   <span className={pendingLang === item.code ? 'lang-modal-check' : 'lang-modal-check-empty'}>{pendingLang === item.code ? '✓' : ''}</span>
                 </button>
               ))}
-              <div className="lang-modal-section-title">ALL LANGUAGES</div>
+              <div className="lang-modal-section-title">{t ? `${t('all')} ${t('language')}` : 'ALL LANGUAGES'}</div>
               {filteredLanguages.filter((item) => searchQuery || !recommendedCodes.includes(item.code)).map((item) => (
                 <button key={item.code} type="button" className={`lang-modal-item ${pendingLang === item.code ? 'lang-modal-item--active' : ''}`} onClick={() => setPendingLang(item.code)}>
                   <span className="lang-modal-flag">🌐</span>
@@ -197,12 +197,12 @@ export function LanguageSelector({
                   <span className={pendingLang === item.code ? 'lang-modal-check' : 'lang-modal-check-empty'}>{pendingLang === item.code ? '✓' : ''}</span>
                 </button>
               ))}
-              {!filteredLanguages.length && <div className="lang-modal-empty">No languages found</div>}
+              {!filteredLanguages.length && <div className="lang-modal-empty">{t ? t('no_results') : 'No languages found'}</div>}
             </div>
 
             <div className="lang-modal-actions">
-              <button type="button" className="lang-modal-cancel" onClick={() => { setPendingLang(lang); setOpen(false); }}>Cancel</button>
-              <button type="button" className="lang-modal-apply" onClick={() => { handleLanguageChange(pendingLang); setOpen(false); }}>Apply Language</button>
+              <button type="button" className="lang-modal-cancel" onClick={() => { setPendingLang(lang); setOpen(false); }}>{t ? t('cancel') : 'Cancel'}</button>
+              <button type="button" className="lang-modal-apply" onClick={() => { handleLanguageChange(pendingLang); setOpen(false); }}>{t ? t('save') : 'Apply Language'}</button>
             </div>
           </div>
         </div>,

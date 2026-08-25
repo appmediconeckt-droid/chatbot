@@ -2200,7 +2200,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 <input
                   type="text"
                   className="search-input-unique"
-                  placeholder="Search patients, counsellors, or conversations..."
+                  placeholder={t('search_counselors')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -2280,7 +2280,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             </div>
           </div>
 
-          <div className="directory-filter-pills-unique" role="tablist" aria-label="Counsellor filters">
+          <div className="directory-filter-pills-unique" role="tablist" aria-label={t('search_counselors')}>
             {[
               ["all", t("all")],
               ["online", t("online")],
@@ -2315,14 +2315,14 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                     <h3>{recommendedCounselor.name}</h3>
                     <p>{recommendedCounselor.specialization}</p>
                     <div className="recommended-stats-unique">
-                      <span>▣ {recommendedCounselor.experience} experience</span>
+                      <span>▣ {recommendedCounselor.experience} {t('experience')}</span>
                       <span className="rating">★ {recommendedCounselor.rating || "4.9"}</span>
                     </div>
                   </div>
                 </div>
                 <div className="recommended-actions-unique">
                   <span className={`recommended-availability-unique ${recommendedCounselor.online ? "available" : ""}`}>
-                    ● {recommendedCounselor.online ? "AVAILABLE" : "OFFLINE"}
+                    ● {recommendedCounselor.online ? t('online') : t('offline')}
                   </span>
                   <div>
                     <button onClick={() => handleBookAppointment(recommendedCounselor)}>{t("book_appointment")}</button>
@@ -2331,7 +2331,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                       disabled={!recommendedCounselor.online}
                       onClick={() => handleChatNow(recommendedCounselor)}
                     >
-                      Chat Now
+                      {t('chat_now')}
                     </button>
                   </div>
                 </div>
@@ -2343,7 +2343,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             <h2>{t("available_counselors")}</h2>
             {directoryCounselors.length > collapsedCounselorLimit && (
               <button type="button" onClick={() => setShowAllCounselors((current) => !current)}>
-                {showAllCounselors ? "See Less" : t("see_all")}
+                {showAllCounselors ? t('show_less') : t("see_all")}
               </button>
             )}
           </div>
@@ -2358,7 +2358,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 className="reset-search-btn-unique"
                 onClick={clearFilters}
               >
-                Clear all filters
+                {t('clear_filters')}
               </button>
             </div>
           )}
@@ -2412,7 +2412,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   </div>
 
                   <div className="counselor-experience-unique">
-                    💼 {counselor.experience} experience
+                    💼 {counselor.experience} {t('experience')}
                   </div>
 
                   <div className="counselor-rating-unique">
@@ -2438,7 +2438,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                       onClick={() => handleBookAppointment(counselor)}
                       className="book-apt-btn-unique"
                     >
-                      📅 {t('book')}
+                      📅 {t('book_appointment')}
                     </button>
                   </div>
                 </div>
@@ -2510,7 +2510,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                           handleBookAppointment(counselor);
                         }}
                       >
-                        {t('book')}
+                        {t('book_appointment')}
                       </button>
                     </div>
                   </div>
@@ -2542,7 +2542,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 className="modal-close-unique"
                 onClick={() => setShowUserModal(false)}
                 type="button"
-                aria-label="Close"
+                aria-label={t('close')}
               >
                 &times;
               </button>
@@ -2728,7 +2728,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                     <label>{t("clinical_notes_reason")}</label>
                   <textarea
                     className="form-textarea-unique"
-                    placeholder="Share what you want to discuss in this session..."
+                    placeholder={`${t('reason')}...`}
                     value={bookingNotes}
                     onChange={(e) => setBookingNotes(e.target.value)}
                     required

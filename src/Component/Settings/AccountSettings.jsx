@@ -204,7 +204,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
     const securityRows = [
       {
         icon: <FaLock />,
-        label: "Change Password",
+        key: "change_password",
         action: () => {
           setPasswordEditorMode("change");
           setShowPasswordEditor(true);
@@ -212,7 +212,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
       },
       {
         icon: <FaKey />,
-        label: "Add Password by OTP",
+        key: "add_password_by_otp",
         action: () => {
           setPasswordEditorMode("set");
           setShowPasswordEditor(true);
@@ -319,17 +319,17 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
                   className="counselor-settings-signout"
                   onClick={() => document.querySelector(".couns-sidebar-item.couns-action, .couns-mobile-nav-item.logout")?.click()}
                 >
-                  <FaSignOutAlt /> Sign Out
+                  <FaSignOutAlt /> {t("sign_out")}
                 </button>
               </>
             ) : counselorSettingsSection === "security" ? (
               <>
-                <span className="counselor-settings-section-label">SECURITY</span>
+                <span className="counselor-settings-section-label">{t("security")}</span>
                 <div className="counselor-security-list">
                   {securityRows.map((row) => (
-                    <button type="button" key={row.label} onClick={row.action} disabled={row.label === "Login Activity" && locationLoading}>
+                    <button type="button" key={row.key} onClick={row.action}>
                       <i>{row.icon}</i>
-                      <span>{row.label === "Login Activity" && locationLoading ? t("updating") : row.label}</span>
+                      <span>{t(row.key)}</span>
                       {row.badge && <b>{row.badge}</b>}
                       <FaChevronRight />
                     </button>
@@ -363,8 +363,8 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
   return (
     <section className={`account-settings settings-screen ${isCounselor ? "account-settings--counselor" : "account-settings--user"}`}>
       <header className="settings-screen__header">
-        <div><h1>{title}</h1><p>Manage your settings and privacy</p></div>
-        <label className="settings-search"><FaSearch /><input type="search" placeholder="Search settings..." aria-label="Search settings" /></label>
+        <div><h1>{title}</h1><p>{t('settings')} · {t('privacy')}</p></div>
+        <label className="settings-search"><FaSearch /><input type="search" placeholder={t('search_settings')} aria-label={t('search_settings')} /></label>
       </header>
 
       {notice.message && <div className={`account-settings__notice ${notice.type}`}>{notice.message}</div>}
@@ -373,20 +373,20 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         <main className="settings-screen__main">
           <section className="settings-security-intro">
             <span className="settings-round-icon"><FaShieldAlt /></span>
-            <div><h2>Security Center</h2><p>Manage your account protection and authentication methods.</p></div>
+            <div><h2>{t('security')}</h2><p>{t('protected')} · {t('account')}</p></div>
           </section>
 
           <section className="settings-account-card">
-            <span className="settings-card-label">ACCOUNT INFO</span>
+            <span className="settings-card-label">{t('account')}</span>
             <div className="settings-profile-row">
               <span className="settings-profile-avatar"><FaUser /></span>
-              <div><strong>{account.name || t("not_added")}</strong><small>Personal Account</small></div>
+              <div><strong>{account.name || t("not_added")}</strong><small>{t('account')}</small></div>
               {onOpenProfile && <button type="button" onClick={onOpenProfile}><FaUserEdit /> {t("edit_profile")}</button>}
             </div>
             <dl>
               <div><dt><FaEnvelope /> {t("email")}</dt><dd>{account.email || t("not_added")}</dd></div>
               <div><dt><FaPhoneAlt /> {t("phone")}</dt><dd>{account.phone || t("not_added")}</dd></div>
-              <div><dt><FaLock /> Login via</dt><dd>{account.authProvider === "google" ? "Google" : "Email & Password"}</dd></div>
+              <div><dt><FaLock /> {t('login')}</dt><dd>{account.authProvider === "google" ? "Google" : `${t('email')} · ${t('password')}`}</dd></div>
             </dl>
           </section>
 
@@ -395,12 +395,12 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
               <div>
                 <h3>{t("password_security")}</h3>
                 <p>{t("update_current_password")}</p>
-                <small>Current: &nbsp;••••••••</small>
+                <small>{t('current_password')}: &nbsp;••••••••</small>
               </div>
               <div className="settings-password-actions">
                 <button type="button" onClick={() => { setPasswordEditorMode("set"); setShowPasswordEditor(true); }}>{t("add")}</button>
                 <button type="button" className="active" onClick={() => { setPasswordEditorMode("change"); setShowPasswordEditor((value) => !value); }}>
-                  {showPasswordEditor ? "Close" : "Change"}
+                  {showPasswordEditor ? t('cancel') : t('change_password')}
                 </button>
               </div>
             </div>
@@ -430,7 +430,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
               <div className="settings-protected-title"><strong><FaCheck /> {t("protected")}</strong></div>
             <ul>
                 <li><FaCheck /> {t("account_authentication_active")}</li>
-              <li><FaCheck /> {account.hasPassword ? "Strong password set" : "Password setup available"}</li>
+              <li><FaCheck /> {account.hasPassword ? t('password') : t('add_password')}</li>
                 <li><FaCheck /> {t("profile_protection_enabled")}</li>
             </ul>
           </section>
@@ -509,7 +509,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         <div className="account-settings__panel account-settings__panel--location">
           <div className="account-settings__panel-heading">
             <span className="account-settings__panel-icon account-settings__panel-icon--location"><FaMapMarkerAlt /></span>
-            <div><h2>{t('location')}</h2><span className="account-settings__status"><i /> Location services</span></div>
+            <div><h2>{t('location')}</h2><span className="account-settings__status"><i /> {t('location')}</span></div>
           </div>
           <p>{t('location_desc')}</p>
           <button

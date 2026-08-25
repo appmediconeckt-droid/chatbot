@@ -9,7 +9,7 @@ import { getTimeGreetingKey } from "../../../../utils/timeGreeting";
  * Koi side menu nahi, sirf dashboard statistics aur cards
  */
 const Dashboard = () => {
-    const { t } = useCounselorTranslation();
+    const { t, lang } = useCounselorTranslation();
     const [loading, setLoading] = useState(true);
     const [monthlyEarnings, setMonthlyEarnings] = useState(0);
 
@@ -30,16 +30,16 @@ const Dashboard = () => {
 
     // Dashboard statistics data
     const dashboardStats = [
-        { title: "Total Patients", value: "156", icon: "👥", change: "+12%", color: "#4285F4" },
-        { title: "Today's Sessions", value: "8", icon: "⏳", change: "+2 today", color: "#0F9D58" },
-        { title: "Appointments", value: "12", icon: "📅", change: "3 urgent", color: "#F4B400" },
-        { title: "Monthly Earnings", value: "₹84.5K", icon: "💰", change: "+18%", color: "#DB4437" },
+        { title: t("total_patients"), value: "156", icon: "👥", change: "+12%", color: "#4285F4" },
+        { title: t("todays_sessions"), value: "8", icon: "⏳", change: `+2 ${t("today")}`, color: "#0F9D58" },
+        { title: t("appointments"), value: "12", icon: "📅", change: "3", color: "#F4B400" },
+        { title: t("monthly_earnings"), value: "₹84.5K", icon: "💰", change: "+18%", color: "#DB4437" },
     ];
     dashboardStats[3] = {
         ...dashboardStats[3],
         value: `₹${monthlyEarnings.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
         icon: "₹",
-        change: "80% counselor share",
+        change: `80% ${t("counselor")}`,
     };
 
     // Recent sessions data
@@ -81,7 +81,7 @@ const Dashboard = () => {
             <div className="dashboard-header">
                 <div>
                     <h1 className="welcome-title">{t(getTimeGreetingKey())}, Dr. Sharma 👋</h1>
-                    <p className="date-info">{new Date().toLocaleDateString('en-IN', {
+                    <p className="date-info">{new Date().toLocaleDateString(lang || undefined, {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -89,8 +89,8 @@ const Dashboard = () => {
                     })}</p>
                 </div>
                 <div className="header-actions">
-                    <button className="action-btn">📅 Today's Schedule</button>
-                    <button className="action-btn primary">+ New Session</button>
+                    <button className="action-btn">📅 {t("todays_schedule")}</button>
+                    <button className="action-btn primary">+ {t("new_session")}</button>
                 </div>
             </div>
 
@@ -117,17 +117,17 @@ const Dashboard = () => {
                     {/* Recent Sessions Card */}
                     <div className="card">
                         <div className="card-header">
-                            <h2>Recent Sessions</h2>
-                            <button className="view-link">View All →</button>
+                            <h2>{t("recent_sessions")}</h2>
+                            <button className="view-link">{t("view_all")} →</button>
                         </div>
                         <div className="table-wrapper">
                             <table className="sessions-table">
                                 <thead>
                                     <tr>
-                                        <th>Patient</th>
-                                        <th>Time</th>
-                                        <th>Type</th>
-                                        <th>Status</th>
+                                        <th>{t("patient")}</th>
+                                        <th>{t("time")}</th>
+                                        <th>{t("type")}</th>
+                                        <th>{t("status")}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -141,7 +141,7 @@ const Dashboard = () => {
                                                     backgroundColor: session.statusColor + '20',
                                                     color: session.statusColor
                                                 }}>
-                                                    {session.status}
+                                                    {t(session.status.toLowerCase().replaceAll(" ", "_"))}
                                                 </span>
                                             </td>
                                         </tr>
@@ -154,15 +154,15 @@ const Dashboard = () => {
                     {/* Weekly Overview Card */}
                     <div className="card">
                         <div className="card-header">
-                            <h2>Weekly Overview</h2>
-                            <button className="view-link">Details →</button>
+                            <h2>{t("weekly_overview")}</h2>
+                            <button className="view-link">{t("details")} →</button>
                         </div>
                         <div className="weekly-grid">
                             {weeklySchedule.map((day) => (
                                 <div className="day-card" key={day.day}>
                                     <span className="day-name">{day.day}</span>
-                                    <span className="day-sessions">{day.sessions} sessions</span>
-                                    <span className="day-patients">{day.patients} patients</span>
+                                    <span className="day-sessions">{day.sessions} {t("sessions")}</span>
+                                    <span className="day-patients">{day.patients} {t("patients")}</span>
                                 </div>
                             ))}
                         </div>
@@ -174,8 +174,8 @@ const Dashboard = () => {
                     {/* Upcoming Appointments Card */}
                     <div className="card">
                         <div className="card-header">
-                            <h2>Upcoming Appointments</h2>
-                            <button className="view-link">Schedule →</button>
+                            <h2>{t("upcoming_appointments")}</h2>
+                            <button className="view-link">{t("schedule")} →</button>
                         </div>
                         <div className="appointments-list">
                             {upcomingAppointments.map((apt) => (
@@ -184,7 +184,7 @@ const Dashboard = () => {
                                     <div className="appointment-info">
                                         <h4>{apt.patient}</h4>
                                         <p>{apt.time}</p>
-                                        <span className="appointment-type">{apt.type}</span>
+                                        <span className="appointment-type">{t(apt.type.toLowerCase().replaceAll(" ", "_"))}</span>
                                     </div>
                                 </div>
                             ))}
@@ -194,8 +194,8 @@ const Dashboard = () => {
                     {/* Recent Messages Card */}
                     <div className="card">
                         <div className="card-header">
-                            <h2>Recent Messages</h2>
-                            <span className="message-count">1 new</span>
+                            <h2>{t("recent_messages")}</h2>
+                            <span className="message-count">1 {t("new")}</span>
                         </div>
                         <div className="messages-list">
                             {recentMessages.map((msg) => (
@@ -217,20 +217,20 @@ const Dashboard = () => {
                     {/* Quick Actions Card */}
                     <div className="card">
                         <div className="card-header">
-                            <h2>Quick Actions</h2>
+                            <h2>{t("quick_actions")}</h2>
                         </div>
                         <div className="quick-actions">
                             <button className="quick-action-btn">
-                                <span>📝</span> Add Notes
+                                <span>📝</span> {t("add_notes")}
                             </button>
                             <button className="quick-action-btn">
-                                <span>💰</span> Invoice
+                                <span>💰</span> {t("invoice")}
                             </button>
                             <button className="quick-action-btn">
-                                <span>📊</span> Reports
+                                <span>📊</span> {t("reports")}
                             </button>
                             <button className="quick-action-btn">
-                                <span>👥</span> New Patient
+                                <span>👥</span> {t("new_patient")}
                             </button>
                         </div>
                     </div>
