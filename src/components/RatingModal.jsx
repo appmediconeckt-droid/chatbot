@@ -27,7 +27,7 @@ const STAR_LABELS = ["", "Poor", "Fair", "Good", "Very good", "Excellent"];
  */
 const RatingModal = ({
   visible,
-  counselorName = "your counselor",
+  counselorName = "your consultant",
   counselorPhoto,
   submitting = false,
   success = false,
@@ -107,7 +107,7 @@ const RatingModal = ({
               )}
             </div>
 
-            <h2 className={styles.title}>Rate your counselor</h2>
+            <h2 className={styles.title}>Rate your consultant</h2>
             <p className={styles.subtitle}>
               How was your experience with{" "}
               <span className={styles.counselorName}>{counselorName}</span>?

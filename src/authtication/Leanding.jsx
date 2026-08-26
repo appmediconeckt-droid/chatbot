@@ -717,6 +717,70 @@ const ServicesSection = () => {
 };
 
 // ========== HOW IT WORKS SECTION ==========
+// const HowItWorksSection = () => {
+//   const { t } = useSiteTranslation();
+//   const steps = [
+//     {
+//       id: 'download-app',
+//       icon: 'mobile-alt',
+//       title: t('landing_ui_step_1_title'),
+//       description: t('landing_ui_step_1_description'),
+//       action: t('landing_ui_step_1_action'),
+//     },
+//     {
+//       id: 'ai-chat',
+//       icon: 'robot',
+//       title: t('landing_ui_step_2_title'),
+//       description: t('landing_ui_step_2_description'),
+//       action: t('landing_ui_step_2_action'),
+//     },
+//     {
+//       id: 'experts',
+//       icon: 'hands-helping',
+//       title: t('landing_ui_step_3_title'),
+//       description: t('landing_ui_step_3_description'),
+//       action: t('landing_ui_step_3_action'),
+//     },
+//     {
+//       id: 'progress',
+//       icon: 'chart-line',
+//       title: t('landing_ui_step_4_title'),
+//       description: t('landing_ui_step_4_description'),
+//       action: t('landing_ui_step_4_action'),
+//     },
+//   ];
+
+//   return (
+//     <section className="section how-it-works" id="how-it-works">
+//       <div className="container">
+//         <div className="section-header">
+//           <h2 className="section-title">{t('landing_ui_how_title')}</h2>
+//           <p className="section-description">
+//             {t('landing_ui_how_description')}
+//           </p>
+//         </div>
+//         <div className="steps-container">
+//           {steps.map((step, index) => (
+//             <div className="step" key={step.id}>
+//               <div className="step-top">
+//                 <div className="step-number">{String(index + 1).padStart(2, '0')}</div>
+//                 <div className="step-icon">
+//                   <i className={`fas fa-${step.icon}`}></i>
+//                 </div>
+//               </div>
+//               <h3 className="step-title">{step.title}</h3>
+//               <p className="step-description">{step.description}</p>
+//               <Link to="/role-selector" className="step-action">
+//                 {step.action} <i className="fas fa-arrow-right"></i>
+//               </Link>
+//             </div>
+//           ))}
+//         </div>
+//       </div>
+//     </section>
+//   );
+// };
+
 const HowItWorksSection = () => {
   const { t } = useSiteTranslation();
   const steps = [
@@ -770,9 +834,22 @@ const HowItWorksSection = () => {
               </div>
               <h3 className="step-title">{step.title}</h3>
               <p className="step-description">{step.description}</p>
-              <Link to="/role-selector" className="step-action">
-                {step.action} <i className="fas fa-arrow-right"></i>
-              </Link>
+              
+              {/* شرط: اگر ڈاؤن لوڈ کا مرحلہ ہے تو بیرونی لنک، ورنہ اندرونی روٹ */}
+              {step.id === 'download-app' ? (
+                <a
+                  href="https://play.google.com/store/apps/details?id=com.mindcrawller.humaeli"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="step-action"
+                >
+                  {step.action} <i className="fas fa-arrow-right"></i>
+                </a>
+              ) : (
+                <Link to="/role-selector" className="step-action">
+                  {step.action} <i className="fas fa-arrow-right"></i>
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -780,6 +857,7 @@ const HowItWorksSection = () => {
     </section>
   );
 };
+
 
 // ========== FEATURES SECTION ==========
 const FeaturesSection = () => {

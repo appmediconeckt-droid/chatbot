@@ -13,7 +13,7 @@ import {
   resolveOfflineLastSeen,
 } from "../../../../utils/presence";
 
-const getInitials = (name = "Counselor") =>
+const getInitials = (name = "Consultant") =>
   name
     .split(" ")
     .filter(Boolean)
@@ -359,7 +359,7 @@ const CounselorTable = () => {
         {!error &&
           sortedCounselors.map((counselor) => {
             const id = counselor._id || counselor.id;
-            const name = counselor.fullName || counselor.name || "Counselor";
+            const name = counselor.fullName || counselor.name || "Consultant";
             const specializations = normalizeArray(counselor.specialization);
             const languages = normalizeArray(counselor.languages);
             const profilePhotoUrl = getProfilePhotoUrl(counselor.profilePhoto);
@@ -392,7 +392,7 @@ const CounselorTable = () => {
                   <div className="counselor-basic">
                     <h3 className="counselor-name">{name}</h3>
                     <p className="counselor-specialization">
-                      {specializations[0] || counselor.qualification || "Counselor"}
+                      {specializations[0] || counselor.qualification || "Consultant"}
                     </p>
                     <p className={`counselor-presence-text ${online ? "online" : "offline"}`}>
                       {presenceText}

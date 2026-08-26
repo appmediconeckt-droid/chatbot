@@ -4240,18 +4240,6 @@
 }
 .ud-ai-safety-note > span { color: #dc5149; font-weight: 800; }
 .ud-ai-safety-note p { margin: 0; }
-.ud-ai-mood-section {
-  flex: none; padding: 7px 0 8px; border-bottom: 1px solid #eef2ef;
-}
-.ud-ai-mood-section > p { margin: 0 0 9px; color: #334039; font-size: 11px; font-weight: 650; }
-.ud-ai-mood-row { display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none; }
-.ud-ai-mood-row::-webkit-scrollbar { display: none; }
-.ud-ai-mood-row button {
-  display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; padding: 6px 10px;
-  border: 1px solid #dfe8e2; border-radius: 999px; color: #45524c;
-  background: #fff; font-size: 10px; cursor: pointer;
-}
-.ud-ai-mood-row button:hover:not(:disabled) { border-color: #84dba8; background: #f0fcf5; }
 .ud-chat-message-wrapper { max-width: 94%; flex: none; }
 .ud-chat-avatar.ud-small {
   width: 27px; height: 27px; flex: 0 0 27px; border: 0; color: #fff;
@@ -4398,42 +4386,6 @@
   margin-top: 1px;
   color: #d9252d;
   font-size: 17px;
-}
-
-.ud-ai-mood-section {
-  margin: 39px -7px 25px;
-  padding: 0;
-  border: 0;
-}
-
-.ud-ai-mood-section > p {
-  margin: 0 0 12px;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.ud-ai-mood-row {
-  gap: 10px;
-  padding-bottom: 3px;
-}
-
-.ud-ai-mood-row button {
-  min-height: 48px;
-  padding: 9px 16px;
-  gap: 8px;
-  font-size: 15px;
-  box-shadow: 0 2px 5px rgba(30, 45, 38, .05);
-}
-
-.ud-ai-mood-row button span {
-  font-size: 18px;
-}
-
-.ud-ai-mood-row button:focus,
-.ud-ai-mood-row button:active {
-  border-color: #8cdec0;
-  color: #007f50;
-  background: #eafaf5;
 }
 
 .ud-chat-message-wrapper {
@@ -4954,10 +4906,6 @@
     margin-top: 13px;
     padding: 11px 9px;
     font-size: 10px;
-  }
-
-  .ud-ai-mood-section {
-    margin: 20px 0 14px;
   }
 
   .ud-chat-popup-footer {

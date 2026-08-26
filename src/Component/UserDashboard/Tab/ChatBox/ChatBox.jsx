@@ -4271,7 +4271,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
     ratingPromptedRef.current = true;
     const target = {
       counselorId: counselorIdResolved,
-      counselorName: currentCounselor?.name || "Counselor",
+      counselorName: currentCounselor?.name || "Consultant",
       counselorPhoto: getProfilePhotoUrl(currentCounselor),
       chatId: getChatIdForAPI(),
     };
@@ -4301,7 +4301,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
       ratingPromptedRef.current = true;
       const target = {
         counselorId: counselorIdResolved,
-        counselorName: currentCounselor?.name || "Counselor",
+        counselorName: currentCounselor?.name || "Consultant",
         counselorPhoto: getProfilePhotoUrl(currentCounselor),
         chatId: apiChatId,
       };
@@ -4334,7 +4334,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
     if (counselorIdResolved && apiChatId) {
       ratingService.savePendingRating({
         counselorId: counselorIdResolved,
-        counselorName: currentCounselor?.name || "Counselor",
+        counselorName: currentCounselor?.name || "Consultant",
         counselorPhoto: getProfilePhotoUrl(currentCounselor),
         chatId: apiChatId,
       });
@@ -4495,7 +4495,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
         id: detailedCall?.id || resolvedCallId,
         callId: resolvedCallId,
         roomId: response.data.roomId || detailedCall?.roomId || incomingCallData.roomId,
-        name: remoteParticipant?.displayName || remoteParticipant?.fullName || incomingCallData.name || "Counselor",
+        name: remoteParticipant?.displayName || remoteParticipant?.fullName || incomingCallData.name || "Consultant",
         type: modalType,
         callType: modalType,
         profilePic: remoteParticipant?.profilePhoto || incomingCallData.image || null,
@@ -4760,7 +4760,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
 
           const fromData = waitingCall.from || {};
 
-          const callerFullName = fromData.fullName || fromData.displayName || "Counselor";
+          const callerFullName = fromData.fullName || fromData.displayName || "Consultant";
 
           const resolvedIncomingCallId = waitingCall.callId || waitingCall.id || waitingCall._id;
 
@@ -5011,7 +5011,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
   const initiateStreamCall = async (requestedCallType = "video") => {
     const normalizedMode = requestedCallType === "audio" || requestedCallType === "voice" ? "voice" : "video";
     if (!currentCounselor) {
-      setCallError("Counselor information not available");
+      setCallError("Consultant information not available");
       return;
     }
     setInitiatingCallType(normalizedMode);
@@ -5022,7 +5022,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
       const initiatorId = resolveCurrentUserId();
       const initiatorType = "user";
       const receiverId = resolveCounselorId();
-      const receiverName = currentCounselor.name || "Counselor";
+      const receiverName = currentCounselor.name || "Consultant";
       const receiverType = "counsellor";
       if (!initiatorId || !receiverId) throw new Error("Unable to start call. Missing user/counselor ID.");
       const requestBody = { initiatorId, initiatorType, receiverId, receiverType, callType: normalizedMode === "voice" ? "audio" : "video" };
@@ -6127,9 +6127,9 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
     if (!counselor) return <div className={`chat-profile-initials-${size}`}>?</div>;
     const profilePhotoUrl = getProfilePhotoUrl(counselor);
     if (profilePhotoUrl) {
-      return <img src={profilePhotoUrl} alt={counselor.name || "Counselor"} className={`chat-profile-image-${size}`} onError={(e) => { e.target.style.display = "none"; e.target.parentElement.innerHTML = `<div class="chat-profile-initials-${size}">${getInitials(counselor.name || "Counselor")}</div>`; }} />;
+      return <img src={profilePhotoUrl} alt={counselor.name || "Consultant"} className={`chat-profile-image-${size}`} onError={(e) => { e.target.style.display = "none"; e.target.parentElement.innerHTML = `<div class="chat-profile-initials-${size}">${getInitials(counselor.name || "Consultant")}</div>`; }} />;
     }
-    return <div className={`chat-profile-initials-${size}`}>{getInitials(counselor.name || "Counselor")}</div>;
+    return <div className={`chat-profile-initials-${size}`}>{getInitials(counselor.name || "Consultant")}</div>;
   };
 
   const renderMessageStatus = (message) => {
@@ -6188,9 +6188,9 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
     return <div className={`chat-status-banner ${statusClass}`}>{statusText}</div>;
   };
 
-  const counselorName = normalizeCounselor(currentCounselor)?.name || "Counselor";
+  const counselorName = normalizeCounselor(currentCounselor)?.name || "Consultant";
   const counselorSpecialization =
-    normalizeCounselor(currentCounselor)?.specialization || t('counselor') || "Counsellor";
+    normalizeCounselor(currentCounselor)?.specialization || t('counselor') || "Consultant";
   const counselorPresence = getPresence(currentCounselor);
   const counselorOnline = counselorPresence.isOnline;
   const counselorPresenceText = formatPresenceText(counselorPresence, {
@@ -6239,7 +6239,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
               <FaArrowLeft />
             </button>
             <div className="chatUserDetails">
-              <div className="chatProfilePic" aria-label="Counselor profile picture">
+              <div className="chatProfilePic" aria-label="Consultant profile picture">
                 {renderProfileAvatar(currentCounselor, "md")}
                 <span className={`chatActiveDot ${counselorOnline ? "chatActiveOnline" : "chatActiveOffline"}`} />
               </div>
@@ -6476,7 +6476,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
         callData={incomingCallData}
         onAccept={handleAcceptCall}
         onReject={handleRejectCall}
-        fallbackName="Counselor"
+        fallbackName="Consultant"
       />
 
       {blockedPopup.show && (

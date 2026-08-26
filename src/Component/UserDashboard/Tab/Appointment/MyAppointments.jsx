@@ -208,7 +208,7 @@ const MyAppointments = () => {
 
   const handleChat = async (apt) => {
     const counselorId = getCounselorId(apt);
-    if (!counselorId) return alert("Counselor information is unavailable.");
+    if (!counselorId) return alert("Consultant information is unavailable.");
 
     try {
       setActionLoading(`chat-${apt._id}`);
@@ -259,7 +259,7 @@ const MyAppointments = () => {
         id: callData.id || response.data.callId,
         callId: response.data.callId || callData.callId,
         roomId: response.data.roomId || callData.roomId,
-        name: callData.receiver?.displayName || callData.receiver?.fullName || apt.counselor?.fullName || "Counselor",
+        name: callData.receiver?.displayName || callData.receiver?.fullName || apt.counselor?.fullName || "Consultant",
         type: mode,
         callType: mode,
         status: response.data.status || "pending",
@@ -295,7 +295,7 @@ const MyAppointments = () => {
     if (!showModal || !selectedApt) return null;
 
     const appointmentSchedule = formatAppointmentDateTime(selectedApt.date);
-    const counselorName = selectedApt.counselor?.fullName || "Counselor";
+    const counselorName = selectedApt.counselor?.fullName || "Consultant";
     const counselorSpecialization =
       selectedApt.counselor?.specialization || "Mental health counselor";
     const appointmentStatus = selectedApt.status || "pending";
@@ -519,7 +519,7 @@ const MyAppointments = () => {
                     />
                     <div className="user-appointment-person">
                       <h2>
-                        {apt.counselor?.fullName || "Counselor"}
+                        {apt.counselor?.fullName || "Consultant"}
                         {/* <FaCheckCircle aria-label="Verified" /> */}
                       </h2>
                       <p>
@@ -749,7 +749,7 @@ const MyAppointments = () => {
                         key={counselor._id || counselor.id}
                         value={counselor._id || counselor.id}
                       >
-                        Dr. {counselor.fullName || counselor.name || "Counselor"}
+                        Dr. {counselor.fullName || counselor.name || "Consultant"}
                         {counselor.specialization?.length
                           ? ` - ${Array.isArray(counselor.specialization) ? counselor.specialization.join(", ") : counselor.specialization}`
                           : ""}

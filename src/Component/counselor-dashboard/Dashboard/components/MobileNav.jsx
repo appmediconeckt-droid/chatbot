@@ -60,7 +60,7 @@ export function MobileMenuOverlay({
               style={{ display: "none" }}
             />
 
-            <h3>{counselorData?.name || "Counselor"}</h3>
+            <h3>{counselorData?.name || "Consultant"}</h3>
 
             <p>
               <strong>{t('specialization')}:</strong>{" "}

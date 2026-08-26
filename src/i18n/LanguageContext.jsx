@@ -574,6 +574,20 @@ const getSemanticAliases = (key) => {
   return [];
 };
 
+const normalizeConsultantTerminology = (value) => {
+  if (typeof value !== "string") return value;
+
+  return value
+    .replace(/\bCounsellors\b/g, "Consultants")
+    .replace(/\bCounselors\b/g, "Consultants")
+    .replace(/\bCounsellor\b/g, "Consultant")
+    .replace(/\bCounselor\b/g, "Consultant")
+    .replace(/\bcounsellors\b/g, "consultants")
+    .replace(/\bcounselors\b/g, "consultants")
+    .replace(/\bcounsellor\b/g, "consultant")
+    .replace(/\bcounselor\b/g, "consultant");
+};
+
 function makeT(lang, translations) {
   return (key) => {
     const resolveLocalized = (lookupKey, visited = new Set()) => {
@@ -599,13 +613,13 @@ function makeT(lang, translations) {
     };
 
     const localized = resolveLocalized(key);
-    if (localized) return localized;
+    if (localized) return normalizeConsultantTerminology(localized);
 
     const lookupKeys = TRANSLATION_KEY_ALIASES[key] || [key];
 
     for (const lookupKey of lookupKeys) {
       if (translations["en-US"]?.[lookupKey]) {
-        return translations["en-US"][lookupKey];
+        return normalizeConsultantTerminology(translations["en-US"][lookupKey]);
       }
     }
 
@@ -637,7 +651,11 @@ export function useUserApiTranslation() {
   if (!ctx) throw new Error('useUserApiTranslation must be used within LanguageProvider');
 
   const translate = useCallback(async (text) => {
-    return translationService.translate(text, ctx.userLang);
+    const translated = await translationService.translate(
+      normalizeConsultantTerminology(text),
+      ctx.userLang,
+    );
+    return normalizeConsultantTerminology(translated);
   }, [ctx.userLang]);
 
   return {
@@ -652,7 +670,11 @@ export function useCounselorApiTranslation() {
   if (!ctx) throw new Error('useCounselorApiTranslation must be used within LanguageProvider');
 
   const translate = useCallback(async (text) => {
-    return translationService.translate(text, ctx.counselorLang);
+    const translated = await translationService.translate(
+      normalizeConsultantTerminology(text),
+      ctx.counselorLang,
+    );
+    return normalizeConsultantTerminology(translated);
   }, [ctx.counselorLang]);
 
   return {

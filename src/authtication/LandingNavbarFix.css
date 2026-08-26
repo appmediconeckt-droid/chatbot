@@ -109,6 +109,27 @@
   display: none !important;
 }
 
+/* Keep navigation and hero copy readable over every frame of the desktop
+   video while preserving the stronger contrast behind the main headline. */
+@media (min-width: 601px) {
+  .humaeli .hero-visual::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+      linear-gradient(rgba(0, 0, 0, .20), rgba(0, 0, 0, .20)),
+      linear-gradient(
+        90deg,
+        rgba(3, 45, 38, .58) 0%,
+        rgba(3, 55, 46, .35) 44%,
+        rgba(3, 49, 41, .08) 74%,
+        transparent 100%
+      ) !important;
+  }
+}
+
 @media (max-width: 600px) {
   .humaeli .hero-visual .hero-desktop-video {
     display: none !important;

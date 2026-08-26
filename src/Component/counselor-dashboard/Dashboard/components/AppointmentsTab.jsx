@@ -18,7 +18,7 @@ export default function AppointmentsTab({
   const [searchTerm, setSearchTerm] = React.useState("");
   const displayCounselorName = React.useMemo(() => {
     const normalizedName = String(counselorName || "").trim();
-    if (!normalizedName) return "Counselor";
+    if (!normalizedName) return "Consultant";
 
     return /^dr\.?\s/i.test(normalizedName)
       ? normalizedName

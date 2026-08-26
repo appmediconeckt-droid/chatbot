@@ -233,7 +233,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             {account.profileImage && !profileImageError ? (
               <img
                 src={account.profileImage}
-                alt={account.name || "Counselor profile"}
+                alt={account.name || "Consultant profile"}
                 onError={() => setProfileImageError(true)}
               />
             ) : (
@@ -250,7 +250,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             </button>
           </div>
           <div>
-            <h2>{account.name || "Counselor"}</h2>
+            <h2>{account.name || "Consultant"}</h2>
             <strong>{account.specialization}</strong>
             <p>{account.email}</p>
           </div>

@@ -1476,7 +1476,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             : {};
 
       const counselorName =
-        rawCounselor.name || rawCounselor.fullName || "Counselor";
+        rawCounselor.name || rawCounselor.fullName || "Consultant";
       const counselorAvatar =
         rawCounselor.avatar ||
         rawCounselor.profilePhoto?.url ||
@@ -1865,7 +1865,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
     if (!counselor.available) {
       addNotification(
         "error",
-        "Counselor Unavailable",
+        "Consultant Unavailable",
         `${counselor.name} ${t('not_available_now')}`,
         counselor.id,
       );
@@ -2675,7 +2675,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header-unique">
-              <h2>Book Appointment with {selectedCounselorForRequest?.name}</h2>
+              <h2>Book Appointment with {selectedCounselorForRequest?.name || "Consultant"}</h2>
               <button
                 className="modal-close-unique"
                 onClick={() => setShowBookingModal(false)}

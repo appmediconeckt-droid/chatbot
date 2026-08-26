@@ -78,7 +78,7 @@ const RoleSelector = () => {
               <span className="role-card-kicker">For individuals</span>
               <span className="c8v6-role-label">I’m seeking support</span>
               <span className="e3w1-role-hint">
-                Find the right counsellor and take charge of your mental wellness.
+                Find the right consultant and take charge of your mental wellness.
               </span>
             </span>
             <span className="role-benefits" aria-hidden="true">
@@ -95,7 +95,7 @@ const RoleSelector = () => {
             type="button"
             className={`q5b3-role-tile d4m7-counselor-tile ${selectedRole === "counsellor" ? "l9p3-selected-state" : ""}`}
             onClick={() => handleRoleSelect("counsellor")}
-            aria-label="Continue as a counsellor"
+            aria-label="Continue as a consultant"
           >
             <span className="role-card-accent" aria-hidden="true" />
             <span className="role-card-badge">Professional</span>

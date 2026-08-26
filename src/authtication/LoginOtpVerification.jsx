@@ -222,7 +222,7 @@ const LoginOtpVerification = () => {
             
             <div className="us-otp-page-role">
               <span className="us-role-label">Account Type:</span>
-              <span className="us-role-value">{role === "counselor" || role === "counsellor" ? "Counselor" : "User"}</span>
+              <span className="us-role-value">{role === "counselor" || role === "counsellor" ? "Consultant" : "User"}</span>
             </div>
 
             {error && (

@@ -474,10 +474,10 @@ const UserSignup = () => {
 
       if (isCounselor) {
         setApiError(
-          "Access denied: Your account is registered as a Counsellor. Please use the Counsellor login page.",
+          "Access denied: Your account is registered as a Consultant. Please use the Consultant login page.",
         );
         showNotification(
-          "Access denied: Please use the Counsellor login page.",
+          "Access denied: Please use the Consultant login page.",
           "error",
         );
         return;
@@ -990,7 +990,7 @@ const handleVerify = async () => {
             )}
             <p className="us-brand-subtitle">
               {isLogin
-                ? "Connect with professional counselors and start your healing journey."
+                ? "Connect with professional consultants and start your healing journey."
                 : "Join thousands of people who have found peace and clarity."}
             </p>
             <div className="us-features">

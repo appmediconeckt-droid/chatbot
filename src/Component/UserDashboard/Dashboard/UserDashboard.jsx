@@ -314,7 +314,7 @@ export default function UserDashboard() {
             fromData.displayName ||
             fromData.name ||
             waitingCall.fromName ||
-            "Counselor";
+            "Consultant";
 
           const currentIncomingId = callerInfo?.callId;
           const stillWaiting = currentIncomingId
@@ -944,7 +944,7 @@ export default function UserDashboard() {
     },
     {
       icon: <FaUserMd />,
-      title: "Counselor support",
+      title: "Consultant support",
       text: "Browse counselors by name, specialization, language, location, rating, and online status before starting care.",
       action: "Find counselor",
       onClick: () => handleMenuItemClick("Live Chat"),
@@ -988,8 +988,8 @@ export default function UserDashboard() {
       text: "Refresh the profile page, confirm required fields, and complete OTP verification if you changed email or phone. For location, use Settings > Update location.",
     },
     {
-      title: "Counselor chat is not opening",
-      text: "Open Counselor Support, choose an available counselor, and wait for the request to be accepted. Existing chats appear in the AI/chat area and counselor chat screens.",
+      title: "Consultant chat is not opening",
+      text: "Open Consultant Support, choose an available consultant, and wait for the request to be accepted. Existing chats appear in the AI/chat area and consultant chat screens.",
     },
     {
       title: "Call is not connecting",
@@ -1067,7 +1067,7 @@ export default function UserDashboard() {
     },
     {
       title: "Shared for care",
-      text: "Counselors receive only the information needed to respond to your request, manage appointments, and conduct chat/call sessions. Your anonymous identity is preferred in counselor-facing views where available.",
+      text: "Consultants receive only the information needed to respond to your request, manage appointments, and conduct chat/call sessions. Your anonymous identity is preferred in consultant-facing views where available.",
     },
     {
       title: "Protected changes",
@@ -1365,7 +1365,7 @@ export default function UserDashboard() {
             callData={callerInfo}
             onAccept={handleAcceptCall}
             onReject={handleRejectCall}
-            fallbackName="Counselor"
+            fallbackName="Consultant"
           />
         )}
 

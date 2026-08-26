@@ -2622,7 +2622,7 @@ const CounselorSignup = () => {
         });
         setIsLogin(true);
         showNotification(
-          "Counselor account created successfully. Please log in.",
+          "Consultant account created successfully. Please log in.",
           "success",
         );
       } else {
@@ -2634,7 +2634,7 @@ const CounselorSignup = () => {
     } catch (error) {
       if (error.response?.status === 409) {
         showNotification(
-          "Counselor with this email or phone already exists",
+          "Consultant with this email or phone already exists",
           "error",
         );
       } else {
@@ -2928,11 +2928,11 @@ const CounselorSignup = () => {
             )}
             <p className="cs-brand-subtitle">
               {isLogin
-                ? "Connect with expert counselors and find the support you need."
-                : "Start your journey as a certified mental health counselor."}
+                ? "Connect with expert consultants and find the support you need."
+                : "Start your journey as a certified mental health consultant."}
             </p>
             <div className="cs-features">
-              <div className="cs-feature">✓ Expert Counselors</div>
+              <div className="cs-feature">✓ Expert Consultants</div>
               <div className="cs-feature">✓ 24/7 Support</div>
               <div className="cs-feature">✓ Confidential Sessions</div>
             </div>

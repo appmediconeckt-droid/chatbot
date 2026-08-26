@@ -556,28 +556,6 @@ export default function AiChatPopup({
             </div>
           </section>
 
-          {messages.length <= 1 && !isLoading && (
-            <section className="ud-ai-mood-section">
-              <p>How are you feeling today?</p>
-              <div className="ud-ai-mood-row">
-                {[
-                  ["😟", "Low"],
-                  ["🙂", "Okay"],
-                  ["😊", "Good"],
-                  ["✨", "Great"],
-                ].map(([emoji, label]) => (
-                  <button
-                    key={label}
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() => sendQuickReply?.(`I am feeling ${label.toLowerCase()} today`)}
-                  >
-                    <span>{emoji}</span>{label}
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
           {messages.map((message) => (
             <div
               key={message.id}
