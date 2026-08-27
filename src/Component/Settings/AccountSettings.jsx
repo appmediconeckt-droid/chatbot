@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import api, { API_BASE_URL } from "../../axiosConfig";
 import { useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
 import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
 import PrivacyPolicy from "./PrivacyPolicy";
@@ -29,6 +28,7 @@ import {
   FaSearch,
   FaShieldAlt,
   FaSignOutAlt,
+  FaTrashAlt,
   FaUser,
   FaUserEdit,
   FaImage,
@@ -84,6 +84,8 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
   const [counselorSettingsSection, setCounselorSettingsSection] = useState("account");
   const [showCounselorProfileEditor, setShowCounselorProfileEditor] = useState(false);
   const [profileImageError, setProfileImageError] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+  const [deletingAccount, setDeletingAccount] = useState(false);
 
   const title = isCounselor ? t('counselor_settings') : t('settings');
 
@@ -115,7 +117,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
       const url = isCounselor
         ? `${API_BASE_URL}/api/auth/counsellors/${accountId}`
         : `${API_BASE_URL}/api/auth/getUser/${accountId}`;
-      const response = await axios.get(url, { headers: authHeaders() });
+      const response = await api.get(url, { headers: authHeaders() });
       const data = isCounselor ? response.data?.counsellor : response.data?.user;
 
       if (!response.data?.success || !data) {
@@ -197,6 +199,32 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         type: "success",
         message: t('password_updated_success'),
       });
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeletingAccount(true);
+    setNotice({ type: "", message: "" });
+    try {
+      const response = await api.delete("/api/auth/delete");
+      if (!response.data?.success) {
+        throw new Error(response.data?.message || t("delete_account_failed"));
+      }
+
+      localStorage.clear();
+      sessionStorage.clear();
+      navigate("/role-selector", { replace: true });
+    } catch (err) {
+      setNotice({
+        type: "error",
+        message:
+          err.response?.data?.message ||
+          err.message ||
+          t("delete_account_failed"),
+      });
+      setShowDeleteConfirmation(false);
+    } finally {
+      setDeletingAccount(false);
     }
   };
 
@@ -441,8 +469,45 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             <FaMapMarkerAlt /> {locationLoading ? t("updating") : t("update_location")}
           </button>
           {!isCounselor && <div className="settings-language-access"><LanguageSelector lang={lang} setLang={setLang} t={t} /></div>}
+          <section className="settings-delete-card">
+            <div>
+              <strong><FaExclamationTriangle /> {t("delete_account")}</strong>
+              <p>{t("delete_account_description")}</p>
+            </div>
+            <button type="button" onClick={() => setShowDeleteConfirmation(true)}>
+              <FaTrashAlt /> {t("delete_account")}
+            </button>
+          </section>
         </aside>
       </div>
+
+      {showDeleteConfirmation && (
+        <div className="settings-delete-modal" role="dialog" aria-modal="true" aria-labelledby="delete-account-title">
+          <div className="settings-delete-modal__panel">
+            <span className="settings-delete-modal__icon"><FaExclamationTriangle /></span>
+            <h2 id="delete-account-title">{t("delete_account_confirm_title")}</h2>
+            <p>{t("delete_account_confirm_description")}</p>
+            <div className="settings-delete-modal__actions">
+              <button
+                type="button"
+                className="cancel"
+                onClick={() => setShowDeleteConfirmation(false)}
+                disabled={deletingAccount}
+              >
+                {t("no")}
+              </button>
+              <button
+                type="button"
+                className="confirm"
+                onClick={handleDeleteAccount}
+                disabled={deletingAccount}
+              >
+                <FaTrashAlt /> {deletingAccount ? t("deleting_account") : t("yes")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 

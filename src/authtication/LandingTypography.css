@@ -19,12 +19,12 @@
 }
 
 .humaeli .hero-title {
-  font-size: clamp(2.5rem, 5vw, 4rem) !important;
+  font-size: clamp(2rem, 4vw, 3.5rem) !important;
   line-height: 1.08 !important;
 }
 
 .humaeli .hero-description {
-  max-width: 590px !important;
+  max-width: 400px !important;
   font-size: 1.05rem !important;
   line-height: 1.6 !important;
 }

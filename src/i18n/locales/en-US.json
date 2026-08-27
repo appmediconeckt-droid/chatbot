@@ -1033,5 +1033,14 @@
   "delete_message": "Delete message",
   "attach_file": "Attach file",
   "take_photo": "Take photo",
-  "sending_message": "Sending message"
+  "sending_message": "Sending message",
+  "delete_account": "Delete Account",
+  "delete_account_description": "Permanently delete your account and sign out from this device.",
+  "delete_account_confirm_title": "Confirm account deletion",
+  "delete_account_confirm_description": "Are you sure you want to delete your account? This action cannot be undone.",
+  "yes": "Yes",
+  "no": "No",
+  "delete_account_permanently": "Delete Permanently",
+  "deleting_account": "Deleting...",
+  "delete_account_failed": "Unable to delete your account. Please try again."
 }
