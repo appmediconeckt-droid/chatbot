@@ -1810,23 +1810,29 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
             setLoading(true);
             setError('');
 
-            const counsellorId = localStorage.getItem("counsellorId");
             const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
 
-            if (!counsellorId) {
-                setError('Counselor ID not found. Please login again.');
+            if (!token) {
+                setError('Your session was not found. Please login again.');
                 setLoading(false);
                 return;
             }
 
-            const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors/${counsellorId}`, {
+            const response = await axios.get(`${API_BASE_URL}/api/auth/me`, {
                 headers: {
                     Authorization: `Bearer ${token}`
                 }
             });
 
-            if (response.data.success && response.data.counsellor) {
-                const userData = response.data.counsellor;
+            if (response.data.success && response.data.user) {
+                const userData = response.data.user;
+                if (userData._id) {
+                    const verifiedId = String(userData._id);
+                    localStorage.setItem("counsellorId", verifiedId);
+                    localStorage.setItem("counselorId", verifiedId);
+                    localStorage.setItem("userId", verifiedId);
+                    localStorage.setItem("userData", JSON.stringify(userData));
+                }
 
                 let profilePhotoUrl = 'https://via.placeholder.com/150x150?text=Profile';
                 if (userData.profilePhoto) {

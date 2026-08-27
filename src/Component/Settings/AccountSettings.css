@@ -95,6 +95,11 @@
 .settings-delete-card p { margin: 8px 0 14px; color: #78565a; font-size: 12px; line-height: 1.5; }
 .settings-delete-card button { width: 100%; min-height: 43px; border: 1px solid #d9303e; border-radius: 8px; color: #fff; background: #c92533; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
 .settings-delete-card button:hover { background: #a91f2b; }
+.counselor-settings-delete-card { margin-top: 22px; padding: 20px; border: 1px solid #ffd2d2; border-radius: 12px; background: #fff8f8; display: flex; align-items: center; justify-content: space-between; gap: 22px; }
+.counselor-settings-delete-card strong { color: #a51d27; display: flex; align-items: center; gap: 8px; font-size: 15px; }
+.counselor-settings-delete-card p { margin: 7px 0 0; color: #78565a; font-size: 12px; line-height: 1.5; }
+.counselor-settings-delete-card > button { min-width: 145px; min-height: 43px; padding: 0 16px; border: 1px solid #c92533; border-radius: 8px; color: #fff; background: #c92533; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+.counselor-settings-delete-card > button:hover { background: #a91f2b; }
 
 .settings-delete-modal { position: fixed; inset: 0; z-index: 10000; padding: 20px; background: rgba(12, 18, 28, .62); display: grid; place-items: center; }
 .settings-delete-modal__panel { width: min(460px, 100%); padding: 28px; border-radius: 16px; background: #fff; box-shadow: 0 24px 70px rgba(0, 0, 0, .26); }
@@ -1300,4 +1305,7 @@
   .counselor-security-list > button {
     padding: 0 16px;
   }
+
+  .counselor-settings-delete-card { align-items: stretch; flex-direction: column; }
+  .counselor-settings-delete-card > button { width: 100%; }
 }

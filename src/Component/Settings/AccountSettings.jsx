@@ -103,7 +103,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
   );
 
   const fetchAccount = async () => {
-    if (!accountId) {
+    if (!accountId && !isCounselor) {
       setNotice({
         type: "error",
         message: t('account_id_not_found'),
@@ -115,10 +115,10 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
     setLoading(true);
     try {
       const url = isCounselor
-        ? `${API_BASE_URL}/api/auth/counsellors/${accountId}`
+        ? `${API_BASE_URL}/api/auth/me`
         : `${API_BASE_URL}/api/auth/getUser/${accountId}`;
       const response = await api.get(url, { headers: authHeaders() });
-      const data = isCounselor ? response.data?.counsellor : response.data?.user;
+      const data = response.data?.user;
 
       if (!response.data?.success || !data) {
         throw new Error(response.data?.message || t('failed_load_settings'));
@@ -129,6 +129,12 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
         : data.specialization || data.professionalTitle || "Psychologist";
 
       setProfileImageError(false);
+      if (isCounselor && data._id) {
+        const verifiedId = String(data._id);
+        localStorage.setItem("counsellorId", verifiedId);
+        localStorage.setItem("counselorId", verifiedId);
+        localStorage.setItem("userId", verifiedId);
+      }
       setAccount({
         name: data.fullName || data.name || "",
         email: data.email || "",
@@ -349,6 +355,16 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
                 >
                   <FaSignOutAlt /> {t("sign_out")}
                 </button>
+
+                <section className="counselor-settings-delete-card">
+                  <div>
+                    <strong><FaExclamationTriangle /> {t("delete_account")}</strong>
+                    <p>{t("delete_account_description")}</p>
+                  </div>
+                  <button type="button" onClick={() => setShowDeleteConfirmation(true)}>
+                    <FaTrashAlt /> {t("delete_account")}
+                  </button>
+                </section>
               </>
             ) : counselorSettingsSection === "security" ? (
               <>
@@ -384,6 +400,34 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             ) : null}
           </main>
         </div>
+
+        {showDeleteConfirmation && (
+          <div className="settings-delete-modal" role="dialog" aria-modal="true" aria-labelledby="counselor-delete-account-title">
+            <div className="settings-delete-modal__panel">
+              <span className="settings-delete-modal__icon"><FaExclamationTriangle /></span>
+              <h2 id="counselor-delete-account-title">{t("delete_account_confirm_title")}</h2>
+              <p>{t("delete_account_confirm_description")}</p>
+              <div className="settings-delete-modal__actions">
+                <button
+                  type="button"
+                  className="cancel"
+                  onClick={() => setShowDeleteConfirmation(false)}
+                  disabled={deletingAccount}
+                >
+                  {t("no")}
+                </button>
+                <button
+                  type="button"
+                  className="confirm"
+                  onClick={handleDeleteAccount}
+                  disabled={deletingAccount}
+                >
+                  <FaTrashAlt /> {deletingAccount ? t("deleting_account") : t("yes")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </section>
     );
   }

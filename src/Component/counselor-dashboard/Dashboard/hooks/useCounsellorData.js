@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
-import { getCounsellorId, getAuthToken } from "./counsellorAuth";
+import { getAuthToken } from "./counsellorAuth";
 
 export default function useCounsellorData() {
   const [counselorData, setCounselorData] = useState(null);
@@ -9,21 +9,27 @@ export default function useCounsellorData() {
 
   const fetchCounsellor = useCallback(async () => {
       try {
-        const counsellorId = getCounsellorId();
         const token = getAuthToken();
 
-        if (!counsellorId) {
-          console.error("No counsellor ID found");
+        if (!token) {
+          console.error("No counselor authentication token found");
           setLoading(false);
           return;
         }
 
         const res = await axios.get(
-          `${API_BASE_URL}/api/auth/counsellors/${counsellorId}`,
+          `${API_BASE_URL}/api/auth/me`,
           { headers: { Authorization: `Bearer ${token}` } },
         );
 
-        const data = res.data.counsellor;
+        const data = res.data.user;
+        if (data?._id) {
+          const verifiedId = String(data._id);
+          localStorage.setItem("counsellorId", verifiedId);
+          localStorage.setItem("counselorId", verifiedId);
+          localStorage.setItem("userId", verifiedId);
+          localStorage.setItem("userData", JSON.stringify(data));
+        }
 
         let profilePhotoUrl = null;
         if (data.profilePhoto) {
