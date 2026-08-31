@@ -61,6 +61,7 @@ const RatingPrompt = lazy(() => import("../../../components/RatingPrompt"));
 const VideoCallModal = lazy(() => import("../Tab/CallModal/VideoCallModal"));
 const WalletDashboard = lazy(() => import("../Tab/Wallet/WalletDashboard"));
 const NotificationsPage = lazy(() => import("../../common/Notifications/NotificationsPage"));
+const Prescriptions = lazy(() => import("../Tab/Prescriptions/Prescriptions"));
 
 const DashboardPanelLoader = () => {
   const { t } = useUserTranslation();
@@ -97,7 +98,7 @@ export default function UserDashboard() {
   const [helpSearch, setHelpSearch] = useState("");
   const [openHelpQuestion, setOpenHelpQuestion] = useState("");
   const [chatOpen, setChatOpen] = useState(false);
-  const [targetCounselor, setTargetCounselor] = useState("");
+  const [targetCounselor, setTargetCounselor] = useState(() => location.state?.consultantName || "");
   const [newMessage, setNewMessage] = useState("");
   const [selectedConversation, setSelectedConversation] = useState(() => {
     if (!isDirectChatRoute) return null;
@@ -909,6 +910,7 @@ export default function UserDashboard() {
     { id: "Chat", icon: <FaCommentDots />, label: t('chat') },
     { id: "Live Chat", icon: <FaUserMd />, label: t("consultants") },
     { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
+    { id: "Prescriptions", icon: <FaFileAlt />, label: "Prescriptions" },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
     { id: "settings", icon: <FaCog />, label: t('settings') },
@@ -1109,6 +1111,21 @@ export default function UserDashboard() {
     URL.revokeObjectURL(url);
   };
 
+  const handleConsultantMentionClick = (name) => {
+    const consultantName = String(name || "").trim();
+    if (!consultantName) return;
+    setSelectedConversation(null);
+    setTargetCounselor(consultantName);
+    setVisitedTabs((current) => new Set(current).add("Live Chat"));
+    setActive("Live Chat");
+    if (isDirectChatRoute) {
+      navigate("/user-dashboard", {
+        replace: true,
+        state: { activePortalTab: "Live Chat", consultantName },
+      });
+    }
+  };
+
   useEffect(() => {
     setVisitedTabs((current) => {
       if (current.has(active)) return current;
@@ -1126,6 +1143,7 @@ export default function UserDashboard() {
       import("../Tab/Callls/CallHistory"),
       import("../Tab/Appointment/BookAppointment"),
       import("../Tab/Appointment/MyAppointments"),
+      import("../Tab/Prescriptions/Prescriptions"),
       import("../../PatientProfile/PatientProfile"),
       import("../Tab/Wallet/WalletDashboard"),
       import("../../common/Notifications/NotificationsPage"),
@@ -1558,6 +1576,7 @@ export default function UserDashboard() {
                         key={selectedConversation.chatId || selectedConversation.counselor?.id}
                         embedded
                         conversation={selectedConversation}
+                        onConsultantMentionClick={handleConsultantMentionClick}
                         onClose={() => {
                           if (isDirectChatRoute) {
                             navigate(-1);
@@ -1576,6 +1595,7 @@ export default function UserDashboard() {
                 </div>
               )}
               {visitedTabs.has("MyAppointments") && <div style={{ display: active === "MyAppointments" ? undefined : "none" }}><MyAppointments /></div>}
+              {visitedTabs.has("Prescriptions") && <div style={{ display: active === "Prescriptions" ? undefined : "none" }}><Prescriptions /></div>}
               {visitedTabs.has("Notifications") && <div style={{ display: active === "Notifications" ? undefined : "none" }}><NotificationsPage /></div>}
               {visitedTabs.has("Wallet") && <div style={{ display: active === "Wallet" ? undefined : "none" }}><WalletDashboard userData={userData} /></div>}
               {visitedTabs.has("Video") && (

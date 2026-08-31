@@ -4088,12 +4088,25 @@ const mergeCounselorProfiles = (storedCounselor, freshCounselor) => {
   return normalizeCounselor({ ...stored, ...freshValues });
 };
 
-const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
+const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantMentionClick }) => {
   const { t, lang } = useUserTranslation();
   const { translate } = useUserApiTranslation();
   const { id: counselorId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const handleConsultantMentionClick = useCallback((consultantName) => {
+    const name = String(consultantName || "").trim();
+    if (!name) return;
+
+    if (onConsultantMentionClick) {
+      onConsultantMentionClick(name);
+      return;
+    }
+
+    navigate("/user-dashboard", {
+      state: { activePortalTab: "Live Chat", consultantName: name },
+    });
+  }, [navigate, onConsultantMentionClick]);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const { chatId, counselor: initialCounselor, user: initialUser } =
     conversation || location.state || {};
@@ -5719,7 +5732,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
           />
           {displayText && (
             <div className="message-text" style={{ marginTop: '4px' }}>
-              <TranslatedMessage text={displayText} translate={translate} lang={lang} />
+              <TranslatedMessage text={displayText} translate={translate} lang={lang} onConsultantMentionClick={handleConsultantMentionClick} />
             </div>
           )}
         </div>
@@ -5743,7 +5756,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
           </div>
           {displayText && displayText !== item.attachmentName && (
             <div className="message-text" style={{ marginTop: '4px' }}>
-              <TranslatedMessage text={displayText} translate={translate} lang={lang} />
+              <TranslatedMessage text={displayText} translate={translate} lang={lang} onConsultantMentionClick={handleConsultantMentionClick} />
             </div>
           )}
         </div>
@@ -5753,7 +5766,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose }) => {
     // Regular text message
     return (
       <div className="message-text">
-        <TranslatedMessage text={item.text} translate={translate} lang={lang} />
+        <TranslatedMessage text={item.text} translate={translate} lang={lang} onConsultantMentionClick={handleConsultantMentionClick} />
       </div>
     );
   };

@@ -367,6 +367,8 @@ import {
   FaUser,
   FaBell,
   FaHistory,
+  FaUserMd,
+  FaFilePrescription,
 } from "react-icons/fa";
 import useVibration from "../../../hooks/useVibration";
 import useRingtone from "../../../hooks/useRingtone";
@@ -406,6 +408,8 @@ const SessionsTab = lazy(() => import("./components/SessionsTab"));
 const VideoCallModal = lazy(() => import("../../UserDashboard/Tab/CallModal/VideoCallModal"));
 const CounselorEarnings = lazy(() => import("../Tab/Earnings/CounselorEarnings"));
 const NotificationsPage = lazy(() => import("../../common/Notifications/NotificationsPage"));
+const PsychiatristsDirectory = lazy(() => import("../Tab/Psychiatrists/PsychiatristsDirectory"));
+const PrescriptionReviews = lazy(() => import("../Tab/Prescriptions/PrescriptionReviews"));
 
 const TabLoading = () => (
   <div className="couns-tab-content">
@@ -574,6 +578,8 @@ export default function CounselorDashboard() {
       import("./components/SessionsTab"),
       import("../Tab/Earnings/CounselorEarnings"),
       import("../../common/Notifications/NotificationsPage"),
+      import("../Tab/Psychiatrists/PsychiatristsDirectory"),
+      import("../Tab/Prescriptions/PrescriptionReviews"),
     ]);
     const idleId = window.requestIdleCallback
       ? window.requestIdleCallback(preloadTabs, { timeout: 1500 })
@@ -587,11 +593,18 @@ export default function CounselorDashboard() {
     return <CounselorSkeleton />;
   }
 
+  const counselorSpecializations = [counselorData?.specialization, counselorData?.specializations, counselorData?.speciality, counselorData?.specialty]
+    .flat(Infinity).filter(Boolean).join(" ");
+  const isPsychiatrist = /\bpsychiatr(?:ist|y|ic)\b/i.test(counselorSpecializations);
+  const canReviewPrescriptions = isPsychiatrist;
+
   const navItems = [
     { id: "messages", icon: <FaComments />, label: t('chats'), badge: pendingRequests.length },
+    ...(canReviewPrescriptions ? [{ id: "prescriptions", icon: <FaFilePrescription />, label: "Prescriptions", badge: 0 }] : []),
     { id: "appointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "sessions", icon: <FaVideo />, label: t('sessions'), badge: 0 },
     { id: "call_history", icon: <FaHistory />, label: t('call_history'), badge: 0 },
+    ...(!isPsychiatrist ? [{ id: "psychiatrists", icon: <FaUserMd />, label: t('psychiatrists'), badge: 0 }] : []),
     // { id: "patients", icon: <FaUsers />, label: t('patients'), badge: 0 },
     { id: "earnings", icon: <FaMoneyBillWave />, label: t('earnings'), badge: 0 },
     // Profile moved to the sidebar actions group as "My Profile"
@@ -857,6 +870,18 @@ export default function CounselorDashboard() {
         {visitedTabs.has("earnings") && (
           <div hidden={activeTab !== "earnings"} className="couns-tab-content">
             <CounselorEarnings />
+          </div>
+        )}
+
+        {visitedTabs.has("psychiatrists") && (
+          <div hidden={activeTab !== "psychiatrists"} className="couns-tab-content">
+            <PsychiatristsDirectory />
+          </div>
+        )}
+
+        {visitedTabs.has("prescriptions") && canReviewPrescriptions && (
+          <div hidden={activeTab !== "prescriptions"} className="couns-tab-content">
+            <PrescriptionReviews />
           </div>
         )}
 

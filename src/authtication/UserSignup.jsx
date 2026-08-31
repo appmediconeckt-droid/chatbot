@@ -23,6 +23,35 @@ import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
 import StrongPasswordChecklist from "../Component/common/StrongPasswordChecklist";
 import { isStrongPassword, STRONG_PASSWORD_ERROR } from "../utils/passwordStrength";
 
+const calculateAgeFromDateOfBirth = (dateOfBirth) => {
+  if (!dateOfBirth) return null;
+  const birthDate = new Date(`${dateOfBirth}T00:00:00`);
+  if (Number.isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+  return age;
+};
+
+const formatDateInputValue = (date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+const getLatestBirthDate = (minimumAge) => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - minimumAge);
+  return formatDateInputValue(date);
+};
+
 const UserSignup = () => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 968);
@@ -36,6 +65,7 @@ const UserSignup = () => {
     anonymous: "",
     phoneNumber: "",
     age: "",
+    dateOfBirth: "",
     gender: "",
     confirmPassword: "",
   });
@@ -136,7 +166,13 @@ const UserSignup = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({
+      ...formData,
+      [name]: value,
+      ...(name === "dateOfBirth"
+        ? { age: calculateAgeFromDateOfBirth(value) ?? "" }
+        : {}),
+    });
 
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
@@ -248,10 +284,11 @@ const UserSignup = () => {
       newErrors.phoneNumber = "Enter a valid phone number";
     }
 
-    if (!formData.age) {
-      newErrors.age = "Age is required";
-    } else if (formData.age < 13 || formData.age > 120) {
-      newErrors.age = "Age must be between 13 and 120";
+    const calculatedAge = calculateAgeFromDateOfBirth(formData.dateOfBirth);
+    if (!formData.dateOfBirth) {
+      newErrors.dateOfBirth = "Date of birth is required";
+    } else if (calculatedAge === null || calculatedAge < 13 || calculatedAge > 120) {
+      newErrors.dateOfBirth = "Age must be between 13 and 120";
     }
 
     if (!formData.gender) newErrors.gender = "Gender is required";
@@ -537,7 +574,8 @@ const UserSignup = () => {
         phoneNumber: completePhoneNumber(),
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        age: parseInt(formData.age),
+        age: calculateAgeFromDateOfBirth(formData.dateOfBirth),
+        dateOfBirth: formData.dateOfBirth,
         gender: formData.gender,
         role: "user",
         isEmailVerified: true,
@@ -567,6 +605,7 @@ const UserSignup = () => {
           anonymous: "",
           phoneNumber: "",
           age: "",
+          dateOfBirth: "",
           gender: "",
           confirmPassword: "",
         });
@@ -744,6 +783,7 @@ const handleVerify = async () => {
         anonymous: "",
         phoneNumber: "",
         age: "",
+        dateOfBirth: "",
         gender: "",
         confirmPassword: "",
       });
@@ -1295,21 +1335,20 @@ const handleVerify = async () => {
                   <div className="us-field">
                     <label className="us-label">
                       <FaCalendarAlt className="us-field-icon" />
-                      Age <span className="us-required">*</span>
+                      Date of Birth <span className="us-required">*</span>
                     </label>
                     <input
-                      type="number"
-                      name="age"
-                      value={formData.age}
+                      type="date"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
                       onChange={handleChange}
-                      className={`us-input ${errors.age ? "us-input-error" : ""}`}
-                      placeholder="Your age"
-                      min="13"
-                      max="120"
+                      className={`us-input ${errors.dateOfBirth ? "us-input-error" : ""}`}
+                      min="1900-01-01"
+                      max={getLatestBirthDate(13)}
                       disabled={isLoading}
                     />
-                    {errors.age && (
-                      <span className="us-error">{errors.age}</span>
+                    {errors.dateOfBirth && (
+                      <span className="us-error">{errors.dateOfBirth}</span>
                     )}
                   </div>
 

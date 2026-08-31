@@ -105,13 +105,15 @@ const getConsistentBrowserVoice = async (language) => {
   const cachedVoice = voices.find((voice) => voice.voiceURI === cachedVoiceUri);
   if (cachedVoice) return cachedVoice;
 
-  const qualityPattern = /natural|enhanced|premium|google|microsoft|samantha|veena|lekha|aditi/i;
+  const malePattern = /\bmale\b|\bman\b|\bboy\b|ravi|hemant|madhur|david|mark|daniel|george|guy|google.*\bmale\b/i;
+  const qualityPattern = /natural|enhanced|premium|google|microsoft/i;
   const rankedVoices = [...voices].sort((a, b) => {
     const score = (voice) => {
       const voiceLocale = String(voice.lang || '').toLowerCase();
       let value = 0;
       if (voiceLocale === locale) value += 100;
       else if (voiceLocale.split('-')[0] === baseLanguage) value += 70;
+      if (malePattern.test(`${voice.name} ${voice.voiceURI}`)) value += 50;
       if (qualityPattern.test(`${voice.name} ${voice.voiceURI}`)) value += 20;
       if (voice.default) value += 2;
       return value;
@@ -1503,7 +1505,7 @@ const ChatPopup = ({
         const speech = new SpeechSynthesisUtterance(text);
         speech.lang = selectedLanguage || 'en-IN';
         speech.rate = 0.88;
-        speech.pitch = 1;
+        speech.pitch = 0.9;
         speech.volume = 1;
         const voice = await getConsistentBrowserVoice(speech.lang);
         if (voice) speech.voice = voice;

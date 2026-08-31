@@ -1619,6 +1619,32 @@ const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
 
 const ACTIVE_CHAT_STATUSES = new Set(['active', 'accepted', 'ongoing']);
 const MAX_CERTIFICATION_DOCUMENTS = 5;
+const calculateAgeFromDateOfBirth = (dateOfBirth) => {
+    if (!dateOfBirth) return null;
+    const normalizedDate = String(dateOfBirth).split('T')[0];
+    const birthDate = new Date(`${normalizedDate}T00:00:00`);
+    if (Number.isNaN(birthDate.getTime())) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDifference = today.getMonth() - birthDate.getMonth();
+    if (
+        monthDifference < 0 ||
+        (monthDifference === 0 && today.getDate() < birthDate.getDate())
+    ) {
+        age -= 1;
+    }
+    return age >= 0 ? age : null;
+};
+
+const getLatestCounselorBirthDate = () => {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - 18);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
 const VERIFICATION_DOCUMENT_OPTIONS = [
     'Medical / Professional Registration Certificate',
     'Degree or Qualification Certificate',
@@ -1942,7 +1968,10 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
     const handleInputChange = (field, value) => {
         setEditedData(prev => ({
             ...prev,
-            [field]: value
+            [field]: value,
+            ...(field === 'dateOfBirth'
+                ? { age: calculateAgeFromDateOfBirth(value) }
+                : {})
         }));
     };
 
@@ -2492,13 +2521,20 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
             formData.append('fullName', editedData.fullName);
             formData.append('email', editedData.email);
             formData.append('phoneNumber', getCompletePhoneNumber());
+            const selectedPhoneCountry =
+                PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0];
+            formData.append('phoneCountryCode', selectedPhoneCountry.dial);
             formData.append('qualification', editedData.qualification || editedData.education);
             formData.append('experience', editedData.experience.toString());
             formData.append('location', editedData.location);
             formData.append('aboutMe', editedData.aboutMe);
             formData.append('education', editedData.education);
 
-            if (editedData.age) formData.append('age', editedData.age.toString());
+            if (editedData.dateOfBirth) {
+                const calculatedAge = calculateAgeFromDateOfBirth(editedData.dateOfBirth);
+                formData.append('dateOfBirth', String(editedData.dateOfBirth).split('T')[0]);
+                if (calculatedAge !== null) formData.append('age', calculatedAge.toString());
+            }
             if (editedData.gender) formData.append('gender', editedData.gender);
 
             if (editedData.address) {
@@ -2629,6 +2665,9 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
         });
     };
 
+    const counselorAge = calculateAgeFromDateOfBirth(counselor?.dateOfBirth);
+    const editedCounselorAge = calculateAgeFromDateOfBirth(editedData?.dateOfBirth);
+
     const hasText = (value) => String(value || '').trim().length > 0;
     const hasItems = (value) => Array.isArray(value) && value.length > 0;
     const hasSelection = (value) => hasItems(value) || (!Array.isArray(value) && hasText(value));
@@ -2642,37 +2681,43 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
     const counselorAddress = counselor?.address || {};
     const hasAddress = [
         counselorAddress.line1,
-        counselorAddress.line2,
-        counselorAddress.street,
         counselorAddress.city,
         counselorAddress.state,
         counselorAddress.pincode,
-    ].some(hasText);
-    const counselorLocation = counselor?.location;
-    const hasLocation =
-        hasText(typeof counselorLocation === 'string' ? counselorLocation : '') ||
-        [counselorLocation?.city, counselorLocation?.state, counselor?.city, counselor?.state].some(hasText);
-    const completionChecks = [
-        hasRealProfilePhoto,
-        hasText(counselor?.fullName),
-        hasText(counselor?.email),
-        hasText(counselor?.phoneNumber || counselor?.phone),
-        hasText(counselor?.dateOfBirth) || Number(counselor?.age) > 0,
-        hasText(counselor?.gender),
-        hasLocation,
-        hasAddress,
-        hasText(counselor?.education || counselor?.qualification),
-        Number(counselor?.experience) > 0,
-        hasText(counselor?.aboutMe),
-        hasSelection(counselor?.specialization),
-        hasSelection(counselor?.languages),
-        hasSelection(counselor?.consultationMode),
-        hasItems(counselor?.certifications),
+        counselorAddress.country,
+    ].every(hasText);
+    const hasValidPhone = (() => {
+        const phoneParts = splitPhoneNumber(counselor?.phoneNumber || counselor?.phone || '');
+        const digits = String(phoneParts.localNumber || '').replace(/\D/g, '');
+        return digits.length >= 6 && digits.length <= 14;
+    })();
+    const hasValidCertification = Array.isArray(counselor?.certifications) &&
+        counselor.certifications.some((certification) =>
+            hasText(certification?.name) &&
+            hasText(certification?.documentUrl || certification?.documentPublicId),
+        );
+    const requiredProfileChecks = [
+        { label: 'Profile photo', complete: hasRealProfilePhoto },
+        { label: 'Full name', complete: hasText(counselor?.fullName) },
+        { label: 'Email', complete: hasText(counselor?.email) },
+        { label: 'Valid phone number', complete: hasValidPhone },
+        { label: 'Valid date of birth', complete: counselorAge !== null },
+        { label: 'Gender', complete: hasText(counselor?.gender) },
+        { label: 'Complete address (line 1, city, state, pincode and country)', complete: hasAddress },
+        { label: 'Qualification or education', complete: hasText(counselor?.education || counselor?.qualification) },
+        { label: 'Experience greater than 0', complete: Number(counselor?.experience) > 0 },
+        { label: 'About me', complete: hasText(counselor?.aboutMe) },
+        { label: 'At least one specialization', complete: hasSelection(counselor?.specialization) },
+        { label: 'At least one language', complete: hasSelection(counselor?.languages) },
+        { label: 'At least one consultation mode', complete: hasSelection(counselor?.consultationMode) },
+        { label: 'Certification with uploaded document', complete: hasValidCertification },
+        { label: 'Saved and approved by backend', complete: counselor?.profileCompleted === true },
     ];
-    const completedProfileFields = completionChecks.filter(Boolean).length;
+    const completedProfileFields = requiredProfileChecks.filter((item) => item.complete).length;
     const profileCompletionPercentage = Math.round(
-        (completedProfileFields / completionChecks.length) * 100,
+        (completedProfileFields / requiredProfileChecks.length) * 100,
     );
+    const incompleteProfileFields = requiredProfileChecks.filter((item) => !item.complete);
 
     // Single Photo Modal with Camera Support
     const PhotoUploadModal = () => {
@@ -2872,13 +2917,26 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                             >
                                 <b style={{ width: `${profileCompletionPercentage}%` }} />
                             </i>
+                            {incompleteProfileFields.length > 0 && (
+                                <div className="counselor-profile-missing-fields">
+                                    <small>Complete these items to become visible to users:</small>
+                                    <ul>
+                                        {incompleteProfileFields.map((item) => (
+                                            <li key={item.label}>{item.label}</li>
+                                        ))}
+                                    </ul>
+                                    {incompleteProfileFields.some((item) => item.label === 'Saved and approved by backend') && (
+                                        <small>After completing all fields, click Edit Profile and Save once again.</small>
+                                    )}
+                                </div>
+                            )}
                         </section>
                     </aside>
 
                     <main className="counselor-profile-reference__right">
                         <section className="counselor-profile-details-card">
                             {[
-                                [<FaCalendarAlt />, t('age'), counselor?.age || t('not_specified')],
+                                [<FaCalendarAlt />, t('age'), counselorAge ?? t('not_specified')],
                                 [<FaUser />, t('gender'), counselor?.gender || t('not_specified')],
                                 [<FaEnvelope />, t('email'), counselor?.email || t('not_specified')],
                                 [<FaPhoneAlt />, t('phone'), counselor?.phoneNumber || counselor?.phone || t('not_specified')],
@@ -3248,12 +3306,13 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                                 {isEditing ? (
                                     <input
                                         type="number"
-                                        value={editedData.age || ''}
-                                        onChange={(e) => handleInputChange('age', parseInt(e.target.value))}
+                                        value={editedCounselorAge ?? ''}
                                         className={`${COUNSELOR_PROFILE_CLASS}__input`}
+                                        readOnly
+                                        aria-label="Age calculated from date of birth"
                                     />
                                 ) : (
-                                    <p>{counselor?.age || 'Not specified'}</p>
+                                    <p>{counselorAge ?? 'Not specified'}</p>
                                 )}
                             </div>
                             <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
@@ -3273,12 +3332,21 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                                     <p>{counselor?.gender ? counselor.gender.charAt(0).toUpperCase() + counselor.gender.slice(1) : 'Not specified'}</p>
                                 )}
                             </div>
-                            {counselor?.dateOfBirth && (
-                                <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
-                                    <label>{t('date_of_birth')}:</label>
-                                    <p>{formatDate(counselor.dateOfBirth)}</p>
-                                </div>
-                            )}
+                            <div className={`${COUNSELOR_PROFILE_CLASS}__info-row`}>
+                                <label>{t('date_of_birth')}:</label>
+                                {isEditing ? (
+                                    <input
+                                        type="date"
+                                        value={String(editedData.dateOfBirth || '').split('T')[0]}
+                                        min="1900-01-01"
+                                        max={getLatestCounselorBirthDate()}
+                                        onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
+                                        className={`${COUNSELOR_PROFILE_CLASS}__input`}
+                                    />
+                                ) : (
+                                    <p>{counselor?.dateOfBirth ? formatDate(counselor.dateOfBirth) : 'Not specified'}</p>
+                                )}
+                            </div>
                         </div>
                     </div>
 

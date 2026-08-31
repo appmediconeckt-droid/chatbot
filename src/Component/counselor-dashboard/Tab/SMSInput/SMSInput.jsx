@@ -3506,10 +3506,10 @@
 
 
 // SMSInput.jsx - Complete Fixed Version
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { FaEllipsisV, FaPaperPlane, FaPhoneAlt, FaSpinner, FaSyncAlt, FaTrashAlt, FaVideo, FaCamera } from "react-icons/fa";
+import { FaEllipsisV, FaPaperPlane, FaPhoneAlt, FaSpinner, FaTrashAlt, FaVideo, FaCamera, FaPrescriptionBottleAlt, FaPlus } from "react-icons/fa";
 import "./SMSInput.css";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
@@ -3527,6 +3527,7 @@ import {
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import TranslatedMessage from "../../../common/TranslatedMessage";
 import { getCallHistoryTone } from "../../../common/callHistoryStyle";
+import { logoHorizontal } from "../../../../assets/brandAssets";
 
 const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack = null }) => {
   const location = useLocation();
@@ -3534,6 +3535,9 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const { t, lang } = useCounselorTranslation();
   const { translate } = useCounselorApiTranslation();
   const [message, setMessage] = useState("");
+  const [psychiatrists, setPsychiatrists] = useState([]);
+  const [mentionQuery, setMentionQuery] = useState(null);
+  const [activeMentionIndex, setActiveMentionIndex] = useState(0);
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -3577,8 +3581,94 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const [cameraStream, setCameraStream] = useState(null);
   const [showCameraPreview, setShowCameraPreview] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
+  const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
+  const [prescription, setPrescription] = useState({
+    medicines: [{ medicine: "", dosage: "", timeOfDay: [], timing: "", duration: "" }],
+    problem: "",
+    instructions: "",
+  });
   const videoRef = useRef(null);
   const optionsRef = useRef(null);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadPsychiatrists = async () => {
+      try {
+        const token = localStorage.getItem("counselorToken") || localStorage.getItem("token");
+        const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const list = response.data?.counsellors || response.data?.counselors || [];
+        // Keep @ suggestions identical to the Psychiatrist directory: only
+        // profiles whose specialization is explicitly psychiatric belong here.
+        const uniqueProfessionals = Array.from(
+          new Map(
+            list
+              .filter((person) => person && (person._id || person.id))
+              .map((person) => [String(person._id || person.id), person]),
+          ).values(),
+        ).filter((person) => {
+          const values = [
+            person.specialization,
+            person.specializations,
+            person.speciality,
+            person.specialty,
+          ].flatMap((value) => {
+            if (Array.isArray(value)) return value;
+            if (typeof value === "string") return value.split(",");
+            return [];
+          });
+          return values.some((value) => /\bpsychiatr(?:ist|y|ic)\b/i.test(String(value).trim()));
+        });
+        if (mounted) setPsychiatrists(uniqueProfessionals);
+      } catch (requestError) {
+        console.error("Unable to load psychiatrist mentions:", requestError);
+        if (mounted) setPsychiatrists([]);
+      }
+    };
+    void loadPsychiatrists();
+    return () => { mounted = false; };
+  }, []);
+
+  const mentionSuggestions = useMemo(() => {
+    if (mentionQuery === null) return [];
+    const query = mentionQuery.trim().toLowerCase();
+    return psychiatrists
+      .filter((person) => {
+        const name = person.fullName || person.name || "";
+        const specialization = Array.isArray(person.specialization)
+          ? person.specialization.join(" ")
+          : person.specialization || "";
+        return !query || `${name} ${specialization}`.toLowerCase().includes(query);
+      })
+      .slice(0, 50);
+  }, [mentionQuery, psychiatrists]);
+
+  const updateMentionQuery = (value, caretPosition = value.length) => {
+    const textBeforeCaret = value.slice(0, caretPosition);
+    const match = textBeforeCaret.match(/(?:^|\s)@([^@\n]*)$/);
+    setMentionQuery(match ? match[1] : null);
+    setActiveMentionIndex(0);
+  };
+
+  const selectPsychiatristMention = (person) => {
+    const name = String(person.fullName || person.name || "").trim();
+    if (!name) return;
+    const input = messageInputRef.current;
+    const caretPosition = input?.selectionStart ?? message.length;
+    const textBeforeCaret = message.slice(0, caretPosition);
+    const atIndex = textBeforeCaret.lastIndexOf("@");
+    if (atIndex < 0) return;
+    const nextMessage = `${message.slice(0, atIndex)}@${name} ${message.slice(caretPosition)}`;
+    const nextCaretPosition = atIndex + name.length + 2;
+    setMessage(nextMessage);
+    setMentionQuery(null);
+    setActiveMentionIndex(0);
+    window.requestAnimationFrame(() => {
+      input?.focus();
+      input?.setSelectionRange(nextCaretPosition, nextCaretPosition);
+    });
+  };
 
   const handleSessionExpired = () => {
     localStorage.clear();
@@ -3646,6 +3736,19 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const currentCounselor = getCurrentCounselor();
   const COUNSELOR_ID = getCounselorId();
   const COUNSELOR_NAME = currentCounselor?.name || currentCounselor?.fullName || "Counselor";
+  const counselorSpecialities = [
+    currentCounselor?.specialization,
+    currentCounselor?.specializations,
+    currentCounselor?.speciality,
+    currentCounselor?.specialty,
+    currentCounselor?.profession,
+    currentCounselor?.designation,
+  ]
+    .flat(Infinity)
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const canPrescribe = /psychiatrist|psychiatry/.test(counselorSpecialities);
 
   const getSelectedUserId = () => {
     if (!selectedUser) return null;
@@ -3908,18 +4011,186 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   };
 
   const counselorOptionsMenuItems = [
-    { id: 1, label: t('refresh_messages') || 'Refresh messages', icon: <FaSyncAlt /> },
-    { id: 2, label: t('clear_chat') || 'Clear Chat', icon: <FaTrashAlt /> },
+    ...(canPrescribe
+      ? [{ id: 'prescription', label: 'Prescription', icon: <FaPrescriptionBottleAlt /> }]
+      : []),
+    { id: 'clear-chat', label: t('clear_chat') || 'Clear Chat', icon: <FaTrashAlt /> },
   ];
 
   const handleOptionsMenuClick = (item) => {
     setShowOptions(false);
-    if (item.id === 1) {
-      fetchMessagesFromAPI();
+    if (item.id === 'prescription') {
+      setShowPrescriptionModal(true);
       return;
     }
-    if (item.id === 2) {
+    if (item.id === 'clear-chat') {
       handleClearChat();
+    }
+  };
+
+  const handlePrescriptionChange = (event) => {
+    const { name, value } = event.target;
+    setPrescription((current) => ({ ...current, [name]: value }));
+  };
+
+  const handleMedicineChange = (index, event) => {
+    const { name, value } = event.target;
+    setPrescription((current) => ({
+      ...current,
+      medicines: current.medicines.map((medicine, medicineIndex) =>
+        medicineIndex === index ? { ...medicine, [name]: value } : medicine
+      ),
+    }));
+  };
+
+  const toggleMedicineTime = (index, time) => {
+    setPrescription((current) => ({
+      ...current,
+      medicines: current.medicines.map((medicine, medicineIndex) => {
+        if (medicineIndex !== index) return medicine;
+        const timeOfDay = medicine.timeOfDay.includes(time)
+          ? medicine.timeOfDay.filter((item) => item !== time)
+          : [...medicine.timeOfDay, time];
+        return { ...medicine, timeOfDay };
+      }),
+    }));
+  };
+
+  const addPrescriptionMedicine = () => {
+    setPrescription((current) => ({
+      ...current,
+      medicines: [
+        ...current.medicines,
+        { medicine: "", dosage: "", timeOfDay: [], timing: "", duration: "" },
+      ],
+    }));
+  };
+
+  const removePrescriptionMedicine = (index) => {
+    setPrescription((current) => ({
+      ...current,
+      medicines: current.medicines.filter((_, medicineIndex) => medicineIndex !== index),
+    }));
+  };
+
+  const escapePrescriptionText = (value) => String(value || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+  const createPrescriptionPdf = async () => {
+    const { default: html2pdf } = await import("html2pdf.js");
+    const prescriptionDate = new Intl.DateTimeFormat("en-IN", {
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(new Date());
+    const patientPhoto = getUserAvatarUrl();
+    const patientInitial = USER_NAME?.trim()?.charAt(0)?.toUpperCase() || "P";
+    const medicinesHtml = prescription.medicines.map((item, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td><strong>${escapePrescriptionText(item.medicine)}</strong></td>
+        <td>${escapePrescriptionText(item.dosage)}</td>
+        <td>${escapePrescriptionText(item.timeOfDay.join(", "))}</td>
+        <td>${escapePrescriptionText(item.timing)}</td>
+        <td>${escapePrescriptionText(item.duration || "—")}</td>
+      </tr>
+    `).join("");
+    const container = document.createElement("div");
+    container.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;z-index:-1;";
+    container.innerHTML = `
+      <article style="width:794px;min-height:1123px;padding:54px 58px;box-sizing:border-box;background:#fff;color:#172033;font-family:Arial,sans-serif;position:relative;">
+        <style>.rx-table th,.rx-table td{padding:11px 8px;text-align:left;border-bottom:1px solid #dbe4ef;vertical-align:top}.rx-table tbody tr:nth-child(even){background:#f8fafc}</style>
+        <header style="display:flex;justify-content:space-between;gap:28px;padding-bottom:25px;border-bottom:3px solid #2563eb;">
+          <div><img src="${logoHorizontal}" alt="Humaeli" style="width:76px;height:76px;object-fit:contain;"><div style="margin-top:8px;color:#2563eb;font-size:12px;font-weight:700;letter-spacing:1.5px;">DIGITAL PRESCRIPTION</div></div>
+          <div style="text-align:right;"><h1 style="margin:0 0 8px;font-size:25px;">${escapePrescriptionText(COUNSELOR_NAME)}</h1><div style="font-size:14px;color:#475569;">Psychiatrist</div><div style="margin-top:8px;font-size:12px;color:#64748b;">Practitioner ID: ${escapePrescriptionText(COUNSELOR_ID)}</div><div style="margin-top:4px;font-size:12px;color:#64748b;">Date: ${prescriptionDate}</div></div>
+        </header>
+        <section style="display:flex;align-items:center;gap:18px;margin:28px 0;padding:18px;border-radius:12px;background:#f1f5f9;">
+          ${patientPhoto ? `<img src="${escapePrescriptionText(patientPhoto)}" alt="Patient" style="width:68px;height:68px;border-radius:50%;object-fit:cover;border:3px solid #fff;">` : `<div style="width:68px;height:68px;border-radius:50%;display:grid;place-items:center;background:#dbeafe;color:#1d4ed8;font-size:28px;font-weight:700;">${patientInitial}</div>`}
+          <div><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:1px;">Patient</div><h2 style="margin:4px 0 7px;font-size:21px;">${escapePrescriptionText(USER_NAME)}</h2><div style="font-size:14px;"><strong>Problem:</strong> ${escapePrescriptionText(prescription.problem)}</div></div>
+        </section>
+        <h3 style="margin:0 0 12px;font-size:17px;">Medicines</h3>
+        <table class="rx-table" style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#1d4ed8;color:#fff;"><th>#</th><th>Medicine</th><th>Dosage</th><th>Time</th><th>How to take</th><th>Duration</th></tr></thead><tbody style="line-height:1.45;">${medicinesHtml}</tbody></table>
+        ${prescription.instructions.trim() ? `<section style="margin-top:25px;padding:17px;border-left:4px solid #2563eb;background:#eff6ff;"><strong style="font-size:14px;">Additional instructions</strong><p style="margin:8px 0 0;line-height:1.6;font-size:13px;white-space:pre-wrap;">${escapePrescriptionText(prescription.instructions)}</p></section>` : ""}
+        <div style="margin-top:38px;text-align:right;"><div style="display:inline-block;min-width:220px;padding-top:10px;border-top:1px solid #94a3b8;font-size:12px;color:#475569;">Digitally prescribed by<br><strong style="color:#172033;">${escapePrescriptionText(COUNSELOR_NAME)}</strong></div></div>
+        <footer style="position:absolute;left:58px;right:58px;bottom:42px;padding-top:15px;border-top:1px solid #dbe4ef;text-align:center;color:#64748b;font-size:11px;">This prescription was issued through <strong style="color:#2563eb;">Humaeli</strong> · www.humaeli.com · support@humaeli.com</footer>
+      </article>`;
+    document.body.appendChild(container);
+    try {
+      const pdfBlob = await html2pdf().set({
+        margin: 0,
+        filename: `prescription-${USER_NAME}-${new Date().toISOString().slice(0, 10)}.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "px", format: [794, 1123], orientation: "portrait" },
+      }).from(container.firstElementChild).outputPdf("blob");
+      return new File([pdfBlob], `Prescription-${USER_NAME}-${new Date().toISOString().slice(0, 10)}.pdf`, { type: "application/pdf" });
+    } finally {
+      container.remove();
+    }
+  };
+
+  const handlePrescriptionSubmit = async (event) => {
+    event.preventDefault();
+    const hasInvalidMedicine = prescription.medicines.some(
+      (item) => !item.medicine.trim() || !item.dosage.trim() || !item.timeOfDay.length || !item.timing.trim()
+    );
+    if (!prescription.medicines.length || hasInvalidMedicine || !prescription.problem.trim()) return;
+
+    const medicineLines = prescription.medicines.flatMap((item, index) => [
+      `Medicine ${index + 1}: ${item.medicine.trim()}`,
+      `Dosage: ${item.dosage.trim()}`,
+      `Time of day: ${item.timeOfDay.join(', ')}`,
+      `When to take: ${item.timing.trim()}`,
+      item.duration.trim() && `Duration: ${item.duration.trim()}`,
+      '',
+    ]);
+
+    const prescriptionMessage = [
+      '📋 PRESCRIPTION',
+      `Patient: ${USER_NAME}`,
+      `Problem: ${prescription.problem.trim()}`,
+      '',
+      ...medicineLines,
+      prescription.instructions.trim() && `Instructions: ${prescription.instructions.trim()}`,
+      `Prescribed by: ${COUNSELOR_NAME}`,
+    ].filter(Boolean).join('\n');
+
+    try {
+      setIsSending(true);
+      setError(null);
+      const prescriptionPdf = await createPrescriptionPdf();
+      const apiChatId = getChatIdForAPI();
+      if (!apiChatId) throw new Error("Chat ID not found");
+      const formData = new FormData();
+      formData.append("problem", prescription.problem.trim());
+      formData.append("instructions", prescription.instructions.trim());
+      formData.append("medicines", JSON.stringify(prescription.medicines.map((item) => ({
+        name: item.medicine.trim(),
+        dosage: item.dosage.trim(),
+        timeOfDay: item.timeOfDay,
+        timing: item.timing.trim(),
+        duration: item.duration.trim(),
+      }))));
+      formData.append("attachment", prescriptionPdf);
+      const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
+      await axios.post(`${API_BASE_URL}/api/prescriptions/chat/${apiChatId}`, formData, {
+        headers: { Authorization: token ? `Bearer ${token}` : "" },
+      });
+      setPrescription({
+        medicines: [{ medicine: '', dosage: '', timeOfDay: [], timing: '', duration: '' }],
+        problem: '',
+        instructions: '',
+      });
+      setShowPrescriptionModal(false);
+      alert(`Prescription sent successfully to ${USER_NAME}.`);
+    } catch (error) {
+      setError(error?.response?.data?.error || error?.response?.data?.message || 'Failed to send prescription');
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -4122,6 +4393,28 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   };
 
   const handleInputKeyDown = (e) => {
+    if (mentionQuery !== null && mentionSuggestions.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveMentionIndex((index) => (index + 1) % mentionSuggestions.length);
+        return;
+      }
+      if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveMentionIndex((index) => (index - 1 + mentionSuggestions.length) % mentionSuggestions.length);
+        return;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        selectPsychiatristMention(mentionSuggestions[activeMentionIndex]);
+        return;
+      }
+    }
+    if (e.key === "Escape" && mentionQuery !== null) {
+      e.preventDefault();
+      setMentionQuery(null);
+      return;
+    }
     if (e.key === "Enter" && !e.shiftKey && !isSending) {
       e.preventDefault();
       handleSendMessage(e);
@@ -5611,6 +5904,44 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       {/* Input Form */}
       <div className="smsinput-form" role="group" aria-label={t("chat.typePlaceholder")}>
         <div className="smsinput-input-wrapper">
+          {mentionQuery !== null && (
+            <div className="psychiatrist-mention-menu" role="listbox" aria-label="Psychiatrist suggestions">
+              <div className="psychiatrist-mention-heading">Psychiatrists</div>
+              {mentionSuggestions.length > 0 ? mentionSuggestions.map((person, index) => {
+                const id = person._id || person.id || index;
+                const name = person.fullName || person.name || "Psychiatrist";
+                const photo = typeof person.profilePhoto === "string"
+                  ? person.profilePhoto
+                  : person.profilePhoto?.url;
+                const specialization = Array.isArray(person.specialization)
+                  ? person.specialization[0]
+                  : person.specialization;
+                return (
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={index === activeMentionIndex}
+                    className={`psychiatrist-mention-option ${index === activeMentionIndex ? "active" : ""}`}
+                    key={id}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => selectPsychiatristMention(person)}
+                  >
+                    <span className="psychiatrist-mention-avatar">
+                      {photo ? <img src={photo} alt="" /> : name.charAt(0).toUpperCase()}
+                    </span>
+                    <span className="psychiatrist-mention-details">
+                      <strong>{name}</strong>
+                      <small>{specialization || person.qualification || "Psychiatrist"}</small>
+                    </span>
+                  </button>
+                );
+              }) : (
+                <div className="psychiatrist-mention-empty">
+                  {psychiatrists.length === 0 ? "No psychiatrists available" : "No matching psychiatrist"}
+                </div>
+              )}
+            </div>
+          )}
           <input ref={fileInputRef} type="file" style={{ display: "none" }} onChange={handleFileSelected} />
           <input ref={cameraInputRef} type="file" capture="environment" style={{ display: "none" }} onChange={handleFileSelected} />
           <button type="button" className="attach-btn" title={t("attach_file")} disabled={isSending} onClick={handleFileAttachClick}>📎</button>
@@ -5621,7 +5952,10 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
             className="smsinput-input"
             placeholder={isSending ? t("sending") : t("chat.typePlaceholder")}
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              updateMentionQuery(e.target.value, e.target.selectionStart);
+            }}
             onKeyDown={handleInputKeyDown}
             disabled={isSending}
           />
@@ -5641,6 +5975,106 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
           </button>
         </div>
       </div>
+
+      {showPrescriptionModal && canPrescribe && (
+        <div
+          className="prescription-modal-overlay"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget && !isSending) setShowPrescriptionModal(false);
+          }}
+        >
+          <section className="prescription-modal" role="dialog" aria-modal="true" aria-labelledby="prescription-title">
+            <div className="prescription-modal-header">
+              <div>
+                <span className="prescription-modal-kicker">Patient prescription</span>
+                <h2 id="prescription-title">Create Prescription</h2>
+                <p>For {USER_NAME}</p>
+              </div>
+              <button
+                type="button"
+                className="prescription-modal-close"
+                onClick={() => setShowPrescriptionModal(false)}
+                disabled={isSending}
+                aria-label="Close prescription modal"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
+
+            <form className="prescription-form" onSubmit={handlePrescriptionSubmit}>
+              <label>
+                Patient problem <span>*</span>
+                <textarea name="problem" value={prescription.problem} onChange={handlePrescriptionChange} placeholder="Describe the patient's problem or diagnosis" rows="2" required />
+              </label>
+              <div className="prescription-medicines">
+                {prescription.medicines.map((item, index) => (
+                  <fieldset className="prescription-medicine-card" key={index}>
+                    <div className="prescription-medicine-heading">
+                      <legend>Medicine {index + 1}</legend>
+                      {prescription.medicines.length > 1 && (
+                        <button type="button" onClick={() => removePrescriptionMedicine(index)} disabled={isSending} aria-label={`Remove medicine ${index + 1}`}>
+                          <FaTrashAlt /> Remove
+                        </button>
+                      )}
+                    </div>
+                    <div className="prescription-form-row">
+                      <label>
+                        Medicine name <span>*</span>
+                        <input name="medicine" value={item.medicine} onChange={(event) => handleMedicineChange(index, event)} placeholder="Medicine name" required autoFocus={index === 0} />
+                      </label>
+                      <label>
+                        Dosage <span>*</span>
+                        <input name="dosage" value={item.dosage} onChange={(event) => handleMedicineChange(index, event)} placeholder="e.g. 10 mg" required />
+                      </label>
+                    </div>
+                    <div className="prescription-form-row prescription-schedule-row">
+                      <div className="prescription-time-field">
+                        <span className="prescription-field-label">Time of day <b>*</b></span>
+                        <div className="prescription-time-options">
+                          {['Morning', 'Afternoon', 'Evening', 'Night'].map((time) => (
+                            <button
+                              type="button"
+                              key={time}
+                              className={item.timeOfDay.includes(time) ? 'selected' : ''}
+                              onClick={() => toggleMedicineTime(index, time)}
+                              aria-pressed={item.timeOfDay.includes(time)}
+                            >
+                              {time}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      <label>
+                        When to take <span>*</span>
+                        <input name="timing" value={item.timing} onChange={(event) => handleMedicineChange(index, event)} placeholder="e.g. After breakfast and dinner" required />
+                      </label>
+                      <label>
+                        Duration
+                        <input name="duration" value={item.duration} onChange={(event) => handleMedicineChange(index, event)} placeholder="e.g. 14 days" />
+                      </label>
+                    </div>
+                  </fieldset>
+                ))}
+              </div>
+              <button type="button" className="prescription-add-medicine" onClick={addPrescriptionMedicine} disabled={isSending}>
+                <FaPlus /> Add another medicine
+              </button>
+              <label>
+                Instructions
+                <textarea name="instructions" value={prescription.instructions} onChange={handlePrescriptionChange} placeholder="Additional instructions for the patient" rows="3" />
+              </label>
+              <div className="prescription-modal-actions">
+                <button type="button" className="prescription-cancel-btn" onClick={() => setShowPrescriptionModal(false)} disabled={isSending}>Cancel</button>
+                <button type="submit" className="prescription-send-btn" disabled={isSending || !prescription.problem.trim() || prescription.medicines.some((item) => !item.medicine.trim() || !item.dosage.trim() || !item.timeOfDay.length || !item.timing.trim())}>
+                  {isSending ? <FaSpinner className="spinning" /> : <FaPrescriptionBottleAlt />}
+                  {isSending ? 'Sending...' : 'Send Prescription'}
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+      )}
 
       {/* Call Modals */}
       <VideoCallModal

@@ -2076,6 +2076,31 @@ import LocationGate from "./LocationGate";
 import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
 import StrongPasswordChecklist from "../Component/common/StrongPasswordChecklist";
 import { isStrongPassword, STRONG_PASSWORD_ERROR } from "../utils/passwordStrength";
+
+const calculateAgeFromDateOfBirth = (dateOfBirth) => {
+  if (!dateOfBirth) return null;
+  const birthDate = new Date(`${dateOfBirth}T00:00:00`);
+  if (Number.isNaN(birthDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+  return age;
+};
+
+const getLatestCounselorBirthDate = () => {
+  const date = new Date();
+  date.setFullYear(date.getFullYear() - 18);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
   
 const CounselorSignup = () => {
   const navigate = useNavigate();
@@ -2089,6 +2114,7 @@ const CounselorSignup = () => {
     fullName: "",
     phoneNumber: "",
     age: "",
+    dateOfBirth: "",
     gender: "",
     qualification: "",
     specialization: "",
@@ -2227,7 +2253,13 @@ const CounselorSignup = () => {
         setFormData({ ...formData, languages: updatedLanguages });
       }
     } else {
-      setFormData({ ...formData, [name]: value });
+      setFormData({
+        ...formData,
+        [name]: value,
+        ...(name === "dateOfBirth"
+          ? { age: calculateAgeFromDateOfBirth(value) ?? "" }
+          : {}),
+      });
     }
 
     if (errors[name]) setErrors({ ...errors, [name]: "" });
@@ -2264,9 +2296,11 @@ const CounselorSignup = () => {
     else if (!/^\d{6,14}$/.test(formData.phoneNumber))
       newErrors.phoneNumber = "Enter a valid phone number";
 
-    if (!formData.age) newErrors.age = "Age is required";
-    else if (formData.age < 18 || formData.age > 100)
-      newErrors.age = "Age must be between 18 and 100";
+    const calculatedAge = calculateAgeFromDateOfBirth(formData.dateOfBirth);
+    if (!formData.dateOfBirth)
+      newErrors.dateOfBirth = "Date of birth is required";
+    else if (calculatedAge === null || calculatedAge < 18 || calculatedAge > 100)
+      newErrors.dateOfBirth = "Age must be between 18 and 100";
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.qualification)
       newErrors.qualification = "Qualification is required";
@@ -2566,7 +2600,8 @@ const CounselorSignup = () => {
       fd.append("fullName", formData.fullName.trim());
       fd.append("email", formData.email.trim());
       fd.append("phoneNumber", completePhoneNumber());
-      fd.append("age", String(Number(formData.age)));
+      fd.append("age", String(calculateAgeFromDateOfBirth(formData.dateOfBirth)));
+      fd.append("dateOfBirth", formData.dateOfBirth);
       fd.append("gender", formData.gender.toLowerCase());
       fd.append("qualification", formData.qualification.trim());
       fd.append("specialization", formData.specialization.trim());
@@ -2609,6 +2644,7 @@ const CounselorSignup = () => {
           fullName: "",
           phoneNumber: "",
           age: "",
+          dateOfBirth: "",
           gender: "",
           qualification: "",
           specialization: "",
@@ -2689,6 +2725,7 @@ const CounselorSignup = () => {
         fullName: "",
         phoneNumber: "",
         age: "",
+        dateOfBirth: "",
         gender: "",
         qualification: "",
         specialization: "",
@@ -3171,21 +3208,20 @@ const CounselorSignup = () => {
                   <div className="cs-field">
                     <label className="cs-label">
                       <FaCalendarAlt className="cs-field-icon" />
-                      Age <span className="cs-required">*</span>
+                      Date of Birth <span className="cs-required">*</span>
                     </label>
                     <input
-                      type="number"
-                      name="age"
-                      value={formData.age}
+                      type="date"
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
                       onChange={handleChange}
-                      className={`cs-input ${errors.age ? "cs-input-error" : ""}`}
-                      placeholder="Your age"
-                      min="18"
-                      max="100"
+                      className={`cs-input ${errors.dateOfBirth ? "cs-input-error" : ""}`}
+                      min="1900-01-01"
+                      max={getLatestCounselorBirthDate()}
                       disabled={isLoading}
                     />
-                    {errors.age && (
-                      <span className="cs-error">{errors.age}</span>
+                    {errors.dateOfBirth && (
+                      <span className="cs-error">{errors.dateOfBirth}</span>
                     )}
                   </div>
 

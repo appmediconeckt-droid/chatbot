@@ -1042,5 +1042,6 @@
   "no": "No",
   "delete_account_permanently": "Delete Permanently",
   "deleting_account": "Deleting...",
-  "delete_account_failed": "Unable to delete your account. Please try again."
+  "delete_account_failed": "Unable to delete your account. Please try again.",
+  "psychiatrists": "Psychiatrist"
 }

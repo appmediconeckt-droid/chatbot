@@ -2272,6 +2272,17 @@
 .counselor-profile-completion-card > div strong { font-size: 17px; }
 .counselor-profile-completion-card > i { height: 8px; margin-top: 13px; overflow: hidden; border-radius: 5px; background: #e2e8f2; display: block; }
 .counselor-profile-completion-card > i b { height: 100%; border-radius: inherit; background: #0759bd; display: block; transition: width 320ms ease; }
+.counselor-profile-completion-card .counselor-profile-missing-fields {
+  display: block;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fff7ed;
+  color: #9a3412;
+}
+.counselor-profile-missing-fields small { display: block; font-weight: 700; line-height: 1.4; }
+.counselor-profile-missing-fields ul { margin: 8px 0; padding-left: 20px; }
+.counselor-profile-missing-fields li { margin: 4px 0; font-size: 13px; line-height: 1.35; }
 
 .counselor-profile-details-card { min-height: 265px; padding: 26px 24px; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); align-content: start; gap: 17px 38px; }
 .counselor-profile-details-card > div { min-width: 0; display: flex; gap: 13px; }

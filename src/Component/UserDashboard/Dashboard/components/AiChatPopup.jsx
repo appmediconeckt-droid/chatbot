@@ -431,21 +431,21 @@ export default function AiChatPopup({
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
         utterance.rate = 0.9;
-        utterance.pitch = 1.15;
+        utterance.pitch = 0.9;
         utterance.volume = 1;
 
         const applyVoice = () => {
           const voices = window.speechSynthesis.getVoices();
-          // Priority: exact lang + female keyword → exact lang → Indian English female → any female → first available
-          const femalePattern = /female|woman|girl|lekha|aditi|veena|heera|zira|samantha|google.*female/i;
+          // Prefer a male voice in the selected language, then use safe fallbacks.
+          const malePattern = /\bmale\b|\bman\b|\bboy\b|ravi|hemant|madhur|david|mark|daniel|george|guy|google.*\bmale\b/i;
           const voice =
-            voices.find(v => v.lang === lang && femalePattern.test(v.name)) ||
+            voices.find(v => v.lang === lang && malePattern.test(v.name)) ||
+            voices.find(v => v.lang.startsWith(lang.split('-')[0]) && malePattern.test(v.name)) ||
+            voices.find(v => v.lang === 'en-IN' && malePattern.test(v.name)) ||
+            voices.find(v => malePattern.test(v.name)) ||
             voices.find(v => v.lang === lang) ||
-            voices.find(v => v.lang.startsWith(lang.split('-')[0]) && femalePattern.test(v.name)) ||
             voices.find(v => v.lang.startsWith(lang.split('-')[0])) ||
-            voices.find(v => v.lang === 'en-IN' && femalePattern.test(v.name)) ||
             voices.find(v => v.lang === 'en-IN') ||
-            voices.find(v => femalePattern.test(v.name)) ||
             voices[0];
           if (voice) utterance.voice = voice;
         };
