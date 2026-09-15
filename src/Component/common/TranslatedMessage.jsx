@@ -1,42 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import './TranslatedMessage.css';
+import { translationService } from '../../i18n/translationService';
 
 const MENTION_PATTERN = /(^|\s)(@[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N}.'’_-]*(?:\s+[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N}.'’_-]*){0,3})(?=\s|$|[,.!?;:])/gu;
 
-const TranslatedMessage = ({ text, translate, lang, onConsultantMentionClick }) => {
+const TRANSLATION_ERROR_PATTERN = /please select two distinct languages|invalid language pair|translation failed/i;
+
+const TranslatedMessage = ({ text, lang, onConsultantMentionClick }) => {
   const [displayText, setDisplayText] = useState(text);
   const [isTranslating, setIsTranslating] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     if (!text) {
       setDisplayText('');
-      return;
+      return () => { cancelled = true; };
     }
 
-    // en-US is the default language. Render English messages unchanged rather
-    // than calling a translation provider with an equivalent target language.
-    if (String(lang || '').toLowerCase().split('-')[0] === 'en') {
+    // Preserve human chat text exactly when English is selected. Auto-detect
+    // translation to English can misread short text ("hii" -> "Huh") or
+    // return a provider error as if it were the translated message.
+    const targetLanguage = String(lang || 'en').split('-')[0].toLowerCase();
+    if (targetLanguage === 'en') {
       setDisplayText(text);
       setIsTranslating(false);
-      return;
+      return () => { cancelled = true; };
     }
 
     console.log(`🔄 Translating "${text.substring(0, 30)}..." to ${lang}`);
     setIsTranslating(true);
 
-    translate(text)
+    translationService.translate(text, lang, 'auto')
       .then(translated => {
         console.log(`✅ Translated to: "${translated?.substring(0, 30)}..."`);
-        setDisplayText(translated || text);
+        const safeTranslation =
+          typeof translated === 'string' &&
+          translated.trim() &&
+          !TRANSLATION_ERROR_PATTERN.test(translated)
+            ? translated
+            : text;
+        if (!cancelled) setDisplayText(safeTranslation);
       })
       .catch(err => {
         console.error('❌ Translation failed:', err);
-        setDisplayText(text);
+        if (!cancelled) setDisplayText(text);
       })
       .finally(() => {
-        setIsTranslating(false);
+        if (!cancelled) setIsTranslating(false);
       });
-  }, [text, lang, translate]);
+
+    return () => { cancelled = true; };
+  }, [text, lang]);
 
   const renderText = () => {
     if (!onConsultantMentionClick || typeof displayText !== 'string') return displayText;

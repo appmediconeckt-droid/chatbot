@@ -4240,6 +4240,18 @@
 }
 .ud-ai-safety-note > span { color: #dc5149; font-weight: 800; }
 .ud-ai-safety-note p { margin: 0; }
+
+.ud-ai-consultant-list { display: grid; gap: 8px; margin-top: 10px; }
+.ud-ai-consultant-card {
+  display: flex; flex-direction: column; align-items: flex-start; width: 100%;
+  padding: 10px 12px; border: 1px solid #bde7cc; border-radius: 12px;
+  background: #f2fbf5; color: #183c27; text-align: left; cursor: pointer;
+}
+.ud-ai-consultant-card:hover { border-color: #01a944; background: #eaf8ef; }
+.ud-ai-consultant-name { font-weight: 750; font-size: 13px; }
+.ud-ai-consultant-specialty { margin-top: 3px; font-size: 11px; color: #356248; }
+.ud-ai-consultant-meta { margin-top: 4px; font-size: 10px; color: #62786b; }
+.ud-ai-consultant-cta { margin-top: 7px; font-size: 11px; font-weight: 700; color: #007d34; }
 .ud-chat-message-wrapper { max-width: 94%; flex: none; }
 .ud-chat-avatar.ud-small {
   width: 27px; height: 27px; flex: 0 0 27px; border: 0; color: #fff;

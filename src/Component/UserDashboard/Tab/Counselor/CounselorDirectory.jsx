@@ -161,11 +161,22 @@ const CounselorTable = () => {
       if (document.visibilityState === "visible") void fetchCounselors(false);
     };
     document.addEventListener("visibilitychange", onVisibilityChange);
+    let refreshSocket = null;
+    const refreshDirectory = () => void fetchCounselors(false);
+    socketService.connect().then((socket) => {
+      if (!isMounted) return;
+      refreshSocket = socket;
+      socket.on('connect', refreshDirectory);
+      socket.on('counselor-directory-updated', refreshDirectory);
+      refreshDirectory();
+    }).catch((error) => console.warn('Directory refresh socket unavailable:', error.message));
 
     return () => {
       isMounted = false;
       window.clearInterval(refreshTimer);
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      refreshSocket?.off('connect', refreshDirectory);
+      refreshSocket?.off('counselor-directory-updated', refreshDirectory);
     };
   }, [t]);
 

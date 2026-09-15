@@ -3582,6 +3582,9 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const [showCameraPreview, setShowCameraPreview] = useState(false);
   const [showOptions, setShowOptions] = useState(false);
   const [showPrescriptionModal, setShowPrescriptionModal] = useState(false);
+  const [signatureDataUrl, setSignatureDataUrl] = useState("");
+  const [signatureMode, setSignatureMode] = useState("draw");
+  const [isDrawingSignature, setIsDrawingSignature] = useState(false);
   const [prescription, setPrescription] = useState({
     medicines: [{ medicine: "", dosage: "", timeOfDay: [], timing: "", duration: "" }],
     problem: "",
@@ -3589,6 +3592,87 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   });
   const videoRef = useRef(null);
   const optionsRef = useRef(null);
+  const signatureCanvasRef = useRef(null);
+
+  const clearSignatureCanvas = useCallback(() => {
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    setSignatureDataUrl("");
+  }, []);
+
+  useEffect(() => {
+    if (!showPrescriptionModal) return;
+    const canvas = signatureCanvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+    const refreshCanvasSize = () => {
+      const rect = canvas.getBoundingClientRect();
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = Math.max(1, Math.round(rect.width * ratio));
+      canvas.height = Math.max(1, Math.round(rect.height * ratio));
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.lineCap = "round";
+      context.lineJoin = "round";
+      context.lineWidth = 2.5;
+      context.strokeStyle = "#0f172a";
+      context.clearRect(0, 0, rect.width, rect.height);
+    };
+    refreshCanvasSize();
+    const resizeObserver = new ResizeObserver(() => refreshCanvasSize());
+    resizeObserver.observe(canvas);
+    return () => resizeObserver.disconnect();
+  }, [showPrescriptionModal]);
+
+  const handleSignaturePointerDown = (event) => {
+    const canvas = signatureCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    context.beginPath();
+    context.moveTo(x, y);
+    context.lineTo(x, y);
+    context.stroke();
+    setIsDrawingSignature(true);
+  };
+
+  const handleSignaturePointerMove = (event) => {
+    if (!isDrawingSignature) return;
+    const canvas = signatureCanvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    context.lineTo(x, y);
+    context.stroke();
+  };
+
+  const handleSignaturePointerEnd = () => {
+    if (!isDrawingSignature) return;
+    setIsDrawingSignature(false);
+    const canvas = signatureCanvasRef.current;
+    if (canvas) {
+      setSignatureDataUrl(canvas.toDataURL("image/png"));
+    }
+  };
+
+  const handleSignatureUpload = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setSignatureDataUrl(String(reader.result || ""));
+      setSignatureMode("draw");
+    };
+    reader.readAsDataURL(file);
+    event.target.value = "";
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -4099,6 +4183,14 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
         <td>${escapePrescriptionText(item.duration || "—")}</td>
       </tr>
     `).join("");
+    const signatureMarkup = signatureDataUrl
+      ? `<div style="display:flex;justify-content:flex-end;align-items:flex-end;min-height:86px;margin-top:18px;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-width:220px;">
+            <img src="${signatureDataUrl}" alt="Doctor signature" style="display:block;max-width:180px;max-height:72px;width:auto;height:auto;object-fit:contain;filter:drop-shadow(0 1px 0 rgba(15,23,42,0.08));" />
+            <div style="width:100%;padding-top:9px;border-top:1px solid #94a3b8;text-align:center;font-size:12px;color:#475569;">Digitally prescribed by<br><strong style="color:#172033;">${escapePrescriptionText(COUNSELOR_NAME)}</strong></div>
+          </div>
+        </div>`
+      : `<div style="margin-top:38px;text-align:right;"><div style="display:inline-block;min-width:220px;padding-top:10px;border-top:1px solid #94a3b8;font-size:12px;color:#475569;">Digitally prescribed by<br><strong style="color:#172033;">${escapePrescriptionText(COUNSELOR_NAME)}</strong></div></div>`;
     const container = document.createElement("div");
     container.style.cssText = "position:fixed;left:-10000px;top:0;width:794px;z-index:-1;";
     container.innerHTML = `
@@ -4115,7 +4207,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
         <h3 style="margin:0 0 12px;font-size:17px;">Medicines</h3>
         <table class="rx-table" style="width:100%;border-collapse:collapse;font-size:12px;"><thead><tr style="background:#1d4ed8;color:#fff;"><th>#</th><th>Medicine</th><th>Dosage</th><th>Time</th><th>How to take</th><th>Duration</th></tr></thead><tbody style="line-height:1.45;">${medicinesHtml}</tbody></table>
         ${prescription.instructions.trim() ? `<section style="margin-top:25px;padding:17px;border-left:4px solid #2563eb;background:#eff6ff;"><strong style="font-size:14px;">Additional instructions</strong><p style="margin:8px 0 0;line-height:1.6;font-size:13px;white-space:pre-wrap;">${escapePrescriptionText(prescription.instructions)}</p></section>` : ""}
-        <div style="margin-top:38px;text-align:right;"><div style="display:inline-block;min-width:220px;padding-top:10px;border-top:1px solid #94a3b8;font-size:12px;color:#475569;">Digitally prescribed by<br><strong style="color:#172033;">${escapePrescriptionText(COUNSELOR_NAME)}</strong></div></div>
+        ${signatureMarkup}
         <footer style="position:absolute;left:58px;right:58px;bottom:42px;padding-top:15px;border-top:1px solid #dbe4ef;text-align:center;color:#64748b;font-size:11px;">This prescription was issued through <strong style="color:#2563eb;">Humaeli</strong> · www.humaeli.com · support@humaeli.com</footer>
       </article>`;
     document.body.appendChild(container);
@@ -4185,6 +4277,11 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
         problem: '',
         instructions: '',
       });
+      setSignatureDataUrl('');
+      if (signatureCanvasRef.current) {
+        const context = signatureCanvasRef.current.getContext('2d');
+        context?.clearRect(0, 0, signatureCanvasRef.current.width, signatureCanvasRef.current.height);
+      }
       setShowPrescriptionModal(false);
       alert(`Prescription sent successfully to ${USER_NAME}.`);
     } catch (error) {
@@ -4330,7 +4427,9 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
     e?.preventDefault?.();
     e?.stopPropagation?.();
     if (!message.trim() || !selectedUser || isSending) return;
-    const messageText = message.trim();
+    const originalMessageText = message.trim();
+    // Always persist and transmit exactly what the counselor typed.
+    const messageText = originalMessageText;
     const tempMessage = {
       id: `temp_${Date.now()}`,
       text: messageText,
@@ -5730,7 +5829,11 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
     // Regular text message
     return (
       <div className="message-text">
-        <TranslatedMessage text={item.text} translate={translate} lang={lang} />
+        {item.sender === 'me' ? (
+          <p className="chatMsgText">{item.text}</p>
+        ) : (
+          <TranslatedMessage text={item.text} translate={translate} lang={lang} />
+        )}
       </div>
     );
   };
@@ -6064,6 +6167,49 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
                 Instructions
                 <textarea name="instructions" value={prescription.instructions} onChange={handlePrescriptionChange} placeholder="Additional instructions for the patient" rows="3" />
               </label>
+
+              <div className="prescription-signature-section">
+                <div className="prescription-signature-header">
+                  <div>
+                    <span className="prescription-signature-label">Doctor signature</span>
+                    <p>Draw or upload the psychiatrist signature for the final PDF.</p>
+                  </div>
+                  <div className="prescription-signature-toggle">
+                    <button type="button" className={signatureMode === 'draw' ? 'active' : ''} onClick={() => setSignatureMode('draw')} disabled={isSending}>Draw</button>
+                    <button type="button" className={signatureMode === 'upload' ? 'active' : ''} onClick={() => setSignatureMode('upload')} disabled={isSending}>Upload</button>
+                  </div>
+                </div>
+
+                {signatureMode === 'draw' ? (
+                  <div className="prescription-signature-pad-wrapper">
+                    <canvas
+                      ref={signatureCanvasRef}
+                      className="prescription-signature-pad"
+                      onPointerDown={handleSignaturePointerDown}
+                      onPointerMove={handleSignaturePointerMove}
+                      onPointerUp={handleSignaturePointerEnd}
+                      onPointerLeave={handleSignaturePointerEnd}
+                      onPointerCancel={handleSignaturePointerEnd}
+                    />
+                    <div className="prescription-signature-actions">
+                      <button type="button" className="prescription-clear-signature-btn" onClick={clearSignatureCanvas} disabled={isSending || !signatureDataUrl}>Clear</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="prescription-signature-upload-wrapper">
+                    <label className="prescription-signature-upload-label">
+                      <input type="file" accept="image/*" onChange={handleSignatureUpload} disabled={isSending} />
+                      <span>Choose signature image</span>
+                    </label>
+                    {signatureDataUrl && (
+                      <div className="prescription-signature-preview">
+                        <img src={signatureDataUrl} alt="Uploaded doctor signature" />
+                        <button type="button" className="prescription-clear-signature-btn" onClick={clearSignatureCanvas} disabled={isSending}>Remove</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
               <div className="prescription-modal-actions">
                 <button type="button" className="prescription-cancel-btn" onClick={() => setShowPrescriptionModal(false)} disabled={isSending}>Cancel</button>
                 <button type="submit" className="prescription-send-btn" disabled={isSending || !prescription.problem.trim() || prescription.medicines.some((item) => !item.medicine.trim() || !item.dosage.trim() || !item.timeOfDay.length || !item.timing.trim())}>

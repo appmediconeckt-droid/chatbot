@@ -24,6 +24,12 @@ class SocketService {
   async connect() {
     if (this._socket?.connected) return this._socket;
     if (this._connectionPromise) return this._connectionPromise;
+    if (this._socket) {
+      // Reuse the socket so mounted screens keep their event listeners.
+      this._socket.auth = { token: localStorage.getItem('accessToken') || localStorage.getItem('token') };
+      this._socket.connect();
+      return this._socket;
+    }
 
     this._connectionPromise = this._establish();
     return this._connectionPromise;

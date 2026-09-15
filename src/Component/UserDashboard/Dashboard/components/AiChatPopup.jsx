@@ -4,7 +4,6 @@ import {
   FaMicrophoneSlash,
   FaPaperPlane,
   FaPhoneSlash,
-  FaPlus,
   FaRedoAlt,
   FaSpinner,
   FaStop,
@@ -44,6 +43,7 @@ export default function AiChatPopup({
   sendChat,
   selectedLang,
   userName,
+  chatLimitReached = false,
 }) {
   const [isRecording, setIsRecording] = React.useState(false);
   const [speakingId, setSpeakingId] = React.useState(null);
@@ -595,10 +595,35 @@ export default function AiChatPopup({
                           key={qr}
                           type="button"
                           className="ud-chat-quick-reply-btn"
-                          disabled={isLoading}
+                          disabled={isLoading || chatLimitReached}
                           onClick={() => sendQuickReply && sendQuickReply(qr)}
                         >
                           {qr}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                {message.sender === "ai" &&
+                  Array.isArray(message.consultants) &&
+                  message.consultants.length > 0 && (
+                    <div className="ud-ai-consultant-list">
+                      {message.consultants.map((consultant) => (
+                        <button
+                          type="button"
+                          className="ud-ai-consultant-card"
+                          key={consultant.id}
+                          onClick={() => handleCounselorClick?.(consultant.name)}
+                        >
+                          <span className="ud-ai-consultant-name">{consultant.name}</span>
+                          <span className="ud-ai-consultant-specialty">
+                            {(consultant.specialization || []).join(", ") || "General counselling"}
+                          </span>
+                          <span className="ud-ai-consultant-meta">
+                            {consultant.experience || 0} yrs experience
+                            {consultant.rating ? ` · ${consultant.rating}/5` : ""}
+                            {consultant.isOnline ? " · Online" : " · Book for later"}
+                          </span>
+                          <span className="ud-ai-consultant-cta">View in Humaeli</span>
                         </button>
                       ))}
                     </div>
@@ -690,14 +715,6 @@ export default function AiChatPopup({
           </div>
         )}
         <div className="ud-chat-popup-footer">
-          <button
-            type="button"
-            className="ud-chat-add-btn"
-            title="More options"
-            aria-label="More chat options"
-          >
-            <FaPlus />
-          </button>
           <div className="ud-lang-picker-wrap" hidden>
             <button
               type="button"
@@ -747,12 +764,13 @@ export default function AiChatPopup({
           <div className="ud-chat-input-wrap" style={{ flex: 1 }}>
             <input
               type="text"
-              placeholder={isRecording ? "Listening…" : "Type your question"}
+              placeholder={chatLimitReached ? "5 messages complete — choose a Humaeli consultant" : isRecording ? "Listening…" : "Type your question"}
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyDown={handleKeyPress}
               className="ud-chat-input"
-              readOnly={isRecording}
+              readOnly={isRecording || chatLimitReached}
+              disabled={chatLimitReached}
             />
             <button
               type="button"
@@ -767,8 +785,8 @@ export default function AiChatPopup({
           <button
             className="ud-send-btn"
             onClick={sendMessage}
-            disabled={isLoading}
-            aria-label={newMessage.trim() ? "Send message" : "AI voice input"}
+            disabled={isLoading || chatLimitReached}
+            aria-label={chatLimitReached ? "AI chat limit reached" : newMessage.trim() ? "Send message" : "AI voice input"}
           >
             {newMessage.trim() ? <FaPaperPlane /> : <FaWaveSquare />}
           </button>

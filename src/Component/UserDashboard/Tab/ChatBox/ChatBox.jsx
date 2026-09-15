@@ -4928,7 +4928,10 @@ const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantM
 
   const handleSendMessage = async () => {
     if (newMessage.trim() === "" || isSending) return;
-    const messageText = newMessage.trim();
+    const originalMessageText = newMessage.trim();
+    // Always persist and transmit exactly what the user typed. Translation is
+    // a recipient-side display concern and must never mutate stored chat data.
+    const messageText = originalMessageText;
     const tempUserMessage = {
       id: `temp_${Date.now()}`,
       text: messageText,
@@ -5766,7 +5769,12 @@ const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantM
     // Regular text message
     return (
       <div className="message-text">
-        <TranslatedMessage text={item.text} translate={translate} lang={lang} onConsultantMentionClick={handleConsultantMentionClick} />
+        <TranslatedMessage
+          text={item.text}
+          translate={translate}
+          lang={lang}
+          onConsultantMentionClick={handleConsultantMentionClick}
+        />
       </div>
     );
   };

@@ -44,6 +44,7 @@ import axios from "axios";
 import socketService from "../../../services/socketService";
 import LocationNoticeToast from "../../common/LocationNoticeToast";
 import { useUserTranslation } from "../../../i18n/LanguageContext";
+import { translationService } from "../../../i18n/translationService";
 import { LanguageSelector } from "../../common/LanguageSelector";
 import AiChatPopup from "./components/AiChatPopup";
 import ChatButton from "./components/ChatButton";
@@ -85,6 +86,17 @@ const getAiChatLanguage = (language) => {
 };
 
 const AI_CHAT_ENDPOINT = `${API_BASE_URL}/api/ai-chat/send-message`;
+const TRANSLATION_ERROR_PATTERN = /please select two distinct languages|invalid language pair|translation failed/i;
+
+const isEnglishLanguage = (language) =>
+  String(language || 'en-IN').split('-')[0].toLowerCase() === 'en';
+
+const isUsableTranslation = (translated, original) => {
+  const value = typeof translated === 'string' ? translated.trim() : '';
+  return Boolean(value && !TRANSLATION_ERROR_PATTERN.test(value))
+    ? value
+    : original;
+};
 
 export default function UserDashboard() {
   const location = useLocation();
@@ -93,7 +105,6 @@ export default function UserDashboard() {
   const { t, lang, setLang } = useUserTranslation();
   const [, setLanguageUpdate] = useState(0);
   const [active, setActive] = useState(() => location.state?.activePortalTab || "Chat");
-  const [visitedTabs, setVisitedTabs] = useState(() => new Set([location.state?.activePortalTab || "Chat"]));
   const [openPrivacySection, setOpenPrivacySection] = useState("Chats & Calls");
   const [helpSearch, setHelpSearch] = useState("");
   const [openHelpQuestion, setOpenHelpQuestion] = useState("");
@@ -472,6 +483,7 @@ export default function UserDashboard() {
   // hard-coded "Hello! I'm your AI assistant" suppressed the warm onboarding.
   const [chatMessages, setChatMessages] = useState([]);
   const [aiSessionId, setAiSessionId] = useState(null);
+  const [aiChatLimitReached, setAiChatLimitReached] = useState(false);
   // The AI chat always follows the language selected for the user dashboard.
   // It deliberately has no separate language preference or selector.
   const selectedLang = getAiChatLanguage(lang);
@@ -512,8 +524,11 @@ export default function UserDashboard() {
               text: msg.content,
               sender: msg.role === 'user' ? 'user' : 'ai',
               quickReplies: null,
+              type: msg.type || "answer",
+              consultants: msg.consultants || [],
             }));
             setChatMessages(loadedMessages);
+            setAiChatLimitReached(Boolean(data.chatLimitReached));
             if (data.sessionId) {
               setAiSessionId(data.sessionId);
             }
@@ -548,7 +563,8 @@ export default function UserDashboard() {
       setIsLoading(true);
        try {
         const response = await axiosInstance.post(AI_CHAT_ENDPOINT, {
-          message: "hi",
+          message: "__humaelio_ai_opening__",
+          kind: "opening",
           history: [],
           language: selectedLang,
         });
@@ -594,9 +610,25 @@ export default function UserDashboard() {
   const trimmed = (text || "").trim();
   if (!trimmed) return;
 
+  let localizedUserText = trimmed;
+  // English is the default AI-chat language. Preserve exactly what the user
+  // typed unless they explicitly select a different dashboard language.
+  if (!isEnglishLanguage(selectedLang)) {
+    try {
+      const translated = await translationService.translate(
+        trimmed,
+        selectedLang,
+        'auto',
+      );
+      localizedUserText = isUsableTranslation(translated, trimmed);
+    } catch (error) {
+      console.warn('[AI-CHAT] outgoing translation failed:', error?.message || error);
+    }
+  }
+
   const userMessage = {
     id: Date.now(),
-    text: trimmed,
+    text: localizedUserText,
     sender: "user",
   };
 
@@ -630,6 +662,20 @@ export default function UserDashboard() {
 
     if (response.data && response.data.success) {
       const aiReply = getAiReplyFromResponse(response.data);
+      const serverLocalizedUserMessage =
+        response.data?.data?.localizedUserMessage?.trim();
+
+      if (
+        !isEnglishLanguage(selectedLang) &&
+        serverLocalizedUserMessage &&
+        !TRANSLATION_ERROR_PATTERN.test(serverLocalizedUserMessage)
+      ) {
+        setChatMessages((prev) => prev.map((item) =>
+          item.id === userMessage.id
+            ? { ...item, text: serverLocalizedUserMessage }
+            : item
+        ));
+      }
 
       if (!aiReply) {
         throw new Error("AI reply missing in response");
@@ -645,8 +691,11 @@ export default function UserDashboard() {
         text: aiReply,
         sender: "ai",
         quickReplies: getAiQuickRepliesFromResponse(response.data),
+        type: response.data?.data?.type || response.data?.type || "answer",
+        consultants: response.data?.data?.consultants || [],
       };
 
+      setAiChatLimitReached(Boolean(response.data?.data?.chatLimitReached));
       setChatMessages((prev) => [...prev, aiResponse]);
     } else {
       throw new Error(response.data?.message || "Invalid AI response");
@@ -668,7 +717,7 @@ export default function UserDashboard() {
 };
 
   const sendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || aiChatLimitReached) return;
     const text = newMessage;
     setNewMessage("");
     await sendChat(text);
@@ -695,11 +744,13 @@ export default function UserDashboard() {
       await axiosInstance.delete(`${API_BASE_URL}/api/ai-chat/my-history`);
     } catch (_) {}
     setAiSessionId(null);
+    setAiChatLimitReached(false);
     setNewMessage("");
     setChatMessages([]);
     try {
       const response = await axiosInstance.post(AI_CHAT_ENDPOINT, {
-        message: "hi",
+        message: "__humaelio_ai_opening__",
+        kind: "opening",
         history: [],
         language: getAiChatLanguage(newLang),
       });
@@ -910,7 +961,7 @@ export default function UserDashboard() {
     { id: "Chat", icon: <FaCommentDots />, label: t('chat') },
     { id: "Live Chat", icon: <FaUserMd />, label: t("consultants") },
     { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
-    { id: "Prescriptions", icon: <FaFileAlt />, label: "Prescriptions" },
+    { id: "Prescriptions", icon: <FaFileAlt />, label: t('prescriptions') },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
     { id: "Video", icon: <FaVideo />, label: t('call_history') },
     { id: "settings", icon: <FaCog />, label: t('settings') },
@@ -1116,7 +1167,6 @@ export default function UserDashboard() {
     if (!consultantName) return;
     setSelectedConversation(null);
     setTargetCounselor(consultantName);
-    setVisitedTabs((current) => new Set(current).add("Live Chat"));
     setActive("Live Chat");
     if (isDirectChatRoute) {
       navigate("/user-dashboard", {
@@ -1125,15 +1175,6 @@ export default function UserDashboard() {
       });
     }
   };
-
-  useEffect(() => {
-    setVisitedTabs((current) => {
-      if (current.has(active)) return current;
-      const next = new Set(current);
-      next.add(active);
-      return next;
-    });
-  }, [active]);
 
   // Warm sidebar chunks while the user is reading the current screen. This
   // removes the blank/skeleton pause on the first visit to another tab.
@@ -1561,8 +1602,8 @@ export default function UserDashboard() {
         <div className={`ud-dashboard-content ${isMobile ? "ud-mobile" : ""}`}>
           <div className="ud-content-scrollable">
             <Suspense fallback={<DashboardPanelLoader />}>
-              {visitedTabs.has("Chat") && (
-                <div style={{ display: active === "Chat" ? undefined : "none" }} className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""} ${isDirectChatRoute ? "direct-conversation" : ""}`}>
+              {active === "Chat" && (
+                <div className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""} ${isDirectChatRoute ? "direct-conversation" : ""}`}>
                   <div className="ud-chat-list-pane">
                     <ChatInterface
                       setActiveTab={setActive}
@@ -1589,24 +1630,24 @@ export default function UserDashboard() {
                   )}
                 </div>
               )}
-              {visitedTabs.has("Live Chat") && (
-                <div style={{ display: active === "Live Chat" ? undefined : "none" }}>
+              {active === "Live Chat" && (
+                <div>
                   <CounselorRequestChat initialSearch={targetCounselor} onOpenConversation={handleOpenCounselorConversation} />
                 </div>
               )}
-              {visitedTabs.has("MyAppointments") && <div style={{ display: active === "MyAppointments" ? undefined : "none" }}><MyAppointments /></div>}
-              {visitedTabs.has("Prescriptions") && <div style={{ display: active === "Prescriptions" ? undefined : "none" }}><Prescriptions /></div>}
-              {visitedTabs.has("Notifications") && <div style={{ display: active === "Notifications" ? undefined : "none" }}><NotificationsPage /></div>}
-              {visitedTabs.has("Wallet") && <div style={{ display: active === "Wallet" ? undefined : "none" }}><WalletDashboard userData={userData} /></div>}
-              {visitedTabs.has("Video") && (
-                <div style={{ display: active === "Video" ? undefined : "none" }}><CallHistory currentUser={{ id: userId, role: "user" }} /></div>
+              {active === "MyAppointments" && <div><MyAppointments /></div>}
+              {active === "Prescriptions" && <div><Prescriptions /></div>}
+              {active === "Notifications" && <div><NotificationsPage /></div>}
+              {active === "Wallet" && <div><WalletDashboard userData={userData} /></div>}
+              {active === "Video" && (
+                <div><CallHistory currentUser={{ id: userId, role: "user" }} /></div>
               )}
-              {visitedTabs.has("profile") && <div style={{ display: active === "profile" ? undefined : "none" }}><PatientProfile /></div>}
-              {visitedTabs.has("settings") && (
-                <div style={{ display: active === "settings" ? undefined : "none" }}><AccountSettings role="user" onOpenProfile={handleProfileClick} /></div>
+              {active === "profile" && <div><PatientProfile /></div>}
+              {active === "settings" && (
+                <div><AccountSettings role="user" onOpenProfile={handleProfileClick} /></div>
               )}
-              {visitedTabs.has("help") && <div style={{ display: active === "help" ? undefined : "none" }} key={`help-${lang}`}>{renderHelpSupport()}</div>}
-              {visitedTabs.has("privacy") && <div style={{ display: active === "privacy" ? undefined : "none" }} key={`privacy-${lang}`}>{renderPrivacyCenter()}</div>}
+              {active === "help" && <div key={`help-${lang}`}>{renderHelpSupport()}</div>}
+              {active === "privacy" && <div key={`privacy-${lang}`}>{renderPrivacyCenter()}</div>}
             </Suspense>
           </div>
         </div>
@@ -1640,6 +1681,7 @@ export default function UserDashboard() {
               );
               setChatMessages([]);
               setAiSessionId(null);
+              setAiChatLimitReached(false);
               // The chatOpen useEffect will fire kickoff again because
               // chatMessages is now empty.
             } catch (err) {
@@ -1654,6 +1696,7 @@ export default function UserDashboard() {
           sendChat={sendChat}
           selectedLang={selectedLang}
           userName={userData?.name}
+          chatLimitReached={aiChatLimitReached}
         />
       )}
 

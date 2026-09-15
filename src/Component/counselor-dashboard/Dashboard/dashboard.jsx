@@ -600,7 +600,7 @@ export default function CounselorDashboard() {
 
   const navItems = [
     { id: "messages", icon: <FaComments />, label: t('chats'), badge: pendingRequests.length },
-    ...(canReviewPrescriptions ? [{ id: "prescriptions", icon: <FaFilePrescription />, label: "Prescriptions", badge: 0 }] : []),
+    ...(canReviewPrescriptions ? [{ id: "prescriptions", icon: <FaFilePrescription />, label: t('prescriptions'), badge: 0 }] : []),
     { id: "appointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "sessions", icon: <FaVideo />, label: t('sessions'), badge: 0 },
     { id: "call_history", icon: <FaHistory />, label: t('call_history'), badge: 0 },

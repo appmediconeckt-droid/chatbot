@@ -4,6 +4,7 @@ import { API_BASE_URL } from "../../axiosConfig";
 import "./PasswordChangePage.css";
 import { useUserTranslation, useCounselorTranslation } from "../../i18n/LanguageContext";
 import { getPasswordChecks, isStrongPassword, STRONG_PASSWORD_ERROR } from "../../utils/passwordStrength";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const initialForm = {
   otp: "",
@@ -28,6 +29,17 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   const [redirectCountdown, setRedirectCountdown] = useState(0);
+  const [visiblePassword, setVisiblePassword] = useState({
+    password: false,
+    confirmPassword: false,
+    oldPassword: false,
+    newPassword: false,
+    confirmNewPassword: false,
+  });
+
+  const togglePasswordVisibility = (fieldName) => {
+    setVisiblePassword((current) => ({ ...current, [fieldName]: !current[fieldName] }));
+  };
 
   useEffect(() => {
     if (initialMode === "set" || initialMode === "change") {
@@ -328,14 +340,19 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           {otpVerified && <>
           <label className="password-field password-new-field">
             <span>{t("new_password")}</span>
-            <input
-              type="password"
-              name="password"
-              value={form.password}
-              onChange={handleChange}
-              placeholder={t("minimum_8_characters")}
-              autoComplete="new-password"
-            />
+            <div className="password-input-wrap">
+              <input
+                type={visiblePassword.password ? "text" : "password"}
+                name="password"
+                value={form.password}
+                onChange={handleChange}
+                placeholder={t("minimum_8_characters")}
+                autoComplete="new-password"
+              />
+              <button type="button" className="password-visibility-button" onClick={() => togglePasswordVisibility("password")} aria-label={visiblePassword.password ? "Hide password" : "Show password"}>
+                {visiblePassword.password ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </label>
           <div className="password-strength">
             <div className="password-strength-row">
@@ -354,14 +371,19 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           </div>
           <label className="password-field password-confirm-field">
             <span>{t("confirm_password")}</span>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={form.confirmPassword}
-              onChange={handleChange}
-              placeholder={t("confirm_password")}
-              autoComplete="new-password"
-            />
+            <div className="password-input-wrap">
+              <input
+                type={visiblePassword.confirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={form.confirmPassword}
+                onChange={handleChange}
+                placeholder={t("confirm_password")}
+                autoComplete="new-password"
+              />
+              <button type="button" className="password-visibility-button" onClick={() => togglePasswordVisibility("confirmPassword")} aria-label={visiblePassword.confirmPassword ? "Hide confirmed password" : "Show confirmed password"}>
+                {visiblePassword.confirmPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </label>
           <div className="password-change-actions">
             <button type="submit" className="password-security-panel__primary" disabled={loading}>
@@ -378,25 +400,21 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           </div>
           <label className="password-field">
             <span>{t("current_password")}</span>
-            <input
-              type="password"
-              name="oldPassword"
-              value={form.oldPassword}
-              onChange={handleChange}
-              placeholder={t("current_password")}
-              autoComplete="current-password"
-            />
+            <div className="password-input-wrap">
+              <input type={visiblePassword.oldPassword ? "text" : "password"} name="oldPassword" value={form.oldPassword} onChange={handleChange} placeholder={t("current_password")} autoComplete="current-password" />
+              <button type="button" className="password-visibility-button" onClick={() => togglePasswordVisibility("oldPassword")} aria-label={visiblePassword.oldPassword ? "Hide current password" : "Show current password"}>
+                {visiblePassword.oldPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </label>
           <label className="password-field">
             <span>{t("new_password")}</span>
-            <input
-              type="password"
-              name="newPassword"
-              value={form.newPassword}
-              onChange={handleChange}
-              placeholder={t("minimum_8_characters")}
-              autoComplete="new-password"
-            />
+            <div className="password-input-wrap">
+              <input type={visiblePassword.newPassword ? "text" : "password"} name="newPassword" value={form.newPassword} onChange={handleChange} placeholder={t("minimum_8_characters")} autoComplete="new-password" />
+              <button type="button" className="password-visibility-button" onClick={() => togglePasswordVisibility("newPassword")} aria-label={visiblePassword.newPassword ? "Hide new password" : "Show new password"}>
+                {visiblePassword.newPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </label>
           <div className="password-strength">
             <div className="password-strength-row">
@@ -415,14 +433,12 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           </div>
           <label className="password-field">
             <span>{t("confirm_password")}</span>
-            <input
-              type="password"
-              name="confirmNewPassword"
-              value={form.confirmNewPassword}
-              onChange={handleChange}
-              placeholder={t("confirm_password")}
-              autoComplete="new-password"
-            />
+            <div className="password-input-wrap">
+              <input type={visiblePassword.confirmNewPassword ? "text" : "password"} name="confirmNewPassword" value={form.confirmNewPassword} onChange={handleChange} placeholder={t("confirm_password")} autoComplete="new-password" />
+              <button type="button" className="password-visibility-button" onClick={() => togglePasswordVisibility("confirmNewPassword")} aria-label={visiblePassword.confirmNewPassword ? "Hide confirmed password" : "Show confirmed password"}>
+                {visiblePassword.confirmNewPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
+            </div>
           </label>
           <div className="password-change-actions">
             <button type="submit" className="password-security-panel__primary" disabled={loading}>

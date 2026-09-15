@@ -31,6 +31,10 @@ const loadRazorpayScript = () =>
 const WalletDashboard = ({ userData }) => {
     const { t, lang } = useUserTranslation();
     const [amount, setAmount] = useState('');
+    const [refundAmount, setRefundAmount] = useState('');
+    const [refundRequests, setRefundRequests] = useState([]);
+    const [refundForm, setRefundForm] = useState({ accountName: '', accountNumber: '', ifsc: '', bankName: '' });
+    const [refundLoading, setRefundLoading] = useState(false);
     const [balance, setBalance] = useState(0);
     const [transactions, setTransactions] = useState([]);
     const [spendingSummary, setSpendingSummary] = useState({ total: 0, breakdown: [] });
@@ -72,6 +76,7 @@ const WalletDashboard = ({ userData }) => {
             const response = await axiosInstance.get('/api/wallet/data', { params });
             setBalance(response.data.balance);
             setTransactions(response.data.transactions);
+            setRefundRequests(response.data.refundRequests || []);
             setSpendingSummary(response.data.spendingSummary || { total: 0, breakdown: [] });
             setCurrentPage(1);
 
@@ -328,8 +333,9 @@ const WalletDashboard = ({ userData }) => {
 
     const handlePayment = async (e) => {
         e.preventDefault();
-        if (!amount || amount <= 0) {
-            alert(t('invalid_amount'));
+        const numericAmount = Number(amount);
+        if (!Number.isFinite(numericAmount) || numericAmount < 100) {
+            alert('Minimum wallet top-up amount is ₹100.');
             return;
         }
 
@@ -341,7 +347,7 @@ const WalletDashboard = ({ userData }) => {
             }
 
             // 1. Create order on server
-            const { data: orderData } = await axiosInstance.post('/api/wallet/create-order', { amount: Number(amount) });
+            const { data: orderData } = await axiosInstance.post('/api/wallet/create-order', { amount: numericAmount });
             if (!orderData?.order_id || !orderData?.key_id || !orderData?.amount) {
                 throw new Error('Payment order response is incomplete');
             }
@@ -415,6 +421,48 @@ const WalletDashboard = ({ userData }) => {
             console.error('Payment initialization failed:', error);
             alert(t('payment_error_description'));
             setLoading(false);
+        }
+    };
+
+    const activeRefundRequest = refundRequests.find((request) => ['pending', 'approved', 'processing'].includes(request.status));
+
+    const handleRefundFieldChange = (event) => {
+        const { name, value } = event.target;
+        setRefundForm((current) => ({
+            ...current,
+            [name]: name === 'ifsc' ? value.toUpperCase() : name === 'accountNumber' ? value.replace(/\D/g, '') : value
+        }));
+    };
+
+    const handleRefundRequest = async (event) => {
+        event.preventDefault();
+        const numericAmount = Number(refundAmount);
+        if (!numericAmount || numericAmount <= 0 || numericAmount > Number(balance)) {
+            alert(`Enter an amount up to ₹${Number(balance).toFixed(2)}.`);
+            return;
+        }
+        if (refundForm.accountNumber.length < 8 || refundForm.accountNumber.length > 20) {
+            alert('Account number must contain 8 to 20 digits.');
+            return;
+        }
+        if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(refundForm.ifsc)) {
+            alert('Enter a valid IFSC code.');
+            return;
+        }
+
+        setRefundLoading(true);
+        try {
+            const response = await axiosInstance.post('/api/wallet/refund-request', {
+                amount: numericAmount,
+                ...refundForm
+            });
+            alert(response.data.message || 'Refund request sent to admin.');
+            setRefundAmount('');
+            await fetchWalletData();
+        } catch (error) {
+            alert(error.response?.data?.message || 'Refund request could not be submitted.');
+        } finally {
+            setRefundLoading(false);
         }
     };
 
@@ -593,7 +641,7 @@ const WalletDashboard = ({ userData }) => {
                         <form onSubmit={handlePayment}>
                             <label className="wallet-amount-box" htmlFor="amount-input">
                                 <span>{t("enter_amount")}</span>
-                                <div><b>₹</b><input id="amount-input" type="number" min="1" placeholder="1,000" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div>
+                                <div><b>₹</b><input id="amount-input" type="number" min="100" placeholder="1,000" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div>
                             </label>
                             <div className="wallet-quick-amounts">
                                 {quickAmounts.map((value) => (
@@ -608,6 +656,40 @@ const WalletDashboard = ({ userData }) => {
                             </button>
                             <p className="wallet-secure"><span className="material-symbols-outlined">lock</span> {t("secure_encryption")}</p>
                         </form>
+                    </section>
+
+                    <section className="wallet-panel wallet-refund-panel">
+                        <div className="wallet-refund-heading">
+                            <div>
+                                <h3>Withdraw wallet balance</h3>
+                                <p>Request a refund to your bank account after your consultation ends.</p>
+                            </div>
+                            <span className="material-symbols-outlined">account_balance</span>
+                        </div>
+                        {activeRefundRequest ? (
+                            <div className="wallet-refund-notice">
+                                <strong>Request {activeRefundRequest.status === 'pending' ? 'under review' : activeRefundRequest.status}</strong>
+                                <span>₹{Number(activeRefundRequest.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })} · Admin approval is required.</span>
+                            </div>
+                        ) : (
+                            <form className="wallet-refund-form" onSubmit={handleRefundRequest}>
+                                <label>Amount to withdraw
+                                    <div className="wallet-refund-amount"><span>₹</span><input type="number" min="1" max={balance} step="0.01" value={refundAmount} onChange={(event) => setRefundAmount(event.target.value)} placeholder="0.00" required /></div>
+                                </label>
+                                <label>Account holder name<input name="accountName" value={refundForm.accountName} onChange={handleRefundFieldChange} placeholder="Name as shown in bank account" required /></label>
+                                <label>Bank name<input name="bankName" value={refundForm.bankName} onChange={handleRefundFieldChange} placeholder="Enter bank name" required /></label>
+                                <label>Account number<input name="accountNumber" inputMode="numeric" value={refundForm.accountNumber} onChange={handleRefundFieldChange} placeholder="8 to 20 digits" maxLength="20" required /></label>
+                                <label>IFSC code<input name="ifsc" value={refundForm.ifsc} onChange={handleRefundFieldChange} placeholder="Example: SBIN0001234" maxLength="11" required /></label>
+                                <button className="wallet-refund-button" type="submit" disabled={refundLoading || !balance}>
+                                    <span className="material-symbols-outlined">send</span>{refundLoading ? 'Sending request...' : 'Send refund request'}
+                                </button>
+                                <p className="wallet-refund-help">After admin approval, the payment will reach your bank account within 48 hours.</p>
+                            </form>
+                        )}
+                        {refundRequests.length > 0 && <div className="wallet-refund-history">
+                            <strong>Refund request history</strong>
+                            {refundRequests.slice(0, 3).map((request) => <div key={request._id}><span>₹{Number(request.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span><span className={`wallet-refund-status wallet-refund-status--${request.status}`}>{request.status}</span></div>)}
+                        </div>}
                     </section>
 
                     {/* <section className="wallet-support">

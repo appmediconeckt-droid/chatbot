@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { FaMapMarkerAlt, FaSearch, FaStar, FaUserMd } from "react-icons/fa";
 import api from "../../../../axiosConfig";
+import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import "./PsychiatristsDirectory.css";
 
 const normalizeList = (value) => {
@@ -28,6 +29,7 @@ const getPhoto = (counselor = {}) => {
 };
 
 export default function PsychiatristsDirectory() {
+  const { t } = useCounselorTranslation();
   const [counselors, setCounselors] = useState([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -75,9 +77,9 @@ export default function PsychiatristsDirectory() {
     <section className="psychiatrists-directory">
       <header className="psychiatrists-directory__header">
         <div>
-          <span>Professional network</span>
-          <h1>Psychiatrist</h1>
-          <p>View psychiatrists available on Humaeli.</p>
+          <span>{t('professional_network') || 'Professional network'}</span>
+          <h1>{t('psychiatrists')}</h1>
+          <p>{t('psychiatrists_available') || 'View psychiatrists available on Humaeli.'}</p>
         </div>
         <label>
           <FaSearch aria-hidden="true" />
@@ -85,18 +87,18 @@ export default function PsychiatristsDirectory() {
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Search psychiatrists"
-            aria-label="Search psychiatrists"
+            placeholder={t('search_psychiatrists') || 'Search psychiatrists'}
+            aria-label={t('search_psychiatrists') || 'Search psychiatrists'}
           />
         </label>
       </header>
 
       {loading ? (
-        <div className="psychiatrists-directory__state">Loading psychiatrists...</div>
+        <div className="psychiatrists-directory__state">{t('loading_psychiatrists') || 'Loading psychiatrists...'}</div>
       ) : error ? (
         <div className="psychiatrists-directory__state error">{error}</div>
       ) : visibleCounselors.length === 0 ? (
-        <div className="psychiatrists-directory__state">No psychiatrists found.</div>
+        <div className="psychiatrists-directory__state">{t('no_psychiatrists_found') || 'No psychiatrists found.'}</div>
       ) : (
         <div className="psychiatrists-directory__grid">
           {visibleCounselors.map((counselor) => {

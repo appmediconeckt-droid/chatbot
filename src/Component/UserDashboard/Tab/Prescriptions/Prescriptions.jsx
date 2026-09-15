@@ -3,6 +3,7 @@ import { FaCamera, FaDownload, FaEye, FaFileMedical, FaPrint, FaRedo, FaSpinner,
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import { logoIcon as logoHorizontal } from "../../../../assets/brandAssets";
 import { getPrescriptionFestivalTheme } from "../../../common/prescriptionFestivalThemes";
+import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import "./Prescriptions.css";
 
 const formatDate = (value) => {
@@ -21,6 +22,7 @@ const formatSize = (bytes) => {
 const verificationLabel = (status) => status === "verified" ? "Verified" : "Not Verified";
 
 export default function Prescriptions() {
+  const { t } = useUserTranslation();
   const [prescriptions, setPrescriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -220,19 +222,19 @@ export default function Prescriptions() {
       <header className="rx-page-header">
         <div className="rx-page-heading">
           <span className="rx-page-icon"><FaFileMedical /></span>
-          <div><p>Health records</p><h1>My Prescriptions</h1><span>View and download prescriptions issued by your psychiatrist.</span></div>
+          <div><p>{t('health_records') || 'Health records'}</p><h1>{t('my_prescriptions') || 'My Prescriptions'}</h1><span>{t('prescriptions_subtitle') || 'View and download prescriptions issued by your psychiatrist.'}</span></div>
         </div>
-        <button type="button" className="rx-refresh-btn" onClick={loadPrescriptions} disabled={loading}><FaRedo className={loading ? "spinning" : ""} /> Refresh</button>
+        <button type="button" className="rx-refresh-btn" onClick={loadPrescriptions} disabled={loading}><FaRedo className={loading ? "spinning" : ""} /> {t('refresh') || 'Refresh'}</button>
       </header>
 
       {actionError && <div className="rx-action-error">{actionError}<button type="button" onClick={() => setActionError("")}><FaTimes /></button></div>}
 
       {loading ? (
-        <div className="rx-page-state"><FaSpinner className="spinning" /><p>Loading prescriptions...</p></div>
+        <div className="rx-page-state"><FaSpinner className="spinning" /><p>{t('loading_prescriptions') || 'Loading prescriptions...'}</p></div>
       ) : error ? (
-        <div className="rx-page-state rx-error"><FaFileMedical /><p>{error}</p><button onClick={loadPrescriptions}>Try again</button></div>
+        <div className="rx-page-state rx-error"><FaFileMedical /><p>{error}</p><button onClick={loadPrescriptions}>{t('try_again') || 'Try again'}</button></div>
       ) : prescriptions.length === 0 ? (
-        <div className="rx-page-state"><FaFileMedical /><h2>No prescriptions yet</h2><p>Prescriptions sent by your psychiatrist will appear here.</p></div>
+        <div className="rx-page-state"><FaFileMedical /><h2>{t('no_prescriptions_yet') || 'No prescriptions yet'}</h2><p>{t('prescriptions_empty_state') || 'Prescriptions sent by your psychiatrist will appear here.'}</p></div>
       ) : (
         <div className="rx-list">
           {prescriptions.map((prescription) => (
@@ -244,11 +246,11 @@ export default function Prescriptions() {
                 {prescription.verificationStatus === "rejected" && prescription.rejectionReason && <p className="rx-rejection">Photo rejected: {prescription.rejectionReason}</p>}
               </div>
               <div className="rx-card-actions">
-                <button type="button" className="rx-photo-btn" onClick={() => choosePatientPhoto(prescription)} disabled={uploadingPhotoId === prescription.id}>{uploadingPhotoId === prescription.id ? <FaSpinner className="spinning" /> : <FaCamera />} {prescription.hasPatientPhoto ? "Change Photo" : "Add Photo"}</button>
-                <button type="button" className="rx-view-btn" onClick={() => viewPrescription(prescription)} disabled={viewingId === prescription.id}>{viewingId === prescription.id ? <FaSpinner className="spinning" /> : <FaEye />} View</button>
-                <button type="button" className="rx-print-btn" onClick={() => printPrescription(prescription)} disabled={printingId === prescription.id || prescription.verificationStatus !== "verified"} title={prescription.verificationStatus !== "verified" ? "Print will be available after the psychiatrist approves your photo" : "Print prescription"}>{printingId === prescription.id ? <FaSpinner className="spinning" /> : <FaPrint />} Print</button>
-                <button type="button" className="rx-download-btn" onClick={() => downloadPrescription(prescription)} disabled={downloadingId === prescription.id || prescription.verificationStatus !== "verified"} title={prescription.verificationStatus !== "verified" ? "Download will be available after the psychiatrist approves your photo" : "Download prescription"}>
-                  {downloadingId === prescription.id ? <FaSpinner className="spinning" /> : <FaDownload />} {downloadingId === prescription.id ? "Downloading..." : "Download"}
+                <button type="button" className="rx-photo-btn" onClick={() => choosePatientPhoto(prescription)} disabled={uploadingPhotoId === prescription.id}>{uploadingPhotoId === prescription.id ? <FaSpinner className="spinning" /> : <FaCamera />} {prescription.hasPatientPhoto ? (t('change_photo') || 'Change Photo') : (t('add_photo') || 'Add Photo')}</button>
+                <button type="button" className="rx-view-btn" onClick={() => viewPrescription(prescription)} disabled={viewingId === prescription.id}>{viewingId === prescription.id ? <FaSpinner className="spinning" /> : <FaEye />} {t('view') || 'View'}</button>
+                <button type="button" className="rx-print-btn" onClick={() => printPrescription(prescription)} disabled={printingId === prescription.id || prescription.verificationStatus !== "verified"} title={prescription.verificationStatus !== "verified" ? (t('print_unavailable_after_approval') || 'Print will be available after the psychiatrist approves your photo') : (t('print_prescription') || 'Print prescription')}>{printingId === prescription.id ? <FaSpinner className="spinning" /> : <FaPrint />} {t('print') || 'Print'}</button>
+                <button type="button" className="rx-download-btn" onClick={() => downloadPrescription(prescription)} disabled={downloadingId === prescription.id || prescription.verificationStatus !== "verified"} title={prescription.verificationStatus !== "verified" ? (t('download_unavailable_after_approval') || 'Download will be available after the psychiatrist approves your photo') : (t('download_prescription') || 'Download prescription')}>
+                  {downloadingId === prescription.id ? <FaSpinner className="spinning" /> : <FaDownload />} {downloadingId === prescription.id ? (t('downloading') || 'Downloading...') : (t('download') || 'Download')}
                 </button>
               </div>
             </article>

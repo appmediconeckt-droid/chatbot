@@ -104,7 +104,8 @@ const translateWithGoogle = async (text, targetLang) => {
 // Main translation function
 export const translateMessage = async (text, targetLang) => {
   // Don't translate if English or empty
-  if (!text || targetLang === 'en' || text.trim().length < 2) {
+  const targetLanguage = String(targetLang || 'en').split('-')[0].toLowerCase();
+  if (!text || targetLanguage === 'en' || text.trim().length < 2) {
     return text;
   }
 

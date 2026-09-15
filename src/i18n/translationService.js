@@ -2,7 +2,8 @@ import axios from 'axios';
 import { API_BASE_URL } from '../axiosConfig';
 
 const CACHE_PREFIX = 'translation_cache_';
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
+const TRANSLATION_ERROR_PATTERN = /please select two distinct languages|invalid language pair|translation failed/i;
 
 class TranslationService {
   constructor() {
@@ -78,14 +79,13 @@ class TranslationService {
   async translate(text, targetLang, sourceLang = 'auto') {
     if (!text || !text.trim()) return text;
 
-    // English is the default message language. Do not send an auto-detect to
-    // English request: some providers return their validation message instead
-    // of the original text when both languages are effectively English.
+    // Auto-detected chat text must still be translated when English is the
+    // selected target (for example Roman Hindi/Hinglish -> English). Only skip
+    // when the caller explicitly confirms source and target are identical.
     const targetLanguageCode = this.getShortLang(targetLang);
     const sourceLanguageCode = this.getShortLang(sourceLang);
     if (
-      targetLanguageCode === 'en' ||
-      (sourceLang !== 'auto' && targetLanguageCode === sourceLanguageCode)
+      sourceLang !== 'auto' && targetLanguageCode === sourceLanguageCode
     ) {
       return text;
     }
@@ -156,6 +156,10 @@ class TranslationService {
 
       let translated = res.data?.translatedText || res.data?.text || text;
 
+      if (typeof translated !== 'string' || TRANSLATION_ERROR_PATTERN.test(translated)) {
+        translated = text;
+      }
+
       if (translated === text) {
         translated = await this.fetchPublicFallbackTranslation(text, targetLang);
       }
@@ -168,7 +172,7 @@ class TranslationService {
       }
 
       // Cache the result
-      if (translated && translated !== text) {
+      if (translated && translated !== text && !TRANSLATION_ERROR_PATTERN.test(translated)) {
         this.cache.set(cacheKey, translated);
         try {
           localStorage.setItem(cacheKey, JSON.stringify(translated));
@@ -196,7 +200,11 @@ class TranslationService {
       const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(`Autodetect|${target}`)}`;
       const response = await axios.get(myMemoryUrl, { timeout: 8000 });
       const translated = response.data?.responseData?.translatedText;
-      if (translated && translated.toLowerCase() !== text.toLowerCase()) {
+      if (
+        translated &&
+        !TRANSLATION_ERROR_PATTERN.test(translated) &&
+        translated.toLowerCase() !== text.toLowerCase()
+      ) {
         return translated;
       }
     } catch (error) {
