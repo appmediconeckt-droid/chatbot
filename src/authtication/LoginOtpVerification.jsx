@@ -1,9 +1,11 @@
+import { isProfessionalRole } from "./authSession.js";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
 import { FaEnvelope, FaSpinner, FaCheckCircle, FaArrowLeft } from "react-icons/fa";
 import { API_BASE_URL } from "../axiosConfig";
 import "./LoginOtpVerification.css";
+import { dashboardForRole, persistAuthSession } from "./authSession";
 
 const LoginOtpVerification = () => {
   const navigate = useNavigate();
@@ -23,7 +25,7 @@ const LoginOtpVerification = () => {
   );
   const isCounselor =
     role === "counselor" ||
-    role === "counsellor" ||
+    isProfessionalRole(role) ||
     role === "counsellour";
   const normalizedEmail = String(email || "").trim().toLowerCase();
 
@@ -76,51 +78,12 @@ const LoginOtpVerification = () => {
         { withCredentials: true }
       );
 
-      console.log("OTP Verification Response:", response.data);
-
-      // Check if we have a token in the response
-      const token = response.data?.token || response.data?.accessToken;
-      
-      if (token) {
-        // Store all necessary data
-        localStorage.setItem("isAuthenticated", "true");
-        localStorage.setItem("userType", role);
-        localStorage.setItem("userRole", role);
-        localStorage.setItem("token", token);
-        localStorage.setItem("accessToken", token);
-        
-        if (response.data.refreshToken) {
-          localStorage.setItem("refreshToken", response.data.refreshToken);
-        }
-        
-        if (response.data.user) {
-          localStorage.setItem("userData", JSON.stringify(response.data.user));
-          if (response.data.user._id) {
-            localStorage.setItem("userId", response.data.user._id);
-            // Store counselor specific IDs if role is counselor
-            if (role === "counselor" || role === "counsellor") {
-              localStorage.setItem("counsellorId", response.data.user._id);
-              localStorage.setItem("counselorId", response.data.user._id);
-            }
-          }
-          if (response.data.user.email) {
-            localStorage.setItem("userEmail", response.data.user.email);
-          }
-        }
-
+      const session = persistAuthSession(response.data);
+      if (session) {
+        setRole(session.role);
         setSuccess(true);
-        
-        // Show success message for a moment then navigate
-        setTimeout(() => {
-          console.log("Navigating to dashboard...");
-          // Determine dashboard path based on role
-          const dashboardPath = role === "counselor" || role === "counsellor" 
-            ? "/counselor-dashboard" 
-            : "/user-dashboard";
-          navigate(dashboardPath, { replace: true });
-        }, 1500);
       } else {
-        setError("No token received. Please try again.");
+        setError("No authenticated session received. Please try again.");
       }
     } catch (error) {
       console.error("OTP Verification Error:", error);
@@ -182,9 +145,7 @@ const LoginOtpVerification = () => {
   useEffect(() => {
     if (success) {
       const timer = setTimeout(() => {
-        const dashboardPath = role === "counselor" || role === "counsellor" 
-          ? "/counselor-dashboard" 
-          : "/user-dashboard";
+        const dashboardPath = dashboardForRole(role);
         navigate(dashboardPath, { replace: true });
       }, 1500);
       
@@ -196,7 +157,7 @@ const LoginOtpVerification = () => {
     <div className={`us-wrapper ${isCounselor ? "auth-theme-counselor" : "auth-theme-user"}`}>
       <div className="us-otp-page-container">
         <button
-          onClick={() => navigate(role === "counselor" || role === "counsellor" ? "/counselor-signup" : "/user-signup")}
+          onClick={() => navigate("/login")}
           className="us-back-btn"
           aria-label="Go back"
         >
@@ -222,7 +183,7 @@ const LoginOtpVerification = () => {
             
             <div className="us-otp-page-role">
               <span className="us-role-label">Account Type:</span>
-              <span className="us-role-value">{role === "counselor" || role === "counsellor" ? "Consultant" : "User"}</span>
+              <span className="us-role-value">{role === "counselor" || isProfessionalRole(role) ? (role === "doctor" ? "Doctor" : "Counselor") : "User"}</span>
             </div>
 
             {error && (

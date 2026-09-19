@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../../../authtication/authSession.js";
 import React, {
   useCallback,
   useEffect,
@@ -181,9 +182,9 @@ const resolveCurrentUserType = (currentUser, callData) => {
 
   if (
     normalizedType === "counselor" ||
-    normalizedType === "counsellor" ||
+    isProfessionalRole(normalizedType) ||
     normalizedType === "counsellour" ||
-    normalizedType === "doctor"
+    normalizedType === "doctor" || normalizedType === "consultant"
   ) {
     return "counsellor";
   }
@@ -254,11 +255,11 @@ const resolveDisplayName = (participant, viewerRole) => {
     );
   }
 
-  if (participantRole === "counselor" || participantRole === "counsellor") {
+  if (participantRole === "counselor" || isProfessionalRole(participantRole)) {
     return participant?.user?.name || participant?.name || "Counselor";
   }
 
-  if (viewerRole === "counsellor" || viewerRole === "counselor") {
+  if (isProfessionalRole(viewerRole) || viewerRole === "counselor") {
     return (
       participant?.user?.anonymous ||
       participant?.anonymous ||
@@ -753,7 +754,7 @@ const VideoCallModal = ({
   );
   const calleeInitials = useMemo(() => buildInitials(calleeName), [calleeName]);
   const maskedCalleeName = useMemo(() => {
-    if (resolvedUserType === "counsellor" || resolvedUserType === "counselor") {
+    if (isProfessionalRole(resolvedUserType) || resolvedUserType === "counselor") {
       return (
         remoteParticipant?.anonymous ||
         remoteParticipant?.user?.anonymous ||

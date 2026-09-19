@@ -1,3 +1,5 @@
+import useProfileCompletion from "../../../../hooks/useProfileCompletion";
+import ProfileCompletion from "../../../common/ProfileCompletion";
 // import React, { useState, useEffect } from 'react';
 // import axios from 'axios';
 // import './CounselorProfile.css';
@@ -1880,7 +1882,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     specialization: Array.isArray(userData.specialization) ? userData.specialization :
                         (userData.specialization ? [userData.specialization] : []),
                     experience: userData.experience || 0,
-                    education: userData.education || '',
+                    education: userData.education || userData.qualification || '',
                     email: userData.email || '',
                     phoneNumber: userData.phoneNumber || userData.phone || '',
                     location: userData.location || '',
@@ -1897,6 +1899,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     consultationMode: Array.isArray(userData.consultationMode) ? userData.consultationMode : [],
                     isActive: userData.isActive || true,
                     profileCompleted: userData.profileCompleted || false,
+                    profileCompletion: userData.profileCompletion || null,
                     age: userData.age || null,
                     gender: userData.gender || '',
                     dateOfBirth: userData.dateOfBirth || null,
@@ -2668,56 +2671,16 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
     const counselorAge = calculateAgeFromDateOfBirth(counselor?.dateOfBirth);
     const editedCounselorAge = calculateAgeFromDateOfBirth(editedData?.dateOfBirth);
 
-    const hasText = (value) => String(value || '').trim().length > 0;
-    const hasItems = (value) => Array.isArray(value) && value.length > 0;
-    const hasSelection = (value) => hasItems(value) || (!Array.isArray(value) && hasText(value));
-    const profilePhotoValue =
-        counselor?.profilePhotoUrl ||
-        counselor?.profilePhoto?.url ||
-        (typeof counselor?.profilePhoto === 'string' ? counselor.profilePhoto : '');
-    const hasRealProfilePhoto =
-        hasText(profilePhotoValue) &&
-        !String(profilePhotoValue).includes('via.placeholder.com');
-    const counselorAddress = counselor?.address || {};
-    const hasAddress = [
-        counselorAddress.line1,
-        counselorAddress.city,
-        counselorAddress.state,
-        counselorAddress.pincode,
-        counselorAddress.country,
-    ].every(hasText);
-    const hasValidPhone = (() => {
-        const phoneParts = splitPhoneNumber(counselor?.phoneNumber || counselor?.phone || '');
-        const digits = String(phoneParts.localNumber || '').replace(/\D/g, '');
-        return digits.length >= 6 && digits.length <= 14;
-    })();
-    const hasValidCertification = Array.isArray(counselor?.certifications) &&
-        counselor.certifications.some((certification) =>
-            hasText(certification?.name) &&
-            hasText(certification?.documentUrl || certification?.documentPublicId),
-        );
-    const requiredProfileChecks = [
-        { label: 'Profile photo', complete: hasRealProfilePhoto },
-        { label: 'Full name', complete: hasText(counselor?.fullName) },
-        { label: 'Email', complete: hasText(counselor?.email) },
-        { label: 'Valid phone number', complete: hasValidPhone },
-        { label: 'Valid date of birth', complete: counselorAge !== null },
-        { label: 'Gender', complete: hasText(counselor?.gender) },
-        { label: 'Complete address (line 1, city, state, pincode and country)', complete: hasAddress },
-        { label: 'Qualification or education', complete: hasText(counselor?.education || counselor?.qualification) },
-        { label: 'Experience greater than 0', complete: Number(counselor?.experience) > 0 },
-        { label: 'About me', complete: hasText(counselor?.aboutMe) },
-        { label: 'At least one specialization', complete: hasSelection(counselor?.specialization) },
-        { label: 'At least one language', complete: hasSelection(counselor?.languages) },
-        { label: 'At least one consultation mode', complete: hasSelection(counselor?.consultationMode) },
-        { label: 'Certification with uploaded document', complete: hasValidCertification },
-        { label: 'Saved and approved by backend', complete: counselor?.profileCompleted === true },
-    ];
-    const completedProfileFields = requiredProfileChecks.filter((item) => item.complete).length;
-    const profileCompletionPercentage = Math.round(
-        (completedProfileFields / requiredProfileChecks.length) * 100,
-    );
-    const incompleteProfileFields = requiredProfileChecks.filter((item) => !item.complete);
+    const completionPreview = useProfileCompletion(counselor?.profileCompletion, {
+        ...editedData,
+        phoneNumber: getCompletePhoneNumber(),
+        phoneCountryCode: (PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0]).dial,
+        profilePhoto: editedData.profilePhoto instanceof File ? 'pending-upload' :
+            (editedData.profilePhotoUrl?.includes('via.placeholder.com') ? null : editedData.profilePhotoUrl),
+        certifications: (editedData.certifications || []).map((cert) => ({
+            ...cert, documentUrl: cert.document instanceof File ? 'pending-upload' : cert.documentUrl,
+        })),
+    }, isEditing);
 
     // Single Photo Modal with Camera Support
     const PhotoUploadModal = () => {
@@ -2906,31 +2869,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                             <div><FaBriefcase /><strong>{counselor?.experience || 0}y</strong><span>{t('experience')}</span></div>
                         </section>
 
-                        <section className="counselor-profile-completion-card">
-                            <div><span><FaCheckCircle /> {t('profile.completion')}</span><strong>{profileCompletionPercentage}%</strong></div>
-                            <i
-                                role="progressbar"
-                                aria-label={t('profile.completion')}
-                                aria-valuemin="0"
-                                aria-valuemax="100"
-                                aria-valuenow={profileCompletionPercentage}
-                            >
-                                <b style={{ width: `${profileCompletionPercentage}%` }} />
-                            </i>
-                            {incompleteProfileFields.length > 0 && (
-                                <div className="counselor-profile-missing-fields">
-                                    <small>Complete these items to become visible to users:</small>
-                                    <ul>
-                                        {incompleteProfileFields.map((item) => (
-                                            <li key={item.label}>{item.label}</li>
-                                        ))}
-                                    </ul>
-                                    {incompleteProfileFields.some((item) => item.label === 'Saved and approved by backend') && (
-                                        <small>After completing all fields, click Edit Profile and Save once again.</small>
-                                    )}
-                                </div>
-                            )}
-                        </section>
+                        <ProfileCompletion {...completionPreview} />
                     </aside>
 
                     <main className="counselor-profile-reference__right">
@@ -2985,6 +2924,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
 
     return (
         <div className={COUNSELOR_PROFILE_CLASS}>
+            <ProfileCompletion {...completionPreview} />
             {/* Hidden file input */}
             <input
                 type="file"

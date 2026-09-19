@@ -1,5 +1,7 @@
+import useProfileCompletion from "../../hooks/useProfileCompletion";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import ProfileCompletion from "../common/ProfileCompletion";
 import "./PatientProfile.css";
 import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
@@ -131,6 +133,7 @@ export const splitPhoneNumber = (value) => {
 
 
 const PatientProfile = () => {
+  const [profileCompletion, setProfileCompletion] = useState(null);
   const { t } = useUserTranslation();
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -295,6 +298,7 @@ const PatientProfile = () => {
 
       if (response.data.success && response.data.user) {
         const userData = response.data.user;
+        setProfileCompletion(userData.profileCompletion || null);
         const profilePhotoUrl = getProfilePhotoUrl(userData);
 
         const formattedData = {
@@ -388,6 +392,16 @@ const PatientProfile = () => {
       PHONE_COUNTRIES[0];
     return `${country.dial}${localNumber}`;
   };
+  const completionPreview = useProfileCompletion(profileCompletion, {
+    fullName: editFormData.name,
+    email: editFormData.email,
+    phoneNumber: getCompletePhoneNumber(),
+    phoneCountryCode: (PHONE_COUNTRIES.find(({ code }) => code === editFormData.phoneCountry) || PHONE_COUNTRIES[0]).dial,
+    dateOfBirth: editFormData.dateOfBirth,
+    gender: editFormData.gender,
+    address: editFormData.address,
+    profilePhoto: profileImageRemoved ? null : (profileImageFile ? 'pending-upload' : profileImage || patientData.personalInfo.profilePhoto),
+  }, isEditing);
   const emailReady =
     !isEmailDirty() ||
     (emailChange.verified &&
@@ -725,6 +739,7 @@ const PatientProfile = () => {
 
   return (
     <div className="profile-container" aria-busy={isInitialLoading}>
+      {!isInitialLoading && <ProfileCompletion {...completionPreview} />}
       {showNotification.show && (
         <div className={`notification ${showNotification.type}`}>
           {showNotification.message}
@@ -916,6 +931,7 @@ const PatientProfile = () => {
               </button>
             </div>
             <div className="patient-profile-modal-body">
+              <ProfileCompletion {...completionPreview} />
               {/* Profile Picture */}
               <div className="form-section">
                 <h4>{t('profile')}</h4>

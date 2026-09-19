@@ -42,7 +42,7 @@
 //   const handleSessionExpired = useCallback(() => {
 //     localStorage.clear();
 //     sessionStorage.clear();
-//     navigate("/role-selector", {
+//     navigate("/login", {
 //       replace: true,
 //       state: {
 //         reason: "session-expired",
@@ -754,7 +754,7 @@ const SMSList = () => {
   const handleSessionExpired = useCallback(() => {
     localStorage.clear();
     sessionStorage.clear();
-    navigate("/role-selector", {
+    navigate("/login", {
       replace: true,
       state: {
         reason: "session-expired",

@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "./authSession.js";
 import React, { useEffect, useState } from "react";
 import {
   tryCaptureLocation,
@@ -23,7 +24,7 @@ const LocationGate = ({ event, onDone, role = "user" }) => {
   const [permissionBlocked, setPermissionBlocked] = useState(false);
   const normalizedRole = String(role || "").toLowerCase();
   const themeRole =
-    normalizedRole === "counselor" || normalizedRole === "counsellor"
+    normalizedRole === "counselor" || isProfessionalRole(normalizedRole)
       ? "counselor"
       : "user";
 

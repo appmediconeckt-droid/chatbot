@@ -1,0 +1,52 @@
+.doctor-layout { --doctor-background-tint: #f4f7fb; min-height: 100dvh; background: var(--doctor-background-tint); color: #24344b; }
+.doctor-sidebar { position: fixed; inset: 0 auto 0 0; width: 248px; z-index: 1040; padding: 22px 14px; background: #fff; border-right: 1px solid #e5eaf1; display: flex; flex-direction: column; overflow-y: auto; }
+.doctor-sidebar-profile { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; gap: .35rem; margin-bottom: 22px; padding: 1rem .75rem 1.1rem; border-radius: 14px; background: #eef3ff; text-align: center; text-decoration: none; color: #1f2937; }
+.doctor-sidebar-profile:focus-visible { outline: 2px solid #1167b1; outline-offset: 3px; }
+.doctor-profile-avatar-wrap { position: relative; width: 75px; height: 75px; flex-shrink: 0; }
+.doctor-profile-avatar { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; border: 3px solid #fff; background: #fff; box-shadow: 0 2px 8px #00000014; }
+.doctor-profile-status { position: absolute; right: 2px; bottom: 2px; width: 15px; height: 15px; border-radius: 50%; background: #22c55e; border: 2.5px solid #fff; box-shadow: 0 1px 3px #00000026; }
+.doctor-profile-name { margin: .3rem 0 .15rem; font-size: .95rem; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.doctor-profile-meta { margin: .15rem 0; display: flex; align-items: center; justify-content: center; gap: .3rem; width: 100%; min-width: 0; font-size: .75rem; line-height: 1.3; color: #475569; }
+.doctor-profile-meta i { flex-shrink: 0; font-size: 11px; color: #94a3b8; }
+.doctor-profile-meta span { min-width: 0; overflow-wrap: anywhere; }
+.doctor-profile-email { color: #1f2937; }
+.doctor-sidebar-label { padding: 0 14px; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: #8290a4; }
+.doctor-nav-link { width: 100%; display: flex; align-items: center; gap: 13px; margin: 3px 0; padding: 12px 14px; border: 0; border-radius: 10px; background: transparent; color: #53637a; font-size: 14px; text-align: left; text-decoration: none; }
+.doctor-nav-link i { width: 20px; text-align: center; }
+.doctor-nav-link:hover, .doctor-nav-link.active { background: #eaf3ff; color: #1167b1; }
+.doctor-nav-link.active { font-weight: 600; }
+.doctor-sidebar-footer { margin-top: auto; padding-top: 18px; }
+.doctor-logout-button { color: #dc2626; cursor: pointer; }
+.doctor-logout-button svg { width: 20px; flex-shrink: 0; }
+.doctor-logout-button:hover { background: #fef2f2; color: #b91c1c; }
+.doctor-logout-dialog { margin: auto; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: 20px; background: #fff; color: #24344b; box-shadow: 0 20px 60px #0003; }
+.doctor-logout-dialog::backdrop { background: #0008; }
+.doctor-logout-dialog-content { padding: 32px; text-align: center; }
+.doctor-logout-warning { color: #ed8936; font-size: 48px; margin-bottom: 16px; }
+.doctor-logout-dialog h3 { margin: 0 0 8px; font-size: 24px; font-weight: 700; }
+.doctor-logout-dialog p { margin: 0 0 32px; color: #64748b; }
+.doctor-logout-actions { display: flex; justify-content: center; gap: 16px; }
+.doctor-logout-actions button { flex: 1; padding: 12px 16px; border: 0; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; }
+.doctor-logout-cancel { background: #f1f5f9; color: #24344b; }
+.doctor-logout-cancel:hover { background: #e2e8f0; }
+.doctor-logout-confirm { background: #e53e3e; color: #fff; }
+.doctor-logout-confirm:hover { background: #c53030; }
+.doctor-logout-actions button:disabled { opacity: .6; cursor: wait; }
+.doctor-logout-actions button:focus-visible, .doctor-logout-button:focus-visible { outline: 2px solid #1167b1; outline-offset: 3px; }
+.doctor-layout-body { margin-left: 248px; min-width: 0; }
+.doctor-topbar { position: sticky; top: 0; z-index: 1000; height: 68px; padding: 0 26px; display: flex; align-items: center; gap: 16px; background: #fff; border-bottom: 1px solid #e5eaf1; }
+.doctor-topbar-title { font-weight: 700; }
+.doctor-topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 22px; }
+.doctor-topbar-actions a { color: #315779; text-decoration: none; }
+.doctor-page-content { min-width: 0; padding: 20px; }
+.doctor-menu-toggle { display: none; border: 0; background: #eef5fd; padding: 8px 12px; border-radius: 8px; }
+.doctor-nav-backdrop { display: none; }
+@media (max-width: 1000px) {
+  .doctor-sidebar { transform: translateX(-100%); transition: transform .2s; }
+  .doctor-sidebar.is-open { transform: translateX(0); }
+  .doctor-layout-body { margin-left: 0; }
+  .doctor-menu-toggle { display: block; }
+  .doctor-topbar { padding: 0 14px; }
+  .doctor-page-content { padding: 12px; }
+  .doctor-nav-backdrop { display: block; position: fixed; inset: 0; z-index: 1035; border: 0; background: #12203380; }
+}

@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../authtication/authSession.js";
 import React, { useState } from "react";
 import {
   FaPhone,
@@ -21,7 +22,7 @@ import { useCounselorTranslation, useUserTranslation } from "../../i18n/Language
 const HelpSupport = ({ role = "user" }) => {
   const userTranslation = useUserTranslation();
   const counselorTranslation = useCounselorTranslation();
-  const { t } = role === "counselor" || role === "counsellor" ? counselorTranslation : userTranslation;
+  const { t } = role === "counselor" || isProfessionalRole(role) ? counselorTranslation : userTranslation;
   const [expandedSections, setExpandedSections] = useState({
     appointments: true,
     earnings: true,

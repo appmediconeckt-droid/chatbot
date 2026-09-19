@@ -112,7 +112,7 @@ axiosInstance.interceptors.response.use(
         sessionStorage.clear();
 
         if (typeof window !== "undefined") {
-          window.location.replace("/role-selector");
+          window.location.replace("/login");
         }
 
         return Promise.reject(refreshError);

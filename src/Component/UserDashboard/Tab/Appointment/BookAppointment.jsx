@@ -1182,6 +1182,8 @@ import {
   getPresenceUserId,
   resolveOfflineLastSeen,
 } from "../../../../utils/presence";
+import AppointmentBookingModal from "./AppointmentBookingModal";
+import TokenStatusPage from "../Counselor/TokenStatusPage";
 
 const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const navigate = useNavigate();
@@ -1219,6 +1221,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const [bookingDate, setBookingDate] = useState("");
   const [bookingNotes, setBookingNotes] = useState("");
   const [blockedPopup, setBlockedPopup] = useState({ show: false, reason: "" });
+
+  // Doctor-specific booking modal state
+  const [showDoctorBookingModal, setShowDoctorBookingModal] = useState(false);
+  const [selectedDoctorForBooking, setSelectedDoctorForBooking] = useState(null);
 
   // State for chat requests status
   const [pendingRequests, setPendingRequests] = useState({}); // { counselorId: true }
@@ -1307,16 +1313,16 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
           "Content-Type": "application/json",
         },
       });
-      
+
       const data = response.data || {};
-      
+
       // A chat request must stay connected to its counselor card after this
       // tab remounts. Both pending and accepted chats use the Chat Now button.
       const pending = {};
       const accepted = {};
       const rejected = {};
       const latestByCounselor = new Map();
-      
+
       if (data.chats && Array.isArray(data.chats)) {
         data.chats.forEach(chat => {
           const counselorId = chat.counselorId || chat.counselor?._id || chat.counselor?.id;
@@ -1353,7 +1359,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
           rejected[counselorId] = true;
         }
       });
-      
+
       setPendingRequests(pending);
       setAcceptedChats(accepted);
       setRejectedRequests(rejected);
@@ -1379,8 +1385,15 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   };
 
   const handleBookAppointment = (counselor) => {
-    setSelectedCounselorForRequest(counselor);
-    setShowBookingModal(true);
+    // If the professional is a doctor, open the dedicated doctor booking modal
+    if (counselor.role === "doctor") {
+      setSelectedDoctorForBooking(counselor);
+      setShowDoctorBookingModal(true);
+    } else {
+      // Consultant / counsellor – use the existing simple booking form
+      setSelectedCounselorForRequest(counselor);
+      setShowBookingModal(true);
+    }
   };
 
   // Function to fetch user data from API
@@ -1601,6 +1614,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             return {
               id: c._id,
               name: c.fullName,
+              role: String(c.role || "").trim().toLowerCase(),
               specialization,
               experience: `${c.experience || 0} years`,
               rating: c.rating || 4.5,
@@ -1696,7 +1710,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       if (!mounted) return;
       const counselorId = data.counselorId || data.counselor?._id || data.counselor?.id;
       const chatId = data.chatId || data.chat?.id || data._id;
-      
+
       if (counselorId) {
         // Remove from pending and add to accepted
         setPendingRequests(prev => {
@@ -1710,7 +1724,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
           return newRejected;
         });
         setAcceptedChats(prev => ({ ...prev, [counselorId]: chatId }));
-        
+
         // Show notification
         addNotification(
           "success",
@@ -1806,9 +1820,15 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
     }, 5000);
   };
 
-  // Get button state for a counselor
+  // Get button state for a counselor / doctor
   const getChatButtonState = (counselor) => {
     const counselorId = counselor.id;
+
+    // Doctor: chat is not allowed at all, only appointment booking
+    if (counselor.role === "doctor") {
+      return { hidden: true, disabled: true, text: "", title: "", className: "" };
+    }
+
     const isOnline = counselor.online || counselor.isOnline;
     const isPending = pendingRequests[counselorId];
     const isAccepted = !!acceptedChats[counselorId];
@@ -1816,17 +1836,17 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       const text = tr("unavailable", "Unavailable");
       return { text, title: text, disabled: true, className: "disabled" };
     }
-    
+
     if (isAccepted) {
       const text = tr("chat_now", "Chat Now");
       return { text, title: text, disabled: false, className: "active" };
     }
-    
+
     if (isPending) {
       const text = tr("request_sent", tr("chat_request_sent", "Request Sent"));
       return { text, title: text, disabled: true, className: "pending" };
     }
-    
+
     const text = tr(
       "send_chat_request",
       tr("counselor.messageCounselor", "Send Chat Request"),
@@ -1838,20 +1858,23 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const handleChatNow = (counselor) => {
     const counselorId = counselor.id;
 
+    // Doctor: chat is not allowed, only appointment booking
+    if (counselor.role === "doctor") return;
+
     // Check if chat is already accepted
     if (acceptedChats[counselorId]) {
       openCounselorChat({
-          chatId: acceptedChats[counselorId],
-          counselor: {
-            id: counselor.id,
-            name: counselor.name,
-            specialization: counselor.specialization,
-            online: counselor.online,
-            lastSeen: counselor.lastSeen,
-            avatar: counselor.avatar,
-            profilePhoto: counselor.profilePhoto,
-            avatarType: counselor.avatarType,
-          },
+        chatId: acceptedChats[counselorId],
+        counselor: {
+          id: counselor.id,
+          name: counselor.name,
+          specialization: counselor.specialization,
+          online: counselor.online,
+          lastSeen: counselor.lastSeen,
+          avatar: counselor.avatar,
+          profilePhoto: counselor.profilePhoto,
+          avatarType: counselor.avatarType,
+        },
       });
       return;
     }
@@ -1963,8 +1986,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
         });
         setShowUserModal(false);
         openCounselorChat({
-            chatId: chatId,
-            counselor: selectedCounselorForRequest,
+          chatId: chatId,
+          counselor: selectedCounselorForRequest,
         });
       } else if (res.data?.chat?.id || res.data?.chatId) {
         // Fallback: navigate to chat
@@ -2095,10 +2118,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   // Navigate to chat interface
   const goToChat = (chat) => {
     openCounselorChat({
-        chatId: chat.chatId || chat.id,
-        chatData: chat,
-        counselor: chat.counselor,
-        user: chat.user,
+      chatId: chat.chatId || chat.id,
+      chatData: chat,
+      counselor: chat.counselor,
+      user: chat.user,
     });
   };
 
@@ -2129,10 +2152,17 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       Number(b.online) - Number(a.online) ||
       Number(b.rating || 0) - Number(a.rating || 0),
     )[0];
+  const recommendedChatState = recommendedCounselor
+    ? getChatButtonState(recommendedCounselor)
+    : null;
   const collapsedCounselorLimit = directoryColumnCount * 3;
   const visibleDirectoryCounselors = showAllCounselors
     ? directoryCounselors
     : directoryCounselors.slice(0, collapsedCounselorLimit);
+
+  // "Token" is a standalone tab: it renders its own separate component
+  // (TokenStatusPage) instead of the counselor search/grid UI below.
+  const isTokenTabActive = directoryFilter === "token";
 
   return (
     <div className="counselor-request-unique">
@@ -2192,93 +2222,95 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
           </div>
 
           {/* Search Bar Section */}
-          <div className="search-section-unique">
-            <div className="search-container-unique">
-              {/* Search by Name */}
-              <div className="search-input-wrapper-unique">
-                <FaSearch className="search-icon-unique" aria-hidden="true" />
-                <input
-                  type="text"
-                  className="search-input-unique"
-                  placeholder={t('search_counselors')}
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                {searchTerm && (
-                  <button
-                    className="clear-search-btn-unique"
-                    onClick={() => setSearchTerm("")}
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
+          {!isTokenTabActive && (
+            <div className="search-section-unique">
+              <div className="search-container-unique">
+                {/* Search by Name */}
+                <div className="search-input-wrapper-unique">
+                  <FaSearch className="search-icon-unique" aria-hidden="true" />
+                  <input
+                    type="text"
+                    className="search-input-unique"
+                    placeholder={t('search_counselors')}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  {searchTerm && (
+                    <button
+                      className="clear-search-btn-unique"
+                      onClick={() => setSearchTerm("")}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
 
-              {/* Search by Location */}
-              <div className="location-input-wrapper-unique">
-                <FaMapMarkerAlt className="location-icon-unique" aria-hidden="true" />
-                <input
-                  type="text"
-                  className="location-input-unique"
-                  placeholder={`${t('search')} ${t('location').toLowerCase()}...`}
-                  value={searchLocation}
-                  onChange={(e) => {
-                    setSearchLocation(e.target.value);
-                    setShowLocationDropdown(true);
-                  }}
-                  onFocus={() => setShowLocationDropdown(true)}
-                />
-                {searchLocation && (
-                  <button
-                    className="clear-location-btn-unique"
-                    onClick={() => setSearchLocation("")}
-                  >
-                    ✕
-                  </button>
-                )}
+                {/* Search by Location */}
+                <div className="location-input-wrapper-unique">
+                  <FaMapMarkerAlt className="location-icon-unique" aria-hidden="true" />
+                  <input
+                    type="text"
+                    className="location-input-unique"
+                    placeholder={`${t('search')} ${t('location').toLowerCase()}...`}
+                    value={searchLocation}
+                    onChange={(e) => {
+                      setSearchLocation(e.target.value);
+                      setShowLocationDropdown(true);
+                    }}
+                    onFocus={() => setShowLocationDropdown(true)}
+                  />
+                  {searchLocation && (
+                    <button
+                      className="clear-location-btn-unique"
+                      onClick={() => setSearchLocation("")}
+                    >
+                      ✕
+                    </button>
+                  )}
 
-                {/* Location Dropdown */}
-                {showLocationDropdown && uniqueLocations.length > 0 && (
-                  <div className="location-dropdown-unique">
-                    {uniqueLocations
-                      .filter((location) =>
-                        location
-                          .toLowerCase()
-                          .includes(searchLocation.toLowerCase()),
-                      )
-                      .map((location, index) => (
-                        <div
-                          key={index}
-                          className="location-option-unique"
-                          onClick={() => {
-                            setSearchLocation(location);
-                            setShowLocationDropdown(false);
-                          }}
-                        >
-                          📍 {location}
-                        </div>
-                      ))}
+                  {/* Location Dropdown */}
+                  {showLocationDropdown && uniqueLocations.length > 0 && (
+                    <div className="location-dropdown-unique">
+                      {uniqueLocations
+                        .filter((location) =>
+                          location
+                            .toLowerCase()
+                            .includes(searchLocation.toLowerCase()),
+                        )
+                        .map((location, index) => (
+                          <div
+                            key={index}
+                            className="location-option-unique"
+                            onClick={() => {
+                              setSearchLocation(location);
+                              setShowLocationDropdown(false);
+                            }}
+                          >
+                            📍 {location}
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Filter Stats and Clear Button */}
+                {(searchTerm || searchLocation) && (
+                  <div className="filter-stats-unique">
+                    <span className="filter-count-unique">
+                      {t("found")} {filteredCounselors.length}{" "}
+                      {t(filteredCounselors.length === 1 ? "counselor_label" : "counselors_found")}
+                    </span>
+                    <button
+                      className="clear-filters-btn-unique"
+                      onClick={clearFilters}
+                    >
+                      {t("clear_filters")}
+                    </button>
                   </div>
                 )}
               </div>
-
-              {/* Filter Stats and Clear Button */}
-              {(searchTerm || searchLocation) && (
-                <div className="filter-stats-unique">
-                  <span className="filter-count-unique">
-                    {t("found")} {filteredCounselors.length}{" "}
-                    {t(filteredCounselors.length === 1 ? "counselor_label" : "counselors_found")}
-                  </span>
-                  <button
-                    className="clear-filters-btn-unique"
-                    onClick={clearFilters}
-                  >
-                    {t("clear_filters")}
-                  </button>
-                </div>
-              )}
             </div>
-          </div>
+          )}
 
           <div className="directory-filter-pills-unique" role="tablist" aria-label={t('search_counselors')}>
             {[
@@ -2287,6 +2319,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               ["nearby", t("nearby")],
               ["top-rated", t("top_rated")],
               ["therapist", t("therapist")],
+              ["token", tr("token_status", "Token")],
             ].map(([value, label]) => (
               <button
                 key={value}
@@ -2299,225 +2332,243 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             ))}
           </div>
 
-          {recommendedCounselor && (
-            <section className="recommended-section-unique">
-              <h2>{t("recommended_for_you")}</h2>
-              <div className="recommended-card-unique">
-                <div className="recommended-profile-unique">
-                  <div className="recommended-avatar-unique">
-                    {recommendedCounselor.avatarType === "image" ? (
-                      <img src={recommendedCounselor.avatar} alt={recommendedCounselor.name} />
-                    ) : (
-                      <span>{recommendedCounselor.avatar}</span>
-                    )}
-                  </div>
-                  <div>
-                    <h3>{recommendedCounselor.name}</h3>
-                    <p>{recommendedCounselor.specialization}</p>
-                    <div className="recommended-stats-unique">
-                      <span>▣ {recommendedCounselor.experience} {t('experience')}</span>
-                      <span className="rating">★ {recommendedCounselor.rating || "4.9"}</span>
+          {isTokenTabActive ? (
+            <TokenStatusPage />
+          ) : (
+            <>
+              {recommendedCounselor && (
+                <section className="recommended-section-unique">
+                  <h2>{t("recommended_for_you")}</h2>
+                  <div className="recommended-card-unique">
+                    <div className="recommended-profile-unique">
+                      <div className="recommended-avatar-unique">
+                        {recommendedCounselor.avatarType === "image" ? (
+                          <img src={recommendedCounselor.avatar} alt={recommendedCounselor.name} />
+                        ) : (
+                          <span>{recommendedCounselor.avatar}</span>
+                        )}
+                      </div>
+                      <div>
+                        <h3>{recommendedCounselor.name}</h3>
+                        <p>{recommendedCounselor.specialization}</p>
+                        <div className="recommended-stats-unique">
+                          <span>▣ {recommendedCounselor.experience} {t('experience')}</span>
+                          <span className="rating">★ {recommendedCounselor.rating || "4.9"}</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-                <div className="recommended-actions-unique">
-                  <span className={`recommended-availability-unique ${recommendedCounselor.online ? "available" : ""}`}>
-                    ● {recommendedCounselor.online ? t('online') : t('offline')}
-                  </span>
-                  <div>
-                    <button onClick={() => handleBookAppointment(recommendedCounselor)}>{t("book_appointment")}</button>
-                    <button
-                      className="outline"
-                      disabled={!recommendedCounselor.online}
-                      onClick={() => handleChatNow(recommendedCounselor)}
-                    >
-                      {t('chat_now')}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          <div className="available-heading-unique">
-            <h2>{t("available_counselors")}</h2>
-            {directoryCounselors.length > collapsedCounselorLimit && (
-              <button type="button" onClick={() => setShowAllCounselors((current) => !current)}>
-                {showAllCounselors ? t('show_less') : t("see_all")}
-              </button>
-            )}
-          </div>
-
-          {/* No Results Message */}
-          {directoryCounselors.length === 0 && (
-            <div className="no-results-unique">
-              <div className="no-results-icon-unique">🔍</div>
-              <h3>{t("no_counselors_found")}</h3>
-              <p>{t("adjust_search_filters")}</p>
-              <button
-                className="reset-search-btn-unique"
-                onClick={clearFilters}
-              >
-                {t('clear_filters')}
-              </button>
-            </div>
-          )}
-
-          {/* Desktop View - Cards Grid */}
-          <div className="counselors-grid-unique desktop-view">
-            {visibleDirectoryCounselors.map((counselor) => {
-              const buttonState = getChatButtonState(counselor);
-              
-              return (
-                <div
-                  key={counselor.id}
-                  className={`counselor-card-unique ${!counselor.available ? "unavailable" : ""}`}
-                >
-                  <div className="counselor-card-header-unique">
-                    <div className="counselor-avatar-unique">
-                      {counselor.avatarType === "image" ? (
-                        <img
-                          src={counselor.avatar}
-                          alt={counselor.name}
-                          className="counselor-avatar-image-unique"
-                          onError={(e) => {
-                            e.target.style.display = "none";
-                            e.target.parentElement.innerHTML = `<span>${getInitials(counselor.name)}</span>`;
-                          }}
-                        />
-                      ) : (
-                        <span>{counselor.avatar}</span>
-                      )}
-                    </div>
-                    <div className="counselor-status-unique">
-                      <span
-                        className={`status-dot-unique ${counselor.online ? "online" : "offline"}`}
-                      ></span>
-                      <span className="status-text-unique">
-                        {counselor.online
-                          ? tr("online", "Online")
-                          : tr("offline", "Offline")}
+                    <div className="recommended-actions-unique">
+                      <span className={`recommended-availability-unique ${recommendedCounselor.online ? "available" : ""}`}>
+                        ● {recommendedCounselor.online ? t('online') : t('offline')}
                       </span>
-                    </div>
-                  </div>
-
-                  <h3 className="counselor-name-unique">{counselor.name}</h3>
-                  {counselor.location && (
-                    <div className="counselor-location-unique">
-                      📍 {counselor.location}
-                    </div>
-                  )}
-                  <div className="counselor-specialization-unique">
-                    {counselor.specialization}
-                  </div>
-
-                  <div className="counselor-experience-unique">
-                    💼 {counselor.experience} {t('experience')}
-                  </div>
-
-                  <div className="counselor-rating-unique">
-                    <div className="stars-unique">
-                      {"★".repeat(Math.floor(counselor.rating))}
-                      {"☆".repeat(5 - Math.floor(counselor.rating))}
-                    </div>
-                    <span className="rating-number-unique">
-                      {counselor.rating}
-                    </span>
-                  </div>
-
-                  <div className="card-actions-unique">
-                    <button
-                      onClick={() => handleChatNow(counselor)}
-                      disabled={buttonState.disabled}
-                      className={`chat-now-btn-unique ${buttonState.className}`}
-                      title={buttonState.title}
-                    >
-                      {buttonState.text}
-                    </button>
-                    <button
-                      onClick={() => handleBookAppointment(counselor)}
-                      className="book-apt-btn-unique"
-                    >
-                      📅 {t('book_appointment')}
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Mobile View - Table/List Style */}
-          <div className="counselors-table-unique mobile-view">
-            {visibleDirectoryCounselors.map((counselor) => {
-              const buttonState = getChatButtonState(counselor);
-              
-              return (
-                <div
-                  key={counselor.id}
-                  className="counselor-row-unique"
-                >
-                  <div className="row-avatar-unique">
-                    {counselor.avatarType === "image" ? (
-                      <img
-                        src={counselor.avatar}
-                        alt={counselor.name}
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                          e.target.parentElement.innerHTML = `<span>${getInitials(counselor.name)}</span>`;
-                        }}
-                      />
-                    ) : (
-                      <span>{counselor.avatar}</span>
-                    )}
-                  </div>
-
-                  <div className="row-info-unique">
-                    <div className="row-name-unique">{counselor.name}</div>
-                    <div className="row-specialization-unique">
-                      {counselor.specialization}
-                    </div>
-                    {counselor.location && (
-                      <div className="row-location-unique">
-                        📍 {counselor.location}
+                      <div>
+                        <button onClick={() => handleBookAppointment(recommendedCounselor)}>{t("book_appointment")}</button>
+                        {!recommendedChatState?.hidden && (
+                          <button
+                            className="outline"
+                            disabled={!recommendedCounselor.online}
+                            onClick={() => handleChatNow(recommendedCounselor)}
+                          >
+                            {t('chat_now')}
+                          </button>
+                        )}
                       </div>
-                    )}
-                    {counselor.experience && (
-                      <div className="row-experience-unique">
-                        💼 {counselor.experience}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="row-action-unique">
-                    <span
-                      className={`dot ${counselor.online ? "online" : "offline"}`}
-                    ></span>
-                    <div className="row-buttons-unique">
-                      <button
-                        disabled={buttonState.disabled}
-                        className={`row-btn-unique ${buttonState.className}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleChatNow(counselor);
-                        }}
-                      >
-                        {buttonState.text}
-                      </button>
-                      <button
-                        className="row-book-btn-unique"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleBookAppointment(counselor);
-                        }}
-                      >
-                        {t('book_appointment')}
-                      </button>
                     </div>
                   </div>
+                </section>
+              )}
+
+              <div className="available-heading-unique">
+                <h2>{t("available_counselors")}</h2>
+                {directoryCounselors.length > collapsedCounselorLimit && (
+                  <button type="button" onClick={() => setShowAllCounselors((current) => !current)}>
+                    {showAllCounselors ? t('show_less') : t("see_all")}
+                  </button>
+                )}
+              </div>
+
+              {/* No Results Message */}
+              {directoryCounselors.length === 0 && (
+                <div className="no-results-unique">
+                  <div className="no-results-icon-unique">🔍</div>
+                  <h3>{t("no_counselors_found")}</h3>
+                  <p>{t("adjust_search_filters")}</p>
+                  <button
+                    className="reset-search-btn-unique"
+                    onClick={clearFilters}
+                  >
+                    {t('clear_filters')}
+                  </button>
                 </div>
-              );
-            })}
-          </div>
+              )}
+
+              {/* Desktop View - Cards Grid */}
+              <div className="counselors-grid-unique desktop-view">
+                {visibleDirectoryCounselors.map((counselor) => {
+                  const buttonState = getChatButtonState(counselor);
+
+                  return (
+                    <div
+                      key={counselor.id}
+                      className={`counselor-card-unique ${!counselor.available ? "unavailable" : ""}`}
+                    >
+                      <div className="counselor-card-header-unique">
+                        <div className="counselor-avatar-unique">
+                          {counselor.avatarType === "image" ? (
+                            <img
+                              src={counselor.avatar}
+                              alt={counselor.name}
+                              className="counselor-avatar-image-unique"
+                              onError={(e) => {
+                                e.target.style.display = "none";
+                                e.target.parentElement.innerHTML = `<span>${getInitials(counselor.name)}</span>`;
+                              }}
+                            />
+                          ) : (
+                            <span>{counselor.avatar}</span>
+                          )}
+                        </div>
+                        <div className="counselor-status-unique">
+                          <span
+                            className={`status-dot-unique ${counselor.online ? "online" : "offline"}`}
+                          ></span>
+                          <span className="status-text-unique">
+                            {counselor.online
+                              ? tr("online", "Online")
+                              : tr("offline", "Offline")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <h3 className="counselor-name-unique">{counselor.name}</h3>
+                      <span className={`professional-role-badge ${counselor.role === "doctor" ? "professional-role-badge--doctor" : ""}`}>
+                        {counselor.role === "doctor" ? tr("professional_role_doctor", "Doctor") : tr("professional_role_consultant", "Consultant")}
+                      </span>
+                      {counselor.location && (
+                        <div className="counselor-location-unique">
+                          📍 {counselor.location}
+                        </div>
+                      )}
+                      <div className="counselor-specialization-unique">
+                        {counselor.specialization}
+                      </div>
+
+                      <div className="counselor-experience-unique">
+                        💼 {counselor.experience} {t('experience')}
+                      </div>
+
+                      <div className="counselor-rating-unique">
+                        <div className="stars-unique">
+                          {"★".repeat(Math.floor(counselor.rating))}
+                          {"☆".repeat(5 - Math.floor(counselor.rating))}
+                        </div>
+                        <span className="rating-number-unique">
+                          {counselor.rating}
+                        </span>
+                      </div>
+
+                      <div className="card-actions-unique">
+                        {!buttonState.hidden && (
+                          <button
+                            onClick={() => handleChatNow(counselor)}
+                            disabled={buttonState.disabled}
+                            className={`chat-now-btn-unique ${buttonState.className}`}
+                            title={buttonState.title}
+                          >
+                            {buttonState.text}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleBookAppointment(counselor)}
+                          className="book-apt-btn-unique"
+                        >
+                          📅 {t('book_appointment')}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Mobile View - Table/List Style */}
+              <div className="counselors-table-unique mobile-view">
+                {visibleDirectoryCounselors.map((counselor) => {
+                  const buttonState = getChatButtonState(counselor);
+
+                  return (
+                    <div
+                      key={counselor.id}
+                      className="counselor-row-unique"
+                    >
+                      <div className="row-avatar-unique">
+                        {counselor.avatarType === "image" ? (
+                          <img
+                            src={counselor.avatar}
+                            alt={counselor.name}
+                            onError={(e) => {
+                              e.target.style.display = "none";
+                              e.target.parentElement.innerHTML = `<span>${getInitials(counselor.name)}</span>`;
+                            }}
+                          />
+                        ) : (
+                          <span>{counselor.avatar}</span>
+                        )}
+                      </div>
+
+                      <div className="row-info-unique">
+                        <div className="row-name-unique">{counselor.name}</div>
+                        <span className={`professional-role-badge ${counselor.role === "doctor" ? "professional-role-badge--doctor" : ""}`}>
+                          {counselor.role === "doctor" ? tr("professional_role_doctor", "Doctor") : tr("professional_role_consultant", "Consultant")}
+                        </span>
+                        <div className="row-specialization-unique">
+                          {counselor.specialization}
+                        </div>
+                        {counselor.location && (
+                          <div className="row-location-unique">
+                            📍 {counselor.location}
+                          </div>
+                        )}
+                        {counselor.experience && (
+                          <div className="row-experience-unique">
+                            💼 {counselor.experience}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="row-action-unique">
+                        <span
+                          className={`dot ${counselor.online ? "online" : "offline"}`}
+                        ></span>
+                        <div className="row-buttons-unique">
+                          {!buttonState.hidden && (
+                            <button
+                              disabled={buttonState.disabled}
+                              className={`row-btn-unique ${buttonState.className}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleChatNow(counselor);
+                              }}
+                            >
+                              {buttonState.text}
+                            </button>
+                          )}
+                          <button
+                            className="row-book-btn-unique"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleBookAppointment(counselor);
+                            }}
+                          >
+                            {t('book_appointment')}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -2610,9 +2661,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                       </div>
                     </div>
                     <span
-                      className={`preview-presence-unique ${
-                        selectedCounselorForRequest.online ? "online" : "offline"
-                      }`}
+                      className={`preview-presence-unique ${selectedCounselorForRequest.online ? "online" : "offline"
+                        }`}
                     >
                       {selectedCounselorForRequest.online
                         ? tr("available", "Available")
@@ -2625,11 +2675,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               {paymentConfig.enabled && (
                 <div className="paid-session-preview-unique">
                   <div>
-                        <span>{t("chat_session")}</span>
+                    <span>{t("chat_session")}</span>
                     <strong>₹{paymentConfig.fees?.chat || 100} / {paymentConfig.durationMinutes || 30} min</strong>
                   </div>
                   <div>
-                        <span>{t("wallet_balance")}</span>
+                    <span>{t("wallet_balance")}</span>
                     <strong>₹{Number(walletBalance || 0).toFixed(2)}</strong>
                   </div>
                   <p>
@@ -2725,7 +2775,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   </label>
                 </div>
                 <div className="form-group-unique">
-                    <label>{t("clinical_notes_reason")}</label>
+                  <label>{t("clinical_notes_reason")}</label>
                   <textarea
                     className="form-textarea-unique"
                     placeholder={`${t('reason')}...`}
@@ -2733,7 +2783,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                     onChange={(e) => setBookingNotes(e.target.value)}
                     required
                   ></textarea>
-                    <small>{t("sent_for_counselor_confirmation")}</small>
+                  <small>{t("sent_for_counselor_confirmation")}</small>
                 </div>
               </div>
 
@@ -2756,6 +2806,17 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Doctor Appointment Booking Modal (clinic/slot-based) */}
+      {showDoctorBookingModal && selectedDoctorForBooking && (
+        <AppointmentBookingModal
+          doctorData={selectedDoctorForBooking}
+          onClose={() => {
+            setShowDoctorBookingModal(false);
+            setSelectedDoctorForBooking(null);
+          }}
+        />
       )}
 
       {/* Blocked Popup */}

@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../authtication/authSession.js";
 import React, { useEffect, useMemo, useState } from "react";
 import api, { API_BASE_URL } from "../../axiosConfig";
 import { useNavigate } from "react-router-dom";
@@ -71,7 +72,7 @@ const resolveCounselorProfilePhoto = (data = {}) => {
 
 const AccountSettings = ({ role = "user", onOpenProfile }) => {
   const navigate = useNavigate();
-  const isCounselor = role === "counsellor" || role === "counselor";
+  const isCounselor = isProfessionalRole(role) || role === "counselor";
   const userT = useUserTranslation();
   const counselorT = useCounselorTranslation();
   const { t, lang, setLang } = isCounselor ? counselorT : userT;
@@ -219,7 +220,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
       localStorage.clear();
       sessionStorage.clear();
-      navigate("/role-selector", { replace: true });
+      navigate("/login", { replace: true });
     } catch (err) {
       setNotice({
         type: "error",

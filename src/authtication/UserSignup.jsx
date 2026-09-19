@@ -18,6 +18,7 @@ import { logoHorizontal } from "../assets/brandAssets";
 import logoHorizontalDarkText from "../assets/humaeli-logo-horizontal-tagline.png";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
+import { dashboardForRole, persistAuthSession } from "./authSession";
 import LocationGate from "./LocationGate";
 import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
 import StrongPasswordChecklist from "../Component/common/StrongPasswordChecklist";
@@ -52,11 +53,11 @@ const getLatestBirthDate = (minimumAge) => {
   return formatDateInputValue(date);
 };
 
-const UserSignup = () => {
+const UserSignup = ({ initialSignup = false, roleSelector }) => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 968);
-  const [isLogin, setIsLogin] = useState(true);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const isLogin = !initialSignup;
+  const isAnimating = false;
   const [phoneCountry, setPhoneCountry] = useState("IN");
   const [formData, setFormData] = useState({
     email: "",
@@ -115,7 +116,7 @@ const UserSignup = () => {
   const [pendingNav, setPendingNav] = useState(null); // { path, event }
 
   const location = useLocation();
-  const roleFromState = location.state?.role;
+
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth <= 968);
@@ -124,10 +125,13 @@ const UserSignup = () => {
   }, []);
 
   useEffect(() => {
-    if (roleFromState) {
-      localStorage.setItem("role", roleFromState);
+    if (location.state?.email) setFormData((prev) => ({ ...prev, email: location.state.email }));
+    if (location.state?.registered) {
+      setNotification({ show: true, message: "Account created successfully. Please log in.", type: "success" });
+      const timer = setTimeout(() => setNotification({ show: false, message: "", type: "" }), 5000);
+      return () => clearTimeout(timer);
     }
-  }, [roleFromState]);
+  }, [location.state?.email, location.state?.registered]);
 
   useEffect(() => {
     let interval;
@@ -153,7 +157,7 @@ const UserSignup = () => {
     const token =
       localStorage.getItem("accessToken") || localStorage.getItem("token");
     if (token) {
-      navigate("/user-dashboard");
+      navigate(dashboardForRole(localStorage.getItem("userRole")), { replace: true });
     }
   }, [navigate]);
 
@@ -262,7 +266,7 @@ const UserSignup = () => {
 
 
   const handleForgotPassword = () => {
-  navigate("/forgot-password", { state: { role: "user" } });
+  navigate("/forgot-password");
 };
   const validateSignup = () => {
     const newErrors = {};
@@ -457,36 +461,7 @@ const UserSignup = () => {
     setPhoneResendTimer(0);
   };
 
-  const persistUserSession = (data) => {
-    const token =
-      data?.token ||
-      data?.accessToken ||
-      data?.data?.token ||
-      data?.data?.accessToken;
-    const refreshToken = data?.refreshToken || data?.data?.refreshToken;
-
-    if (!token) return false;
-
-    localStorage.setItem("isAuthenticated", "true");
-    localStorage.setItem("userType", "user");
-    localStorage.setItem("userRole", "user");
-    // Store tokens from response if present
-    if (data?.accessToken) {
-      localStorage.setItem("accessToken", data.accessToken);
-    }
-    if (data?.refreshToken) {
-      localStorage.setItem("refreshToken", data.refreshToken);
-    }
-    if (token) {
-      localStorage.setItem("token", token);
-      localStorage.setItem("accessToken", token);
-    }
-    localStorage.setItem("userEmail", formData.email);
-    if (data?.user) localStorage.setItem("userData", JSON.stringify(data.user));
-    if (data?.user?._id) localStorage.setItem("userId", data.user._id);
-
-    return true;
-  };
+  const persistUserSession = persistAuthSession;
 
   const handleLogin = async () => {
     try {
@@ -495,34 +470,14 @@ const UserSignup = () => {
         {
           email: String(formData.email || "").trim().toLowerCase(),
           password: formData.password,
-          role: "user",
         },
         { withCredentials: true },
       );
 
-      // Enforce role: only "user" accounts can login here
-      const returnedRole = (
-        response.data?.role ||
-        response.data?.user?.role ||
-        "user"
-      ).toLowerCase();
-      const isCounselor =
-        returnedRole === "counselor" || returnedRole === "counsellor";
-
-      if (isCounselor) {
-        setApiError(
-          "Access denied: Your account is registered as a Consultant. Please use the Consultant login page.",
-        );
-        showNotification(
-          "Access denied: Please use the Consultant login page.",
-          "error",
-        );
-        return;
-      }
-
-      if (persistUserSession(response.data)) {
+      const session = persistUserSession(response.data);
+      if (session) {
         showNotification("Login successful! One last step…", "success");
-        setPendingNav({ path: "/user-dashboard", event: "login" });
+        setPendingNav({ ...session, event: "login" });
         return;
       }
 
@@ -582,8 +537,6 @@ const UserSignup = () => {
         emailVerificationToken,
       };
 
-      console.log("Sending signup data:", signupData);
-
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/complete-registration`,
         signupData,
@@ -609,7 +562,7 @@ const UserSignup = () => {
           gender: "",
           confirmPassword: "",
         });
-        setIsLogin(true);
+        navigate("/login", { replace: true, state: { email: registeredEmail, registered: true } });
 
         showNotification("Account created successfully. Please log in.", "success");
       } else {
@@ -738,12 +691,13 @@ const handleVerify = async () => {
         { withCredentials: true },
       );
 
-      if (persistUserSession(response.data)) {
+      const session = persistUserSession(response.data);
+      if (session) {
         setShowVerifyButton(false);
         setOtpSentForLogin(false);
         setLoginOtp("");
         showNotification("OTP verified! One last step…", "success");
-        setPendingNav({ path: "/user-dashboard", event: "login" });
+        setPendingNav({ ...session, event: "login" });
       } else {
         showNotification(
           response.data?.message || "OTP verification failed",
@@ -761,38 +715,8 @@ const handleVerify = async () => {
   };
 
   const toggleMode = () => {
-    if (isAnimating) return;
-
-    setIsAnimating(true);
-
-    setTimeout(() => {
-      setIsLogin(!isLogin);
-      setErrors({});
-      setApiError("");
-      setShowVerifyButton(false);
-      setVerifySuccess(false);
-      setOtpSentForLogin(false);
-      setLoginOtp("");
-      setEmailVerified(false);
-      setEmailVerificationToken("");
-      setPhoneVerified(false);
-      setFormData({
-        email: "",
-        password: "",
-        fullName: "",
-        anonymous: "",
-        phoneNumber: "",
-        age: "",
-        dateOfBirth: "",
-        gender: "",
-        confirmPassword: "",
-      });
-      setNotification({ show: false, message: "", type: "" });
-
-      setTimeout(() => {
-        setIsAnimating(false);
-      }, 500);
-    }, 300);
+    if (isLoading) return;
+    navigate(isLogin ? "/signup" : "/login");
   };
 
   const EmailOtpModal = () => (
@@ -1145,6 +1069,7 @@ const handleVerify = async () => {
           )}
 
           <form onSubmit={handleSubmit} className="us-form">
+            {!isLogin && roleSelector?.(isLoading)}
             {isLogin ? (
               <>
                 <div className="us-field">
@@ -1463,7 +1388,7 @@ const handleVerify = async () => {
             </div>
 
             <GoogleAuthButton
-              role="user"
+              role={isLogin ? "auto" : "user"}
               text={isLogin ? "signin_with" : "signup_with"}
               disabled={isLoading}
               gateDriven
@@ -1475,7 +1400,7 @@ const handleVerify = async () => {
                   "success",
                 );
                 setPendingNav({
-                  path: "/user-dashboard",
+                  path: dashboardForRole(localStorage.getItem("userRole")),
                   event: isLogin ? "login" : "signup",
                 });
               }}
@@ -1513,7 +1438,7 @@ const handleVerify = async () => {
       {pendingNav && (
         <LocationGate
           event={pendingNav.event}
-          role="user"
+          role={localStorage.getItem("userRole") || "user"}
           onDone={() => {
             const target = pendingNav.path;
             setPendingNav(null);

@@ -177,7 +177,7 @@ const OTPVerification = () => {
         <button
           type="button"
           className="otp-page-back-btn"
-          onClick={() => navigate('/user-signup')}
+          onClick={() => navigate('/login')}
           aria-label="Go back"
         >
           <FaArrowLeft />

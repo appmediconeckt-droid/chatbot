@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "./authSession.js";
 // import React, { useState, useEffect } from "react";
 // import {
 //   FaEnvelope,
@@ -2102,10 +2103,10 @@ const getLatestCounselorBirthDate = () => {
   return `${year}-${month}-${day}`;
 };
   
-const CounselorSignup = () => {
+const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 968);
-  const [isLogin, setIsLogin] = useState(true);
+  const isLogin = false;
   const [slideAnim, setSlideAnim] = useState("");
   const [phoneCountry, setPhoneCountry] = useState("IN");
   const [formData, setFormData] = useState({
@@ -2205,7 +2206,7 @@ const CounselorSignup = () => {
     const token =
       localStorage.getItem("accessToken") || localStorage.getItem("token");
     const userRole = (localStorage.getItem("userRole") || "").toLowerCase();
-    if (token && (userRole === "counselor" || userRole === "counsellor")) {
+    if (token && (userRole === "counselor" || isProfessionalRole(userRole))) {
       navigate("/counselor-dashboard");
     } else if (token && userRole === "user") {
       navigate("/user-dashboard");
@@ -2507,7 +2508,7 @@ const CounselorSignup = () => {
         "counsellor"
       ).toLowerCase();
       const isCounselor =
-        returnedRole === "counselor" || returnedRole === "counsellor";
+        returnedRole === "counselor" || isProfessionalRole(returnedRole);
 
       if (!isCounselor) {
         showNotification(
@@ -2620,7 +2621,8 @@ const CounselorSignup = () => {
       fd.append("aboutMe", formData.aboutMe.trim());
       fd.append("password", formData.password);
       fd.append("confirmPassword", formData.confirmPassword);
-      fd.append("role", "counsellor");
+      fd.append("role", accountRole);
+      fd.append("accountRole", accountRole);
       fd.append("emailVerificationToken", emailVerificationToken);
       if (formData.profilePhoto instanceof File) {
         fd.append("profilePhoto", formData.profilePhoto);
@@ -2656,9 +2658,9 @@ const CounselorSignup = () => {
           profilePhoto: null,
           confirmPassword: "",
         });
-        setIsLogin(true);
+        navigate("/login", { replace: true, state: { email: registeredEmail, registered: true } });
         showNotification(
-          "Consultant account created successfully. Please log in.",
+          `${accountRole === "doctor" ? "Doctor" : "Counselor"} account created successfully. Please log in.`,
           "success",
         );
       } else {
@@ -2670,7 +2672,7 @@ const CounselorSignup = () => {
     } catch (error) {
       if (error.response?.status === 409) {
         showNotification(
-          "Consultant with this email or phone already exists",
+          "An account with this email or phone already exists",
           "error",
         );
       } else {
@@ -2709,40 +2711,9 @@ const CounselorSignup = () => {
 
   const toggleMode = () => {
     if (isLoading) return;
-    setSlideAnim(isLogin ? "slide-left" : "slide-right");
-    setTimeout(() => {
-      setIsLogin(!isLogin);
-      setErrors({});
-      setApiError("");
-      setShowDeviceConflict(false);
-      setVerifySuccess(false);
-      setEmailVerified(false);
-      setEmailVerificationToken("");
-      setPhoneVerified(false);
-      setFormData({
-        email: "",
-        password: "",
-        fullName: "",
-        phoneNumber: "",
-        age: "",
-        dateOfBirth: "",
-        gender: "",
-        qualification: "",
-        specialization: "",
-        experience: "",
-        location: "",
-        consultationMode: [],
-        languages: [],
-        aboutMe: "",
-        profilePhoto: null,
-        confirmPassword: "",
-      });
-      setNotification({ show: false, message: "", type: "" });
-      setTimeout(() => setSlideAnim(""), 50);
-    }, 300);
+    navigate("/login");
   };
 
-  // Email OTP Modal
   const EmailOtpModal = () => (
     <div
       className="cs-otp-overlay"
@@ -2966,7 +2937,7 @@ const CounselorSignup = () => {
             <p className="cs-brand-subtitle">
               {isLogin
                 ? "Connect with expert consultants and find the support you need."
-                : "Start your journey as a certified mental health consultant."}
+                : `Start your journey as a ${accountRole === "doctor" ? "doctor" : "counselor"}.`}
             </p>
             <div className="cs-features">
               <div className="cs-feature">✓ Expert Consultants</div>
@@ -3039,6 +3010,7 @@ const CounselorSignup = () => {
           )}
 
           <form onSubmit={handleSubmit} className="cs-form">
+            {!isLogin && roleSelector?.(isLoading)}
             {isLogin ? (
               <>
                 <div className="cs-field">
@@ -3499,6 +3471,7 @@ const CounselorSignup = () => {
               )}
             </button>
 
+            {isLogin && (<>
             <div className="cs-divider">
               <span>or {isLogin ? "sign in" : "sign up"} with</span>
             </div>
@@ -3534,6 +3507,8 @@ const CounselorSignup = () => {
                 showNotification(msg, "error");
               }}
             />
+
+            </>)}
 
             {!isLogin && (
               <p className="cs-terms">

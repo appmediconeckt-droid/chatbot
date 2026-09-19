@@ -1,0 +1,350 @@
+.doctor-qr-page,
+.doctor-qr-page * {
+  box-sizing: border-box;
+}
+
+.doctor-qr-page {
+  min-height: calc(100vh - 64px);
+  padding: 28px 34px 70px;
+  background: var(--doctor-background-tint, var(--doctor-surface-raised, #f8fafc));
+  color: #171b24;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.doctor-qr-header {
+  max-width: 520px;
+  margin-bottom: 32px;
+}
+
+.doctor-qr-header h1 {
+  margin: 0 0 6px;
+  color: var(--doctor-primary, #004ac6);
+  font-size: 25px;
+  line-height: 1.15;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
+.doctor-qr-header p {
+  margin: 0;
+  color: #4b5563;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.doctor-qr-layout {
+  width: min(806px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 476px) minmax(0, 296px);
+  gap: 34px;
+  align-items: start;
+}
+
+.doctor-qr-card,
+.doctor-qr-panel,
+.doctor-qr-state {
+  border: 1px solid #c9d3e4;
+  border-radius: 10px;
+  background: var(--doctor-surface, #ffffff);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.doctor-qr-card {
+  min-height: 494px;
+  padding: 20px;
+  text-align: center;
+}
+
+.doctor-qr-card h2 {
+  margin: 0 0 20px;
+  color: #20242d;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.doctor-qr-frame {
+  width: 250px;
+  height: 250px;
+  margin: 0 auto 18px;
+  border-radius: 8px;
+  background: #e7e6f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.doctor-qr-frame img {
+  width: 155px;
+  height: 155px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.doctor-qr-doctor-name {
+  margin: -4px 0 14px;
+  color: #1f2937;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.doctor-identity-pill {
+  width: fit-content;
+  max-width: 100%;
+  min-width: 172px;
+  min-height: 54px;
+  margin: 0 auto 18px;
+  padding: 7px 14px 7px 8px;
+  border: 1px solid #c9d3e4;
+  border-radius: 999px;
+  background: #f7f8ff;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  text-align: left;
+}
+
+.doctor-avatar {
+  width: 42px;
+  height: 42px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #cfe3ee;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--doctor-primary, #004ac6);
+  font-size: 13px;
+  font-weight: 800;
+  flex: 0 0 auto;
+}
+
+.doctor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.doctor-identity-pill strong {
+  display: block;
+  color: #20242d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.doctor-identity-pill small {
+  display: block;
+  margin-top: 2px;
+  color: #4b5563;
+  font-size: 11px;
+}
+
+.doctor-verified {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  background: var(--doctor-primary, #004ac6);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 900;
+}
+
+.doctor-qr-scan {
+  width: min(360px, 100%);
+  margin: 0 auto;
+  text-align: left;
+}
+
+.doctor-qr-scan h3 {
+  margin: 0 0 12px;
+  color: #374151;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.doctor-qr-scan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 34px;
+}
+
+.doctor-qr-scan-grid span {
+  color: #202938;
+  font-size: 12px;
+  line-height: 1.2;
+}
+
+.doctor-qr-side {
+  display: grid;
+  gap: 20px;
+}
+
+.doctor-qr-panel {
+  padding: 20px;
+}
+
+.doctor-qr-panel h3 {
+  margin: 0 0 14px;
+  color: #20242d;
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.doctor-qr-primary {
+  width: 100%;
+  height: 36px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--doctor-gradient, linear-gradient(135deg, #004ac6, #0070fa));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.doctor-qr-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 7px;
+}
+
+.doctor-qr-actions button {
+  height: 31px;
+  border: 1px solid #c9d3e4;
+  border-radius: 6px;
+  background: var(--doctor-surface, #ffffff);
+  color: #202938;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.doctor-qr-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.doctor-qr-stats div {
+  position: relative;
+  min-height: 56px;
+  padding: 9px;
+  border: 1px solid #c9d3e4;
+  border-radius: 6px;
+  background: #f5f5ff;
+}
+
+.doctor-qr-stats span {
+  display: block;
+  color: #374151;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.doctor-qr-stats strong {
+  display: block;
+  margin-top: 5px;
+  color: #171b24;
+  font-size: 21px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.doctor-qr-stats em {
+  position: absolute;
+  top: 7px;
+  right: 8px;
+  color: #16a34a;
+  font-style: normal;
+  font-weight: 900;
+  font-size: 13px;
+}
+
+.doctor-qr-details p {
+  min-height: 40px;
+  margin: 0;
+  border-bottom: 1px solid #e5e9f2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.doctor-qr-details p:last-child {
+  border-bottom: 0;
+}
+
+.doctor-qr-details span {
+  color: #4b5563;
+  font-size: 12px;
+}
+
+.doctor-qr-details strong {
+  color: #20242d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.doctor-qr-details strong.active {
+  min-width: 50px;
+  border-radius: 999px;
+  padding: 4px 9px;
+  background: #d9f7e5;
+  color: #16a34a;
+  text-align: center;
+  text-transform: uppercase;
+  font-size: 10px;
+}
+
+.doctor-qr-note {
+  display: block;
+  margin-top: 12px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.doctor-qr-state {
+  width: min(806px, 100%);
+  margin: 0 auto;
+  padding: 24px;
+  color: #374151;
+  text-align: center;
+}
+
+.doctor-qr-error {
+  color: #b91c1c;
+}
+
+@media (max-width: 900px) {
+  .doctor-qr-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .doctor-qr-side {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .doctor-qr-page {
+    padding: 22px 18px 60px;
+  }
+
+  .doctor-qr-frame {
+    width: 220px;
+    height: 220px;
+  }
+
+  .doctor-qr-scan-grid {
+    grid-template-columns: 1fr;
+  }
+}

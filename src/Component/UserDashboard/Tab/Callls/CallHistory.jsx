@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../../../authtication/authSession.js";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { FaCalendarAlt, FaPhoneAlt, FaSearch, FaVideo } from "react-icons/fa";
@@ -19,7 +20,7 @@ const normalizeRole = (role) => {
     .trim()
     .toLowerCase();
 
-  if (normalized === "counselor") {
+  if (isProfessionalRole(normalized)) {
     return "counsellor";
   }
 
@@ -159,7 +160,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
   const userTranslation = useUserTranslation();
   const counselorTranslation = useCounselorTranslation();
   const { t, lang } =
-    translationRole === "counselor" || translationRole === "counsellor"
+    translationRole === "counselor" || isProfessionalRole(translationRole)
       ? counselorTranslation
       : userTranslation;
   const [activeFilter, setActiveFilter] = useState("all");
@@ -178,7 +179,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
   const currentUserType = normalizeRole(
     currentUser?.role || localStorage.getItem("userRole") || "user",
   );
-  const isCounselorView = currentUserType === "counsellor";
+  const isCounselorView = isProfessionalRole(currentUserType);
 
   const fetchCallHistory = useCallback(async () => {
     if (!currentUserId) {
@@ -250,7 +251,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
           const anonymousUser = getAnonymousUserDisplay(counterPartySource);
           const displayName =
             apiParticipant.displayName ||
-            (currentUserType === "counsellor" ? anonymousUser.name : "") ||
+            (isProfessionalRole(currentUserType) ? anonymousUser.name : "") ||
             "Anonymous User";
           const anonymousAvatar =
             anonymousUser.avatar || getAnonymousUserAvatar(counterPartySource);

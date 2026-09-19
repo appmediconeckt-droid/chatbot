@@ -1,0 +1,1024 @@
+/* WalkInAppointment.css */
+
+.walkin-main {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+  color: #333;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.walkin-header-section {
+  margin-bottom: 30px;
+}
+
+.walkin-title {
+  color: #2c3e50;
+  font-weight: 600;
+  margin: 0;
+}
+
+.walkin-stats-container {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.walkin-stat-card {
+  flex: 1;
+  min-width: 120px;
+  padding: 20px 15px;
+  border-radius: 12px;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: transform 0.2s ease;
+}
+
+.walkin-stat-card:hover {
+  transform: translateY(-3px);
+}
+
+.walkin-stat-total {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-left: 4px solid #6c757d;
+}
+
+.walkin-stat-booked {
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+  border-left: 4px solid #2196f3;
+}
+
+.walkin-stat-cancelled {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-left: 4px solid #f44336;
+}
+
+.walkin-stat-count {
+  display: block;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.walkin-stat-label {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+.walkin-content-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 25px;
+}
+
+@media (min-width: 992px) {
+  .walkin-content-layout {
+    grid-template-columns: 350px 1fr;
+  }
+}
+
+.walkin-card {
+  background: var(--doctor-surface, #ffffff);
+  border-radius: 16px;
+  padding: 25px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+  height: fit-content;
+}
+
+.walkin-section-title {
+  color: #2c3e50;
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.walkin-section-description {
+  color: #666;
+  margin-bottom: 25px;
+  line-height: 1.5;
+}
+
+.walkin-primary-btn {
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  padding: 14px 24px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  width: 100%;
+}
+
+.walkin-primary-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.3);
+}
+
+/* Table Styles */
+.walkin-table-section {
+  overflow: hidden;
+}
+
+.walkin-table-wrapper {
+  overflow-x: auto;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.walkin-appointment-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 900px;
+}
+
+.walkin-appointment-table thead {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.walkin-appointment-table th {
+  padding: 18px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.walkin-appointment-table tbody tr {
+  border-bottom: 1px solid #e9ecef;
+  transition: background-color 0.2s ease;
+}
+
+.walkin-appointment-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.walkin-appointment-table td {
+  padding: 16px;
+  vertical-align: middle;
+}
+
+.walkin-patient-name {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.walkin-phone-cell {
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+}
+
+.walkin-gender-cell {
+  text-transform: capitalize;
+}
+
+.walkin-problem-cell {
+  max-width: 250px;
+}
+
+.walkin-problem-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+  color: #666;
+}
+
+.walkin-time-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.walkin-date {
+  font-weight: 500;
+  color: #2c3e50;
+}
+
+.walkin-time {
+  font-size: 13px;
+  color: #6c757d;
+}
+
+/* Status Badges */
+.walkin-status-cell {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.walkin-badge-booked,
+.walkin-badge-cancelled {
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  display: inline-block;
+}
+
+.walkin-badge-booked {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+
+.walkin-badge-cancelled {
+  background-color: #ffebee;
+  color: #d32f2f;
+  border: 1px solid #ffcdd2;
+}
+
+/* Row Status Colors */
+.walkin-row-booked {
+  background-color: rgba(227, 242, 253, 0.1);
+}
+
+.walkin-row-cancelled {
+  background-color: rgba(255, 235, 238, 0.1);
+}
+
+/* Action Buttons */
+.walkin-action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.walkin-action-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.walkin-btn-cancel {
+  background-color: #fff3e0;
+  color: #f57c00;
+  border-color: #ffe0b2;
+}
+
+.walkin-btn-cancel:hover {
+  background-color: #ffe0b2;
+  transform: translateY(-1px);
+}
+
+.walkin-btn-cancel.walkin-active {
+  background-color: #f57c00;
+  color: white;
+  border-color: #f57c00;
+}
+
+.walkin-btn-delete {
+  background-color: #ffebee;
+  color: #f44336;
+  border-color: #ffcdd2;
+}
+
+.walkin-btn-delete:hover {
+  background-color: #ffcdd2;
+  transform: translateY(-1px);
+}
+
+/* Modal Styles */
+.walkin-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.walkin-modal {
+  background: var(--doctor-surface, #ffffff);
+  border-radius: 20px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 95vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+}
+
+.walkin-modal-header {
+  padding: 24px;
+  border-bottom: 1px solid #e9ecef;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.walkin-modal-header h3 {
+  margin: 0;
+  color: #2c3e50;
+  font-weight: 600;
+}
+
+.walkin-modal-close {
+  background: none;
+  border: none;
+  font-size: 28px;
+  color: #6c757d;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.walkin-modal-close:hover {
+  background-color: #f8f9fa;
+  color: #495057;
+}
+
+.walkin-modal-body {
+  padding: 24px;
+}
+
+.walkin-form-group {
+  margin-bottom: 20px;
+}
+
+.walkin-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #495057;
+  font-size: 14px;
+}
+
+.walkin-form-group input,
+.walkin-form-group select,
+.walkin-form-group textarea {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  font-size: 15px;
+  transition: border-color 0.2s ease;
+  font-family: inherit;
+}
+
+.walkin-form-group input:focus,
+.walkin-form-group select:focus,
+.walkin-form-group textarea:focus {
+  outline: none;
+  border-color: #4f46e5;
+}
+
+.walkin-input-error {
+  border-color: #f44336 !important;
+  background-color: #fff5f5;
+}
+
+.walkin-error-message {
+  color: #f44336;
+  font-size: 13px;
+  margin-top: 6px;
+  font-weight: 500;
+}
+
+.walkin-modal-footer {
+  padding: 20px 24px;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.walkin-btn-secondary {
+  padding: 12px 24px;
+  border: 2px solid #e9ecef;
+  border-radius: 10px;
+  background: var(--doctor-surface, #ffffff);
+  color: #495057;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.walkin-btn-secondary:hover {
+  background-color: #f8f9fa;
+  border-color: #dee2e6;
+}
+
+/* Empty State */
+.walkin-empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6c757d;
+}
+
+.walkin-empty-state svg {
+  margin-bottom: 20px;
+  color: #adb5bd;
+}
+
+.walkin-empty-state p {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.walkin-empty-state small {
+  font-size: 14px;
+  color: #adb5bd;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .walkin-stats-container {
+    gap: 10px;
+  }
+  
+  .walkin-stat-card {
+    min-width: calc(50% - 10px);
+  }
+  
+  .walkin-card {
+    padding: 20px;
+  }
+  
+  .walkin-action-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .walkin-action-btn {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 576px) {
+  .walkin-stat-card {
+    min-width: 100%;
+  }
+  
+  .walkin-modal {
+    border-radius: 12px;
+  }
+  
+  .walkin-modal-header,
+  .walkin-modal-body,
+  .walkin-modal-footer {
+    padding: 16px;
+  }
+}
+
+/* Screenshot-style Walk-in Appointments */
+.walkin-main.walkin-portal {
+  width: 100%;
+  max-width: none;
+  min-height: calc(100vh - 64px);
+  margin: 0;
+  padding: 28px;
+  background: var(--doctor-background-tint, var(--doctor-surface-raised, #f8fafc));
+  color: #172033;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.walkin-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+.walkin-page-header h1 {
+  margin: 0 0 6px;
+  color: var(--doctor-primary, #004ac6);
+  font-size: 30px;
+  line-height: 1.15;
+  font-weight: 800;
+}
+
+.walkin-page-header p {
+  margin: 0;
+  color: #485264;
+  font-size: 15px;
+}
+
+.walkin-new-btn {
+  min-width: 190px;
+  height: 46px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--doctor-primary, #004ac6);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(var(--doctor-primary-rgb, 0, 74, 198), 0.18);
+}
+
+.walkin-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 38px;
+}
+
+.walkin-summary-grid article {
+  min-height: 104px;
+  padding: 14px;
+  border: 1px solid #c9d3e4;
+  border-radius: 14px;
+  background: var(--doctor-surface, #ffffff);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+}
+
+.walkin-summary-grid article div {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 7px;
+}
+
+.walkin-summary-grid .blue {
+  color: #0b63ff;
+  background: #dbe8ff;
+}
+
+.walkin-summary-grid .orange {
+  color: #ea580c;
+  background: #fff0e7;
+}
+
+.walkin-summary-grid .green {
+  color: #087f5b;
+  background: #dffbf4;
+}
+
+.walkin-summary-grid .teal {
+  color: #008b83;
+  background: #dbfaf6;
+}
+
+.walkin-summary-grid .red {
+  color: #dc2626;
+  background: #fff1f1;
+}
+
+.walkin-summary-grid strong {
+  display: block;
+  color: #152033;
+  font-size: 23px;
+  line-height: 1;
+  font-weight: 800;
+}
+
+.walkin-summary-grid span {
+  display: block;
+  margin-top: 5px;
+  color: #4b5563;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.walkin-live-bar {
+  display: grid;
+  grid-template-columns: 1.45fr repeat(4, minmax(130px, 1fr));
+  gap: 14px;
+  align-items: center;
+  margin-bottom: 32px;
+  padding: 10px 22px;
+  border: 1px solid #a9bcff;
+  border-radius: 12px;
+  background: #dfe6ff;
+}
+
+.walkin-live-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #0b3478;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.walkin-live-stat {
+  min-height: 44px;
+  padding: 8px 14px;
+  border: 1px solid #c2cae0;
+  border-radius: 7px;
+  background: var(--doctor-surface, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.walkin-live-stat span {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.walkin-live-stat strong {
+  color: #172033;
+  font-size: 16px;
+  white-space: nowrap;
+}
+
+.walkin-live-stat .orange-text {
+  color: #ea580c;
+}
+
+.walkin-table-card {
+  overflow: hidden;
+  border: 1px solid #c9d3e4;
+  border-radius: 14px;
+  background: var(--doctor-surface, #ffffff);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+}
+
+.walkin-table-toolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.35fr) minmax(150px, 0.95fr) minmax(135px, 0.85fr) minmax(150px, 0.95fr) minmax(125px, 0.78fr) auto;
+  gap: 8px;
+  padding: 22px;
+}
+
+.walkin-table-toolbar label,
+.walkin-table-toolbar select,
+.walkin-table-toolbar button {
+  height: 36px;
+  border: 1px solid #c9d3e4;
+  border-radius: 7px;
+  background: var(--doctor-surface-raised, #f8fafc);
+  color: #22304a;
+  font-size: 13px;
+}
+
+.walkin-table-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 10px;
+}
+
+.walkin-table-toolbar input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: #22304a;
+  font: inherit;
+}
+
+.walkin-table-toolbar select,
+.walkin-table-toolbar button {
+  padding: 0 12px;
+}
+
+.walkin-table-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.walkin-table-wrapper {
+  overflow-x: auto;
+  border: 0;
+  border-radius: 0;
+}
+
+.walkin-appointment-table {
+  min-width: 1000px;
+  border-collapse: collapse;
+}
+
+.walkin-appointment-table thead {
+  background: var(--doctor-surface-raised, #f8fafc);
+}
+
+.walkin-appointment-table th {
+  padding: 14px 22px;
+  border-top: 1px solid #e5eaf4;
+  border-bottom: 1px solid #c9d3e4;
+  color: #4a5568;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+}
+
+.walkin-appointment-table td {
+  padding: 22px;
+  border-bottom: 1px solid #d7dfeb;
+  color: #22304a;
+  font-size: 14px;
+}
+
+.walkin-appointment-table tbody tr:hover {
+  background: #fbfcff;
+}
+
+.walkin-token {
+  color: #172033;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.walkin-patient-cell,
+.walkin-doctor-cell,
+.walkin-time-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.walkin-patient-cell {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.walkin-patient-cell > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.walkin-patient-cell > span {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #c7d7ff;
+  color: #0758d1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.walkin-patient-cell strong,
+.walkin-doctor-cell strong,
+.walkin-time-cell strong {
+  color: #263248;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.walkin-patient-cell small,
+.walkin-doctor-cell small,
+.walkin-time-cell small {
+  color: #596579;
+  font-size: 12px;
+}
+
+.walkin-time-cell small {
+  color: #ea580c;
+}
+
+.walkin-priority,
+.walkin-status {
+  min-height: 24px;
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.walkin-priority.high {
+  color: #dc2626;
+  background: #ffe0dd;
+  border: 1px solid #ffb4ad;
+}
+
+.walkin-priority.low {
+  color: #406196;
+  background: #e4edff;
+  border: 1px solid #c5d6f4;
+}
+
+.walkin-priority.med {
+  color: #ea580c;
+  background: #fff0e7;
+  border: 1px solid #ffc7a6;
+}
+
+.walkin-status i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.walkin-status.waiting {
+  color: #c2410c;
+  background: #fff0e7;
+  border: 1px solid #ffc7a6;
+}
+
+.walkin-status.consulting {
+  color: #0758d1;
+  background: #dce7ff;
+  border: 1px solid #aebfff;
+  border-radius: 999px;
+}
+
+.walkin-status.completed {
+  color: #00796b;
+  background: #d9f8f2;
+  border: 1px solid #a1e9de;
+  border-radius: 999px;
+}
+
+.walkin-status.cancelled {
+  color: #dc2626;
+  background: #fff1f1;
+  border: 1px solid #fecaca;
+  border-radius: 999px;
+}
+
+.walkin-action-buttons {
+  gap: 8px;
+}
+
+.walkin-action-btn {
+  min-height: 32px;
+  padding: 7px 11px;
+  border-radius: 7px;
+  font-size: 12px;
+}
+
+.walkin-action-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
+.walkin-empty-row {
+  text-align: center;
+  color: #64748b;
+}
+
+.walkin-api-error {
+  margin: -14px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #fecaca;
+  border-radius: 10px;
+  background: #fff1f1;
+  color: #b91c1c;
+  font-size: 14px;
+}
+
+.walkin-modal-overlay {
+  z-index: 1200;
+  background: rgba(15, 23, 42, 0.48);
+}
+
+.walkin-qr-page > :not(.walkin-modal-overlay) {
+  display: none;
+}
+
+.walkin-qr-page .walkin-modal-overlay {
+  display: flex;
+}
+
+.walkin-modal {
+  max-width: 680px;
+  border-radius: 14px;
+}
+
+.walkin-modal-header h3 {
+  color: var(--doctor-primary, #004ac6);
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.walkin-modal-header p {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.walkin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.walkin-form-grid .walkin-form-group {
+  margin-bottom: 0;
+}
+
+.walkin-wide-field {
+  grid-column: 1 / -1;
+}
+
+.walkin-form-group label span {
+  color: #dc2626;
+}
+
+.walkin-modal-footer .walkin-primary-btn {
+  width: auto;
+  min-width: 190px;
+  background: var(--doctor-primary, #004ac6);
+}
+
+@media (max-width: 1180px) {
+  .walkin-summary-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .walkin-live-bar {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .walkin-live-label {
+    grid-column: 1 / -1;
+  }
+
+  .walkin-table-toolbar {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .walkin-main.walkin-portal {
+    padding: 18px;
+  }
+
+  .walkin-page-header {
+    flex-direction: column;
+  }
+
+  .walkin-new-btn {
+    width: 100%;
+  }
+
+  .walkin-summary-grid,
+  .walkin-live-bar,
+  .walkin-table-toolbar,
+  .walkin-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .walkin-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .walkin-modal-footer .walkin-primary-btn,
+  .walkin-btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+.walkin-pagination { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 20px; border-top:1px solid #e7ebf2; color:#64748b; font-size:13px; }
+.walkin-pagination > div { display:flex; gap:6px; flex-wrap:wrap; }
+.walkin-pagination button { width:36px; height:36px; padding:0; border:1px solid #dce3f3; border-radius:8px; background:var(--doctor-surface, #fff); color:#7c879d; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; font-size:14px; }
+.walkin-pagination button.active { color:#fff; background:#064fc5; border-color:#064fc5; font-weight:700; }
+.walkin-pagination button:disabled { opacity:.45; cursor:not-allowed; }
+@media (max-width:680px) { .walkin-pagination { align-items:flex-start; flex-direction:column; } }

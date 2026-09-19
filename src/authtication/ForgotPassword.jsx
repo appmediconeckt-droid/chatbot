@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "./authSession.js";
 import React, { useState } from "react";
 import { FaEnvelope, FaArrowLeft, FaSpinner } from "react-icons/fa";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -13,7 +14,7 @@ const ForgotPassword = () => {
   const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
     ? "counsellor"
     : "user";
-  const themeClass = role === "counsellor" ? "auth-theme-counselor" : "auth-theme-user";
+  const themeClass = isProfessionalRole(role) ? "auth-theme-counselor" : "auth-theme-user";
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -66,7 +67,7 @@ const ForgotPassword = () => {
         {/* Back Button */}
         {/* <button 
           className="fp-back-btn"
-          onClick={() => navigate("/user-signup")}
+          onClick={() => navigate("/login")}
           aria-label="Go back"
         >
           <FaArrowLeft />
@@ -134,7 +135,7 @@ const ForgotPassword = () => {
                 <button
                   type="button"
                   className="fp-link"
-                  onClick={() => navigate(role === "counsellor" ? "/counselor-signup" : "/user-signup")}
+                  onClick={() => navigate("/login")}
                 >
                   Back to Login
                 </button>

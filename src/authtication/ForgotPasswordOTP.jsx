@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "./authSession.js";
 import React, { useState, useEffect } from "react";
 import { FaCheckCircle, FaSpinner, FaEnvelope } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -14,7 +15,7 @@ const ForgotPasswordOTP = () => {
   const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
     ? "counsellor"
     : "user";
-  const themeClass = role === "counsellor" ? "auth-theme-counselor" : "auth-theme-user";
+  const themeClass = isProfessionalRole(role) ? "auth-theme-counselor" : "auth-theme-user";
 
   const [otp, setOtp] = useState("");
   const [error, setError] = useState("");

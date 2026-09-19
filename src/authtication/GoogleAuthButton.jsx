@@ -4,6 +4,7 @@ import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
 import { sendLocationSilently } from "./locationHelper";
 import "./GoogleAuthButton.css";
+import { isProfessionalRole, persistAuthSession } from "./authSession";
 
 // Branded Google sign-in surface. We render Google's official iframe button
 // (the backend verifies the id_token JWT it returns, which is what the OAuth2
@@ -57,7 +58,7 @@ const GoogleAuthButton = ({
 
     setBusy(true);
     try {
-      const selectedRole = role || localStorage.getItem("role") || "user";
+      const selectedRole = role === "auto" ? undefined : role || localStorage.getItem("role") || "user";
 
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/google`,
@@ -67,37 +68,11 @@ const GoogleAuthButton = ({
 
       const data = response.data || {};
       const userRole = data.role || data.user?.role || selectedRole;
-      const isCounselor =
-        userRole.toLowerCase() === "counselor" ||
-        userRole.toLowerCase() === "counsellor";
+      const isCounselor = isProfessionalRole(userRole);
 
-      const token = data.accessToken || data.token;
-      if (token) {
-        localStorage.setItem("accessToken", token);
-        localStorage.setItem("token", token);
-      }
-      if (data.refreshToken) {
-        localStorage.setItem("refreshToken", data.refreshToken);
-      }
-
-      localStorage.setItem("userRole", userRole);
-      localStorage.setItem("isAuthenticated", "true");
-
+      const session = persistAuthSession(data);
+      if (!session) throw new Error("No authenticated session received. Please try again.");
       const user = data.user || data;
-      if (user) {
-        localStorage.setItem("userData", JSON.stringify(user));
-        if (user.email) localStorage.setItem("userEmail", user.email);
-        const id = user._id || user.id;
-        if (id) {
-          localStorage.setItem("userId", id);
-          if (isCounselor) {
-            localStorage.setItem("counsellorId", id);
-            localStorage.setItem("counselorId", id);
-          }
-        }
-      }
-
-      localStorage.removeItem("role");
 
       if (!gateDriven) {
         sendLocationSilently(locationEvent);

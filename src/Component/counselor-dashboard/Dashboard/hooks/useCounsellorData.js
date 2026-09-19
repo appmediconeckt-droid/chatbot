@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../../../authtication/authSession.js";
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
@@ -76,7 +77,7 @@ export default function useCounsellorData() {
     fetchCounsellor();
 
     const handleProfileUpdated = (event) => {
-      if (!event.detail?.role || event.detail.role === "counselor") {
+      if (!event.detail?.role || isProfessionalRole(event.detail.role)) {
         fetchCounsellor();
       }
     };

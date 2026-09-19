@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "./authSession.js";
 import React, { useState, useEffect } from "react";
 import { 
   FaLock, 
@@ -22,7 +23,7 @@ const ResetPassword = () => {
   const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
     ? "counsellor"
     : "user";
-  const themeClass = role === "counsellor" ? "auth-theme-counselor" : "auth-theme-user";
+  const themeClass = isProfessionalRole(role) ? "auth-theme-counselor" : "auth-theme-user";
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -72,7 +73,7 @@ const ResetPassword = () => {
         setSuccess(true);
         // Navigate to login after success
         setTimeout(() => {
-          navigate(role === "counsellor" ? "/counselor-signup" : "/user-signup", {
+          navigate("/login", {
             state: { message: "Password reset successfully! Please login." } 
           });
         }, 2000);
@@ -210,7 +211,7 @@ const ResetPassword = () => {
                 <button
                   type="button"
                   className="rp-link"
-                  onClick={() => navigate(role === "counsellor" ? "/counselor-signup" : "/user-signup")}
+                  onClick={() => navigate("/login")}
                 >
                   Back to Login
                 </button>

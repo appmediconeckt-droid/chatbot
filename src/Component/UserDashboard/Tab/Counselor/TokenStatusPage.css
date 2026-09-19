@@ -1,0 +1,186 @@
+.token-status-page {
+    padding: 24px;
+}
+
+.token-page-header {
+    margin-bottom: 20px;
+}
+
+.token-page-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 4px;
+}
+
+.token-page-subtitle {
+    color: #6b7280;
+    font-size: 14px;
+    margin: 0;
+}
+
+.token-page-body {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .token-page-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Appointment picker */
+.appointment-picker {
+    border: 1px solid #e5e9f2;
+    border-radius: 12px;
+    padding: 16px;
+    background: #fff;
+}
+
+.picker-heading {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 12px;
+}
+
+.picker-state {
+    color: #6b7280;
+    font-size: 13px;
+    padding: 12px 0;
+}
+
+.picker-state.error {
+    color: #d92d20;
+}
+
+.appointment-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 480px;
+    overflow-y: auto;
+}
+
+.appointment-item {
+    width: 100%;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid #e5e9f2;
+    border-radius: 10px;
+    background: #f9fafc;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.appointment-item:hover {
+    border-color: #2c50cd;
+}
+
+.appointment-item.selected {
+    border-color: #2c50cd;
+    background: #eef1ff;
+}
+
+.appointment-doctor {
+    font-weight: 600;
+    font-size: 13px;
+}
+
+.appointment-datetime {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.appointment-status {
+    font-size: 11px;
+    text-transform: capitalize;
+    color: #2c50cd;
+    width: fit-content;
+}
+
+/* Token detail panel */
+.token-detail-panel {
+    border: 1px solid #e5e9f2;
+    border-radius: 12px;
+    padding: 24px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 320px;
+}
+
+.token-empty-state {
+    color: #6b7280;
+    font-size: 14px;
+    text-align: center;
+}
+
+.token-empty-state.error {
+    color: #d92d20;
+}
+
+.token-card {
+    width: 100%;
+}
+
+.emergency-banner {
+    background: #fff4e5;
+    color: #b54708;
+    border: 1px solid #fedf89;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    margin-bottom: 16px;
+}
+
+.token-doctor-line {
+    font-size: 15px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 16px;
+}
+
+.token-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.token-stat {
+    border: 1px solid #e5e9f2;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.token-stat.your-token {
+    background: #2c50cd;
+    border-color: #2c50cd;
+}
+
+.token-stat.your-token .token-stat-label,
+.token-stat.your-token .token-stat-value {
+    color: #fff;
+}
+
+.token-stat-label {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.token-stat-value {
+    font-size: 26px;
+    font-weight: 700;
+    color: #111827;
+}

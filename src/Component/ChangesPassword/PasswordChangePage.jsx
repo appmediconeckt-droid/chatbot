@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../authtication/authSession.js";
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../axiosConfig";
@@ -16,7 +17,7 @@ const initialForm = {
 };
 
 const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated, onCancel, role = "user" }) => {
-  const isCounselor = role === "counsellor" || role === "counselor";
+  const isCounselor = isProfessionalRole(role) || role === "counselor";
   const userT = useUserTranslation();
   const counselorT = useCounselorTranslation();
   const { t } = isCounselor ? counselorT : userT;

@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../../../authtication/authSession.js";
 // // SMSInput.jsx - Fully Responsive Chat Interface with Zero Padding Issues on Mobile
 // import React, { useState, useRef, useEffect, useCallback } from "react";
 // import { useLocation, useNavigate } from "react-router-dom";
@@ -74,7 +75,7 @@
 //   const handleSessionExpired = () => {
 //     localStorage.clear();
 //     sessionStorage.clear();
-//     navigate("/role-selector", {
+//     navigate("/login", {
 //       replace: true,
 //       state: {
 //         reason: "session-expired",
@@ -1802,7 +1803,7 @@
 //   const handleSessionExpired = () => {
 //     localStorage.clear();
 //     sessionStorage.clear();
-//     navigate("/role-selector", {
+//     navigate("/login", {
 //       replace: true,
 //       state: {
 //         reason: "session-expired",
@@ -3757,7 +3758,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const handleSessionExpired = () => {
     localStorage.clear();
     sessionStorage.clear();
-    navigate("/role-selector", {
+    navigate("/login", {
       replace: true,
       state: {
         reason: "session-expired",
@@ -3795,7 +3796,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       if (userData) {
         try {
           const user = JSON.parse(userData);
-          if (user.role === "counselor" || user.role === "counsellor" || user.userType === "counselor") {
+          if (user.role === "counselor" || isProfessionalRole(user.role) || user.userType === "counselor") {
             counselorData = user;
           }
         } catch (e) {}
@@ -4018,7 +4019,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
           _id: msg._id || msg.id,
           messageId: msg.messageId,
           text: msg.content,
-          sender: msg.senderRole === "counsellor" ? "me" : "user",
+          sender: isProfessionalRole(msg.senderRole) ? "me" : "user",
           senderRole: msg.senderRole,
           time: new Date(msg.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
@@ -5329,7 +5330,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
           _id: msg._id || msg.id,
           messageId: msg.messageId,
           text: msg.content,
-          sender: msg.senderRole === "counsellor" ? "me" : "user",
+          sender: isProfessionalRole(msg.senderRole) ? "me" : "user",
           senderRole: msg.senderRole,
           time: new Date(msg.createdAt).toLocaleTimeString([], {
             hour: "2-digit",
@@ -5422,7 +5423,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
         : rawMessageData;
       if (!isCurrentChatMessage(messageData)) return;
       if (
-        messageData.senderRole === "counsellor" &&
+        isProfessionalRole(messageData.senderRole) &&
         String(messageData.senderId) === String(COUNSELOR_ID)
       ) {
         setMessages((prev) => {

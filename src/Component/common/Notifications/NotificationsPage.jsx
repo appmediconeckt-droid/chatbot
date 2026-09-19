@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../../authtication/authSession.js";
 import React, { useEffect, useState } from "react";
 import { FaBell, FaCalendarAlt, FaCheck, FaCommentAlt, FaTrash } from "react-icons/fa";
 import axiosInstance from "../../../axiosConfig";
@@ -33,7 +34,7 @@ const localizeKnownNotification = (item, t) => {
 };
 
 const NotificationsPage = ({ role = "user" }) => {
-  const isCounselor = role === "counselor" || role === "counsellor";
+  const isCounselor = role === "counselor" || isProfessionalRole(role);
   const userTranslation = useUserTranslation();
   const counselorTranslation = useCounselorTranslation();
   const userApiTranslation = useUserApiTranslation();

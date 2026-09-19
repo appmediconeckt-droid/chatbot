@@ -1,27 +1,21 @@
+import { dashboardForRole, isProfessionalRole } from "../../authtication/authSession.js";
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 
-const ProtectedRoute = ({ children, allowedRoles }) => {
+const ProtectedRoute = ({ children, allowedRoles, exactRoles = false }) => {
   const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
   const userRole = (localStorage.getItem('userRole') || '').toLowerCase();
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
   if (!token || !isAuthenticated) {
     // Not logged in, redirect to login
-    return <Navigate to="/role-selector" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   const normalizedAllowedRoles = allowedRoles?.map((role) => role.toLowerCase());
 
-  if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(userRole)) {
-    // Logged in but wrong role, redirect to appropriate dashboard
-    const isCounselor = userRole === 'counselor' || userRole === 'counsellor';
-    
-    if (isCounselor) {
-      return <Navigate to="/counselor-dashboard" replace />;
-    } else {
-      return <Navigate to="/user-dashboard" replace />;
-    }
+  if (normalizedAllowedRoles && !normalizedAllowedRoles.includes(userRole) && !(!exactRoles && isProfessionalRole(userRole) && normalizedAllowedRoles.some(isProfessionalRole))) {
+    return <Navigate to={dashboardForRole(userRole)} replace />;
   }
 
   return children;

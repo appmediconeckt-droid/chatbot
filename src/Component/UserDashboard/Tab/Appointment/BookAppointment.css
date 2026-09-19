@@ -2836,3 +2836,20 @@
   border-color: transparent;
   box-shadow: none;
 }
+.professional-role-badge {
+  display: inline-block;
+  width: fit-content;
+  margin: 4px 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #e8f5ee;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.professional-role-badge--doctor {
+  background: #e8f0ff;
+  color: #1e40af;
+}

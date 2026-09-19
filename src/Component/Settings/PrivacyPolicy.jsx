@@ -1,3 +1,4 @@
+import { isProfessionalRole } from "../../authtication/authSession.js";
 import React, { useState } from "react";
 import {
   FaCloud,
@@ -27,7 +28,7 @@ const SUPPORT_PHONE = "9152987821";
 
 const PrivacyPolicy = ({ variant = "dashboard", role = "user" }) => {
   const isPublic = variant === "public";
-  const isCounselor = role === "counselor" || role === "counsellor";
+  const isCounselor = role === "counselor" || isProfessionalRole(role);
   const userTranslation = useUserTranslation();
   const counselorTranslation = useCounselorTranslation();
   const { t } = isCounselor ? counselorTranslation : userTranslation;

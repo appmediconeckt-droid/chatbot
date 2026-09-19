@@ -5,6 +5,7 @@ import axiosInstance from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import "./CounselorDirectory.css";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
+import AppointmentBookingModal from "../Appointment/AppointmentBookingModal";
 import StarRating from "../../../../components/StarRating";
 import {
   formatPresenceText,
@@ -42,7 +43,18 @@ const CounselorTable = () => {
   const navigate = useNavigate();
   const [startingChatId, setStartingChatId] = useState(null);
 
+  // Doctor-specific booking modal state
+  const [showDoctorBookingModal, setShowDoctorBookingModal] = useState(false);
+  const [selectedDoctorForBooking, setSelectedDoctorForBooking] = useState(null);
+
   const handleBookAppointment = (counselor) => {
+    // If the professional is a doctor, open the dedicated doctor booking modal
+    if (counselor.role === "doctor") {
+      setSelectedDoctorForBooking(counselor);
+      setShowDoctorBookingModal(true);
+      return;
+    }
+    // Consultant / counsellor – navigate to the appointment page as before
     const counselorData = {
       id: counselor._id || counselor.id,
       name: counselor.fullName || counselor.name,
@@ -498,6 +510,17 @@ const CounselorTable = () => {
           </div>
         )}
       </div>
+
+      {/* Doctor Appointment Booking Modal (clinic/slot-based) */}
+      {showDoctorBookingModal && selectedDoctorForBooking && (
+        <AppointmentBookingModal
+          doctorData={selectedDoctorForBooking}
+          onClose={() => {
+            setShowDoctorBookingModal(false);
+            setSelectedDoctorForBooking(null);
+          }}
+        />
+      )}
     </div>
   );
 };

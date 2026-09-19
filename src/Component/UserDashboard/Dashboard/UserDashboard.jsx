@@ -917,12 +917,12 @@ export default function UserDashboard() {
       console.log("Logout success:", response.data);
       socketService.disconnect();
       localStorage.clear();
-      navigate("/role-selector");
+      navigate("/login");
     } catch (error) {
       console.error("Logout error:", error?.response?.data || error.message);
       socketService.disconnect();
       localStorage.clear();
-      navigate("/role-selector");
+      navigate("/login");
     }
   };
 
@@ -941,7 +941,7 @@ export default function UserDashboard() {
     setShowDeleteConfirm(false);
     setDeleteSuccess(true);
     setTimeout(() => {
-      navigate("/role-selector");
+      navigate("/login");
     }, 2500);
   };
 

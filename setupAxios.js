@@ -121,7 +121,7 @@ axios.interceptors.response.use(
         localStorage.removeItem("refreshToken");
         sessionStorage.clear();
         if (typeof window !== "undefined") {
-          window.location.replace("/role-selector");
+          window.location.replace("/login");
         }
         return Promise.reject(err);
       } finally {

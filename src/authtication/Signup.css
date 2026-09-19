@@ -1,0 +1,119 @@
+.signup-role {
+  min-width: 0;
+  margin: 0 0 6px;
+  padding: 0;
+  border: 0;
+}
+
+.signup-role-title {
+  padding: 0;
+  color: #24364b;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.signup-role-hint {
+  margin: 5px 0 12px;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.signup-role-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.signup-role-option {
+  position: relative;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.signup-role-option input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+}
+
+.signup-role-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px 6px 13px;
+  border: 1px solid #dce4ee;
+  border-radius: 12px;
+  background: #f8fafc;
+  color: #526176;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  transition: border-color 150ms, background-color 150ms, box-shadow 150ms;
+}
+
+.signup-role-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #eaf0f7;
+  color: #637994;
+  font-size: 18px;
+}
+
+.signup-role-check {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #1167b1;
+  color: white;
+  font-size: 8px;
+  visibility: hidden;
+}
+
+.signup-role-option input:checked + .signup-role-card {
+  border-color: #1167b1;
+  background: #edf6ff;
+  color: #115b9b;
+  box-shadow: 0 0 0 1px #1167b1;
+}
+
+.signup-role-option input:checked + .signup-role-card .signup-role-icon {
+  background: #d9ebfd;
+  color: #1167b1;
+}
+
+.signup-role-option input:checked + .signup-role-card .signup-role-check {
+  visibility: visible;
+}
+
+.signup-role-option input:focus-visible + .signup-role-card {
+  outline: 3px solid #8bbcf0;
+  outline-offset: 3px;
+}
+
+.signup-role-option:hover input:not(:disabled) + .signup-role-card {
+  border-color: #1167b1;
+}
+
+.signup-role:disabled .signup-role-option {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+@media (max-width: 380px) {
+  .signup-role-options { gap: 7px; }
+  .signup-role-card { font-size: 12px; padding-inline: 3px; }
+}

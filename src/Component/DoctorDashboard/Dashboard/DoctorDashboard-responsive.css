@@ -1,0 +1,518 @@
+/* ============================================
+   DOCTOR DASHBOARD - RESPONSIVE CSS
+   ============================================ */
+
+/* ============================================
+   MOBILE FIRST - Base Styles (320px+)
+   ============================================ */
+
+.dd-main-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.dd-dashboard-header {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dd-dashboard-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+
+.dd-dashboard-subtitle {
+  font-size: 12px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.dd-dashboard-time-info {
+  font-size: 11px;
+  opacity: 0.8;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Quick Stats */
+.dd-quick-stats {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.dd-stat-card {
+  background: var(--doctor-surface, #ffffff);
+  padding: 12px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-left: 3px solid #3b82f6;
+  transition: all 0.2s ease;
+}
+
+.dd-stat-card:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+}
+
+.dd-stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.dd-stat-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.dd-stat-value {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0;
+  color: #333;
+}
+
+.dd-stat-label {
+  font-size: 11px;
+  color: #666;
+  margin: 2px 0 0 0;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* Sections */
+.dd-section {
+  background: var(--doctor-surface, #ffffff);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+.dd-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dd-section-title svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* Appointment List */
+.dd-appointment-item {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+
+.dd-appointment-item:active {
+  background: #f9f9f9;
+  border-color: #3b82f6;
+}
+
+.dd-appointment-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dd-appointment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.dd-appointment-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  word-break: break-word;
+}
+
+.dd-appointment-time {
+  font-size: 11px;
+  color: #666;
+  margin: 2px 0 0 0;
+}
+
+.dd-appointment-status {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  background: #d4edda;
+  color: #1d5e1f;
+}
+
+/* Calendar Grid */
+.dd-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.dd-calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #666;
+  background: #f9f9f9;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.dd-calendar-day:active {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.dd-calendar-day.today {
+  background: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+/* Break Settings */
+.dd-break-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.dd-break-input {
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.dd-break-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+/* Buttons */
+.dd-btn {
+  padding: 10px 14px;
+  border-radius: 6px;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 36px;
+}
+
+.dd-btn-primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e3a8a 100%);
+  color: white;
+  box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3);
+}
+
+.dd-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 8px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.dd-btn-secondary {
+  background: var(--doctor-surface-raised, #f8fafc);
+  color: #333;
+  border: 1px solid #e5e7eb;
+}
+
+.dd-btn-secondary:hover {
+  background: #e5e7eb;
+}
+
+/* ============================================
+   TABLET - 768px and up
+   ============================================ */
+
+@media (min-width: 768px) {
+  .dd-main-container {
+    padding: 16px;
+  }
+
+  .dd-dashboard-header {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .dd-dashboard-title {
+    font-size: 22px;
+    margin-bottom: 6px;
+  }
+
+  .dd-dashboard-subtitle {
+    font-size: 13px;
+  }
+
+  .dd-quick-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .dd-stat-card {
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .dd-stat-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+  }
+
+  .dd-stat-value {
+    font-size: 18px;
+  }
+
+  .dd-stat-label {
+    font-size: 12px;
+  }
+
+  .dd-section {
+    padding: 16px;
+    margin-bottom: 20px;
+  }
+
+  .dd-section-title {
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+
+  .dd-appointment-item {
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 10px;
+  }
+
+  .dd-appointment-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .dd-appointment-name {
+    font-size: 14px;
+  }
+
+  .dd-appointment-time {
+    font-size: 12px;
+  }
+
+  .dd-break-controls {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .dd-break-input {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .dd-btn {
+    padding: 12px 18px;
+    font-size: 13px;
+    min-height: 40px;
+  }
+}
+
+/* ============================================
+   DESKTOP - 1024px and up
+   ============================================ */
+
+@media (min-width: 1024px) {
+  .dd-main-container {
+    padding: 24px;
+  }
+
+  .dd-dashboard-header {
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .dd-dashboard-title {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+
+  .dd-dashboard-subtitle {
+    font-size: 14px;
+  }
+
+  .dd-quick-stats {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .dd-stat-card {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .dd-stat-icon {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+  }
+
+  .dd-stat-value {
+    font-size: 20px;
+  }
+
+  .dd-stat-label {
+    font-size: 13px;
+  }
+
+  .dd-section {
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .dd-section-title {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+
+  .dd-appointment-item {
+    gap: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+
+  .dd-appointment-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .dd-appointment-name {
+    font-size: 15px;
+  }
+
+  .dd-appointment-time {
+    font-size: 13px;
+  }
+
+  .dd-btn {
+    padding: 12px 20px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+}
+
+/* ============================================
+   LARGE DESKTOP - 1280px and up
+   ============================================ */
+
+@media (min-width: 1280px) {
+  .dd-main-container {
+    padding: 32px;
+  }
+
+  .dd-quick-stats {
+    gap: 20px;
+  }
+
+  .dd-section {
+    padding: 24px;
+    margin-bottom: 28px;
+  }
+}
+
+/* ============================================
+   UTILITIES
+   ============================================ */
+
+@media (max-width: 479px) {
+  .dd-hide-mobile {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .dd-show-tablet {
+    display: block;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY & PRINT
+   ============================================ */
+
+@media print {
+  .dd-main-container {
+    background: var(--doctor-surface, #ffffff);
+  }
+
+  .dd-btn {
+    display: none;
+  }
+
+  .dd-section {
+    page-break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #999;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dd-stat-card,
+  .dd-appointment-item,
+  .dd-btn {
+    transition: none;
+  }
+}

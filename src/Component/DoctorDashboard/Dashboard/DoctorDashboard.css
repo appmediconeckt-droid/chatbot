@@ -1,0 +1,2066 @@
+/* DoctorDashboard.css - Complete Styling */
+
+.dd-screenshot-shell {
+  background: var(--doctor-background-tint);
+  color: #151a23;
+  height: auto;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  min-height: calc(100vh - 64px);
+  padding: 28px 26px 34px;
+  overflow: visible;
+  width: 100%;
+}
+
+.dd-main-container.dd-screenshot-shell {
+  background: var(--doctor-background-tint);
+  height: auto !important;
+  min-height: calc(100vh - 64px) !important;
+  overflow: visible !important;
+}
+
+.dd-topbar {
+  align-items: center;
+  background: var(--doctor-surface, #ffffff);
+  border-bottom: 1px solid #edf0f4;
+  display: flex;
+  height: 64px;
+  justify-content: space-between;
+  padding: 0 28px;
+}
+
+.dd-brand-wrap {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dd-brand-logo {
+  display: block;
+  height: 26px;
+  object-fit: contain;
+  width: 214px;
+}
+
+.dd-brand-wrap span {
+  color: #111827;
+  font-size: 11px;
+  line-height: 1;
+  margin-left: 42px;
+}
+
+.dd-top-actions {
+  align-items: center;
+  display: flex;
+  gap: 11px;
+}
+
+.dd-break-pill,
+.dd-icon-round,
+.dd-user-photo,
+.dd-side-icon,
+.dd-row-actions button,
+.dd-next-patient-card button,
+.dd-start-break,
+.dd-break-widget button,
+.dd-live-actions button {
+  align-items: center;
+  border: 0;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.dd-break-pill {
+  background: var(--doctor-surface, #ffffff);
+  border: 1px solid #e1e6ef;
+  border-radius: 999px;
+  color: #2a313d;
+  gap: 10px;
+  height: 38px;
+  padding: 0 24px;
+}
+
+.dd-icon-round,
+.dd-user-photo {
+  background: var(--doctor-surface-raised, #f8fafc);
+  border-radius: 999px;
+  color: #17304e;
+  height: 36px;
+  width: 36px;
+}
+
+.dd-user-photo {
+  background: linear-gradient(135deg, #0c948c, #cddba7);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.dd-dashboard-frame {
+  display: block;
+  min-height: auto;
+}
+
+.dd-sidebar {
+  align-items: center;
+  background: var(--doctor-surface, #ffffff);
+  border-right: 1px solid #e8edf4;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 18px 0 26px;
+}
+
+.dd-side-stack {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dd-side-icon {
+  background: transparent;
+  border-radius: 8px;
+  color: #3f4248;
+  font-size: 21px;
+  height: 42px;
+  transition: 160ms ease;
+  width: 42px;
+}
+
+.dd-side-icon.active,
+.dd-side-icon:hover {
+  background: var(--doctor-primary);
+  color: #ffffff;
+}
+
+.dd-dashboard-content {
+  align-items: start;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: minmax(0, 1fr) minmax(290px, 312px);
+  margin: 0 auto;
+  max-width: 1380px;
+  padding: 0;
+  position: static !important;
+  width: 100%;
+  height: auto !important;
+  animation: none !important;
+}
+
+.dd-primary-column {
+  min-width: 0;
+}
+
+.dd-hero-row {
+  align-items: flex-start;
+  display: grid;
+  gap: 28px;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(0, 1fr) auto;
+  justify-content: space-between;
+  margin: 0;
+  width: 100%;
+}
+
+.dd-hero-row h1 {
+  color: #171b22;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 0;
+  margin: 0 0 6px;
+}
+
+.dd-hero-row p {
+  color: #3e4653;
+  font-size: 15px;
+  line-height: 1.35;
+  margin: 0;
+  max-width: 520px;
+}
+
+.dd-date-block {
+  align-items: flex-start;
+  color: #002d61;
+  display: flex;
+  flex-direction: column;
+  font-size: 15px;
+  gap: 8px;
+  line-height: 1;
+  justify-self: end;
+  min-width: 126px;
+  padding-top: 2px;
+}
+
+.dd-date-block strong {
+  font-weight: 700;
+}
+
+.dd-stat-grid {
+  display: grid;
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(158px, 1fr));
+  margin-bottom: 22px;
+}
+
+.dd-stat-card {
+  align-items: flex-start;
+  background: var(--doctor-surface, #ffffff);
+  border: 1px solid #edf1f7;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  min-height: 122px;
+  min-width: 0;
+  padding: 22px 20px;
+}
+
+.dd-stat-card span {
+  color: #444b56;
+  display: block;
+  font-size: 14px;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+
+.dd-stat-card strong {
+  color: #141820;
+  display: flex;
+  font-size: 36px;
+  font-weight: 800;
+  gap: 4px;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.dd-stat-card small {
+  align-self: flex-end;
+  color: #222833;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+
+.dd-stat-card i {
+  align-items: center;
+  background: #dbe5ff;
+  border-radius: 7px;
+  color: #0057d8;
+  display: flex;
+  font-size: 20px;
+  height: 38px;
+  justify-content: center;
+  width: 34px;
+}
+
+.dd-live-consult {
+  align-items: center;
+  background: #e8f0ff;
+  border: 1px solid #c5d6ff;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 14px 18px;
+}
+
+.dd-live-consult span,
+.dd-live-consult small {
+  color: #4b5564;
+  display: block;
+  font-size: 12px;
+}
+
+.dd-live-consult strong {
+  color: #0d3478;
+  display: block;
+  font-size: 17px;
+}
+
+.dd-live-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dd-live-actions button {
+  background: #06419b;
+  border-radius: 7px;
+  color: #ffffff;
+  gap: 7px;
+  min-height: 36px;
+  padding: 0 14px;
+}
+
+.dd-live-actions button:disabled {
+  opacity: 0.55;
+}
+
+.dd-queue-card {
+  background: var(--doctor-surface, #ffffff);
+  border: 1px solid #edf1f7;
+  border-radius: 8px;
+  min-height: 438px;
+  padding: 24px 20px;
+}
+
+.dd-queue-card h2 {
+  color: #151a23;
+  font-size: 21px;
+  font-weight: 800;
+  margin: 0 0 18px;
+}
+
+.dd-tabs {
+  border-bottom: 1px solid #edf0f5;
+  display: flex;
+  gap: 24px;
+  margin-bottom: 22px;
+  margin-top: 22px;
+}
+
+.dd-tabs button {
+  background: transparent;
+  border: 0;
+  color: #2f3745;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 0 0 12px;
+}
+
+.dd-tabs button.active {
+  border-bottom: 3px solid #045cff;
+  color: #034dbc;
+}
+
+.dd-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dd-queue-row {
+  align-items: center;
+  background: var(--doctor-surface, #ffffff);
+  border: 1px solid #e7ebf2;
+  border-radius: 7px;
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  min-height: 88px;
+  padding: 13px 16px;
+}
+
+.dd-queue-row.highlight {
+  background: #f5f8ff;
+}
+
+.dd-patient-avatar-img,
+.dd-next-avatar {
+  align-items: center;
+  background: linear-gradient(135deg, #0a8c8e, #bcd596);
+  border: 4px solid #d9eef2;
+  border-radius: 999px;
+  color: #ffffff;
+  display: flex;
+  flex: 0 0 auto;
+  font-weight: 800;
+  height: 44px;
+  justify-content: center;
+  width: 44px;
+}
+
+.dd-queue-title,
+.dd-queue-meta,
+.dd-vital-tags {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+
+.dd-queue-title strong {
+  color: #1d2430;
+  font-size: 14px;
+}
+
+.dd-queue-title span,
+.dd-vital-tags span {
+  background: #f0f3f8;
+  border-radius: 4px;
+  color: #586171;
+  font-size: 10px;
+  padding: 3px 7px;
+}
+
+.dd-queue-title em {
+  background: #ffeeb8;
+  border-radius: 999px;
+  color: #7a5200;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+  padding: 3px 8px;
+}
+
+.dd-queue-title em.complete {
+  background: #dcfce7;
+  color: #146c35;
+}
+
+.dd-queue-meta {
+  color: #4e5968;
+  font-size: 12px;
+  margin: 4px 0 8px;
+}
+
+.dd-queue-meta .issue {
+  color: #cf1d31;
+  font-weight: 700;
+}
+
+.dd-queue-meta i {
+  margin-right: 4px;
+}
+
+.dd-row-actions button,
+.dd-next-patient-card button {
+  background: #00449f;
+  border-radius: 7px;
+  box-shadow: 0 5px 10px rgba(0, 58, 140, 0.18);
+  color: #ffffff;
+  font-size: 14px;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 17px;
+}
+
+.dd-row-actions button.ghost {
+  background: var(--doctor-surface, #ffffff);
+  border: 1px solid #cfd7e6;
+  box-shadow: none;
+  color: #0052c8;
+}
+
+.dd-row-actions button:disabled,
+.dd-next-patient-card button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.dd-empty-queue {
+  align-items: center;
+  border: 1px dashed #cfd7e6;
+  border-radius: 8px;
+  color: #667085;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  min-height: 160px;
+}
+
+.dd-right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+ 
+}
+
+.dd-next-patient-card {
+  background: linear-gradient(135deg, #d7e0ff, #cbd9ff);
+  border: 1px solid #a8bbfa;
+  border-radius: 8px;
+  box-shadow: 0 8px 18px rgba(16, 58, 153, 0.12);
+  padding: 20px;
+}
+
+.dd-next-top {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.dd-next-top span {
+  color: #002c6f;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dd-next-top strong {
+  background: #f4f7ff;
+  border-radius: 4px;
+  color: #0054ff;
+  font-size: 11px;
+  padding: 5px 8px;
+}
+
+.dd-next-body {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.dd-next-body h3,
+.dd-break-widget h3,
+.dd-overview-card h3 {
+  color: #151a23;
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.dd-next-body p {
+  color: #0b4c9f;
+  font-size: 12px;
+  margin: 2px 0 0;
+}
+
+.dd-next-patient-card button {
+  min-height: 40px;
+  width: 100%;
+}
+
+.dd-break-widget,
+.dd-overview-card {
+  background: var(--doctor-surface, #ffffff);
+  border: 1px solid #edf1f7;
+  border-radius: 8px;
+  box-shadow: 0 12px 28px rgba(18, 24, 33, 0.1);
+  padding: 20px;
+}
+
+.dd-widget-title {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.dd-widget-title span {
+  background: #dff7e4;
+  border-radius: 999px;
+  color: #19803a;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 5px 10px;
+}
+
+.dd-break-options {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, 1fr);
+  margin-bottom: 14px;
+}
+
+.dd-break-options button,
+.dd-break-options .input-group .form-control {
+  background: var(--doctor-surface, #ffffff);
+  border: 1px solid #dce3ef;
+  border-radius: 7px;
+  color: #344054;
+  font-size: 12px;
+  height: 36px;
+}
+
+.dd-break-options button.active {
+  border-color: var(--doctor-primary);
+  color: var(--doctor-primary);
+  font-weight: 700;
+}
+
+.dd-start-break,
+.dd-break-active button {
+  background: #e5e8ee;
+  border-radius: 7px;
+  color: #222832;
+  font-size: 14px;
+  height: 40px;
+  width: 100%;
+}
+
+.dd-break-active {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: center;
+}
+
+.dd-break-active strong {
+  color: var(--doctor-primary);
+  font-size: 20px;
+}
+
+.dd-break-active .progress {
+  height: 7px;
+}
+
+.dd-overview-card {
+  min-height: 214px;
+}
+
+.dd-progress-ring {
+  align-items: center;
+  background: conic-gradient(var(--doctor-primary) var(--progress), #e7ecf6 0deg);
+  border-radius: 999px;
+  display: flex;
+  height: 106px;
+  justify-content: center;
+  margin: 26px auto 16px;
+  width: 106px;
+}
+
+.dd-progress-ring > div {
+  align-items: center;
+  background: var(--doctor-surface, #ffffff);
+  border-radius: 999px;
+  display: flex;
+  flex-direction: column;
+  height: 72px;
+  justify-content: center;
+  width: 72px;
+}
+
+.dd-progress-ring strong {
+  color: #111827;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.dd-progress-ring span {
+  color: #535d6d;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.dd-overview-card p {
+  color: #475467;
+  font-size: 13px;
+  margin: 0;
+  text-align: center;
+}
+
+@media (max-width: 1180px) {
+  .dd-dashboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .dd-right-panel {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .dd-screenshot-shell {
+    padding: 18px 14px 28px;
+  }
+
+  .dd-dashboard-content {
+    padding: 0;
+  }
+
+  .dd-hero-row,
+  .dd-live-consult {
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .dd-hero-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dd-date-block {
+    justify-self: start;
+  }
+
+  .dd-stat-grid,
+  .dd-right-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .dd-queue-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .dd-row-actions {
+    grid-column: 1 / -1;
+  }
+
+  .dd-row-actions button {
+    width: 100%;
+  }
+}
+
+/* Main Container */
+.dd-main-container {
+  background: linear-gradient(135deg, var(--doctor-surface-raised, #f8fafc) 0%, var(--doctor-surface-raised, #f8fafc) 100%);
+  min-height: 100vh;
+}
+
+/* Header Styles */
+/* .dd-dashboard-header {
+  background: var(--doctor-surface, #ffffff);
+  padding: 20px 25px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 25px;
+} */
+
+.dd-dashboard-title {
+  font-weight: 800;
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 2rem;
+  margin: 0;
+}
+
+/* .dd-dashboard-time-info {
+  padding: 8px 15px;
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(30, 58, 138, 0.1);
+} */
+
+.dd-current-date-display {
+  font-size: 0.9rem;
+  color: #475569;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.dd-current-time-display {
+  font-weight: 700;
+  font-size: 18px;
+  color: #1e40af;
+  font-family: 'Courier New', monospace;
+}
+
+/* Break Controls Card */
+.dd-break-controls-card {
+  background: var(--doctor-surface, #ffffff);
+  border-radius: 16px;
+  border: 2px solid rgba(59, 130, 246, 0.2);
+  margin-bottom: 25px;
+  overflow: hidden;
+}
+
+.dd-break-controls-card .card-body {
+  padding: 20px;
+}
+
+.dd-break-controls-title {
+  color: #1e40af;
+  font-weight: 700;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dd-break-duration-select {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.dd-custom-break-input-group .form-control {
+  border: 2px solid #e2e8f0;
+  border-right: none;
+  border-radius: 8px 0 0 8px;
+}
+
+.dd-custom-break-input-group .input-group-text {
+  border: 2px solid #e2e8f0;
+  border-left: none;
+  background: var(--doctor-surface-raised, #f8fafc);
+  border-radius: 0 8px 8px 0;
+}
+
+.dd-take-break-btn {
+  background: linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%);
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+.dd-take-break-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(14, 165, 233, 0.3);
+}
+
+.dd-pause-resume-btn {
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+.dd-break-timer-section {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 12px;
+  border: 1px solid rgba(14, 165, 233, 0.2);
+}
+
+.dd-break-remaining-label {
+  color: #0369a1;
+  font-size: 1rem;
+}
+
+.dd-break-time-remaining {
+  color: #1e40af;
+  min-width: 80px;
+}
+
+.dd-break-progress-bar .progress-bar {
+  background: linear-gradient(90deg, #0ea5e9 0%, #38bdf8 100%);
+  border-radius: 4px;
+}
+
+.dd-end-break-btn {
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-weight: 500;
+}
+
+/* Active Session Card */
+.dd-active-session-card {
+  border: none;
+  border-radius: 16px;
+  background: var(--doctor-surface, #ffffff);
+  margin-bottom: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.dd-active-session-card.dd-active {
+  border-left: 6px solid #10b981;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);
+}
+
+.dd-patient-avatar {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  color: white;
+  font-weight: 700;
+}
+
+.dd-patient-label {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.dd-patient-name {
+  color: #1e293b;
+  font-size: 1.5rem;
+}
+
+.dd-patient-gender {
+  font-size: 0.9rem;
+  font-weight: 400;
+}
+
+.dd-patient-issue {
+  font-size: 0.95rem;
+  color: #475569;
+}
+
+.dd-patient-vitals {
+  display: flex;
+  gap: 8px;
+}
+
+.dd-vital-badge {
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.dd-session-info {
+  margin-top: 15px;
+}
+
+.dd-info-label {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 4px;
+}
+
+.dd-info-value {
+  font-size: 1rem;
+  color: #1e293b;
+}
+
+.dd-session-status {
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+}
+
+.dd-session-controls {
+  margin-top: 15px;
+}
+
+.dd-checked-btn, .dd-complete-now-btn {
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.dd-checked-btn:hover, .dd-complete-now-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dd-checked-btn {
+  background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+  border: none;
+}
+
+.dd-complete-now-btn {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  border: none;
+}
+
+/* Tables Styling */
+.dd-appointments-table-card, .dd-completed-table-card {
+  background: var(--doctor-surface, #ffffff);
+  border-radius: 16px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  margin-bottom: 25px;
+}
+
+.dd-appointments-table-card .card-body, .dd-completed-table-card .card-body {
+  padding: 25px;
+}
+
+.dd-table-heading {
+  color: #1e40af;
+  font-weight: 700;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dd-appointment-count, .dd-completed-count {
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.dd-appointments-table, .dd-completed-appointments-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+}
+
+.dd-table-header {
+  background: linear-gradient(135deg, var(--doctor-surface-raised, #f8fafc) 0%, #e2e8f0 100%);
+  border-radius: 10px;
+}
+
+.dd-table-header th {
+  border: none;
+  font-weight: 700;
+  color: white;
+  font-size: 14px;
+  padding: 16px 12px;
+  vertical-align: middle;
+}
+
+.dd-table-header th:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.dd-table-header th:last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+/* Appointment Rows */
+.dd-appointment-row, .dd-completed-row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+}
+
+.dd-appointment-row:hover, .dd-completed-row:hover {
+  background-color: var(--doctor-surface-raised, #f8fafc);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.dd-appointment-row td, .dd-completed-row td {
+  padding: 16px 12px;
+  vertical-align: middle;
+  border: none;
+}
+
+/* Serial Number */
+.dd-serial-number {
+  text-align: center;
+  width: 60px;
+}
+
+.dd-serial-badge {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+  background: var(--doctor-surface-raised, #f8fafc);
+  color: #64748b;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+/* Patient Cell */
+.dd-patient-name-cell {
+  min-width: 180px;
+}
+
+.dd-patient-avatar-small {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.dd-patient-name {
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+/* Badges */
+.dd-gender-badge {
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  min-width: 60px;
+  text-align: center;
+}
+
+.dd-bp-badge, .dd-blood-group-badge, .dd-duration-badge {
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* Issue Text */
+.dd-issue-text {
+  color: #475569;
+  font-size: 0.9rem;
+  max-width: 200px;
+  line-height: 1.4;
+}
+
+/* Phone Link */
+.dd-phone-link {
+  color: #475569;
+  font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.dd-phone-link:hover {
+  color: #3b82f6;
+}
+
+/* Time Display */
+.dd-time-display {
+  color: #475569;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Action Buttons */
+.dd-consent-btn {
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.dd-consent-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+.dd-active-badge {
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Completed Rows Specific */
+.dd-completed-time {
+  font-size: 0.8rem;
+}
+
+.dd-diagnosis-cell, .dd-medicine-cell, .dd-advice-cell {
+  max-width: 200px;
+}
+
+.dd-diagnosis-text, .dd-medicine-text, .dd-advice-text {
+  font-size: 0.85rem;
+  color: #475569;
+  line-height: 1.4;
+  max-height: 60px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+/* Scrollbar for text cells */
+.dd-diagnosis-text::-webkit-scrollbar,
+.dd-medicine-text::-webkit-scrollbar,
+.dd-advice-text::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dd-diagnosis-text::-webkit-scrollbar-track,
+.dd-medicine-text::-webkit-scrollbar-track,
+.dd-advice-text::-webkit-scrollbar-track {
+  background: var(--doctor-surface-raised, #f8fafc);
+  border-radius: 2px;
+}
+
+.dd-diagnosis-text::-webkit-scrollbar-thumb,
+.dd-medicine-text::-webkit-scrollbar-thumb,
+.dd-advice-text::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+/* Follow-up Badge */
+.dd-follow-up-badge {
+  border-radius: 12px;
+  padding: 6px 12px;
+  font-weight: 500;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dd-no-followup {
+  font-size: 0.85rem;
+}
+
+/* Edit Button */
+.dd-edit-cell {
+  width: 70px;
+  text-align: center;
+}
+
+.dd-edit-btn {
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.3s ease;
+}
+
+.dd-edit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Empty States */
+.dd-no-appointments-row, .dd-no-completed-row {
+  border: none;
+}
+
+.dd-empty-state {
+  padding: 40px 20px;
+}
+
+/* Modals */
+.dd-consent-modal .modal-content,
+.dd-complete-modal .modal-content,
+.dd-edit-modal .modal-content,
+.dd-summary-modal .modal-content {
+  border-radius: 20px;
+  border: none;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+}
+
+.dd-consent-modal-header,
+.dd-complete-modal-header,
+.dd-edit-modal-header,
+.dd-summary-modal-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+  border-bottom: none;
+  padding: 20px;
+}
+
+.dd-consent-modal-title,
+.dd-complete-modal-title,
+.dd-edit-modal-title,
+.dd-summary-modal-title {
+  color: white;
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dd-consent-modal-body,
+.dd-complete-modal-body,
+.dd-edit-modal-body,
+.dd-summary-modal-body {
+  padding: 25px;
+}
+
+.dd-consent-modal-footer,
+.dd-complete-modal-footer,
+.dd-edit-modal-footer,
+.dd-summary-modal-footer {
+  border-top: 1px solid #e2e8f0;
+  padding: 20px;
+}
+
+.dd-complete-modal-footer > .d-flex {
+  gap: 20px;
+}
+
+.dd-modal-actions,
+.dd-summary-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: nowrap;
+}
+
+.dd-modal-actions .btn,
+.dd-summary-modal-footer .btn {
+  margin: 0 !important;
+  min-height: 42px;
+  padding: 9px 20px;
+  border-radius: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dd-summary-close-btn {
+  min-width: 100px;
+}
+
+.dd-summary-complete-btn,
+.dd-summary-print-btn {
+  min-width: 170px;
+}
+
+@media (max-width: 640px) {
+  .dd-complete-modal-footer > .d-flex {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .dd-form-requirements {
+    width: 100%;
+  }
+
+  .dd-modal-actions,
+  .dd-summary-modal-footer {
+    display: grid;
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .dd-modal-actions .btn,
+  .dd-summary-modal-footer .btn {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Patient Summary in Modals */
+.dd-patient-summary-title {
+  color: #1e40af;
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+}
+
+.dd-patient-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.dd-patient-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.dd-detail-label {
+  color: #64748b;
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+}
+
+.dd-detail-value {
+  color: #1e293b;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+/* Form Elements in Modals */
+.dd-form-label {
+  font-weight: 600;
+  color: #334155;
+  font-size: 0.9rem;
+  margin-bottom: 8px;
+}
+
+.dd-form-control-sm {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.dd-form-control-sm:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.dd-diagnosis-textarea,
+.dd-medicine-textarea,
+.dd-advice-textarea,
+.dd-additional-notes-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.dd-complete-patient-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.dd-complete-patient-meta span {
+  background: #f0f5fb;
+  border: 1px solid #dbe7f3;
+  border-radius: 6px;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 8px;
+}
+
+.dd-section-heading-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dd-medicine-card {
+  background: #fbfdff;
+  border: 1px solid #dfe8f3;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  padding: 12px;
+}
+
+.dd-medicine-card-header {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.dd-medicine-card-header strong {
+  color: #1e293b;
+  font-size: 13px;
+}
+
+.dd-medicine-card-header button {
+  align-items: center;
+  background: #fee2e2;
+  border: 0;
+  border-radius: 6px;
+  color: #b91c1c;
+  display: inline-flex;
+  height: 26px;
+  justify-content: center;
+  width: 26px;
+}
+
+.dd-medicine-timing-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.dd-medicine-preview {
+  background: var(--doctor-surface-raised, #f8fafc);
+  border: 1px dashed #cbd5e1;
+  border-radius: 6px;
+  color: #475569;
+  font-size: 12px;
+  margin-top: 10px;
+  padding: 8px;
+}
+
+.dd-follow-up-section,
+.dd-additional-notes-section {
+  background: var(--doctor-surface-raised, #f8fafc);
+  border-radius: 8px;
+}
+
+.dd-follow-up-switch .form-check-input:checked {
+  background-color: #10b981;
+  border-color: #10b981;
+}
+
+.dd-follow-up-date-input {
+  max-width: 200px;
+}
+
+.dd-follow-up-date-info {
+  font-size: 0.85rem;
+}
+
+/* Color Theme Picker */
+.dd-color-theme-picker {
+  display: flex;
+  align-items: center;
+}
+
+.dd-theme-dropdown-toggle {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.dd-theme-dropdown-toggle:hover {
+  background: rgba(255, 255, 255, 0.3);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-2px);
+}
+
+.dd-theme-dropdown-menu {
+  min-width: 300px;
+  max-height: 400px;
+  overflow-y: auto;
+  border-radius: 12px;
+  border: none;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  margin-top: 10px;
+}
+
+.dd-theme-selector-title {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.95rem;
+  margin-bottom: 15px;
+}
+
+.dd-theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.dd-theme-option {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: var(--doctor-surface, #ffffff);
+}
+
+.dd-theme-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dd-theme-option.dd-theme-active {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.dd-theme-preview {
+  display: flex;
+  height: 20px;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.dd-theme-primary,
+.dd-theme-secondary,
+.dd-theme-accent {
+  flex: 1;
+}
+
+.dd-theme-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #475569;
+  text-align: center;
+}
+
+/* Summary Modal Content */
+.dd-printable-summary {
+  background: var(--doctor-surface, #ffffff);
+  padding: 20px;
+}
+
+.dd-clinic-header {
+  text-align: center;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 20px;
+}
+
+.dd-clinic-name {
+  font-weight: 800;
+  font-size: 1.8rem;
+  margin-bottom: 5px;
+}
+
+.dd-clinic-address {
+  font-size: 0.95rem;
+  color: #64748b;
+  margin-bottom: 10px;
+}
+
+.dd-clinic-contacts {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  font-size: 0.9rem;
+  color: #64748b;
+}
+
+.dd-appointment-banner {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.dd-summary-content {
+  padding: 0 0px;
+}
+
+.dd-patient-info-section,
+.dd-medical-section,
+.dd-followup-section,
+.dd-signature-section {
+  margin-bottom: 25px;
+}
+
+.dd-section-title {
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dd-info-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 10px;
+}
+
+.dd-info-label {
+  min-width: 120px;
+  font-weight: 600;
+}
+
+.dd-info-value {
+  flex: 1;
+}
+
+.dd-medical-card {
+  margin-bottom: 15px;
+  padding: 15px;
+  border-radius: 8px;
+  background: var(--doctor-surface, #ffffff);
+}
+
+.dd-medical-title {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 10px;
+}
+
+.dd-medical-content {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #475569;
+}
+
+.dd-signature-box {
+  border-radius: 8px;
+  padding: 15px;
+  background: var(--doctor-surface-raised, #f8fafc);
+}
+
+.dd-signature-line {
+  border-bottom: 2px solid #475569;
+  width: 200px;
+  margin-bottom: 10px;
+}
+
+.dd-signature-label {
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 5px;
+}
+
+.dd-signature-title {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+/* Footer Actions */
+.dd-footer-notes {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.dd-footer-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.dd-close-btn,
+.dd-complete-btn,
+.dd-print-btn,
+.dd-edit-cancel-btn,
+.dd-edit-save-btn,
+.dd-consent-cancel-btn,
+.dd-consent-start-btn,
+.dd-complete-cancel-btn,
+.dd-complete-save-btn {
+  border-radius: 8px;
+  padding: 8px 20px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+.dd-close-btn:hover,
+.dd-edit-cancel-btn:hover,
+.dd-consent-cancel-btn:hover,
+.dd-complete-cancel-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.dd-complete-btn:hover,
+.dd-edit-save-btn:hover,
+.dd-consent-start-btn:hover,
+.dd-complete-save-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+}
+
+.dd-print-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .dd-patient-details-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dd-diagnosis-cell,
+  .dd-medicine-cell,
+  .dd-advice-cell {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 992px) {
+  .dd-dashboard-title {
+    font-size: 1.7rem;
+  }
+  
+  .dd-current-time-display {
+    font-size: 1.2rem;
+  }
+  
+  .dd-table-header th {
+    font-size: 0.85rem;
+    padding: 12px 8px;
+  }
+  
+  .dd-appointment-row td,
+  .dd-completed-row td {
+    padding: 12px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  .dd-main-container {
+    padding: 15px;
+  }
+  
+  .dd-dashboard-header {
+    padding: 15px;
+  }
+  
+  .dd-appointments-table-card .card-body,
+  .dd-completed-table-card .card-body {
+    padding: 20px;
+  }
+  
+  .dd-table-responsive {
+    overflow-x: auto;
+  }
+  
+  .dd-appointments-table,
+  .dd-completed-appointments-table {
+    min-width: 800px;
+  }
+  
+  .dd-theme-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .dd-break-controls-card .card-body {
+    padding: 15px;
+  }
+  
+  .dd-active-session-card .card-body {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 576px) {
+  .dd-dashboard-title {
+    font-size: 1.5rem;
+  }
+  
+  .dd-dashboard-time-info {
+    padding: 6px 12px;
+  }
+  
+  .dd-current-date-display {
+    font-size: 0.8rem;
+  }
+  
+  .dd-current-time-display {
+    font-size: 1rem;
+  }
+  
+  .dd-table-heading {
+    font-size: 1.1rem;
+  }
+  
+  .dd-appointment-count,
+  .dd-completed-count {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+  }
+  
+  .dd-patient-details-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dd-theme-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .dd-footer-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .dd-close-btn,
+  .dd-complete-btn,
+  .dd-print-btn {
+    width: 100%;
+    margin-bottom: 5px;
+  }
+  
+  .dd-session-controls {
+    width: 100%;
+  }
+  
+  .dd-checked-btn,
+  .dd-complete-now-btn {
+    flex: 1;
+  }
+}
+
+/* Scrollbar Styling */
+.dd-consent-modal-body::-webkit-scrollbar,
+.dd-complete-modal-body::-webkit-scrollbar,
+.dd-edit-modal-body::-webkit-scrollbar,
+.dd-summary-modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dd-consent-modal-body::-webkit-scrollbar-track,
+.dd-complete-modal-body::-webkit-scrollbar-track,
+.dd-edit-modal-body::-webkit-scrollbar-track,
+.dd-summary-modal-body::-webkit-scrollbar-track {
+  background: var(--doctor-surface-raised, #f8fafc);
+  border-radius: 4px;
+}
+
+.dd-consent-modal-body::-webkit-scrollbar-thumb,
+.dd-complete-modal-body::-webkit-scrollbar-thumb,
+.dd-edit-modal-body::-webkit-scrollbar-thumb,
+.dd-summary-modal-body::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.dd-consent-modal-body::-webkit-scrollbar-thumb:hover,
+.dd-complete-modal-body::-webkit-scrollbar-thumb:hover,
+.dd-edit-modal-body::-webkit-scrollbar-thumb:hover,
+.dd-summary-modal-body::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Print Styles */
+@media print {
+  .dd-main-container,
+  .dd-dashboard-header,
+  .dd-break-controls-card,
+  .dd-active-session-card,
+  .dd-appointments-table-card,
+  .dd-completed-table-card,
+  .dd-consent-modal,
+  .dd-complete-modal,
+  .dd-edit-modal,
+  .dd-summary-modal-header,
+  .dd-summary-modal-footer,
+  .dd-color-theme-picker,
+  .modal-header,
+  .modal-footer {
+    display: none !important;
+  }
+  
+  .dd-summary-modal {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+  }
+  
+  .dd-summary-modal .modal-content {
+    border: none !important;
+    box-shadow: none !important;
+  }
+  
+  .dd-summary-modal-body {
+    max-height: none !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+  
+  .dd-printable-summary {
+    padding: 0 !important;
+  }
+}
+
+/* Animation for loading states */
+@keyframes dd-fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.dd-appointment-row,
+.dd-completed-row,
+.dd-active-session-card {
+  animation: dd-fadeIn 0.5s ease-out;
+}
+
+/* Loading spinner for active session */
+.dd-session-status .spinner-border {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-width: 2px;
+}
+
+/* Doctor dashboard viewport + responsive width fix */
+.dd-main-container.dd-screenshot-shell {
+  box-sizing: border-box;
+  min-height: 100% !important;
+  overflow: visible !important;
+  padding: clamp(18px, 1.7vw, 28px) clamp(18px, 1.8vw, 30px) 44px !important;
+  width: 100%;
+}
+
+.dd-main-container.dd-screenshot-shell,
+.dd-main-container.dd-screenshot-shell * {
+  box-sizing: border-box;
+}
+
+.dd-main-container.dd-screenshot-shell .dd-dashboard-content {
+  align-items: start;
+  display: grid;
+  gap: clamp(18px, 1.7vw, 28px);
+  grid-template-columns: minmax(0, 1fr) minmax(274px, 312px);
+  margin: 0;
+  max-width: none;
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.dd-main-container.dd-screenshot-shell .dd-primary-column,
+.dd-main-container.dd-screenshot-shell .dd-right-panel,
+.dd-main-container.dd-screenshot-shell .dd-queue-card,
+.dd-main-container.dd-screenshot-shell .dd-stat-card {
+  min-width: 0;
+}
+
+.dd-main-container.dd-screenshot-shell .dd-stat-grid {
+  gap: clamp(14px, 1.35vw, 20px);
+  grid-template-columns: repeat(4, minmax(150px, 1fr));
+}
+
+.dd-main-container.dd-screenshot-shell .dd-hero-row {
+  grid-template-columns: minmax(0, 1fr) max-content;
+}
+
+.dd-main-container.dd-screenshot-shell .dd-date-block {
+  justify-self: end;
+  text-align: left;
+}
+
+.dd-main-container.dd-screenshot-shell .dd-queue-row {
+  min-width: 0;
+}
+
+@media (max-width: 1320px) {
+  .dd-main-container.dd-screenshot-shell .dd-dashboard-content {
+    grid-template-columns: minmax(0, 1fr) 292px;
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-stat-grid {
+    grid-template-columns: repeat(4, minmax(136px, 1fr));
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-stat-card {
+    padding: 20px 16px;
+  }
+}
+
+@media (max-width: 1120px) {
+  .dd-main-container.dd-screenshot-shell .dd-dashboard-content {
+    grid-template-columns: 1fr;
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-right-panel {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 920px) {
+  .dd-main-container.dd-screenshot-shell .dd-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-right-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .dd-main-container.dd-screenshot-shell {
+    padding: 16px 12px 34px !important;
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-hero-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-date-block {
+    justify-self: start;
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-stat-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-queue-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+  }
+
+  .dd-main-container.dd-screenshot-shell .dd-row-actions {
+    grid-column: 1 / -1;
+  }
+}
+.dd-call-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #1455c0;
+  color: #fff;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.dd-call-action:disabled { background: #94a3b8; opacity: .7; cursor: not-allowed; }

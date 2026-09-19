@@ -382,7 +382,7 @@ const Leanding = () => {
 
   return (
     <div className="humaeli">
-      <Header onLoginClick={() => navigate('/role-selector')} />
+      <Header onLoginClick={() => navigate('/login')} />
       <main>
         <HeroSection />
         <ServicesSection />
@@ -584,7 +584,7 @@ const HeroSection = () => {
             {t('landing_ui_hero_description')}
           </p>
           <div className="hero-actions">
-            <Link to="/role-selector" className="btn btn-primary">
+            <Link to="/login" className="btn btn-primary">
               {t('landing_get_started')}
             </Link>
           </div>
@@ -706,7 +706,7 @@ const ServicesSection = () => {
               <h3 className="service-title">{service.title}</h3>
               <p className="service-description">{service.description}</p>
               <button className="service-learn-more">
-                <Link to="/role-selector" >
+                <Link to="/login" >
                 {service.action}
                 </Link>
               </button>
@@ -772,7 +772,7 @@ const ServicesSection = () => {
 //               </div>
 //               <h3 className="step-title">{step.title}</h3>
 //               <p className="step-description">{step.description}</p>
-//               <Link to="/role-selector" className="step-action">
+//               <Link to="/login" className="step-action">
 //                 {step.action} <i className="fas fa-arrow-right"></i>
 //               </Link>
 //             </div>
@@ -848,7 +848,7 @@ const HowItWorksSection = () => {
                   {step.action} <i className="fas fa-arrow-right"></i>
                 </a>
               ) : (
-                <Link to="/role-selector" className="step-action">
+                <Link to="/login" className="step-action">
                   {step.action} <i className="fas fa-arrow-right"></i>
                 </Link>
               )}
@@ -923,7 +923,7 @@ const FeaturesSection = () => {
                 </div>
               ))}
             </div>
-            <Link to="/role-selector" className="btn btn-primary features-cta">
+            <Link to="/login" className="btn btn-primary features-cta">
               {t('landing_ui_features_action')}
             </Link>
           </div>
@@ -1125,10 +1125,10 @@ const DoctorsSection = () => {
                   </div>
                   <p className="doctor-bio">{description}</p>
                   <div className="doctor-actions">
-                    <Link to="/role-selector" className="btn btn-primary doctor-book-button">
+                    <Link to="/login" className="btn btn-primary doctor-book-button">
                       {t('landing_ui_book_consultation')}
                     </Link>
-                    <Link to="/role-selector" className="doctor-profile-link">
+                    <Link to="/login" className="doctor-profile-link">
                       {index === 1 ? t('landing_ui_view_full_profile') : t('landing_ui_view_profile')}
                     </Link>
                   </div>
@@ -1322,7 +1322,7 @@ const CTASection = () => {
         <div className="landing-cta-card">
           <div className="landing-cta-content">
             <h2>{t('landing_ui_cta_title')}</h2>
-            <Link to="/role-selector" className="btn landing-cta-button">
+            <Link to="/login" className="btn landing-cta-button">
               {t('landing_ui_cta_action')}
             </Link>
           </div>
@@ -1596,7 +1596,7 @@ const ChatPopup = ({
           <div className="guest-chat-limit-card" role="status">
             <strong>{t('landing_chat_expired_title')}</strong>
             <span>{t('landing_chat_expired_text')}</span>
-            <Link className="guest-chat-signup-btn" to="/user-signup">
+            <Link className="guest-chat-signup-btn" to="/signup">
               {t('landing_chat_expired_cta')}
             </Link>
           </div>

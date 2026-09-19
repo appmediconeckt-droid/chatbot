@@ -80,7 +80,7 @@
 //     localStorage.clear();
 //     sessionStorage.clear();
 //     setShowLogoutConfirm(false);
-//     navigate("/role-selector", {
+//     navigate("/login", {
 //       replace: true,
 //       state: {
 //         reason: "session-expired",
@@ -118,12 +118,12 @@
 //       );
 //       localStorage.clear();
 //       setShowLogoutConfirm(false);
-//       navigate("/role-selector");
+//       navigate("/login");
 //     } catch (error) {
 //       console.error("Logout Error:", error);
 //       localStorage.clear();
 //       setShowLogoutConfirm(false);
-//       navigate("/role-selector");
+//       navigate("/login");
 //     }
 //   };
 
@@ -465,7 +465,7 @@ export default function CounselorDashboard() {
     localStorage.clear();
     sessionStorage.clear();
     setShowLogoutConfirm(false);
-    navigate("/role-selector", {
+    navigate("/login", {
       replace: true,
       state: {
         reason: "session-expired",
@@ -504,13 +504,13 @@ export default function CounselorDashboard() {
       socketService.disconnect();
       localStorage.clear();
       setShowLogoutConfirm(false);
-      navigate("/role-selector");
+      navigate("/login");
     } catch (error) {
       console.error("Logout Error:", error);
       socketService.disconnect();
       localStorage.clear();
       setShowLogoutConfirm(false);
-      navigate("/role-selector");
+      navigate("/login");
     }
   };
 
