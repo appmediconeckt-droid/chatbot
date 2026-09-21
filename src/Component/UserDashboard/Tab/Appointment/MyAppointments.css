@@ -1778,3 +1778,22 @@
   .user-appointment-person > p { font-size: 12px; }
   .user-appointment-schedule { font-size: 12px; }
 }
+
+
+/* Add to MyAppointments.css (skip if professional-role-badge is already global) */
+.professional-role-badge {
+  display: inline-block;
+  align-self: flex-start;
+  margin: 2px 0 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.5;
+  background: #eef2ff;
+  color: #4648d4;
+}
+.professional-role-badge--doctor {
+  background: #e6f7ef;
+  color: #0f8a5f;
+}

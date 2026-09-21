@@ -1,3 +1,814 @@
+// import React, { useState, useEffect } from "react";
+// import { createPortal } from "react-dom";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+// import { API_BASE_URL } from "../../../../axiosConfig";
+// import { useUserTranslation } from "../../../../i18n/LanguageContext";
+// import VideoCallModal from "../CallModal/VideoCallModal";
+// import {
+//   FaBriefcase,
+//   FaCalendarAlt,
+//   FaCheckCircle,
+//   FaClock,
+//   FaCommentDots,
+//   FaEye,
+//   FaLaptop,
+//   FaPhoneAlt,
+//   FaStopwatch,
+//   FaVideo,
+// } from "react-icons/fa";
+// import './MyAppointments.css'; // Import the CSS file for styling
+// const MyAppointments = () => {
+//   const { t, lang } = useUserTranslation();
+//   const navigate = useNavigate();
+//   const [appointments, setAppointments] = useState([]);
+//   const [counselors, setCounselors] = useState([]);
+//   const [loading, setLoading] = useState(true);
+//   const [bookingLoading, setBookingLoading] = useState(false);
+//   const [activeTab, setActiveTab] = useState("Upcoming");
+//   const [statusFilter, setStatusFilter] = useState("All");
+//   const [selectedApt, setSelectedApt] = useState(null);
+//   const [showModal, setShowModal] = useState(false);
+//   const [showBookingModal, setShowBookingModal] = useState(false);
+//   const [selectedCounselorId, setSelectedCounselorId] = useState("");
+//   const [bookingDate, setBookingDate] = useState("");
+//   const [bookingNotes, setBookingNotes] = useState("");
+//   const [actionLoading, setActionLoading] = useState(null);
+//   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
+//   const [selectedCall, setSelectedCall] = useState(null);
+
+//   const token =
+//     localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+//   const fetchAppointments = async () => {
+//     try {
+//       const response = await axios.get(`${API_BASE_URL}/api/appointments`, {
+//         headers: { Authorization: `Bearer ${token}` },
+//       });
+//       setAppointments(Array.isArray(response.data) ? response.data : []);
+//     } catch (err) {
+//       console.error("Error fetching appointments:", err);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   useEffect(() => {
+//     fetchAppointments();
+//   }, []);
+
+//   useEffect(() => {
+//     const fetchCounselors = async () => {
+//       try {
+//         const response = await axios.get(`${API_BASE_URL}/api/auth/counsellors`);
+//         const list =
+//           response.data?.counsellors || response.data?.counselors || [];
+//         setCounselors(Array.isArray(list) ? list : []);
+//       } catch (err) {
+//         console.error("Error fetching counselors:", err);
+//       }
+//     };
+
+//     fetchCounselors();
+//   }, []);
+
+//   // Split appointments by their actual scheduled date/time. Status alone is
+//   // not reliable because an old appointment can remain pending/confirmed.
+//   const now = Date.now();
+//   const getAppointmentTimestamp = (apt) => {
+//     const timestamp = new Date(apt?.date).getTime();
+//     return Number.isNaN(timestamp) ? null : timestamp;
+//   };
+//   const isTerminalAppointment = (apt) =>
+//     ["completed", "canceled", "cancelled", "rejected"].includes(
+//       String(apt?.status || "").toLowerCase(),
+//     );
+
+//   const upcomingApts = appointments
+//     .filter((apt) => {
+//       const timestamp = getAppointmentTimestamp(apt);
+//       return timestamp !== null && timestamp > now && !isTerminalAppointment(apt);
+//     })
+//     .sort((a, b) => getAppointmentTimestamp(a) - getAppointmentTimestamp(b));
+
+//   const pastApts = appointments
+//     .filter((apt) => {
+//       const timestamp = getAppointmentTimestamp(apt);
+//       return isTerminalAppointment(apt) || (timestamp !== null && timestamp <= now);
+//     })
+//     .sort((a, b) => (getAppointmentTimestamp(b) || 0) - (getAppointmentTimestamp(a) || 0));
+//   let displayApts = activeTab === "Upcoming" ? upcomingApts : pastApts;
+
+//   // Filter by status
+//   if (statusFilter === "Pending") {
+//     displayApts = displayApts.filter((apt) => apt.status === "pending");
+//   } else if (statusFilter === "Confirmed") {
+//     displayApts = displayApts.filter((apt) => apt.status === "confirmed");
+//   } else if (statusFilter === "Completed") {
+//     displayApts = displayApts.filter((apt) => apt.status === "completed");
+//   }
+
+//   const getStatusStyle = (status) => {
+//     switch (status) {
+//       case "confirmed":
+//         return "bg-indigo-50 text-indigo-600";
+//       case "completed":
+//         return "bg-emerald-50 text-emerald-600";
+//       case "canceled":
+//         return "bg-red-50 text-red-500";
+//       default:
+//         return "bg-amber-50 text-amber-600";
+//     }
+//   };
+
+//   const getAvatarSrc = (apt) => {
+//     if (apt.counselor?.profilePhoto) {
+//       return typeof apt.counselor.profilePhoto === "string"
+//         ? apt.counselor.profilePhoto
+//         : apt.counselor.profilePhoto.url;
+//     }
+//     return `https://ui-avatars.com/api/?name=${encodeURIComponent(apt.counselor?.fullName || "C")}&background=e0e7ff&color=4648d4&bold=true`;
+//   };
+
+//   const formatAppointmentDateTime = (date) => {
+//     const appointmentDate = new Date(date);
+//     if (Number.isNaN(appointmentDate.getTime())) {
+//       return { date: t('unavailable'), time: "" };
+//     }
+
+//     return {
+//       date: appointmentDate.toLocaleDateString(lang, {
+//         weekday: "short",
+//         month: "short",
+//         day: "numeric",
+//         year: "numeric",
+//       }),
+//       time: appointmentDate.toLocaleTimeString(lang, {
+//         hour: "2-digit",
+//         minute: "2-digit",
+//       }),
+//     };
+//   };
+
+//   const resetBookingForm = () => {
+//     setSelectedCounselorId("");
+//     setBookingDate("");
+//     setBookingNotes("");
+//   };
+
+//   const handleBookNewClick = () => {
+//     resetBookingForm();
+//     setShowBookingModal(true);
+//   };
+
+//   const handleConfirmBooking = async (e) => {
+//     e.preventDefault();
+
+//     if (!selectedCounselorId) {
+//       alert(t('please_select_counselor'));
+//       return;
+//     }
+
+//     if (!bookingDate) {
+//       alert(t('please_select_date_time'));
+//       return;
+//     }
+
+//     try {
+//       setBookingLoading(true);
+//       await axios.post(
+//         `${API_BASE_URL}/api/appointments`,
+//         {
+//           counselorId: selectedCounselorId,
+//           date: bookingDate,
+//           notes: bookingNotes,
+//         },
+//         {
+//           headers: {
+//             Authorization: `Bearer ${token}`,
+//             "Content-Type": "application/json",
+//           },
+//         },
+//       );
+
+//       alert(t('appointment_booked_success'));
+//       setShowBookingModal(false);
+//       resetBookingForm();
+//       fetchAppointments();
+//     } catch (error) {
+//       console.error("Error booking appointment:", error);
+//       alert(error?.response?.data?.message || "Failed to book appointment");
+//     } finally {
+//       setBookingLoading(false);
+//     }
+//   };
+
+//   const getCounselorId = (apt) =>
+//     apt?.counselor?._id || apt?.counselor?.id || apt?.counselorId;
+
+//   const handleChat = async (apt) => {
+//     const counselorId = getCounselorId(apt);
+//     if (!counselorId) return alert("Consultant information is unavailable.");
+
+//     try {
+//       setActionLoading(`chat-${apt._id}`);
+//       const response = await axios.post(
+//         `${API_BASE_URL}/api/chat/start`,
+//         { counselorId },
+//         { headers: { Authorization: `Bearer ${token}` } },
+//       );
+//       const chatId = response.data?.chat?.id || response.data?.chatId;
+//       navigate(`/chat/${counselorId}`, {
+//         state: { chatId, counselor: apt.counselor },
+//       });
+//     } catch (error) {
+//       const existingChatId = error?.response?.data?.chatId;
+//       if (existingChatId) {
+//         navigate(`/chat/${counselorId}`, {
+//           state: { chatId: existingChatId, counselor: apt.counselor },
+//         });
+//         return;
+//       }
+//       alert(error?.response?.data?.message || "Unable to start chat. Please try again.");
+//     } finally {
+//       setActionLoading(null);
+//     }
+//   };
+
+//   const handleCall = async (apt, mode) => {
+//     const counselorId = getCounselorId(apt);
+//     const userId = localStorage.getItem("userId");
+//     if (!counselorId || !userId) return alert("Call information is unavailable. Please login again.");
+
+//     try {
+//       setActionLoading(`${mode}-${apt._id}`);
+//       const response = await axios.post(
+//         `${API_BASE_URL}/api/video/calls/initiate`,
+//         {
+//           initiatorId: userId,
+//           initiatorType: "user",
+//           receiverId: counselorId,
+//           receiverType: "counsellor",
+//           callType: mode === "voice" ? "audio" : "video",
+//         },
+//         { headers: { Authorization: `Bearer ${token}` } },
+//       );
+//       if (!response.data?.success) throw new Error(response.data?.message || "Call request failed");
+//       const callData = response.data.callData || {};
+//       setSelectedCall({
+//         id: callData.id || response.data.callId,
+//         callId: response.data.callId || callData.callId,
+//         roomId: response.data.roomId || callData.roomId,
+//         name: callData.receiver?.displayName || callData.receiver?.fullName || apt.counselor?.fullName || "Consultant",
+//         type: mode,
+//         callType: mode,
+//         status: response.data.status || "pending",
+//         profilePic: callData.receiver?.profilePhoto || apt.counselor?.profilePhoto?.url || apt.counselor?.profilePhoto || null,
+//         apiCallData: callData,
+//         initiator: callData.initiator,
+//         receiver: callData.receiver,
+//         currentUserId: userId,
+//         currentUserType: "user",
+//       });
+//       setIsCallModalOpen(true);
+//     } catch (error) {
+//       alert(error?.response?.data?.message || `Unable to start ${mode} call. Please try again.`);
+//     } finally {
+//       setActionLoading(null);
+//     }
+//   };
+
+//   const handleEndCall = async (callId) => {
+//     if (!callId) return;
+//     try {
+//       await axios.put(
+//         `${API_BASE_URL}/api/video/calls/${callId}/end`,
+//         { userId: localStorage.getItem("userId"), endedBy: "user" },
+//         { headers: { Authorization: `Bearer ${token}` } },
+//       );
+//     } catch (error) {
+//       console.warn("Could not end appointment call:", error);
+//     }
+//   };
+
+//   const renderAppointmentDetailsModal = () => {
+//     if (!showModal || !selectedApt) return null;
+
+//     const appointmentSchedule = formatAppointmentDateTime(selectedApt.date);
+//     const counselorName = selectedApt.counselor?.fullName || "Consultant";
+//     const counselorSpecialization =
+//       selectedApt.counselor?.specialization || "Mental health counselor";
+//     const appointmentStatus = selectedApt.status || "pending";
+//     const appointmentTime = new Date(selectedApt.date);
+//     const remainingMs = Math.max(0, appointmentTime.getTime() - Date.now());
+//     const remainingHours = Math.floor(remainingMs / 3600000);
+//     const remainingMinutes = Math.floor((remainingMs % 3600000) / 60000);
+//     const remainingSeconds = Math.floor((remainingMs % 60000) / 1000);
+//     const countdown = `${String(remainingHours).padStart(2, "0")}:${String(
+//       remainingMinutes,
+//     ).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+//     const appointmentMode =
+//       selectedApt.mode || selectedApt.consultationMode || "Video Call";
+//     const appointmentDuration =
+//       selectedApt.duration || selectedApt.durationMinutes || 45;
+
+//     return createPortal(
+//       <div
+//         className="appointment-detail-overlay"
+//         onClick={() => setShowModal(false)}
+//         role="dialog"
+//         aria-modal="true"
+//         aria-label="Appointment details"
+//       >
+//         <div
+//           className="appointment-detail-modal"
+//           onClick={(event) => event.stopPropagation()}
+//         >
+//           <button
+//             type="button"
+//             className="appointment-detail-close"
+//             onClick={() => setShowModal(false)}
+//             aria-label="Close appointment details"
+//           >
+//             &times;
+//           </button>
+
+//           <div className="appointment-detail-title">
+//             <h2>{t('appointment_details')}</h2>
+//           <p>{t("view_session_information")}</p>
+//           </div>
+
+//           <div className="appointment-detail-counselor">
+//             <div className="appointment-detail-avatar-wrap">
+//               <img
+//                 src={getAvatarSrc(selectedApt)}
+//                 alt={counselorName}
+//                 className="appointment-detail-avatar"
+//               />
+//             </div>
+//             <div className="appointment-detail-heading">
+//               <h3> {counselorName}</h3>
+//               <p>{counselorSpecialization}</p>
+//               <div>
+//                 <span><FaBriefcase /> {selectedApt.counselor?.experience || 0} {t('years')}</span>
+//                 <span className="rating">★ {selectedApt.counselor?.rating || 4.9}</span>
+//               </div>
+//             </div>
+//             <span className={`appointment-detail-status ${appointmentStatus}`}>
+//               <i></i>{t(appointmentStatus)}
+//             </span>
+//           </div>
+
+//           <div className="appointment-detail-countdown">
+//             <span className="countdown-icon"><FaClock /></span>
+//             <div>
+//                   <small>{t("session_starts_in")}</small>
+//               <strong>{countdown}</strong>
+//             </div>
+//             <div className="countdown-time">
+//                   <small>{t("today")}</small>
+//               <strong>{appointmentSchedule.time || "N/A"}</strong>
+//             </div>
+//           </div>
+
+//           <div className="appointment-detail-grid">
+//             <div className="appointment-detail-card">
+//               <FaCalendarAlt />
+//               <div>
+//                 <small>{t('date')}</small>
+//                 <strong>{appointmentSchedule.date}</strong>
+//               </div>
+//             </div>
+//             <div className="appointment-detail-card">
+//               <FaClock />
+//               <div>
+//                 <small>{t('time')}</small>
+//                 <strong>{appointmentSchedule.time || "N/A"}</strong>
+//               </div>
+//             </div>
+//             <div className="appointment-detail-card mode">
+//               <FaLaptop />
+//               <div>
+//                 <small>{t("mode")}</small>
+//                 <strong>{appointmentMode}</strong>
+//               </div>
+//             </div>
+//             <div className="appointment-detail-card duration">
+//               <FaStopwatch />
+//               <div>
+//                 <small>{t("duration")}</small>
+//                 <strong>{appointmentDuration} {t('minutes')}</strong>
+//               </div>
+//             </div>
+//           </div>
+
+//           <div className="appointment-detail-actions">
+//             <button
+//               type="button"
+//               className="appointment-detail-action join"
+//               onClick={() => handleCall(selectedApt, "video")}
+//               disabled={actionLoading === `video-${selectedApt._id}`}
+//             >
+//               <FaVideo />
+//               {actionLoading === `video-${selectedApt._id}` ? t('loading') : t('start_video_call')}
+//             </button>
+//             <button
+//               type="button"
+//               className="appointment-detail-action secondary"
+//               onClick={() => handleChat(selectedApt)}
+//               disabled={actionLoading === `chat-${selectedApt._id}`}
+//             >
+//               <FaCommentDots />
+//               {actionLoading === `chat-${selectedApt._id}` ? t('loading') : t('chat')}
+//             </button>
+//             <button
+//               type="button"
+//               className="appointment-detail-action primary"
+//               onClick={() => handleCall(selectedApt, "voice")}
+//               disabled={actionLoading === `voice-${selectedApt._id}`}
+//             >
+//               <FaPhoneAlt />
+//               {actionLoading === `voice-${selectedApt._id}` ? t('loading') : t('voice_call')}
+//             </button>
+//           </div>
+//         </div>
+//       </div>,
+//       document.body,
+//     );
+//   };
+
+//   return (
+//     <div
+//       className="user-appointments-page flex w-full gap-0 min-h-screen"
+//       style={{ fontFamily: "'Manrope', sans-serif" }}
+//     >
+//       {/* ── Main Content ── */}
+//       <main className="flex-1 p-4 sm:p-8 min-w-0">
+//         {/* Header */}
+//         <header className="user-appointments-hero">
+//           <div>
+//             <h1>{t('my_appointments')}</h1>
+//           <p>{t("appointments_subtitle")}</p>
+//           </div>
+//         </header>
+
+//         <div className="user-appointments-filterbar">
+//           <div className="user-appointments-status-pills">
+//             {[
+//               ["All", t("all")],
+//               ["Pending", t("pending")],
+//               ["Confirmed", t("confirmed")],
+//               ["Completed", t("completed")],
+//             ].map(([filter, label]) => (
+//               <button
+//                 key={filter}
+//                 type="button"
+//                 className={statusFilter === filter ? "active" : ""}
+//                 onClick={() => setStatusFilter(filter)}
+//               >
+//                 {label}
+//               </button>
+//             ))}
+//           </div>
+//           <div className="user-appointments-tabs p-1 rounded-xl flex shrink-0">
+//             <button
+//               onClick={() => setActiveTab("Upcoming")}
+//               className={`user-appointments-tab px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Upcoming" ? "active" : ""}`}
+//             >
+//               {t('upcoming')}
+//             </button>
+//             <button
+//               onClick={() => setActiveTab("Past")}
+//               className={`user-appointments-tab px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Past" ? "active" : ""}`}
+//             >
+//               {t('past')}
+//             </button>
+//           </div>
+//         </div>
+
+//         {/* Appointment Cards */}
+//         {loading ? (
+//           <div className="flex justify-center items-center py-20">
+//             <div className="user-appointments-spinner animate-spin rounded-full h-10 w-10 border-b-2"></div>
+//           </div>
+//         ) : (
+//           <div className="user-appointments-grid">
+//             {displayApts.length === 0 ? (
+//               <div className="bg-white rounded-xl p-8 sm:p-16 border border-dashed border-slate-200 text-center shadow-[0px_4px_20px_rgba(0,0,0,0.05)]">
+//                 <span className="material-symbols-outlined text-slate-300 text-5xl block mb-3">
+//                   calendar_today
+//                 </span>
+//                 <p className="text-[#464554] text-sm">
+//                   {t('no_appointments_found').replace('{tab}', activeTab.toLowerCase())}
+//                 </p>
+//               </div>
+//             ) : (
+//               displayApts.map((apt) => {
+//                 const appointmentSchedule = formatAppointmentDateTime(apt.date);
+
+//                 return (
+//                   <div
+//                   key={apt._id}
+//                   className="user-appointment-card"
+//                 >
+//                   <div className="user-appointment-profile">
+//                     <img
+//                       alt={apt.counselor?.fullName}
+//                       src={getAvatarSrc(apt)}
+//                       className="user-appointment-avatar"
+//                     />
+//                     <div className="user-appointment-person">
+//                       <h2>
+//                         {apt.counselor?.fullName || "Consultant"}
+//                         {/* <FaCheckCircle aria-label="Verified" /> */}
+//                       </h2>
+//                       <p>
+//                         {Array.isArray(apt.counselor?.specialization)
+//                           ? apt.counselor.specialization.join(" | ")
+//                           : apt.counselor?.specialization || t('medical_specialist')}
+//                       </p>
+//                       <div className="user-appointment-meta">
+//                         <span><FaBriefcase /> {apt.counselor?.experience || 0} {t('years')}</span>
+//                         <span className="rating">★ {apt.counselor?.rating || 4.9}</span>
+//                       </div>
+//                     </div>
+//                     <span className={`user-appointment-status ${apt.status || "pending"}`}>
+//                       <i></i>{t(apt.status || "pending")}
+//                     </span>
+//                   </div>
+
+//                   <div className="user-appointment-schedule">
+//                     <FaCalendarAlt aria-hidden="true" />
+//                     <span>{appointmentSchedule.date}</span>
+//                     <b></b>
+//                     <FaClock aria-hidden="true" />
+//                     <span>{appointmentSchedule.time}</span>
+//                   </div>
+
+//                     <div className="user-appointment-actions">
+//                       <button
+//                         className="user-appointment-action secondary"
+//                         onClick={() => {
+//                           setSelectedApt(apt);
+//                           setShowModal(true);
+//                         }}
+//                       >
+//                         <FaEye aria-hidden="true" />
+//                         {t('view_details')}
+//                       </button>
+//                       <button
+//                         className="user-appointment-action icon"
+//                         onClick={() => handleCall(apt, "video")}
+//                         disabled={actionLoading === `video-${apt._id}`}
+//                         title="Video Call"
+//                         aria-label="Video Call"
+//                       >
+//                         <FaVideo aria-hidden="true" />
+//                       </button>
+//                       <button
+//                         className="user-appointment-action icon"
+//                         onClick={() => handleCall(apt, "voice")}
+//                         disabled={actionLoading === `voice-${apt._id}`}
+//                         title="Voice Call"
+//                         aria-label="Voice Call"
+//                       >
+//                         <FaPhoneAlt aria-hidden="true" />
+//                       </button>
+//                       <button
+//                         className="user-appointment-action icon"
+//                         onClick={() => handleChat(apt)}
+//                         disabled={actionLoading === `chat-${apt._id}`}
+//                         title="Chat"
+//                         aria-label="Chat"
+//                       >
+//                         <FaCommentDots aria-hidden="true" />
+//                       </button>
+//                       {/* Appointment Details Modal */}
+//                       {false && showModal && selectedApt && (
+//                         <div
+//                           style={{
+//                             position: "fixed",
+//                             top: 0,
+//                             left: 0,
+//                             width: "100vw",
+//                             height: "100vh",
+//                             background: "rgba(0,0,0,0.3)",
+//                             zIndex: 1000,
+//                             display: "flex",
+//                             alignItems: "center",
+//                             justifyContent: "center",
+//                           }}
+//                         >
+//                           <div
+//                             style={{
+//                               background: "white",
+//                               borderRadius: "16px",
+//                               padding: "32px",
+//                               minWidth: "320px",
+//                               maxWidth: "90vw",
+//                               boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
+//                               position: "relative",
+//                             }}
+//                           >
+//                             <button
+//                               onClick={() => setShowModal(false)}
+//                               style={{
+//                                 position: "absolute",
+//                                 top: 16,
+//                                 right: 16,
+//                                 background: "transparent",
+//                                 border: "none",
+//                                 fontSize: 20,
+//                                 cursor: "pointer",
+//                                 color: "#64748b",
+//                               }}
+//                               aria-label="Close"
+//                             >
+//                               ×
+//                             </button>
+//                             <h2
+//                               style={{
+//                                 fontSize: 22,
+//                                 fontWeight: 700,
+//                                 marginBottom: 16,
+//                                 color: "#0b1c30",
+//                               }}
+//                             >
+//                               {t('appointment_details')}
+//                             </h2>
+//                             <div style={{ marginBottom: 12 }}>
+//                               <strong>{t('date')}:</strong>{" "}
+//                               {new Date(selectedApt.date).toLocaleDateString(
+//                                 "en-US",
+//                                 {
+//                                   month: "short",
+//                                   day: "numeric",
+//                                   year: "numeric",
+//                                 },
+//                               )}
+//                             </div>
+//                             <div style={{ marginBottom: 12 }}>
+//                               <strong>{t('time')}:</strong>{" "}
+//                               {new Date(selectedApt.date).toLocaleTimeString(
+//                                 [],
+//                                 { hour: "2-digit", minute: "2-digit" },
+//                               )}
+//                             </div>
+//                             <div style={{ marginBottom: 12 }}>
+//                               <strong>{t('reason')}:</strong>{" "}
+//                               {selectedApt.notes || "N/A"}
+//                             </div>
+//                             {/* Add more fields as needed */}
+//                           </div>
+//                         </div>
+//                       )}
+//                     </div>
+//                   </div>
+//                 );
+//               })
+//             )}
+//           </div>
+//         )}
+
+//         {renderAppointmentDetailsModal()}
+
+//         <VideoCallModal
+//           isOpen={isCallModalOpen}
+//           onClose={() => {
+//             setIsCallModalOpen(false);
+//             setSelectedCall(null);
+//           }}
+//           callData={selectedCall}
+//           callMode={selectedCall?.callType || selectedCall?.type}
+//           currentUser={{ id: localStorage.getItem("userId"), role: "user" }}
+//           onEndCall={handleEndCall}
+//         />
+
+//         {/* Promo Banner */}
+//         <section className="user-appointments-promo relative overflow-hidden rounded-2xl p-8 text-white">
+//           <div className="relative z-10 md:w-2/3">
+//             <h2 className="text-2xl font-[600] mb-2">{t('need_checkup')}</h2>
+//             <p className="opacity-90 mb-6 text-[16px]">
+//               {t('checkup_description')}
+//             </p>
+//             <button
+//               onClick={handleBookNewClick}
+//               className="user-appointments-book-button bg-white px-8 py-3 rounded-xl font-bold shadow-lg transition-colors active:scale-95"
+//             >
+//               {t('book_new_appointment')}
+//             </button>
+//           </div>
+//           <div className="absolute right-[-10%] top-[-50%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+//           <div className="absolute right-[5%] bottom-[-20%] w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
+//           <span className="material-symbols-outlined absolute right-12 top-1/2 -translate-y-1/2 text-[140px] opacity-10">
+//             health_and_safety
+//           </span>
+//         </section>
+
+//         {showBookingModal && (
+//           <div
+//             className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 p-4"
+//             onClick={() => setShowBookingModal(false)}
+//           >
+//             <div
+//               className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
+//               onClick={(e) => e.stopPropagation()}
+//             >
+//               <div className="flex items-start justify-between gap-4 mb-5">
+//                 <div>
+//                   <h2 className="text-2xl font-bold text-[#0b1c30]">
+//                     {t('book_new_appointment_modal')}
+//                   </h2>
+//                   <p className="text-sm text-slate-500 mt-1">
+//                     {t('choose_counselor_text')}
+//                   </p>
+//                 </div>
+//                 <button
+//                   onClick={() => setShowBookingModal(false)}
+//                   className="text-slate-400 hover:text-slate-700 text-2xl leading-none"
+//                   aria-label="Close booking modal"
+//                 >
+//                   ×
+//                 </button>
+//               </div>
+
+//               <form onSubmit={handleConfirmBooking} className="space-y-4">
+//                 <div>
+//                   <label className="block text-sm font-bold text-[#0b1c30] mb-2">
+//                     {t('counselor_label')}
+//                   </label>
+//                   <select
+//                     value={selectedCounselorId}
+//                     onChange={(e) => setSelectedCounselorId(e.target.value)}
+//                     className="user-booking-input w-full rounded-xl border px-4 py-3 text-[#0b1c30] focus:outline-none"
+//                     required
+//                   >
+//                     <option value="">{t('select_counselor')}</option>
+//                     {counselors.map((counselor) => (
+//                       <option
+//                         key={counselor._id || counselor.id}
+//                         value={counselor._id || counselor.id}
+//                       >
+//                         Dr. {counselor.fullName || counselor.name || "Consultant"}
+//                         {counselor.specialization?.length
+//                           ? ` - ${Array.isArray(counselor.specialization) ? counselor.specialization.join(", ") : counselor.specialization}`
+//                           : ""}
+//                       </option>
+//                     ))}
+//                   </select>
+//                 </div>
+
+//                 <div>
+//                   <label className="block text-sm font-bold text-[#0b1c30] mb-2">
+//                     {t('date_and_time')}
+//                   </label>
+//                   <input
+//                     type="datetime-local"
+//                     value={bookingDate}
+//                     onChange={(e) => setBookingDate(e.target.value)}
+//                     className="user-booking-input w-full rounded-xl border px-4 py-3 text-[#0b1c30] focus:outline-none"
+//                     required
+//                   />
+//                 </div>
+
+//                 <div>
+//                   <label className="block text-sm font-bold text-[#0b1c30] mb-2">
+//                     {t('clinical_notes_reason')}
+//                   </label>
+//                   <textarea
+//                     value={bookingNotes}
+//                     onChange={(e) => setBookingNotes(e.target.value)}
+//                     placeholder={t('share_to_discuss')}
+//                     className="user-booking-input min-h-[110px] w-full rounded-xl border px-4 py-3 text-[#0b1c30] focus:outline-none"
+//                     required
+//                   />
+//                 </div>
+
+//                 <div className="user-booking-notice rounded-xl p-4 text-sm">
+//                   {t('appointment_confirmation')}
+//                 </div>
+
+//                 <button
+//                   type="submit"
+//                   disabled={bookingLoading}
+//                   className="user-booking-submit w-full rounded-xl px-5 py-3 font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+//                 >
+//                   {bookingLoading ? t('booking_button') : t('confirm_appointment')}
+//                 </button>
+//               </form>
+//             </div>
+//           </div>
+//         )}
+//       </main>
+
+//       {/* ── Right Sidebar: Today's Schedule ── */}
+      
+//     </div>
+//   );
+// };
+
+// export default MyAppointments;
+
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import axios from "axios";
@@ -20,6 +831,10 @@ import {
 import './MyAppointments.css'; // Import the CSS file for styling
 const MyAppointments = () => {
   const { t, lang } = useUserTranslation();
+  const tr = (key, fallback) => {
+    const value = t(key);
+    return value && value !== key ? value : fallback;
+  };
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [counselors, setCounselors] = useState([]);
@@ -71,6 +886,112 @@ const MyAppointments = () => {
 
     fetchCounselors();
   }, []);
+
+  // Role of the professional this appointment was booked with
+  // (Doctor / Consultant). Falls back to the counselors list if the
+  // appointment payload does not include `role`.
+  const getProfessionalRole = (apt) => {
+    const counselorId =
+      apt?.counselor?._id || apt?.counselor?.id || apt?.counselorId;
+    const fromList = counselors.find(
+      (c) => String(c._id || c.id) === String(counselorId),
+    )?.role;
+    const rawRole = String(
+      apt?.counselor?.role || apt?.doctor?.role || apt?.role || fromList || "",
+    )
+      .trim()
+      .toLowerCase();
+    const isDoctor = rawRole === "doctor";
+    return {
+      isDoctor,
+      label: isDoctor
+        ? tr("professional_role_doctor", "Doctor")
+        : tr("professional_role_consultant", "Consultant"),
+    };
+  };
+
+  const renderRoleBadge = (apt) => {
+    const { isDoctor, label } = getProfessionalRole(apt);
+    return (
+      <span
+        className={`professional-role-badge ${isDoctor ? "professional-role-badge--doctor" : ""}`}
+      >
+        {label}
+      </span>
+    );
+  };
+
+  // Consultation mode chosen while booking (Video Call / Voice Call / Chat /
+  // In-Person...). The backend field name can differ, so check every likely key
+  // (also inside nested objects) and never default to "Video Call".
+  const MODE_KEYS = [
+    "consultationMode",
+    "consultation_mode",
+    "consultationType",
+    "consultation_type",
+    "appointmentMode",
+    "appointment_mode",
+    "appointmentType",
+    "appointment_type",
+    "modeOfConsultation",
+    "sessionType",
+    "session_type",
+    "callType",
+    "mode",
+    "type",
+  ];
+  const MODE_NESTED = ["slot", "booking", "details", "appointmentDetails", "meta"];
+
+  const normalizeModeValue = (value) => {
+    if (value === null || value === undefined) return "";
+    if (Array.isArray(value)) {
+      return value.map(normalizeModeValue).filter(Boolean).join(", ");
+    }
+    if (typeof value === "object") {
+      return normalizeModeValue(
+        value.label || value.name || value.mode || value.type || value.value,
+      );
+    }
+    const raw = String(value).trim();
+    if (!raw) return "";
+    const key = raw.toLowerCase().replace(/[\s_-]+/g, "");
+    if (["video", "videocall", "videoconsultation", "videoconsult"].includes(key))
+      return tr("video_call", "Video Call");
+    if (["voice", "audio", "voicecall", "audiocall", "call", "phone", "phonecall"].includes(key))
+      return tr("voice_call", "Voice Call");
+    if (["chat", "message", "messaging", "text", "chatconsultation"].includes(key))
+      return tr("chat", "Chat");
+    if (["inperson", "clinic", "clinicvisit", "offline", "physical", "visit", "onsite"].includes(key))
+      return tr("in_person", "In-Person");
+    if (key === "online") return tr("online", "Online");
+    // Unknown value (e.g. "In-Clinic Visit"): show it as entered
+    if (raw.includes("_")) {
+      return raw.replace(/_+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    }
+    return raw;
+  };
+
+  const getAppointmentMode = (apt) => {
+    const sources = [apt, ...MODE_NESTED.map((k) => apt?.[k])].filter(
+      (src) => src && typeof src === "object",
+    );
+    for (const src of sources) {
+      for (const key of MODE_KEYS) {
+        const label = normalizeModeValue(src[key]);
+        if (label) return label;
+      }
+    }
+    // Backend stores the chosen mode inside notes, e.g.
+    // "Consultation: In-Clinic Visit at <clinic>. Location: ..."
+    const notesMatch = String(apt?.notes || "").match(
+      /Consultation:\s*([^.]*?)(?:\s+at\s+|\.|$)/i,
+    );
+    if (notesMatch?.[1]) {
+      const label = normalizeModeValue(notesMatch[1]);
+      if (label) return label;
+    }
+    return "N/A";
+  };
 
   // Split appointments by their actual scheduled date/time. Status alone is
   // not reliable because an old appointment can remain pending/confirmed.
@@ -209,6 +1130,7 @@ const MyAppointments = () => {
   const handleChat = async (apt) => {
     const counselorId = getCounselorId(apt);
     if (!counselorId) return alert("Consultant information is unavailable.");
+    if (getProfessionalRole(apt).isDoctor) return; // no chat with doctors
 
     try {
       setActionLoading(`chat-${apt._id}`);
@@ -307,8 +1229,7 @@ const MyAppointments = () => {
     const countdown = `${String(remainingHours).padStart(2, "0")}:${String(
       remainingMinutes,
     ).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
-    const appointmentMode =
-      selectedApt.mode || selectedApt.consultationMode || "Video Call";
+    const appointmentMode = getAppointmentMode(selectedApt);
     const appointmentDuration =
       selectedApt.duration || selectedApt.durationMinutes || 45;
 
@@ -348,6 +1269,7 @@ const MyAppointments = () => {
             </div>
             <div className="appointment-detail-heading">
               <h3> {counselorName}</h3>
+              {renderRoleBadge(selectedApt)}
               <p>{counselorSpecialization}</p>
               <div>
                 <span><FaBriefcase /> {selectedApt.counselor?.experience || 0} {t('years')}</span>
@@ -412,15 +1334,17 @@ const MyAppointments = () => {
               <FaVideo />
               {actionLoading === `video-${selectedApt._id}` ? t('loading') : t('start_video_call')}
             </button>
-            <button
-              type="button"
-              className="appointment-detail-action secondary"
-              onClick={() => handleChat(selectedApt)}
-              disabled={actionLoading === `chat-${selectedApt._id}`}
-            >
-              <FaCommentDots />
-              {actionLoading === `chat-${selectedApt._id}` ? t('loading') : t('chat')}
-            </button>
+            {!getProfessionalRole(selectedApt).isDoctor && (
+              <button
+                type="button"
+                className="appointment-detail-action secondary"
+                onClick={() => handleChat(selectedApt)}
+                disabled={actionLoading === `chat-${selectedApt._id}`}
+              >
+                <FaCommentDots />
+                {actionLoading === `chat-${selectedApt._id}` ? t('loading') : t('chat')}
+              </button>
+            )}
             <button
               type="button"
               className="appointment-detail-action primary"
@@ -522,6 +1446,7 @@ const MyAppointments = () => {
                         {apt.counselor?.fullName || "Consultant"}
                         {/* <FaCheckCircle aria-label="Verified" /> */}
                       </h2>
+                      {renderRoleBadge(apt)}
                       <p>
                         {Array.isArray(apt.counselor?.specialization)
                           ? apt.counselor.specialization.join(" | ")
@@ -574,93 +1499,16 @@ const MyAppointments = () => {
                       >
                         <FaPhoneAlt aria-hidden="true" />
                       </button>
-                      <button
-                        className="user-appointment-action icon"
-                        onClick={() => handleChat(apt)}
-                        disabled={actionLoading === `chat-${apt._id}`}
-                        title="Chat"
-                        aria-label="Chat"
-                      >
-                        <FaCommentDots aria-hidden="true" />
-                      </button>
-                      {/* Appointment Details Modal */}
-                      {false && showModal && selectedApt && (
-                        <div
-                          style={{
-                            position: "fixed",
-                            top: 0,
-                            left: 0,
-                            width: "100vw",
-                            height: "100vh",
-                            background: "rgba(0,0,0,0.3)",
-                            zIndex: 1000,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                          }}
+                      {!getProfessionalRole(apt).isDoctor && (
+                        <button
+                          className="user-appointment-action icon"
+                          onClick={() => handleChat(apt)}
+                          disabled={actionLoading === `chat-${apt._id}`}
+                          title="Chat"
+                          aria-label="Chat"
                         >
-                          <div
-                            style={{
-                              background: "white",
-                              borderRadius: "16px",
-                              padding: "32px",
-                              minWidth: "320px",
-                              maxWidth: "90vw",
-                              boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-                              position: "relative",
-                            }}
-                          >
-                            <button
-                              onClick={() => setShowModal(false)}
-                              style={{
-                                position: "absolute",
-                                top: 16,
-                                right: 16,
-                                background: "transparent",
-                                border: "none",
-                                fontSize: 20,
-                                cursor: "pointer",
-                                color: "#64748b",
-                              }}
-                              aria-label="Close"
-                            >
-                              ×
-                            </button>
-                            <h2
-                              style={{
-                                fontSize: 22,
-                                fontWeight: 700,
-                                marginBottom: 16,
-                                color: "#0b1c30",
-                              }}
-                            >
-                              {t('appointment_details')}
-                            </h2>
-                            <div style={{ marginBottom: 12 }}>
-                              <strong>{t('date')}:</strong>{" "}
-                              {new Date(selectedApt.date).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                },
-                              )}
-                            </div>
-                            <div style={{ marginBottom: 12 }}>
-                              <strong>{t('time')}:</strong>{" "}
-                              {new Date(selectedApt.date).toLocaleTimeString(
-                                [],
-                                { hour: "2-digit", minute: "2-digit" },
-                              )}
-                            </div>
-                            <div style={{ marginBottom: 12 }}>
-                              <strong>{t('reason')}:</strong>{" "}
-                              {selectedApt.notes || "N/A"}
-                            </div>
-                            {/* Add more fields as needed */}
-                          </div>
-                        </div>
+                          <FaCommentDots aria-hidden="true" />
+                        </button>
                       )}
                     </div>
                   </div>
@@ -749,7 +1597,8 @@ const MyAppointments = () => {
                         key={counselor._id || counselor.id}
                         value={counselor._id || counselor.id}
                       >
-                        Dr. {counselor.fullName || counselor.name || "Consultant"}
+                        {String(counselor.role || "").toLowerCase() === "doctor" ? "Dr. " : ""}
+                        {counselor.fullName || counselor.name || "Consultant"}
                         {counselor.specialization?.length
                           ? ` - ${Array.isArray(counselor.specialization) ? counselor.specialization.join(", ") : counselor.specialization}`
                           : ""}
