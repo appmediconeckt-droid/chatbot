@@ -20,7 +20,7 @@ for (const role of ["user", "doctor", "counselor", "consultant", "counsellor"]) 
     assert.equal(localStorage.getItem("userRole"), role);
     assert.equal(localStorage.getItem("userType"), role);
     assert.equal(JSON.parse(localStorage.getItem("userData")).role, role);
-    assert.equal(session.path, role === "user" ? "/user-dashboard" : "/counselor-dashboard");
+    assert.equal(session.path, role === "user" ? "/user-dashboard" : role === "doctor" ? "/doctordashboard" : "/counselor-dashboard");
     assert.equal(dashboardForRole(role), session.path);
   });
 }

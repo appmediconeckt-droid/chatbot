@@ -196,7 +196,7 @@ export default function NotificationPage() {
     try {
       setStatus("loading");
       setError("");
-      const response = await axios.get(`${NOTIFICATION_BASE_URL}/${userId}/${userRole}`, {
+      const response = await axios.get(NOTIFICATION_BASE_URL, {
         headers: getAuthHeaders(),
         signal,
       });
@@ -223,7 +223,7 @@ export default function NotificationPage() {
     );
 
     try {
-      await axios.put(`${NOTIFICATION_BASE_URL}/${id}/read`, {}, { headers: getAuthHeaders() });
+      await axios.patch(`${NOTIFICATION_BASE_URL}/${id}/read`, {}, { headers: getAuthHeaders() });
     } catch (err) {
       setNotifications(current);
       alert(err.response?.data?.message || err.response?.data?.error || "Failed to mark notification as read");
@@ -237,9 +237,9 @@ export default function NotificationPage() {
     if (!userId) return;
 
     try {
-      await axios.put(
-        `${NOTIFICATION_BASE_URL}/mark-all-read`,
-        { user_id: userId, user_role: userRole },
+      await axios.patch(
+        `${NOTIFICATION_BASE_URL}/read-all`,
+        {},
         { headers: getAuthHeaders() }
       );
     } catch (err) {

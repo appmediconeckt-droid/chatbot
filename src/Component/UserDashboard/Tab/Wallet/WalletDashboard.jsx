@@ -36,6 +36,7 @@ const WalletDashboard = ({ userData }) => {
     const [refundForm, setRefundForm] = useState({ accountName: '', accountNumber: '', ifsc: '', bankName: '' });
     const [refundLoading, setRefundLoading] = useState(false);
     const [balance, setBalance] = useState(0);
+    const [paymentNotice, setPaymentNotice] = useState('');
     const [transactions, setTransactions] = useState([]);
     const [spendingSummary, setSpendingSummary] = useState({ total: 0, breakdown: [] });
     const [loading, setLoading] = useState(false);
@@ -97,6 +98,9 @@ const WalletDashboard = ({ userData }) => {
                         orderId: tx.razorpayOrderId,
                         paymentId: tx.razorpayPaymentId || undefined
                     });
+                    if (recovery.data?.pending) {
+                        setPaymentNotice(recovery.data.message || 'Payment confirmation is pending. Your wallet has not been credited yet.');
+                    }
                     if (recovery.data?.success) {
                         didRecoverPayment = true;
                         setBalance(recovery.data.balance);
@@ -584,7 +588,7 @@ const WalletDashboard = ({ userData }) => {
                 <h1>{t("your_wallet")}</h1>
                 <p>{t("wallet_tracking_subtitle")}</p>
             </header>
-
+            {paymentNotice && <p className="wallet-payment-notice" role="status">{paymentNotice}</p>}
             <main className="wallet-layout">
                 <div className="wallet-main">
                     <section className="wallet-balance-card">

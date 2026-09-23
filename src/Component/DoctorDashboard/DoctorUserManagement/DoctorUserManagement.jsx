@@ -544,7 +544,7 @@ const DoctorUserManagement = () => {
 
     try {
       if (staff.rawId) {
-        await axios.delete(`${API_BASE_URL}/users/${staff.rawId}`, { headers: getAuthHeaders() });
+        await axios.delete(`${API_BASE_URL}/staff/${staff.rawId}`, { headers: getAuthHeaders() });
       }
       setStaffRows((currentRows) => currentRows.filter((row) => row.id !== staff.id));
     } catch (error) {
@@ -557,7 +557,7 @@ const DoctorUserManagement = () => {
 
     try {
       if (staff.rawId) {
-        await axios.put(`${API_BASE_URL}/users/${staff.rawId}`, { status: "Suspended" }, { headers: getAuthHeaders() });
+        await axios.put(`${API_BASE_URL}/staff/${staff.rawId}`, { status: "Suspended", isActive: false }, { headers: getAuthHeaders() });
       }
     } catch (error) {
       alert(error.response?.data?.message || "Staff suspend nahi ho paya.");
@@ -583,7 +583,7 @@ const DoctorUserManagement = () => {
     try {
       if (editingStaff.rawId) {
         await axios.put(
-          `${API_BASE_URL}/users/${editingStaff.rawId}`,
+          `${API_BASE_URL}/staff/${editingStaff.rawId}`,
           {
             full_name: editForm.name,
             name: editForm.name,
@@ -592,6 +592,7 @@ const DoctorUserManagement = () => {
             role: editForm.role,
             shift: editForm.shift,
             status: editForm.status,
+            isActive: editForm.status === "Active",
           },
           { headers: getAuthHeaders() }
         );

@@ -1664,7 +1664,9 @@ const DoctorCalendar = () => {
 
     setSelectedDays([]);
     setRecurringWeekdays([]);
-    setAvailabilityDateMap({});
+    setAvailabilityDateMap((current) => Object.fromEntries(
+      Object.entries(current).filter(([, value]) => value.blocked).map(([date, value]) => [date, { ...value, ranges: [] }])
+    ));
     setAvailabilityWeekdayMap({});
     setSlotPreview([]);
     setEditingTarget(null);

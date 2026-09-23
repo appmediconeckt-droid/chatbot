@@ -31,7 +31,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [step, setStep] = useState('select'); // 'select' | 'payment' | 'success'
   const [paymentMethod, setPaymentMethod] = useState('Cash');
-  const [token, setToken] = useState(() => Math.floor(Math.random() * 20) + 1);
+  const [token, setToken] = useState(null);
   const [apiClinics, setApiClinics] = useState([]);
   const [clinicsLoading, setClinicsLoading] = useState(false);
 
@@ -168,7 +168,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     setSelectedTime(null);
 
     const params = { doctor_id: doctorId };
-    if (selectedClinicId && typeof selectedClinicId === 'string' && selectedClinicId.length === 24) {
+    if (selectedClinicId) {
       params.clinic_id = selectedClinicId;
     }
 
@@ -215,7 +215,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     return availabilityRanges.filter((range) => {
       const rangeDate = String(range.date || range.availability_date || '').slice(0, 10);
       const recurrence = String(range.recurrence || '').toLowerCase();
-      return rangeDate === iso || (recurrence !== 'date' && Number(range.weekday) === weekday);
+      if (range.is_unavailable === true || Number(range.is_unavailable) === 1) return false;
+      return rangeDate ? rangeDate === iso : (recurrence !== 'date' && range.weekday != null && range.weekday !== '' && Number(range.weekday) === weekday);
     });
   };
 
@@ -243,14 +244,6 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
           slots.set(cursor, { time: formatMinutes(cursor), minutes: cursor, disabled: false });
         }
       });
-    } else if (hasClinics && availabilityRanges.length === 0) {
-      // If doctor hasn't configured custom ranges yet, offer standard clinic consultation hours
-      const defaultStart = 9 * 60; // 09:00 AM
-      const defaultEnd = 17 * 60;  // 05:00 PM
-      const duration = 30;
-      for (let cursor = defaultStart; cursor + duration <= defaultEnd; cursor += duration) {
-        slots.set(cursor, { time: formatMinutes(cursor), minutes: cursor, disabled: false });
-      }
     }
 
     return Array.from(slots.values()).sort((a, b) => a.minutes - b.minutes);
@@ -265,7 +258,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const ranges = rangesForDate(iso, d.getDay());
     // If ranges exist, status is available if ranges > 0; if no custom ranges configured, allow weekdays (Mon-Sat)
-    const isAvailable = ranges.length > 0 || (availabilityRanges.length === 0 && d.getDay() !== 0);
+    const isAvailable = ranges.length > 0;
     return {
       date: d.getDate(),
       day: dayNames[d.getDay()],
@@ -369,7 +362,6 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       consultation_mode: selectedMode.id,
       fee: totalFee,
       payment_method: paymentMethod,
-      token,
       notes: `Consultation: ${selectedMode.name} at ${selectedClinic.name}. Location: ${appointmentLocation.trim()}`,
       booking_source: 'online',
     };
@@ -380,7 +372,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       });
       const data = res.data?.data || res.data || {};
       const respToken = data.token ?? data.token_number ?? data.queue_token;
-      if (respToken != null) setToken(respToken);
+      setToken(respToken ?? null);
       setStep('success');
     } catch (err) {
       setBookError(err.response?.data?.message || err.message || 'Failed to book appointment. Please try again.');
@@ -462,7 +454,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                     <span className="abm-success-token-label"><i className="fa-solid fa-ticket"></i> Token Number</span>
                     <span className="abm-success-token-note">Arrive 15 minutes early</span>
                   </div>
-                  <span className="abm-success-token-num">#{token}</span>
+                  <span className="abm-success-token-num">{token != null ? `#${token}` : 'Pending'}</span>
                 </div>
 
                 <div className="abm-success-grid">
@@ -555,8 +547,9 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 <aside className="abm-pay-side">
                   <div className="abm-token-banner">
                     <div className="abm-token-ic"><i className="fa-solid fa-ticket"></i></div>
-                    <div className="abm-token-label">Estimated Token Number</div>
-                    <div className="abm-token-num">#{token}</div>
+                    <div className="abm-token-label">Selected Appointment Slot</div>
+                    <div className="abm-token-num">{selectedTime || 'Select a time'}</div>
+                    <div className="abm-token-note">Your token follows this slot's position in the doctor's daily schedule.</div>
                     <div className="abm-token-note"><i className="fa-regular fa-clock"></i> Arrive 15 minutes early</div>
                   </div>
 

@@ -2,14 +2,14 @@ import axios from "axios";
 
 const envApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://s5jl7g4z-5001.inc1.devtunnels.ms/";
+  "http://localhost:5002";
 if (!envApiBaseUrl) {
   throw new Error(
     "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",
   );
 }
 
-export const VITE_API_BASE_URL = envApiBaseUrl.replace(/\/+$/, "");
+export const VITE_API_BASE_URL = envApiBaseUrl.replace(/\/+$/, "").replace(/\/api$/, "");
 
 export const API_BASE_URL = VITE_API_BASE_URL;
 
@@ -17,6 +17,8 @@ const axiosInstance = axios.create({
   baseURL: VITE_API_BASE_URL,
   withCredentials: true, // ✅ MUST
 });
+// Components use the configured client for requests and cancellation checks.
+axiosInstance.isCancel = axios.isCancel;
 
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -41,7 +43,14 @@ const processQueue = (error, token = null) => {
 };
 
 axiosInstance.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const token = response.headers?.["x-new-access-token"];
+    if (token) {
+      localStorage.setItem("accessToken", token);
+      localStorage.setItem("token", token);
+    }
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
     const requestUrl = originalRequest?.url || "";
@@ -54,13 +63,14 @@ axiosInstance.interceptors.response.use(
       requestUrl.includes("/api/auth/verifyOtp") ||
       requestUrl.includes("/api/auth/logout-other-devices") ||
       requestUrl.includes("/api/auth/generateOtp") ||
-      requestUrl.includes("/api/auth/resendOtp")
+      requestUrl.includes("/api/auth/resendOtp") ||
+      requestUrl.includes("/api/auth/changePassword")
     ) {
       return Promise.reject(error);
     }
 
     // ✅ ONLY handle 401
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });

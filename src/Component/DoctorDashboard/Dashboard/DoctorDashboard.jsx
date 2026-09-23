@@ -2203,11 +2203,7 @@ const getAppointmentApiUrl = (appointment) =>
 
 const getStatusUpdatePayload = (appointment, status, extraFields = {}) => {
   if (getAppointmentSource(appointment) === "walkin") {
-    // The walk-in API accepts only lowercase booked/cancelled/completed.
-    // Starting a consultation stays `booked` on the API while the dashboard
-    // keeps the active consultation state locally.
-    const walkInStatus = status === "in-progress" ? "booked" : status.toLowerCase();
-    return { ...extraFields, status: walkInStatus };
+    return { ...extraFields, status: status.toLowerCase() };
   }
   return { ...extraFields, appointment_status: status };
 };
@@ -3637,17 +3633,26 @@ const DoctorDashboard = () => {
   // Start appointment from consent modal
   const handleStartFromConsent = async () => {
     if (!selectedAppointment) return;
-
-    const startTime = Date.now();
+    let saved;
+    try {
+      const response = await axios.patch(getAppointmentApiUrl(selectedAppointment), getStatusUpdatePayload(selectedAppointment, "in-progress"), { headers: getAuthHeaders() });
+      saved = response.data?.appointment || response.data?.data;
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Checkup could not be started.");
+      return;
+    }
+    const startTime = new Date(saved?.consultation_timing?.startedAt || saved?.consultation_started_at || Date.now()).getTime();
+    const savedPauses = saved?.consultation_timing?.pauses || [];
+    const openPause = savedPauses.find((pause) => !pause.endedAt);
     const session = {
       appt: selectedAppointment,
       startTime,
-      accumulatedPauseMs: 0,
-      pauseStartMs: null,
+      accumulatedPauseMs: savedPauses.reduce((total, pause) => total + (pause.endedAt ? Math.max(0, Date.parse(pause.endedAt) - Date.parse(pause.startedAt)) : 0), 0),
+      pauseStartMs: openPause ? Date.parse(openPause.startedAt) : null,
       breakStartMs: null,
       breakEndMs: null,
       breakDurationMs: null,
-      status: "started",
+      status: openPause ? "paused" : "started",
     };
 
     setActiveSession(session);
@@ -3657,25 +3662,19 @@ const DoctorDashboard = () => {
       )
     );
 
-    // Update appointment status in API
-    try {
-      await axios.patch(getAppointmentApiUrl(selectedAppointment), getStatusUpdatePayload(
-        selectedAppointment,
-        "in-progress"
-      ), {
-        headers: getAuthHeaders(),
-      });
-    } catch (err) {
-      console.error('Error updating appointment status:', err);
-    }
-
     setShowConsentModal(false);
     setSelectedAppointment(null);
   };
 
   // Pause / Resume
-  const handlePause = () => {
+  const handlePause = async () => {
     if (!activeSession || activeSession.status === "break") return;
+    try {
+      await axios.patch(getAppointmentApiUrl(activeSession.appt), { consultation_action: activeSession.status === "paused" ? "resume" : "pause" }, { headers: getAuthHeaders() });
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Could not update consultation timer.");
+      return;
+    }
     
     if (activeSession.status === "paused") {
       const pauseDuration = Date.now() - activeSession.pauseStartMs;
@@ -3710,6 +3709,12 @@ const DoctorDashboard = () => {
       const breakStart = new Date(serverBreak.started_at || Date.now()).getTime();
       const breakEnd = new Date(serverBreak.expected_end_at || (Date.now() + minutes * 60000)).getTime();
       const breakDurationMs = Math.max(0, breakEnd - breakStart);
+
+      // The persisted break now owns the pause interval; close a manual pause
+      // so the patient's timer resumes when that break ends.
+      if (activeSession?.appt && activeSession.status === "paused") {
+        await axios.patch(getAppointmentApiUrl(activeSession.appt), { consultation_action: "resume" }, { headers: getAuthHeaders() });
+      }
 
       if (!activeSession) {
         setActiveSession({
@@ -3845,13 +3850,6 @@ const DoctorDashboard = () => {
       additionalNotes: ""
     };
 
-    setCompleted((prev) => [completedRecord, ...prev]);
-    setAppointments((prev) =>
-      prev.filter((a) => a.id !== activeSession.appt.id)
-    );
-
-    setActiveSession(null);
-
     // Update appointment status in API
     try {
       await axios.patch(getAppointmentApiUrl(activeSession.appt), getStatusUpdatePayload(
@@ -3860,6 +3858,9 @@ const DoctorDashboard = () => {
       ), {
         headers: getAuthHeaders(),
       });
+      setCompleted((prev) => [completedRecord, ...prev]);
+      setAppointments((prev) => prev.filter((a) => a.id !== activeSession.appt.id));
+      setActiveSession(null);
       await fetchAppointments();
     } catch (err) {
       console.error('Error completing appointment:', err);
@@ -3899,16 +3900,6 @@ const DoctorDashboard = () => {
       followUpDate: formData.followUpDate || ""
     };
 
-    setCompleted((prev) => [completedRecord, ...prev]);
-    setAppointments((prev) =>
-      prev.filter((a) => a.id !== activeSession.appt.id)
-    );
-
-    setLastCompletedAppointment(completedRecord);
-    setActiveSession(null);
-    setShowCompleteModal(false);
-    setShowSummaryModal(true);
-
     const validRecommendedTests = (formData.recommendedTests || [])
       .filter((test) => test.testName?.trim())
       .map((test) => ({
@@ -3942,6 +3933,12 @@ const DoctorDashboard = () => {
       }), {
         headers: getAuthHeaders(),
       });
+      setCompleted((prev) => [completedRecord, ...prev]);
+      setAppointments((prev) => prev.filter((a) => a.id !== activeSession.appt.id));
+      setLastCompletedAppointment(completedRecord);
+      setActiveSession(null);
+      setShowCompleteModal(false);
+      setShowSummaryModal(true);
       await fetchAppointments();
     } catch (err) {
       console.error('Error completing appointment:', err);

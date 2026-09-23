@@ -9,6 +9,7 @@ import axiosInstance from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import "./TokenStatusPage.css";
+import { formatTimer, getLiveTokenTiming } from "./tokenTiming.js";
 
 const TOKEN_STATUS_ENDPOINT = "/api/appointments/my-token-status";
 const POLL_INTERVAL_MS = 10000;
@@ -86,6 +87,12 @@ const TokenStatusPage = () => {
   const [selectedAppointmentId, setSelectedAppointmentId] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [now, setNow] = useState(Date.now());
+  const [clockOffset, setClockOffset] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // Keep latest `t` in a ref so fetchTokenStatus stays stable
   const tRef = useRef(t);
@@ -123,6 +130,8 @@ const TokenStatusPage = () => {
         : [];
 
       setAppointments(list);
+      const serverTime = Date.parse(list[0]?.current?.serverTime);
+      if (Number.isFinite(serverTime)) setClockOffset(serverTime - Date.now());
       setError("");
 
       setSelectedAppointmentId((previousId) => {
@@ -223,6 +232,8 @@ const TokenStatusPage = () => {
   const currentData = selectedItem?.current || {};
   const queueData = selectedItem?.queue || {};
   const emergencyData = selectedItem?.emergency || {};
+  const liveTiming = getLiveTokenTiming(currentData, queueData, now + clockOffset);
+  const doctorStatusLabel = { consulting: "Consulting", paused: "Paused", break: "On break", waiting: "Not started" }[currentData.doctorStatus] || "Not started";
 
   return (
     <div className="token-status-page">
@@ -355,6 +366,15 @@ const TokenStatusPage = () => {
               </div>
 
               {/* Main token stats */}
+              <div className="token-live-timing" role="status">
+                {currentData.consultationStartedAt ? (
+                  <>
+                    <strong>{currentData.isYourTurn ? "Your checkup" : "Current checkup"}: {formatTimer(liveTiming.elapsed)}</strong>
+                    <p>{currentData.isYourTurn ? "The doctor is checking your appointment." : "Estimated waiting time updates as the doctor checks patients."}</p>
+                    {(currentData.doctorStatus === "paused" || currentData.doctorStatus === "break") && <p>Timer paused while the doctor is {currentData.doctorStatus === "break" ? "on break" : "paused"}.</p>}
+                  </>
+                ) : <p>The live timer starts when the doctor starts a checkup.</p>}
+              </div>
               <div className="token-stats-grid">
                 <div className="token-stat your-token">
                   <span className="token-stat-label">
@@ -403,9 +423,7 @@ const TokenStatusPage = () => {
                 <div className="token-stat">
                   <span className="token-stat-label">Estimated Wait</span>
                   <span className="token-stat-value">
-                    {queueData.estimatedWaitMinutes != null
-                      ? `${queueData.estimatedWaitMinutes} min`
-                      : "--"}
+                    {formatTimer(liveTiming.waiting)}
                   </span>
                 </div>
               </div>
@@ -421,9 +439,7 @@ const TokenStatusPage = () => {
                 <div className="token-stat">
                   <span className="token-stat-label">Doctor Status</span>
                   <span className="token-stat-value">
-                    {currentData.doctorStatus === "consulting"
-                      ? "Consulting"
-                      : "Waiting"}
+                    {doctorStatusLabel}
                   </span>
                 </div>
 

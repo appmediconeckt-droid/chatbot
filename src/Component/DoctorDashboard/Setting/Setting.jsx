@@ -232,12 +232,10 @@ export default function SettingsPage() {
       setLoading(true);
 
       await axios.post(
-        `${API_BASE_URL}/users/change-password`,
+        `${API_BASE_URL}/auth/changePassword`,
         {
-          user_id: userId,
-          current_password: passwordData.current_password,
-          new_password: passwordData.new_password,
-          confirm_password: passwordData.confirm_password,
+          oldPassword: passwordData.current_password,
+          newPassword: passwordData.new_password,
         },
         {
           headers: {
@@ -246,7 +244,9 @@ export default function SettingsPage() {
         }
       );
 
-      alert("Password changed successfully");
+      alert("Password changed successfully. Please sign in again.");
+      localStorage.clear();
+      navigate("/login");
       setShowChangePassword(false);
       setPasswordData({
         current_password: "",
@@ -270,7 +270,7 @@ export default function SettingsPage() {
     try {
       setLoading(true);
 
-      await axios.delete(`${API_BASE_URL}/users/${userId}`, {
+      await axios.delete(`${API_BASE_URL}/auth/delete`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

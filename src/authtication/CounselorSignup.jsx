@@ -2496,7 +2496,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
         {
           email: String(formData.email || "").trim().toLowerCase(),
           password: formData.password,
-          role: "counsellor",
+          // No role sent — backend uses the role stored in DB for this account
         },
         { withCredentials: true },
       );

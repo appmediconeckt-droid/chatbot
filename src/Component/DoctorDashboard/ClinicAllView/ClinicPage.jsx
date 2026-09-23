@@ -310,15 +310,11 @@ export default function ClinicPage() {
       }
 
       setResourceStatus("loading");
-      const params = { clinic_id: clinic.id };
+      const params = { clinic_id: clinic.id, doctor_id: clinic.doctorId || doctorId };
       const requestConfig = { headers: getAuthHeaders(), params, signal: controller.signal };
-      const [doctorResult, appointmentResult, departmentResult] = await Promise.allSettled([
-        axios.get(`${API_BASE_URL}/users`, {
-          ...requestConfig,
-          params: { ...params, role: "doctor" },
-        }),
+      const [doctorResult, appointmentResult] = await Promise.allSettled([
+        axios.get(`${API_BASE_URL}/auth/me`, requestConfig),
         axios.get(`${API_BASE_URL}/appointments`, requestConfig),
-        axios.get(`${API_BASE_URL}/departments`, requestConfig),
       ]);
 
       if (controller.signal.aborted) return;
@@ -331,19 +327,17 @@ export default function ClinicPage() {
       };
 
       const doctorRows = doctorResult.status === "fulfilled"
-        ? unwrapApiArray(doctorResult.value.data).filter(matchesClinic)
+        ? [doctorResult.value.data.user].filter(Boolean)
         : [];
       const appointmentRows = appointmentResult.status === "fulfilled"
         ? unwrapApiArray(appointmentResult.value.data).filter(matchesClinic)
         : [];
-      const departmentRows = departmentResult.status === "fulfilled"
-        ? unwrapApiArray(departmentResult.value.data).filter(matchesClinic)
-        : [];
+      const departmentRows = Array.isArray(clinic.raw?.departments) ? clinic.raw.departments : [];
 
       setClinicDoctors(doctorRows);
       setClinicAppointments(appointmentRows);
       setClinicDepartments(departmentRows);
-      setResourceStatus("succeeded");
+      setResourceStatus(doctorResult.status === "rejected" || appointmentResult.status === "rejected" ? "failed" : "succeeded");
     };
 
     loadClinicResources().catch((resourceError) => {
@@ -355,12 +349,12 @@ export default function ClinicPage() {
     });
 
     return () => controller.abort();
-  }, [clinic.id]);
+  }, [clinic.id, clinic.doctorId, doctorId]);
 
   const normalizedDoctors = useMemo(() => clinicDoctors.map((doctor, index) => ({
     id: doctor.id || doctor.user_id || doctor.doctor_id || doctor._id || index,
-    name: doctor.full_name || doctor.fullname || doctor.name || doctor.doctor_name || "Doctor",
-    specialty: doctor.specialization || doctor.speciality || doctor.specialty || doctor.department || "General Physician",
+    name: doctor.fullName || doctor.full_name || doctor.fullname || doctor.name || doctor.doctor_name || "Doctor",
+    specialty: (Array.isArray(doctor.specialization) ? doctor.specialization.join(", ") : doctor.specialization) || doctor.speciality || doctor.specialty || doctor.department || "General Physician",
     experience: doctor.experience || doctor.years_of_experience || doctor.experience_years || "N/A",
     rating: doctor.rating || doctor.average_rating || "N/A",
     image: getAssetUrl(doctor.profile_photo || doctor.profilePhoto || doctor.avatar || doctor.image) || DEFAULT_CLINIC_IMAGE,

@@ -24,7 +24,7 @@ export default function ProfileCard() {
         const user = stored.user || stored.data?.user || stored;
         const doctorId = user.doctor_id || user.doctorId || user.id || user._id || user.user_id || user.userId;
         if (!doctorId) throw new Error("Doctor ID not found. Please sign in again.");
-        const response = await axios.get(`${API_BASE_URL}/auth/doctor-profile/${encodeURIComponent(doctorId)}`);
+        const response = await axios.get(`${API_BASE_URL}/auth/me`);
         if (!active) return;
         const details = publicDoctorProfile(response.data?.data || response.data || {}, user);
         if (!details.name) throw new Error("Please complete your doctor profile before generating a QR.");
