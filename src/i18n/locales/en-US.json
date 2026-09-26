@@ -351,7 +351,7 @@
   "my_appointments": "My Appointments",
   "your_token_status": "Your Token Status",
   "token_page_subtitle": "View your appointment token, current serving token and live waiting status.",
-  "no_appointments": "You don't have any active appointments.",
+  "no_appointments": "You don't have any appointments yet.",
   "error_load_token": "Could not load token status.",
   "select_appointment_prompt": "Select an appointment to see your token status.",
   "your_token": "Your Token",

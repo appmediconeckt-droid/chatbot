@@ -1,8 +1,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600&family=Poppins:wght@400;500;600;700&display=swap');
 
-/* Keep typography consistent across every user-portal screen. */
+/* Keep text typography consistent without overriding icon font families. */
 .user-dashboard,
-.user-dashboard *:not(.material-symbols-outlined) {
+.user-dashboard *:not(.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons, .fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands, .fa-classic, .bi) {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
 }
 

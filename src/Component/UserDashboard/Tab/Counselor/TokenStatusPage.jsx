@@ -232,6 +232,8 @@ const TokenStatusPage = () => {
   const currentData = selectedItem?.current || {};
   const queueData = selectedItem?.queue || {};
   const emergencyData = selectedItem?.emergency || {};
+  const isTerminalAppointment = ["completed", "cancelled", "canceled", "rejected", "reject", "no-show", "no_show"].includes(appointment.status)
+    || ["completed", "cancelled", "canceled", "rejected", "reject", "no-show", "no_show"].includes(tokenData.queueStatus);
   const liveTiming = getLiveTokenTiming(currentData, queueData, now + clockOffset);
   const doctorStatusLabel = { consulting: "Consulting", paused: "Paused", break: "On break", waiting: "Not started" }[currentData.doctorStatus] || "Not started";
 
@@ -365,6 +367,12 @@ const TokenStatusPage = () => {
                 {formatAppointmentDateTime(appointment)}
               </div>
 
+              {isTerminalAppointment ? (
+                <div className="token-empty-state">
+                  <p>Appointment status: <strong>{appointment.status}</strong></p>
+                  {tokenData.myToken != null && <p>Token #{tokenData.myToken}</p>}
+                </div>
+              ) : <>
               {/* Main token stats */}
               <div className="token-live-timing" role="status">
                 {currentData.consultationStartedAt ? (
@@ -373,7 +381,7 @@ const TokenStatusPage = () => {
                     <p>{currentData.isYourTurn ? "The doctor is checking your appointment." : "Estimated waiting time updates as the doctor checks patients."}</p>
                     {(currentData.doctorStatus === "paused" || currentData.doctorStatus === "break") && <p>Timer paused while the doctor is {currentData.doctorStatus === "break" ? "on break" : "paused"}.</p>}
                   </>
-                ) : <p>The live timer starts when the doctor starts a checkup.</p>}
+                ) : <p>Estimated waiting time will appear when the doctor starts a checkup.</p>}
               </div>
               <div className="token-stats-grid">
                 <div className="token-stat your-token">
@@ -430,7 +438,7 @@ const TokenStatusPage = () => {
 
               <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
-                  <span className="token-stat-label">Expected Turn</span>
+                  <span className="token-stat-label" title="Approximate time your consultation will begin, based on the live queue.">Estimated Consultation Time</span>
                   <span className="token-stat-value">
                     {formatEstimatedTurnTime(queueData.estimatedTurnTime)}
                   </span>
@@ -472,6 +480,7 @@ const TokenStatusPage = () => {
                   </div>
                 </div>
               )}
+              </>}
 
               <button
                 type="button"

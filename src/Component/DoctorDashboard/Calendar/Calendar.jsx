@@ -308,6 +308,8 @@ const DoctorCalendar = () => {
   const [apiStatus, setApiStatus] = useState("idle");
   const [apiError, setApiError] = useState("");
   const [unavailableReason, setUnavailableReason] = useState("");
+  const [savingUnavailable, setSavingUnavailable] = useState(false);
+  const [unavailableError, setUnavailableError] = useState("");
   const currentUser = authUser || getStoredAuthUser() || {};
   const doctorId = getDoctorId(currentUser);
   const availabilityStorageKey = `doctorAvailability:${doctorId || "doctor"}:${selectedClinic?.id || "clinic"}`;
@@ -437,14 +439,7 @@ const DoctorCalendar = () => {
       ...(Array.isArray(payload?.unavailable_dates) ? payload.unavailable_dates : []),
       ...(Array.isArray(payload?.data?.unavailable_dates) ? payload.data.unavailable_dates : []),
     ];
-    const locallyBlockedDates = Object.entries(localDateMap)
-      .filter(([, info]) => Boolean(info?.blocked))
-      .map(([date, info]) => ({
-        date,
-        clinic_id: selectedClinic?.id,
-        reason: info?.reason || "",
-      }));
-    const unavailableDates = [...apiUnavailableDates, ...locallyBlockedDates];
+    const unavailableDates = apiUnavailableDates;
 
     if (!unavailableDates.length) return;
 
@@ -459,12 +454,13 @@ const DoctorCalendar = () => {
           : "";
         const belongsToSelectedClinic = itemClinicId
           ? String(itemClinicId) === String(selectedClinic?.id)
-          : Boolean(localDateMap?.[dateKey]?.blocked);
+          : true;
         if (!belongsToSelectedClinic) return;
         const info = next[dateKey] || { ranges: [], blocked: false };
         next[dateKey] = {
           ...info,
           blocked: true,
+          globalBlocked: Boolean(info.globalBlocked || !itemClinicId),
           reason: typeof item === "object" ? item.reason || item.unavailable_reason || item.note || "" : info.reason || "",
         };
       });
@@ -1288,6 +1284,7 @@ const DoctorCalendar = () => {
     setEditingTarget({ type: "date", key: dateKey, year, month, day });
     setNewRange({ start: "", end: "", duration: 15 });
     setUnavailableReason(availabilityDateMap[dateKey]?.reason || "");
+    setUnavailableError("");
     setSelectedDays([day]);
   };
 
@@ -1498,32 +1495,31 @@ const DoctorCalendar = () => {
       return;
     }
 
+    if (savingUnavailable || !selectedClinic?.id) return;
     const currentlyBlocked = Boolean(availabilityDateMap[dateKey]?.blocked);
+    const globalBlocked = Boolean(availabilityDateMap[dateKey]?.globalBlocked);
+    setSavingUnavailable(true);
+    setUnavailableError("");
     try {
+      const data = { doctor_id: doctorId, clinic_id: selectedClinic.id, date: dateKey, ...(globalBlocked ? { scope: "all" } : {}) };
       if (currentlyBlocked) {
-        await axios.delete(`${AVAILABILITY_BASE_URL}/clear-date`, {
-          headers: getAuthHeaders(),
-          data: { doctor_id: doctorId, clinic_id: selectedClinic.id, date: dateKey },
-        });
+        await axios.delete(`${AVAILABILITY_BASE_URL}/unavailable`, { headers: getAuthHeaders(), data });
       } else {
-        await axios.post(
-          `${AVAILABILITY_BASE_URL}/unavailable`,
-          { doctor_id: doctorId, clinic_id: selectedClinic.id, date: dateKey, reason: unavailableReason },
-          { headers: getAuthHeaders() }
-        );
+        await axios.post(`${AVAILABILITY_BASE_URL}/unavailable`, data, { headers: getAuthHeaders() });
       }
+      setApiError("");
+      setAvailabilityDateMap(prev => {
+        const info = prev[dateKey] || { ranges: [], blocked: false };
+        const next = { ...prev, [dateKey]: { ...info, blocked: !currentlyBlocked, globalBlocked: false, reason: "" } };
+        saveLocalAvailability(getAllLocalRanges(next), next);
+        return next;
+      });
+      setSlotPreview([]);
     } catch (error) {
-      setApiError("Unavailable date saved locally. Backend unavailable API is not available right now.");
+      setUnavailableError(error.response?.data?.message || "Availability could not be saved. Please try again.");
+    } finally {
+      setSavingUnavailable(false);
     }
-
-    setAvailabilityDateMap((prev) => {
-      const info = prev[dateKey]
-        ? { ...prev[dateKey] }
-        : { ranges: [], blocked: false };
-      const next = { ...prev, [dateKey]: { ...info, blocked: !info.blocked, reason: currentlyBlocked ? "" : unavailableReason } };
-      saveLocalAvailability(getAllLocalRanges(next), next);
-      return next;
-    });
   };
 
   const removeAllRangesForDate = async (dateKey, year, month, day) => {
@@ -1960,7 +1956,7 @@ const DoctorCalendar = () => {
             <hr />
             {activeCalendarTab === "unavailable" ? (
               <p className="calendar-empty-note">
-                Calendar me kisi date par click karke unavailable reason add karein aur date ko block/unblock karein.
+                Select a date to stop new bookings at this clinic, or restore its saved timings.
               </p>
             ) : (
               <>
@@ -2157,23 +2153,17 @@ const DoctorCalendar = () => {
               </button>
             </div>
 
-            {activeCalendarTab === "unavailable" && (
             <div className="calendar-unavailable-panel">
-              <label>
-                Unavailable reason
-                <textarea
-                  value={unavailableReason}
-                  onChange={(event) => setUnavailableReason(event.target.value)}
-                  placeholder="e.g., Emergency, leave, conference, hospital duty..."
-                  rows={3}
-                />
-              </label>
+              <p>Stop new bookings for this date at {selectedClinic?.name}. Your saved timings and existing appointments are kept.</p>
+              {availabilityDateMap[editingTarget.key]?.globalBlocked && <p>This date has an all-clinic block. Restoring it removes that block across clinics.</p>}
+              {unavailableError && <p role="alert" className="text-danger">{unavailableError}</p>}
               <button
                 type="button"
                 className={availabilityDateMap[editingTarget.key]?.blocked ? "apply-weekdays-btn" : "calendar-danger-btn"}
+                disabled={savingUnavailable || !selectedClinic?.id}
                 onClick={() => toggleBlockDate(editingTarget.key, editingTarget.year, editingTarget.month, editingTarget.day)}
               >
-                {availabilityDateMap[editingTarget.key]?.blocked ? "Mark Available Again" : "Mark Unavailable for This Date"}
+                {savingUnavailable ? "Saving..." : availabilityDateMap[editingTarget.key]?.globalBlocked ? "Remove All-Clinic Block" : availabilityDateMap[editingTarget.key]?.blocked ? "Mark Available Again" : "Mark Unavailable for This Date"}
               </button>
               {availabilityDateMap[editingTarget.key]?.blocked && (
                 <small className="calendar-unavailable-note">
@@ -2181,7 +2171,6 @@ const DoctorCalendar = () => {
                 </small>
               )}
             </div>
-            )}
 
             {activeCalendarTab === "specific" && (
             <>

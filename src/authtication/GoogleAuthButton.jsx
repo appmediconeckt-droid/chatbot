@@ -58,7 +58,11 @@ const GoogleAuthButton = ({
 
     setBusy(true);
     try {
-      const selectedRole = role === "auto" ? undefined : role || localStorage.getItem("role") || "user";
+      const roleValue = String(role || "").trim().toLowerCase();
+      const selectedRole = ["counselor", "consultant"].includes(roleValue) ? "counsellor" : roleValue;
+      if (!["user", "counsellor", "doctor"].includes(selectedRole)) {
+        throw new Error("Please select User, Consultant or Doctor before signing in with Google.");
+      }
 
       const response = await axios.post(
         `${API_BASE_URL}/api/auth/google`,

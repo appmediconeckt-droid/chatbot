@@ -1389,7 +1389,7 @@ const handleVerify = async () => {
             </div>
 
             <GoogleAuthButton
-              role={isLogin ? "auto" : "user"}
+              role="user"
               text={isLogin ? "signin_with" : "signup_with"}
               disabled={isLoading}
               gateDriven

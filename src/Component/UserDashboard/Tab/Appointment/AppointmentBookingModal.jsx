@@ -1,3 +1,5 @@
+import { getClinicSchedule } from "./clinicSchedule.js";
+import { canSendEmergency, emergencyBookingPayload } from "./emergencyBooking.js";
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -21,6 +23,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
+  const [appointmentPriority, setAppointmentPriority] = useState('normal');
+  const [emergencyReason, setEmergencyReason] = useState('');
+  const isEmergency = appointmentPriority === 'emergency';
+  const todayIndia = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
   const [clinicOpen, setClinicOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [selectedClinicId, setSelectedClinicId] = useState(null);
@@ -32,6 +38,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const [step, setStep] = useState('select'); // 'select' | 'payment' | 'success'
   const [paymentMethod, setPaymentMethod] = useState('Cash');
   const [token, setToken] = useState(null);
+  const [requestId, setRequestId] = useState('');
   const [apiClinics, setApiClinics] = useState([]);
   const [clinicsLoading, setClinicsLoading] = useState(false);
 
@@ -120,8 +127,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     name: c.clinic_name || c.name || 'Clinic',
     address: c.location || c.address || c.city || 'Clinic Address',
     phone: c.phone_number || c.phone || '',
-    days: c.days || c.available_days || c.working_days || 'Mon - Fri',
-    timings: c.timings || c.hours || c.working_hours || '9:00 AM - 5:00 PM',
+    ...(availabilityLoading ? { days: 'Loading availability...', timings: 'Loading availability...' }
+      : getClinicSchedule(availabilityRanges, c._id || c.id, unavailableDates, undefined, selectedDate?.iso)),
     fee: c.fee ?? c.consultation_fee ?? c.consultationFee ?? doctor.consultationFee ?? 100,
   });
 
@@ -168,9 +175,6 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     setSelectedTime(null);
 
     const params = { doctor_id: doctorId };
-    if (selectedClinicId) {
-      params.clinic_id = selectedClinicId;
-    }
 
     // Try /api/availability/available first (public/patient endpoint)
     axios.get(`${API_BASE_URL}/api/availability/available`, {
@@ -186,7 +190,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       .catch(() => {
         // Fallback to /api/availability/ranges
         if (cancelled) return;
-        axios.get(`${API_BASE_URL}/api/availability/ranges`, {
+        return axios.get(`${API_BASE_URL}/api/availability/ranges`, {
           headers: getAuthHeaders(),
           params,
         })
@@ -207,12 +211,17 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       });
 
     return () => { cancelled = true; };
-  }, [doctorId, selectedClinicId]);
+  }, [doctorId]);
+
+  useEffect(() => {
+    setSelectedTime(null);
+  }, [selectedClinicId]);
 
   const rangesForDate = (iso, weekday) => {
-    const isUnavailable = unavailableDates.some((item) => String(item?.date || item?.unavailable_date || item).slice(0, 10) === iso);
+    const isUnavailable = unavailableDates.some((item) => (!item?.clinic_id || String(item.clinic_id) === String(selectedClinicId)) && String(item?.date || item?.unavailable_date || item).slice(0, 10) === iso);
     if (isUnavailable) return [];
     return availabilityRanges.filter((range) => {
+      if (range.clinic_id && String(range.clinic_id) !== String(selectedClinicId)) return false;
       const rangeDate = String(range.date || range.availability_date || '').slice(0, 10);
       const recurrence = String(range.recurrence || '').toLowerCase();
       if (range.is_unavailable === true || Number(range.is_unavailable) === 1) return false;
@@ -234,8 +243,9 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     // If specific ranges exist for this doctor/clinic
     if (applicableRanges.length > 0) {
       applicableRanges.forEach((range) => {
-        const [startHour, startMinute] = String(range.start_time || '09:00').split(':').map(Number);
-        const [endHour, endMinute] = String(range.end_time || '17:00').split(':').map(Number);
+        if (!range.start_time || !range.end_time) return;
+        const [startHour, startMinute] = String(range.start_time).split(':').map(Number);
+        const [endHour, endMinute] = String(range.end_time).split(':').map(Number);
         const start = startHour * 60 + (startMinute || 0);
         const end = endHour * 60 + (endMinute || 0);
         const duration = Math.max(1, Number(range.slot_duration || 15));
@@ -253,7 +263,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const calendarDates = Array.from({ length: 7 }, (_, i) => {
-    const d = new Date();
+    const d = new Date(`${todayIndia}T12:00:00`);
     d.setDate(d.getDate() + i);
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const ranges = rangesForDate(iso, d.getDay());
@@ -315,6 +325,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const patientName = patient.name.replace(' (You)', '') || 'Not Provided';
 
   const goToPayment = () => {
+    if (isEmergency) return;
     if (selectedDate && selectedTime && hasClinics && appointmentLocation.trim()) {
       setStep('payment');
     }
@@ -322,6 +333,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
   const [booking, setBooking] = useState(false);
   const [bookError, setBookError] = useState('');
+  const emergencyReady = canSendEmergency({ doctorId, clinicId: selectedClinicId, reason: emergencyReason, booking });
 
   // Convert "09:30 AM" / "01:30 PM" -> "09:30:00" / "13:30:00" for MySQL TIME
   const to24Hour = (t) => {
@@ -337,6 +349,11 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   };
 
   const confirmBooking = async () => {
+    if (booking) return;
+    if (isEmergency && !emergencyReady) {
+      setBookError('Select a clinic and describe the emergency in 10 to 1000 characters.');
+      return;
+    }
     if (!hasClinics) {
       setBookError('This doctor has no clinic available, so the appointment cannot be booked.');
       return;
@@ -347,7 +364,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     const formattedTime = to24Hour(selectedTime);
     const isoDate = `${selectedDate?.iso}T${formattedTime}+05:30`;
 
-    const payload = {
+    const payload = isEmergency ? emergencyBookingPayload({ doctorId, clinicId: selectedClinic.id, reason: emergencyReason, location: appointmentLocation || selectedClinic.address }) : {
       doctor_id: doctorId,
       counselorId: doctorId,
       patient_id: getCurrentUserId(),
@@ -364,6 +381,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       payment_method: paymentMethod,
       notes: `Consultation: ${selectedMode.name} at ${selectedClinic.name}. Location: ${appointmentLocation.trim()}`,
       booking_source: 'online',
+      priority: appointmentPriority,
+      emergency_reason: isEmergency ? emergencyReason.trim() : undefined,
     };
 
     try {
@@ -373,6 +392,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       const data = res.data?.data || res.data || {};
       const respToken = data.token ?? data.token_number ?? data.queue_token;
       setToken(respToken ?? null);
+      setRequestId(String(data._id || data.id || ''));
       setStep('success');
     } catch (err) {
       setBookError(err.response?.data?.message || err.message || 'Failed to book appointment. Please try again.');
@@ -395,8 +415,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     {
       key: 'datetime',
       icon: 'fa-calendar',
-      label: 'Date & Time',
-      value: selectedDate && selectedTime ? `${selectedDate.day}, ${selectedDate.label} • ${selectedTime}` : null,
+      label: isEmergency ? 'Emergency Request' : 'Date & Time',
+      value: isEmergency ? 'Send now — no time slot required' : selectedDate && selectedTime ? `${selectedDate.day}, ${selectedDate.label} • ${selectedTime}` : null,
       active: false,
     },
     {
@@ -417,7 +437,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       key: 'mode',
       icon: selectedMode.icon,
       label: 'Consultation Mode',
-      value: `${selectedMode.name}${selectedMode.fee > 0 ? ` +$${selectedMode.fee}` : ''}`,
+      value: isEmergency ? 'In-Clinic Visit' : `${selectedMode.name}${selectedMode.fee > 0 ? ` +$${selectedMode.fee}` : ''}`,
       active: false,
     },
     {
@@ -444,17 +464,17 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
             <div className="abm-success">
               <div className="abm-success-hero">
                 <div className="abm-success-icon"><i className="fa-solid fa-check"></i></div>
-                <h2 className="abm-success-title">Appointment Booked Successfully!</h2>
-                <p className="abm-success-sub">A confirmation notification with all the details has been generated for you.</p>
+                <h2 className="abm-success-title">{isEmergency ? 'Emergency Appointment Requested' : 'Appointment Booked Successfully!'}</h2>
+                <p className="abm-success-sub">{isEmergency ? 'Your emergency request has been sent to the clinic for the doctor and care team to review. The clinic will confirm consultation timing.' : 'A confirmation notification with all the details has been generated for you.'}</p>
               </div>
 
               <div className="abm-success-card">
                 <div className="abm-success-token">
                   <div className="abm-success-token-left">
-                    <span className="abm-success-token-label"><i className="fa-solid fa-ticket"></i> Token Number</span>
-                    <span className="abm-success-token-note">Arrive 15 minutes early</span>
+                    <span className="abm-success-token-label"><i className="fa-solid fa-ticket"></i> {isEmergency ? 'Request Status' : 'Token Number'}</span>
+                    <span className="abm-success-token-note">{isEmergency ? `Request ID: ${requestId}` : 'Arrive 15 minutes early'}</span>
                   </div>
-                  <span className="abm-success-token-num">{token != null ? `#${token}` : 'Pending'}</span>
+                  <span className="abm-success-token-num">{isEmergency ? 'Sent' : token != null ? `#${token}` : 'Pending'}</span>
                 </div>
 
                 <div className="abm-success-grid">
@@ -463,11 +483,11 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                   <div className="abm-pay-row"><span><i className="fa-solid fa-hospital"></i> Clinic</span><strong>{selectedClinic.name}</strong></div>
                   <div className="abm-pay-row"><span><i className="fa-solid fa-location-dot"></i> Location</span><strong>{appointmentLocation}</strong></div>
                   <div className="abm-pay-row"><span><i className={`fa-solid ${selectedMode.icon}`}></i> Consultation Mode</span><strong>{selectedMode.name}</strong></div>
-                  <div className="abm-pay-row"><span><i className="fa-regular fa-calendar"></i> Date</span><strong>{dateStr}</strong></div>
-                  <div className="abm-pay-row"><span><i className="fa-regular fa-clock"></i> Time</span><strong>{selectedTime}</strong></div>
+                  <div className="abm-pay-row"><span><i className="fa-regular fa-calendar"></i> Date</span><strong>{isEmergency ? 'Requested today' : dateStr}</strong></div>
+                  <div className="abm-pay-row"><span><i className="fa-regular fa-clock"></i> Time</span><strong>{isEmergency ? 'Clinic will confirm' : selectedTime}</strong></div>
                 </div>
 
-                <div className="abm-pay-row abm-pay-total abm-success-total"><span>Total Fee</span><strong>${totalFee}</strong></div>
+                {!isEmergency && <div className="abm-pay-row abm-pay-total abm-success-total"><span>Total Fee</span><strong>${totalFee}</strong></div>}
               </div>
 
               <button className="abm-confirm abm-success-btn" onClick={bookAnother}>
@@ -505,6 +525,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                   {/* Appointment summary */}
                   <div className="abm-pay-card">
                     <h3 className="abm-pay-card-title"><i className="fa-regular fa-calendar-check"></i> Appointment Summary</h3>
+                    {isEmergency && <div className="abm-emergency-summary"><strong>Emergency appointment</strong><p>{emergencyReason}</p><small>Subject to clinic confirmation.</small></div>}
                     <div className="abm-pay-rows2">
                       <div className="abm-pay-row"><span><i className="fa-solid fa-user"></i> Patient</span><strong>{patientName}</strong></div>
                       <div className="abm-pay-row"><span><i className="fa-solid fa-user-doctor"></i> Doctor</span><strong>{doctor.name}</strong></div>
@@ -657,6 +678,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                           key={c.id || c.name}
                           className={`abm-opt-card ${selectedClinicId === c.id ? 'selected' : ''}`}
                           onClick={() => {
+                            if (booking) return;
                             if (c.id) setSelectedClinicId(c.id);
                             if (c.address) setAppointmentLocation(c.address);
                             setClinicOpen(false);
@@ -679,7 +701,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 </div>
 
                 {/* Consultation Mode dropdown */}
-                <div className="abm-select">
+                {!isEmergency && <div className="abm-select">
                   <button className="abm-select-head" type="button" onClick={() => { setModeOpen(!modeOpen); setClinicOpen(false); }}>
                     <span className="abm-select-icon"><i className={`fa-solid ${selectedMode.icon}`}></i></span>
                     <span className="abm-select-headtext">
@@ -709,22 +731,38 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                       ))}
                     </div>
                   )}
-                </div>
+                </div>}
               </div>
 
+              <fieldset className="abm-priority-field" disabled={booking}>
+                <legend>Appointment Type</legend>
+                <label><input type="radio" name="appointment-priority" value="normal" checked={!isEmergency} onChange={() => { setAppointmentPriority('normal'); setSelectedTime(null); }} /> Regular appointment</label>
+                {!['counsellor', 'counselor', 'consultant'].includes(String(incoming?.role || '').toLowerCase()) &&
+                  <label><input type="radio" name="appointment-priority" value="emergency" checked={isEmergency} onChange={() => { setAppointmentPriority('emergency'); setSelectedTime(null); setSelectedModeId('in-clinic'); }} /> Emergency appointment — send now</label>}
+                {isEmergency && <div className="abm-emergency-summary">
+                  <label htmlFor="emergency-reason">Reason for emergency *</label>
+                  <textarea id="emergency-reason" value={emergencyReason} onChange={(event) => setEmergencyReason(event.target.value)} minLength={10} maxLength={1000} required rows={3} aria-describedby="emergency-booking-help" placeholder="Describe why you need an urgent appointment" />
+                  <p id="emergency-booking-help">Enter 10–1000 characters. No date, time slot or payment selection is needed. Your request alerts the doctor and the selected clinic's nurse/reception team. The clinic confirms consultation timing.</p>
+                  {bookError && <p role="alert">{bookError}</p>}
+                  <button className="abm-confirm abm-emergency-submit" type="button" disabled={!emergencyReady || clinicsLoading} onClick={confirmBooking}>
+                    {booking ? 'Sending Emergency Request...' : 'Send Emergency Request'}
+                  </button>
+                </div>}
+              </fieldset>
+
               <div className="abm-location-field">
-                <label htmlFor="appointment-location"><i className="fa-solid fa-location-dot"></i> Appointment Location</label>
+                <label htmlFor="appointment-location"><i className="fa-solid fa-location-dot"></i> {isEmergency ? 'Your Location (optional)' : 'Appointment Location'}</label>
                 <input
                   id="appointment-location"
                   type="text"
                   value={appointmentLocation}
                   onChange={(event) => setAppointmentLocation(event.target.value)}
                   placeholder="Enter area, address or clinic location"
-                  required
+                  required={!isEmergency}
                 />
               </div>
 
-              <div className="abm-main">
+              {!isEmergency && <div className="abm-main">
                 <div className="abm-section-head">
                   <h3 className="abm-section-title">Choose Appointment Date</h3>
                   <div className="abm-month-nav">
@@ -804,7 +842,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                     <i className="fa-regular fa-calendar-xmark"></i> No slots available in the next 7 days for this clinic.
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
 
             {/* Right: Booking Summary (timeline, sticky) */}
@@ -813,7 +851,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
               <div className="abm-summary-doctor">{doctor.name}</div>
 
               <div className="abm-timeline">
-                {summarySteps.map((s) => (
+                {summarySteps.filter((s) => !isEmergency || !['payment', 'review'].includes(s.key)).map((s) => (
                   <div key={s.key} className={`abm-step ${s.active ? 'active' : ''}`}>
                     <div className="abm-step-icon"><i className={`fa-solid ${s.icon}`}></i></div>
                     <div className="abm-step-body">
@@ -824,10 +862,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 ))}
               </div>
 
-              <div className="abm-total">
+              {!isEmergency && <div className="abm-total">
                 <span className="abm-total-label">Total Fee</span>
                 <span className="abm-total-amount">${totalFee}.00</span>
-              </div>
+              </div>}
 
               {!hasClinics && (
                 <p className="abm-no-clinic">
@@ -837,11 +875,11 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
               <button
                 className="abm-confirm"
-                onClick={goToPayment}
+                onClick={isEmergency ? confirmBooking : goToPayment}
                 type="button"
-                disabled={!selectedDate || !selectedTime || !hasClinics || !appointmentLocation.trim()}
+                disabled={isEmergency ? !emergencyReady || clinicsLoading : !selectedDate || !selectedTime || !hasClinics || !appointmentLocation.trim()}
               >
-                Confirm Selection <i className="fa-solid fa-arrow-right"></i>
+                {isEmergency ? booking ? 'Sending...' : 'Send Emergency Request' : 'Confirm Selection'} <i className="fa-solid fa-arrow-right"></i>
               </button>
             </aside>
 

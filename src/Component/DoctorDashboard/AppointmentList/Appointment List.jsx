@@ -3,6 +3,7 @@ import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./Appointment List.css";
+import { getAppointmentPatientDetails } from "./patientDetails.js";
 
 export default function AppointmentList() {
   const authUser = useDoctorUser();
@@ -28,7 +29,6 @@ export default function AppointmentList() {
     appointmentDate: new Date().toISOString().split("T")[0],
     appointmentTime: "",
     test: "",
-    technician: "",
     location: "",
     type: "Clinic",
     status: "Pending",
@@ -137,7 +137,6 @@ export default function AppointmentList() {
     });
   };
 
-  const getPatient = (appointment) => appointment.patient || appointment.patient_details || {};
   const getDoctor = (appointment) => appointment.doctor || appointment.doctor_details || {};
   const getClinic = (appointment) => appointment.clinic || appointment.clinic_details || {};
 
@@ -159,7 +158,6 @@ export default function AppointmentList() {
   };
 
   const normalizeAppointment = (appointment, index) => {
-    const patient = getPatient(appointment);
     const doctor = getDoctor(appointment);
     const clinic = getClinic(appointment);
 
@@ -173,12 +171,6 @@ export default function AppointmentList() {
         appointment.appointment_token ||
         appointment.appointmentToken ||
         "N/A",
-      patientName:
-        appointment.patient_name ||
-        patient.name ||
-        patient.full_name ||
-        patient.patient_name ||
-        "N/A",
       doctorName:
         appointment.doctor_name ||
         doctor.name ||
@@ -189,24 +181,15 @@ export default function AppointmentList() {
         clinic.name ||
         clinic.clinic_name ||
         "N/A",
-      phone:
-        appointment.patient_phone ||
-        appointment.phone_number ||
-        appointment.phoneNumber ||
-        appointment.phone ||
-        appointment.mobile ||
-        patient.patient_phone ||
-        patient.phone_number ||
-        patient.phoneNumber ||
-        patient.phone ||
-        patient.mobile ||
-        "N/A",
       date: formatDate(appointment.appointment_date || appointment.date || appointment.created_at),
       rawDate: formatDateForInput(appointment.appointment_date || appointment.date || appointment.created_at),
       time: formatTime(appointment.appointment_time || appointment.time || appointment.created_at),
       rawTime: appointment.appointment_time || appointment.time || appointment.created_at,
       type: normalizeType(appointment.consultation_mode || appointment.type || appointment.mode),
       status: normalizeStatus(appointment.appointment_status || appointment.status),
+      isEmergency: String(appointment.priority || '').toLowerCase() === 'emergency',
+      emergencyReason: appointment.emergency_reason || '',
+      awaitingEmergency: String(appointment.priority || '').toLowerCase() === 'emergency' && !appointment.appointment_time,
       test:
         appointment.test_name ||
         appointment.reason ||
@@ -214,18 +197,7 @@ export default function AppointmentList() {
         appointment.symptoms ||
         appointment.department ||
         normalizeType(appointment.consultation_mode || appointment.type || appointment.mode),
-      technician:
-        appointment.technician_name ||
-        appointment.staff_name ||
-        appointment.assigned_to ||
-        "Kristin",
-      location:
-        appointment.location ||
-        appointment.address ||
-        clinic.address ||
-        clinic.location ||
-        clinic.clinic_address ||
-        "N/A",
+      ...getAppointmentPatientDetails(appointment),
       paymentMethod: String(appointment.payment_method || appointment.paymentMethod || "").toLowerCase(),
       paymentAmount: appointment.payment_amount || appointment.amount_paid || appointment.consultation_fee || appointment.paymentAmount || "",
       paymentReference: appointment.payment_reference || appointment.transaction_id || appointment.upi_reference || appointment.paymentReference || "",
@@ -285,6 +257,7 @@ export default function AppointmentList() {
   };
 
   const getTimeRange = (appointment) => {
+    if (appointment.awaitingEmergency) return "Emergency — time not assigned";
     if (!appointment.rawTime || appointment.rawTime === "N/A") return appointment.time;
     const date = new Date(appointment.rawTime);
     if (Number.isNaN(date.getTime())) return appointment.time;
@@ -299,7 +272,7 @@ export default function AppointmentList() {
     const query = searchText.trim().toLowerCase();
     const matchesSearch =
       !query ||
-      [appointment.tokenNumber, appointment.patientName, appointment.phone, appointment.test, appointment.technician, appointment.location]
+      [appointment.tokenNumber, appointment.patientName, appointment.phone, appointment.test, appointment.location]
         .join(" ")
         .toLowerCase()
         .includes(query);
@@ -355,7 +328,6 @@ export default function AppointmentList() {
     appointmentDate: appointment.rawDate || new Date().toISOString().split("T")[0],
     appointmentTime: getFormTime(appointment),
     test: appointment.test === "N/A" ? "" : appointment.test,
-    technician: appointment.technician === "N/A" ? "" : appointment.technician,
     location: appointment.location === "N/A" ? "" : appointment.location,
     type: appointment.type === "N/A" ? "Clinic" : appointment.type,
     status: appointment.status || "Confirmed",
@@ -380,7 +352,6 @@ export default function AppointmentList() {
     type: form.type,
     status: form.status,
     test: form.test || form.type,
-    technician: form.technician || "N/A",
     location: form.location || "N/A",
     paymentMethod: form.paymentMethod,
     paymentAmount: form.paymentAmount,
@@ -406,7 +377,6 @@ export default function AppointmentList() {
       appointmentDate: new Date().toISOString().split("T")[0],
       appointmentTime: "",
       test: "",
-      technician: "",
       location: "",
       type: "Clinic",
       status: "Pending",
@@ -616,7 +586,6 @@ export default function AppointmentList() {
               <th>Patient</th>
               <th>Phone No</th>
               <th>Test</th>
-              <th>Technician</th>
               <th>Location</th>
               <th>Status</th>
               <th>Info</th>
@@ -626,11 +595,11 @@ export default function AppointmentList() {
           <tbody>
             {status === "loading" ? (
               <tr>
-                <td colSpan="11" className="appointment-empty">Loading appointments...</td>
+                <td colSpan="10" className="appointment-empty">Loading appointments...</td>
               </tr>
             ) : filteredAppointments.length === 0 ? (
               <tr>
-                <td colSpan="11" className="appointment-empty">No appointments found</td>
+                <td colSpan="10" className="appointment-empty">No appointments found</td>
               </tr>
             ) : (
               paginatedAppointments.map((appointment, index) => {
@@ -643,10 +612,9 @@ export default function AppointmentList() {
                     </td>
                     <td>{getTimeRange(appointment)}</td>
                     <td>{appointment.tokenNumber}</td>
-                    <td>{appointment.patientName}</td>
+                    <td>{appointment.patientName}{appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}</td>
                     <td>{appointment.phone}</td>
                     <td className="test-cell">{appointment.test}</td>
-                    <td>{appointment.technician}</td>
                     <td className="location-cell">{appointment.location}</td>
                     <td>
                       <span className={`status-pill ${statusMeta.className}`}>
@@ -756,20 +724,12 @@ export default function AppointmentList() {
                   placeholder="Digestive Disorders"
                 />
               </label>
-              <label>
-                Technician
-                <input
-                  value={newAppointment.technician}
-                  onChange={(event) => updateNewAppointment("technician", event.target.value)}
-                  placeholder="Kristin"
-                />
-              </label>
               <label className="wide-field">
                 Location
                 <input
                   value={newAppointment.location}
                   onChange={(event) => updateNewAppointment("location", event.target.value)}
-                  placeholder="Clinic or patient location"
+                  placeholder="Patient location"
                 />
               </label>
               <label>
@@ -845,10 +805,6 @@ export default function AppointmentList() {
                 Test / Reason
                 <input value={editAppointment.form.test} onChange={(event) => updateEditAppointment("test", event.target.value)} />
               </label>
-              <label>
-                Technician
-                <input value={editAppointment.form.technician} onChange={(event) => updateEditAppointment("technician", event.target.value)} />
-              </label>
               <label className="wide-field">
                 Location
                 <input value={editAppointment.form.location} onChange={(event) => updateEditAppointment("location", event.target.value)} />
@@ -907,9 +863,9 @@ export default function AppointmentList() {
               <div><span>Time</span><strong>{getTimeRange(viewAppointment)}</strong></div>
               <div><span>Token</span><strong>{viewAppointment.tokenNumber}</strong></div>
               <div><span>Patient</span><strong>{viewAppointment.patientName}</strong></div>
+              {viewAppointment.isEmergency && <div><span>Emergency reason</span><strong>{viewAppointment.emergencyReason || 'Emergency appointment'}</strong></div>}
               <div><span>Phone No</span><strong>{viewAppointment.phone}</strong></div>
               <div><span>Test</span><strong>{viewAppointment.test}</strong></div>
-              <div><span>Technician</span><strong>{viewAppointment.technician}</strong></div>
               <div><span>Status</span><strong>{getUiStatus(viewAppointment.status).label}</strong></div>
               <div><span>Payment Method</span><strong>{viewAppointment.paymentMethod ? viewAppointment.paymentMethod.toUpperCase() : "N/A"}</strong></div>
               <div><span>Amount</span><strong>{viewAppointment.paymentAmount ? `₹${viewAppointment.paymentAmount}` : "N/A"}</strong></div>

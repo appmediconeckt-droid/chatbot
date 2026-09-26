@@ -1,4 +1,4 @@
-// Keep validation aligned with backend src/utils/profileCompletion.js.
+// Completion includes fields supported by the profile API.
 const isProfessionalRole = (role) => ['doctor', 'consultant', 'counselor', 'counsellor', 'counsellour'].includes(String(role || '').trim().toLowerCase());
 
 const hasText = (value) => typeof value === "string" && value.trim().length > 0;
@@ -29,13 +29,6 @@ export const getProfileCompletion = (data = {}) => {
       ["languages", "At least one language", hasItems(data.languages)],
       ["consultationMode", "At least one consultation mode", hasItems(data.consultationMode)],
       ["certifications", "Certification with uploaded document", Array.isArray(data.certifications) && data.certifications.some((cert) => hasText(cert?.name) && (hasText(cert?.documentUrl) || hasText(cert?.documentPublicId)))],
-    );
-  }
-  if (data.role === "doctor") {
-    checks.push(
-      ["aadhaarNumber", "Aadhaar number (12 digits)", /^\d{12}$/.test(String(data.aadhaarNumber || '').replace(/\s/g, ''))],
-      ["panNumber", "PAN number", /^[A-Z]{5}\d{4}[A-Z]$/.test(String(data.panNumber || '').trim().toUpperCase())],
-      ["permanentAddress", "Permanent address", hasText(data.permanentAddress)],
     );
   }
   const fields = checks.map(([key, label, complete]) => ({ key, label, complete: Boolean(complete) }));

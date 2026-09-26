@@ -16,9 +16,6 @@ const PERSONAL_REQUIRED_FIELDS = [
   "dob",
   "gender",
   "currentAddress",
-  "permanentAddress",
-  "aadhaar",
-  "pan",
 ];
 
 const PROFESSIONAL_REQUIRED_FIELDS = [
@@ -53,9 +50,6 @@ export default function DoctorProfileFlow() {
     dob: "",
     gender: "",
     currentAddress: "",
-    permanentAddress: "",
-    aadhaar: "",
-    pan: "",
     photo: null,
 
     // PROFESSIONAL DETAILS
@@ -125,9 +119,6 @@ export default function DoctorProfileFlow() {
       currentAddress: value("address")?.line1 || value("current_address", "currentAddress") || "",
       address: source.address || { line1: '', city: '', state: '', pincode: '', country: 'India' },
       consultationMode: Array.isArray(source.consultationMode) ? source.consultationMode.join(', ') : source.consultationMode || '',
-      permanentAddress: formatAddress(value("permanent_address", "permanentAddress")),
-      aadhaar: value("aadhaar", "aadhaar_number", "aadhaarNumber"),
-      pan: value("pan", "pan_number", "panNumber"),
       photo: getImageUrl(source.profilePhoto?.url || (typeof source.profilePhoto === "string" ? source.profilePhoto : "") || value("profileImage", "profilePic", "profile_pic", "profile_image", "profile_photo")),
       qualification: value("qualification", "medical_degree", "degree"),
       experience: source.experience ?? value("experience", "years_of_experience", "experience_years"),
@@ -372,7 +363,6 @@ export default function DoctorProfileFlow() {
 
   const toApiProfile = (data) => ({
     fullName: data.name, email: data.email, phoneNumber: data.mobile,
-    aadhaarNumber: data.aadhaar, panNumber: data.pan, permanentAddress: data.permanentAddress,
     phoneCountryCode: savedProfileData?.phoneCountryCode || '+91',
     dateOfBirth: data.dob, gender: String(data.gender || '').toLowerCase(),
     address: { ...data.address, line1: data.currentAddress },
@@ -388,10 +378,10 @@ export default function DoctorProfileFlow() {
   const savedCompletion = savedProfileData
     ? getProfileCompletion({ ...savedProfileData, role: 'doctor' })
     : null;
-  const completionPreview = useProfileCompletion(savedProfileData?.profileCompletion || savedCompletion, draftProfile, isEditMode);
+  const completionPreview = useProfileCompletion(savedCompletion, draftProfile, isEditMode);
   const visibleCompletion = savedProfileData && isEditMode
     ? getProfileCompletion({ ...savedProfileData, ...draftProfile, role: 'doctor' })
-    : completionPreview.completion;
+    : savedCompletion;
 
   const professionalKeys = ['qualification', 'experience', 'languages', 'aboutMe', 'specialization', 'consultationMode', 'certifications'];
   const sectionComplete = (professional) => {
@@ -413,10 +403,7 @@ export default function DoctorProfileFlow() {
           { label: "Mobile", key: "mobile" },
           { label: "Date of Birth", key: "dob" },
           { label: "Gender", key: "gender" },
-          { label: "Aadhaar", key: "aadhaar" },
-          { label: "PAN", key: "pan" },
           { label: "Current Address", key: "currentAddress" },
-          { label: "Permanent Address", key: "permanentAddress" },
         ]
       },
       {
@@ -617,25 +604,7 @@ export default function DoctorProfileFlow() {
               </select>
             </div>
 
-            <div className="col-md-3 mb-3">
-              <label className="form-label">Aadhaar Number</label>
-              <input
-                className="form-input form-control"
-                value={profile.aadhaar}
-                onChange={(e) => setProfile({ ...profile, aadhaar: e.target.value })}
-                placeholder="XXXX-XXXX-XXXX"
-              />
-            </div>
 
-            <div className="col-md-3 mb-3">
-              <label className="form-label">PAN Number</label>
-              <input
-                className="form-input form-control"
-                value={profile.pan}
-                onChange={(e) => setProfile({ ...profile, pan: e.target.value })}
-                placeholder="ABCDE1234F"
-              />
-            </div>
           </div>
 
           <div className="row mt-3">
@@ -647,16 +616,6 @@ export default function DoctorProfileFlow() {
                 value={profile.currentAddress}
                 onChange={(e) => setProfile({ ...profile, currentAddress: e.target.value })}
                 placeholder="Enter current address"
-              />
-            </div>
-            <div className="col-md-6 mb-3">
-              <label className="form-label">Permanent Address</label>
-              <textarea
-                className="form-input form-control"
-                rows="2"
-                value={profile.permanentAddress}
-                onChange={(e) => setProfile({ ...profile, permanentAddress: e.target.value })}
-                placeholder="Enter permanent address"
               />
             </div>
           </div>
@@ -886,7 +845,7 @@ export default function DoctorProfileFlow() {
         <div className="alert alert-info" role="status">
           {savedProfileData.isActive === false
             ? "Your account is inactive. Contact support to appear in the user directory."
-            : !(savedProfileData.profileCompletion || savedCompletion)?.isComplete
+            : !savedCompletion?.isComplete
               ? "Your saved profile is incomplete. Fill the remaining fields shown above and save your changes to appear in the user directory."
               : "Your saved profile meets the completion requirements for the user directory."}
         </div>

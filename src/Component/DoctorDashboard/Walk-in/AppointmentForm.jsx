@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { API_BASE_URL } from "../doctorApi.js";
@@ -39,6 +39,30 @@ export default function AppointmentForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [appointmentToken, setAppointmentToken] = useState("");
   const [apiError, setApiError] = useState("");
+  const [doctor, setDoctor] = useState(null);
+  const visit = useRef(null);
+
+  useEffect(() => {
+    if (!doctorId) return;
+    let active = true;
+    setDoctor(null);
+    if (visit.current?.doctorId !== doctorId) {
+      visit.current = { doctorId, id: `${Date.now()}-${Math.random().toString(36).slice(2)}` };
+    }
+    axios.get(`${API_BASE_URL}/auth/doctor-qr/${doctorId}`).then(({ data }) => {
+      if (!active) return;
+      setDoctor(data.data?.doctor || null);
+    }).catch((error) => console.error("Unable to load doctor profile", error));
+    return () => { active = false; };
+  }, [doctorId]);
+
+  useEffect(() => {
+    if (!doctor || !visit.current) return;
+    axios.post(`${API_BASE_URL}/auth/doctor-qr/${doctorId}/visits`, {
+      visitId: visit.current.id,
+      source: isQrBooking ? "qr" : "direct",
+    }).catch((error) => console.error("Unable to record QR visit", error));
+  }, [doctor, doctorId, isQrBooking]);
 
   const updateField = (event) => {
     const { name, value } = event.target;
@@ -106,6 +130,7 @@ export default function AppointmentForm() {
       <header className="qr-appointment-header">
         <button type="button" onClick={() => navigate(-1)}>← Back to Scanner</button>
         <h1>Book Appointment</h1>
+        {doctor && <p><strong>{doctor.full_name}</strong> · {Array.isArray(doctor.specialization) ? doctor.specialization.join(", ") : doctor.specialization}</p>}
         <p>Fill in your details to confirm appointment</p>
       </header>
       <div className="qr-appointment-layout">

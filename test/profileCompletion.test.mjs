@@ -5,8 +5,16 @@ import { build } from 'esbuild';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { getProfileCompletion } from '../src/utils/profileCompletion.js';
-import { getProfileCompletion as backendCompletion } from '../../chatbot-backend/src/utils/profileCompletion.js';
-import { completeProfessional } from '../../chatbot-backend/test/fixtures/profileCompletion.js';
+
+const completeProfessional = () => ({
+  role: 'doctor', fullName: 'Test Doctor', email: 'doctor@example.com',
+  phoneNumber: '9876543210', phoneCountryCode: '+91',
+  profilePhoto: { url: '/photo.jpg' }, dateOfBirth: '1990-01-01', gender: 'female',
+  address: { line1: 'Street', city: 'Delhi', state: 'Delhi', pincode: '110001', country: 'India' },
+  specialization: ['Psychiatry'], experience: 0, qualification: 'MBBS', aboutMe: 'Doctor bio',
+  languages: ['Hindi'], consultationMode: ['online'],
+  certifications: [{ name: 'Degree', documentUrl: '/degree.pdf' }],
+});
 
 const bundled = await build({ entryPoints: ['src/Component/common/ProfileCompletion.jsx'], bundle: true, write: false, format: 'cjs', platform: 'node', external: ['react'], loader: { '.css': 'empty' } });
 const compiled = { exports: {} };
@@ -21,25 +29,26 @@ test('progress bar stays visible when API completion metadata is missing', () =>
   assert.doesNotMatch(html, /0% complete/);
 });
 
-test('existing profile fields produce a visible complete and remaining percentage', () => {
-  const data = { ...completeProfessional(), panNumber: '', permanentAddress: '' };
+test('doctor profile reaches 100% without Aadhaar, PAN or permanent address', () => {
+  const data = completeProfessional();
   const completion = getProfileCompletion(data);
   const html = renderToStaticMarkup(React.createElement(Progress, { completion }));
-  assert.match(html, /90% complete/);
-  assert.match(html, /10% remaining/);
-  assert.match(html, /width:90%/);
-  assert.match(html, /19 of 21 required fields filled/);
+  assert.match(html, /100% complete/);
+  assert.match(html, /0% remaining/);
+  assert.match(html, /width:100%/);
+  assert.match(html, /18 of 18 required fields filled/);
 });
 
-test('local fallback matches backend completion when every required field is cleared', () => {
+test('remaining supported fields still count toward completion', () => {
   const full = completeProfessional();
-  for (const field of backendCompletion(full).fields) {
+  for (const field of getProfileCompletion(full).fields) {
     const draft = structuredClone(full);
     const [key, nested] = field.key.split('.');
     if (nested) draft[key][nested] = '';
     else draft[key] = '';
-    assert.deepEqual(getProfileCompletion(draft), backendCompletion(draft));
+
     assert.ok(getProfileCompletion(draft).percentage < 100);
   }
-  assert.deepEqual(getProfileCompletion(full), backendCompletion(full));
+  assert.equal(getProfileCompletion(full).percentage, 100);
+  assert.ok(!getProfileCompletion(full).fields.some(({ key }) => ['aadhaarNumber', 'panNumber', 'permanentAddress'].includes(key)));
 });

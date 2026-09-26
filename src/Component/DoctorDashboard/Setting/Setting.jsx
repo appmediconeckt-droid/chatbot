@@ -185,6 +185,7 @@
 
 
 import React, { useState } from "react";
+import { Stethoscope, Hospital, CreditCard, QrCode, KeyRound, LogOut, CircleHelp, ShieldCheck, Trash2 } from "lucide-react";
 import "./Setting.css";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../../../axiosConfig.js";
@@ -299,7 +300,7 @@ export default function SettingsPage() {
         onClick={() => setActive(id)}
         className={`settingitem ${isActive ? "active" : ""}`}
       >
-        <span className="settingicon">{icon}</span>
+        <span className="settingicon" aria-hidden="true">{icon}</span>
         <span className="settingtext">{label}</span>
       </button>
     );
@@ -314,14 +315,14 @@ export default function SettingsPage() {
               <h2 className="mb-3">Settings</h2>
             </div>
 
-            <MenuItem id="profile" icon="👤" label="Profile" />
-            <MenuItem id="clinic" icon="🏥" label="Clinic" />
+            <MenuItem id="profile" icon={<Stethoscope />} label="Profile" />
+            <MenuItem id="clinic" icon={<Hospital />} label="Clinic" />
             <MenuItem
               id="payment"
-              icon={<i className="fa-solid fa-credit-card m-lg-1"></i>}
+              icon={<CreditCard />}
               label="Payment"
             />
-            <MenuItem id="profileQR" icon="👤" label="ProfileQR" />
+            <MenuItem id="profileQR" icon={<QrCode />} label="ProfileQR" />
 
             <hr className="separator" />
 
@@ -330,7 +331,7 @@ export default function SettingsPage() {
               className="settingitem"
               onClick={() => setShowChangePassword(true)}
             >
-              <span className="settingicon">🔑</span> Change Password
+              <span className="settingicon" aria-hidden="true"><KeyRound /></span> Change Password
             </button>
 
             <button
@@ -338,21 +339,21 @@ export default function SettingsPage() {
               className="settingitem logout"
               onClick={() => setShowLogoutConfirm(true)}
             >
-              <span className="settingicon">⛔</span> Logout
+              <span className="settingicon" aria-hidden="true"><LogOut /></span> Logout
             </button>
           </div>
 
           <div className="set-side-box mt-2">
             <div className="set-side-sub">More</div>
-            <MenuItem id="Help" label="Help & Support" />
-            <MenuItem id="Privacy" label="Privacy" />
+            <MenuItem id="Help" icon={<CircleHelp />} label="Help & Support" />
+            <MenuItem id="Privacy" icon={<ShieldCheck />} label="Privacy" />
 
             <button
               type="button"
               className="more-item text-center"
               onClick={() => setShowDeleteConfirm(true)}
             >
-              Delete Account
+              <span className="settingicon" aria-hidden="true"><Trash2 /></span> Delete Account
             </button>
           </div>
         </aside>

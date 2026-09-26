@@ -251,6 +251,8 @@ export default function ClinicPage() {
   const [activeClinicIndex, setActiveClinicIndex] = useState(0);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const [activeTab, setActiveTab] = useState("Overview");
   const [clinicDoctors, setClinicDoctors] = useState([]);
   const [clinicDepartments, setClinicDepartments] = useState([]);
@@ -285,7 +287,7 @@ export default function ClinicPage() {
       if (axios.isCancel(err)) return;
       setClinics([]);
       setActiveClinicIndex(0);
-      setError(err.response?.data?.message || err.response?.data?.error || "Showing sample clinic profile. Failed to load live clinic data.");
+      setError(err.response?.data?.message || err.response?.data?.error || "Failed to load clinics. Please refresh and try again.");
       setStatus("failed");
     }
   }, [doctorId, userRole]);
@@ -407,6 +409,22 @@ export default function ClinicPage() {
       (currentIndex + direction + clinics.length) % clinics.length
     ));
     setActiveTab("Overview");
+    setDeleteError("");
+  };
+
+  const handleDeleteClinic = async () => {
+    if (isDeleting || !clinics.length) return;
+    if (!window.confirm(`Delete ${clinic.name}? This cannot be undone. Clinics with staff, appointments or saved timings cannot be deleted.`)) return;
+    setIsDeleting(true);
+    setDeleteError("");
+    try {
+      await axios.delete(`${CLINICS_BASE_URL}/${clinic.id}`, { headers: getAuthHeaders() });
+      setClinics((rows) => rows.filter((item) => item.id !== clinic.id));
+      setActiveClinicIndex(0);
+      setActiveTab("Overview");
+    } catch (error) {
+      setDeleteError(error.response?.data?.message || "Clinic could not be deleted. Please try again.");
+    } finally { setIsDeleting(false); }
   };
 
   const formatWebsiteUrl = (website = "") => {
@@ -414,9 +432,31 @@ export default function ClinicPage() {
     return website.startsWith("http") ? website : `https://${website}`;
   };
 
+  if (!clinics.length) return (
+    <div className="doctor-clinic-profile-page">
+      <h1>Clinics / Hospitals</h1>
+      {error && <p role="alert">{error}</p>}
+      <p>{status === "loading" || status === "idle" ? "Loading clinics..." : "No clinics or hospitals added. Add one from Clinic Settings."}</p>
+    </div>
+  );
+
   return (
     <div className="doctor-clinic-profile-page">
       {error && <div className="doctor-clinic-profile-error">{error}</div>}
+      <div className="doctor-clinic-management">
+        <label>
+          Clinic / Hospital
+          <select disabled={isDeleting} value={activeClinicIndex} onChange={(event) => {
+            setActiveClinicIndex(Number(event.target.value)); setActiveTab("Overview"); setDeleteError("");
+          }}>
+            {clinics.map((item, index) => <option key={item.id} value={index}>{item.name} — {item.address}</option>)}
+          </select>
+        </label>
+        <button type="button" className="doctor-clinic-delete" disabled={isDeleting} onClick={handleDeleteClinic}>
+          {isDeleting ? "Deleting..." : "Delete Clinic / Hospital"}
+        </button>
+      </div>
+      {deleteError && <p className="doctor-clinic-profile-error" role="alert">{deleteError}</p>}
 
       <section className="doctor-clinic-hero">
         <img
@@ -460,6 +500,7 @@ export default function ClinicPage() {
               className="doctor-clinic-switch-btn doctor-clinic-switch-prev"
               onClick={() => changeClinic(-1)}
               aria-label="Previous clinic"
+              disabled={isDeleting}
             >
               <ChevronLeft size={20} />
             </button>
@@ -468,6 +509,7 @@ export default function ClinicPage() {
               className="doctor-clinic-switch-btn doctor-clinic-switch-next"
               onClick={() => changeClinic(1)}
               aria-label="Next clinic"
+              disabled={isDeleting}
             >
               <ChevronRight size={20} />
             </button>

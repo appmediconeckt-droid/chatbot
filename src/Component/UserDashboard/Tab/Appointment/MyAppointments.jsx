@@ -829,6 +829,8 @@ import {
   FaVideo,
 } from "react-icons/fa";
 import './MyAppointments.css'; // Import the CSS file for styling
+import { isUnscheduledEmergency } from './emergencyBooking.js';
+import { filterAppointments } from './appointmentFilters.js';
 const MyAppointments = () => {
   const { t, lang } = useUserTranslation();
   const tr = (key, fallback) => {
@@ -840,7 +842,7 @@ const MyAppointments = () => {
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState("Upcoming");
+  const [activeTab, setActiveTab] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedApt, setSelectedApt] = useState(null);
   const [showModal, setShowModal] = useState(false);
@@ -993,41 +995,7 @@ const MyAppointments = () => {
     return "N/A";
   };
 
-  // Split appointments by their actual scheduled date/time. Status alone is
-  // not reliable because an old appointment can remain pending/confirmed.
-  const now = Date.now();
-  const getAppointmentTimestamp = (apt) => {
-    const timestamp = new Date(apt?.date).getTime();
-    return Number.isNaN(timestamp) ? null : timestamp;
-  };
-  const isTerminalAppointment = (apt) =>
-    ["completed", "canceled", "cancelled", "rejected"].includes(
-      String(apt?.status || "").toLowerCase(),
-    );
-
-  const upcomingApts = appointments
-    .filter((apt) => {
-      const timestamp = getAppointmentTimestamp(apt);
-      return timestamp !== null && timestamp > now && !isTerminalAppointment(apt);
-    })
-    .sort((a, b) => getAppointmentTimestamp(a) - getAppointmentTimestamp(b));
-
-  const pastApts = appointments
-    .filter((apt) => {
-      const timestamp = getAppointmentTimestamp(apt);
-      return isTerminalAppointment(apt) || (timestamp !== null && timestamp <= now);
-    })
-    .sort((a, b) => (getAppointmentTimestamp(b) || 0) - (getAppointmentTimestamp(a) || 0));
-  let displayApts = activeTab === "Upcoming" ? upcomingApts : pastApts;
-
-  // Filter by status
-  if (statusFilter === "Pending") {
-    displayApts = displayApts.filter((apt) => apt.status === "pending");
-  } else if (statusFilter === "Confirmed") {
-    displayApts = displayApts.filter((apt) => apt.status === "confirmed");
-  } else if (statusFilter === "Completed") {
-    displayApts = displayApts.filter((apt) => apt.status === "completed");
-  }
+  const displayApts = filterAppointments(appointments, statusFilter, activeTab);
 
   const getStatusStyle = (status) => {
     switch (status) {
@@ -1217,6 +1185,8 @@ const MyAppointments = () => {
     if (!showModal || !selectedApt) return null;
 
     const appointmentSchedule = formatAppointmentDateTime(selectedApt.date);
+    const awaitingEmergency = isUnscheduledEmergency(selectedApt);
+    if (awaitingEmergency) appointmentSchedule.time = 'Clinic will confirm';
     const counselorName = selectedApt.counselor?.fullName || "Consultant";
     const counselorSpecialization =
       selectedApt.counselor?.specialization || "Mental health counselor";
@@ -1281,7 +1251,9 @@ const MyAppointments = () => {
             </span>
           </div>
 
-          <div className="appointment-detail-countdown">
+          {selectedApt.priority === 'emergency' && <div className="user-emergency-notice"><strong>Emergency appointment</strong><p>{selectedApt.emergency_reason}</p></div>}
+
+          {!awaitingEmergency && <div className="appointment-detail-countdown">
             <span className="countdown-icon"><FaClock /></span>
             <div>
                   <small>{t("session_starts_in")}</small>
@@ -1291,7 +1263,7 @@ const MyAppointments = () => {
                   <small>{t("today")}</small>
               <strong>{appointmentSchedule.time || "N/A"}</strong>
             </div>
-          </div>
+          </div>}
 
           <div className="appointment-detail-grid">
             <div className="appointment-detail-card">
@@ -1383,18 +1355,25 @@ const MyAppointments = () => {
               ["Pending", t("pending")],
               ["Confirmed", t("confirmed")],
               ["Completed", t("completed")],
+              ["Cancelled", tr("cancelled", "Cancelled")],
             ].map(([filter, label]) => (
               <button
                 key={filter}
                 type="button"
                 className={statusFilter === filter ? "active" : ""}
-                onClick={() => setStatusFilter(filter)}
+                onClick={() => { setStatusFilter(filter); setActiveTab("All"); }}
               >
                 {label}
               </button>
             ))}
           </div>
           <div className="user-appointments-tabs p-1 rounded-xl flex shrink-0">
+            <button
+              onClick={() => setActiveTab("All")}
+              className={`user-appointments-tab px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "All" ? "active" : ""}`}
+            >
+              {t('all')}
+            </button>
             <button
               onClick={() => setActiveTab("Upcoming")}
               className={`user-appointments-tab px-6 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === "Upcoming" ? "active" : ""}`}
@@ -1429,6 +1408,7 @@ const MyAppointments = () => {
             ) : (
               displayApts.map((apt) => {
                 const appointmentSchedule = formatAppointmentDateTime(apt.date);
+                if (isUnscheduledEmergency(apt)) appointmentSchedule.time = 'Clinic will confirm';
 
                 return (
                   <div
@@ -1447,6 +1427,7 @@ const MyAppointments = () => {
                         {/* <FaCheckCircle aria-label="Verified" /> */}
                       </h2>
                       {renderRoleBadge(apt)}
+                      {apt.priority === 'emergency' && <span className="user-emergency-badge">Emergency</span>}
                       <p>
                         {Array.isArray(apt.counselor?.specialization)
                           ? apt.counselor.specialization.join(" | ")

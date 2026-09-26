@@ -1856,3 +1856,21 @@
     flex-wrap: wrap;
   }
 }
+.docstaff-clinic-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px 0;
+  max-width: 480px;
+  font-weight: 600;
+}
+.docstaff-clinic-filter select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  color: #1e293b;
+}
+.docstaff-screen-person .docstaff-clinic-name { color: #1d4ed8; }
+.docstaff-screen-page button:disabled { opacity: 0.6; cursor: not-allowed; }

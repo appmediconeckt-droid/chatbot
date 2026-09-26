@@ -2073,6 +2073,7 @@ import logoHorizontalDarkText from "../assets/humaeli-logo-horizontal-tagline.pn
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
+import { dashboardForRole } from "./authSession";
 import LocationGate from "./LocationGate";
 import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
 import StrongPasswordChecklist from "../Component/common/StrongPasswordChecklist";
@@ -3471,13 +3472,12 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
               )}
             </button>
 
-            {isLogin && (<>
             <div className="cs-divider">
               <span>or {isLogin ? "sign in" : "sign up"} with</span>
             </div>
 
             <GoogleAuthButton
-              role="counsellor"
+              role={accountRole}
               mode={isLogin ? "signin" : "signup"}
               disabled={isLoading}
               gateDriven
@@ -3489,7 +3489,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
                   "success",
                 );
                 setPendingNav({
-                  path: "/counselor-dashboard",
+                  path: dashboardForRole(localStorage.getItem("userRole") || accountRole),
                   event: isLogin ? "login" : "signup",
                 });
               }}
@@ -3507,8 +3507,6 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
                 showNotification(msg, "error");
               }}
             />
-
-            </>)}
 
             {!isLogin && (
               <p className="cs-terms">
@@ -3529,7 +3527,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
       {pendingNav && (
         <LocationGate
           event={pendingNav.event}
-          role="counselor"
+          role={localStorage.getItem("userRole") || accountRole}
           onDone={() => {
             const target = pendingNav.path;
             setPendingNav(null);

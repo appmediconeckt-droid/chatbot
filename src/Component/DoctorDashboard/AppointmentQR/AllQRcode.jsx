@@ -30,6 +30,8 @@ export default function QRcode() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [statsError, setStatsError] = useState("");
+  const [statsUpdatedAt, setStatsUpdatedAt] = useState(null);
 
   const doctorId = useMemo(() => getStoredDoctorId(), []);
   const appOrigin = import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin;
@@ -91,6 +93,8 @@ export default function QRcode() {
 
       setDoctorData(doctorQrRes.data?.data || doctorQrRes.data || null);
       setQuickStats(statsRes.data?.data || statsRes.data || {});
+      setStatsError("");
+      setStatsUpdatedAt(new Date());
     } catch (error) {
       console.log("QR API Error:", error.response?.data || error.message);
       setError(error.response?.data?.message || "QR details load nahi ho pa rahi hain");
@@ -102,6 +106,33 @@ export default function QRcode() {
   useEffect(() => {
     getDoctorQR();
   }, []);
+
+  useEffect(() => {
+    if (!doctorId) return;
+    let active = true;
+    let pending = false;
+    const refreshStats = async () => {
+      if (document.hidden || pending) return;
+      pending = true;
+      try {
+        const response = await axios.get(`${API_BASE_URL}/auth/doctor-qr/${doctorId}/stats`, { headers: getAuthHeaders() });
+        if (active) {
+          setQuickStats(response.data?.data || response.data || {});
+          setStatsError("");
+          setStatsUpdatedAt(new Date());
+        }
+      } catch {
+        if (active) setStatsError("Stats refresh failed. Showing last loaded counts.");
+      } finally { pending = false; }
+    };
+    const timer = window.setInterval(refreshStats, 30000);
+    window.addEventListener("focus", refreshStats);
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refreshStats);
+    };
+  }, [doctorId]);
 
   const storedUser = (() => {
     try {
@@ -208,6 +239,7 @@ export default function QRcode() {
 
             <section className="doctor-qr-panel">
               <h3>Quick Stats</h3>
+              {statsError && <small role="status">{statsError}</small>}
               <div className="doctor-qr-stats">
                 <div><span>Today's Scans</span><strong>{quickStats.todayScans || 0}</strong><em>↗</em></div>
                 <div><span>This Week</span><strong>{quickStats.thisWeekScans || 0}</strong><em>↗</em></div>
@@ -220,7 +252,7 @@ export default function QRcode() {
               <h3>QR Details</h3>
               <div className="doctor-qr-details">
                 <p><span>QR Status</span><strong className="active">Active</strong></p>
-                <p><span>Last Updated</span><strong>Today, 09:41 AM</strong></p>
+                <p><span>Stats Updated</span><strong>{statsUpdatedAt ? statsUpdatedAt.toLocaleString() : "—"}</strong></p>
                 <p><span>Visibility</span><strong>Public</strong></p>
                 <p><span>Expires</span><strong>Never</strong></p>
               </div>

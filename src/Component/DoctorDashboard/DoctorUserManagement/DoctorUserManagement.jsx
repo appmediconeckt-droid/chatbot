@@ -192,7 +192,7 @@ const docStaffRoleCards = [
   },
 ];
 
-const staffRoleValues = ["nurse", "assistant", "technician", "housekeeping", "supervisor", "manager", "billing"];
+const staffRoleValues = ["staff", "nurse", "assistant", "technician", "receptionist", "housekeeping", "supervisor", "manager", "billing"];
 
 const roleLabels = {
   nurse: "Nurse",
@@ -300,6 +300,8 @@ const normalizeStaffRow = (staff, index = 0) => {
   return {
     raw: staff,
     rawId,
+    clinicId: String(staff.clinic_id || ""),
+    clinicName: staff.clinic_name || "Unassigned",
     id: staff.employee_id || staff.employeeId || staff.staff_code || staff.code || (rawId ? `#MC-${rawId}` : `#MC-${4000 + index}`),
     name: fullName,
     email: staff.email || staff.email_address || "No email",
@@ -324,6 +326,11 @@ const DoctorUserManagement = () => {
   const user = useMemo(() => authUser || getStoredAuthUser() || {}, [authUser]);
   const doctorId = useMemo(() => getDoctorId(user), [user]);
   const [staffRows, setStaffRows] = useState([]);
+  const [clinics, setClinics] = useState([]);
+  const [clinicFilter, setClinicFilter] = useState("all");
+  const [clinicError, setClinicError] = useState("");
+  const [isLoadingClinics, setIsLoadingClinics] = useState(true);
+  const [isSavingStaff, setIsSavingStaff] = useState(false);
   const [isLoadingStaff, setIsLoadingStaff] = useState(false);
   const [staffError, setStaffError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -348,6 +355,7 @@ const DoctorUserManagement = () => {
   const [staffPhoto, setStaffPhoto] = useState(null);
   const [staffPhotoPreview, setStaffPhotoPreview] = useState("");
   const [newStaffForm, setNewStaffForm] = useState({
+    clinicId: "",
     firstName: "",
     lastName: "",
     email: "",
@@ -370,25 +378,7 @@ const DoctorUserManagement = () => {
           doctor_id: doctorId || undefined,
         },
       });
-      let apiRows = getNestedArray(mainResponse.data);
-
-      if (!apiRows.length) {
-        const roleResponses = await Promise.allSettled(
-          staffRoleValues.map((role) =>
-            axios.get(`${API_BASE_URL}/staff`, {
-              headers: getAuthHeaders(),
-              params: {
-                role,
-                doctor_id: doctorId || undefined,
-              },
-            })
-          )
-        );
-
-        apiRows = roleResponses.flatMap((result) =>
-          result.status === "fulfilled" ? getNestedArray(result.value.data) : []
-        );
-      }
+      const apiRows = getNestedArray(mainResponse.data);
 
       const doctorStaffRows = apiRows
         .filter((staff) => {
@@ -407,8 +397,34 @@ const DoctorUserManagement = () => {
   };
 
   useEffect(() => {
-    loadStaffRows();
+    if (doctorId) loadStaffRows();
   }, [doctorId]);
+
+  useEffect(() => {
+    if (!doctorId) return;
+    const controller = new AbortController();
+    setIsLoadingClinics(true);
+    setClinicError("");
+    axios.get(`${API_BASE_URL}/clinics`, {
+      headers: getAuthHeaders(), params: { doctor_id: doctorId }, signal: controller.signal,
+    }).then(({ data }) => {
+      setClinics(getNestedArray(data).map((clinic) => ({
+        id: String(clinic.id || clinic._id),
+        name: clinic.clinic_name || clinic.name,
+        location: clinic.location || "",
+      })));
+    }).catch((error) => {
+      if (!axios.isCancel(error)) {
+        setClinics([]);
+        setClinicError("Clinics could not be loaded. Refresh the page to try again.");
+      }
+    }).finally(() => { if (!controller.signal.aborted) setIsLoadingClinics(false); });
+    return () => controller.abort();
+  }, [doctorId]);
+
+  const clinicStaffRows = useMemo(() => staffRows.filter((staff) =>
+    clinicFilter === "all" || (clinicFilter === "unassigned" ? !staff.clinicId : staff.clinicId === clinicFilter)
+  ), [staffRows, clinicFilter]);
 
   useEffect(() => {
     const closeActionMenu = (event) => {
@@ -422,8 +438,8 @@ const DoctorUserManagement = () => {
   }, []);
 
   const filteredRows = useMemo(() => {
-    return staffRows.filter((staff) => {
-      const query = `${staff.name} ${staff.email} ${staff.id}`.toLowerCase();
+    return clinicStaffRows.filter((staff) => {
+      const query = `${staff.name} ${staff.email} ${staff.id} ${staff.clinicName}`.toLowerCase();
 
       return (
         query.includes(searchTerm.toLowerCase()) &&
@@ -433,7 +449,7 @@ const DoctorUserManagement = () => {
         (shiftFilter === "All" || staff.shift === shiftFilter)
       );
     });
-  }, [staffRows, searchTerm, roleFilter, deptFilter, statusFilter, shiftFilter]);
+  }, [clinicStaffRows, searchTerm, roleFilter, deptFilter, statusFilter, shiftFilter]);
   const totalPages = Math.max(1, Math.ceil(filteredRows.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const firstRowIndex = filteredRows.length ? (safeCurrentPage - 1) * pageSize : 0;
@@ -442,14 +458,14 @@ const DoctorUserManagement = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, roleFilter, deptFilter, statusFilter, shiftFilter]);
+  }, [searchTerm, roleFilter, deptFilter, statusFilter, shiftFilter, clinicFilter]);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
   const filteredRoleCards = useMemo(() => {
-    const roleCounts = staffRows.reduce((counts, staff) => {
+    const roleCounts = clinicStaffRows.reduce((counts, staff) => {
       const key = String(staff.role || "").toLowerCase().replace(/\s+/g, "");
       const roleKey = key.includes("medicalassistant") ? "assistant" : key.includes("labtechnician") ? "technician" : key;
       counts[roleKey] = (counts[roleKey] || 0) + 1;
@@ -465,21 +481,21 @@ const DoctorUserManagement = () => {
 
       return matchesSearch && matchesDepartment && matchesCategory;
     });
-  }, [staffRows, roleSearchTerm, roleDepartmentFilter, roleCategoryFilter]);
+  }, [clinicStaffRows, roleSearchTerm, roleDepartmentFilter, roleCategoryFilter]);
 
   const dynamicStats = useMemo(() => {
-    const total = staffRows.length;
-    const active = staffRows.filter((staff) => staff.status === "Active").length;
-    const pending = staffRows.filter((staff) => staff.verification !== "Verified").length;
-    const departments = new Set(staffRows.map((staff) => staff.department).filter(Boolean)).size;
+    const total = clinicStaffRows.length;
+    const active = clinicStaffRows.filter((staff) => staff.status === "Active").length;
+    const pending = clinicStaffRows.filter((staff) => staff.verification !== "Verified").length;
+    const departments = new Set(clinicStaffRows.map((staff) => staff.department).filter(Boolean)).size;
 
     return [
-      { ...docStaffScreenStats[0], value: String(total), note: total ? "From API" : "No staff found" },
+      { ...docStaffScreenStats[0], value: String(total), note: clinicFilter === "all" ? "All clinics" : "Selected clinic" },
       { ...docStaffScreenStats[1], value: String(active), note: total ? `(${Math.round((active / total) * 100)}%)` : "(0%)" },
       { ...docStaffScreenStats[2], value: String(pending), note: pending ? "Requires attention" : "All verified" },
       { ...docStaffScreenStats[3], value: String(departments), note: "Across clinic" },
     ];
-  }, [staffRows]);
+  }, [clinicStaffRows, clinicFilter]);
 
   const roleFilterOptions = useMemo(
     () => ["All", ...new Set([...docStaffRoleCards.map((role) => role.title), "Receptionist", ...staffRows.map((staff) => staff.role)].filter(Boolean))],
@@ -579,13 +595,17 @@ const DoctorUserManagement = () => {
 
   const handleSaveStaffUpdate = async (event) => {
     event.preventDefault();
+    if (isSavingStaff) return;
+    if (!editForm.clinicId) return alert("Please select a clinic or hospital.");
 
     try {
+      setIsSavingStaff(true);
       if (editingStaff.rawId) {
-        await axios.put(
+        const response = await axios.put(
           `${API_BASE_URL}/staff/${editingStaff.rawId}`,
           {
             full_name: editForm.name,
+            clinic_id: editForm.clinicId,
             name: editForm.name,
             email: editForm.email,
             department: editForm.department,
@@ -596,24 +616,24 @@ const DoctorUserManagement = () => {
           },
           { headers: getAuthHeaders() }
         );
+        const updated = normalizeStaffRow(response.data.data || response.data.user);
+        setStaffRows((rows) => rows.map((staff) => staff.rawId === editingStaff.rawId ? updated : staff));
       }
-
-      setStaffRows((currentRows) =>
-        currentRows.map((staff) => (staff.id === editingStaff.id ? { ...staff, ...editForm } : staff))
-      );
       setEditingStaff(null);
       setEditForm(null);
     } catch (error) {
       alert(error.response?.data?.message || "Staff update nahi ho paya.");
-    }
+    } finally { setIsSavingStaff(false); }
   };
 
   const closeUpdateModal = () => {
+    if (isSavingStaff) return;
     setEditingStaff(null);
     setEditForm(null);
   };
 
   const closeAddStaffModal = () => {
+    if (isSavingStaff) return;
     setShowAddStaffModal(false);
     setSelectedNewRole("nurse");
     setRoleSearchTerm("");
@@ -623,6 +643,7 @@ const DoctorUserManagement = () => {
     setStaffPhoto(null);
     setStaffPhotoPreview("");
     setNewStaffForm({
+      clinicId: "",
       firstName: "",
       lastName: "",
       email: "",
@@ -658,6 +679,7 @@ const DoctorUserManagement = () => {
   };
 
   const handleContinueNewStaff = async () => {
+    if (isSavingStaff) return;
     const role = docStaffRoleCards.find((item) => item.id === selectedNewRole) || docStaffRoleCards[0];
 
     if (addStaffStep === 1) {
@@ -671,6 +693,7 @@ const DoctorUserManagement = () => {
 
     if (addStaffStep === 2) {
       const missingFields = [];
+      if (!newStaffForm.clinicId) missingFields.push("clinic / hospital");
       if (!newStaffForm.firstName.trim()) missingFields.push("first name");
       if (!newStaffForm.lastName.trim()) missingFields.push("last name");
       if (!newStaffForm.email.trim()) missingFields.push("email");
@@ -718,10 +741,12 @@ const DoctorUserManagement = () => {
     };
 
     try {
+      setIsSavingStaff(true);
       const response = await axios.post(
         `${API_BASE_URL}/staff`,
         {
           full_name: fullName,
+          clinic_id: newStaffForm.clinicId,
           name: fullName,
           email: newStaffForm.email,
           contact_number: newStaffForm.phone.trim(),
@@ -750,10 +775,11 @@ const DoctorUserManagement = () => {
       setStatusFilter("All");
       setShiftFilter("All");
       setCurrentPage(1);
+      setClinicFilter(newStaffForm.clinicId);
       closeAddStaffModal();
     } catch (error) {
       alert(error.response?.data?.message || error.response?.data?.error || "Staff create nahi ho paya.");
-    }
+    } finally { setIsSavingStaff(false); }
   };
 
   const handleNewStaffFormChange = (field, value) => {
@@ -796,7 +822,7 @@ const DoctorUserManagement = () => {
           <div>
             <h1 className="docstaff-screen-title">Staff Management</h1>
             <p className="docstaff-screen-subtitle">
-              Manage staff accounts, permissions, departments, and employment status.
+              Manage your staff separately for each clinic or hospital.
             </p>
           </div>
 
@@ -810,12 +836,26 @@ const DoctorUserManagement = () => {
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </label>
-            <button className="docstaff-screen-add-btn" type="button" onClick={() => setShowAddStaffModal(true)}>
+            <button className="docstaff-screen-add-btn" type="button" disabled={isLoadingClinics || !clinics.length} onClick={() => {
+              setNewStaffForm((form) => ({ ...form, clinicId: clinics.some((c) => c.id === clinicFilter) ? clinicFilter : clinics.length === 1 ? clinics[0].id : "" }));
+              setShowAddStaffModal(true);
+            }}>
               <Plus size={16} strokeWidth={2.4} />
               Add Staff Member
             </button>
           </div>
         </div>
+
+        {clinicError && <p role="alert">{clinicError}</p>}
+        {!isLoadingClinics && !clinicError && !clinics.length && <p>Add a clinic or hospital in Clinic Settings before adding staff.</p>}
+        <label className="docstaff-clinic-filter">
+          Clinic / Hospital
+          <select value={clinicFilter} onChange={(event) => setClinicFilter(event.target.value)}>
+            <option value="all">All clinics / hospitals</option>
+            {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
+            <option value="unassigned">Unassigned staff</option>
+          </select>
+        </label>
 
         <div className="docstaff-screen-stats">
           {dynamicStats.map((stat) => {
@@ -911,6 +951,7 @@ const DoctorUserManagement = () => {
                         <div>
                           <strong>{staff.name}</strong>
                           <span>{staff.email}</span>
+                          <span className="docstaff-clinic-name">{staff.clinicName}</span>
                         </div>
                       </button>
                     </td>
@@ -1056,6 +1097,8 @@ const DoctorUserManagement = () => {
               <section className="docstaff-screen-profile-section">
                 <h4>Employment Details</h4>
                 <div className="docstaff-screen-profile-details">
+                  <span>Clinic / Hospital</span>
+                  <strong>{viewStaff.clinicName}</strong>
                   <span>Department</span>
                   <strong>{viewStaff.department}</strong>
                   <span>Shift</span>
@@ -1203,6 +1246,13 @@ const DoctorUserManagement = () => {
               <div className="docstaff-screen-staff-details-step">
                 <section className="docstaff-screen-details-section">
                   <h3>Personal Information</h3>
+                  <label className="docstaff-clinic-filter">
+                    Clinic / Hospital *
+                    <select required value={newStaffForm.clinicId} onChange={(event) => handleNewStaffFormChange("clinicId", event.target.value)}>
+                      <option value="">Select a clinic or hospital</option>
+                      {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
+                    </select>
+                  </label>
                   <div className="docstaff-screen-photo-row">
                     <span className="docstaff-screen-photo-placeholder">
                       {staffPhotoPreview ? (
@@ -1386,6 +1436,10 @@ const DoctorUserManagement = () => {
 
                     <div className="docstaff-screen-review-professional">
                       <div className="docstaff-screen-review-field">
+                        <label>Clinic / Hospital</label>
+                        <strong>{clinics.find((clinic) => clinic.id === newStaffForm.clinicId)?.name || "Not selected"}</strong>
+                      </div>
+                      <div className="docstaff-screen-review-field">
                         <small>Role</small>
                         <span className="docstaff-screen-review-role">{selectedStaffRole.title}</span>
                       </div>
@@ -1446,8 +1500,8 @@ const DoctorUserManagement = () => {
               >
                 {addStaffStep === 1 ? "Cancel" : "Back"}
               </button>
-              <button type="button" className="docstaff-screen-add-continue" onClick={handleContinueNewStaff}>
-                {addStaffStep === 3 ? "Create Account" : "Continue"}
+              <button type="button" className="docstaff-screen-add-continue" disabled={isSavingStaff} onClick={handleContinueNewStaff}>
+                {isSavingStaff ? "Saving..." : addStaffStep === 3 ? "Create Account" : "Continue"}
                 {addStaffStep !== 3 && <span>-&gt;</span>}
               </button>
             </div>
@@ -1475,6 +1529,13 @@ const DoctorUserManagement = () => {
             </div>
 
             <form className="docstaff-screen-edit-form" onSubmit={handleSaveStaffUpdate}>
+              <label>
+                Clinic / Hospital *
+                <select required value={editForm.clinicId} onChange={(event) => handleEditFormChange("clinicId", event.target.value)}>
+                  <option value="">Select a clinic or hospital</option>
+                  {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
+                </select>
+              </label>
               <label>
                 Name
                 <input
@@ -1508,10 +1569,7 @@ const DoctorUserManagement = () => {
               <label>
                 Role
                 <select value={editForm.role} onChange={(event) => handleEditFormChange("role", event.target.value)}>
-                  <option>Nurse</option>
-                  <option>Lab Technician</option>
-                  <option>Billing</option>
-                  <option>Receptionist</option>
+                  {[...new Set([editForm.role, ...Object.values(roleLabels)])].map((role) => <option key={role}>{role}</option>)}
                 </select>
               </label>
               <label>
@@ -1534,7 +1592,7 @@ const DoctorUserManagement = () => {
                 <button type="button" className="docstaff-screen-cancel-btn" onClick={closeUpdateModal}>
                   Cancel
                 </button>
-                <button type="submit" className="docstaff-screen-save-btn">
+                <button type="submit" disabled={isSavingStaff} className="docstaff-screen-save-btn">
                   Update Staff
                 </button>
               </div>

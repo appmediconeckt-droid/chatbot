@@ -11,4 +11,6 @@ test("paused and missing timers do not advance or fabricate a countdown", () => 
   assert.equal(getLiveTokenTiming({ serverTime: "2026-09-22T04:30:00Z", elapsedSeconds: 60, doctorStatus: "paused" }, {}, Date.parse("2026-09-22T04:35:00Z")).elapsed, 60);
   assert.deepEqual(getLiveTokenTiming({}, {}), { elapsed: null, waiting: null });
   assert.equal(formatTimer(null), "--");
+  assert.equal(getLiveTokenTiming({ doctorStatus: "waiting" }, { estimatedTurnTime: "2099-01-01" }).waiting, null);
+  assert.equal(getLiveTokenTiming({ doctorStatus: "paused", elapsedSeconds: 60 }, { estimatedTurnTime: "2099-01-01" }).waiting, null);
 });

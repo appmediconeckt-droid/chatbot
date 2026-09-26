@@ -1243,3 +1243,11 @@
     font-size: 1rem;
   }
 }
+.abm-priority-field { margin: 20px 0; padding: 16px; border: 1px solid #dbe3ee; border-radius: 12px; }
+.abm-priority-field legend { float: none; width: auto; padding: 0 6px; font-size: 16px; font-weight: 700; }
+.abm-priority-field > label { display: inline-flex; gap: 8px; align-items: center; margin: 8px 24px 8px 0; cursor: pointer; }
+.abm-emergency-summary { padding: 14px; margin-top: 10px; border-radius: 8px; background: #fff1f2; color: #9f1239; overflow-wrap: anywhere; }
+.abm-emergency-summary textarea { display: block; width: 100%; margin-top: 8px; padding: 10px; border: 1px solid #fda4af; border-radius: 8px; background: white; color: #172033; resize: vertical; }
+.abm-emergency-summary p { margin: 8px 0; font-size: 13px; line-height: 1.5; }
+.abm-emergency-submit { margin-top: 14px; background: #be123c; }
+.abm-emergency-summary .abm-emergency-submit { display: flex; visibility: visible; }

@@ -2,9 +2,9 @@
 
 /* CounselorDashboard.css */
 
-/* Keep typography consistent across every counselor-portal screen. */
+/* Keep text typography consistent without overriding icon font families. */
 .couns-dashboard,
-.couns-dashboard *:not(.material-symbols-outlined) {
+.couns-dashboard *:not(.material-symbols-outlined, .material-symbols-rounded, .material-symbols-sharp, .material-icons, .fa, .fas, .far, .fab, .fa-solid, .fa-regular, .fa-brands, .fa-classic, .bi) {
   font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
 }
 

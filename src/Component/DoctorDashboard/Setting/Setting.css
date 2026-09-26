@@ -306,59 +306,21 @@ show {
 }
 
 .settingicon {
-  width: 18px;
-  min-width: 18px;
+  width: 20px;
+  min-width: 20px;
+  height: 20px;
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: currentColor;
-  font-size: 0;
 }
 
-.settingicon i {
-  font-size: 14px;
-}
-
-.settingitem .settingicon::before {
-  font-family: "Font Awesome 6 Free";
-  font-size: 14px;
-  font-weight: 900;
-}
-
-.settingitem .settingicon:has(i)::before {
-  content: none !important;
-}
-
-.set-side-box:first-child .settingitem:nth-of-type(1) .settingicon::before {
-  content: "\f0f0";
-}
-
-.set-side-box:first-child .settingitem:nth-of-type(2) .settingicon::before {
-  content: "\f0f8";
-}
-
-.set-side-box:first-child .settingitem:nth-of-type(3) .settingicon::before {
-  content: "\f09d";
-}
-
-.set-side-box:first-child .settingitem:nth-of-type(4) .settingicon::before {
-  content: "\f029";
-}
-
-.set-side-box:first-child .settingitem:nth-of-type(5) .settingicon::before {
-  content: "\f084";
-}
-
-.set-side-box:first-child .settingitem:nth-of-type(6) .settingicon::before {
-  content: "\f2f5";
-}
-
-.set-side-box:nth-of-type(2) .settingitem:nth-of-type(1) .settingicon::before {
-  content: "\f059";
-}
-
-.set-side-box:nth-of-type(2) .settingitem:nth-of-type(2) .settingicon::before {
-  content: "\f3ed";
+.settings-ss .settingicon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+  stroke-width: 2;
 }
 
 .separator {

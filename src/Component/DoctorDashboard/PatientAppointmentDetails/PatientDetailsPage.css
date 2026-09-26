@@ -1135,28 +1135,25 @@
   padding: 12px;
 }
 
-.pd-last-visit {
+.pd-patient-doctor {
   align-items: center;
   display: flex;
   font-weight: 400;
   justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
 }
 
-.pd-last-visit::before {
+.pd-patient-doctor > span {
   color: #4b5563;
-  content: "Doctor";
   font-weight: 400;
 }
 
-.pd-last-visit {
-  font-size: 0;
-}
-
-.pd-last-visit::after {
+.pd-patient-doctor > strong {
   color: #111827;
-  content: "Dr. Sarah Jenkins";
   font-size: 13px;
   font-weight: 700;
+  text-align: right;
 }
 
 .pd-patient-footer .pd-record-count {

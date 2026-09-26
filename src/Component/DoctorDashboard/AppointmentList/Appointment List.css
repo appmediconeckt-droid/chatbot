@@ -1998,3 +1998,4 @@
 .appointment-pagination-buttons button.active { background: #064fc5; border-color: #064fc5; color: #fff; font-weight: 700; }
 .appointment-pagination-buttons button:disabled { opacity: .45; cursor: not-allowed; }
 @media (max-width: 680px) { .appointment-pagination { align-items: flex-start; flex-direction: column; } }
+.doctor-emergency-badge { display: block; width: fit-content; margin-top: 5px; padding: 3px 8px; border-radius: 6px; background: #fff1f2; color: #be123c; font-size: 12px; font-weight: 700; }

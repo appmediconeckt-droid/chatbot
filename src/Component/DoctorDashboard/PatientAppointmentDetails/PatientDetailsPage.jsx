@@ -6,6 +6,7 @@ import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import { User, Phone, Calendar, Clock, Heart, Pill, Stethoscope, ChevronLeft, FileText, Download, Users, UserPlus, ClipboardList, TrendingUp } from "lucide-react";
 import "./PatientDetailsPage.css";
+import { patientCardDetails, appointmentDoctorName, appointmentVitals } from "./patientRecordDetails.js";
 import { generatePrescriptionPDF } from "./pdfGenerator";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 
@@ -192,15 +193,6 @@ export default function PatientDetailsPage() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const getPatientFromAppointment = (appointment) => {
-    return appointment.patient || appointment.patient_data || appointment.user || {};
-  };
-
-  const getPatientId = (appointment) => {
-    const patient = getPatientFromAppointment(appointment);
-    return appointment.patient_id || appointment.patientId || patient.id || patient._id || patient.user_id || appointment.id;
-  };
-
   const getProblem = (appointment) => {
     return appointment.problem ||
       appointment.symptoms ||
@@ -259,16 +251,15 @@ export default function PatientDetailsPage() {
     const appointmentTime = appointment.appointment_time || appointment.time || createdAt;
     return {
       id: appointment.id || appointment._id,
+      timestamp: Date.parse(createdAt) || 0,
       date: formatDate(createdAt),
       time: formatTime(appointmentTime),
-      bp: appointment.bp || appointment.blood_pressure || "N/A",
-      pulse: appointment.pulse || appointment.heart_rate || appointment.heartRate || "N/A",
-      temperature: appointment.temperature || "N/A",
+      ...appointmentVitals(appointment),
       problem: getProblem(appointment),
       diagnosis: appointment.diagnosis || "N/A",
       tablets: formatMedicines(appointment),
       days: getMedicineDuration(appointment),
-      doctor: appointment.doctor_name || appointment.doctor?.name || authUser?.full_name || authUser?.name || "Doctor",
+      doctor: appointmentDoctorName(appointment, authUser || getStoredAuthUser()),
       prescription: appointment.prescription || appointment.advice || appointment.additional_notes || appointment.additionalNotes || appointment.notes || "N/A",
       followUp: hasFollowUp(appointment)
         ? formatDate(appointment.follow_up_date || appointment.followUpDate || appointment.follow_up || appointment.followUp)
@@ -280,24 +271,19 @@ export default function PatientDetailsPage() {
     const byPatient = new Map();
 
     appointments.forEach((appointment) => {
-      const patient = getPatientFromAppointment(appointment);
-      const patientId = getPatientId(appointment);
+      const patient = patientCardDetails(appointment);
+      const patientId = patient.id;
       const record = normalizeRecord(appointment);
       const existing = byPatient.get(patientId);
 
       const patientDetails = existing || {
-        id: patientId,
-        name: patient.full_name || patient.fullname || patient.name || appointment.patient_name || appointment.name || "Unknown Patient",
-        age: patient.age || appointment.patient_age || appointment.age || "N/A",
-        gender: patient.patient_gender || appointment.patient_gender || "N/A",
-        phone: patient.patient_phone || patient.patient_phone || appointment.patient_phone || appointment.patient_phone || "N/A",
-        bloodGroup: patient.patient_blood_group || patient.patient_blood_group || appointment.patient_blood_group || "N/A",
+        ...patient,
         lastVisit: record.date,
         records: [],
       };
 
       patientDetails.records.push(record);
-      patientDetails.records.sort((a, b) => new Date(b.date) - new Date(a.date));
+      patientDetails.records.sort((a, b) => b.timestamp - a.timestamp);
       patientDetails.lastVisit = patientDetails.records[0]?.date || record.date;
       byPatient.set(patientId, patientDetails);
     });
@@ -322,7 +308,7 @@ export default function PatientDetailsPage() {
           params: { doctor_id: doctorId },
         });
         const appointments = unwrapApiArray(response.data).filter((appointment) => {
-          const appointmentDoctorId = appointment.doctor_id || appointment.doctorId || appointment.doctor?.id || appointment.doctor?._id;
+          const appointmentDoctorId = appointment.doctor_id || appointment.doctorId || appointment.doctor?.id || appointment.doctor?._id || appointment.counselor?._id || appointment.counselor?.id;
           return !appointmentDoctorId || String(appointmentDoctorId) === String(doctorId);
         });
         setPatients(buildPatientsFromAppointments(appointments));
@@ -433,7 +419,7 @@ export default function PatientDetailsPage() {
           diagnosis: "N/A",
           tablets: "N/A",
           days: "N/A",
-          doctor: newPatient.doctor || authUser?.full_name || authUser?.name || "Doctor",
+          doctor: newPatient.doctor || appointmentDoctorName({}, authUser || getStoredAuthUser()),
           prescription: "N/A",
           followUp: "N/A",
         },
@@ -554,7 +540,9 @@ export default function PatientDetailsPage() {
                       <h4 className="pd-patient-name">{patient.name}</h4>
                       <div className="pd-patient-meta">
                         <span className="pd-patient-age">{patient.age} yrs • {patient.gender}</span>
-                        <span className="pd-patient-blood">{patient.bloodGroup}</span>
+                        {patient.bloodGroup && patient.bloodGroup !== "N/A" && (
+                          <span className="pd-patient-blood" title="Blood group">{patient.bloodGroup}</span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -563,9 +551,10 @@ export default function PatientDetailsPage() {
                     <span>{patient.phone}</span>
                   </div>
                   <div className="pd-patient-footer">
-                    <span className="pd-last-visit">
-                      Last visit: {patient.lastVisit}
-                    </span>
+                    <div className="pd-patient-doctor">
+                      <span>Doctor</span>
+                      <strong>{patient.records[0]?.doctor || appointmentDoctorName({}, authUser || getStoredAuthUser())}</strong>
+                    </div>
                     <span className="pd-record-count">
                       {patient.records.length} {patient.records.length === 1 ? 'Visit' : 'Visits'}
                     </span>
@@ -886,7 +875,7 @@ export default function PatientDetailsPage() {
               </label>
               <label>
                 Doctor
-                <input value={newPatient.doctor} onChange={(event) => updateNewPatient("doctor", event.target.value)} placeholder="Dr. Sarah Jenkins" />
+                <input value={newPatient.doctor} onChange={(event) => updateNewPatient("doctor", event.target.value)} placeholder="Doctor name" />
               </label>
               <label className="pd-wide-field">
                 Last Visit
