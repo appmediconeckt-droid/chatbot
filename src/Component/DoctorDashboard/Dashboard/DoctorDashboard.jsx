@@ -2257,6 +2257,7 @@ const getAppointmentDateValue = (appointment) =>
   );
 
 const formatLocalDateKey = (value) => {
+  if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value.trim())) return value.trim();
   const date = value ? new Date(value) : new Date();
   if (Number.isNaN(date.getTime())) return "";
 
@@ -2296,13 +2297,16 @@ const getAppointmentDateTime = (appointment) => {
 };
 
 const isTodayAppointment = (appointment) => {
+  if (String(appointment?.priority || "").toLowerCase() === "emergency" || appointment?.isEmergency) return true;
   const dateValue = getAppointmentDateValue(appointment);
   if (!dateValue) return true;
 
   const appointmentDateKey = formatLocalDateKey(dateValue);
   if (!appointmentDateKey) return true;
 
-  return appointmentDateKey === formatLocalDateKey();
+  const localToday = formatLocalDateKey();
+  const indiaToday = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
+  return appointmentDateKey === localToday || appointmentDateKey === indiaToday;
 };
 
 const isExpiredPendingAppointment = (appointment, nowMs = Date.now()) => {
@@ -2310,6 +2314,7 @@ const isExpiredPendingAppointment = (appointment, nowMs = Date.now()) => {
   // Walk-ins stay in the doctor's queue until their status is explicitly
   // changed; their check-in/preferred time must not make them disappear.
   if (getAppointmentSource(appointment) === "walkin") return false;
+  if (String(appointment?.priority || "").toLowerCase() === "emergency" || appointment?.isEmergency) return false;
 
   const appointmentDateTime = getAppointmentDateTime(appointment);
   if (!appointmentDateTime) return false;
@@ -2408,7 +2413,10 @@ const formatAppointment = (appointment, forcedStatus) => {
     id: `${appointmentSource}-${apiId}`,
     apiId,
     appointmentSource,
-    appointmentType: appointmentSource === "walkin" ? "Walk-in" : "Online",
+    appointmentType: String(pickFirst(appointment?.priority, "")).toLowerCase() === "emergency" ? "Emergency Request" : (appointmentSource === "walkin" ? "Walk-in" : "Online"),
+    isEmergency: String(pickFirst(appointment?.priority, appointment?.is_emergency, "")).toLowerCase() === "emergency" || appointment?.priority === "emergency" || appointment?.is_emergency === true,
+    emergencyReason: pickFirst(appointment?.emergency_reason, appointment?.emergencyReason, ""),
+    priority: String(pickFirst(appointment?.priority, "")).toLowerCase() === "emergency" ? "emergency" : "normal",
     consultationMode: String(pickFirst(appointment?.consultation_mode, appointment?.consultationMode, appointment?.mode, "in-clinic")).toLowerCase(),
     appointmentDate: getAppointmentDateValue(appointment),
     originalAppointmentAt: pickFirst(appointment?.original_appointment_at, appointment?.originalAppointmentAt),
@@ -2473,6 +2481,9 @@ const formatAppointment = (appointment, forcedStatus) => {
     additionalNotes: pickFirst(appointment?.additional_notes, appointment?.additionalNotes),
     followUpRequired,
     followUpDate: rawFollowUpDate ? formatLocalDateKey(rawFollowUpDate) : "",
+    delayMinutes: Number(appointment?.delay_minutes || appointment?.delayMinutes || 0),
+    estimatedTime: pickFirst(appointment?.estimated_appointment_time, appointment?.estimatedAppointmentTime),
+    originalTime: pickFirst(appointment?.original_appointment_time, appointment?.originalAppointmentTime),
   };
 };
 
@@ -3530,6 +3541,23 @@ const DoctorDashboard = () => {
         );
       });
 
+      todayAppointments.sort((a, b) => {
+        const isEmergA = String(a?.priority || "").toLowerCase() === "emergency" || a?.isEmergency;
+        const isEmergB = String(b?.priority || "").toLowerCase() === "emergency" || b?.isEmergency;
+        if (isEmergA && !isEmergB) return -1;
+        if (!isEmergA && isEmergB) return 1;
+
+        const tokenA = pickFirst(a?.token_number, a?.tokenNumber, a?.token);
+        const tokenB = pickFirst(b?.token_number, b?.tokenNumber, b?.token);
+        if (tokenA !== undefined && tokenB !== undefined && !isNaN(Number(tokenA)) && !isNaN(Number(tokenB)) && Number(tokenA) !== Number(tokenB)) {
+          return Number(tokenA) - Number(tokenB);
+        }
+
+        const dateA = getAppointmentDateTime(a)?.getTime() || 0;
+        const dateB = getAppointmentDateTime(b)?.getTime() || 0;
+        return dateA - dateB;
+      });
+
       setAppointments(todayAppointments.map((apt) => formatAppointment(apt)));
 
       const completedList = appointmentList;
@@ -4072,7 +4100,7 @@ const DoctorDashboard = () => {
   const elapsedMs = computeElapsedMs();
   const breakRemainingMs = getBreakRemainingMs();
   const pendingAppointments = appointments.filter(
-    (appt) => appt.status === "pending" && !isExpiredPendingAppointment(appt, now)
+    (appt) => appt.status === "pending"
   );
   const inProgressAppointments = [
     ...(activeAppt ? [activeAppt] : []),
@@ -4249,7 +4277,7 @@ const DoctorDashboard = () => {
                           {getRemoteConsultationMode(appt) && <span><i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video" : "bi-telephone"}`}></i>{getRemoteConsultationMode(appt) === "video" ? "Video" : "Voice"}</span>}
                           <span>{appt.gender}</span>
                           <span className="issue">{appt.issue}</span>
-                          <span><i className="bi bi-clock"></i>{appt.scheduledTime || (appt.endTime ? formatTimeOfDay(appt.endTime) : "Today")}</span>
+                          <span><i className="bi bi-clock"></i>{appt.delayMinutes > 0 && appt.estimatedTime ? `~${appt.estimatedTime} (+${appt.delayMinutes}m)` : (appt.scheduledTime || (appt.endTime ? formatTimeOfDay(appt.endTime) : "Today"))}</span>
                           {appt.delayMinutes > 0 && <span className="issue"><i className="bi bi-hourglass-split"></i>Delayed {appt.delayMinutes} min{appt.delayReason ? ` - ${appt.delayReason}` : ""}</span>}
                           {appt.status === "completed" && appt.followUpRequired && (
                             <span className="dd-follow-up-history-date">

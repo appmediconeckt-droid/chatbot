@@ -632,6 +632,17 @@
   box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
 }
 
+.abm-time.disabled,
+.abm-time:disabled {
+  opacity: 0.38 !important;
+  cursor: not-allowed !important;
+  background: #f1f5f9 !important;
+  color: #94a3b8 !important;
+  border-color: #e2e8f0 !important;
+  pointer-events: none !important;
+  text-decoration: line-through !important;
+}
+
 /* ===== Right Column: Booking Summary ===== */
 .abm-summary {
   background: #ffffff;

@@ -190,6 +190,10 @@ export default function AppointmentList() {
       isEmergency: String(appointment.priority || '').toLowerCase() === 'emergency',
       emergencyReason: appointment.emergency_reason || '',
       awaitingEmergency: String(appointment.priority || '').toLowerCase() === 'emergency' && !appointment.appointment_time,
+      delayMinutes: Number(appointment.delay_minutes || appointment.delayMinutes || 0),
+      delayReason: appointment.delay_reason || appointment.delayReason || '',
+      estimatedTime: appointment.estimated_appointment_time || appointment.estimatedAppointmentTime || '',
+      originalTime: appointment.original_appointment_time || appointment.originalAppointmentTime || '',
       test:
         appointment.test_name ||
         appointment.reason ||
@@ -256,8 +260,26 @@ export default function AppointmentList() {
     return { label: "Pending", className: "pending", icon: "fa-solid fa-clock" };
   };
 
+  const formatTimeParts = (timeStr) => {
+    if (!timeStr) return "";
+    const parts = String(timeStr).split(":");
+    if (parts.length < 2) return timeStr;
+    const h = Number(parts[0]);
+    const m = Number(parts[1]);
+    const ampm = h >= 12 ? "PM" : "AM";
+    const hr12 = (h % 12) || 12;
+    return `${hr12}:${String(m).padStart(2, "0")} ${ampm}`;
+  };
+
   const getTimeRange = (appointment) => {
     if (appointment.awaitingEmergency) return "Emergency — time not assigned";
+    if (appointment.delayMinutes > 0 && appointment.estimatedTime) {
+      const orig = formatTimeParts(appointment.originalTime || appointment.rawTime);
+      const est = formatTimeParts(appointment.estimatedTime);
+      if (est) {
+        return orig ? `${orig} → ${est} (+${appointment.delayMinutes}m)` : `~${est} (+${appointment.delayMinutes}m)`;
+      }
+    }
     if (!appointment.rawTime || appointment.rawTime === "N/A") return appointment.time;
     const date = new Date(appointment.rawTime);
     if (Number.isNaN(date.getTime())) return appointment.time;
@@ -610,8 +632,16 @@ export default function AppointmentList() {
                     <td className="check-cell">
                       <input type="checkbox" checked={isSelected} onChange={() => toggleRow(appointment.id)} />
                     </td>
-                    <td>{getTimeRange(appointment)}</td>
-                    <td>{appointment.tokenNumber}</td>
+                    <td>
+                      <span className={getTimeRange(appointment).includes("+") ? "time-delayed" : ""}>
+                        {getTimeRange(appointment)}
+                      </span>
+                    </td>
+                    <td>
+                      {appointment.tokenNumber && appointment.tokenNumber !== "N/A"
+                        ? <span className="token-badge">#{appointment.tokenNumber}</span>
+                        : <span className="token-empty">—</span>}
+                    </td>
                     <td>{appointment.patientName}{appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}</td>
                     <td>{appointment.phone}</td>
                     <td className="test-cell">{appointment.test}</td>

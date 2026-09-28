@@ -235,12 +235,21 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     return `${String(hour24 % 12 || 12).padStart(2, '0')}:${String(mins).padStart(2, '0')} ${hour24 >= 12 ? 'PM' : 'AM'}`;
   };
 
+  const getNowIndiaMinutes = () => {
+    const d = new Date(Date.now() + 330 * 60000);
+    return d.getUTCHours() * 60 + d.getUTCMinutes();
+  };
+
   const slotsForDate = (date) => {
     if (!date) return [];
     const slots = new Map();
     const applicableRanges = rangesForDate(date.iso, date.weekday);
+    const nowMins = getNowIndiaMinutes();
+    const isToday = date.iso === todayIndia;
+    const isPastDate = date.iso < todayIndia;
 
-    // If specific ranges exist for this doctor/clinic
+    if (isPastDate) return [];
+
     if (applicableRanges.length > 0) {
       applicableRanges.forEach((range) => {
         if (!range.start_time || !range.end_time) return;
@@ -251,7 +260,13 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
         const duration = Math.max(1, Number(range.slot_duration || 15));
         if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
         for (let cursor = start; cursor + duration <= end; cursor += duration) {
-          slots.set(cursor, { time: formatMinutes(cursor), minutes: cursor, disabled: false });
+          const isSlotPast = isToday && cursor <= nowMins;
+          slots.set(cursor, {
+            time: formatMinutes(cursor),
+            minutes: cursor,
+            disabled: isSlotPast,
+            isPast: isSlotPast,
+          });
         }
       });
     }
@@ -268,7 +283,9 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const ranges = rangesForDate(iso, d.getDay());
     // If ranges exist, status is available if ranges > 0; if no custom ranges configured, allow weekdays (Mon-Sat)
-    const isAvailable = ranges.length > 0;
+    const daySlots = slotsForDate({ iso, weekday: d.getDay() });
+    const hasAvailableSlot = daySlots.length === 0 || daySlots.some((s) => !s.disabled);
+    const isAvailable = ranges.length > 0 && hasAvailableSlot;
     return {
       date: d.getDate(),
       day: dayNames[d.getDay()],
@@ -311,7 +328,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   };
 
   const handleTimeSelect = (slot) => {
-    if (!slot.disabled) setSelectedTime(slot.time);
+    if (!slot.disabled && !slot.isPast) setSelectedTime(slot.time);
   };
 
   const paymentMethods = [
@@ -327,6 +344,19 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const goToPayment = () => {
     if (isEmergency) return;
     if (selectedDate && selectedTime && hasClinics && appointmentLocation.trim()) {
+      if (selectedDate.iso < todayIndia) {
+        setBookError('Cannot book an appointment for a past date.');
+        return;
+      }
+      if (selectedDate.iso === todayIndia) {
+        const slot = selectedDateSlots.find((s) => s.time === selectedTime);
+        if (slot && (slot.disabled || slot.isPast || slot.minutes <= getNowIndiaMinutes())) {
+          setBookError('This slot has already passed. Please select an upcoming time slot.');
+          setSelectedTime(null);
+          return;
+        }
+      }
+      setBookError('');
       setStep('payment');
     }
   };
@@ -350,9 +380,15 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
   const confirmBooking = async () => {
     if (booking) return;
-    if (isEmergency && !emergencyReady) {
-      setBookError('Select a clinic and describe the emergency in 10 to 1000 characters.');
-      return;
+    if (isEmergency) {
+      if (!selectedClinic?.id && !selectedClinicId) {
+        setBookError('Please select a clinic for your emergency request.');
+        return;
+      }
+      if (!emergencyReason || !emergencyReason.trim()) {
+        setBookError('Please enter a brief description of the emergency.');
+        return;
+      }
     }
     if (!hasClinics) {
       setBookError('This doctor has no clinic available, so the appointment cannot be booked.');
@@ -741,10 +777,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                   <label><input type="radio" name="appointment-priority" value="emergency" checked={isEmergency} onChange={() => { setAppointmentPriority('emergency'); setSelectedTime(null); setSelectedModeId('in-clinic'); }} /> Emergency appointment — send now</label>}
                 {isEmergency && <div className="abm-emergency-summary">
                   <label htmlFor="emergency-reason">Reason for emergency *</label>
-                  <textarea id="emergency-reason" value={emergencyReason} onChange={(event) => setEmergencyReason(event.target.value)} minLength={10} maxLength={1000} required rows={3} aria-describedby="emergency-booking-help" placeholder="Describe why you need an urgent appointment" />
+                  <textarea id="emergency-reason" value={emergencyReason} onChange={(event) => setEmergencyReason(event.target.value)} minLength={1} maxLength={1000} required rows={3} aria-describedby="emergency-booking-help" placeholder="Describe why you need an urgent appointment" />
                   <p id="emergency-booking-help">Enter 10–1000 characters. No date, time slot or payment selection is needed. Your request alerts the doctor and the selected clinic's nurse/reception team. The clinic confirms consultation timing.</p>
                   {bookError && <p role="alert">{bookError}</p>}
-                  <button className="abm-confirm abm-emergency-submit" type="button" disabled={!emergencyReady || clinicsLoading} onClick={confirmBooking}>
+                  <button className="abm-confirm abm-emergency-submit" type="button" disabled={booking || clinicsLoading} onClick={confirmBooking}>
                     {booking ? 'Sending Emergency Request...' : 'Send Emergency Request'}
                   </button>
                 </div>}
@@ -821,7 +857,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                               <button
                                 key={slot.time}
                                 type="button"
-                                className={`abm-time ${selectedTime === slot.time ? 'selected' : ''}`}
+                                className={`abm-time ${selectedTime === slot.time ? 'selected' : ''} ${slot.disabled ? 'disabled' : ''}`} disabled={slot.disabled}
                                 onClick={() => handleTimeSelect(slot)}
                               >
                                 {slot.time}
@@ -877,7 +913,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 className="abm-confirm"
                 onClick={isEmergency ? confirmBooking : goToPayment}
                 type="button"
-                disabled={isEmergency ? !emergencyReady || clinicsLoading : !selectedDate || !selectedTime || !hasClinics || !appointmentLocation.trim()}
+                disabled={isEmergency ? booking || clinicsLoading : !selectedDate || !selectedTime || !hasClinics || !appointmentLocation.trim()}
               >
                 {isEmergency ? booking ? 'Sending...' : 'Send Emergency Request' : 'Confirm Selection'} <i className="fa-solid fa-arrow-right"></i>
               </button>

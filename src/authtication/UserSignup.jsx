@@ -1384,7 +1384,7 @@ const handleVerify = async () => {
               )}
             </button>
 
-            <div className="us-divider">
+            {/* <div className="us-divider">
               <span>or {isLogin ? "sign in" : "sign up"} with</span>
             </div>
 
@@ -1418,7 +1418,7 @@ const handleVerify = async () => {
                 setApiError(msg);
                 showNotification(msg, "error");
               }}
-            />
+            /> */}
 
             {!isLogin && (
               <p className="us-terms">

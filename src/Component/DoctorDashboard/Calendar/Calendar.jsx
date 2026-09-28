@@ -1718,7 +1718,24 @@ const DoctorCalendar = () => {
     );
   });
 
+  // Group slots by time period: Morning / Afternoon / Evening
+  const groupSlotsByPeriod = (slots = []) => {
+    const morning = [], afternoon = [], evening = [];
+    for (const slot of slots) {
+      const h = parseInt(String(slot.time || "00").split(":")[0], 10);
+      if (h < 12) morning.push(slot);
+      else if (h < 18) afternoon.push(slot);
+      else evening.push(slot);
+    }
+    return [
+      { label: "🌅 Morning", slots: morning },
+      { label: "☀️ Afternoon", slots: afternoon },
+      { label: "🌙 Evening", slots: evening },
+    ].filter((g) => g.slots.length > 0);
+  };
+
   return (
+
     <div className="doctor-calendar-root calendar-portal">
       <header className="calendar-portal-header">
         <div>
@@ -1926,8 +1943,15 @@ const DoctorCalendar = () => {
                       )}
                       {!entry.blocked && (
                         <div className="slot-time-pills">
-                          {entry.slots?.map((slot, slotIndex) => (
-                            <small key={`${slot.time}-${slotIndex}`}>{slot.time}</small>
+                          {groupSlotsByPeriod(entry.slots || []).map((group) => (
+                            <div key={group.label} className="slot-period-group">
+                              <span className="slot-period-label">{group.label}</span>
+                              <div className="slot-period-pills">
+                                {group.slots.map((slot, slotIndex) => (
+                                  <small key={`${slot.time}-${slotIndex}`}>{slot.time}</small>
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -2554,18 +2578,25 @@ const DoctorCalendar = () => {
                       <em className="text-danger">Date marked unavailable</em>
                     ) : e.slots.length ? (
                       <div className="slot-list">
-                        {e.slots.map((slot, idx) => (
-                          <span
-                            key={idx}
-                            className="badge me-1 mb-1"
-                            style={{
-                              backgroundColor: slot.clinicColor,
-                              color: "white"
-                            }}
-                            title={`Clinic: ${slot.clinicName}`}
-                          >
-                            {slot.time}
-                          </span>
+                        {groupSlotsByPeriod(e.slots).map((group) => (
+                          <div key={group.label} className="slot-period-group mb-2">
+                            <div className="slot-period-label small fw-semibold mb-1">{group.label}</div>
+                            <div className="slot-period-pills">
+                              {group.slots.map((slot, idx) => (
+                                <span
+                                  key={idx}
+                                  className="badge me-1 mb-1"
+                                  style={{
+                                    backgroundColor: slot.clinicColor,
+                                    color: "white"
+                                  }}
+                                  title={`Clinic: ${slot.clinicName}`}
+                                >
+                                  {slot.time}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     ) : (

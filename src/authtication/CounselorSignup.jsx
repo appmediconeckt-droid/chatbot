@@ -3472,7 +3472,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
               )}
             </button>
 
-            <div className="cs-divider">
+            {/* <div className="cs-divider">
               <span>or {isLogin ? "sign in" : "sign up"} with</span>
             </div>
 
@@ -3506,7 +3506,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
                 setApiError(msg);
                 showNotification(msg, "error");
               }}
-            />
+            /> */}
 
             {!isLogin && (
               <p className="cs-terms">

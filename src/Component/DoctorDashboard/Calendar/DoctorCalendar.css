@@ -1567,6 +1567,34 @@ i.empty {
   margin: 0;
 }
 
+/* ── Slot period groups (Morning / Afternoon / Evening) ── */
+.slot-period-group {
+  margin-top: 10px;
+  width: 100%;
+}
+
+.slot-period-label {
+  align-items: center;
+  background: linear-gradient(90deg, #e0e7ff 0%, transparent 100%);
+  border-left: 3px solid #6366f1;
+  border-radius: 4px;
+  color: #4338ca;
+  display: flex;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 5px;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+}
+
+.slot-period-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
 .slot-preview-list article:has(.slot-unavailable-message) {
   background: #fff7f7;
   border-color: #fecaca;
