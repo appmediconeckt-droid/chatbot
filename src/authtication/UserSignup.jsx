@@ -205,69 +205,12 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
     return newErrors;
   };
 
-  // const handleForgotPassword = async () => {
-  //   const emailFromForm = String(formData.email || "")
-  //     .trim()
-  //     .toLowerCase();
-  //   const promptedEmail = emailFromForm
-  //     ? ""
-  //     : window.prompt("Enter your registered email:", "") || "";
-  //   const normalizedEmail = String(emailFromForm || promptedEmail)
-  //     .trim()
-  //     .toLowerCase();
 
-  //   if (!normalizedEmail) {
-  //     showNotification("Please enter your registered email", "error");
-  //     return;
-  //   }
-
-  //   if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
-  //     showNotification("Please enter a valid email address", "error");
-  //     return;
-  //   }
-
-  //   try {
-  //     setIsLoading(true);
-  //     const endpoints = ["forgot-password", "forgotPassword"];
-  //     let sent = false;
-
-  //     for (const endpoint of endpoints) {
-  //       try {
-  //         await axios.post(
-  //           `${API_BASE_URL}/api/auth/${endpoint}`,
-  //           { email: normalizedEmail },
-  //           { withCredentials: true },
-  //         );
-  //         sent = true;
-  //         break;
-  //       } catch (error) {
-  //         if (error?.response?.status !== 404) {
-  //           throw error;
-  //         }
-  //       }
-  //     }
-
-  //     if (!sent) {
-  //       throw new Error("Unable to reach forgot password API");
-  //     }
-
-  //     setFormData((prev) => ({ ...prev, email: normalizedEmail }));
-  //     showNotification("Reset link sent to your email", "success");
-  //   } catch (error) {
-  //     const message =
-  //       error?.response?.data?.message ||
-  //       error?.message ||
-  //       "Unable to send reset link right now";
-  //     showNotification(message, "error");
-  //   } finally {
-  //     setIsLoading(false);
-  //   }
-  // };
 
 
   const handleForgotPassword = () => {
-  navigate("/forgot-password");
-};
+    navigate("/forgot-password");
+  };
   const validateSignup = () => {
     const newErrors = {};
 
@@ -642,41 +585,41 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
 
   // In UserSignup.js, update the handleVerify function:
 
-const handleVerify = async () => {
-  try {
-    setIsVerifying(true);
-    setVerifySuccess(false);
-    const loginEmail = String(formData.email || "").trim().toLowerCase();
-    
-    // First, send the OTP and logout other devices
-    const verifyResponse = await axios.post(
-      `${API_BASE_URL}/api/auth/logout-other-devices`,
-      { email: loginEmail },
-      { withCredentials: true },
-    );
-    
-    if (verifyResponse.data?.success) {
-      // Store email in localStorage for the OTP page to use
-      localStorage.setItem("userEmail", loginEmail);
-      
-      // Navigate to OTP verification page
-      navigate("/verify-login-otp", { 
-        state: { 
-          email: loginEmail
-        } 
-      });
+  const handleVerify = async () => {
+    try {
+      setIsVerifying(true);
+      setVerifySuccess(false);
+      const loginEmail = String(formData.email || "").trim().toLowerCase();
+
+      // First, send the OTP and logout other devices
+      const verifyResponse = await axios.post(
+        `${API_BASE_URL}/api/auth/logout-other-devices`,
+        { email: loginEmail },
+        { withCredentials: true },
+      );
+
+      if (verifyResponse.data?.success) {
+        // Store email in localStorage for the OTP page to use
+        localStorage.setItem("userEmail", loginEmail);
+
+        // Navigate to OTP verification page
+        navigate("/verify-login-otp", {
+          state: {
+            email: loginEmail
+          }
+        });
+      }
+    } catch (error) {
+      console.error("Verification error:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to send OTP. Please try again.";
+      setApiError(errorMessage);
+      showNotification(errorMessage, "error");
+    } finally {
+      setIsVerifying(false);
     }
-  } catch (error) {
-    console.error("Verification error:", error);
-    const errorMessage =
-      error.response?.data?.message ||
-      "Failed to send OTP. Please try again.";
-    setApiError(errorMessage);
-    showNotification(errorMessage, "error");
-  } finally {
-    setIsVerifying(false);
-  }
-};
+  };
 
   const handleVerifyLoginOtp = async () => {
     if (!loginOtp || loginOtp.length !== 6) {
@@ -758,67 +701,67 @@ const handleVerify = async () => {
             )}
           </div>
         ) : (
-        <div className="us-otp-body">
-          <p>Enter the 6-digit code sent to</p>
-          <div className="us-otp-recipient">{formData.email}</div>
+          <div className="us-otp-body">
+            <p>Enter the 6-digit code sent to</p>
+            <div className="us-otp-recipient">{formData.email}</div>
 
-          <div className="us-otp-input-wrapper">
-            <input
-              type="text"
-              placeholder="000000"
-              value={emailOtp}
-              onChange={(e) =>
-                setEmailOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
-              }
-              className={`us-otp-input ${emailOtpSuccess ? "us-otp-input-success" : ""}`}
-              maxLength="6"
-              disabled={isVerifyingEmailOtp || emailOtpSuccess}
-              autoFocus
-            />
+            <div className="us-otp-input-wrapper">
+              <input
+                type="text"
+                placeholder="000000"
+                value={emailOtp}
+                onChange={(e) =>
+                  setEmailOtp(e.target.value.replace(/\D/g, "").slice(0, 6))
+                }
+                className={`us-otp-input ${emailOtpSuccess ? "us-otp-input-success" : ""}`}
+                maxLength="6"
+                disabled={isVerifyingEmailOtp || emailOtpSuccess}
+                autoFocus
+              />
+              {emailOtpSuccess && (
+                <FaCheckCircle className="us-otp-success-icon" />
+              )}
+            </div>
+
+            {emailOtpError && <div className="us-otp-error">{emailOtpError}</div>}
+
+            <div className="us-otp-actions">
+              <button
+                onClick={handleVerifyEmailOtp}
+                className="us-otp-verify"
+                disabled={isVerifyingEmailOtp || emailOtpSuccess || !emailOtp}
+              >
+                {isVerifyingEmailOtp ? (
+                  <FaSpinner className="us-spin" />
+                ) : (
+                  "Verify"
+                )}
+              </button>
+              <button
+                onClick={handleSendEmailOtp}
+                className="us-otp-resend"
+                disabled={
+                  isSendingEmailOtp || emailResendTimer > 0 || emailOtpSuccess
+                }
+              >
+                {isSendingEmailOtp ? (
+                  <>
+                    <FaSpinner className="us-spin" /> Sending
+                  </>
+                ) : emailResendTimer > 0 ? (
+                  `Resend in ${emailResendTimer}s`
+                ) : (
+                  "Resend Code"
+                )}
+              </button>
+            </div>
+
             {emailOtpSuccess && (
-              <FaCheckCircle className="us-otp-success-icon" />
+              <div className="us-otp-success">
+                <FaCheckCircle /> Email verified successfully!
+              </div>
             )}
           </div>
-
-          {emailOtpError && <div className="us-otp-error">{emailOtpError}</div>}
-
-          <div className="us-otp-actions">
-            <button
-              onClick={handleVerifyEmailOtp}
-              className="us-otp-verify"
-              disabled={isVerifyingEmailOtp || emailOtpSuccess || !emailOtp}
-            >
-              {isVerifyingEmailOtp ? (
-                <FaSpinner className="us-spin" />
-              ) : (
-                "Verify"
-              )}
-            </button>
-            <button
-              onClick={handleSendEmailOtp}
-              className="us-otp-resend"
-              disabled={
-                isSendingEmailOtp || emailResendTimer > 0 || emailOtpSuccess
-              }
-            >
-              {isSendingEmailOtp ? (
-                <>
-                  <FaSpinner className="us-spin" /> Sending
-                </>
-              ) : emailResendTimer > 0 ? (
-                `Resend in ${emailResendTimer}s`
-              ) : (
-                "Resend Code"
-              )}
-            </button>
-          </div>
-
-          {emailOtpSuccess && (
-            <div className="us-otp-success">
-              <FaCheckCircle /> Email verified successfully!
-            </div>
-          )}
-        </div>
         )}
       </div>
     </div>
@@ -1384,7 +1327,7 @@ const handleVerify = async () => {
               )}
             </button>
 
-            {/* <div className="us-divider">
+            <div className="us-divider">
               <span>or {isLogin ? "sign in" : "sign up"} with</span>
             </div>
 
@@ -1418,7 +1361,7 @@ const handleVerify = async () => {
                 setApiError(msg);
                 showNotification(msg, "error");
               }}
-            /> */}
+            />
 
             {!isLogin && (
               <p className="us-terms">
