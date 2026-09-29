@@ -1,4 +1,7 @@
-import { normalizeProfileImage as normalizeImage } from "../../../utils/profileImage";
+import {
+  normalizeProfileImage as normalizeImage,
+  resolveProfileImage,
+} from "../../../utils/profileImage";
 import { API_BASE_URL } from "../../../axiosConfig";
 import React, { useMemo, useState } from "react";
 import {
@@ -165,14 +168,24 @@ const IncomingCallModal = ({
     );
   }, [callData, callerName, fallbackName, isPatientCaller, resolvedAnonymousName]);
 
-  const profilePhoto = normalizeProfileImage(isPatientCaller
-    ? anonymousCaller.avatarUrl || anonymousCaller.avatar
-    : callData?.from?.profilePhoto ||
-      callData?.from?.profilePic ||
-      callData?.initiator?.profilePhoto ||
-      callData?.initiator?.profilePic ||
-      callData?.from?.avatar ||
-      callerImage);
+  const profilePhoto = isPatientCaller
+    ? normalizeProfileImage(anonymousCaller.avatarUrl || anonymousCaller.avatar)
+    : (
+        resolveProfileImage(callData?.from, API_BASE_URL) ||
+        resolveProfileImage(callData?.initiator, API_BASE_URL) ||
+        resolveProfileImage(callData, API_BASE_URL) ||
+        normalizeProfileImage(
+          callerImage ||
+            callData?.image ||
+            callData?.fromProfilePhoto ||
+            callData?.fromProfileImage ||
+            callData?.fromProfilePic ||
+            callData?.consultantProfilePhoto ||
+            callData?.consultantProfileImage ||
+            callData?.doctorProfilePhoto ||
+            callData?.doctorProfileImage,
+        )
+      );
 
   const requestedTime = formatRequestTime(
     callData?.requestedAt || callData?.createdAt,

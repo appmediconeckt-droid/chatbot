@@ -49,6 +49,10 @@ import { LanguageSelector } from "../../common/LanguageSelector";
 import AiChatPopup from "./components/AiChatPopup";
 import ChatButton from "./components/ChatButton";
 import NotificationCenter from "../../common/Notifications/NotificationCenter";
+import {
+  normalizeProfileImage,
+  resolveProfileImage,
+} from "../../../utils/profileImage";
 
 const AccountSettings = lazy(() => import("../../Settings/AccountSettings"));
 const CallHistory = lazy(() => import("../Tab/Callls/CallHistory"));
@@ -219,6 +223,28 @@ export default function UserDashboard() {
     return "";
   };
 
+  const resolveIncomingCallerImage = (callData = {}, fromData = {}) => {
+    const candidates = [
+      resolveProfileImage(fromData, API_BASE_URL),
+      resolveProfileImage(callData.initiator, API_BASE_URL),
+      resolveProfileImage(callData.from, API_BASE_URL),
+      resolveProfileImage(callData, API_BASE_URL),
+      normalizeProfileImage(callData.fromProfilePhoto, API_BASE_URL),
+      normalizeProfileImage(callData.fromProfileImage, API_BASE_URL),
+      normalizeProfileImage(callData.fromProfilePic, API_BASE_URL),
+      normalizeProfileImage(callData.fromAvatar, API_BASE_URL),
+      normalizeProfileImage(callData.fromPhoto, API_BASE_URL),
+      normalizeProfileImage(callData.callerProfilePhoto, API_BASE_URL),
+      normalizeProfileImage(callData.callerProfileImage, API_BASE_URL),
+      normalizeProfileImage(callData.consultantProfilePhoto, API_BASE_URL),
+      normalizeProfileImage(callData.consultantProfileImage, API_BASE_URL),
+      normalizeProfileImage(callData.doctorProfilePhoto, API_BASE_URL),
+      normalizeProfileImage(callData.doctorProfileImage, API_BASE_URL),
+    ];
+
+    return candidates.find(Boolean) || null;
+  };
+
   const acceptCall = async (callId) => {
     try {
       const token =
@@ -351,8 +377,7 @@ export default function UserDashboard() {
             return;
           }
 
-          const profilePhoto =
-            fromData.profilePhoto || waitingCall.fromProfilePhoto || null;
+          const profilePhoto = resolveIncomingCallerImage(waitingCall, fromData);
           const callId =
             waitingCall.callId || waitingCall.id || waitingCall._id;
           const roomId = waitingCall.roomId;
@@ -366,7 +391,16 @@ export default function UserDashboard() {
             waitingDuration:
               waitingCall.waitingDuration || waitingCall.remainingSeconds || 0,
             onEndCall: endCall,
-            from: fromData,
+            from: {
+              ...fromData,
+              profilePhoto:
+                profilePhoto ||
+                fromData.profilePhoto ||
+                fromData.profileImage ||
+                fromData.profilePic ||
+                fromData.avatar,
+            },
+            initiator: waitingCall.initiator,
             requestMessage:
               waitingCall.requestMessage || `Incoming ${callTypeValue} call...`,
             requestedAt: waitingCall.requestedAt || waitingCall.createdAt,
