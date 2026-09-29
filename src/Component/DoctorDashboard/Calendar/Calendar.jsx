@@ -2032,6 +2032,8 @@ const DoctorCalendar = () => {
                   type="button"
                   key={day}
                   className={recurringWeekdays.includes(index) ? "active" : ""}
+                  aria-label={day}
+                  aria-pressed={recurringWeekdays.includes(index)}
                   onClick={() => toggleRecurringWeekday(index)}
                 >
                   {day[0]}

@@ -1372,6 +1372,68 @@
   color: #ffffff;
 }
 
+/* Filter select dropdowns (styled like the old buttons) */
+.pd-filter-select {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 32px 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #334155;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.pd-filter-select:hover {
+  border-color: #cbd5e1;
+  background-color: #f8fafc;
+}
+
+.pd-filter-select:focus {
+  outline: none;
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+}
+
+/* Clear filters button */
+.pd-clear-filters-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pd-clear-filters-btn:hover {
+  background: #fecaca;
+  border-color: #fca5a5;
+}
+
+/* Filter summary text */
+.pd-filter-summary {
+  font-size: 13px;
+  color: #64748b;
+  margin: 4px 0 12px;
+}
+
+.pd-filter-summary strong {
+  color: #0f172a;
+}
+
 @media (max-width: 760px) {
   .pd-add-form-grid {
     grid-template-columns: 1fr;
@@ -1395,3 +1457,17 @@
 .pd-pagination button.active { color:#fff; background:#064fc5; border-color:#064fc5; font-weight:700; }
 .pd-pagination button:disabled { opacity:.45; cursor:not-allowed; }
 @media (max-width:680px) { .pd-pagination { align-items:flex-start; flex-direction:column; } }
+.pd-container .pd-directory-tools {flex-wrap:wrap;gap:14px;align-items:center}
+.pd-container .pd-filter-row {align-items:center}
+.pd-container .pd-filter-select,.pd-container .pd-sort-control select,.pd-container .pd-clear-filters-btn {height:38px;min-height:38px;margin:0;line-height:normal;box-sizing:border-box}
+.pd-container .pd-patient-grid {grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+.pd-container .pd-patient-card {min-width:0;padding:22px;display:flex;flex-direction:column}
+.pd-container .pd-patient-header {display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.pd-container .pd-patient-avatar {flex:0 0 54px;width:54px;height:54px}
+.pd-container .pd-patient-info {min-width:0;flex:1}
+.pd-container .pd-patient-name {overflow-wrap:anywhere;margin:0 0 8px}
+.pd-container .pd-patient-meta {display:flex;flex-wrap:wrap;gap:8px;margin:0}
+.pd-container .pd-patient-blood,.pd-container .pd-record-count {position:static;display:inline-flex;align-items:center;width:fit-content;border-radius:6px}
+.pd-container .pd-patient-contact {margin:0 0 16px;display:flex;align-items:center;overflow-wrap:anywhere}
+.pd-container .pd-patient-footer {margin-top:auto;min-width:0}
+.pd-container .pd-patient-doctor strong {overflow-wrap:anywhere}

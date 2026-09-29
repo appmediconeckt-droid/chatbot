@@ -1,3 +1,4 @@
+import { normalizeProfileImage as normalizeImage, profileImageValue } from "../../../../utils/profileImage";
 import { isProfessionalRole } from "../../../../authtication/authSession.js";
 import React, {
   useCallback,
@@ -9,6 +10,7 @@ import React, {
 import axios from "axios";
 import {
   CallingState,
+  DefaultVideoPlaceholder,
   OwnCapability,
   ParticipantView,
   StreamCall,
@@ -109,24 +111,21 @@ const buildInitials = (name) => {
   return normalizedName ? normalizedName.charAt(0).toUpperCase() : "?";
 };
 
-const normalizeProfileImage = (value) => {
-  if (!value) return "";
-  if (typeof value === "string") return value;
-  return value.url || value.secure_url || value.avatarUrl || "";
+const normalizeProfileImage = value => normalizeImage(value, API_BASE_URL);
+const resolveParticipantImage = (participant, fallback = "") =>
+  normalizeProfileImage(profileImageValue(participant) || profileImageValue(participant?.user) || fallback);
+
+const CallAvatar = ({ image, name }) => {
+  const [failedImage, setFailedImage] = useState(null);
+  if (!image || failedImage === image) return <span>{buildInitials(name)}</span>;
+  if (!/^(https?:|data:|blob:|\/)/i.test(image)) return <span>{image}</span>;
+  return <img src={image} alt={name} onError={() => setFailedImage(image)} />;
 };
 
-const resolveParticipantImage = (participant, fallback = "") =>
-  normalizeProfileImage(
-    participant?.image ||
-      participant?.user?.image ||
-      participant?.user?.profilePhoto ||
-      participant?.user?.profilePic ||
-      participant?.user?.avatar ||
-      participant?.profilePhoto ||
-      participant?.profilePic ||
-      participant?.avatar ||
-      fallback,
-  );
+const CallVideoPlaceholder = React.forwardRef(function CallVideoPlaceholder(props, ref) {
+  const participant = { ...props.participant, image: resolveParticipantImage(props.participant) };
+  return <DefaultVideoPlaceholder key={participant.image} {...props} participant={participant} ref={ref} />;
+});
 
 const formatDuration = (seconds) => {
   const safeSeconds = Math.max(0, Number(seconds) || 0);
@@ -422,7 +421,7 @@ const StreamVideoBody = ({
                   </span>
                   {voiceParticipantImage ? (
                     <img
-                      src={voiceParticipantImage}
+                      key={voiceParticipantImage} src={voiceParticipantImage}
                       alt=""
                       onError={(event) => {
                         event.currentTarget.style.display = "none";
@@ -487,7 +486,8 @@ const StreamVideoBody = ({
             <>
               <ParticipantView
                 className="stream-main-participant"
-                participant={mainParticipant}
+                VideoPlaceholder={CallVideoPlaceholder}
+                participant={{ ...mainParticipant, image: resolveParticipantImage(mainParticipant, remoteProfilePhoto) }}
                 trackType={isPresentingMain ? "screenShareTrack" : "videoTrack"}
                 muteAudio={muteRemoteAudio}
               />
@@ -504,6 +504,7 @@ const StreamVideoBody = ({
           <div className="stream-self-pip">
             <ParticipantView
               className="stream-self-participant"
+              VideoPlaceholder={CallVideoPlaceholder}
               participant={localParticipant}
               muteAudio={true}
             />
@@ -614,7 +615,7 @@ const VideoCallModal = ({
   const currentUserFullName = currentUser?.fullName;
   const currentUserName = currentUser?.name;
   const currentUserProfilePic = currentUser?.profilePic;
-  const currentUserProfilePhoto = currentUser?.profilePhoto;
+  const currentUserProfilePhoto = profileImageValue(currentUser);
   const currentUserRole = currentUser?.role;
   const currentUserTypeFromCall = callData?.currentUserType;
   const initialCallStatus = useMemo(
@@ -698,7 +699,7 @@ const VideoCallModal = ({
       name: currentUserName || storedCurrentUser?.name,
       profilePic: currentUserProfilePic || storedCurrentUser?.profilePic,
       profilePhoto:
-        currentUserProfilePhoto || storedCurrentUser?.profilePhoto,
+        currentUserProfilePhoto || profileImageValue(storedCurrentUser),
     });
 
     userObj.role = resolvedUserType;
@@ -733,24 +734,8 @@ const VideoCallModal = ({
   ]);
   const calleeName = useMemo(() => resolveCalleeName(callData), [callData]);
   const remoteProfilePhoto = useMemo(
-    () =>
-      normalizeProfileImage(
-        callData?.profilePhoto ||
-          callData?.profilePic ||
-          callData?.avatarUrl ||
-          callData?.avatar ||
-          callData?.receiver?.profilePhoto ||
-          callData?.receiver?.profilePic ||
-          callData?.receiver?.avatar ||
-          callData?.initiator?.profilePhoto ||
-          callData?.initiator?.profilePic ||
-          callData?.initiator?.avatar ||
-          callData?.from?.profilePhoto ||
-          callData?.from?.profilePic ||
-          callData?.from?.avatar ||
-          callData?.image,
-      ),
-    [callData],
+    () => normalizeProfileImage(profileImageValue(callData) || profileImageValue(remoteParticipant)),
+    [callData, remoteParticipant],
   );
   const calleeInitials = useMemo(() => buildInitials(calleeName), [calleeName]);
   const maskedCalleeName = useMemo(() => {
@@ -1697,11 +1682,7 @@ const VideoCallModal = ({
                   <div className="stream-pulse-ring stream-pulse-ring-2" />
                   <div className="stream-pulse-ring stream-pulse-ring-3" />
                   <div className="stream-avatar-glow">
-                    {remoteProfilePhoto ? (
-                      <img src={remoteProfilePhoto} alt={maskedCalleeName} />
-                    ) : (
-                      maskedCalleeInitials
-                    )}
+                    <CallAvatar image={remoteProfilePhoto} name={maskedCalleeName} />
                   </div>
                 </div>
                 <h1 className="stream-callee-name">{maskedCalleeName}</h1>

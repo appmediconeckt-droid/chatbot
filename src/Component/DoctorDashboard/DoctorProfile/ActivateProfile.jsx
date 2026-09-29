@@ -349,11 +349,11 @@ export default function DoctorProfileFlow() {
       setPhotoFile(null);
       setCertificateFile(null);
       setCertificateName('');
-      window.dispatchEvent(new CustomEvent('profile-updated', { detail: { role: 'doctor' } }));
       setSavedContact({ email: saved.email, mobile: saved.phoneNumber });
       setIsEditMode(false);
       setProfileStatus("succeeded");
       localStorage.setItem(`doctorProfile:${doctorId}`, JSON.stringify(mapApiProfile(saved)));
+      window.dispatchEvent(new CustomEvent('profile-updated', { detail: { role: 'doctor' } }));
     } catch (error) {
       setProfileError(error.response?.data?.message || error.message || "Profile update failed");
     } finally {

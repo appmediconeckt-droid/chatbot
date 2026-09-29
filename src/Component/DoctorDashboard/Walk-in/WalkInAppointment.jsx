@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
-import { CheckCircle, Clock, XCircle, Users, Stethoscope, CircleCheck, CircleX, Search, CalendarDays, SlidersHorizontal, Link2 } from "lucide-react";
+import { CheckCircle, Clock, XCircle, Users, Stethoscope, CircleCheck, CircleX, Search, CalendarDays, SlidersHorizontal, Link2, X } from "lucide-react";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./WalkInAppointment.css";
 
@@ -18,6 +18,14 @@ export default function WalkInAppointment() {
   const [submitting, setSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
+
+  // ===== Filter States =====
+  const [searchQuery, setSearchQuery] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [doctorFilter, setDoctorFilter] = useState("");
+  const [departmentFilter, setDepartmentFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -45,15 +53,6 @@ export default function WalkInAppointment() {
   const queryDoctorId = new URLSearchParams(location.search).get("doctorId");
   const isQrForm = location.pathname === "/walkinappointment/form";
   const doctorId = queryDoctorId || extractDoctorId(authUser || getStoredAuthUser());
-  const totalPages = Math.max(1, Math.ceil(appointments.length / pageSize));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
-  const firstRowIndex = appointments.length ? (safeCurrentPage - 1) * pageSize : 0;
-  const paginatedAppointments = appointments.slice(firstRowIndex, firstRowIndex + pageSize);
-  const lastRowIndex = Math.min(firstRowIndex + pageSize, appointments.length);
-
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(totalPages);
-  }, [currentPage, totalPages]);
 
   const unwrapApiArray = (payload) => {
     if (Array.isArray(payload)) return payload;
@@ -105,6 +104,7 @@ export default function WalkInAppointment() {
         "BOOKED"
       ).toUpperCase().replace(/[\s-]+/g, "_"),
       date: formatAppointmentDate(createdAt),
+      rawDate: createdAt,
       time: item.time || item.appointment_time || formatAppointmentTime(createdAt),
       doctor: item.doctor_name || item.doctor?.name || item.doctor || "Not assigned",
       department: item.department || item.dept || "Not assigned",
@@ -157,6 +157,79 @@ export default function WalkInAppointment() {
     if (isQrForm) setShowModal(true);
   }, [isQrForm]);
 
+  // ===== Filter + Search Logic =====
+  const filteredAppointments = useMemo(() => {
+    return appointments.filter((apt) => {
+      // Search: name + phone
+      const q = searchQuery.trim().toLowerCase();
+      const matchesSearch =
+        !q ||
+        (apt.name || "").toLowerCase().includes(q) ||
+        String(apt.phone || "").toLowerCase().includes(q);
+
+      // Date filter
+      let matchesDate = true;
+      if (dateFilter) {
+        const aptDate = apt.rawDate ? new Date(apt.rawDate) : null;
+        if (!aptDate || Number.isNaN(aptDate.getTime())) {
+          matchesDate = false;
+        } else {
+          const yyyy = aptDate.getFullYear();
+          const mm = String(aptDate.getMonth() + 1).padStart(2, "0");
+          const dd = String(aptDate.getDate()).padStart(2, "0");
+          matchesDate = `${yyyy}-${mm}-${dd}` === dateFilter;
+        }
+      }
+
+      // Doctor filter
+      const matchesDoctor =
+        !doctorFilter || apt.doctor === doctorFilter;
+
+      // Department filter
+      const matchesDepartment =
+        !departmentFilter || apt.department === departmentFilter;
+
+      // Status filter
+      const matchesStatus =
+        !statusFilter || apt.status === statusFilter;
+
+      return matchesSearch && matchesDate && matchesDoctor && matchesDepartment && matchesStatus;
+    });
+  }, [appointments, searchQuery, dateFilter, doctorFilter, departmentFilter, statusFilter]);
+
+  // ===== Doctor dropdown options =====
+  const doctorOptions = useMemo(() => {
+    const set = new Set();
+    appointments.forEach((apt) => {
+      if (apt.doctor && apt.doctor !== "Not assigned") set.add(apt.doctor);
+    });
+    return Array.from(set).sort();
+  }, [appointments]);
+
+  // ===== Department dropdown options =====
+  const departmentOptions = useMemo(() => {
+    const set = new Set();
+    appointments.forEach((apt) => {
+      if (apt.department && apt.department !== "Not assigned") set.add(apt.department);
+    });
+    return Array.from(set).sort();
+  }, [appointments]);
+
+  // ===== Reset pagination when filters change =====
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, dateFilter, doctorFilter, departmentFilter, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAppointments.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const firstRowIndex = filteredAppointments.length ? (safeCurrentPage - 1) * pageSize : 0;
+  const paginatedAppointments = filteredAppointments.slice(firstRowIndex, firstRowIndex + pageSize);
+  const lastRowIndex = Math.min(firstRowIndex + pageSize, filteredAppointments.length);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
   const openModal = () => {
     setShowModal(true);
     setErrors({});
@@ -182,7 +255,6 @@ export default function WalkInAppointment() {
       ...formData,
       [name]: value
     });
-    // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors({
         ...errors,
@@ -193,17 +265,17 @@ export default function WalkInAppointment() {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = "Name is required";
     }
-    
+
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
     } else if (!/^\d{10}$/.test(formData.phone)) {
       newErrors.phone = "Please enter a valid 10-digit phone number";
     }
-    
+
     if (!formData.problem.trim()) {
       newErrors.problem = "Problem description is required";
     }
@@ -307,6 +379,22 @@ export default function WalkInAppointment() {
     ["BOOKED", "WAITING", "IN_CONSULTATION"].includes(appointment.status)
   )?.doctor || "—";
 
+  // ===== Clear all filters =====
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setDateFilter("");
+    setDoctorFilter("");
+    setDepartmentFilter("");
+    setStatusFilter("");
+  };
+
+  const hasActiveFilters =
+    searchQuery !== "" ||
+    dateFilter !== "" ||
+    doctorFilter !== "" ||
+    departmentFilter !== "" ||
+    statusFilter !== "";
+
   return (
     <div className={`walkin-main walkin-portal ${isQrForm ? "walkin-qr-page" : ""}`}>
       {showModal && (
@@ -407,14 +495,79 @@ export default function WalkInAppointment() {
       </section>
 
       <section className="walkin-table-card">
+        {/* ===== Working Filters Toolbar ===== */}
         <div className="walkin-table-toolbar">
-          <label><Search size={16} /><input placeholder="Search patient name, phone..." /></label>
-          <label><CalendarDays size={16} /><input type="date" /></label>
-          <select defaultValue=""><option value="">All Doctors</option></select>
-          <select defaultValue=""><option value="">All Departments</option></select>
-          <select defaultValue=""><option value="">Status: All</option></select>
-          <button type="button"><SlidersHorizontal size={16} /> More</button>
+          <label>
+            <Search size={16} />
+            <input
+              placeholder="Search patient name, phone..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </label>
+
+          <label>
+            <CalendarDays size={16} />
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+            />
+          </label>
+
+          <select
+            value={doctorFilter}
+            onChange={(e) => setDoctorFilter(e.target.value)}
+            aria-label="Filter by doctor"
+          >
+            <option value="">All Doctors</option>
+            {doctorOptions.map((doctor) => (
+              <option key={doctor} value={doctor}>{doctor}</option>
+            ))}
+          </select>
+
+          <select
+            value={departmentFilter}
+            onChange={(e) => setDepartmentFilter(e.target.value)}
+            aria-label="Filter by department"
+          >
+            <option value="">All Departments</option>
+            {departmentOptions.map((dept) => (
+              <option key={dept} value={dept}>{dept}</option>
+            ))}
+          </select>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            aria-label="Filter by status"
+          >
+            <option value="">Status: All</option>
+            <option value="BOOKED">Waiting / Booked</option>
+            <option value="WAITING">Waiting</option>
+            <option value="IN_CONSULTATION">In Consultation</option>
+            <option value="COMPLETED">Completed</option>
+            <option value="CANCELLED">Cancelled</option>
+          </select>
+
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className="walkin-clear-filters-btn"
+              onClick={clearAllFilters}
+              title="Clear all filters"
+            >
+              <X size={14} /> Clear
+            </button>
+          )}
         </div>
+
+        {/* ===== Filter Summary ===== */}
+        {hasActiveFilters && status === "succeeded" && (
+          <div className="walkin-filter-summary">
+            Showing <strong>{filteredAppointments.length}</strong> of <strong>{appointments.length}</strong> appointments
+          </div>
+        )}
 
         <div className="walkin-table-wrapper">
           <table className="walkin-appointment-table">
@@ -431,8 +584,14 @@ export default function WalkInAppointment() {
             <tbody>
               {status === "loading" ? (
                 <tr><td colSpan="6" className="walkin-empty-row">Loading appointments...</td></tr>
-              ) : appointments.length === 0 ? (
-                <tr><td colSpan="6" className="walkin-empty-row">No walk-in appointments found</td></tr>
+              ) : filteredAppointments.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="walkin-empty-row">
+                    {hasActiveFilters
+                      ? "No appointments match your filters. Try clearing them."
+                      : "No walk-in appointments found"}
+                  </td>
+                </tr>
               ) : (
                 paginatedAppointments.map((apt) => (
                   <tr key={apt.id}>
@@ -470,8 +629,11 @@ export default function WalkInAppointment() {
             </tbody>
           </table>
         </div>
+
         <div className="walkin-pagination">
-          <span>Showing {appointments.length ? firstRowIndex + 1 : 0} to {lastRowIndex} of {appointments.length} entries</span>
+          <span>
+            Showing {filteredAppointments.length ? firstRowIndex + 1 : 0} to {lastRowIndex} of {filteredAppointments.length} entries
+          </span>
           <div>
             <button type="button" aria-label="Previous page" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>‹</button>
             {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (

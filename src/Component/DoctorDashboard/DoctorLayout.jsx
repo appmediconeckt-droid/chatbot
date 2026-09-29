@@ -3,7 +3,8 @@ import { FaSignOutAlt, FaExclamationTriangle } from "react-icons/fa";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { doctorMenuItems } from "./doctorRoutes";
 import { getDoctorUser } from "./doctorApi";
-import axiosInstance from "../../axiosConfig";
+import axiosInstance, { API_BASE_URL } from "../../axiosConfig";
+import { normalizeProfileImage, profileImageValue } from "../../utils/profileImage";
 import { socketService } from "../../services/socketService";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -19,10 +20,36 @@ export default function DoctorLayout() {
   const navigate = useNavigate();
   const user = getDoctorUser();
   const doctorId = user?.doctor_id || user?.doctorId || user?.id || user?._id || user?.user_id || user?.userId;
+  const [serverProfile, setServerProfile] = useState(null);
+  const [, refreshProfile] = useState(0);
   let savedProfile = {};
   try {
     savedProfile = JSON.parse(localStorage.getItem(`doctorProfile:${doctorId}`) || "{}");
   } catch { /* Use the signed-in user's details if the profile cache is invalid. */ }
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const { data } = await axiosInstance.get("/api/auth/me");
+        if (active) setServerProfile(data?.data?.user || data?.data || data?.user || data?.profile || data);
+      } catch { /* Keep the cached profile available when offline. */ }
+    };
+    const update = () => {
+      setServerProfile(null);
+      refreshProfile(value => value + 1);
+      load();
+    };
+    load();
+    window.addEventListener("profile-updated", update);
+    window.addEventListener("storage", update);
+    return () => {
+      active = false;
+      window.removeEventListener("profile-updated", update);
+      window.removeEventListener("storage", update);
+    };
+  }, [doctorId]);
+  const doctorPhoto = normalizeProfileImage(
+    serverProfile ? profileImageValue(serverProfile) : savedProfile.photo || profileImageValue(user), API_BASE_URL);
   const doctorName = savedProfile?.name || user?.fullName || user?.full_name || user?.name || "Doctor";
   const doctorEmail = savedProfile?.email || user?.email || user?.email_address;
   const doctorPhone = savedProfile?.mobile || user?.phoneNumber || user?.phone_number || user?.phone || user?.mobile || user?.contact_number || user?.contactNumber;
@@ -57,7 +84,7 @@ export default function DoctorLayout() {
       <aside id="doctor-sidebar" className={`doctor-sidebar ${open ? "is-open" : ""}`}>
         <Link to="/doctorprofile" className="doctor-sidebar-profile" aria-label="View my doctor profile">
           <div className="doctor-profile-avatar-wrap">
-            <img className="doctor-profile-avatar" src="/favicon-96.png" alt="Humaeli" />
+            <img className="doctor-profile-avatar" key={doctorPhoto} src={doctorPhoto || "/favicon-96.png"} alt={`${doctorName} profile`} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/favicon-96.png"; }} />
             <span className="doctor-profile-status" aria-hidden="true" />
           </div>
           <h3 className="doctor-profile-name" title={doctorName}>{doctorName}</h3>

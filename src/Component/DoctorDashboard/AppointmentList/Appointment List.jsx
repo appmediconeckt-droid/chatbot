@@ -554,10 +554,11 @@ export default function AppointmentList() {
             />
           </label>
 
-          <div className="appointment-date-actions" aria-label="Date shortcuts">
-            <button type="button" className="today-link" onClick={() => setSelectedDate(new Date().toISOString().split("T")[0])}>Today</button>
-          </div>
 
+
+          <div className="appointment-date-actions" aria-label="Date shortcuts">
+            <button type="button" className="today-link" onClick={() => setSelectedDate(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()))}>Today</button>
+          </div>
           <label className="appointment-toggle">
             <input
               type="checkbox"

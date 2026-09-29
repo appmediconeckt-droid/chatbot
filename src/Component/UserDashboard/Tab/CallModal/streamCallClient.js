@@ -1,3 +1,4 @@
+import { normalizeProfileImage, profileImageValue } from "../../../../utils/profileImage";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
 
@@ -26,13 +27,7 @@ export const resolveStreamUser = (currentUser) => {
     localStorage.getItem("name") ||
     "User";
 
-  const rawImage =
-    currentUser?.profilePic ||
-    currentUser?.profilePhoto ||
-    readLocalProfileImage() ||
-    "";
-
-  const image = typeof rawImage === "string" ? rawImage : rawImage?.url || "";
+  const image = normalizeProfileImage(profileImageValue(currentUser) || readLocalProfileImage(), API_BASE_URL);
 
   return {
     id: String(id),

@@ -1,10 +1,11 @@
+import { filterPatients, dateKey } from "./patientFilters.js";
 // ===============================
 // PatientDetailsPage.jsx (ReactJS)
 // ===============================
 import React, { useEffect, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
-import { User, Phone, Calendar, Clock, Heart, Pill, Stethoscope, ChevronLeft, FileText, Download, Users, UserPlus, ClipboardList, TrendingUp } from "lucide-react";
+import { User, Phone, Calendar, Clock, Heart, Pill, Stethoscope, ChevronLeft, FileText, Download, Users, UserPlus, ClipboardList, TrendingUp, X } from "lucide-react";
 import "./PatientDetailsPage.css";
 import { patientCardDetails, appointmentDoctorName, appointmentVitals } from "./patientRecordDetails.js";
 import { generatePrescriptionPDF } from "./pdfGenerator";
@@ -146,6 +147,14 @@ export default function PatientDetailsPage() {
   const [patientPage, setPatientPage] = useState(1);
   const [recordPage, setRecordPage] = useState(1);
   const pageSize = 10;
+
+  // ===== Filter & Sort States =====
+  const [genderFilter, setGenderFilter] = useState("All");
+  const [bloodGroupFilter, setBloodGroupFilter] = useState("All");
+  const [ageFilter, setAgeFilter] = useState("All");
+  const [lastVisitFilter, setLastVisitFilter] = useState("All");
+  const [sortBy, setSortBy] = useState("Newest First");
+
   const [newPatient, setNewPatient] = useState({
     name: "",
     age: "",
@@ -169,7 +178,8 @@ export default function PatientDetailsPage() {
     return user.doctor_id || user.doctorId || user.id || user._id || user.user_id || user.userId || "";
   };
 
-  const doctorId = extractDoctorId(authUser || getStoredAuthUser());
+  const storedDoctor = authUser || getStoredAuthUser();
+  const doctorId = extractDoctorId(storedDoctor?.user || storedDoctor?.data?.user || storedDoctor);
 
   const unwrapApiArray = (payload) => {
     if (Array.isArray(payload)) return payload;
@@ -252,6 +262,7 @@ export default function PatientDetailsPage() {
     return {
       id: appointment.id || appointment._id,
       timestamp: Date.parse(createdAt) || 0,
+      dateKey: dateKey(createdAt),
       date: formatDate(createdAt),
       time: formatTime(appointmentTime),
       ...appointmentVitals(appointment),
@@ -270,9 +281,9 @@ export default function PatientDetailsPage() {
   const buildPatientsFromAppointments = (appointments) => {
     const byPatient = new Map();
 
-    appointments.forEach((appointment) => {
+    [...appointments].sort((a,b) => Date.parse(b.appointment_date || b.date || b.createdAt || 0) - Date.parse(a.appointment_date || a.date || a.createdAt || 0)).forEach((appointment) => {
       const patient = patientCardDetails(appointment);
-      const patientId = patient.id;
+      const patientId = String(patient.id || `record-${appointment.id || appointment._id}`);
       const record = normalizeRecord(appointment);
       const existing = byPatient.get(patientId);
 
@@ -282,9 +293,15 @@ export default function PatientDetailsPage() {
         records: [],
       };
 
+      if (existing) {
+        for (const field of ['name', 'age', 'gender', 'phone', 'bloodGroup']) {
+          if (['N/A', 'Unknown Patient', '', undefined, null].includes(patientDetails[field]) && !['N/A', 'Unknown Patient', '', undefined, null].includes(patient[field])) patientDetails[field] = patient[field];
+        }
+      }
       patientDetails.records.push(record);
       patientDetails.records.sort((a, b) => b.timestamp - a.timestamp);
       patientDetails.lastVisit = patientDetails.records[0]?.date || record.date;
+      patientDetails.lastVisitKey = patientDetails.records[0]?.dateKey || record.dateKey;
       byPatient.set(patientId, patientDetails);
     });
 
@@ -303,13 +320,14 @@ export default function PatientDetailsPage() {
       try {
         setStatus("loading");
         setError("");
-        const response = await axios.get(`${API_BASE_URL}/appointments`, {
-          headers: getAuthHeaders(),
-          params: { doctor_id: doctorId },
-        });
-        const appointments = unwrapApiArray(response.data).filter((appointment) => {
+        const responses = await Promise.allSettled(['/appointments', '/walkin-appointments'].map(path => axios.get(`${API_BASE_URL}${path}`, {
+          headers: getAuthHeaders(), params: { doctor_id: doctorId },
+        })));
+        if (responses.every(result => result.status === 'rejected')) throw responses[0].reason;
+        if (responses.some(result => result.status === 'rejected')) setError('Some visit records could not load. Refresh to try again.');
+        const appointments = responses.flatMap(result => result.status === 'fulfilled' ? unwrapApiArray(result.value.data) : []).filter((appointment) => {
           const appointmentDoctorId = appointment.doctor_id || appointment.doctorId || appointment.doctor?.id || appointment.doctor?._id || appointment.counselor?._id || appointment.counselor?.id;
-          return !appointmentDoctorId || String(appointmentDoctorId) === String(doctorId);
+          return !appointmentDoctorId || String(typeof appointmentDoctorId === "object" ? appointmentDoctorId._id || appointmentDoctorId.id : appointmentDoctorId) === String(doctorId);
         });
         setPatients(buildPatientsFromAppointments(appointments));
         setStatus("succeeded");
@@ -323,11 +341,8 @@ export default function PatientDetailsPage() {
     loadPatients();
   }, [doctorId]);
 
-  const filteredPatients = patients.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      String(p.phone).includes(search)
-  );
+  const filteredPatients = filterPatients(patients, { search, genderFilter, bloodGroupFilter, ageFilter, lastVisitFilter, sortBy });
+
   const patientTotalPages = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
   const safePatientPage = Math.min(patientPage, patientTotalPages);
   const patientFirstIndex = filteredPatients.length ? (safePatientPage - 1) * pageSize : 0;
@@ -340,9 +355,10 @@ export default function PatientDetailsPage() {
   const paginatedRecords = selectedRecords.slice(recordFirstIndex, recordFirstIndex + pageSize);
   const recordLastIndex = Math.min(recordFirstIndex + pageSize, selectedRecords.length);
 
+  // Reset pagination when search OR any filter changes
   useEffect(() => {
     setPatientPage(1);
-  }, [search]);
+  }, [search, genderFilter, bloodGroupFilter, ageFilter, lastVisitFilter, sortBy]);
 
   useEffect(() => {
     if (patientPage > patientTotalPages) setPatientPage(patientTotalPages);
@@ -351,9 +367,10 @@ export default function PatientDetailsPage() {
   useEffect(() => {
     if (recordPage > recordTotalPages) setRecordPage(recordTotalPages);
   }, [recordPage, recordTotalPages]);
+
   const todayLabel = new Date().toLocaleDateString();
   const todaysAppointments = patients.reduce(
-    (count, patient) => count + patient.records.filter((record) => record.date === todayLabel).length,
+    (count, patient) => count + patient.records.filter((record) => record.dateKey === dateKey(new Date())).length,
     0
   );
   const pendingReports = patients.reduce(
@@ -380,7 +397,7 @@ export default function PatientDetailsPage() {
 
   const handleDownloadPrescription = async () => {
     if (!selectedPatient || !selectedRecord) return;
-    
+
     setIsDownloading(true);
     try {
       await generatePrescriptionPDF(selectedPatient, selectedRecord);
@@ -407,10 +424,13 @@ export default function PatientDetailsPage() {
       phone: newPatient.phone || "N/A",
       bloodGroup: newPatient.bloodGroup || "N/A",
       lastVisit: visitDate,
+      lastVisitKey: newPatient.lastVisit,
       records: [
         {
           id: `record-${Date.now()}`,
           date: visitDate,
+          dateKey: newPatient.lastVisit,
+          timestamp: Date.parse(newPatient.lastVisit),
           time: "N/A",
           bp: "N/A",
           pulse: "N/A",
@@ -438,6 +458,24 @@ export default function PatientDetailsPage() {
       lastVisit: new Date().toISOString().split("T")[0],
     });
   };
+
+  // ===== Clear all filters =====
+  const clearAllFilters = () => {
+    setSearch("");
+    setGenderFilter("All");
+    setBloodGroupFilter("All");
+    setAgeFilter("All");
+    setLastVisitFilter("All");
+    setSortBy("Newest First");
+  };
+
+  const hasActiveFilters =
+    search !== "" ||
+    genderFilter !== "All" ||
+    bloodGroupFilter !== "All" ||
+    ageFilter !== "All" ||
+    lastVisitFilter !== "All" ||
+    sortBy !== "Newest First";
 
   return (
     <div className="pd-container">
@@ -492,22 +530,102 @@ export default function PatientDetailsPage() {
                 />
               </div>
             </div>
+
+            {/* ===== Working Filter Row ===== */}
             <div className="pd-directory-tools">
               <div className="pd-filter-row">
-                <button type="button">Gender</button>
-                <button type="button">Blood Group</button>
-                <button type="button">Age <i className="fa-solid fa-chevron-down"></i></button>
-                <button type="button">Last Visit <i className="fa-solid fa-chevron-down"></i></button>
+                <select
+                  className="pd-filter-select"
+                  value={genderFilter}
+                  onChange={(e) => setGenderFilter(e.target.value)}
+                  aria-label="Filter by gender"
+                >
+                  <option value="All">Gender: All</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+
+                <select
+                  className="pd-filter-select"
+                  value={bloodGroupFilter}
+                  onChange={(e) => setBloodGroupFilter(e.target.value)}
+                  aria-label="Filter by blood group"
+                >
+                  <option value="All">Blood Group: All</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                </select>
+
+                <select
+                  className="pd-filter-select"
+                  value={ageFilter}
+                  onChange={(e) => setAgeFilter(e.target.value)}
+                  aria-label="Filter by age"
+                >
+                  <option value="All">Age: All</option>
+                  <option value="0-18">0 - 18</option>
+                  <option value="19-35">19 - 35</option>
+                  <option value="36-50">36 - 50</option>
+                  <option value="51-64">51 - 65</option>
+                  <option value="65+">65+</option>
+                </select>
+
+                <select
+                  className="pd-filter-select"
+                  value={lastVisitFilter}
+                  onChange={(e) => setLastVisitFilter(e.target.value)}
+                  aria-label="Filter by last visit"
+                >
+                  <option value="All">Last Visit: All</option>
+                  <option value="Today">Today</option>
+                  <option value="This Week">This Week</option>
+                  <option value="This Month">This Month</option>
+                  <option value="Last 3 Months">Last 3 Months</option>
+                </select>
+
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    className="pd-clear-filters-btn"
+                    onClick={clearAllFilters}
+                    title="Clear all filters"
+                  >
+                    <X size={14} /> Clear
+                  </button>
+                )}
               </div>
+
               <label className="pd-sort-control">
                 Sort by:
-                <select defaultValue="Newest First">
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                >
                   <option>Newest First</option>
                   <option>Oldest First</option>
                   <option>Name A-Z</option>
                 </select>
               </label>
             </div>
+
+            {error && status === "succeeded" && <p role="status">{error}</p>}
+            {/* ===== Active Filter Summary ===== */}
+            {hasActiveFilters && status === "succeeded" && (
+              <div className="pd-filter-summary">
+                <span>
+                  Showing <strong>{filteredPatients.length}</strong> of{" "}
+                  <strong>{patients.length}</strong> patients
+                </span>
+              </div>
+            )}
+
             {status === "loading" ? (
               <div className="pd-empty-state">
                 <FileText size={48} />
@@ -521,57 +639,71 @@ export default function PatientDetailsPage() {
             ) : filteredPatients.length === 0 ? (
               <div className="pd-empty-state">
                 <FileText size={48} />
-                <p>No patients found for this doctor</p>
+                <p>
+                  {hasActiveFilters
+                    ? "No patients match your filters. Try clearing them."
+                    : "No patients found for this doctor"}
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    type="button"
+                    className="pd-clear-filters-btn"
+                    onClick={clearAllFilters}
+                    style={{ marginTop: 12 }}
+                  >
+                    <X size={14} /> Clear Filters
+                  </button>
+                )}
               </div>
             ) : (
               <>
-              <div className="pd-patient-grid">
-                {paginatedPatients.map((patient) => (
-                <div
-                  key={patient.id}
-                  className="pd-patient-card"
-                  onClick={() => handlePatientClick(patient)}
-                >
-                  <div className="pd-patient-header">
-                    <div className="pd-patient-avatar">
-                      {patient.name.charAt(0)}
-                    </div>
-                    <div className="pd-patient-info">
-                      <h4 className="pd-patient-name">{patient.name}</h4>
-                      <div className="pd-patient-meta">
-                        <span className="pd-patient-age">{patient.age} yrs • {patient.gender}</span>
-                        {patient.bloodGroup && patient.bloodGroup !== "N/A" && (
-                          <span className="pd-patient-blood" title="Blood group">{patient.bloodGroup}</span>
-                        )}
+                <div className="pd-patient-grid">
+                  {paginatedPatients.map((patient) => (
+                    <div
+                      key={patient.id}
+                      className="pd-patient-card"
+                      onClick={() => handlePatientClick(patient)}
+                    >
+                      <div className="pd-patient-header">
+                        <div className="pd-patient-avatar">
+                          {patient.name.charAt(0)}
+                        </div>
+                        <div className="pd-patient-info">
+                          <h4 className="pd-patient-name">{patient.name}</h4>
+                          <div className="pd-patient-meta">
+                            <span className="pd-patient-age">{patient.age === "N/A" ? "Age not provided" : `${patient.age} yrs`} • {patient.gender}</span>
+                            {patient.bloodGroup && patient.bloodGroup !== "N/A" && (
+                              <span className="pd-patient-blood" title="Blood group">{patient.bloodGroup}</span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="pd-patient-contact">
+                        <Phone size={14} />
+                        <span>{patient.phone}</span>
+                      </div>
+                      <div className="pd-patient-footer">
+                        <div className="pd-patient-doctor">
+                          <span>Last visit: {patient.lastVisit}</span><span>Doctor</span>
+                          <strong>{patient.records[0]?.doctor || appointmentDoctorName({}, authUser || getStoredAuthUser())}</strong>
+                        </div>
+                        <span className="pd-record-count">
+                          {patient.records.length} {patient.records.length === 1 ? 'Visit' : 'Visits'}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                  <div className="pd-patient-contact">
-                    <Phone size={14} />
-                    <span>{patient.phone}</span>
-                  </div>
-                  <div className="pd-patient-footer">
-                    <div className="pd-patient-doctor">
-                      <span>Doctor</span>
-                      <strong>{patient.records[0]?.doctor || appointmentDoctorName({}, authUser || getStoredAuthUser())}</strong>
-                    </div>
-                    <span className="pd-record-count">
-                      {patient.records.length} {patient.records.length === 1 ? 'Visit' : 'Visits'}
-                    </span>
-                  </div>
-                </div>
-                ))}
-              </div>
-              <div className="pd-pagination">
-                <span>Showing {filteredPatients.length ? patientFirstIndex + 1 : 0} to {patientLastIndex} of {filteredPatients.length} patients</span>
-                <div>
-                  <button type="button" aria-label="Previous page" disabled={safePatientPage === 1} onClick={() => setPatientPage((page) => Math.max(1, page - 1))}>‹</button>
-                  {Array.from({ length: patientTotalPages }, (_, index) => index + 1).map((page) => (
-                    <button type="button" key={page} className={page === safePatientPage ? "active" : ""} onClick={() => setPatientPage(page)}>{page}</button>
                   ))}
-                  <button type="button" aria-label="Next page" disabled={safePatientPage === patientTotalPages} onClick={() => setPatientPage((page) => Math.min(patientTotalPages, page + 1))}>›</button>
                 </div>
-              </div>
+                <div className="pd-pagination">
+                  <span>Showing {filteredPatients.length ? patientFirstIndex + 1 : 0} to {patientLastIndex} of {filteredPatients.length} patients</span>
+                  <div>
+                    <button type="button" aria-label="Previous page" disabled={safePatientPage === 1} onClick={() => setPatientPage((page) => Math.max(1, page - 1))}>‹</button>
+                    {Array.from({ length: patientTotalPages }, (_, index) => index + 1).map((page) => (
+                      <button type="button" key={page} className={page === safePatientPage ? "active" : ""} onClick={() => setPatientPage(page)}>{page}</button>
+                    ))}
+                    <button type="button" aria-label="Next page" disabled={safePatientPage === patientTotalPages} onClick={() => setPatientPage((page) => Math.min(patientTotalPages, page + 1))}>›</button>
+                  </div>
+                </div>
               </>
             )}
           </div>
@@ -602,7 +734,7 @@ export default function PatientDetailsPage() {
             <h3 className="pd-section-title">
               <Calendar size={20} /> Visit History ({selectedPatient.records.length} appointments)
             </h3>
-            
+
             {selectedPatient.records.length === 0 ? (
               <div className="pd-empty-state">
                 <FileText size={48} />
@@ -683,7 +815,6 @@ export default function PatientDetailsPage() {
             </div>
 
             <div className="pd-detail-card">
-              {/* Patient Info Banner */}
               <div className="pd-detail-patient-banner">
                 <div className="pd-detail-avatar">{selectedPatient.name.charAt(0)}</div>
                 <div>
@@ -698,7 +829,6 @@ export default function PatientDetailsPage() {
                 </div>
               </div>
 
-              {/* Visit Details Grid */}
               <div className="pd-detail-grid">
                 <div className="pd-detail-column">
                   <h5 className="pd-detail-column-title">Visit Information</h5>
@@ -800,9 +930,8 @@ export default function PatientDetailsPage() {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="pd-detail-actions">
-                <button 
+                <button
                   className="pd-btn-primary"
                   onClick={handleDownloadPrescription}
                   disabled={isDownloading}

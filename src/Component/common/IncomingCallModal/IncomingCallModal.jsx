@@ -1,3 +1,5 @@
+import { normalizeProfileImage as normalizeImage } from "../../../utils/profileImage";
+import { API_BASE_URL } from "../../../axiosConfig";
 import React, { useMemo, useState } from "react";
 import {
   FaPhoneAlt,
@@ -20,11 +22,7 @@ const normalizeCallType = (callType) => {
   return "video";
 };
 
-const normalizeProfileImage = (value) => {
-  if (!value) return "";
-  if (typeof value === "string") return value;
-  return value.url || value.secure_url || value.avatarUrl || "";
-};
+const normalizeProfileImage = value => normalizeImage(value, API_BASE_URL);
 
 const formatRequestTime = (value) => {
   if (!value) return "";
