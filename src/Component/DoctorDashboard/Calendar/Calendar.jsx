@@ -661,6 +661,7 @@ const DoctorCalendar = () => {
     if (conflict) return alert(conflict);
 
     let savedRange;
+    const requestedClinicId = selectedClinicIdRef.current;
     try {
       savedRange = await persistRange(
         { start, end, duration },

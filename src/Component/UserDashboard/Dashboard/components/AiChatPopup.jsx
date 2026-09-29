@@ -42,6 +42,7 @@ export default function AiChatPopup({
   sendQuickReply,
   sendChat,
   selectedLang,
+  onLangChange,
   userName,
   chatLimitReached = false,
 }) {

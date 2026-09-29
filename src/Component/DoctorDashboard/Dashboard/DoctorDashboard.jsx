@@ -2481,7 +2481,6 @@ const formatAppointment = (appointment, forcedStatus) => {
     additionalNotes: pickFirst(appointment?.additional_notes, appointment?.additionalNotes),
     followUpRequired,
     followUpDate: rawFollowUpDate ? formatLocalDateKey(rawFollowUpDate) : "",
-    delayMinutes: Number(appointment?.delay_minutes || appointment?.delayMinutes || 0),
     estimatedTime: pickFirst(appointment?.estimated_appointment_time, appointment?.estimatedAppointmentTime),
     originalTime: pickFirst(appointment?.original_appointment_time, appointment?.originalAppointmentTime),
   };
