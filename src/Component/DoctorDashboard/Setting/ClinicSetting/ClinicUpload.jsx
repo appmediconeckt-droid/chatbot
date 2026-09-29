@@ -3,6 +3,7 @@ import { useDoctorUser } from "../../doctorApi.js";
 import axios from "../../../../axiosConfig.js";
 import { API_BASE_URL, getAuthToken } from "../../doctorApi.js";
 import "./ClinicSettings.css";
+import "../../ClinicQrPages.css";
 
 export default function ClinicSettings() {
   const [clinicName, setClinicName] = useState("");
@@ -13,6 +14,7 @@ export default function ClinicSettings() {
   const [previewUrls, setPreviewUrls] = useState([]);
   const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
+  const [savedQr, setSavedQr] = useState(null);
 
   const authUser = useDoctorUser();
   const storedUser = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('authUser') || 'null') : null;
@@ -73,8 +75,8 @@ export default function ClinicSettings() {
   };
 
   const handleSave = async () => {
+    if (status === 'loading' || status === 'succeeded') return;
     const token = getAuthToken();
-    console.log('Form validation:', { clinicName, phone, address, doctorId, token, hasToken: !!token });
 
     if (!clinicName || !phone || !address || !doctorId) {
       const missingFields = [];
@@ -111,11 +113,11 @@ export default function ClinicSettings() {
       });
 
       setStatus('succeeded');
-      setMessage('Clinic created successfully.');
-      console.log('Clinic creation response:', response.data);
+      setMessage('Clinic created successfully. Its walk-in QR is ready.');
+      setSavedQr({ ...response.data, name: clinicName });
     } catch (error) {
       setStatus('failed');
-      const errorMessage = error.response?.data || error.message || 'Failed to create clinic';
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to create clinic';
       setMessage(errorMessage);
       console.error('Clinic creation error:', error);
     }
@@ -130,6 +132,7 @@ export default function ClinicSettings() {
     setPreviewUrls([]);
     setStatus('idle');
     setMessage('');
+    setSavedQr(null);
   };
 
   return (
@@ -272,11 +275,17 @@ export default function ClinicSettings() {
           )}
 
           {/* Action Buttons */}
+          {savedQr?.walkinQrCode && <section className="clinic-qr-management">
+            <h3>{savedQr.name} — Walk-in QR</h3>
+            <p>Print this QR at this clinic. Patients will join this doctor's queue here.</p>
+            <img src={savedQr.walkinQrCode} width="220" height="220" alt={`Walk-in QR for ${savedQr.name}`} />
+            <p><a href={savedQr.walkinQrCode} download={`clinic-${savedQr.doctorClinicId}-qr.png`}>Download QR</a> · <a href={savedQr.walkinQrUrl} target="_blank" rel="noreferrer">Open walk-in page</a></p>
+          </section>}
           <div className="action-buttons">
-            <button className="btn-cancel" onClick={handleCancel}>
-              Cancel
+            <button className="btn-cancel" disabled={status === 'loading'} onClick={handleCancel}>
+              {status === 'succeeded' ? 'Add another clinic' : 'Cancel'}
             </button>
-            <button className="btn-save" onClick={handleSave}>
+            <button className="btn-save" disabled={status === 'loading' || status === 'succeeded'} onClick={handleSave}>
               {status === 'loading' ? 'Saving...' : 'Save Clinic'}
             </button>
           </div>

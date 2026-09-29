@@ -1,0 +1,11 @@
+.clinic-qr-public {max-width:850px;margin:40px auto;padding:28px;background:white;border-radius:16px;color:#183c49;box-shadow:0 4px 24px #183c4912}
+.clinic-qr-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px}
+.clinic-qr-grid article {border:1px solid #dce6e9;border-radius:12px;padding:20px;background:white;overflow-wrap:anywhere}
+.clinic-qr-grid img {display:block;max-width:100%;height:auto;margin:auto}
+.clinic-qr-public form {max-width:480px;margin:24px auto;display:grid;gap:18px}
+.clinic-qr-public label {display:grid;gap:8px}
+.clinic-qr-public input,.clinic-qr-public textarea {width:100%;padding:12px;border:1px solid #b7cbd2;border-radius:8px;box-sizing:border-box;color:#183c49;background:white}
+.clinic-qr-public button,.clinic-qr-action {display:inline-block;padding:12px 20px;background:#007e8b;color:white;border:0;border-radius:8px;text-decoration:none;cursor:pointer}
+.clinic-qr-public button:disabled {opacity:.6;cursor:wait}
+.clinic-qr-management {margin:24px 0;padding:20px;border-radius:12px;background:#f5fafb}
+@media(max-width:600px){.clinic-qr-public{margin:12px;padding:20px}.clinic-qr-grid{grid-template-columns:1fr}}

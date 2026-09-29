@@ -8,6 +8,8 @@ import axiosInstance from "./axiosConfig";
 
 import { isDoctorRoute } from "./Component/DoctorDashboard/doctorRoutes";
 
+const DoctorProfilePage = lazy(() => import('./Component/DoctorDashboard/ClinicQrPages.jsx').then(m => ({ default: m.DoctorProfilePage })));
+const ClinicWalkinPage = lazy(() => import('./Component/DoctorDashboard/ClinicQrPages.jsx').then(m => ({ default: m.ClinicWalkinPage })));
 const PublicDoctorProfile = lazy(() => import("./Component/DoctorDashboard/Setting/SettingProfileQR/PublicDoctorProfile.jsx"));
 const DoctorLayout = lazy(() => import("./Component/DoctorDashboard/DoctorLayout"));
 const Leanding = lazy(() => import("./authtication/Leanding"));
@@ -56,7 +58,7 @@ const SettingsPage = lazy(() => import("./Component/DoctorDashboard/Setting/Sett
 const DoctorNotificationPage = lazy(() => import("./Component/DoctorDashboard/Notification/NotificationPage"));
 const ClinicPage = lazy(() => import("./Component/DoctorDashboard/ClinicAllView/ClinicPage"));
 const WalkInAppointment = lazy(() => import("./Component/DoctorDashboard/Walk-in/WalkInAppointment"));
-const AppointmentForm = lazy(() => import("./Component/DoctorDashboard/Walk-in/AppointmentForm"));
+const AppointmentForm = lazy(() => import('./Component/DoctorDashboard/ClinicQrPages.jsx').then(m => ({ default: m.LegacyWalkinPage })));
 const PatientList = lazy(() => import("./Component/DoctorDashboard/DoctorDashboardChat/DoctorSmsPatient"));
 const DoctorChat = lazy(() => import("./Component/DoctorDashboard/DoctorDashboardChat/DoctorChat"));
 const FollowUp = lazy(() => import("./Component/DoctorDashboard/Follow-Up/FollowUp"));
@@ -162,6 +164,8 @@ function App() {
             path="/verify-login-otp"
             element={<LoginOtpVerification />}
           />
+          <Route path="/doctor/:doctorId" element={<DoctorProfilePage />} />
+          <Route path="/walkin/:doctorClinicId" element={<ClinicWalkinPage />} />
           <Route path="/doctor-profile-qr" element={<PublicDoctorProfile />} />
           <Route path="/walk-in-appointment" element={<AppointmentForm />} />
 

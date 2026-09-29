@@ -1626,3 +1626,37 @@
   border-radius: 0;
   box-shadow: none;
 }
+
+/* Center the login content as one group; keep long/short-screen forms scrollable. */
+.us-login-layout .us-form-section {
+  padding-block: 32px;
+  overflow-y: auto;
+}
+
+.us-login-layout .us-form-section > :not(.us-mobile-text-back) {
+  width: 100%;
+  max-width: 480px;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.us-login-layout .us-form-header {
+  margin-top: auto;
+}
+
+.us-login-layout .us-form {
+  flex: none;
+  margin: 0 auto auto;
+  padding: 0;
+  overflow: visible;
+}
+
+@media (max-width: 968px) {
+  .us-login-layout .us-form-section {
+    padding-block: 56px;
+  }
+
+  .us-login-layout .us-form-header picture {
+    margin-top: 0;
+  }
+}

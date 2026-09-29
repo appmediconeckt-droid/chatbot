@@ -1327,41 +1327,45 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
               )}
             </button>
 
-            <div className="us-divider">
-              <span>or {isLogin ? "sign in" : "sign up"} with</span>
-            </div>
+            {!isLogin && (
+              <>
+                <div className="us-divider">
+                  <span>or sign up with</span>
+                </div>
 
-            <GoogleAuthButton
-              role="user"
-              text={isLogin ? "signin_with" : "signup_with"}
-              disabled={isLoading}
-              gateDriven
-              onSuccess={() => {
-                showNotification(
-                  isLogin
-                    ? "Logged in with Google! One last step…"
-                    : "Account created with Google! One last step…",
-                  "success",
-                );
-                setPendingNav({
-                  path: dashboardForRole(localStorage.getItem("userRole")),
-                  event: isLogin ? "login" : "signup",
-                });
-              }}
-              onConflict={() => {
-                setApiError(
-                  "You're already signed in on another device. Use the standard login screen to resolve the conflict.",
-                );
-                showNotification(
-                  "Active session on another device. Please use the login page.",
-                  "error",
-                );
-              }}
-              onError={(msg) => {
-                setApiError(msg);
-                showNotification(msg, "error");
-              }}
-            />
+                <GoogleAuthButton
+                  role="user"
+                  text="signup_with"
+                  disabled={isLoading}
+                  gateDriven
+                  onSuccess={() => {
+                    showNotification(
+                      isLogin
+                        ? "Logged in with Google! One last step…"
+                        : "Account created with Google! One last step…",
+                      "success",
+                    );
+                    setPendingNav({
+                      path: dashboardForRole(localStorage.getItem("userRole")),
+                      event: isLogin ? "login" : "signup",
+                    });
+                  }}
+                  onConflict={() => {
+                    setApiError(
+                      "You're already signed in on another device. Use the standard login screen to resolve the conflict.",
+                    );
+                    showNotification(
+                      "Active session on another device. Please use the login page.",
+                      "error",
+                    );
+                  }}
+                  onError={(msg) => {
+                    setApiError(msg);
+                    showNotification(msg, "error");
+                  }}
+                />
+              </>
+            )}
 
             {!isLogin && (
               <p className="us-terms">

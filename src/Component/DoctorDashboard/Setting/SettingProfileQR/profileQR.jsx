@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import axios from "../../../../axiosConfig.js";
 import { API_BASE_URL, getDoctorUser } from "../../doctorApi.js";
-import { createProfileLink, publicDoctorProfile } from "./profileQrData.js";
+import { publicDoctorProfile } from "./profileQrData.js";
 import "./ProfileCard.css";
 
 export default function ProfileCard() {
   const [profile, setProfile] = useState(null);
+  const [qrSrc, setQrSrc] = useState("");
   const [profileLink, setProfileLink] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -29,7 +30,10 @@ export default function ProfileCard() {
         const details = publicDoctorProfile(response.data?.data || response.data || {}, user);
         if (!details.name) throw new Error("Please complete your doctor profile before generating a QR.");
         setProfile(details);
-        setProfileLink(createProfileLink(details, import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin));
+        const qr = await axios.get(`${API_BASE_URL}/qr/doctors/${doctorId}/codes`);
+        if (!active) return;
+        setProfileLink(qr.data.data.profileQrUrl);
+        setQrSrc(qr.data.data.profileQrCode);
       } catch (err) {
         if (active) setError(err.response?.data?.message || err.message || "Unable to load doctor profile.");
       } finally {
@@ -43,7 +47,6 @@ export default function ProfileCard() {
   if (loading) return <p role="status">Loading doctor profile QR...</p>;
   if (error) return <div role="alert"><p>{error}</p><button type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></div>;
 
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&ecc=M&margin=16&data=${encodeURIComponent(profileLink)}`;
   return (
     <section className="doctor-profile-qr">
       <div className="doctor-profile-qr-card">
@@ -62,7 +65,7 @@ export default function ProfileCard() {
           <a href={profileLink} target="_blank" rel="noopener noreferrer">View profile</a>
         </div>
       </div>
-      <p className="doctor-profile-qr-note">Scan to view contact and professional details without signing in. This QR contains your current profile details; generate a new QR after updating your profile.</p>
+      <p className="doctor-profile-qr-note">Your permanent doctor profile QR shows your latest profile and available clinics. Clinic changes do not require a new profile QR.</p>
     </section>
   );
 }

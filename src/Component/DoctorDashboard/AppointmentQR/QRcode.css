@@ -348,3 +348,15 @@
     grid-template-columns: 1fr;
   }
 }
+
+.doctor-qr-clinic-selector {display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:24px}
+.doctor-qr-clinic-selector select {flex:1;min-width:180px;max-width:480px;padding:12px;border:1px solid #cad9de;border-radius:8px;background:white;color:#183c49}
+.doctor-qr-clinic-selector button {padding:10px 16px;border:1px solid #cad9de;border-radius:8px;background:white;cursor:pointer}
+.doctor-qr-room-form {display:grid;gap:10px;margin:16px 0}
+.doctor-qr-room-form input,.doctor-qr-led-url {box-sizing:border-box;width:100%;padding:10px;border:1px solid #cad9de;border-radius:8px;background:white;color:#183c49}
+.doctor-qr-led-url {margin-bottom:12px}
+@media print {
+  body * {visibility:hidden}
+  .doctor-qr-card,.doctor-qr-card * {visibility:visible}
+  .doctor-qr-card {position:absolute;left:0;top:0;width:100%;box-shadow:none;border:0}
+}

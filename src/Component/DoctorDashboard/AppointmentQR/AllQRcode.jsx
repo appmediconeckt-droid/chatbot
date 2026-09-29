@@ -1,266 +1,112 @@
-import React, { useEffect, useMemo, useState } from "react";
-import axios from "../../../axiosConfig.js";
-import "./QRcode.css";
-import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
-
-const getStoredDoctorId = () => {
-  try {
-    const userAuth = JSON.parse(localStorage.getItem("userData") || "null");
-    return (
-      userAuth?.doctor_id ||
-      userAuth?.doctorId ||
-      userAuth?.user?.id ||
-      userAuth?.id ||
-      userAuth?._id ||
-      userAuth?.user_id ||
-      null
-    );
-  } catch {
-    return null;
-  }
-};
+﻿import React, { useEffect, useMemo, useState } from 'react';
+import axios from '../../../axiosConfig.js';
+import { API_BASE_URL, getAuthHeaders, getDoctorUser } from '../doctorApi.js';
+import './QRcode.css';
 
 export default function QRcode() {
-  const [doctorData, setDoctorData] = useState(null);
-  const [quickStats, setQuickStats] = useState({
-    todayScans: 0,
-    thisWeekScans: 0,
-    qrAppointments: 0,
-    profileViews: 0,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [statsError, setStatsError] = useState("");
-  const [statsUpdatedAt, setStatsUpdatedAt] = useState(null);
-
-  const doctorId = useMemo(() => getStoredDoctorId(), []);
-  const appOrigin = import.meta.env.VITE_PUBLIC_APP_URL || window.location.origin;
-  const isLocalhost = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-
-  const createAppointmentUrl = () => {
-    const url = new URL("/walk-in-appointment", appOrigin);
-    url.searchParams.set("doctorId", doctorId);
-    url.searchParams.set("source", "qr");
-    return url.toString();
-  };
-
-  const createQrImageUrl = (targetUrl) =>
-    `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(
-      targetUrl
-    )}`;
-
-  const downloadQr = async () => {
-    try {
-      const response = await fetch(createQrImageUrl(doctorAppointmentUrl));
-      const blob = await response.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = blobUrl;
-      link.download = `${doctorData?.full_name || "doctor"}-appointment-qr.png`;
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.log("QR download error:", error);
-      const link = document.createElement("a");
-      link.href = `${createQrImageUrl(doctorAppointmentUrl)}&download=1`;
-      link.download = "doctor-appointment-qr.png";
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    }
-  };
-
-  const getDoctorQR = async () => {
-    try {
-      if (!doctorId) {
-        setError("Doctor ID not found. Please login again.");
-        return;
-      }
-
-      setIsLoading(true);
-      setError("");
-
-      const [doctorQrRes, statsRes] = await Promise.all([
-        axios.get(`${API_BASE_URL}/auth/doctor-qr/${doctorId}`, {
-          headers: getAuthHeaders(),
-        }),
-        axios.get(`${API_BASE_URL}/auth/doctor-qr/${doctorId}/stats`, {
-          headers: getAuthHeaders(),
-        }),
-      ]);
-
-      setDoctorData(doctorQrRes.data?.data || doctorQrRes.data || null);
-      setQuickStats(statsRes.data?.data || statsRes.data || {});
-      setStatsError("");
-      setStatsUpdatedAt(new Date());
-    } catch (error) {
-      console.log("QR API Error:", error.response?.data || error.message);
-      setError(error.response?.data?.message || "QR details load nahi ho pa rahi hain");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    getDoctorQR();
+  const doctorId = useMemo(() => {
+    const stored = getDoctorUser() || {};
+    const user = stored.user || stored.data?.user || stored;
+    return user.doctor_id || user.doctorId || user.id || user._id || user.user_id || user.userId;
   }, []);
-
+  const [clinics, setClinics] = useState([]);
+  const [selectedId, setSelectedId] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [refresh, setRefresh] = useState(0);
+  const [room, setRoom] = useState('');
+  const [savingRoom, setSavingRoom] = useState(false);
+  const [roomNotice, setRoomNotice] = useState('');
   useEffect(() => {
-    if (!doctorId) return;
-    let active = true;
-    let pending = false;
-    const refreshStats = async () => {
-      if (document.hidden || pending) return;
-      pending = true;
-      try {
-        const response = await axios.get(`${API_BASE_URL}/auth/doctor-qr/${doctorId}/stats`, { headers: getAuthHeaders() });
-        if (active) {
-          setQuickStats(response.data?.data || response.data || {});
-          setStatsError("");
-          setStatsUpdatedAt(new Date());
-        }
-      } catch {
-        if (active) setStatsError("Stats refresh failed. Showing last loaded counts.");
-      } finally { pending = false; }
-    };
-    const timer = window.setInterval(refreshStats, 30000);
-    window.addEventListener("focus", refreshStats);
-    return () => {
-      active = false;
-      window.clearInterval(timer);
-      window.removeEventListener("focus", refreshStats);
-    };
-  }, [doctorId]);
-
-  const storedUser = (() => {
+    const controller = new AbortController();
+    setLoading(true); setError(''); setNotice('');
+    if (!doctorId) { setError('Doctor ID not found. Please sign in again.'); setLoading(false); return; }
+    axios.get(`${API_BASE_URL}/qr/doctors/${encodeURIComponent(doctorId)}/clinics`, {
+      headers: getAuthHeaders(), signal: controller.signal,
+    }).then(response => {
+      if (controller.signal.aborted) return;
+      const items = response.data?.data?.clinics || [];
+      setClinics(items);
+      setSelectedId(current => items.some(c => c.doctorClinicId === current) ? current : items[0]?.doctorClinicId || '');
+    }).catch(err => {
+      if (!controller.signal.aborted) { setClinics([]); setError(err.response?.data?.message || 'Unable to load clinics. Please retry.'); }
+    }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, [doctorId, refresh]);
+  const selected = clinics.find(c => c.doctorClinicId === selectedId);
+  useEffect(() => { setRoom(selected?.clinic.room || ''); setRoomNotice(''); }, [selectedId, selected?.clinic.room]);
+  const ledUrl = selected ? `${API_BASE_URL.replace(/\/api\/?$/, '')}${selected.ledPath}` : '';
+  const saveRoom = async event => {
+    event.preventDefault();
+    if (!selected || savingRoom) return;
+    const targetId = selected.doctorClinicId;
+    setSavingRoom(true); setRoomNotice('');
     try {
-      return JSON.parse(localStorage.getItem("userData") || "null") || {};
-    } catch {
-      return {};
-    }
-  })();
-  const doctorRecord = doctorData?.doctor || doctorData?.user || doctorData || {};
-  const doctorAppointmentUrl = doctorId ? createAppointmentUrl() : "";
-  const doctorName =
-    doctorRecord.full_name ||
-    doctorRecord.fullName ||
-    doctorRecord.name ||
-    storedUser.full_name ||
-    storedUser.fullName ||
-    storedUser.name ||
-    "Doctor";
-  const doctorSpeciality = doctorRecord.speciality || doctorRecord.specialization || "Doctor";
-  const qrImageUrl = doctorAppointmentUrl ? createQrImageUrl(doctorAppointmentUrl) : "";
-
-  const copyLink = async () => {
-    if (!doctorAppointmentUrl) return;
-    try {
-      await navigator.clipboard.writeText(doctorAppointmentUrl);
-    } catch {
-      const input = document.createElement("input");
-      input.value = doctorAppointmentUrl;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      input.remove();
-    }
+      const response = await axios.patch(`${API_BASE_URL}/qr/walkin/${encodeURIComponent(targetId)}/room`,
+        { roomNumber: room }, { headers: getAuthHeaders() });
+      setClinics(items => items.map(c => c.doctorClinicId === targetId ? { ...c, clinic: { ...c.clinic, room: response.data.data.roomNumber } } : c));
+      setNotice('Room saved. The connected LED will update automatically.');
+    } catch (err) { setRoomNotice(err.response?.data?.message || 'Unable to save room. Please retry.'); }
+    finally { setSavingRoom(false); }
   };
-
   const shareQr = async () => {
-    if (navigator.share && doctorAppointmentUrl) {
-      await navigator.share({
-        title: `${doctorName} QR Code`,
-        text: "Scan this QR to view profile or book appointment.",
-        url: doctorAppointmentUrl,
-      });
-    } else {
-      await copyLink();
-    }
+    try {
+      const blob = await (await fetch(selected.walkinQrCode)).blob();
+      const file = new File([blob], `clinic-${selected.doctorClinicId}-qr.png`, { type: 'image/png' });
+      if (navigator.canShare?.({ files: [file] })) await navigator.share({ title: selected.clinic.name, files: [file] });
+      else setNotice('Use Download QR to save the image and share it.');
+    } catch (err) { if (err.name !== 'AbortError') setNotice('Unable to share. Please download the QR image.'); }
   };
-
-  return (
-    <div className="doctor-qr-page">
-      <header className="doctor-qr-header">
-        <h1>Doctor Profile QR Code</h1>
-        <p>Share your professional profile instantly with patients using a secure QR Code.</p>
-      </header>
-
-      {isLoading && <div className="doctor-qr-state">QR Loading...</div>}
-      {error && <div className="doctor-qr-state doctor-qr-error">{error}</div>}
-
-      {!isLoading && !error && doctorAppointmentUrl && (
-        <div className="doctor-qr-layout">
-          <section className="doctor-qr-card">
-            <h2>Your Doctor QR Code</h2>
-            <div className="doctor-qr-frame">
-              <img src={qrImageUrl} alt="Doctor profile QR" />
-            </div>
-            <p className="doctor-qr-doctor-name">{doctorName}</p>
-
-            <div className="doctor-identity-pill">
-              <div className="doctor-avatar">
-                {doctorData?.profile_image || doctorData?.profileImage ? (
-                  <img src={doctorData.profile_image || doctorData.profileImage} alt={doctorName} />
-                ) : (
-                  <span>{doctorName.split(" ").map((part) => part[0]).slice(0, 2).join("")}</span>
-                )}
-              </div>
-              <div>
-                <strong>{doctorName}</strong>
-                <small>{doctorSpeciality}</small>
-              </div>
-              <span className="doctor-verified">✓</span>
-            </div>
-
-            <div className="doctor-qr-scan">
-              <h3>Scan this QR Code to:</h3>
-              <div className="doctor-qr-scan-grid">
-                <span>♙ View Profile</span>
-                <span>▦ Book Appointment</span>
-                <span>▤ Start Chat</span>
-                <span>⌕ Contact Clinic</span>
-              </div>
-            </div>
-          </section>
-
-          <aside className="doctor-qr-side">
-            <section className="doctor-qr-panel">
-              <h3>QR Management</h3>
-              <button type="button" className="doctor-qr-primary" onClick={downloadQr}>⇩ Download QR</button>
-              <div className="doctor-qr-actions">
-                <button type="button" onClick={shareQr}>⌯ Share</button>
-                <button type="button" onClick={() => window.print()}>▣ Print</button>
-                <button type="button" onClick={copyLink}>↔ Copy Link</button>
-                <button type="button" onClick={getDoctorQR}>⟳ Refresh</button>
-              </div>
-            </section>
-
-            <section className="doctor-qr-panel">
-              <h3>Quick Stats</h3>
-              {statsError && <small role="status">{statsError}</small>}
-              <div className="doctor-qr-stats">
-                <div><span>Today's Scans</span><strong>{quickStats.todayScans || 0}</strong><em>↗</em></div>
-                <div><span>This Week</span><strong>{quickStats.thisWeekScans || 0}</strong><em>↗</em></div>
-                <div><span>Appointments</span><strong>{quickStats.qrAppointments || 0}</strong><em>↗</em></div>
-                <div><span>Profile Views</span><strong>{quickStats.profileViews || 0}</strong><em>→</em></div>
-              </div>
-            </section>
-
-            <section className="doctor-qr-panel">
-              <h3>QR Details</h3>
-              <div className="doctor-qr-details">
-                <p><span>QR Status</span><strong className="active">Active</strong></p>
-                <p><span>Stats Updated</span><strong>{statsUpdatedAt ? statsUpdatedAt.toLocaleString() : "—"}</strong></p>
-                <p><span>Visibility</span><strong>Public</strong></p>
-                <p><span>Expires</span><strong>Never</strong></p>
-              </div>
-              {isLocalhost && <small className="doctor-qr-note">Mobile scan ke liye LAN IP URL use karein.</small>}
-            </section>
-          </aside>
-        </div>
-      )}
+  const copy = async (url, label) => {
+    try { await navigator.clipboard.writeText(url); setNotice(`${label} copied.`); }
+    catch { setNotice('Copy unavailable. Open the link and copy it from the address bar.'); }
+  };
+  return <div className="doctor-qr-page">
+    <header className="doctor-qr-header"><h1>Clinic QR Code</h1><p>Select a clinic to view its appointment QR and live LED display.</p></header>
+    <div className="doctor-qr-clinic-selector">
+      <label htmlFor="qr-clinic">Clinic</label>
+      <select id="qr-clinic" value={selectedId} disabled={loading || savingRoom || !clinics.length} onChange={event => { setSelectedId(event.target.value); setNotice(''); }}>
+        {!clinics.length && <option value="">Select clinic</option>}
+        {clinics.map(c => <option key={c.doctorClinicId} value={c.doctorClinicId}>{c.clinic.name}</option>)}
+      </select>
+      <button type="button" disabled={loading || savingRoom} onClick={() => setRefresh(n => n + 1)}>Refresh</button>
     </div>
-  );
+    {loading && <p role="status">Fetching clinics...</p>}
+    {error && <p role="alert">{error}</p>}
+    {!loading && !error && !clinics.length && <p>Add a clinic in Clinic Settings to view its QR.</p>}
+    {!loading && !error && selected && <div className="doctor-qr-layout">
+      <section className="doctor-qr-card">
+        <h2>{selected.clinic.name}</h2><p>{selected.doctor.name}</p>
+        {selected.clinic.room && <p><strong>Room {selected.clinic.room}</strong></p>}
+        <div className="doctor-qr-frame"><img src={selected.walkinQrCode} alt={`Appointment QR for ${selected.clinic.name}`} /></div>
+        <p>Scan to join today's queue at {selected.clinic.name}.</p>
+      </section>
+      <aside className="doctor-qr-side">
+        <section className="doctor-qr-panel"><h3>QR Management</h3>
+          <p><a href={selected.walkinQrCode} download={`clinic-${selected.doctorClinicId}-qr.png`}>Download QR</a></p>
+          <div className="doctor-qr-actions"><button type="button" onClick={shareQr}>Share QR</button>
+            <button type="button" onClick={() => window.print()}>Print QR</button></div>
+        </section>
+        <section className="doctor-qr-panel"><h3>Clinic LED Display</h3><p>Shows this doctor's current and waiting tokens at {selected.clinic.name}.</p>
+          <form onSubmit={saveRoom} className="doctor-qr-room-form">
+            <label htmlFor="qr-room">Doctor room number at this clinic</label>
+            <input id="qr-room" required maxLength={100} placeholder="e.g. 101 or OPD-2" value={room} disabled={savingRoom} onChange={event => setRoom(event.target.value)} />
+            <button disabled={savingRoom}>{savingRoom ? 'Saving...' : 'Save room number'}</button>
+            {roomNotice && <p role="alert">{roomNotice}</p>}
+          </form>
+          <ol><li>Connect the outside LED to this laptop with HDMI.</li>
+            <li>Press Win + P and choose Extend.</li>
+            <li>Open the LED window below. With that window focused, press Win + Shift + Left/Right Arrow to move it to the outside LED.</li>
+            <li>Press F11 for full screen. Keep your doctor dashboard on the laptop.</li></ol>
+          <button type="button" onClick={() => window.open(ledUrl, '_blank', 'popup,width=1280,height=720,noopener,noreferrer')}>Open separate LED window</button>
+          <input aria-label="LED screen link" readOnly value={ledUrl} onFocus={event => event.target.select()} className="doctor-qr-led-url" />
+          <button type="button" onClick={() => copy(ledUrl, 'LED link')}>Copy LED link</button>
+          <p><a href={ledUrl} target="_blank" rel="noreferrer">Preview on this device</a></p>
+          <p>The LED refreshes every 3 seconds. Keep the laptop awake and connected to the internet. If the window is blocked, allow pop-ups or open the preview in a separate browser window.</p>
+        </section>
+        {notice && <p role="status">{notice}</p>}
+      </aside>
+    </div>}
+  </div>;
 }
