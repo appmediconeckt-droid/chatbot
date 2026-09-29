@@ -1,3 +1,5 @@
+import { API_BASE_URL } from "../axiosConfig";
+import { normalizeProfileImage, resolveProfileImage } from "./profileImage";
 export const ANONYMOUS_USER_NAME = "Anonymous User";
 
 const SAFE_GENERATED_AVATAR_HOSTS = [
@@ -31,7 +33,7 @@ const normalizeAvatarUrl = (value, allowAnyHttpUrl = false) => {
 
   if (typeof raw !== "string" || !raw.trim()) return "";
 
-  const trimmed = raw.trim();
+  const trimmed = normalizeProfileImage(raw, API_BASE_URL);
   if (/^data:image\//i.test(trimmed)) return trimmed;
   if (!/^https?:\/\//i.test(trimmed)) return "";
 
@@ -145,6 +147,10 @@ export const getAnonymousUserAvatar = (source) => {
 };
 
 export const getAnonymousUserAvatarUrl = (source) => {
+  for (const person of [source, source?.user, source?.patient, source?.otherParty, source?.profile, source?.from, source?.initiator]) {
+    const photo = resolveProfileImage(person, API_BASE_URL);
+    if (photo) return photo;
+  }
   const profileAvatarUrl = readFirstAvatarUrl(source, [
     ["profilePhoto"],
     ["profilePhoto", "url"],

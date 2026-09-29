@@ -1,3 +1,5 @@
+import ParticipantPhoto from "../../../common/ParticipantPhoto";
+import { resolveProfileImage } from "../../../../utils/profileImage";
 // // ChatBox.jsx - Fully Responsive Chat Interface with Proper Scroll Behavior
 // import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 // import axios from "axios";
@@ -4070,7 +4072,7 @@ const normalizeCounselor = (counselor) => {
     counselor.profilePhoto ||
     counselor.profileImage ||
     counselor.photo ||
-    (counselor.avatarType === "image" ? counselor.avatar : null);
+    counselor.avatar;
 
   return {
     ...counselor,
@@ -4206,16 +4208,21 @@ const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantM
   const resolveCurrentUserId = () => currentUser?.id || currentUser?._id || localStorage.getItem("userId") || null;
   const resolveCounselorId = () => currentCounselor?.id?.toString() || currentCounselor?._id?.toString() || counselorId || currentChat?.counselorId?.toString() || null;
 
-  const getProfilePhotoUrl = (counselor) => {
-    if (!counselor) return null;
-    if (typeof counselor.profilePhoto === "string") return counselor.profilePhoto;
-    if (counselor?.profilePhoto?.url) return counselor.profilePhoto.url;
-    if (counselor?.profilePhoto?.secure_url) return counselor.profilePhoto.secure_url;
-    if (typeof counselor.profileImage === "string") return counselor.profileImage;
-    if (counselor?.profileImage?.url) return counselor.profileImage.url;
-    if (counselor?.avatar && counselor?.avatarType === "image") return counselor.avatar;
-    return null;
-  };
+  const peerCounselorId = resolveCounselorId();
+  useEffect(() => {
+    if (!peerCounselorId) return;
+    let active = true;
+    axios.get(`${API_BASE_URL}/api/chat/counselor/${encodeURIComponent(peerCounselorId)}`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("accessToken") || localStorage.getItem("token") || ""}` },
+    }).then(({ data }) => {
+      if (!active || !data.counselor) return;
+      const photo = resolveProfileImage(data.counselor, API_BASE_URL);
+      setCurrentCounselor(previous => ({ ...previous, profilePhoto: photo, avatar: photo }));
+    }).catch(() => { /* Retain the conversation's photo if profile refresh fails. */ });
+    return () => { active = false; };
+  }, [peerCounselorId]);
+
+  const getProfilePhotoUrl = counselor => resolveProfileImage(counselor, API_BASE_URL);
 
   const getInitials = (name) => {
     if (!name) return "?";
@@ -6144,14 +6151,11 @@ const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantM
     );
   };
 
-  const renderProfileAvatar = (counselor, size = "md") => {
-    if (!counselor) return <div className={`chat-profile-initials-${size}`}>?</div>;
-    const profilePhotoUrl = getProfilePhotoUrl(counselor);
-    if (profilePhotoUrl) {
-      return <img src={profilePhotoUrl} alt={counselor.name || "Consultant"} className={`chat-profile-image-${size}`} onError={(e) => { e.target.style.display = "none"; e.target.parentElement.innerHTML = `<div class="chat-profile-initials-${size}">${getInitials(counselor.name || "Consultant")}</div>`; }} />;
-    }
-    return <div className={`chat-profile-initials-${size}`}>{getInitials(counselor.name || "Consultant")}</div>;
-  };
+  const renderProfileAvatar = (counselor, size = "md") => (
+    <ParticipantPhoto src={getProfilePhotoUrl(counselor)} name={counselor?.name || "Consultant"}
+      className={`chat-profile-image-${size}`}
+      fallback={<div className={`chat-profile-initials-${size}`}>{getInitials(counselor?.name || "Consultant")}</div>} />
+  );
 
   const renderMessageStatus = (message) => {
     const statusForOwnMessage = message.sender === "user";

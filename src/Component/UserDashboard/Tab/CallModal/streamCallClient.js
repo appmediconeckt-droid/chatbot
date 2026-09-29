@@ -52,6 +52,7 @@ export const resolveStreamApiKey = (tokenPayload) =>
 export const resolveStreamUserFromToken = (localUser, tokenPayload) => ({
   ...localUser,
   id: String(tokenPayload?.userId || localUser?.id || "").trim(),
+  image: normalizeProfileImage(tokenPayload?.image ?? localUser?.image, API_BASE_URL),
 });
 
 export const validateStreamTokenPayload = (payload) => {

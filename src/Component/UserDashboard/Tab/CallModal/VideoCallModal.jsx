@@ -1,4 +1,4 @@
-import { normalizeProfileImage as normalizeImage, profileImageValue } from "../../../../utils/profileImage";
+import { normalizeProfileImage as normalizeImage, profileImageValue, resolveProfileImage, remoteCallImage } from "../../../../utils/profileImage";
 import { isProfessionalRole } from "../../../../authtication/authSession.js";
 import React, {
   useCallback,
@@ -113,7 +113,7 @@ const buildInitials = (name) => {
 
 const normalizeProfileImage = value => normalizeImage(value, API_BASE_URL);
 const resolveParticipantImage = (participant, fallback = "") =>
-  normalizeProfileImage(profileImageValue(participant) || profileImageValue(participant?.user) || fallback);
+  resolveProfileImage(participant, API_BASE_URL) || resolveProfileImage(participant?.user, API_BASE_URL) || normalizeProfileImage(fallback);
 
 const CallAvatar = ({ image, name }) => {
   const [failedImage, setFailedImage] = useState(null);
@@ -453,7 +453,8 @@ const StreamVideoBody = ({
             </div>
           ) : (
             <div className="stream-empty-state">
-              Waiting for others to join...
+              <div className="stream-avatar-glow"><CallAvatar image={remoteProfilePhoto} name={calleeName} /></div>
+              <span>Waiting for others to join...</span>
             </div>
           )}
 
@@ -495,7 +496,8 @@ const StreamVideoBody = ({
             </>
           ) : (
             <div className="stream-empty-state">
-              Waiting for others to join...
+              <div className="stream-avatar-glow"><CallAvatar image={remoteProfilePhoto} name={calleeName} /></div>
+              <span>Waiting for others to join...</span>
             </div>
           )}
         </div>
@@ -734,8 +736,8 @@ const VideoCallModal = ({
   ]);
   const calleeName = useMemo(() => resolveCalleeName(callData), [callData]);
   const remoteProfilePhoto = useMemo(
-    () => normalizeProfileImage(profileImageValue(callData) || profileImageValue(remoteParticipant)),
-    [callData, remoteParticipant],
+    () => remoteCallImage(callData, localIdentityId, API_BASE_URL),
+    [callData, localIdentityId],
   );
   const calleeInitials = useMemo(() => buildInitials(calleeName), [calleeName]);
   const maskedCalleeName = useMemo(() => {

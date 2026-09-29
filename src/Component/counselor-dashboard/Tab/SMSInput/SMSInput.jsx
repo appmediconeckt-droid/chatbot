@@ -1,3 +1,5 @@
+import ParticipantPhoto from "../../../common/ParticipantPhoto";
+import { normalizeProfileImage, resolveProfileImage } from "../../../../utils/profileImage";
 import { isProfessionalRole } from "../../../../authtication/authSession.js";
 // // SMSInput.jsx - Fully Responsive Chat Interface with Zero Padding Issues on Mobile
 // import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -1214,7 +1216,7 @@ import { isProfessionalRole } from "../../../../authtication/authSession.js";
 
 //   const getUserAvatarUrl = () => {
 //     if (typeof userDetails.avatarUrl === "string" && userDetails.avatarUrl.trim()) {
-//       return userDetails.avatarUrl.trim();
+//       return normalizeProfileImage(userDetails.avatarUrl, API_BASE_URL);
 //     }
 //     return null;
 //   };
@@ -2940,7 +2942,7 @@ import { isProfessionalRole } from "../../../../authtication/authSession.js";
 
 //   const getUserAvatarUrl = () => {
 //     if (typeof userDetails.avatarUrl === "string" && userDetails.avatarUrl.trim()) {
-//       return userDetails.avatarUrl.trim();
+//       return normalizeProfileImage(userDetails.avatarUrl, API_BASE_URL);
 //     }
 //     return null;
 //   };
@@ -3298,7 +3300,7 @@ import { isProfessionalRole } from "../../../../authtication/authSession.js";
 //           <div className="smsinput-user-info">
 //             <div className="smsinput-user-avatar">
 //               {getUserAvatarUrl() ? (
-//                 <img src={getUserAvatarUrl()} alt={USER_NAME} className="smsinput-user-avatar-img" />
+//                 <ParticipantPhoto src={getUserAvatarUrl()} name={USER_NAME} className="smsinput-user-avatar-img" fallback={<span className="avatar-icon">{getUserAvatarIcon()}</span>} />
 //               ) : (
 //                 <span className="avatar-icon">{getUserAvatarIcon()}</span>
 //               )}
@@ -3869,6 +3871,19 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const userDetails = getUserDetails();
   const USER_ID = userDetails.id;
   const USER_NAME = userDetails.name;
+  const [freshPeerPhoto, setFreshPeerPhoto] = useState(null);
+  useEffect(() => {
+    if (!USER_ID) return;
+    let active = true;
+    axios.get(`${API_BASE_URL}/api/chat/chats`, {
+      headers: { Authorization: `Bearer ${localStorage.getItem("accessToken") || localStorage.getItem("token") || ""}` },
+    }).then(({ data }) => {
+      const peer = data.chats?.find(chat => String(chat.otherParty?.id) === String(USER_ID))?.otherParty;
+      if (active && peer) setFreshPeerPhoto({ id: USER_ID, image: resolveProfileImage(peer, API_BASE_URL) });
+    }).catch(() => { /* Keep the selected conversation's photo when offline. */ });
+    return () => { active = false; };
+  }, [USER_ID]);
+
   const remoteStatusClass = remotePresence.isOnline ? "online" : "offline";
   const remotePresenceText = formatPresenceText(remotePresence, {
     onlineText: t('online') || "Online",
@@ -5238,8 +5253,9 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const getUserAvatarIcon = () => userDetails.avatar || getAvatarIcon(userDetails.gender);
 
   const getUserAvatarUrl = () => {
+    if (freshPeerPhoto?.id === USER_ID) return freshPeerPhoto.image;
     if (typeof userDetails.avatarUrl === "string" && userDetails.avatarUrl.trim()) {
-      return userDetails.avatarUrl.trim();
+      return normalizeProfileImage(userDetails.avatarUrl, API_BASE_URL);
     }
     return null;
   };
@@ -5855,7 +5871,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
           <div className="smsinput-user-info">
             <div className="smsinput-user-avatar">
               {getUserAvatarUrl() ? (
-                <img src={getUserAvatarUrl()} alt={USER_NAME} className="smsinput-user-avatar-img" />
+                <ParticipantPhoto src={getUserAvatarUrl()} name={USER_NAME} className="smsinput-user-avatar-img" fallback={<span className="avatar-icon">{getUserAvatarIcon()}</span>} />
               ) : (
                 <span className="avatar-icon">{getUserAvatarIcon()}</span>
               )}

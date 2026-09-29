@@ -1,3 +1,4 @@
+import ParticipantPhoto from "../../../common/ParticipantPhoto";
 // import React, { useState, useEffect, useCallback } from "react";
 // import { useNavigate } from "react-router-dom";
 // import { FaSearch } from "react-icons/fa";
@@ -1473,10 +1474,11 @@ const SMSList = () => {
               {/* Avatar with status indicator */}
               <div className="smslist-user-avatar">
                 {user.avatarUrl ? (
-                  <img
+                  <ParticipantPhoto
                     src={user.avatarUrl}
-                    alt={user.name}
+                    name={user.name}
                     className="avatar-image"
+                    fallback={<div className="avatar-initials">{getAnonymousUserAvatar(user)}</div>}
                   />
                 ) : (
                   <div
