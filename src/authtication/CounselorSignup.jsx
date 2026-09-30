@@ -25,7 +25,7 @@ import logoHorizontalDarkText from "../assets/humaeli-logo-horizontal-tagline.pn
 import axios from "axios";
 import { API_BASE_URL } from "../axiosConfig";
 import GoogleAuthButton from "./GoogleAuthButton";
-import { dashboardForRole } from "./authSession";
+import { dashboardForRole, persistAuthSession } from "./authSession";
 import LocationGate from "./LocationGate";
 import { PHONE_COUNTRIES } from "../Component/PatientProfile/PatientProfile";
 import StrongPasswordChecklist from "../Component/common/StrongPasswordChecklist";
@@ -56,8 +56,20 @@ const getLatestCounselorBirthDate = () => {
   return `${year}-${month}-${day}`;
 };
 
-const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
+const normalizeSignupRole = (role) => {
+  const normalized = String(role || "").trim().toLowerCase();
+  if (["counselor", "counsellor", "counsellour"].includes(normalized)) {
+    return "consultant";
+  }
+  return normalized || "consultant";
+};
+
+const displayRoleName = (role) =>
+  role === "doctor" ? "Doctor" : role === "user" ? "User" : "Consultant";
+
+const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
   const navigate = useNavigate();
+  const signupAccountRole = normalizeSignupRole(accountRole);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 968);
   const isLogin = false;
   const [slideAnim, setSlideAnim] = useState("");
@@ -234,7 +246,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
   };
 
   const handleForgotPassword = () => {
-    navigate("/forgot-password", { state: { role: "counsellor" } });
+    navigate("/forgot-password", { state: { role: "consultant" } });
   };
 
   const validateSignup = () => {
@@ -413,36 +425,6 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
     setPhoneResendTimer(0);
   };
 
-  const persistCounselorSession = (data) => {
-    // Store tokens from response if present
-    if (data?.accessToken) {
-      localStorage.setItem("accessToken", data.accessToken);
-    }
-    if (data?.refreshToken) {
-      localStorage.setItem("refreshToken", data.refreshToken);
-    }
-    const token = data?.token || data?.accessToken;
-    if (token) {
-      localStorage.setItem("token", token);
-      localStorage.setItem("accessToken", token);
-    }
-    if (data.user) {
-      localStorage.setItem("userData", JSON.stringify(data.user));
-      localStorage.setItem("userRole", data.user.role || "counsellor");
-      const id = data.user._id || data.user.id;
-      if (id) {
-        localStorage.setItem("counsellorId", id);
-        localStorage.setItem("counselorId", id);
-        localStorage.setItem("userId", id);
-      }
-    } else {
-      localStorage.setItem("userRole", "counsellor");
-    }
-    localStorage.setItem("userEmail", formData.email);
-    localStorage.setItem("isAuthenticated", "true");
-    return true;
-  };
-
   const handleLogin = async () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/api/auth/login`,
@@ -458,7 +440,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
       const returnedRole = (
         response.data?.role ||
         response.data?.user?.role ||
-        "counsellor"
+        "consultant"
       ).toLowerCase();
       const isCounselor =
         returnedRole === "counselor" || isProfessionalRole(returnedRole);
@@ -471,9 +453,13 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
         return;
       }
 
-      if (persistCounselorSession(response.data)) {
+      const session = persistAuthSession({
+        ...response.data,
+        role: returnedRole,
+      });
+      if (session) {
         showNotification("Login successful! One last step…", "success");
-        setPendingNav({ path: "/counselor-dashboard", event: "login" });
+        setPendingNav({ path: session.path, event: "login" });
       } else {
         showNotification(response.data?.message || "Login failed", "error");
       }
@@ -521,7 +507,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
         navigate("/verify-login-otp", {
           state: {
             email: loginEmail,
-            role: "counsellor"
+            role: "consultant"
           }
         });
       } else {
@@ -574,8 +560,8 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
       fd.append("aboutMe", formData.aboutMe.trim());
       fd.append("password", formData.password);
       fd.append("confirmPassword", formData.confirmPassword);
-      fd.append("role", accountRole);
-      fd.append("accountRole", accountRole);
+      fd.append("role", signupAccountRole);
+      fd.append("accountRole", signupAccountRole);
       fd.append("emailVerificationToken", emailVerificationToken);
       if (formData.profilePhoto instanceof File) {
         fd.append("profilePhoto", formData.profilePhoto);
@@ -613,7 +599,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
         });
         navigate("/login", { replace: true, state: { email: registeredEmail, registered: true } });
         showNotification(
-          `${accountRole === "doctor" ? "Doctor" : "Counselor"} account created successfully. Please log in.`,
+          `${displayRoleName(signupAccountRole)} account created successfully. Please log in.`,
           "success",
         );
       } else {
@@ -890,7 +876,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
             <p className="cs-brand-subtitle">
               {isLogin
                 ? "Connect with expert consultants and find the support you need."
-                : `Start your journey as a ${accountRole === "doctor" ? "doctor" : "counselor"}.`}
+                : `Start your journey as a ${signupAccountRole === "doctor" ? "doctor" : "consultant"}.`}
             </p>
             <div className="cs-features">
               <div className="cs-feature">✓ Expert Consultants</div>
@@ -1429,7 +1415,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
             </div>
 
             <GoogleAuthButton
-              role={accountRole}
+              role={signupAccountRole}
               mode={isLogin ? "signin" : "signup"}
               disabled={isLoading}
               gateDriven
@@ -1441,7 +1427,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
                   "success",
                 );
                 setPendingNav({
-                  path: dashboardForRole(localStorage.getItem("userRole") || accountRole),
+                  path: dashboardForRole(localStorage.getItem("userRole") || signupAccountRole),
                   event: isLogin ? "login" : "signup",
                 });
               }}
@@ -1479,7 +1465,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "counselor" }) => {
       {pendingNav && (
         <LocationGate
           event={pendingNav.event}
-          role={localStorage.getItem("userRole") || accountRole}
+          role={localStorage.getItem("userRole") || signupAccountRole}
           onDone={() => {
             const target = pendingNav.path;
             setPendingNav(null);

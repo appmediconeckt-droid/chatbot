@@ -1,8 +1,23 @@
 import axios from "axios";
 
-const envApiBaseUrl =
+const rawEnvApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   "https://s5jl7g4z-5003.inc1.devtunnels.ms";
+
+const resolveApiBaseUrl = (url) => {
+  const normalizedUrl = String(url || "").replace(/^hhttps:\/\//i, "https://");
+  const isLocalFrontend =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+
+  if (isLocalFrontend && /\.devtunnels\.ms\/?$/i.test(normalizedUrl)) {
+    return "http://localhost:5005";
+  }
+
+  return normalizedUrl;
+};
+
+const envApiBaseUrl = resolveApiBaseUrl(rawEnvApiBaseUrl);
 if (!envApiBaseUrl) {
   throw new Error(
     "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",

@@ -59,8 +59,10 @@ const GoogleAuthButton = ({
     setBusy(true);
     try {
       const roleValue = String(role || "").trim().toLowerCase();
-      const selectedRole = ["counselor", "consultant"].includes(roleValue) ? "counsellor" : roleValue;
-      if (!["user", "counsellor", "doctor"].includes(selectedRole)) {
+      const selectedRole = ["counselor", "counsellor", "counsellour"].includes(roleValue)
+        ? "consultant"
+        : roleValue;
+      if (!["user", "consultant", "doctor"].includes(selectedRole)) {
         throw new Error("Please select User, Consultant or Doctor before signing in with Google.");
       }
 

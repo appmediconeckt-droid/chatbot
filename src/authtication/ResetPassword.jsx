@@ -20,8 +20,8 @@ const ResetPassword = () => {
   const location = useLocation();
   const email = location.state?.email || "";
   const requestedRole = String(location.state?.role || "").toLowerCase();
-  const role = ["counselor", "counsellor", "counsellour"].includes(requestedRole)
-    ? "counsellor"
+  const role = ["counselor", "counsellor", "counsellour", "consultant"].includes(requestedRole)
+    ? "consultant"
     : "user";
   const themeClass = isProfessionalRole(role) ? "auth-theme-counselor" : "auth-theme-user";
 

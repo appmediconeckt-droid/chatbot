@@ -4,6 +4,7 @@ import { FaArrowLeft } from 'react-icons/fa';
 import axios from 'axios';
 import { API_BASE_URL } from '../axiosConfig';
 import { updateVerificationStatus, setUserEmail, getAccessToken } from './authUtils';
+import { persistAuthSession } from './authSession';
 import LocationGate from './LocationGate';
 import './OTPVerification.css';
 
@@ -113,27 +114,18 @@ const OTPVerification = () => {
       });
 
       if (res.data.success) {
-        localStorage.setItem('accessToken', res.data.token);
-        localStorage.setItem('token', res.data.token);
-        if (res.data.refreshToken) {
-          localStorage.setItem('refreshToken', res.data.refreshToken);
-        }
-        
-        localStorage.setItem('userRole', 'user'); // OTPVerification seems specific to users
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', email);
-        
-        const user = res.data.user || {};
-        localStorage.setItem('userData', JSON.stringify(user));
-        
-        const id = user._id || user.id || res.data.userId;
-        if (id) {
-          localStorage.setItem('userId', id);
+        const session = persistAuthSession({
+          ...res.data,
+          role: res.data.role || res.data.user?.role || 'user',
+        });
+        if (!session) {
+          setError('Login session missing. Please try again.');
+          return;
         }
 
         updateVerificationStatus(true);
         setSuccess('Login successful! One last step…');
-        setPendingNav({ path: '/user-dashboard', event: 'login' });
+        setPendingNav({ path: session.path, event: 'login' });
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid OTP');
