@@ -2,7 +2,7 @@ import axios from "axios";
 
 const rawEnvApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://s5jl7g4z-5003.inc1.devtunnels.ms";
+  "https://humaeli-backend-update-production.up.railway.app";
 
 const resolveApiBaseUrl = (url) => {
   const normalizedUrl = String(url || "").replace(/^hhttps:\/\//i, "https://");
@@ -11,7 +11,7 @@ const resolveApiBaseUrl = (url) => {
     ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 
   if (isLocalFrontend && /\.devtunnels\.ms\/?$/i.test(normalizedUrl)) {
-    return "http://localhost:5005";
+    return "https://humaeli-backend-update-production.up.railway.app";
   }
 
   return normalizedUrl;
