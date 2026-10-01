@@ -3,6 +3,7 @@ import { FaBrain, FaCalendarAlt, FaCheckCircle, FaClock, FaHistory, FaSearch, Fa
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import { getTimeGreetingKey } from "../../../../utils/timeGreeting";
+import ParticipantPhoto from "../../../common/ParticipantPhoto";
 
 export default function AppointmentsTab({
   appointments = [],
@@ -167,10 +168,11 @@ export default function AppointmentsTab({
                       <div className="stitch-apt-card-top">
                         <div className="stitch-apt-avatar">
                           {anonymousUser.avatarUrl ? (
-                            <img
+                            <ParticipantPhoto
                               src={anonymousUser.avatarUrl}
-                              alt={anonymousUser.name}
+                              name={anonymousUser.name}
                               className="stitch-apt-avatar-img"
+                              fallback={<span>{anonymousUser.avatar}</span>}
                             />
                           ) : (
                             <span>{anonymousUser.avatar}</span>

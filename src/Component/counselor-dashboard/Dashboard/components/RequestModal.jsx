@@ -2,6 +2,7 @@ import React from "react";
 import { FaUsers, FaCheck, FaTimes as FaClose } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
+import ParticipantPhoto from "../../../common/ParticipantPhoto";
 
 export default function RequestModal({
   showRequestModal,
@@ -43,7 +44,11 @@ export default function RequestModal({
             <div className="couns-request-patient-main">
               <div className="couns-request-avatar">
                 {anonymousUser.avatarUrl ? (
-                  <img src={anonymousUser.avatarUrl} alt={anonymousUser.name} />
+                  <ParticipantPhoto
+                    src={anonymousUser.avatarUrl}
+                    name={anonymousUser.name}
+                    fallback={<span>{anonymousUser.avatar}</span>}
+                  />
                 ) : (
                   <span>{anonymousUser.avatar}</span>
                 )}

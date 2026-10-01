@@ -712,6 +712,7 @@ import socketService from "../../../../services/socketService";
 import {
   getAnonymousParticipantId,
   getAnonymousUserAvatar,
+  getAnonymousUserAvatarUrl,
   getAnonymousUserDisplay,
 } from "../../../../utils/anonymousUser";
 import {
@@ -925,18 +926,20 @@ const SMSList = () => {
       const transformedUsers = (data.chats || []).map((chat) => {
         const otherParty = chat.otherParty || {};
         const anonymousUser = getAnonymousUserDisplay(otherParty);
+        const peerAvatarUrl = getAnonymousUserAvatarUrl(otherParty);
         const actualUserId =
           getAnonymousParticipantId({ ...otherParty, userId: chat.userId }) ||
           chat.userId;
         const presence = getPresence(otherParty);
         const safeOtherParty = {
+          ...otherParty,
           id: actualUserId,
           _id: actualUserId,
           userId: actualUserId,
           anonymous: anonymousUser.name,
           gender: anonymousUser.gender,
           avatar: anonymousUser.avatar,
-          avatarUrl: anonymousUser.avatarUrl,
+          avatarUrl: peerAvatarUrl,
           age: otherParty.age,
           genderLabel: otherParty.gender,
           dateOfBirth: otherParty.dateOfBirth,
@@ -967,7 +970,13 @@ const SMSList = () => {
           name: anonymousUser.name,
           gender: anonymousUser.gender,
           avatar: anonymousUser.avatar,
-          avatarUrl: anonymousUser.avatarUrl,
+          avatarUrl: peerAvatarUrl,
+          profilePhoto: otherParty.profilePhoto,
+          profileImage: otherParty.profileImage,
+          profilePic: otherParty.profilePic,
+          avatarImage: otherParty.avatarImage,
+          anonymousAvatarUrl: otherParty.anonymousAvatarUrl,
+          otherParty,
           lastMessage: chat.lastMessage?.content || t("no_messages"),
           time: formatTime(lastMessageTime),
           fullDateTime: formatFullDateTime(lastMessageTime),
@@ -997,7 +1006,42 @@ const SMSList = () => {
         };
       });
 
-      transformedUsers.sort((a, b) => {
+      const tokenForProfile =
+        localStorage.getItem("token") || localStorage.getItem("accessToken");
+      const enrichedUsers = await Promise.all(
+        transformedUsers.map(async (user) => {
+          if (user.avatarUrl || !user.receiverId) return user;
+          try {
+            const profileResponse = await fetch(
+              `${API_BASE_URL}/api/auth/getUser/${encodeURIComponent(user.receiverId)}`,
+              {
+                headers: {
+                  Authorization: tokenForProfile ? `Bearer ${tokenForProfile}` : "",
+                },
+              },
+            );
+            if (!profileResponse.ok) return user;
+            const profileData = await profileResponse.json();
+            const profileUser = profileData.user || profileData.data || profileData;
+            const profileAvatarUrl = getAnonymousUserAvatarUrl(profileUser);
+            if (!profileAvatarUrl) return user;
+            return {
+              ...user,
+              avatarUrl: profileAvatarUrl,
+              profilePhoto: profileUser.profilePhoto || user.profilePhoto,
+              user: {
+                ...user.user,
+                ...profileUser,
+                avatarUrl: profileAvatarUrl,
+              },
+            };
+          } catch {
+            return user;
+          }
+        }),
+      );
+
+      enrichedUsers.sort((a, b) => {
         const aTime = a.lastActivityAt
           ? new Date(a.lastActivityAt).getTime()
           : 0;
@@ -1007,8 +1051,8 @@ const SMSList = () => {
         return bTime - aTime;
       });
 
-      setOriginalUsers(transformedUsers);
-      setUsers(transformedUsers);
+      setOriginalUsers(enrichedUsers);
+      setUsers(enrichedUsers);
       setLoading(false);
     } catch (err) {
       console.error("Error fetching chats:", err);

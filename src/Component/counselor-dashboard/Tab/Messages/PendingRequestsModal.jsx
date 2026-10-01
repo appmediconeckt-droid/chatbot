@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { FaTimes, FaCheck, FaTrash, FaBell } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
+import ParticipantPhoto from "../../../common/ParticipantPhoto";
 import ConfirmActionModal from "./ConfirmActionModal";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import "./PendingRequestsModal.css";
@@ -88,9 +89,21 @@ export default function PendingRequestsModal({
                   <div key={request.id} className="pending-request-item">
                     <div className="pending-request-avatar">
                       {anonymousUser.avatarUrl ? (
-                        <img
+                        <ParticipantPhoto
                           src={anonymousUser.avatarUrl}
-                          alt={anonymousUser.name}
+                          name={anonymousUser.name}
+                          fallback={
+                            <span
+                              className="avatar-initials"
+                              style={{
+                                backgroundColor: getAvatarColor(
+                                  anonymousUser.name
+                                ),
+                              }}
+                            >
+                              {anonymousUser.avatar}
+                            </span>
+                          }
                         />
                       ) : (
                         <span

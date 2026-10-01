@@ -147,7 +147,22 @@ export const getAnonymousUserAvatar = (source) => {
 };
 
 export const getAnonymousUserAvatarUrl = (source) => {
-  for (const person of [source, source?.user, source?.patient, source?.otherParty, source?.profile, source?.from, source?.initiator]) {
+  for (const person of [
+    source,
+    source?.user,
+    source?.user?.profile,
+    source?.patient,
+    source?.patient?.profile,
+    source?.client,
+    source?.client?.profile,
+    source?.otherParty,
+    source?.otherParty?.profile,
+    source?.profile,
+    source?.from,
+    source?.from?.profile,
+    source?.initiator,
+    source?.initiator?.profile,
+  ]) {
     const photo = resolveProfileImage(person, API_BASE_URL);
     if (photo) return photo;
   }
@@ -176,6 +191,14 @@ export const getAnonymousUserAvatarUrl = (source) => {
     ["patient", "Image"],
     ["patient", "avatar"],
     ["patient", "avatar", "url"],
+    ["client", "profilePhoto"],
+    ["client", "profilePhoto", "url"],
+    ["client", "profilePic"],
+    ["client", "photoUrl"],
+    ["client", "image"],
+    ["client", "Image"],
+    ["client", "avatar"],
+    ["client", "avatar", "url"],
     ["otherParty", "profilePhoto"],
     ["otherParty", "profilePhoto", "url"],
     ["otherParty", "profilePic"],
@@ -216,6 +239,11 @@ export const getAnonymousUserAvatarUrl = (source) => {
     ["patient", "avatarUrl"],
     ["patient", "avatarImage"],
     ["patient", "Image"],
+    ["client", "anonymousAvatarUrl"],
+    ["client", "anonymousAvatar"],
+    ["client", "avatarUrl"],
+    ["client", "avatarImage"],
+    ["client", "Image"],
     ["otherParty", "anonymousAvatarUrl"],
     ["otherParty", "anonymousAvatar"],
     ["otherParty", "avatarUrl"],
@@ -251,6 +279,12 @@ export const getAnonymousUserAvatarUrl = (source) => {
     ["patient", "profilePhoto"],
     ["patient", "profilePhoto", "url"],
     ["patient", "profilePic"],
+    ["client", "avatar"],
+    ["client", "avatar", "url"],
+    ["client", "Image"],
+    ["client", "profilePhoto"],
+    ["client", "profilePhoto", "url"],
+    ["client", "profilePic"],
     ["otherParty", "avatar"],
     ["otherParty", "avatar", "url"],
     ["otherParty", "Image"],
