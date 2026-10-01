@@ -1276,6 +1276,113 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const token =
     localStorage.getItem("token") || localStorage.getItem("accessToken");
 
+  const readProfessionalsFromResponse = (payload = {}) => {
+    const candidates = [
+      payload.counsellors,
+      payload.counselors,
+      payload.doctors,
+      payload.professionals,
+      payload.users,
+      payload.data?.counsellors,
+      payload.data?.counselors,
+      payload.data?.doctors,
+      payload.data?.professionals,
+      payload.data?.users,
+      payload.data,
+    ];
+
+    return candidates.find(Array.isArray) || [];
+  };
+
+  const getProfessionalDisplayRole = (professional = {}) => {
+    const role = String(professional.role || "").trim().toLowerCase();
+    const accountType = String(professional.accountType || "").trim().toLowerCase();
+    if (role === "doctor" || accountType === "doctor") return "doctor";
+    return "consultant";
+  };
+
+  const PROFESSIONAL_ROLES = [
+    "doctor",
+    "consultant",
+    "counsellor",
+    "counselor",
+    "counsellour",
+  ];
+
+  const isVisibleProfessionalRole = (professional = {}) => {
+    const role = String(professional.role || "").trim().toLowerCase();
+    const accountType = String(professional.accountType || "").trim().toLowerCase();
+    return PROFESSIONAL_ROLES.includes(role) || PROFESSIONAL_ROLES.includes(accountType);
+  };
+
+  const formatSpecialization = (specialization) => {
+    if (Array.isArray(specialization)) {
+      return specialization.filter(Boolean).join(" , ") || "General";
+    }
+    return String(specialization || "General");
+  };
+
+  const getProfessionalLocation = (professional = {}) => {
+    if (professional.location) return professional.location;
+    if (professional.locationData?.current?.address) {
+      return professional.locationData.current.address;
+    }
+
+    const address = professional.address || {};
+    return [
+      address.line1,
+      address.line2,
+      address.city,
+      address.state,
+      address.country,
+    ]
+      .filter(Boolean)
+      .join(", ");
+  };
+
+  const getProfessionalId = (professional = {}) =>
+    professional._id ||
+    professional.id ||
+    professional.userId ||
+    professional.user_id ||
+    professional.doctorId ||
+    professional.doctor_id ||
+    professional.consultantId ||
+    professional.consultant_id ||
+    professional.counselorId ||
+    professional.counsellorId;
+
+  const mergeUniqueProfessionals = (...lists) => {
+    const unique = new Map();
+    lists.flat().forEach((item) => {
+      const id = getProfessionalId(item);
+      if (!id) return;
+      unique.set(String(id), item);
+    });
+    return Array.from(unique.values());
+  };
+
+  const hasRenderableProfessionalProfile = (professional = {}) => {
+    const hasIdentity = Boolean(
+      getProfessionalId(professional) &&
+        (professional.fullName || professional.name || professional.email),
+    );
+    const hasProfessionalDetails = Boolean(
+      formatSpecialization(professional.specialization) !== "General" ||
+        professional.qualification ||
+        professional.education ||
+        professional.experience ||
+        professional.aboutMe ||
+        professional.profilePhoto?.url ||
+        professional.location ||
+        professional.locationData?.current?.address ||
+        professional.address?.city ||
+        professional.certifications?.length,
+    );
+
+    return hasIdentity && hasProfessionalDetails;
+  };
+
   useEffect(() => {
     const fetchPaymentDetails = async () => {
       try {
@@ -1595,26 +1702,68 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
   // Fetch counselors from API
   useEffect(() => {
+    const fetchUsersByRole = async (role) => {
+      try {
+        const response = await axiosInstance.get("/api/auth/users", {
+          params: { role },
+        });
+        return readProfessionalsFromResponse(response.data || {});
+      } catch (error) {
+        console.warn(
+          `Fallback ${role} directory unavailable:`,
+          error?.response?.data || error.message,
+        );
+        return [];
+      }
+    };
+
     const fetchCounselors = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/counsellors`);
+        const directoryRequest = axiosInstance
+          .get("/api/auth/counsellors")
+          .then((response) => readProfessionalsFromResponse(response.data || {}))
+          .catch((error) => {
+            console.warn(
+              "Counsellors directory unavailable:",
+              error?.response?.data || error.message,
+            );
+            return [];
+          });
 
-        const data = await response.json();
+        const roleRequests = PROFESSIONAL_ROLES.map((role) => fetchUsersByRole(role));
+        const [directoryProfessionals, ...roleProfessionals] = await Promise.all([
+          directoryRequest,
+          ...roleRequests,
+        ]);
 
-        if (data.success) {
-          const formattedCounselors = data.counsellors.map((c) => {
+        const professionals = mergeUniqueProfessionals(
+          directoryProfessionals,
+          ...roleProfessionals,
+        );
+
+        const visibleProfessionals = professionals.filter((professional) => {
+          return (
+            isVisibleProfessionalRole(professional) &&
+            professional?.isActive !== false &&
+            hasRenderableProfessionalProfile(professional)
+          );
+        });
+
+        const formattedCounselors = visibleProfessionals.map((c) => {
             // The directory API returns live socket presence. Do not combine
             // it with an older login/session value, otherwise an offline
             // counselor can remain displayed as online.
             const presence = getPresence(c);
             const isOnline = presence.isOnline;
-            const specialization = Array.isArray(c.specialization)
-              ? c.specialization.join(" , ")
-              : String(c.specialization || "General");
+            const specialization = formatSpecialization(c.specialization);
+            const displayRole = getProfessionalDisplayRole(c);
+            const profilePhotoUrl = getProfilePhotoUrl(c);
             return {
-              id: c._id,
-              name: c.fullName,
-              role: String(c.role || "").trim().toLowerCase(),
+              id: getProfessionalId(c),
+              name: c.fullName || c.name || (displayRole === "doctor" ? "Doctor" : "Consultant"),
+              role: displayRole,
+              rawRole: String(c.role || "").trim().toLowerCase(),
+              accountType: c.accountType || "",
               specialization,
               experience: `${c.experience || 0} years`,
               rating: c.rating || 4.5,
@@ -1624,10 +1773,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               hasActiveSession: isOnline,
               presenceStatus: isOnline ? "online" : "offline",
               socketOnline: isOnline,
-              available: c.isActive,
+              available: c.isActive !== false,
               lastSeen: c.lastSeen || null,
-              avatar: getProfilePhotoUrl(c) || getInitials(c.fullName),
-              avatarType: getProfilePhotoUrl(c) ? "image" : "text",
+              avatar: profilePhotoUrl || getInitials(c.fullName || c.name),
+              avatarType: profilePhotoUrl ? "image" : "text",
               expertise: Array.isArray(c.specialization)
                 ? c.specialization
                 : c.specialization
@@ -1637,7 +1786,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               profilePhoto: c.profilePhoto,
               email: c.email,
               phone: c.phoneNumber,
-              location: c.location,
+              location: getProfessionalLocation(c),
               languages: c.languages || [],
               aboutMe: c.aboutMe,
               qualification: c.qualification,
@@ -1647,15 +1796,14 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               totalSessions: c.totalSessions || 0,
               activeClients: c.activeClients || 0,
             };
-          });
+        });
 
-          setCounselors(formattedCounselors);
-          setFilteredCounselors(formattedCounselors);
+        setCounselors(formattedCounselors);
+        setFilteredCounselors(formattedCounselors);
 
-          // Extract unique locations
-          const locations = extractUniqueLocations(formattedCounselors);
-          setUniqueLocations(locations);
-        }
+        // Extract unique locations
+        const locations = extractUniqueLocations(formattedCounselors);
+        setUniqueLocations(locations);
       } catch (error) {
         console.error("Error fetching counselors:", error);
       }

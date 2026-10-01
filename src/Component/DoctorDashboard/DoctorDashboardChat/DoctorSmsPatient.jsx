@@ -1,3 +1,4 @@
+import PatientProfileImage from "../../common/PatientProfileImage";
 // import React, { useEffect, useMemo, useRef, useState } from "react";
 // import { useLocation } from "react-router-dom";
 // import axios from "../../../axiosConfig.js";
@@ -2042,6 +2043,7 @@ function PatientList() {
           return {
             id: receiverId,
             receiverId,
+            profilePhoto: patient.profilePhoto || patient.avatarUrl || patient.avatar,
             name: patient.full_name || patient.fullname || patient.name || patient.patient_name || item.patient_name || "Unknown Patient",
             age: patient.age || "NA",
             gender: patient.gender || "Male",
@@ -2079,6 +2081,7 @@ function PatientList() {
           resolvedPatients.push({
             id: getUserId(patient),
             receiverId: getUserId(patient),
+            profilePhoto: patient.profilePhoto || patient.avatarUrl || patient.avatar,
             name: patient.full_name,
             age: patient.age || "NA",
             gender: patient.gender || patient.patient_gender || "NA",
@@ -2657,7 +2660,7 @@ function PatientList() {
               >
                 <div className="sms-conversation-main">
                   <div>
-                    <strong>{patient.name}</strong>
+                    <strong><PatientProfileImage patient={patient} size={32} />{patient.name}</strong>
                     <span className={`sms-status-pill ${getStatusClass(patient.status)}`}>{patient.status}</span>
                   </div>
                   <small>{patient.previewTitle || patient.condition}</small>
@@ -2674,7 +2677,7 @@ function PatientList() {
 
         <section className="sms-chat-card">
           <div className="sms-chat-header">
-            <div className="sms-chat-avatar">{getInitials(selectedPatient?.name)}</div>
+            <div className="sms-chat-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</div>
             <div className="sms-chat-title">
               <h2>
                 {selectedPatient?.name || "Select a patient"}
@@ -2696,7 +2699,7 @@ function PatientList() {
             <div className="sms-date-chip">{selectedPatient ? "Today" : "No conversation selected"}</div>
             {selectedMessages.slice(0, 1).map((msg) => (
               <div className={`sms-message-row ${msg.sender}`} key={msg.id}>
-                <span className="sms-message-avatar">{getInitials(selectedPatient?.name)}</span>
+                <span className="sms-message-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</span>
                 <div>
                   <div className="sms-message-meta">{msg.sender === "doctor" ? "You" : selectedPatient?.name} <span>{msg.time}</span></div>
                   <div className="sms-message-bubble">
@@ -2709,7 +2712,7 @@ function PatientList() {
             {selectedMessages.length > 1 && <div className="sms-new-divider"><span>New Messages</span></div>}
             {selectedMessages.slice(1).map((msg) => (
               <div className={`sms-message-row ${msg.sender}`} key={msg.id}>
-                {msg.sender === "patient" && <span className="sms-message-avatar">{getInitials(selectedPatient?.name)}</span>}
+                {msg.sender === "patient" && <span className="sms-message-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</span>}
                 <div>
                   <div className="sms-message-meta">{msg.sender === "doctor" ? "You" : selectedPatient?.name} <span>{msg.time}</span></div>
                   <div className="sms-message-bubble">
@@ -2758,7 +2761,7 @@ function PatientList() {
               <span>{activeCall.type === "video" ? "Video call" : "Voice call"}</span>
               <strong>{activeCall.status === "connected" ? formatCallDuration(callSeconds) : getCallStatusText()}</strong>
             </div>
-            <div className="sms-call-avatar">{getInitials(selectedPatient?.name)}</div>
+            <div className="sms-call-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</div>
             <h2>{selectedPatient?.name || "Patient"}</h2>
             <p>
               {activeCall.status === "missed"

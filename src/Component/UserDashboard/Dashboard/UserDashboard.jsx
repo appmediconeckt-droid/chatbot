@@ -545,27 +545,21 @@ export default function UserDashboard() {
   useEffect(() => {
     const loadChatHistory = async () => {
       try {
-        const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
-        const response = await fetch(`${API_BASE_URL}/api/ai-chat/history`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
+        const { data } = await axiosInstance.get("/api/ai-chat/history");
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && Array.isArray(data.history) && data.history.length > 0) {
-            const loadedMessages = data.history.map((msg, index) => ({
-              id: Date.now() + index,
-              text: msg.content,
-              sender: msg.role === 'user' ? 'user' : 'ai',
-              quickReplies: null,
-              type: msg.type || "answer",
-              consultants: msg.consultants || [],
-            }));
-            setChatMessages(loadedMessages);
-            setAiChatLimitReached(Boolean(data.chatLimitReached));
-            if (data.sessionId) {
-              setAiSessionId(data.sessionId);
-            }
+        if (data.success && Array.isArray(data.history) && data.history.length > 0) {
+          const loadedMessages = data.history.map((msg, index) => ({
+            id: Date.now() + index,
+            text: msg.content,
+            sender: msg.role === 'user' ? 'user' : 'ai',
+            quickReplies: null,
+            type: msg.type || "answer",
+            consultants: msg.consultants || [],
+          }));
+          setChatMessages(loadedMessages);
+          setAiChatLimitReached(Boolean(data.chatLimitReached));
+          if (data.sessionId) {
+            setAiSessionId(data.sessionId);
           }
         }
       } catch (err) {

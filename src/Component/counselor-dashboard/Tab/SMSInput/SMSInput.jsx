@@ -5253,7 +5253,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const getUserAvatarIcon = () => userDetails.avatar || getAvatarIcon(userDetails.gender);
 
   const getUserAvatarUrl = () => {
-    if (freshPeerPhoto?.id === USER_ID) return freshPeerPhoto.image;
+    if (freshPeerPhoto?.id === USER_ID && freshPeerPhoto.image) return freshPeerPhoto.image;
     if (typeof userDetails.avatarUrl === "string" && userDetails.avatarUrl.trim()) {
       return normalizeProfileImage(userDetails.avatarUrl, API_BASE_URL);
     }

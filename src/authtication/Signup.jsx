@@ -7,7 +7,7 @@ import "./Signup.css";
 const signupRoles = [
   { value: "user", label: "User", icon: FaUser },
   { value: "doctor", label: "Doctor", icon: FaUserMd },
-  { value: "counselor", label: "Counselor", icon: FaComments },
+  { value: "consultant", label: "Consultant", icon: FaComments },
 ];
 
 export default function Signup() {

@@ -1,3 +1,4 @@
+import PatientProfileImage from "../../common/PatientProfileImage";
 import React, { useEffect, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
@@ -202,6 +203,7 @@ export default function AppointmentList() {
         appointment.department ||
         normalizeType(appointment.consultation_mode || appointment.type || appointment.mode),
       ...getAppointmentPatientDetails(appointment),
+      profilePhoto: appointment.patient?.profilePhoto || appointment.patient?.avatarUrl || appointment.patient?.avatar || appointment.user?.profilePhoto,
       paymentMethod: String(appointment.payment_method || appointment.paymentMethod || "").toLowerCase(),
       paymentAmount: appointment.payment_amount || appointment.amount_paid || appointment.consultation_fee || appointment.paymentAmount || "",
       paymentReference: appointment.payment_reference || appointment.transaction_id || appointment.upi_reference || appointment.paymentReference || "",
@@ -643,7 +645,7 @@ export default function AppointmentList() {
                         ? <span className="token-badge">#{appointment.tokenNumber}</span>
                         : <span className="token-empty">—</span>}
                     </td>
-                    <td>{appointment.patientName}{appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}</td>
+                    <td><PatientProfileImage patient={appointment} size={32} />{appointment.patientName}{appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}</td>
                     <td>{appointment.phone}</td>
                     <td className="test-cell">{appointment.test}</td>
                     <td className="location-cell">{appointment.location}</td>
@@ -883,7 +885,7 @@ export default function AppointmentList() {
             <div className="appointment-modal-header">
               <div>
                 <h2>Appointment Details</h2>
-                <p>{viewAppointment.patientName}</p>
+                <p><PatientProfileImage patient={viewAppointment} size={40} />{viewAppointment.patientName}</p>
               </div>
               <button type="button" onClick={() => setViewAppointment(null)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>

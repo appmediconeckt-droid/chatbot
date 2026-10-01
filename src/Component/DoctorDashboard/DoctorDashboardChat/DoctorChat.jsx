@@ -1,3 +1,4 @@
+import PatientProfileImage from "../../common/PatientProfileImage";
 // DoctorChat.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -244,6 +245,7 @@ const PatientChat = () => {
 
         setCurrentPatient(patient ? {
           id: patient.id || patient._id || patient.patient_id || patientItem?.patient_id || patient.user_id,
+          profilePhoto: patient.profilePhoto || patient.avatarUrl || patient.avatar,
           name: patient.full_name || patient.fullname || patient.name || patient.patient_name || patientItem?.patient_name || 'Unknown Patient',
           age: patient.age || 'NA',
           gender: patient.gender || 'NA',
@@ -606,7 +608,7 @@ const PatientChat = () => {
 
         <section className="dc-chat-panel">
           <div className="dc-chat-profile">
-            <div className="dc-chat-avatar">{getInitials(currentPatient.name)}</div>
+            <div className="dc-chat-avatar">{<PatientProfileImage patient={currentPatient} fallback={getInitials(currentPatient.name)} />}</div>
             <div className="dc-chat-profile-info">
               <h2>{currentPatient.name} <span className={`dc-status-tag ${currentPatient.status.toLowerCase().replace(/\s+/g, '-')}`}>{currentPatient.status}</span></h2>
               <p>{currentPatient.age}{currentPatient.gender?.[0] || 'M'} • Blood {currentPatient.bloodGroup || 'O+'} • {currentPatient.condition}</p>
@@ -621,7 +623,7 @@ const PatientChat = () => {
             <div className="dc-chat-date">Today</div>
             {messages.map((msg, index) => (
               <div className={`dc-message-row ${msg.sender}`} key={msg.id} style={{ '--message-index': index }}>
-                {msg.sender !== 'doctor' && <span className="dc-message-avatar">{getInitials(currentPatient.name)}</span>}
+                {msg.sender !== 'doctor' && <span className="dc-message-avatar">{<PatientProfileImage patient={currentPatient} fallback={getInitials(currentPatient.name)} />}</span>}
                 <div className="dc-message-stack">
                   <div className="dc-message-meta">
                     <strong>{msg.sender === 'doctor' ? 'You' : currentPatient.name}</strong>

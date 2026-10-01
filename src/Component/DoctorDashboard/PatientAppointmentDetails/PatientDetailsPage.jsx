@@ -1,3 +1,4 @@
+import PatientProfileImage from "../../common/PatientProfileImage";
 import { filterPatients, dateKey } from "./patientFilters.js";
 // ===============================
 // PatientDetailsPage.jsx (ReactJS)
@@ -289,6 +290,7 @@ export default function PatientDetailsPage() {
 
       const patientDetails = existing || {
         ...patient,
+        profilePhoto: appointment.patient?.profilePhoto || appointment.patient?.avatarUrl || appointment.patient?.avatar || appointment.user?.profilePhoto,
         lastVisit: record.date,
         records: [],
       };
@@ -666,7 +668,7 @@ export default function PatientDetailsPage() {
                     >
                       <div className="pd-patient-header">
                         <div className="pd-patient-avatar">
-                          {patient.name.charAt(0)}
+                          {<PatientProfileImage patient={patient} fallback={patient.name.charAt(0)} />}
                         </div>
                         <div className="pd-patient-info">
                           <h4 className="pd-patient-name">{patient.name}</h4>
@@ -718,7 +720,7 @@ export default function PatientDetailsPage() {
               </button>
               <div className="pd-selected-patient-info">
                 <div className="pd-patient-avatar-large">
-                  {selectedPatient.name.charAt(0)}
+                  {<PatientProfileImage patient={selectedPatient} fallback={selectedPatient.name.charAt(0)} />}
                 </div>
                 <div>
                   <h3 className="pd-patient-name-large">{selectedPatient.name}</h3>
@@ -816,7 +818,7 @@ export default function PatientDetailsPage() {
 
             <div className="pd-detail-card">
               <div className="pd-detail-patient-banner">
-                <div className="pd-detail-avatar">{selectedPatient.name.charAt(0)}</div>
+                <div className="pd-detail-avatar">{<PatientProfileImage patient={selectedPatient} fallback={selectedPatient.name.charAt(0)} />}</div>
                 <div>
                   <h4 className="pd-detail-patient-name">{selectedPatient.name}</h4>
                   <div className="pd-detail-patient-meta">

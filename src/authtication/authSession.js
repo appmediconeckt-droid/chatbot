@@ -9,7 +9,15 @@ export const dashboardForRole = (role) =>
 
 export function persistAuthSession(data) {
   const user = data?.user || data?.data?.user;
-  const token = data?.accessToken || data?.token || data?.data?.accessToken || data?.data?.token;
+  const token =
+    data?.accessToken ||
+    data?.token ||
+    data?.data?.accessToken ||
+    data?.data?.token;
+  const refreshToken =
+    data?.refreshToken ||
+    data?.data?.refreshToken ||
+    user?.refreshToken;
   const accountRole = String(data?.accountRole || user?.accountRole || data?.data?.accountRole || "")
     .trim()
     .toLowerCase();
@@ -29,9 +37,9 @@ export function persistAuthSession(data) {
   localStorage.setItem("isAuthenticated", "true");
   localStorage.setItem("userType", accessRole);
   localStorage.setItem("userRole", accessRole);
+  localStorage.setItem("role", accessRole);
   localStorage.setItem("token", token);
   localStorage.setItem("accessToken", token);
-  const refreshToken = data?.refreshToken || data?.data?.refreshToken;
   if (refreshToken) localStorage.setItem("refreshToken", refreshToken);
   if (user) {
     localStorage.setItem("userData", JSON.stringify({ ...user, role }));

@@ -1621,6 +1621,12 @@ const COUNSELOR_PROFILE_CLASS = 'counselor-profile-container';
 
 const ACTIVE_CHAT_STATUSES = new Set(['active', 'accepted', 'ongoing']);
 const MAX_CERTIFICATION_DOCUMENTS = 5;
+
+const toFormDate = (value) => (value ? String(value).split('T')[0] : '');
+
+const compactTextArray = (items = []) =>
+    items.map((item) => String(item || '').trim()).filter(Boolean);
+
 const calculateAgeFromDateOfBirth = (dateOfBirth) => {
     if (!dateOfBirth) return null;
     const normalizedDate = String(dateOfBirth).split('T')[0];
@@ -2541,71 +2547,51 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
             if (editedData.gender) formData.append('gender', editedData.gender);
 
             if (editedData.address) {
-                formData.append('address[line1]', editedData.address.line1 || '');
-                formData.append('address[line2]', editedData.address.line2 || '');
-                formData.append('address[city]', editedData.address.city || '');
-                formData.append('address[state]', editedData.address.state || '');
-                formData.append('address[pincode]', editedData.address.pincode || '');
-                formData.append('address[country]', editedData.address.country || 'India');
+                formData.append('address', JSON.stringify({
+                    line1: editedData.address.line1 || '',
+                    line2: editedData.address.line2 || '',
+                    city: editedData.address.city || '',
+                    state: editedData.address.state || '',
+                    pincode: editedData.address.pincode || '',
+                    country: editedData.address.country || 'India',
+                }));
             }
 
             if (editedData.emergencyContact) {
-                formData.append('emergencyContact[name]', editedData.emergencyContact.name || '');
-                formData.append('emergencyContact[relation]', editedData.emergencyContact.relation || '');
-                formData.append('emergencyContact[phone]', editedData.emergencyContact.phone || '');
+                formData.append('emergencyContact', JSON.stringify({
+                    name: editedData.emergencyContact.name || '',
+                    relation: editedData.emergencyContact.relation || '',
+                    phone: editedData.emergencyContact.phone || '',
+                }));
             }
 
-            if (editedData.languages && editedData.languages.length > 0) {
-                editedData.languages.forEach((lang, index) => {
-                    formData.append(`languages[${index}]`, lang);
-                });
-            }
-
-            if (editedData.specialization && editedData.specialization.length > 0) {
-                editedData.specialization.forEach((spec, index) => {
-                    formData.append(`specialization[${index}]`, spec);
-                });
-            }
-
-            if (editedData.consultationMode && editedData.consultationMode.length > 0) {
-                editedData.consultationMode.forEach((mode, index) => {
-                    formData.append(`consultationMode[${index}]`, mode);
-                });
-            }
+            formData.append('languages', JSON.stringify(compactTextArray(editedData.languages)));
+            formData.append('specialization', JSON.stringify(compactTextArray(editedData.specialization)));
+            formData.append('consultationMode', JSON.stringify(compactTextArray(editedData.consultationMode)));
 
             if (editedData.profilePhoto instanceof File) {
                 formData.append('profilePhoto', editedData.profilePhoto);
             }
 
-            if (editedData.certifications && editedData.certifications.length > 0) {
-                editedData.certifications.forEach((cert, index) => {
-                    formData.append(`certifications[${index}][name]`, cert.name || '');
-                    formData.append(`certifications[${index}][issuedBy]`, cert.issuedBy || '');
+            const certificationPayload = (editedData.certifications || []).map((cert) => ({
+                name: cert.name || '',
+                issuedBy: cert.issuedBy || '',
+                issueDate: toFormDate(cert.issueDate) || null,
+                expiryDate: toFormDate(cert.expiryDate) || null,
+                ...(cert._id && !String(cert._id).startsWith('temp_') ? { _id: String(cert._id) } : {}),
+                ...(cert.documentUrl && !cert.document ? {
+                    documentUrl: cert.documentUrl,
+                    documentName: cert.documentName || '',
+                    documentPublicId: cert.documentPublicId || null,
+                } : {}),
+            }));
+            formData.append('certifications', JSON.stringify(certificationPayload));
 
-                    if (cert.issueDate) {
-                        formData.append(`certifications[${index}][issueDate]`, cert.issueDate);
-                    }
-                    if (cert.expiryDate) {
-                        formData.append(`certifications[${index}][expiryDate]`, cert.expiryDate);
-                    }
-
-                    if (cert._id && !cert._id.toString().startsWith('temp_')) {
-                        formData.append(`certifications[${index}][_id]`, cert._id);
-                    }
-
-                    if (cert.documentUrl && !cert.document) {
-                        formData.append(`certifications[${index}][documentUrl]`, cert.documentUrl);
-                        formData.append(`certifications[${index}][documentName]`, cert.documentName || '');
-                        if (cert.documentPublicId) {
-                            formData.append(`certifications[${index}][documentPublicId]`, cert.documentPublicId);
-                        }
-                    }
-
-                    if (cert.document instanceof File) {
-                        formData.append(`certifications[${index}][document]`, cert.document);
-                    }
-                });
-            }
+            (editedData.certifications || []).forEach((cert, index) => {
+                if (cert.document instanceof File) {
+                    formData.append(`certifications[${index}][document]`, cert.document);
+                }
+            });
 
             const response = await updateCounselorProfile(formData);
 

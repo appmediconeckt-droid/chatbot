@@ -31,9 +31,23 @@ test("user login clears a previous professional account's identifiers", () => {
   assert.equal(localStorage.getItem("counselorId"), null);
   assert.equal(localStorage.getItem("counsellorId"), null);
   assert.equal(localStorage.getItem("userRole"), "user");
+  assert.equal(localStorage.getItem("role"), "user");
 });
 
 test("does not infer a role from a token-only response", () => {
   assert.equal(persistAuthSession({ token: "missing-role" }), null);
   assert.equal(localStorage.getItem("isAuthenticated"), null);
+});
+
+test("stores accessToken response shape from OTP login", () => {
+  const session = persistAuthSession({
+    accessToken: "access-token",
+    refreshToken: "refresh-token",
+    user: { _id: "user-id", email: "otp@example.com", role: "user" },
+  });
+  assert.equal(session.path, "/user-dashboard");
+  assert.equal(localStorage.getItem("accessToken"), "access-token");
+  assert.equal(localStorage.getItem("token"), "access-token");
+  assert.equal(localStorage.getItem("refreshToken"), "refresh-token");
+  assert.equal(localStorage.getItem("role"), "user");
 });

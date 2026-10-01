@@ -34,6 +34,79 @@ const getProfilePhotoUrl = (profilePhoto) => {
   return profilePhoto.url || null;
 };
 
+const PROFESSIONAL_ROLES = [
+  "doctor",
+  "consultant",
+  "counsellor",
+  "counselor",
+  "counsellour",
+];
+
+const readProfessionalsFromResponse = (payload = {}) => {
+  const candidates = [
+    payload.counsellors,
+    payload.counselors,
+    payload.doctors,
+    payload.professionals,
+    payload.users,
+    payload.data?.counsellors,
+    payload.data?.counselors,
+    payload.data?.doctors,
+    payload.data?.professionals,
+    payload.data?.users,
+    payload.data,
+  ];
+
+  return candidates.find(Array.isArray) || [];
+};
+
+const getProfessionalId = (professional = {}) =>
+  professional._id ||
+  professional.id ||
+  professional.userId ||
+  professional.user_id ||
+  professional.doctorId ||
+  professional.doctor_id ||
+  professional.consultantId ||
+  professional.consultant_id ||
+  professional.counselorId ||
+  professional.counsellorId;
+
+const mergeUniqueProfessionals = (...lists) => {
+  const unique = new Map();
+  lists.flat().forEach((item) => {
+    const id = getProfessionalId(item);
+    if (!id) return;
+    unique.set(String(id), item);
+  });
+  return Array.from(unique.values());
+};
+
+const getProfessionalDisplayRole = (professional = {}) => {
+  const role = String(professional.role || "").trim().toLowerCase();
+  const accountType = String(professional.accountType || "").trim().toLowerCase();
+  if (role === "doctor" || accountType === "doctor") return "doctor";
+  return "consultant";
+};
+
+const isVisibleProfessionalRole = (professional = {}) => {
+  const role = String(professional.role || "").trim().toLowerCase();
+  const accountType = String(professional.accountType || "").trim().toLowerCase();
+  return PROFESSIONAL_ROLES.includes(role) || PROFESSIONAL_ROLES.includes(accountType);
+};
+
+const hasCompleteProfessionalProfile = (professional = {}) => {
+  if (
+    professional.profileCompleted === undefined &&
+    professional.profileCompletion === undefined
+  ) {
+    return true;
+  }
+  if (professional.profileCompleted === true) return true;
+  if (professional.profileCompletion?.isComplete === true) return true;
+  return Number(professional.profileCompletion?.percentage) === 100;
+};
+
 // Keep this identical to the Chat tab: all API/socket payload shapes are
 // normalized in one place instead of requiring several duplicate flags.
 const isCounselorOnline = (counselor) => getPresence(counselor).isOnline;
@@ -128,19 +201,61 @@ const CounselorTable = () => {
   useEffect(() => {
     let isMounted = true;
 
+    const fetchUsersByRole = async (role) => {
+      try {
+        const response = await axiosInstance.get("/api/auth/users", {
+          params: { role },
+        });
+        return readProfessionalsFromResponse(response.data || {});
+      } catch (error) {
+        console.warn(
+          `Fallback ${role} directory unavailable:`,
+          error?.response?.data || error.message,
+        );
+        return [];
+      }
+    };
+
     const fetchCounselors = async (showLoader = true) => {
       try {
         if (showLoader) setIsLoading(true);
 
-        const response = await axiosInstance.get("/api/auth/counsellors");
-        const counselors = (
-          response.data?.counsellors ||
-          response.data?.counselors ||
-          []
-        ).map((counselor) => {
+        const directoryRequest = axiosInstance
+          .get("/api/auth/counsellors")
+          .then((response) => readProfessionalsFromResponse(response.data || {}))
+          .catch((error) => {
+            console.warn(
+              "Counsellors directory unavailable:",
+              error?.response?.data || error.message,
+            );
+            return [];
+          });
+
+        const roleRequests = PROFESSIONAL_ROLES.map((role) => fetchUsersByRole(role));
+        const [directoryProfessionals, ...roleProfessionals] = await Promise.all([
+          directoryRequest,
+          ...roleRequests,
+        ]);
+
+        const professionals = mergeUniqueProfessionals(
+          directoryProfessionals,
+          ...roleProfessionals,
+        );
+
+        const counselors = professionals
+          .filter(
+            (professional) =>
+              isVisibleProfessionalRole(professional) &&
+              professional?.isActive !== false &&
+              hasCompleteProfessionalProfile(professional),
+          )
+          .map((counselor) => {
           const presence = getPresence(counselor);
+          const displayRole = getProfessionalDisplayRole(counselor);
           return {
             ...counselor,
+            id: getProfessionalId(counselor),
+            role: displayRole,
             presenceStatus: presence.isOnline ? "online" : "offline",
             hasActiveSession: presence.isOnline,
             socketOnline: presence.isOnline,

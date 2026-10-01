@@ -450,6 +450,8 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
         errorMessage = "Invalid email or password";
       } else if (error.request) {
         errorMessage = "Network error. Please check your connection.";
+      } else if (error.message) {
+        errorMessage = error.message;
       }
       setApiError(errorMessage);
       showNotification(errorMessage, "error");

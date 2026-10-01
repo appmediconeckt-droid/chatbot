@@ -1,8 +1,23 @@
 import axios from "axios";
 
-const envApiBaseUrl =
+const rawEnvApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   "https://humaeli-backend-update-production.up.railway.app";
+
+const resolveApiBaseUrl = (url) => {
+  const normalizedUrl = String(url || "").replace(/^hhttps:\/\//i, "https://");
+  const isLocalFrontend =
+    typeof window !== "undefined" &&
+    ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+
+  if (isLocalFrontend && /\.devtunnels\.ms\/?$/i.test(normalizedUrl)) {
+    return "https://humaeli-backend-update-production.up.railway.app";
+  }
+
+  return normalizedUrl;
+};
+
+const envApiBaseUrl = resolveApiBaseUrl(rawEnvApiBaseUrl);
 if (!envApiBaseUrl) {
   throw new Error(
     "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",
