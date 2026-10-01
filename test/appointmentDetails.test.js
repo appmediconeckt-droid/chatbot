@@ -5,12 +5,26 @@ import { getClinicSchedule } from "../src/Component/UserDashboard/Tab/Appointmen
 
 test("doctor list uses registered patient name, phone and structured address", () => {
   assert.deepEqual(getAppointmentPatientDetails({ patient: { fullName: "Patient One", phoneNumber: "+919876543210", address: JSON.stringify({ line1: "12 Main Road", city: "Jaipur", state: "Rajasthan" }) } }), {
-    patientName: "Patient One", phone: "+919876543210", location: "12 Main Road, Jaipur, Rajasthan",
+    patientName: "Patient One", phone: "+919876543210", location: "12 Main Road, Jaipur, Rajasthan", patientAvatarUrl: "",
   });
   assert.equal(getAppointmentPatientDetails({ patient: { phoneNumber: "registered" }, patient_phone: "other" }).phone, "registered");
   assert.equal(getAppointmentPatientDetails({ patient_location: "Booking address" }).location, "Booking address");
   assert.equal(getAppointmentPatientDetails({ notes: "Consultation: In-Clinic Visit at Test. Location: Saved booking location" }).location, "Saved booking location");
   assert.equal(getAppointmentPatientDetails({ clinic: { address: "Clinic address" } }).location, "N/A");
+});
+
+test("doctor list carries patient avatar from nested profile fields", () => {
+  assert.equal(
+    getAppointmentPatientDetails(
+      { patient: { name: "Avatar Patient", profilePhoto: { url: "uploads/patients/avatar.jpg" } } },
+      "https://api.example.com/api",
+    ).patientAvatarUrl,
+    "https://api.example.com/uploads/patients/avatar.jpg",
+  );
+  assert.equal(
+    getAppointmentPatientDetails({ patient_name: "Direct Avatar", avatarUrl: "data:image/png;base64,abc" }).patientAvatarUrl,
+    "data:image/png;base64,abc",
+  );
 });
 test("clinic schedules use saved days, date-specific hours and clinic boundaries", () => {
   const ranges = [

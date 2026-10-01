@@ -5,6 +5,34 @@ import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./Appointment List.css";
 import { getAppointmentPatientDetails } from "./patientDetails.js";
 
+const getPatientInitials = (name = "") => {
+  const words = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length || words[0].toUpperCase() === "N/A") return "P";
+  return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join("");
+};
+
+function PatientAvatar({ name, avatarUrl, size = "sm" }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const shouldShowImage = Boolean(avatarUrl) && !imageFailed;
+
+  return (
+    <span className={`appointment-patient-avatar ${size}`}>
+      {shouldShowImage ? (
+        <img
+          src={avatarUrl}
+          alt={`${name || "Patient"} avatar`}
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span>{getPatientInitials(name)}</span>
+      )}
+    </span>
+  );
+}
+
 export default function AppointmentList() {
   const authUser = useDoctorUser();
   const [appointments, setAppointments] = useState([]);
@@ -201,7 +229,7 @@ export default function AppointmentList() {
         appointment.symptoms ||
         appointment.department ||
         normalizeType(appointment.consultation_mode || appointment.type || appointment.mode),
-      ...getAppointmentPatientDetails(appointment),
+      ...getAppointmentPatientDetails(appointment, API_BASE_URL),
       paymentMethod: String(appointment.payment_method || appointment.paymentMethod || "").toLowerCase(),
       paymentAmount: appointment.payment_amount || appointment.amount_paid || appointment.consultation_fee || appointment.paymentAmount || "",
       paymentReference: appointment.payment_reference || appointment.transaction_id || appointment.upi_reference || appointment.paymentReference || "",
@@ -643,7 +671,15 @@ export default function AppointmentList() {
                         ? <span className="token-badge">#{appointment.tokenNumber}</span>
                         : <span className="token-empty">—</span>}
                     </td>
-                    <td>{appointment.patientName}{appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}</td>
+                    <td>
+                      <div className="appointment-patient-cell">
+                        <PatientAvatar name={appointment.patientName} avatarUrl={appointment.patientAvatarUrl} />
+                        <div className="appointment-patient-copy">
+                          <span>{appointment.patientName}</span>
+                          {appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}
+                        </div>
+                      </div>
+                    </td>
                     <td>{appointment.phone}</td>
                     <td className="test-cell">{appointment.test}</td>
                     <td className="location-cell">{appointment.location}</td>
@@ -881,9 +917,12 @@ export default function AppointmentList() {
         <div className="appointment-modal-backdrop" role="dialog" aria-modal="true" onClick={() => setViewAppointment(null)}>
           <div className="appointment-modal appointment-view-modal" onClick={(event) => event.stopPropagation()}>
             <div className="appointment-modal-header">
-              <div>
-                <h2>Appointment Details</h2>
-                <p>{viewAppointment.patientName}</p>
+              <div className="appointment-view-heading">
+                <PatientAvatar name={viewAppointment.patientName} avatarUrl={viewAppointment.patientAvatarUrl} size="lg" />
+                <div>
+                  <h2>Appointment Details</h2>
+                  <p>{viewAppointment.patientName}</p>
+                </div>
               </div>
               <button type="button" onClick={() => setViewAppointment(null)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>

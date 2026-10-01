@@ -2166,6 +2166,7 @@ import { logoHorizontal as logo } from "../../../assets/brandAssets";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import { useNavigate } from "react-router-dom";
+import { resolveProfileImage } from "../../../utils/profileImage.js";
 
 const DEFAULT_BREAK_MIN = 30;
 const BREAK_OPTIONS_MIN = [5, 10, 15, 30, 45, 60];
@@ -2197,6 +2198,39 @@ const formatDuration = (ms) => {
 };
 
 const pickFirst = (...values) => values.find((value) => value !== undefined && value !== null && value !== "");
+
+const pickFirstObject = (...values) => values.find((value) => value && typeof value === "object" && !Array.isArray(value)) || {};
+
+const getPatientInitials = (name = "") => {
+  const words = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length || words[0].toLowerCase() === "unknown") return "NA";
+  return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join("");
+};
+
+function DashboardPatientAvatar({ name, avatarUrl, className = "" }) {
+  const [imageFailed, setImageFailed] = useState(false);
+
+  useEffect(() => {
+    setImageFailed(false);
+  }, [avatarUrl]);
+
+  return (
+    <div className={className}>
+      {avatarUrl && !imageFailed ? (
+        <img
+          src={avatarUrl}
+          alt={`${name || "Patient"} avatar`}
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span>{getPatientInitials(name)}</span>
+      )}
+    </div>
+  );
+}
 
 const getAppointmentApiUrl = (appointment) =>
   `${API_BASE_URL}/${getAppointmentSource(appointment) === "walkin" ? "walkin-appointments" : "appointments"}/${appointment.apiId || appointment.id}`;
@@ -2371,7 +2405,21 @@ const normalizeAppointmentStatus = (appointment, forcedStatus) => {
 };
 
 const formatAppointment = (appointment, forcedStatus) => {
-  const patient = appointment?.patient || appointment?.patientData || appointment?.user || {};
+  const patient = pickFirstObject(
+    appointment?.patient,
+    appointment?.patient_details,
+    appointment?.patientDetails,
+    appointment?.patientData,
+    appointment?.user,
+    appointment?.user_details,
+    appointment?.userDetails
+  );
+  const patientProfile = pickFirstObject(
+    appointment?.patientProfile,
+    appointment?.patient_profile,
+    appointment?.profile,
+    patient?.profile
+  );
   const status = normalizeAppointmentStatus(appointment, forcedStatus);
   const appointmentSource = getAppointmentSource(appointment);
   const followUp = appointment?.followup || appointment?.follow_up || appointment?.followUp || {};
@@ -2472,6 +2520,10 @@ const formatAppointment = (appointment, forcedStatus) => {
     temperature: pickFirst(appointment?.temperature, appointment?.temp),
     bloodGroup: pickFirst(appointment?.blood_group, appointment?.bloodGroup, patient?.blood_group, patient?.bloodGroup, "Not recorded"),
     patientId: pickFirst(patient?.user_id, patient?.userId, appointment?.patient_user_id, appointment?.patientUserId, appointment?.patient_id, appointment?.patientId, patient?.id, patient?._id),
+    avatarUrl:
+      resolveProfileImage(patient, API_BASE_URL) ||
+      resolveProfileImage(patientProfile, API_BASE_URL) ||
+      resolveProfileImage(appointment, API_BASE_URL),
     startTime: pickFirst(appointment?.start_time, appointment?.startTime),
     endTime: pickFirst(appointment?.end_time, appointment?.endTime),
     durationMs: pickFirst(appointment?.duration_ms, appointment?.durationMs),
@@ -3546,14 +3598,16 @@ const DoctorDashboard = () => {
         if (isEmergA && !isEmergB) return -1;
         if (!isEmergA && isEmergB) return 1;
 
+        const dateA = getAppointmentDateTime(a)?.getTime() || 0;
+        const dateB = getAppointmentDateTime(b)?.getTime() || 0;
+        if (dateA !== dateB) return dateA - dateB;
+
         const tokenA = pickFirst(a?.token_number, a?.tokenNumber, a?.token);
         const tokenB = pickFirst(b?.token_number, b?.tokenNumber, b?.token);
         if (tokenA !== undefined && tokenB !== undefined && !isNaN(Number(tokenA)) && !isNaN(Number(tokenB)) && Number(tokenA) !== Number(tokenB)) {
           return Number(tokenA) - Number(tokenB);
         }
 
-        const dateA = getAppointmentDateTime(a)?.getTime() || 0;
-        const dateB = getAppointmentDateTime(b)?.getTime() || 0;
         return dateA - dateB;
       });
 
@@ -4254,15 +4308,14 @@ const DoctorDashboard = () => {
               <div className="dd-queue-list">
                 {visibleQueue.map((appt, index) => {
                   const isActive = activeAppt?.id === appt.id;
-                  const initials = appt.name
-                    .split(" ")
-                    .map((name) => name[0])
-                    .slice(0, 2)
-                    .join("");
 
                   return (
                     <article className={`dd-queue-row ${isActive || index === 0 ? "highlight" : ""}`} key={`${activeQueueTab}-${appt.id}`}>
-                      <div className="dd-patient-avatar-img">{initials}</div>
+                      <DashboardPatientAvatar
+                        name={appt.name}
+                        avatarUrl={appt.avatarUrl}
+                        className="dd-patient-avatar-img"
+                      />
                       <div className="dd-queue-info">
                         <div className="dd-queue-title">
                           <strong>{appt.name}</strong>
@@ -4343,11 +4396,11 @@ const DoctorDashboard = () => {
                 <strong>{nextPatient?.scheduledTime || "--:--"}</strong>
               </div>
               <div className="dd-next-body">
-                <div className="dd-next-avatar">
-                  {nextPatient
-                    ? nextPatient.name.split(" ").map((name) => name[0]).slice(0, 2).join("")
-                    : "NA"}
-                </div>
+                <DashboardPatientAvatar
+                  name={nextPatient?.name || "No Patient"}
+                  avatarUrl={nextPatient?.avatarUrl}
+                  className="dd-next-avatar"
+                />
                 <div>
                   <h3>{nextPatient?.name || "No Patient"}</h3>
                   <p>{nextPatient ? `${getTokenLabel(nextPatient)} - ${nextPatient.issue}` : "Queue is clear"}</p>

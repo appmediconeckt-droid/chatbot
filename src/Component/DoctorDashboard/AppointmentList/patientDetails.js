@@ -1,3 +1,5 @@
+import { resolveProfileImage } from "../../../utils/profileImage.js";
+
 export const formatPatientLocation = (value) => {
   if (typeof value === "string") {
     try { return formatPatientLocation(JSON.parse(value)); } catch { return value.trim(); }
@@ -8,9 +10,14 @@ export const formatPatientLocation = (value) => {
     .filter(item => typeof item === "string" && item.trim()).map(item => item.trim()))].join(", ");
 };
 
-export const getAppointmentPatientDetails = (appointment) => {
+export const getAppointmentPatientDetails = (appointment, imageOrigin = "") => {
   const patient = appointment.patient && typeof appointment.patient === "object"
     ? appointment.patient : appointment.patient_details || {};
+  const patientAvatarUrl =
+    resolveProfileImage(patient, imageOrigin) ||
+    resolveProfileImage(appointment.patientProfile || appointment.patient_profile || appointment.user || appointment.user_details, imageOrigin) ||
+    resolveProfileImage(appointment, imageOrigin);
+
   return {
     patientName: appointment.patient_name || patient.fullName || patient.full_name || patient.name || patient.patient_name || "N/A",
     phone: patient.phoneNumber || patient.phone || patient.phone_number || patient.mobile
@@ -19,5 +26,6 @@ export const getAppointmentPatientDetails = (appointment) => {
       || formatPatientLocation(patient.locationData) || formatPatientLocation(appointment.location)
       || formatPatientLocation(appointment.address)
       || String(appointment.notes || "").match(/Location:\s*(.+)$/i)?.[1]?.trim() || "N/A",
+    patientAvatarUrl,
   };
 };
