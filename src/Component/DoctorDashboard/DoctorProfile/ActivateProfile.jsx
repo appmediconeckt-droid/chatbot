@@ -362,6 +362,7 @@ export default function DoctorProfileFlow() {
   };
 
   const toApiProfile = (data) => ({
+    role: 'doctor',
     fullName: data.name, email: data.email, phoneNumber: data.mobile,
     phoneCountryCode: savedProfileData?.phoneCountryCode || '+91',
     dateOfBirth: data.dob, gender: String(data.gender || '').toLowerCase(),

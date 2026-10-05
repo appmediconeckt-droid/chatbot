@@ -3527,7 +3527,10 @@ import {
   getPresenceUserId,
   resolveOfflineLastSeen,
 } from "../../../../utils/presence";
-import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
+import {
+  getAnonymousUserAvatarUrl,
+  getAnonymousUserDisplay,
+} from "../../../../utils/anonymousUser";
 import TranslatedMessage from "../../../common/TranslatedMessage";
 import { getCallHistoryTone } from "../../../common/callHistoryStyle";
 import { logoHorizontal } from "../../../../assets/brandAssets";
@@ -3857,6 +3860,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   const getUserDetails = () => {
     const id = getSelectedUserId();
     const anonymousDisplay = getAnonymousUserDisplay(selectedUser || {});
+    const selectedAvatarUrl = getAnonymousUserAvatarUrl(selectedUser || {});
     return {
       id,
       name: selectedUser?.name || selectedUser?.fullName || selectedUser?.user?.name || selectedUser?.otherParty?.name || "User",
@@ -3864,7 +3868,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       phone: selectedUser?.phone || selectedUser?.phoneNumber || selectedUser?.user?.phone || selectedUser?.otherParty?.phone,
       email: selectedUser?.email || selectedUser?.user?.email || selectedUser?.otherParty?.email,
       avatar: anonymousDisplay.avatar || selectedUser?.avatar || selectedUser?.user?.avatar || selectedUser?.otherParty?.avatar,
-      avatarUrl: anonymousDisplay.avatarUrl || selectedUser?.avatarUrl || selectedUser?.anonymousAvatarUrl || selectedUser?.profilePhoto?.url || selectedUser?.profilePhoto || selectedUser?.profilePic || selectedUser?.avatarImage || selectedUser?.user?.avatarUrl || selectedUser?.user?.anonymousAvatarUrl || selectedUser?.user?.profilePhoto?.url || selectedUser?.user?.profilePhoto || selectedUser?.user?.profilePic || selectedUser?.user?.avatarImage || selectedUser?.otherParty?.avatarUrl || selectedUser?.otherParty?.anonymousAvatarUrl || selectedUser?.otherParty?.profilePhoto?.url || selectedUser?.otherParty?.profilePhoto || selectedUser?.otherParty?.profilePic || selectedUser?.otherParty?.avatarImage,
+      avatarUrl: selectedAvatarUrl || anonymousDisplay.avatarUrl || selectedUser?.avatarUrl || selectedUser?.anonymousAvatarUrl || selectedUser?.profilePhoto?.url || selectedUser?.profilePhoto || selectedUser?.profilePic || selectedUser?.avatarImage || selectedUser?.user?.avatarUrl || selectedUser?.user?.anonymousAvatarUrl || selectedUser?.user?.profilePhoto?.url || selectedUser?.user?.profilePhoto || selectedUser?.user?.profilePic || selectedUser?.user?.avatarImage || selectedUser?.otherParty?.avatarUrl || selectedUser?.otherParty?.anonymousAvatarUrl || selectedUser?.otherParty?.profilePhoto?.url || selectedUser?.otherParty?.profilePhoto || selectedUser?.otherParty?.profilePic || selectedUser?.otherParty?.avatarImage,
     };
   };
 
@@ -3875,11 +3879,25 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
   useEffect(() => {
     if (!USER_ID) return;
     let active = true;
-    axios.get(`${API_BASE_URL}/api/chat/chats`, {
-      headers: { Authorization: `Bearer ${localStorage.getItem("accessToken") || localStorage.getItem("token") || ""}` },
-    }).then(({ data }) => {
-      const peer = data.chats?.find(chat => String(chat.otherParty?.id) === String(USER_ID))?.otherParty;
-      if (active && peer) setFreshPeerPhoto({ id: USER_ID, image: resolveProfileImage(peer, API_BASE_URL) });
+    const token = localStorage.getItem("accessToken") || localStorage.getItem("token") || "";
+    const authHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+    Promise.allSettled([
+      axios.get(`${API_BASE_URL}/api/chat/chats`, { headers: authHeaders }),
+      axios.get(`${API_BASE_URL}/api/auth/getUser/${encodeURIComponent(USER_ID)}`, { headers: authHeaders }),
+    ]).then((results) => {
+      if (!active) return;
+      const chatsData = results[0].status === "fulfilled" ? results[0].value.data : null;
+      const userData = results[1].status === "fulfilled" ? results[1].value.data : null;
+      const peer = chatsData?.chats?.find((chat) =>
+        String(chat.otherParty?.id || chat.otherParty?._id || chat.userId) === String(USER_ID)
+      )?.otherParty;
+      const profileUser = userData?.user || userData?.data || userData;
+      const image =
+        getAnonymousUserAvatarUrl(profileUser) ||
+        getAnonymousUserAvatarUrl(peer) ||
+        resolveProfileImage(profileUser, API_BASE_URL) ||
+        resolveProfileImage(peer, API_BASE_URL);
+      if (image) setFreshPeerPhoto({ id: USER_ID, image });
     }).catch(() => { /* Keep the selected conversation's photo when offline. */ });
     return () => { active = false; };
   }, [USER_ID]);

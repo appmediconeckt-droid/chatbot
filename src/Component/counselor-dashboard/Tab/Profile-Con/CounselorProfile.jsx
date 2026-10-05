@@ -1,4 +1,5 @@
 import useProfileCompletion from "../../../../hooks/useProfileCompletion";
+import { getProfileCompletion } from "../../../../utils/profileCompletion";
 import ProfileCompletion from "../../../common/ProfileCompletion";
 // import React, { useState, useEffect } from 'react';
 // import axios from 'axios';
@@ -1905,7 +1906,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     consultationMode: Array.isArray(userData.consultationMode) ? userData.consultationMode : [],
                     isActive: userData.isActive || true,
                     profileCompleted: userData.profileCompleted || false,
-                    profileCompletion: userData.profileCompletion || null,
+                    profileCompletion: getProfileCompletion({ ...userData, role: 'counsellor' }),
                     age: userData.age || null,
                     gender: userData.gender || '',
                     dateOfBirth: userData.dateOfBirth || null,
@@ -2659,6 +2660,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
 
     const completionPreview = useProfileCompletion(counselor?.profileCompletion, {
         ...editedData,
+        role: 'counsellor',
         phoneNumber: getCompletePhoneNumber(),
         phoneCountryCode: (PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0]).dial,
         profilePhoto: editedData.profilePhoto instanceof File ? 'pending-upload' :

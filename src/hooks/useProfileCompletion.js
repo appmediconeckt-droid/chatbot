@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "../axiosConfig";
+import { getProfileCompletion } from "../utils/profileCompletion";
 
 export default function useProfileCompletion(saved, draft, editing) {
   const payload = JSON.stringify(draft);
@@ -19,7 +20,9 @@ export default function useProfileCompletion(saved, draft, editing) {
   }, [payload, editing]);
   const current = editing && preview?.payload === payload ? preview : null;
   return {
-    completion: editing && !current?.error ? (preview?.completion || saved) : saved,
+    completion: editing
+      ? (current?.completion || getProfileCompletion(draft))
+      : saved,
     pending: editing && !current,
     error: Boolean(current?.error),
     editing,

@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
+import ParticipantPhoto from "../../../common/ParticipantPhoto";
 
 export default function SessionsTab({
   sessionAppointments,
@@ -250,10 +251,11 @@ export default function SessionsTab({
                     <div className="stitch-session-card-body">
                       <div className="stitch-session-avatar">
                         {anonymousUser.avatarUrl ? (
-                          <img
+                          <ParticipantPhoto
                             src={anonymousUser.avatarUrl}
-                            alt={anonymousUser.name}
+                            name={anonymousUser.name}
                             className="stitch-session-avatar-img"
+                            fallback={<span>{anonymousUser.avatar}</span>}
                           />
                         ) : (
                           <span>{anonymousUser.avatar}</span>
@@ -329,7 +331,15 @@ export default function SessionsTab({
             >
               <header>
                 <div className="stitch-session-modal-avatar">
-                  {patient.avatarUrl ? <img src={patient.avatarUrl} alt={patient.name} /> : <span>{patient.avatar}</span>}
+                  {patient.avatarUrl ? (
+                    <ParticipantPhoto
+                      src={patient.avatarUrl}
+                      name={patient.name}
+                      fallback={<span>{patient.avatar}</span>}
+                    />
+                  ) : (
+                    <span>{patient.avatar}</span>
+                  )}
                 </div>
                 <div>
                   <h2>{patient.name}</h2>
