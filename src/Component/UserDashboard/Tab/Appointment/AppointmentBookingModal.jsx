@@ -1,5 +1,6 @@
 import { getClinicSchedule } from "./clinicSchedule.js";
 import { canSendEmergency, emergencyBookingPayload } from "./emergencyBooking.js";
+import { appointmentRecordToSlot, buildSlotsFromAvailabilityRanges, getScheduleTokenForTime, isActiveAppointmentRecord } from "./appointmentSlotTokens.js";
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -34,6 +35,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const [appointmentLocation, setAppointmentLocation] = useState(incoming?.location || '');
   const [availabilityRanges, setAvailabilityRanges] = useState([]);
   const [unavailableDates, setUnavailableDates] = useState([]);
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [patientBookedSlots, setPatientBookedSlots] = useState([]);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [step, setStep] = useState('select'); // 'select' | 'payment' | 'success'
   const [paymentMethod, setPaymentMethod] = useState('Cash');
@@ -122,6 +125,37 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     return () => { cancelled = true; };
   }, [doctorId]);
 
+  useEffect(() => {
+    if (!doctorId) {
+      setPatientBookedSlots([]);
+      return;
+    }
+
+    let cancelled = false;
+    axios.get(`${API_BASE_URL}/api/appointments`, {
+      headers: getAuthHeaders(),
+    })
+      .then((response) => {
+        if (cancelled) return;
+        const rawAppointments = Array.isArray(response.data) ? response.data : (response.data?.data || response.data?.appointments || []);
+        const appointments = Array.isArray(rawAppointments) ? rawAppointments : [];
+        const slots = appointments
+          .filter((appointment) => {
+            if (!isActiveAppointmentRecord(appointment)) return false;
+            const appointmentDoctorId = appointment.doctor_id || appointment.counselor?._id || appointment.counselor || appointment.doctorId || appointment.doctor;
+            return String(appointmentDoctorId || '') === String(doctorId);
+          })
+          .map((appointment) => appointmentRecordToSlot(appointment))
+          .filter(Boolean);
+        setPatientBookedSlots(slots);
+      })
+      .catch(() => {
+        if (!cancelled) setPatientBookedSlots([]);
+      });
+
+    return () => { cancelled = true; };
+  }, [doctorId]);
+
   const mapClinic = (c, i) => ({
     id: c._id || c.id || `clinic-${i + 1}`,
     name: c.clinic_name || c.name || 'Clinic',
@@ -186,6 +220,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
         const ranges = response.data?.availableRanges || response.data?.existingRanges || response.data?.data || [];
         setAvailabilityRanges(ranges);
         setUnavailableDates(response.data?.unavailableDates || []);
+        setBookedSlots(response.data?.bookedSlots || []);
       })
       .catch(() => {
         // Fallback to /api/availability/ranges
@@ -198,11 +233,13 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
             if (cancelled) return;
             setAvailabilityRanges(res2.data?.existingRanges || res2.data?.availableRanges || res2.data?.data || []);
             setUnavailableDates(res2.data?.unavailableDates || []);
+            setBookedSlots(res2.data?.bookedSlots || []);
           })
           .catch(() => {
             if (!cancelled) {
               setAvailabilityRanges([]);
               setUnavailableDates([]);
+              setBookedSlots([]);
             }
           });
       })
@@ -240,9 +277,14 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     return d.getUTCHours() * 60 + d.getUTCMinutes();
   };
 
+  const isBookedSlot = (iso, minutes) =>
+    bookedSlots.some((slot) => {
+      const booked = appointmentRecordToSlot(slot);
+      return booked?.date === iso && booked.minutes === minutes;
+    }) || patientBookedSlots.some((slot) => slot.date === iso && slot.minutes === minutes);
+
   const slotsForDate = (date) => {
     if (!date) return [];
-    const slots = new Map();
     const applicableRanges = rangesForDate(date.iso, date.weekday);
     const nowMins = getNowIndiaMinutes();
     const isToday = date.iso === todayIndia;
@@ -250,28 +292,12 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
     if (isPastDate) return [];
 
-    if (applicableRanges.length > 0) {
-      applicableRanges.forEach((range) => {
-        if (!range.start_time || !range.end_time) return;
-        const [startHour, startMinute] = String(range.start_time).split(':').map(Number);
-        const [endHour, endMinute] = String(range.end_time).split(':').map(Number);
-        const start = startHour * 60 + (startMinute || 0);
-        const end = endHour * 60 + (endMinute || 0);
-        const duration = Math.max(1, Number(range.slot_duration || 15));
-        if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return;
-        for (let cursor = start; cursor + duration <= end; cursor += duration) {
-          const isSlotPast = isToday && cursor <= nowMins;
-          slots.set(cursor, {
-            time: formatMinutes(cursor),
-            minutes: cursor,
-            disabled: isSlotPast,
-            isPast: isSlotPast,
-          });
-        }
-      });
-    }
-
-    return Array.from(slots.values()).sort((a, b) => a.minutes - b.minutes);
+    return buildSlotsFromAvailabilityRanges({
+      ranges: applicableRanges,
+      isToday,
+      nowMinutes: nowMins,
+      formatMinutes,
+    }).filter((slot) => !isBookedSlot(date.iso, slot.minutes));
   };
 
   // Calendar dates — next 7 days starting today
@@ -314,6 +340,15 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   ];
 
   const selectedDateSlots = slotsForDate(selectedDate);
+  const selectedSlot = selectedDateSlots.find((slot) => slot.time === selectedTime);
+  const selectedSlotToken = getScheduleTokenForTime(selectedDateSlots, selectedTime);
+  const selectedDateAvailableCount = selectedDateSlots.filter((slot) => !slot.disabled && !slot.isPast).length;
+
+  useEffect(() => {
+    if (selectedTime && !selectedSlot) {
+      setSelectedTime(null);
+    }
+  }, [selectedTime, selectedSlot]);
   const slotGroups = [
     { label: 'Morning', icon: true, slots: selectedDateSlots.filter((slot) => slot.minutes < 720) },
     { label: 'Afternoon', slots: selectedDateSlots.filter((slot) => slot.minutes >= 720 && slot.minutes < 1020) },
@@ -344,6 +379,11 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const goToPayment = () => {
     if (isEmergency) return;
     if (selectedDate && selectedTime && hasClinics && appointmentLocation.trim()) {
+      if (!selectedSlot || isBookedSlot(selectedDate.iso, selectedSlot.minutes)) {
+        setBookError('This slot is already booked. Please select another time.');
+        setSelectedTime(null);
+        return;
+      }
       if (selectedDate.iso < todayIndia) {
         setBookError('Cannot book an appointment for a past date.');
         return;
@@ -394,6 +434,12 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       setBookError('This doctor has no clinic available, so the appointment cannot be booked.');
       return;
     }
+    if (!isEmergency && (!selectedSlot || isBookedSlot(selectedDate?.iso, selectedSlot.minutes))) {
+      setBookError('This slot is already booked. Please select another time.');
+      setStep('select');
+      setSelectedTime(null);
+      return;
+    }
     setBooking(true);
     setBookError('');
 
@@ -409,6 +455,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       date: isoDate,
       clinic_id: selectedClinic.id,
       clinic: selectedClinic.name,
+      schedule_slot_position: selectedSlotToken,
+      slot_index: selectedSlot?.slotIndex,
+      slot_duration: selectedSlot?.duration,
+      slot_start_time: formattedTime,
       location: appointmentLocation.trim(),
       patient_location: appointmentLocation.trim(),
       appointment_location: appointmentLocation.trim(),
@@ -426,8 +476,13 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
         headers: getAuthHeaders(),
       });
       const data = res.data?.data || res.data || {};
-      const respToken = data.token ?? data.token_number ?? data.queue_token;
-      setToken(respToken ?? null);
+      const respToken =
+        data.token_number ??
+        data.tokenNumber ??
+        data.appointment_token ??
+        data.queue_token ??
+        data.token;
+      setToken(respToken ?? selectedSlotToken ?? null);
       setRequestId(String(data._id || data.id || ''));
       setStep('success');
     } catch (err) {
@@ -604,9 +659,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 <aside className="abm-pay-side">
                   <div className="abm-token-banner">
                     <div className="abm-token-ic"><i className="fa-solid fa-ticket"></i></div>
-                    <div className="abm-token-label">Selected Appointment Slot</div>
-                    <div className="abm-token-num">{selectedTime || 'Select a time'}</div>
-                    <div className="abm-token-note">Your token follows this slot's position in the doctor's daily schedule.</div>
+                    <div className="abm-token-label">Final Token</div>
+                    <div className="abm-token-num">{selectedTime ? '1 Token' : 'Select a time'}</div>
+                    <div className="abm-token-note">{selectedTime ? `${selectedTime} appointment slot` : 'Select a time slot'}</div>
+                    <div className="abm-token-note">One confirmed booking creates one backend token. Your final token appears after booking.</div>
                     <div className="abm-token-note"><i className="fa-regular fa-clock"></i> Arrive 15 minutes early</div>
                   </div>
 
@@ -829,6 +885,11 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                       >
                         <span className="abm-date-day">{d.day}</span>
                         <span className="abm-date-num">{d.date}</span>
+                        <span className="abm-date-slots">
+                          {d.status === 'available'
+                            ? `${slotsForDate(d).filter((slot) => !slot.disabled && !slot.isPast).length} slots`
+                            : 'No slots'}
+                        </span>
                         {d.note && <span className="abm-date-note">{d.note}</span>}
                       </button>
                     );
@@ -845,7 +906,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 )}
                 {selectedDate && !availabilityLoading && (
                   <div className="abm-times">
-                    <h4 className="abm-times-title">Available Times for {selectedDate.day}, {selectedDate.label}</h4>
+                    <h4 className="abm-times-title">
+                      Available Times for {selectedDate.day}, {selectedDate.label}
+                      <span>{selectedDateAvailableCount} separate appointment slot{selectedDateAvailableCount === 1 ? '' : 's'}</span>
+                    </h4>
                     {slotGroups.length > 0 ? (
                       slotGroups.map((group) => (
                         <div className="abm-times-group" key={group.label}>
@@ -860,7 +924,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                                 className={`abm-time ${selectedTime === slot.time ? 'selected' : ''} ${slot.disabled ? 'disabled' : ''}`} disabled={slot.disabled}
                                 onClick={() => handleTimeSelect(slot)}
                               >
-                                {slot.time}
+                                <span>{slot.time}</span>
+                                <small>Token {slot.tokenNumber}</small>
                               </button>
                             ))}
                           </div>

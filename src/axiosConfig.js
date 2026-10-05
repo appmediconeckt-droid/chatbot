@@ -1,5 +1,8 @@
 import axios from "axios";
 
+const DEFAULT_LOCAL_API_BASE_URL = "hhttps://humaeli-backend-update-production.up.railway.app";
+const DEV_TUNNEL_PORT_PATTERN = /-(\d+)\.inc\d+\.devtunnels\.ms\/?$/i;
+
 const rawEnvApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
   "https://s5jl7g4z-5004.inc1.devtunnels.ms";

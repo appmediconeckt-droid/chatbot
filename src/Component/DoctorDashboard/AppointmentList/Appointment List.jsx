@@ -6,6 +6,34 @@ import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./Appointment List.css";
 import { getAppointmentPatientDetails } from "./patientDetails.js";
 
+const getPatientInitials = (name = "") => {
+  const words = String(name || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!words.length || words[0].toUpperCase() === "N/A") return "P";
+  return words.slice(0, 2).map((word) => word[0]?.toUpperCase()).join("");
+};
+
+function PatientAvatar({ name, avatarUrl, size = "sm" }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const shouldShowImage = Boolean(avatarUrl) && !imageFailed;
+
+  return (
+    <span className={`appointment-patient-avatar ${size}`}>
+      {shouldShowImage ? (
+        <img
+          src={avatarUrl}
+          alt={`${name || "Patient"} avatar`}
+          onError={() => setImageFailed(true)}
+        />
+      ) : (
+        <span>{getPatientInitials(name)}</span>
+      )}
+    </span>
+  );
+}
+
 export default function AppointmentList() {
   const authUser = useDoctorUser();
   const [appointments, setAppointments] = useState([]);
@@ -202,8 +230,12 @@ export default function AppointmentList() {
         appointment.symptoms ||
         appointment.department ||
         normalizeType(appointment.consultation_mode || appointment.type || appointment.mode),
+<<<<<<< HEAD
       ...getAppointmentPatientDetails(appointment),
       profilePhoto: appointment.patient?.profilePhoto || appointment.patient?.avatarUrl || appointment.patient?.avatar || appointment.user?.profilePhoto,
+=======
+      ...getAppointmentPatientDetails(appointment, API_BASE_URL),
+>>>>>>> 950ee005708dc6f29e3f6c2828f40b33575e7215
       paymentMethod: String(appointment.payment_method || appointment.paymentMethod || "").toLowerCase(),
       paymentAmount: appointment.payment_amount || appointment.amount_paid || appointment.consultation_fee || appointment.paymentAmount || "",
       paymentReference: appointment.payment_reference || appointment.transaction_id || appointment.upi_reference || appointment.paymentReference || "",
@@ -645,7 +677,19 @@ export default function AppointmentList() {
                         ? <span className="token-badge">#{appointment.tokenNumber}</span>
                         : <span className="token-empty">—</span>}
                     </td>
+<<<<<<< HEAD
                     <td><PatientProfileImage patient={appointment} size={32} />{appointment.patientName}{appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}</td>
+=======
+                    <td>
+                      <div className="appointment-patient-cell">
+                        <PatientAvatar name={appointment.patientName} avatarUrl={appointment.patientAvatarUrl} />
+                        <div className="appointment-patient-copy">
+                          <span>{appointment.patientName}</span>
+                          {appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}
+                        </div>
+                      </div>
+                    </td>
+>>>>>>> 950ee005708dc6f29e3f6c2828f40b33575e7215
                     <td>{appointment.phone}</td>
                     <td className="test-cell">{appointment.test}</td>
                     <td className="location-cell">{appointment.location}</td>
@@ -883,9 +927,18 @@ export default function AppointmentList() {
         <div className="appointment-modal-backdrop" role="dialog" aria-modal="true" onClick={() => setViewAppointment(null)}>
           <div className="appointment-modal appointment-view-modal" onClick={(event) => event.stopPropagation()}>
             <div className="appointment-modal-header">
+<<<<<<< HEAD
               <div>
                 <h2>Appointment Details</h2>
                 <p><PatientProfileImage patient={viewAppointment} size={40} />{viewAppointment.patientName}</p>
+=======
+              <div className="appointment-view-heading">
+                <PatientAvatar name={viewAppointment.patientName} avatarUrl={viewAppointment.patientAvatarUrl} size="lg" />
+                <div>
+                  <h2>Appointment Details</h2>
+                  <p>{viewAppointment.patientName}</p>
+                </div>
+>>>>>>> 950ee005708dc6f29e3f6c2828f40b33575e7215
               </div>
               <button type="button" onClick={() => setViewAppointment(null)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>

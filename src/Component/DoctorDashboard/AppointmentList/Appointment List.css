@@ -1630,6 +1630,61 @@
   background: #f3f7ff;
 }
 
+.appointment-patient-cell,
+.appointment-view-heading {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  min-width: 180px;
+}
+
+.appointment-patient-copy {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.appointment-patient-copy > span:first-child {
+  color: #20242c;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.appointment-patient-avatar {
+  align-items: center;
+  background: linear-gradient(135deg, #dbeafe 0%, #ccfbf1 100%);
+  border: 1px solid #c8d9ef;
+  border-radius: 999px;
+  color: #0f766e;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-weight: 800;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.appointment-patient-avatar.sm {
+  font-size: 13px;
+  height: 36px;
+  width: 36px;
+}
+
+.appointment-patient-avatar.lg {
+  font-size: 18px;
+  height: 52px;
+  width: 52px;
+}
+
+.appointment-patient-avatar img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
 .check-cell {
   padding-left: 28px !important;
   width: 44px;

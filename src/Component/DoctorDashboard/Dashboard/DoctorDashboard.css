@@ -370,6 +370,23 @@
   width: 44px;
 }
 
+.dd-patient-avatar-img img,
+.dd-next-avatar img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  width: 100%;
+}
+
+.dd-patient-avatar-img span,
+.dd-next-avatar span {
+  align-items: center;
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  width: 100%;
+}
+
 .dd-queue-title,
 .dd-queue-meta,
 .dd-vital-tags {

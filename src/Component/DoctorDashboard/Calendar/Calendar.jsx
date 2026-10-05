@@ -470,6 +470,8 @@ const DoctorCalendar = () => {
 
   const loadAvailabilityRanges = async () => {
     if (!doctorId || !selectedClinic?.id) return;
+    const selectedClinicIsLoaded = apiStatus === "succeeded" && clinics.some((clinic) => String(clinic.id) === String(selectedClinic.id));
+    if (!selectedClinicIsLoaded) return;
     const requestedClinicId = selectedClinic.id;
 
     try {
@@ -550,7 +552,7 @@ const DoctorCalendar = () => {
   useEffect(() => {
     loadAvailabilityRanges();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [doctorId, selectedClinic?.id, currentDate.getMonth(), currentDate.getFullYear()]);
+  }, [doctorId, selectedClinic?.id, apiStatus, clinics, currentDate.getMonth(), currentDate.getFullYear()]);
 
   // Check if a date is in the past
   const isPastDate = (year, month, day) => {
@@ -1547,7 +1549,7 @@ const DoctorCalendar = () => {
     });
   };
 
-  const generateSlotsForRange = (year, month, day, range) => {
+  const generateSlotsForRange = (year, month, day, range, rangeIndex = 0) => {
     if (!range?.start || !range?.end) return [];
     const [sh, sm] = range.start.split(":").map(Number);
     const [eh, em] = range.end.split(":").map(Number);
@@ -1555,16 +1557,21 @@ const DoctorCalendar = () => {
     const end = new Date(year, month, day, eh, em);
     const res = [];
     const duration = Number(range.duration || 15);
+    let tokenNumber = 1;
     while (start.getTime() + duration * 60000 <= end.getTime()) {
       const hh = String(start.getHours()).padStart(2, "0");
       const mm = String(start.getMinutes()).padStart(2, "0");
       const clinic = clinics.find(c => String(c.id) === String(range.clinicId)) || selectedClinic;
       res.push({
         time: `${hh}:${mm}`,
+        tokenNumber,
+        rangeIndex,
+        rangeLabel: `${range.start} -> ${range.end}`,
         clinicId: clinic.id,
         clinicName: clinic.name,
         clinicColor: clinic.color
       });
+      tokenNumber += 1;
       start = new Date(start.getTime() + duration * 60000);
     }
     return res;
@@ -1617,8 +1624,8 @@ const DoctorCalendar = () => {
         );
 
         const slots = [];
-        filteredRanges.forEach((r) => {
-          slots.push(...generateSlotsForRange(year, month, d, r));
+        filteredRanges.forEach((r, rangeIndex) => {
+          slots.push(...generateSlotsForRange(year, month, d, r, rangeIndex));
         });
 
         if (slots.length) {
@@ -1719,20 +1726,37 @@ const DoctorCalendar = () => {
     );
   });
 
-  // Group slots by time period: Morning / Afternoon / Evening
-  const groupSlotsByPeriod = (slots = []) => {
-    const morning = [], afternoon = [], evening = [];
-    for (const slot of slots) {
-      const h = parseInt(String(slot.time || "00").split(":")[0], 10);
-      if (h < 12) morning.push(slot);
-      else if (h < 18) afternoon.push(slot);
-      else evening.push(slot);
-    }
-    return [
-      { label: "🌅 Morning", slots: morning },
-      { label: "☀️ Afternoon", slots: afternoon },
-      { label: "🌙 Evening", slots: evening },
-    ].filter((g) => g.slots.length > 0);
+  const getPeriodLabel = (time = "00:00") => {
+    const h = parseInt(String(time).split(":")[0], 10);
+    if (h < 12) return "Morning";
+    if (h < 18) return "Afternoon";
+    return "Evening";
+  };
+
+  const groupSlotsBySchedule = (slots = []) => {
+    const groups = new Map();
+    slots.forEach((slot) => {
+      const key = `${slot.rangeIndex ?? 0}|${slot.rangeLabel || ""}`;
+      const group = groups.get(key) || {
+        rangeIndex: slot.rangeIndex ?? 0,
+        rangeLabel: slot.rangeLabel || "Schedule",
+        period: getPeriodLabel(slot.time),
+        slots: [],
+      };
+      group.slots.push(slot);
+      groups.set(key, group);
+    });
+
+    return Array.from(groups.values())
+      .map((group) => ({
+        ...group,
+        slots: group.slots.sort((a, b) => a.time.localeCompare(b.time)),
+      }))
+      .sort((a, b) => {
+        const aFirst = a.slots[0]?.time || "";
+        const bFirst = b.slots[0]?.time || "";
+        return aFirst.localeCompare(bFirst);
+      });
   };
 
   return (
@@ -1944,12 +1968,18 @@ const DoctorCalendar = () => {
                       )}
                       {!entry.blocked && (
                         <div className="slot-time-pills">
-                          {groupSlotsByPeriod(entry.slots || []).map((group) => (
-                            <div key={group.label} className="slot-period-group">
-                              <span className="slot-period-label">{group.label}</span>
+                          {groupSlotsBySchedule(entry.slots || []).map((group, scheduleIndex) => (
+                            <div key={`${group.rangeIndex}-${group.rangeLabel}`} className="slot-period-group slot-schedule-group">
+                              <span className="slot-period-label slot-schedule-label">
+                                <span>Schedule {scheduleIndex + 1}</span>
+                                <strong>{group.rangeLabel}</strong>
+                                <em>{group.period} • {group.slots.length} slots</em>
+                              </span>
                               <div className="slot-period-pills">
                                 {group.slots.map((slot, slotIndex) => (
-                                  <small key={`${slot.time}-${slotIndex}`}>{slot.time}</small>
+                                  <small key={`${slot.time}-${slotIndex}`}>
+                                    {slot.time} <b>#{slot.tokenNumber}</b>
+                                  </small>
                                 ))}
                               </div>
                             </div>
@@ -2581,9 +2611,13 @@ const DoctorCalendar = () => {
                       <em className="text-danger">Date marked unavailable</em>
                     ) : e.slots.length ? (
                       <div className="slot-list">
-                        {groupSlotsByPeriod(e.slots).map((group) => (
-                          <div key={group.label} className="slot-period-group mb-2">
-                            <div className="slot-period-label small fw-semibold mb-1">{group.label}</div>
+                        {groupSlotsBySchedule(e.slots).map((group, scheduleIndex) => (
+                          <div key={`${group.rangeIndex}-${group.rangeLabel}`} className="slot-period-group slot-schedule-group mb-2">
+                            <div className="slot-period-label slot-schedule-label small fw-semibold mb-1">
+                              <span>Schedule {scheduleIndex + 1}</span>
+                              <strong>{group.rangeLabel}</strong>
+                              <em>{group.period} • {group.slots.length} slots</em>
+                            </div>
                             <div className="slot-period-pills">
                               {group.slots.map((slot, idx) => (
                                 <span
@@ -2593,9 +2627,9 @@ const DoctorCalendar = () => {
                                     backgroundColor: slot.clinicColor,
                                     color: "white"
                                   }}
-                                  title={`Clinic: ${slot.clinicName}`}
+                                  title={`Clinic: ${slot.clinicName} | ${slot.rangeLabel} | Token ${slot.tokenNumber}`}
                                 >
-                                  {slot.time}
+                                  {slot.time} <small>#{slot.tokenNumber}</small>
                                 </span>
                               ))}
                             </div>

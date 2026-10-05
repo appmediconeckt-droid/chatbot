@@ -1039,6 +1039,36 @@ const MyAppointments = () => {
     };
   };
 
+  const getAppointmentDateKey = (apt) => {
+    const source = apt?.appointment_date || apt?.date;
+    const parsed = new Date(source);
+    if (Number.isNaN(parsed.getTime())) {
+      return String(source || "unscheduled").slice(0, 10) || "unscheduled";
+    }
+    return parsed.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  };
+
+  const getAppointmentToken = (apt) =>
+    apt?.token_number ??
+    apt?.tokenNumber ??
+    apt?.appointment_token ??
+    apt?.queue_token ??
+    apt?.token ??
+    null;
+
+  const appointmentDateGroups = displayApts.reduce((groups, apt) => {
+    const key = getAppointmentDateKey(apt);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(apt);
+    return groups;
+  }, new Map());
+
+  const groupedDisplayApts = Array.from(appointmentDateGroups.entries()).map(([dateKey, items]) => ({
+    dateKey,
+    label: items[0] ? formatAppointmentDateTime(items[0].date).date : dateKey,
+    items,
+  }));
+
   const resetBookingForm = () => {
     setSelectedCounselorId("");
     setBookingDate("");
@@ -1406,9 +1436,17 @@ const MyAppointments = () => {
                 </p>
               </div>
             ) : (
-              displayApts.map((apt) => {
+              groupedDisplayApts.map((group) => (
+                <section className="user-appointment-date-group" key={group.dateKey}>
+                  <div className="user-appointment-date-heading">
+                    <span>{group.label}</span>
+                    <strong>{group.items.length} appointment{group.items.length === 1 ? "" : "s"}</strong>
+                  </div>
+                  <div className="user-appointment-date-grid">
+                    {group.items.map((apt) => {
                 const appointmentSchedule = formatAppointmentDateTime(apt.date);
                 if (isUnscheduledEmergency(apt)) appointmentSchedule.time = 'Clinic will confirm';
+                const appointmentToken = getAppointmentToken(apt);
 
                 return (
                   <div
@@ -1449,6 +1487,14 @@ const MyAppointments = () => {
                     <b></b>
                     <FaClock aria-hidden="true" />
                     <span>{appointmentSchedule.time}</span>
+                    {appointmentToken != null && (
+                      <>
+                        <b></b>
+                        <span className="user-appointment-token">
+                          Token #{appointmentToken}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                     <div className="user-appointment-actions">
@@ -1494,7 +1540,10 @@ const MyAppointments = () => {
                     </div>
                   </div>
                 );
-              })
+                    })}
+                  </div>
+                </section>
+              ))
             )}
           </div>
         )}

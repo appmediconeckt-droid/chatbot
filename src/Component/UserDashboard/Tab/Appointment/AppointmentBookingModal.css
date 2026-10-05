@@ -532,6 +532,13 @@
   margin-top: 4px;
 }
 
+.abm-date-slots {
+  margin-top: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
 .abm-date:hover:not(:disabled) {
   border-color: #0d9488;
   background: #f0fdfa;
@@ -557,7 +564,8 @@
 }
 
 .abm-date.selected .abm-date-day,
-.abm-date.selected .abm-date-num {
+.abm-date.selected .abm-date-num,
+.abm-date.selected .abm-date-slots {
   color: #ffffff !important;
 }
 
@@ -584,6 +592,14 @@
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 14px;
+}
+
+.abm-times-title span {
+  display: block;
+  margin-top: 3px;
+  color: #64748b;
+  font-size: 0.76rem;
+  font-weight: 600;
 }
 
 .abm-times-group {
@@ -616,6 +632,21 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s ease;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 86px;
+}
+
+.abm-time small {
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.abm-time.selected small {
+  color: #ffffff;
 }
 
 .abm-time:hover {
