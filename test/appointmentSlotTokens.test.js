@@ -14,7 +14,7 @@ test("appointment token follows clinic availability slot order, not booking orde
   assert.equal(slots.length, 12);
 });
 
-test("slot tokens are sorted across multiple availability ranges", () => {
+test("slot tokens restart from one for each availability range", () => {
   const slots = buildSlotsFromAvailabilityRanges({
     ranges: [
       { start_time: "16:00", end_time: "17:00", slot_duration: 30 },
@@ -25,9 +25,33 @@ test("slot tokens are sorted across multiple availability ranges", () => {
   assert.deepEqual(slots.map((slot) => [slot.time, slot.tokenNumber]), [
     ["02:00 PM", 1],
     ["02:30 PM", 2],
-    ["04:00 PM", 3],
-    ["04:30 PM", 4],
+    ["04:00 PM", 1],
+    ["04:30 PM", 2],
   ]);
+});
+
+test("doctor split same-day ranges each begin at token one", () => {
+  const slots = buildSlotsFromAvailabilityRanges({
+    ranges: [
+      { start_time: "21:28", end_time: "23:30", slot_duration: 10 },
+      { start_time: "17:00", end_time: "20:02", slot_duration: 10 },
+      { start_time: "12:30", end_time: "14:30", slot_duration: 20 },
+    ],
+  });
+
+  assert.equal(slots.length, 36);
+  assert.deepEqual(slots.map((slot) => [slot.time, slot.tokenNumber]).slice(0, 8), [
+    ["12:30 PM", 1],
+    ["12:50 PM", 2],
+    ["01:10 PM", 3],
+    ["01:30 PM", 4],
+    ["01:50 PM", 5],
+    ["02:10 PM", 6],
+    ["05:00 PM", 1],
+    ["05:10 PM", 2],
+  ]);
+  assert.equal(getScheduleTokenForTime(slots, "09:28 PM"), 1);
+  assert.equal(getScheduleTokenForTime(slots, "11:18 PM"), 12);
 });
 
 test("time parser matches displayed PM slots with backend 24-hour booked slots", () => {

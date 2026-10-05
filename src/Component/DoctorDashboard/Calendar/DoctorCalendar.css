@@ -1598,10 +1598,53 @@ i.empty {
   text-transform: uppercase;
 }
 
+.slot-schedule-label {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 2px;
+  letter-spacing: 0;
+  line-height: 1.25;
+  text-transform: none;
+}
+
+.slot-schedule-label span {
+  color: #4f46e5;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.slot-schedule-label strong {
+  color: #1f2937;
+  font-size: 12px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.slot-schedule-label em {
+  color: #64748b;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 .slot-period-pills {
   display: flex;
   flex-wrap: wrap;
   gap: 5px;
+}
+
+.slot-period-pills .badge {
+  align-items: center;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.slot-period-pills .badge small {
+  color: inherit;
+  font-size: 0.78em;
+  font-weight: 800;
+  opacity: 0.9;
 }
 
 .slot-preview-list article:has(.slot-unavailable-message) {

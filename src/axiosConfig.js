@@ -1,8 +1,11 @@
 import axios from "axios";
 
+const DEFAULT_LOCAL_API_BASE_URL = "hhttps://humaeli-backend-update-production.up.railway.app";
+const DEV_TUNNEL_PORT_PATTERN = /-(\d+)\.inc\d+\.devtunnels\.ms\/?$/i;
+
 const rawEnvApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://m429gbrg-5006.inc1.devtunnels.ms";
+  DEFAULT_LOCAL_API_BASE_URL;
 
 const resolveApiBaseUrl = (url) => {
   const normalizedUrl = String(url || "").replace(/^hhttps:\/\//i, "https://");
@@ -10,8 +13,11 @@ const resolveApiBaseUrl = (url) => {
     typeof window !== "undefined" &&
     ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 
-  if (isLocalFrontend && /\.devtunnels\.ms\/?$/i.test(normalizedUrl)) {
-    return "https://m429gbrg-5006.inc1.devtunnels.ms";
+  if (isLocalFrontend) {
+    const devTunnelPort = normalizedUrl.match(DEV_TUNNEL_PORT_PATTERN)?.[1];
+    if (devTunnelPort) {
+      return "https://humaeli-backend-update-production.up.railway.app";
+    }
   }
 
   return normalizedUrl;

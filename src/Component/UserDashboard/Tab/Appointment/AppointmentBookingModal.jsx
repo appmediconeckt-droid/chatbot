@@ -342,6 +342,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const selectedDateSlots = slotsForDate(selectedDate);
   const selectedSlot = selectedDateSlots.find((slot) => slot.time === selectedTime);
   const selectedSlotToken = getScheduleTokenForTime(selectedDateSlots, selectedTime);
+  const selectedDateAvailableCount = selectedDateSlots.filter((slot) => !slot.disabled && !slot.isPast).length;
 
   useEffect(() => {
     if (selectedTime && !selectedSlot) {
@@ -454,10 +455,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       date: isoDate,
       clinic_id: selectedClinic.id,
       clinic: selectedClinic.name,
-      token_number: selectedSlotToken,
-      tokenNumber: selectedSlotToken,
-      appointment_token: selectedSlotToken,
-      queue_token: selectedSlotToken,
+      schedule_slot_position: selectedSlotToken,
       slot_index: selectedSlot?.slotIndex,
       slot_duration: selectedSlot?.duration,
       slot_start_time: formattedTime,
@@ -478,7 +476,12 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
         headers: getAuthHeaders(),
       });
       const data = res.data?.data || res.data || {};
-      const respToken = data.token ?? data.token_number ?? data.queue_token;
+      const respToken =
+        data.token_number ??
+        data.tokenNumber ??
+        data.appointment_token ??
+        data.queue_token ??
+        data.token;
       setToken(respToken ?? selectedSlotToken ?? null);
       setRequestId(String(data._id || data.id || ''));
       setStep('success');
@@ -656,10 +659,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 <aside className="abm-pay-side">
                   <div className="abm-token-banner">
                     <div className="abm-token-ic"><i className="fa-solid fa-ticket"></i></div>
-                    <div className="abm-token-label">Schedule Token</div>
-                    <div className="abm-token-num">{selectedSlotToken ? `#${selectedSlotToken}` : selectedTime || 'Select a time'}</div>
+                    <div className="abm-token-label">Final Token</div>
+                    <div className="abm-token-num">{selectedTime ? '1 Token' : 'Select a time'}</div>
                     <div className="abm-token-note">{selectedTime ? `${selectedTime} appointment slot` : 'Select a time slot'}</div>
-                    <div className="abm-token-note">Token follows the slot position in the doctor's clinic availability.</div>
+                    <div className="abm-token-note">One confirmed booking creates one backend token. Your final token appears after booking.</div>
                     <div className="abm-token-note"><i className="fa-regular fa-clock"></i> Arrive 15 minutes early</div>
                   </div>
 
@@ -882,6 +885,11 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                       >
                         <span className="abm-date-day">{d.day}</span>
                         <span className="abm-date-num">{d.date}</span>
+                        <span className="abm-date-slots">
+                          {d.status === 'available'
+                            ? `${slotsForDate(d).filter((slot) => !slot.disabled && !slot.isPast).length} slots`
+                            : 'No slots'}
+                        </span>
                         {d.note && <span className="abm-date-note">{d.note}</span>}
                       </button>
                     );
@@ -898,7 +906,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 )}
                 {selectedDate && !availabilityLoading && (
                   <div className="abm-times">
-                    <h4 className="abm-times-title">Available Times for {selectedDate.day}, {selectedDate.label}</h4>
+                    <h4 className="abm-times-title">
+                      Available Times for {selectedDate.day}, {selectedDate.label}
+                      <span>{selectedDateAvailableCount} separate appointment slot{selectedDateAvailableCount === 1 ? '' : 's'}</span>
+                    </h4>
                     {slotGroups.length > 0 ? (
                       slotGroups.map((group) => (
                         <div className="abm-times-group" key={group.label}>
@@ -913,7 +924,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                                 className={`abm-time ${selectedTime === slot.time ? 'selected' : ''} ${slot.disabled ? 'disabled' : ''}`} disabled={slot.disabled}
                                 onClick={() => handleTimeSelect(slot)}
                               >
-                                {slot.time}
+                                <span>{slot.time}</span>
+                                <small>Token {slot.tokenNumber}</small>
                               </button>
                             ))}
                           </div>

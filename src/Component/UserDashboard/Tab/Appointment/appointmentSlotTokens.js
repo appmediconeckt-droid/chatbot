@@ -70,8 +70,8 @@ export const withScheduleTokens = (slots) =>
     .sort((a, b) => a.minutes - b.minutes)
     .map((slot, index) => ({
       ...slot,
-      tokenNumber: index + 1,
-      slotIndex: index,
+      tokenNumber: slot.tokenNumber ?? index + 1,
+      slotIndex: slot.slotIndex ?? index,
     }));
 
 export const buildSlotsFromAvailabilityRanges = ({
@@ -82,23 +82,34 @@ export const buildSlotsFromAvailabilityRanges = ({
 }) => {
   const slots = new Map();
 
-  ranges.forEach((range) => {
-    const start = timeToMinutes(range.start_time);
-    const end = timeToMinutes(range.end_time);
-    const duration = Math.max(1, Number(range.slot_duration || range.duration || 15));
-    if (start == null || end == null || end <= start) return;
+  [...ranges]
+    .sort((left, right) => {
+      const leftStart = timeToMinutes(left.start_time || left.start || left.startTime) ?? 0;
+      const rightStart = timeToMinutes(right.start_time || right.start || right.startTime) ?? 0;
+      return leftStart - rightStart;
+    })
+    .forEach((range, rangeIndex) => {
+      const start = timeToMinutes(range.start_time || range.start || range.startTime);
+      const end = timeToMinutes(range.end_time || range.end || range.endTime);
+      const duration = Math.max(1, Number(range.slot_duration || range.duration || 15));
+      if (start == null || end == null || end <= start) return;
 
-    for (let cursor = start; cursor + duration <= end; cursor += duration) {
-      const isSlotPast = isToday && cursor <= nowMinutes;
-      slots.set(cursor, {
-        time: formatMinutes(cursor),
-        minutes: cursor,
-        duration,
-        disabled: isSlotPast,
-        isPast: isSlotPast,
-      });
-    }
-  });
+      let rangeToken = 1;
+      for (let cursor = start; cursor + duration <= end; cursor += duration, rangeToken += 1) {
+        const isSlotPast = isToday && cursor <= nowMinutes;
+        if (slots.has(cursor)) continue;
+        slots.set(cursor, {
+          time: formatMinutes(cursor),
+          minutes: cursor,
+          duration,
+          tokenNumber: rangeToken,
+          slotIndex: rangeToken - 1,
+          rangeIndex,
+          disabled: isSlotPast,
+          isPast: isSlotPast,
+        });
+      }
+    });
 
   return withScheduleTokens(slots.values());
 };
