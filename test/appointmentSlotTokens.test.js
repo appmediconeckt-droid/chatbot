@@ -28,6 +28,10 @@ test("slot tokens restart from one for each availability range", () => {
     ["04:00 PM", 1],
     ["04:30 PM", 2],
   ]);
+  assert.deepEqual([...new Set(slots.map((slot) => slot.rangeLabel))], [
+    "02:00 PM - 03:00 PM",
+    "04:00 PM - 05:00 PM",
+  ]);
 });
 
 test("doctor split same-day ranges each begin at token one", () => {
@@ -52,6 +56,11 @@ test("doctor split same-day ranges each begin at token one", () => {
   ]);
   assert.equal(getScheduleTokenForTime(slots, "09:28 PM"), 1);
   assert.equal(getScheduleTokenForTime(slots, "11:18 PM"), 12);
+  assert.deepEqual([...new Set(slots.map((slot) => slot.rangeLabel))], [
+    "12:30 PM - 02:30 PM",
+    "05:00 PM - 08:02 PM",
+    "09:28 PM - 11:30 PM",
+  ]);
 });
 
 test("time parser matches displayed PM slots with backend 24-hour booked slots", () => {

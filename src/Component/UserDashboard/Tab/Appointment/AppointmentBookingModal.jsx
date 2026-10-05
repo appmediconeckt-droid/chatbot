@@ -310,7 +310,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     const ranges = rangesForDate(iso, d.getDay());
     // If ranges exist, status is available if ranges > 0; if no custom ranges configured, allow weekdays (Mon-Sat)
     const daySlots = slotsForDate({ iso, weekday: d.getDay() });
-    const hasAvailableSlot = daySlots.length === 0 || daySlots.some((s) => !s.disabled);
+    const hasAvailableSlot = daySlots.some((s) => !s.disabled && !s.isPast);
     const isAvailable = ranges.length > 0 && hasAvailableSlot;
     return {
       date: d.getDate(),
@@ -342,18 +342,29 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const selectedDateSlots = slotsForDate(selectedDate);
   const selectedSlot = selectedDateSlots.find((slot) => slot.time === selectedTime);
   const selectedSlotToken = getScheduleTokenForTime(selectedDateSlots, selectedTime);
-  const selectedDateAvailableCount = selectedDateSlots.filter((slot) => !slot.disabled && !slot.isPast).length;
+  const selectedDateAvailableSlots = selectedDateSlots.filter((slot) => !slot.disabled && !slot.isPast);
+  const selectedDateAvailableCount = selectedDateAvailableSlots.length;
 
   useEffect(() => {
     if (selectedTime && !selectedSlot) {
       setSelectedTime(null);
     }
   }, [selectedTime, selectedSlot]);
-  const slotGroups = [
-    { label: 'Morning', icon: true, slots: selectedDateSlots.filter((slot) => slot.minutes < 720) },
-    { label: 'Afternoon', slots: selectedDateSlots.filter((slot) => slot.minutes >= 720 && slot.minutes < 1020) },
-    { label: 'Evening', slots: selectedDateSlots.filter((slot) => slot.minutes >= 1020) },
-  ].filter((group) => group.slots.length);
+  const slotGroups = Array.from(
+    selectedDateAvailableSlots.reduce((groups, slot) => {
+      const key = slot.rangeIndex ?? `${slot.rangeStart || ''}-${slot.rangeEnd || ''}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: slot.rangeLabel || 'Available Slot',
+          icon: groups.size === 0,
+          slots: [],
+        });
+      }
+      groups.get(key).slots.push(slot);
+      return groups;
+    }, new Map()).values()
+  );
 
   const handleDateSelect = (d) => {
     if (d.status !== 'unavailable') {
