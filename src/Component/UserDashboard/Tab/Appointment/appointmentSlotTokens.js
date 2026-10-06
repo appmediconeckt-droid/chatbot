@@ -95,6 +95,7 @@ export const buildSlotsFromAvailabilityRanges = ({
       if (start == null || end == null || end <= start) return;
 
       let rangeToken = 1;
+      const rangeLabel = `${formatMinutes(start)} - ${formatMinutes(end)}`;
       for (let cursor = start; cursor + duration <= end; cursor += duration, rangeToken += 1) {
         const isSlotPast = isToday && cursor <= nowMinutes;
         if (slots.has(cursor)) continue;
@@ -105,6 +106,9 @@ export const buildSlotsFromAvailabilityRanges = ({
           tokenNumber: rangeToken,
           slotIndex: rangeToken - 1,
           rangeIndex,
+          rangeLabel,
+          rangeStart: start,
+          rangeEnd: end,
           disabled: isSlotPast,
           isPast: isSlotPast,
         });

@@ -12,6 +12,8 @@ const getCurrentUserId = () => {
   return localStorage.getItem('userId') || localStorage.getItem('user_id') || '';
 };
 
+const getTodayIndiaDateKey = () => new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
+
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token') || localStorage.getItem('accessToken');
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -27,7 +29,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const [appointmentPriority, setAppointmentPriority] = useState('normal');
   const [emergencyReason, setEmergencyReason] = useState('');
   const isEmergency = appointmentPriority === 'emergency';
-  const todayIndia = new Date(Date.now() + 330 * 60000).toISOString().slice(0, 10);
+  const todayIndia = getTodayIndiaDateKey();
   const [clinicOpen, setClinicOpen] = useState(false);
   const [modeOpen, setModeOpen] = useState(false);
   const [selectedClinicId, setSelectedClinicId] = useState(null);
@@ -310,7 +312,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     const ranges = rangesForDate(iso, d.getDay());
     // If ranges exist, status is available if ranges > 0; if no custom ranges configured, allow weekdays (Mon-Sat)
     const daySlots = slotsForDate({ iso, weekday: d.getDay() });
-    const hasAvailableSlot = daySlots.length === 0 || daySlots.some((s) => !s.disabled);
+    const hasAvailableSlot = daySlots.some((s) => !s.disabled && !s.isPast);
     const isAvailable = ranges.length > 0 && hasAvailableSlot;
     return {
       date: d.getDate(),
@@ -342,21 +344,32 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const selectedDateSlots = slotsForDate(selectedDate);
   const selectedSlot = selectedDateSlots.find((slot) => slot.time === selectedTime);
   const selectedSlotToken = getScheduleTokenForTime(selectedDateSlots, selectedTime);
-  const selectedDateAvailableCount = selectedDateSlots.filter((slot) => !slot.disabled && !slot.isPast).length;
+  const selectedDateAvailableSlots = selectedDateSlots.filter((slot) => !slot.disabled && !slot.isPast);
+  const selectedDateAvailableCount = selectedDateAvailableSlots.length;
 
   useEffect(() => {
     if (selectedTime && !selectedSlot) {
       setSelectedTime(null);
     }
   }, [selectedTime, selectedSlot]);
-  const slotGroups = [
-    { label: 'Morning', icon: true, slots: selectedDateSlots.filter((slot) => slot.minutes < 720) },
-    { label: 'Afternoon', slots: selectedDateSlots.filter((slot) => slot.minutes >= 720 && slot.minutes < 1020) },
-    { label: 'Evening', slots: selectedDateSlots.filter((slot) => slot.minutes >= 1020) },
-  ].filter((group) => group.slots.length);
+  const slotGroups = Array.from(
+    selectedDateAvailableSlots.reduce((groups, slot) => {
+      const key = slot.rangeIndex ?? `${slot.rangeStart || ''}-${slot.rangeEnd || ''}`;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          key,
+          label: slot.rangeLabel || 'Available Slot',
+          icon: groups.size === 0,
+          slots: [],
+        });
+      }
+      groups.get(key).slots.push(slot);
+      return groups;
+    }, new Map()).values()
+  );
 
   const handleDateSelect = (d) => {
-    if (d.status !== 'unavailable') {
+    if (d.status !== 'unavailable' && d.iso >= getTodayIndiaDateKey()) {
       setSelectedDate(d);
       setSelectedTime(null);
     }
@@ -384,11 +397,11 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
         setSelectedTime(null);
         return;
       }
-      if (selectedDate.iso < todayIndia) {
+      if (selectedDate.iso < getTodayIndiaDateKey()) {
         setBookError('Cannot book an appointment for a past date.');
         return;
       }
-      if (selectedDate.iso === todayIndia) {
+      if (selectedDate.iso === getTodayIndiaDateKey()) {
         const slot = selectedDateSlots.find((s) => s.time === selectedTime);
         if (slot && (slot.disabled || slot.isPast || slot.minutes <= getNowIndiaMinutes())) {
           setBookError('This slot has already passed. Please select an upcoming time slot.');
@@ -436,6 +449,12 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     }
     if (!isEmergency && (!selectedSlot || isBookedSlot(selectedDate?.iso, selectedSlot.minutes))) {
       setBookError('This slot is already booked. Please select another time.');
+      setStep('select');
+      setSelectedTime(null);
+      return;
+    }
+    if (!isEmergency && selectedDate?.iso < getTodayIndiaDateKey()) {
+      setBookError('Cannot book an appointment for a past date.');
       setStep('select');
       setSelectedTime(null);
       return;

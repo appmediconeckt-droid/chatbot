@@ -1,4 +1,4 @@
-import { normalizeApiList, getAppointmentSource, loadDoctorAppointmentFeed } from "../appointmentFeed.js";
+import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctorAppointmentFeed, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../appointmentFeed.js";
 // // DoctorDashboard.jsx
 // import React, { useEffect, useRef, useState } from "react";
 // import {
@@ -2172,7 +2172,6 @@ const DEFAULT_BREAK_MIN = 30;
 const BREAK_OPTIONS_MIN = [5, 10, 15, 30, 45, 60];
 
 const pad = (n) => (n < 10 ? "0" + n : n);
-const formatTimeOfDay = (ms) => new Date(ms).toLocaleTimeString();
 const formatDateTime = (ms) =>
   `${new Date(ms).toLocaleDateString()} ${new Date(ms).toLocaleTimeString()}`;
 const formatDate = (dateString) => {
@@ -2301,33 +2300,44 @@ const formatLocalDateKey = (value) => {
   return `${year}-${month}-${day}`;
 };
 
-const getAppointmentDateTime = (appointment) => {
-  const dateKey = formatLocalDateKey(getAppointmentDateValue(appointment));
-  if (!dateKey) return null;
-
+const getBookedAppointmentDateTime = (appointment) => {
+  const dateKey = formatLocalDateKey(pickFirst(
+    appointment?.appointment_date,
+    appointment?.appointmentDate,
+    appointment?.date,
+    appointment?.scheduled_date,
+    appointment?.scheduledDate,
+  ));
   const timeValue = pickFirst(
     appointment?.appointment_time,
     appointment?.appointmentTime,
-    appointment?.time,
-    appointment?.scheduled_time,
-    appointment?.scheduledTime,
+    appointment?.slot_start_time,
+    appointment?.slotStartTime,
     appointment?.slot_time,
     appointment?.slotTime,
-    appointment?.check_in_time,
-    appointment?.checkInTime
+    appointment?.bookedSlotTime,
+    appointment?.time,
   );
-  const normalizedTime = String(timeValue || "23:59:59").trim();
-  const [hours = "23", minutes = "59", seconds = "59"] = normalizedTime.split(":");
-  const dateTime = new Date(
+  const match = String(timeValue || "").trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?$/i);
+  if (!dateKey || !match) return null;
+  let hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  const seconds = Number(match[3] || 0);
+  const meridiem = match[4]?.toUpperCase();
+  if (meridiem) {
+    if (hours < 1 || hours > 12) return null;
+    if (meridiem === "PM" && hours !== 12) hours += 12;
+    if (meridiem === "AM" && hours === 12) hours = 0;
+  }
+  if (hours > 23 || minutes > 59 || seconds > 59) return null;
+  return new Date(
     Number(dateKey.slice(0, 4)),
     Number(dateKey.slice(5, 7)) - 1,
     Number(dateKey.slice(8, 10)),
-    Number(hours),
-    Number(minutes),
-    Number(seconds)
+    hours,
+    minutes,
+    seconds,
   );
-
-  return Number.isNaN(dateTime.getTime()) ? null : dateTime;
 };
 
 const isTodayAppointment = (appointment) => {
@@ -2343,17 +2353,10 @@ const isTodayAppointment = (appointment) => {
   return appointmentDateKey === localToday || appointmentDateKey === indiaToday;
 };
 
-const isExpiredPendingAppointment = (appointment, nowMs = Date.now()) => {
-  if (normalizeAppointmentStatus(appointment) !== "pending") return false;
-  // Walk-ins stay in the doctor's queue until their status is explicitly
-  // changed; their check-in/preferred time must not make them disappear.
-  if (getAppointmentSource(appointment) === "walkin") return false;
-  if (String(appointment?.priority || "").toLowerCase() === "emergency" || appointment?.isEmergency) return false;
-
-  const appointmentDateTime = getAppointmentDateTime(appointment);
-  if (!appointmentDateTime) return false;
-
-  return appointmentDateTime.getTime() < nowMs;
+const isAppointmentStartTimeReached = (appointment, nowMs = Date.now()) => {
+  if (getAppointmentSource(appointment) === "walkin") return true;
+  if (String(appointment?.priority || "").toLowerCase() === "emergency" || appointment?.isEmergency) return true;
+  return isBookedAppointmentStartTimeReached(appointment, nowMs);
 };
 
 const formatAppointmentTime = (appointment) => {
@@ -2386,17 +2389,26 @@ const formatAppointmentTime = (appointment) => {
 };
 
 const normalizeAppointmentStatus = (appointment, forcedStatus) => {
+  const queueStatus = String(
+    pickFirst(appointment?.queue_status, appointment?.queueStatus, ""),
+  ).toLowerCase().trim().replace(/\s+/g, "-");
+  if (!forcedStatus) {
+    if (["in-progress", "in_progress", "in-consultation", "in_consultation"].includes(queueStatus)) return "in-progress";
+    if (queueStatus === "no_show" || queueStatus === "no-show") return "no-show";
+    if (queueStatus === "completed") return "completed";
+    if (queueStatus === "cancelled" || queueStatus === "canceled") return "cancelled";
+  }
   const rawStatus = pickFirst(
     forcedStatus,
     appointment?.appointment_status,
     appointment?.walkin_status,
-    appointment?.queue_status,
     appointment?.status
   );
   const status = String(rawStatus || "pending").toLowerCase().trim().replace(/\s+/g, "-");
 
   if (status === "completed" || status === "complete") return "completed";
   if (status === "cancelled" || status === "canceled") return "cancelled";
+  if (status === "no-show" || status === "no_show") return "no-show";
   if (status === "confirmed" || status === "accepted" || status === "active") return "confirmed";
   if (status === "in-progress" || status === "in_progress" || status === "in-consultation" || status === "in_consultation") return "in-progress";
   if (status === "scheduled" || status === "booked" || status === "approved" || status === "waiting" || status === "queued" || status === "") return "pending";
@@ -2404,7 +2416,7 @@ const normalizeAppointmentStatus = (appointment, forcedStatus) => {
   return "pending";
 };
 
-const formatAppointment = (appointment, forcedStatus) => {
+const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) => {
   const patient = pickFirstObject(
     appointment?.patient,
     appointment?.patient_details,
@@ -2446,16 +2458,8 @@ const formatAppointment = (appointment, forcedStatus) => {
     rawFollowUpRequired === "1" ||
     String(rawFollowUpRequired).toLowerCase() === "true" ||
     Boolean(rawFollowUpDate);
-  const apiId = pickFirst(
-    appointment?.id,
-    appointment?._id,
-    appointment?.appointment_id,
-    appointment?.appointmentId,
-    appointment?.walkin_appointment_id,
-    appointment?.walkinAppointmentId,
-    appointment?.walkin_id,
-    appointment?.walkinId
-  );
+  const apiId = getAppointmentApiId(appointment);
+  const bookedSchedule = getAppointmentSchedule(appointment, availabilityRanges);
 
   return {
     id: `${appointmentSource}-${apiId}`,
@@ -2466,7 +2470,13 @@ const formatAppointment = (appointment, forcedStatus) => {
     emergencyReason: pickFirst(appointment?.emergency_reason, appointment?.emergencyReason, ""),
     priority: String(pickFirst(appointment?.priority, "")).toLowerCase() === "emergency" ? "emergency" : "normal",
     consultationMode: String(pickFirst(appointment?.consultation_mode, appointment?.consultationMode, appointment?.mode, "in-clinic")).toLowerCase(),
-    appointmentDate: getAppointmentDateValue(appointment),
+    appointmentDate: pickFirst(
+      appointment?.appointment_date,
+      appointment?.appointmentDate,
+      appointment?.date,
+      appointment?.scheduled_date,
+      appointment?.scheduledDate,
+    ),
     originalAppointmentAt: pickFirst(appointment?.original_appointment_at, appointment?.originalAppointmentAt),
     estimatedStartAt: pickFirst(appointment?.estimated_start_at, appointment?.estimatedStartAt),
     delayMinutes: Number(pickFirst(appointment?.delay_minutes, appointment?.delayMinutes, 0)),
@@ -2487,6 +2497,28 @@ const formatAppointment = (appointment, forcedStatus) => {
     gender: pickFirst(appointment?.gender, appointment?.patient_gender, patient?.gender, "Not specified"),
     issue: pickFirst(appointment?.reason, appointment?.issue, appointment?.symptoms, appointment?.description, "General Checkup"),
     scheduledTime: formatAppointmentTime(appointment),
+    bookedSlotTime: formatBookedAppointmentTime(appointment),
+    bookedSchedule,
+    slotDurationMinutes: Number(pickFirst(
+      appointment?.slot_duration,
+      appointment?.slotDuration,
+      appointment?.slot_duration_minutes,
+      appointment?.slotDurationMinutes,
+      bookedSchedule?.durationMinutes
+    )) || 0,
+    queueStatus: pickFirst(appointment?.queue_status, appointment?.queueStatus, ""),
+    consultationStartedAt: pickFirst(
+      appointment?.consultation_started_at,
+      appointment?.consultationStartedAt,
+      appointment?.consultation_timing?.startedAt,
+      appointment?.consultation_timing?.started_at,
+    ),
+    consultationEndedAt: pickFirst(
+      appointment?.consultation_ended_at,
+      appointment?.consultationEndedAt,
+      appointment?.consultation_timing?.endedAt,
+      appointment?.consultation_timing?.ended_at,
+    ),
     status,
     phone: pickFirst(
       appointment?.patient_phone,
@@ -2556,7 +2588,7 @@ const isAppointmentCallWindowOpen = (appointment) => {
   if (match[4]?.toUpperCase() === "AM" && hours === 12) hours = 0;
   const scheduled = new Date(`${dateKey}T${String(hours).padStart(2, "0")}:${match[2]}:${match[3] || "00"}`);
   const diffMinutes = (Date.now() - scheduled.getTime()) / 60000;
-  return diffMinutes >= -15 && diffMinutes <= 90;
+  return diffMinutes >= 0 && diffMinutes <= 90;
 };
 
 // Color Themes (same as before - keeping it compact)
@@ -3525,6 +3557,7 @@ const DoctorDashboard = () => {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [completed, setCompleted] = useState([]);
+  const [cancelledAppointments, setCancelledAppointments] = useState([]);
   const [activeSession, setActiveSession] = useState(null);
   const [, setTick] = useState(0);
   const tickRef = useRef(null);
@@ -3576,6 +3609,7 @@ const DoctorDashboard = () => {
       if (!doctorId) {
         setAppointments([]);
         setCompleted([]);
+        setCancelledAppointments([]);
         setError("Doctor ID not found. Please login again.");
         return;
       }
@@ -3583,12 +3617,21 @@ const DoctorDashboard = () => {
       const appointmentList = await loadDoctorAppointmentFeed(
         axios, API_BASE_URL, doctorId, getAuthHeaders(),
       );
+      let availabilityRanges = [];
+      try {
+        const availabilityResponse = await axios.get(`${API_BASE_URL}/availability/ranges`, {
+          headers: getAuthHeaders(),
+          params: { doctor_id: doctorId },
+        });
+        availabilityRanges = normalizeAvailabilityRanges(availabilityResponse.data);
+      } catch (availabilityError) {
+        console.warn("Doctor availability schedules could not be loaded:", availabilityError);
+      }
       const todayAppointments = appointmentList.filter((apt) => {
         const status = normalizeAppointmentStatus(apt);
         return (
           isTodayAppointment(apt) &&
-          ["pending", "confirmed", "in-progress"].includes(status) &&
-          !isExpiredPendingAppointment(apt)
+          ["pending", "confirmed", "in-progress"].includes(status)
         );
       });
 
@@ -3598,8 +3641,8 @@ const DoctorDashboard = () => {
         if (isEmergA && !isEmergB) return -1;
         if (!isEmergA && isEmergB) return 1;
 
-        const dateA = getAppointmentDateTime(a)?.getTime() || 0;
-        const dateB = getAppointmentDateTime(b)?.getTime() || 0;
+        const dateA = getBookedAppointmentDateTime(a)?.getTime() || 0;
+        const dateB = getBookedAppointmentDateTime(b)?.getTime() || 0;
         if (dateA !== dateB) return dateA - dateB;
 
         const tokenA = pickFirst(a?.token_number, a?.tokenNumber, a?.token);
@@ -3611,7 +3654,12 @@ const DoctorDashboard = () => {
         return dateA - dateB;
       });
 
-      setAppointments(todayAppointments.map((apt) => formatAppointment(apt)));
+      setAppointments(todayAppointments.map((apt) => formatAppointment(apt, undefined, availabilityRanges)));
+      setCancelledAppointments(
+        appointmentList
+          .filter((apt) => normalizeAppointmentStatus(apt) === "cancelled")
+          .map((apt) => formatAppointment(apt, undefined, availabilityRanges)),
+      );
 
       const completedList = appointmentList;
       let followUpList = [];
@@ -3714,11 +3762,38 @@ const DoctorDashboard = () => {
   // Start appointment from consent modal
   const handleStartFromConsent = async () => {
     if (!selectedAppointment) return;
+    if (!["pending", "confirmed"].includes(selectedAppointment.status)) {
+      setError("This appointment is not ready to start.");
+      return;
+    }
+    if (activeSession?.appt || activeSession?.status === "break") {
+      setError("Finish the current consultation or break before starting another appointment.");
+      return;
+    }
+    if (!canStartAppointment(selectedAppointment)) {
+      setError(
+        activeSession?.appt || activeSession?.status === "break"
+          ? "Finish the current consultation or break before starting another appointment."
+          : `Consultation can start at ${selectedAppointment.scheduledTime || "the appointment time"}.`,
+      );
+      return;
+    }
+
     let saved;
     try {
-      const response = await axios.patch(getAppointmentApiUrl(selectedAppointment), getStatusUpdatePayload(selectedAppointment, "in-progress"), { headers: getAuthHeaders() });
+      const isWalkIn = getAppointmentSource(selectedAppointment) === "walkin";
+      const statusUrl = getAppointmentStatusUrl(API_BASE_URL, selectedAppointment);
+      const statusPayload = isWalkIn
+        ? getStatusUpdatePayload(selectedAppointment, "in-progress")
+        : { status: "in-progress" };
+      const response = await axios.patch(statusUrl, statusPayload, { headers: getAuthHeaders() });
       saved = response.data?.appointment || response.data?.data;
     } catch (err) {
+      if (err.response?.status === 404) {
+        await fetchAppointments();
+        setError("This appointment is no longer available. The doctor queue has been refreshed.");
+        return;
+      }
       setError(err.response?.data?.message || err.message || "Checkup could not be started.");
       return;
     }
@@ -4152,24 +4227,35 @@ const DoctorDashboard = () => {
   const activeAppt = activeSession?.appt || null;
   const elapsedMs = computeElapsedMs();
   const breakRemainingMs = getBreakRemainingMs();
-  const pendingAppointments = appointments.filter(
+  const visibleAppointments = appointments.filter((appt) => !isAppointmentSlotExpired(appt, now));
+  const pendingAppointments = visibleAppointments.filter(
     (appt) => appt.status === "pending"
   );
+  const upcomingAppointments = visibleAppointments;
   const inProgressAppointments = [
     ...(activeAppt ? [activeAppt] : []),
-    ...appointments.filter(
+    ...upcomingAppointments.filter(
       (appt) => ["confirmed", "in-progress"].includes(appt.status) && appt.id !== activeAppt?.id
     ),
   ];
   const visibleQueue =
-    activeQueueTab === "completed"
+    activeQueueTab === "cancelled"
+      ? cancelledAppointments
+      : activeQueueTab === "completed"
       ? completed
       : activeQueueTab === "in-progress"
         ? inProgressAppointments
         : pendingAppointments;
-  const nextPatient = activeAppt || pendingAppointments[0] || appointments[0] || null;
-  const totalToday = appointments.length + completed.length;
+  const nextPatient = activeAppt || pendingAppointments[0] || upcomingAppointments[0] || null;
+  const totalToday = upcomingAppointments.length + completed.length;
   const completionPercent = totalToday ? Math.round((completed.length / totalToday) * 100) : 0;
+  const canStartAppointment = (appointment) =>
+    canStartConsultation({
+      appointment,
+      hasActiveConsultation: Boolean(activeSession?.appt),
+      isOnBreak: activeSession?.status === "break",
+      slotStartReached: isAppointmentStartTimeReached(appointment, now),
+    });
   const dateParts = new Date(now).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -4293,7 +4379,7 @@ const DoctorDashboard = () => {
             <section className="dd-queue-card">
               <h2>Today's Appointment Queue</h2>
               <div className="dd-tabs">
-                {["pending", "in-progress", "completed"].map((tab) => (
+                {["pending", "in-progress", "completed", "cancelled"].map((tab) => (
                   <button
                     type="button"
                     key={tab}
@@ -4308,6 +4394,14 @@ const DoctorDashboard = () => {
               <div className="dd-queue-list">
                 {visibleQueue.map((appt, index) => {
                   const isActive = activeAppt?.id === appt.id;
+                  const isSlotStartReached = isAppointmentStartTimeReached(appt, now);
+                  const showStartConsultation = shouldShowStartConsultation({
+                    activeTab: activeQueueTab,
+                    appointment: appt,
+                    slotStartReached: isSlotStartReached,
+                    pendingIndex: pendingAppointments.findIndex((item) => item.id === appt.id),
+                  });
+                  const canStartThisAppointment = canStartAppointment(appt);
 
                   return (
                     <article className={`dd-queue-row ${isActive || index === 0 ? "highlight" : ""}`} key={`${activeQueueTab}-${appt.id}`}>
@@ -4329,7 +4423,15 @@ const DoctorDashboard = () => {
                           {getRemoteConsultationMode(appt) && <span><i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video" : "bi-telephone"}`}></i>{getRemoteConsultationMode(appt) === "video" ? "Video" : "Voice"}</span>}
                           <span>{appt.gender}</span>
                           <span className="issue">{appt.issue}</span>
-                          <span><i className="bi bi-clock"></i>{appt.delayMinutes > 0 && appt.estimatedTime ? `~${appt.estimatedTime} (+${appt.delayMinutes}m)` : (appt.scheduledTime || (appt.endTime ? formatTimeOfDay(appt.endTime) : "Today"))}</span>
+                          <span>
+                            <i className="bi bi-clock"></i>
+                            {appt.bookedSchedule
+                              ? `${appt.bookedSchedule.label} (${appt.bookedSchedule.range}) · Slot ${appt.bookedSlotTime}`
+                              : `Scheduled time: ${appt.bookedSlotTime || "Not available"}`}
+                          </span>
+                          {appt.delayMinutes > 0 && appt.estimatedTime && (
+                            <span><i className="bi bi-hourglass-split"></i>Estimated: {appt.estimatedTime} (+{appt.delayMinutes}m)</span>
+                          )}
                           {appt.delayMinutes > 0 && <span className="issue"><i className="bi bi-hourglass-split"></i>Delayed {appt.delayMinutes} min{appt.delayReason ? ` - ${appt.delayReason}` : ""}</span>}
                           {appt.status === "completed" && appt.followUpRequired && (
                             <span className="dd-follow-up-history-date">
@@ -4344,12 +4446,14 @@ const DoctorDashboard = () => {
                         </div>
                       </div>
                       <div className="dd-row-actions">
-                        {getRemoteConsultationMode(appt) && appt.status !== "completed" && (
+                        {appt.status === "cancelled" ? (
+                          <Badge bg="secondary">Cancelled</Badge>
+                        ) : getRemoteConsultationMode(appt) && appt.status !== "completed" && (
                           <button
                             type="button"
                             className="dd-call-action"
                             disabled={!isAppointmentCallWindowOpen(appt) || !appt.patientId}
-                            title={isAppointmentCallWindowOpen(appt) ? `Start ${getRemoteConsultationMode(appt)} call` : "Call opens 15 minutes before appointment"}
+                            title={isAppointmentCallWindowOpen(appt) ? `Start ${getRemoteConsultationMode(appt)} call` : "Call is available at the appointment time"}
                             onClick={() => navigate('/patient-sms', { state: { callTargetId: appt.patientId, autoStartCallType: getRemoteConsultationMode(appt), appointment: appt } })}
                           >
                             <i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video-fill" : "bi-telephone-fill"}`}></i>
@@ -4367,11 +4471,22 @@ const DoctorDashboard = () => {
                         ) : !getRemoteConsultationMode(appt) ? (
                           <button
                             type="button"
-                            className={index === 0 && activeQueueTab === "pending" ? "" : "ghost"}
+                            className={showStartConsultation ? "" : "ghost"}
                             onClick={() => handleConsentClick(appt)}
-                            disabled={!!activeSession?.appt || activeSession?.status === "break"}
+                            disabled={
+                              !!activeSession?.appt ||
+                              activeSession?.status === "break" ||
+                              (showStartConsultation && !canStartThisAppointment)
+                            }
+                            title={
+                              showStartConsultation && !canStartThisAppointment
+                                ? activeSession?.appt || activeSession?.status === "break"
+                                  ? "Finish the current consultation before starting the next appointment"
+                                  : "Start appointments in scheduled queue order"
+                                : undefined
+                            }
                           >
-                            {index === 0 && activeQueueTab === "pending" ? "Start Consultation" : "View"}
+                            {showStartConsultation ? "Start Consultation" : "View"}
                           </button>
                         ) : null}
                       </div>
@@ -4420,6 +4535,7 @@ const DoctorDashboard = () => {
                 disabled={
                   !nextPatient ||
                   activeSession?.status === "break" ||
+                  (!activeAppt && !getRemoteConsultationMode(nextPatient) && !canStartAppointment(nextPatient)) ||
                   (Boolean(getRemoteConsultationMode(nextPatient)) && (!isAppointmentCallWindowOpen(nextPatient) || !nextPatient?.patientId))
                 }
               >
@@ -4522,8 +4638,12 @@ const DoctorDashboard = () => {
                 <span className="dd-detail-value">{selectedAppointment?.issue}</span>
               </div>
               <div className="dd-patient-detail">
-                <span className="dd-detail-label">Scheduled:</span>
-                <span className="dd-detail-value">{selectedAppointment?.scheduledTime}</span>
+                <span className="dd-detail-label">Schedule:</span>
+                <span className="dd-detail-value">
+                  {selectedAppointment?.bookedSchedule
+                    ? `${selectedAppointment.bookedSchedule.label} (${selectedAppointment.bookedSchedule.range}) · Slot ${selectedAppointment.bookedSlotTime}`
+                    : selectedAppointment?.bookedSlotTime || "Not available"}
+                </span>
               </div>
               <div className="dd-patient-detail">
                 <span className="dd-detail-label">Token:</span>
@@ -4583,6 +4703,12 @@ const DoctorDashboard = () => {
             onClick={handleStartFromConsent}
             className="dd-consent-start-btn"
             size="sm"
+            disabled={!canStartAppointment(selectedAppointment)}
+            title={
+              selectedAppointment && !isAppointmentStartTimeReached(selectedAppointment, now)
+                ? `Available at ${selectedAppointment.scheduledTime || "the appointment time"}`
+                : undefined
+            }
           >
             <i className="bi bi-play-circle me-1"></i>
             Start Consultation

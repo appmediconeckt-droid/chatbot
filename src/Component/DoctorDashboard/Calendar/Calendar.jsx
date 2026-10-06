@@ -566,6 +566,11 @@ const DoctorCalendar = () => {
     return dateToCheck < today;
   };
 
+  const isPastDateKey = (dateKey) => {
+    const [year, month, day] = String(dateKey || "").split("-").map(Number);
+    return Boolean(year && month && day) && isPastDate(year, month - 1, day);
+  };
+
   // Check if a date-time is in the past
   const isPastDateTime = (year, month, day, hour, minute) => {
     const now = new Date();
@@ -1587,6 +1592,7 @@ const DoctorCalendar = () => {
     const dateSet = new Set();
     for (let d = 1; d <= totalDays; d++) {
       const dateKey = formatDateKey(year, month, d);
+      if (isPastDateKey(dateKey)) continue;
       const weekday = new Date(year, month, d).getDay();
       const isBlocked = Boolean(availabilityDateMap[dateKey]?.blocked);
       const dateRanges = availabilityDateMap[dateKey]?.ranges || [];
@@ -1711,6 +1717,7 @@ const DoctorCalendar = () => {
   const configuredDatesCount = Object.values(availabilityDateMap).filter((item) => item?.ranges?.length).length;
   const recurringConfiguredCount = Object.values(availabilityWeekdayMap).filter((ranges) => ranges?.length).length;
   const visibleSlotPreview = slotPreview.filter((entry) => {
+    if (isPastDateKey(entry.date)) return false;
     const dateInfo = availabilityDateMap[entry.date] || {};
     if (activeCalendarTab === "unavailable") return Boolean(entry.blocked || dateInfo.blocked);
     if (activeCalendarTab === "specific") {
@@ -1725,6 +1732,7 @@ const DoctorCalendar = () => {
       Boolean(availabilityWeekdayMap[weekday]?.length)
     );
   });
+  const futureSlotPreview = slotPreview.filter((entry) => !isPastDateKey(entry.date));
 
   const getPeriodLabel = (time = "00:00") => {
     const h = parseInt(String(time).split(":")[0], 10);
@@ -2589,11 +2597,11 @@ const DoctorCalendar = () => {
             Current Clinic
           </span>
         </h5>
-        {slotPreview.length === 0 ? (
+        {futureSlotPreview.length === 0 ? (
           <p className="text-muted">No slots generated yet for {selectedClinic.name}.</p>
         ) : (
           <div className="row">
-            {slotPreview.map((e, i) => (
+            {futureSlotPreview.map((e, i) => (
               <div key={i} className="col-12 col-md-4 mb-2">
                 <div className="p-3 border rounded slot-card">
                   <div className="d-flex justify-content-between align-items-start">
