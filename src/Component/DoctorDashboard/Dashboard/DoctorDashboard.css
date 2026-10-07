@@ -459,6 +459,13 @@
   color: #0052c8;
 }
 
+.dd-row-actions button.dd-complete-row-action,
+.dd-live-actions button.dd-complete-row-action {
+  background: #138a4b;
+  border: 1px solid #138a4b;
+  color: #ffffff;
+}
+
 .dd-row-actions button:disabled,
 .dd-next-patient-card button:disabled {
   cursor: not-allowed;

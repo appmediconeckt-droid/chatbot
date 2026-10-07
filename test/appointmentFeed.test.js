@@ -149,6 +149,24 @@ test("allows either of the next two appointments to start when the doctor is fre
   assert.equal(canStart({ slotStartReached: false }), false);
 });
 
+test("allows the next pending token after the previous token is completed", () => {
+  const appointment = { status: "pending" };
+  assert.equal(canStartConsultation({
+    appointment,
+    hasActiveConsultation: false,
+    isOnBreak: false,
+    slotStartReached: false,
+    queueTurnReached: true,
+  }), true);
+  assert.equal(canStartConsultation({
+    appointment,
+    hasActiveConsultation: true,
+    isOnBreak: false,
+    slotStartReached: false,
+    queueTurnReached: true,
+  }), false);
+});
+
 test("consultation start eligibility follows booked slot time, not delayed estimate", () => {
   const appointment = {
     appointment_date: "2026-10-05",

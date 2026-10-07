@@ -261,6 +261,7 @@ export const canStartConsultation = ({
   hasActiveConsultation,
   isOnBreak,
   slotStartReached,
+  queueTurnReached = false,
 }) =>
   Boolean(appointment) &&
   ["pending", "confirmed"].includes(
@@ -268,7 +269,7 @@ export const canStartConsultation = ({
   ) &&
   !hasActiveConsultation &&
   !isOnBreak &&
-  slotStartReached;
+  (slotStartReached || queueTurnReached);
 
 export const isBookedAppointmentStartTimeReached = (appointment, nowMs = Date.now()) => {
   const dateValue = pickFirst(

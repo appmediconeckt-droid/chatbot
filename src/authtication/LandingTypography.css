@@ -132,6 +132,40 @@
   line-height: 1.45 !important;
 }
 
+/* Keep the header login CTA readable over the hero image. LandingTypography is
+   imported last, so this scoped state restores the green CTA after generic
+   button hover styles run. */
+.humaeli .header .header-actions .btn-secondary,
+.humaeli .header.header-scrolled .header-actions .btn-secondary,
+.humaeli .header .header-actions .btn-secondary:hover,
+.humaeli .header.header-scrolled .header-actions .btn-secondary:hover,
+.humaeli .header .header-actions .btn-secondary:focus-visible,
+.humaeli .header.header-scrolled .header-actions .btn-secondary:focus-visible {
+  background: linear-gradient(135deg, #20b995 0%, #17a782 100%) !important;
+  border-color: rgba(255, 255, 255, .65) !important;
+  color: #fff !important;
+  box-shadow: 0 8px 20px rgba(8, 116, 95, .22) !important;
+}
+
+.humaeli .header .header-actions .btn-secondary:hover,
+.humaeli .header.header-scrolled .header-actions .btn-secondary:hover,
+.humaeli .header .header-actions .btn-secondary:focus-visible,
+.humaeli .header.header-scrolled .header-actions .btn-secondary:focus-visible {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #18a982 0%, #08745f 100%) !important;
+  border-color: rgba(255, 255, 255, .85) !important;
+}
+
+.humaeli .header .header-actions .btn-secondary:active,
+.humaeli .header.header-scrolled .header-actions .btn-secondary:active {
+  transform: translateY(0);
+}
+
+.humaeli .header .header-actions .btn-secondary i,
+.humaeli .header.header-scrolled .header-actions .btn-secondary i {
+  color: currentColor !important;
+}
+
 @media (max-width: 768px) {
   .humaeli .section-title {
     font-size: clamp(1.8rem, 7vw, 2.3rem) !important;

@@ -2235,10 +2235,16 @@ const getAppointmentApiUrl = (appointment) =>
   `${API_BASE_URL}/${getAppointmentSource(appointment) === "walkin" ? "walkin-appointments" : "appointments"}/${appointment.apiId || appointment.id}`;
 
 const getStatusUpdatePayload = (appointment, status, extraFields = {}) => {
+  const normalizedStatus = String(status || "").toLowerCase().replace(/-/g, "_");
   if (getAppointmentSource(appointment) === "walkin") {
     return { ...extraFields, status: status.toLowerCase() };
   }
-  return { ...extraFields, appointment_status: status };
+  return {
+    ...extraFields,
+    appointment_status: status,
+    ...(normalizedStatus === "completed" ? { queue_status: "completed" } : {}),
+    ...(normalizedStatus === "in_progress" ? { queue_status: "in_progress" } : {}),
+  };
 };
 
 const getStoredAuthUser = () => {
@@ -3654,7 +3660,25 @@ const DoctorDashboard = () => {
         return dateA - dateB;
       });
 
-      setAppointments(todayAppointments.map((apt) => formatAppointment(apt, undefined, availabilityRanges)));
+      const formattedTodayAppointments = todayAppointments.map((apt) => formatAppointment(apt, undefined, availabilityRanges));
+      setAppointments(formattedTodayAppointments);
+      const serverActiveAppointment = formattedTodayAppointments.find((apt) => apt.status === "in-progress");
+      if (serverActiveAppointment) {
+        setActiveSession((current) => {
+          if (current?.appt || current?.status === "break") return current;
+          const startTime = Date.parse(serverActiveAppointment.consultationStartedAt) || Date.now();
+          return {
+            appt: serverActiveAppointment,
+            startTime,
+            accumulatedPauseMs: 0,
+            pauseStartMs: null,
+            breakStartMs: null,
+            breakEndMs: null,
+            breakDurationMs: null,
+            status: "started",
+          };
+        });
+      }
       setCancelledAppointments(
         appointmentList
           .filter((apt) => normalizeAppointmentStatus(apt) === "cancelled")
@@ -3978,24 +4002,31 @@ const DoctorDashboard = () => {
 
   // Complete appointment immediately
   const handleCompleteNow = async () => {
-    if (!activeSession) return;
+    const currentSession = activeSession || (activeAppt ? {
+      appt: activeAppt,
+      startTime: Date.parse(activeAppt.consultationStartedAt) || Date.now(),
+      accumulatedPauseMs: 0,
+      pauseStartMs: null,
+      breakStartMs: null,
+    } : null);
+    if (!currentSession?.appt) return;
     const endTime = Date.now();
 
-    let finalAccumulated = activeSession.accumulatedPauseMs;
-    if (activeSession.pauseStartMs)
-      finalAccumulated += Date.now() - activeSession.pauseStartMs;
-    if (activeSession.breakStartMs)
-      finalAccumulated += Date.now() - activeSession.breakStartMs;
+    let finalAccumulated = currentSession.accumulatedPauseMs;
+    if (currentSession.pauseStartMs)
+      finalAccumulated += Date.now() - currentSession.pauseStartMs;
+    if (currentSession.breakStartMs)
+      finalAccumulated += Date.now() - currentSession.breakStartMs;
 
     const totalTreatmentMs = Math.max(
       0,
-      endTime - activeSession.startTime - finalAccumulated
+      endTime - currentSession.startTime - finalAccumulated
     );
 
     const completedRecord = {
-      ...activeSession.appt,
+      ...currentSession.appt,
       status: "completed",
-      startTime: activeSession.startTime,
+      startTime: currentSession.startTime,
       endTime,
       durationMs: totalTreatmentMs,
       diagnosis: "Not specified",
@@ -4008,14 +4039,14 @@ const DoctorDashboard = () => {
 
     // Update appointment status in API
     try {
-      await axios.patch(getAppointmentApiUrl(activeSession.appt), getStatusUpdatePayload(
-        activeSession.appt,
+      await axios.patch(getAppointmentApiUrl(currentSession.appt), getStatusUpdatePayload(
+        currentSession.appt,
         "completed"
       ), {
         headers: getAuthHeaders(),
       });
       setCompleted((prev) => [completedRecord, ...prev]);
-      setAppointments((prev) => prev.filter((a) => a.id !== activeSession.appt.id));
+      setAppointments((prev) => prev.filter((a) => a.id !== currentSession.appt.id));
       setActiveSession(null);
       await fetchAppointments();
     } catch (err) {
@@ -4026,24 +4057,31 @@ const DoctorDashboard = () => {
 
   // Save completed appointment from modal
   const saveCompleteModal = async (formData) => {
-    if (!activeSession) return;
+    const currentSession = activeSession || (activeAppt ? {
+      appt: activeAppt,
+      startTime: Date.parse(activeAppt.consultationStartedAt) || Date.now(),
+      accumulatedPauseMs: 0,
+      pauseStartMs: null,
+      breakStartMs: null,
+    } : null);
+    if (!currentSession?.appt) return;
     const endTime = Date.now();
 
-    let finalAccumulated = activeSession.accumulatedPauseMs;
-    if (activeSession.pauseStartMs)
-      finalAccumulated += Date.now() - activeSession.pauseStartMs;
-    if (activeSession.breakStartMs)
-      finalAccumulated += Date.now() - activeSession.breakStartMs;
+    let finalAccumulated = currentSession.accumulatedPauseMs;
+    if (currentSession.pauseStartMs)
+      finalAccumulated += Date.now() - currentSession.pauseStartMs;
+    if (currentSession.breakStartMs)
+      finalAccumulated += Date.now() - currentSession.breakStartMs;
 
     const totalTreatmentMs = Math.max(
       0,
-      endTime - activeSession.startTime - finalAccumulated
+      endTime - currentSession.startTime - finalAccumulated
     );
 
     const completedRecord = {
-      ...activeSession.appt,
+      ...currentSession.appt,
       status: "completed",
-      startTime: activeSession.startTime,
+      startTime: currentSession.startTime,
       endTime,
       durationMs: totalTreatmentMs,
       diagnosis: formData.diagnosis,
@@ -4068,7 +4106,7 @@ const DoctorDashboard = () => {
 
     // Update appointment status in API
     try {
-      await axios.patch(getAppointmentApiUrl(activeSession.appt), getStatusUpdatePayload(activeSession.appt, "completed", {
+      await axios.patch(getAppointmentApiUrl(currentSession.appt), getStatusUpdatePayload(currentSession.appt, "completed", {
         end_time: endTime,
         duration_ms: totalTreatmentMs,
         diagnosis: formData.diagnosis,
@@ -4090,7 +4128,7 @@ const DoctorDashboard = () => {
         headers: getAuthHeaders(),
       });
       setCompleted((prev) => [completedRecord, ...prev]);
-      setAppointments((prev) => prev.filter((a) => a.id !== activeSession.appt.id));
+      setAppointments((prev) => prev.filter((a) => a.id !== currentSession.appt.id));
       setLastCompletedAppointment(completedRecord);
       setActiveSession(null);
       setShowCompleteModal(false);
@@ -4224,7 +4262,8 @@ const DoctorDashboard = () => {
     return Math.max(0, activeSession.breakEndMs - Date.now());
   };
 
-  const activeAppt = activeSession?.appt || null;
+  const serverInProgressAppt = appointments.find((appt) => appt.status === "in-progress") || null;
+  const activeAppt = activeSession?.appt || serverInProgressAppt || null;
   const elapsedMs = computeElapsedMs();
   const breakRemainingMs = getBreakRemainingMs();
   const visibleAppointments = appointments.filter((appt) => !isAppointmentSlotExpired(appt, now));
@@ -4249,12 +4288,17 @@ const DoctorDashboard = () => {
   const nextPatient = activeAppt || pendingAppointments[0] || upcomingAppointments[0] || null;
   const totalToday = upcomingAppointments.length + completed.length;
   const completionPercent = totalToday ? Math.round((completed.length / totalToday) * 100) : 0;
+  const getPendingQueueIndex = (appointment) =>
+    pendingAppointments.findIndex((item) => item.id === appointment?.id);
+  const isQueueTurnAvailable = (appointment) =>
+    completed.length > 0 && getPendingQueueIndex(appointment) === 0;
   const canStartAppointment = (appointment) =>
     canStartConsultation({
       appointment,
-      hasActiveConsultation: Boolean(activeSession?.appt),
+      hasActiveConsultation: Boolean(activeAppt),
       isOnBreak: activeSession?.status === "break",
       slotStartReached: isAppointmentStartTimeReached(appointment, now),
+      queueTurnReached: isQueueTurnAvailable(appointment),
     });
   const dateParts = new Date(now).toLocaleDateString("en-US", {
     weekday: "long",
@@ -4368,7 +4412,7 @@ const DoctorDashboard = () => {
                     <i className="bi bi-clipboard-check"></i>
                     Checked
                   </button>
-                  <button type="button" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
+                  <button type="button" className="dd-complete-row-action" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
                     <i className="bi bi-check-circle"></i>
                     Complete
                   </button>
@@ -4399,7 +4443,7 @@ const DoctorDashboard = () => {
                     activeTab: activeQueueTab,
                     appointment: appt,
                     slotStartReached: isSlotStartReached,
-                    pendingIndex: pendingAppointments.findIndex((item) => item.id === appt.id),
+                    pendingIndex: getPendingQueueIndex(appt),
                   });
                   const canStartThisAppointment = canStartAppointment(appt);
 
@@ -4465,9 +4509,15 @@ const DoctorDashboard = () => {
                             View
                           </button>
                         ) : !getRemoteConsultationMode(appt) && isActive ? (
-                          <button type="button" onClick={handleChecked} disabled={activeSession?.status === "break"}>
-                            Continue
-                          </button>
+                          <>
+                            <button type="button" className="ghost" onClick={handleChecked} disabled={activeSession?.status === "break"}>
+                              Continue
+                            </button>
+                            <button type="button" className="dd-complete-row-action" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
+                              <i className="bi bi-check-circle"></i>
+                              Complete
+                            </button>
+                          </>
                         ) : !getRemoteConsultationMode(appt) ? (
                           <button
                             type="button"
@@ -4507,7 +4557,7 @@ const DoctorDashboard = () => {
           <aside className="dd-right-panel">
             <section className="dd-next-patient-card">
               <div className="dd-next-top">
-                <span><i className="bi bi-dot"></i> Next Patient</span>
+                <span><i className="bi bi-dot"></i> {activeAppt ? "Current Patient" : "Next Patient"}</span>
                 <strong>{nextPatient?.scheduledTime || "--:--"}</strong>
               </div>
               <div className="dd-next-body">
@@ -4525,22 +4575,28 @@ const DoctorDashboard = () => {
                 type="button"
                 onClick={() => {
                   if (!nextPatient) return;
+                  if (activeAppt) {
+                    handleCompleteNow();
+                    return;
+                  }
                   const remoteMode = getRemoteConsultationMode(nextPatient);
                   if (remoteMode) {
                     navigate('/patient-sms', { state: { callTargetId: nextPatient.patientId, autoStartCallType: remoteMode, appointment: nextPatient } });
                     return;
                   }
-                  activeAppt ? handleChecked() : handleConsentClick(nextPatient);
+                  handleConsentClick(nextPatient);
                 }}
                 disabled={
                   !nextPatient ||
                   activeSession?.status === "break" ||
                   (!activeAppt && !getRemoteConsultationMode(nextPatient) && !canStartAppointment(nextPatient)) ||
-                  (Boolean(getRemoteConsultationMode(nextPatient)) && (!isAppointmentCallWindowOpen(nextPatient) || !nextPatient?.patientId))
+                  (!activeAppt && Boolean(getRemoteConsultationMode(nextPatient)) && (!isAppointmentCallWindowOpen(nextPatient) || !nextPatient?.patientId))
                 }
               >
-                <i className={`bi ${getRemoteConsultationMode(nextPatient) === "video" ? "bi-camera-video-fill" : getRemoteConsultationMode(nextPatient) === "voice" ? "bi-telephone-fill" : "bi-clipboard2-pulse"}`}></i>
-                {getRemoteConsultationMode(nextPatient) === "video"
+                <i className={`bi ${activeAppt ? "bi-check-circle" : getRemoteConsultationMode(nextPatient) === "video" ? "bi-camera-video-fill" : getRemoteConsultationMode(nextPatient) === "voice" ? "bi-telephone-fill" : "bi-clipboard2-pulse"}`}></i>
+                {activeAppt
+                  ? "Complete Current"
+                  : getRemoteConsultationMode(nextPatient) === "video"
                   ? "Video Call"
                   : getRemoteConsultationMode(nextPatient) === "voice"
                     ? "Voice Call"
@@ -4705,7 +4761,9 @@ const DoctorDashboard = () => {
             size="sm"
             disabled={!canStartAppointment(selectedAppointment)}
             title={
-              selectedAppointment && !isAppointmentStartTimeReached(selectedAppointment, now)
+              selectedAppointment &&
+              !isAppointmentStartTimeReached(selectedAppointment, now) &&
+              !isQueueTurnAvailable(selectedAppointment)
                 ? `Available at ${selectedAppointment.scheduledTime || "the appointment time"}`
                 : undefined
             }
