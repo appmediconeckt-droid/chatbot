@@ -9,11 +9,36 @@ import axiosInstance from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import "./TokenStatusPage.css";
-import { formatTimer, getLiveTokenTiming } from "./tokenTiming.js";
+import { formatTimer, formatWaitLabel, getLiveTokenTiming } from "./tokenTiming.js";
 
 const TOKEN_STATUS_ENDPOINT = "/api/appointments/my-token-status";
 const POLL_INTERVAL_MS = 10000;
 const SOCKET_DEBOUNCE_MS = 500;
+const TERMINAL_APPOINTMENT_STATUSES = new Set([
+  "completed",
+  "cancelled",
+  "canceled",
+  "rejected",
+  "reject",
+  "no-show",
+  "no_show",
+]);
+
+const normalizeStatus = (value) => String(value || "").toLowerCase();
+
+const isActiveTokenItem = (item) => {
+  const appointment = item?.appointment || {};
+  const token = item?.token || {};
+
+  return (
+    !TERMINAL_APPOINTMENT_STATUSES.has(normalizeStatus(appointment.status)) &&
+    !TERMINAL_APPOINTMENT_STATUSES.has(normalizeStatus(token.queueStatus)) &&
+    !appointment.consultationEndedAt &&
+    !appointment.consultation_ended_at &&
+    !appointment.consultationTiming?.endedAt &&
+    !appointment.consultation_timing?.endedAt
+  );
+};
 
 const formatAppointmentDateTime = (appointment) => {
   if (!appointment) return "";
@@ -62,6 +87,46 @@ const formatEstimatedTurnTime = (value) => {
     minute: "2-digit",
   });
 };
+
+const formatDateTimeValue = (value) => {
+  if (!value) return "--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--";
+  return date.toLocaleString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+};
+
+const formatMinuteDifference = (minutes) => {
+  if (minutes == null || !Number.isFinite(Number(minutes))) return "";
+  const value = Math.abs(Math.round(Number(minutes)));
+  if (value === 0) return "on time";
+  return `${value} min ${Number(minutes) > 0 ? "late" : "early"}`;
+};
+
+const getTimingMessage = (appointment = {}, queue = {}, liveTiming = {}) => {
+  if (queue.notice) return queue.notice;
+  if (queue.estimateUncertain) {
+    return "Your number may be called anytime. Please stay near the clinic.";
+  }
+  const relation = queue.timingRelation || appointment.timingRelation;
+  const diff = queue.timingDifferenceMinutes ?? appointment.timingDifferenceMinutes;
+  const wait = formatWaitLabel(liveTiming.waiting);
+  if (liveTiming.waiting != null) {
+    if (relation === "early") return `Your number may come in ${wait}, about ${Math.abs(Math.round(Number(diff) || 0))} min before the appointment time.`;
+    if (relation === "late") return `Your number may come in ${wait}, about ${Math.abs(Math.round(Number(diff) || 0))} min after the appointment time.`;
+    return `Your number may come in ${wait}.`;
+  }
+  return "Waiting time updates with the live clinic queue.";
+};
+
+const getWaitDisplay = (queue = {}, liveTiming = {}) => (
+  queue.estimateUncertain ? "Anytime" : formatWaitLabel(liveTiming.waiting)
+);
 
 const getDoctorName = (item) => {
   const doctor = item?.appointment?.doctor;
@@ -125,8 +190,12 @@ const TokenStatusPage = () => {
       const response = await axiosInstance.get(TOKEN_STATUS_ENDPOINT);
       if (!isMountedRef.current) return;
 
+      if (response.data?.success === false) {
+        throw new Error(response.data?.message || "Unable to load token status");
+      }
+
       const list = Array.isArray(response.data?.appointments)
-        ? response.data.appointments
+        ? response.data.appointments.filter(isActiveTokenItem)
         : [];
 
       setAppointments(list);
@@ -153,11 +222,14 @@ const TokenStatusPage = () => {
         err?.response?.data || err,
       );
 
-      setError(
-        err?.response?.data?.message ||
-          tRef.current("error_load_token") ||
-          "Could not load token status.",
-      );
+      if (!silent) {
+        setError(
+          err?.response?.data?.message ||
+            err?.message ||
+            tRef.current("error_load_token") ||
+            "Could not load token status.",
+        );
+      }
 
       if (!silent) setAppointments([]);
     } finally {
@@ -232,10 +304,11 @@ const TokenStatusPage = () => {
   const currentData = selectedItem?.current || {};
   const queueData = selectedItem?.queue || {};
   const emergencyData = selectedItem?.emergency || {};
-  const isTerminalAppointment = ["completed", "cancelled", "canceled", "rejected", "reject", "no-show", "no_show"].includes(appointment.status)
-    || ["completed", "cancelled", "canceled", "rejected", "reject", "no-show", "no_show"].includes(tokenData.queueStatus);
+  const isTerminalAppointment = !isActiveTokenItem(selectedItem);
   const liveTiming = getLiveTokenTiming(currentData, queueData, now + clockOffset);
   const doctorStatusLabel = { consulting: "Consulting", paused: "Paused", break: "On break", waiting: "Not started" }[currentData.doctorStatus] || "Not started";
+  const bookedAt = appointment.bookedAt || appointment.createdAt;
+  const timingMessage = getTimingMessage(appointment, queueData, liveTiming);
 
   return (
     <div className="token-status-page">
@@ -357,14 +430,9 @@ const TokenStatusPage = () => {
                 {getDoctorName(selectedItem)}
               </div>
 
-              <div
-                style={{
-                  marginBottom: 14,
-                  fontSize: 13,
-                  opacity: 0.75,
-                }}
-              >
-                {formatAppointmentDateTime(appointment)}
+              <div className="token-appointment-meta">
+                <span>Booked: {formatDateTimeValue(bookedAt)}</span>
+                <span>Appointment: {formatAppointmentDateTime(appointment) || "--"}</span>
               </div>
 
               {isTerminalAppointment ? (
@@ -378,10 +446,10 @@ const TokenStatusPage = () => {
                 {currentData.consultationStartedAt ? (
                   <>
                     <strong>{currentData.isYourTurn ? "Your checkup" : "Current checkup"}: {formatTimer(liveTiming.elapsed)}</strong>
-                    <p>{currentData.isYourTurn ? "The doctor is checking your appointment." : "Estimated waiting time updates as the doctor checks patients."}</p>
+                    <p>{currentData.isYourTurn ? "The doctor is checking your appointment." : timingMessage}</p>
                     {(currentData.doctorStatus === "paused" || currentData.doctorStatus === "break") && <p>Timer paused while the doctor is {currentData.doctorStatus === "break" ? "on break" : "paused"}.</p>}
                   </>
-                ) : <p>Estimated waiting time will appear when the doctor starts a checkup.</p>}
+                ) : <p>{timingMessage}</p>}
               </div>
               <div className="token-stats-grid">
                 <div className="token-stat your-token">
@@ -400,15 +468,15 @@ const TokenStatusPage = () => {
                   <span className="token-stat-value">
                     {currentData.currentToken ?? "--"}
                   </span>
+                  <span className="token-stat-help">Current token</span>
                 </div>
 
                 <div className="token-stat">
-                  <span className="token-stat-label">
-                    {t("waiting_count") || "Waiting"}
-                  </span>
+                  <span className="token-stat-label">Your number in</span>
                   <span className="token-stat-value">
-                    {queueData.totalWaiting ?? "--"}
+                    {getWaitDisplay(queueData, liveTiming)}
                   </span>
+                  <span className="token-stat-help">{queueData.estimateUncertain ? "Can be called anytime" : "Approximate"}</span>
                 </div>
               </div>
 
@@ -429,9 +497,9 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
-                  <span className="token-stat-label">Estimated Wait</span>
+                  <span className="token-stat-label">Total Waiting</span>
                   <span className="token-stat-value">
-                    {formatTimer(liveTiming.waiting)}
+                    {queueData.totalWaiting ?? "--"}
                   </span>
                 </div>
               </div>
@@ -445,16 +513,39 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-label">Appointment Timing</span>
+                  <span className="token-stat-value token-stat-value-small">
+                    {formatMinuteDifference(queueData.timingDifferenceMinutes ?? appointment.timingDifferenceMinutes) || "--"}
+                  </span>
+                </div>
+
+                <div className="token-stat">
                   <span className="token-stat-label">Doctor Status</span>
                   <span className="token-stat-value">
                     {doctorStatusLabel}
                   </span>
                 </div>
+              </div>
 
+              <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
                   <span className="token-stat-label">Queue Status</span>
                   <span className="token-stat-value">
                     {tokenData.queueStatus || "--"}
+                  </span>
+                </div>
+
+                <div className="token-stat">
+                  <span className="token-stat-label">Scheduled Time</span>
+                  <span className="token-stat-value token-stat-value-small">
+                    {formatEstimatedTurnTime(appointment.scheduledStartAt)}
+                  </span>
+                </div>
+
+                <div className="token-stat">
+                  <span className="token-stat-label">Live Start</span>
+                  <span className="token-stat-value token-stat-value-small">
+                    {formatEstimatedTurnTime(appointment.estimatedStartAt || queueData.estimatedTurnTime)}
                   </span>
                 </div>
               </div>

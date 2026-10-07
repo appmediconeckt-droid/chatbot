@@ -145,7 +145,37 @@
     font-size: 15px;
     font-weight: 600;
     color: #111827;
-    margin-bottom: 16px;
+    margin-bottom: 8px;
+}
+
+.token-appointment-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 14px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.token-live-timing {
+    border: 1px solid #c7d2fe;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: #1f2a68;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.token-live-timing strong {
+    display: block;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.token-live-timing p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.45;
 }
 
 .token-stats-grid {
@@ -162,6 +192,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
+    min-width: 0;
 }
 
 .token-stat.your-token {
@@ -183,4 +214,34 @@
     font-size: 26px;
     font-weight: 700;
     color: #111827;
+    overflow-wrap: anywhere;
+}
+
+.token-stat-value-small {
+    font-size: 18px;
+}
+
+.token-stat-help {
+    color: #6b7280;
+    font-size: 11px;
+}
+
+@media (max-width: 980px) {
+    .token-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 520px) {
+    .token-status-page {
+        padding: 16px;
+    }
+
+    .token-detail-panel {
+        padding: 16px;
+    }
+
+    .token-stats-grid {
+        grid-template-columns: 1fr;
+    }
 }

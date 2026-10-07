@@ -19,7 +19,7 @@ export const getAppointmentPatientDetails = (appointment, imageOrigin = "") => {
     resolveProfileImage(appointment, imageOrigin);
 
   return {
-    patientName: appointment.patient_name || patient.fullName || patient.full_name || patient.name || patient.patient_name || "N/A",
+    patientName: patient.fullName || patient.full_name || appointment.patient_name || patient.name || patient.patient_name || "N/A",
     phone: patient.phoneNumber || patient.phone || patient.phone_number || patient.mobile
       || appointment.patient_phone || appointment.phone_number || appointment.phoneNumber || appointment.phone || appointment.mobile || patient.patient_phone || "N/A",
     location: formatPatientLocation(appointment.patient_location) || formatPatientLocation(patient.address)

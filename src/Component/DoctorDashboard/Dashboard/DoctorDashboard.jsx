@@ -1,4 +1,4 @@
-import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctorAppointmentFeed, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../appointmentFeed.js";
+import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctorAppointmentFeed, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, getCancelledAppointmentHistory, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../appointmentFeed.js";
 // // DoctorDashboard.jsx
 // import React, { useEffect, useRef, useState } from "react";
 // import {
@@ -16,9 +16,6 @@ import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctor
 //   Dropdown,
 // } from "react-bootstrap";
 // import "./DoctorDashboard.css";
-// import { jsPDF } from "jspdf";
-// import "jspdf-autotable";
-// import html2canvas from "html2canvas";
 // import { motion } from "framer-motion";
 // import { logoHorizontal as logo } from "../../../assets/brandAssets";
 // import { API_BASE_URL } from "../doctorApi.js";
@@ -2097,7 +2094,7 @@ import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctor
 //           </Button>
 //           <Button
 //             variant="primary"
-//             onClick={handleStartFromConsent}
+//             onClick={() => handleStartFromConsent()}
 //             className="dd-consent-start-btn"
 //             size="sm"
 //           >
@@ -2130,7 +2127,7 @@ import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctor
 //         show={showSummaryModal}
 //         onHide={() => setShowSummaryModal(false)}
 //         appointmentData={lastCompletedAppointment}
-//         onPrint={handlePrintSummary}
+//         doctorName={doctorName}
 //         onCompleteWithoutPrint={handleCompleteWithoutPrint}
 //       />
 //     </div>
@@ -2158,11 +2155,11 @@ import {
   Alert,
 } from "react-bootstrap";
 import "./DoctorDashboard.css";
-import { jsPDF } from "jspdf";
-import "jspdf-autotable";
-import html2canvas from "html2canvas";
-import { motion } from "framer-motion";
-import { logoHorizontal as logo } from "../../../assets/brandAssets";
+import PrescriptionDocument from "../../common/PrescriptionDocument";
+import { getDoctorBreakTiming } from "../doctorBreakState.js";
+import { getAppointmentBookingType } from "../appointmentFeed.js";
+import { downloadConsultationPrescription } from "../../common/downloadPrescription";
+
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import { useNavigate } from "react-router-dom";
@@ -2235,10 +2232,16 @@ const getAppointmentApiUrl = (appointment) =>
   `${API_BASE_URL}/${getAppointmentSource(appointment) === "walkin" ? "walkin-appointments" : "appointments"}/${appointment.apiId || appointment.id}`;
 
 const getStatusUpdatePayload = (appointment, status, extraFields = {}) => {
+  const normalizedStatus = String(status || "").toLowerCase().replace(/-/g, "_");
   if (getAppointmentSource(appointment) === "walkin") {
     return { ...extraFields, status: status.toLowerCase() };
   }
-  return { ...extraFields, appointment_status: status };
+  return {
+    ...extraFields,
+    appointment_status: status,
+    ...(normalizedStatus === "completed" ? { queue_status: "completed" } : {}),
+    ...(normalizedStatus === "in_progress" ? { queue_status: "in_progress" } : {}),
+  };
 };
 
 const getStoredAuthUser = () => {
@@ -2395,6 +2398,7 @@ const normalizeAppointmentStatus = (appointment, forcedStatus) => {
   if (!forcedStatus) {
     if (["in-progress", "in_progress", "in-consultation", "in_consultation"].includes(queueStatus)) return "in-progress";
     if (queueStatus === "no_show" || queueStatus === "no-show") return "no-show";
+    if (queueStatus === "skipped") return "skipped";
     if (queueStatus === "completed") return "completed";
     if (queueStatus === "cancelled" || queueStatus === "canceled") return "cancelled";
   }
@@ -2409,6 +2413,7 @@ const normalizeAppointmentStatus = (appointment, forcedStatus) => {
   if (status === "completed" || status === "complete") return "completed";
   if (status === "cancelled" || status === "canceled") return "cancelled";
   if (status === "no-show" || status === "no_show") return "no-show";
+  if (status === "skipped") return "skipped";
   if (status === "confirmed" || status === "accepted" || status === "active") return "confirmed";
   if (status === "in-progress" || status === "in_progress" || status === "in-consultation" || status === "in_consultation") return "in-progress";
   if (status === "scheduled" || status === "booked" || status === "approved" || status === "waiting" || status === "queued" || status === "") return "pending";
@@ -2465,7 +2470,7 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
     id: `${appointmentSource}-${apiId}`,
     apiId,
     appointmentSource,
-    appointmentType: String(pickFirst(appointment?.priority, "")).toLowerCase() === "emergency" ? "Emergency Request" : (appointmentSource === "walkin" ? "Walk-in" : "Online"),
+    appointmentType: String(pickFirst(appointment?.priority, "")).toLowerCase() === "emergency" ? "Emergency Request" : (getAppointmentBookingType(appointment) === "walkin" ? "Walk-in" : "Online"),
     isEmergency: String(pickFirst(appointment?.priority, appointment?.is_emergency, "")).toLowerCase() === "emergency" || appointment?.priority === "emergency" || appointment?.is_emergency === true,
     emergencyReason: pickFirst(appointment?.emergency_reason, appointment?.emergencyReason, ""),
     priority: String(pickFirst(appointment?.priority, "")).toLowerCase() === "emergency" ? "emergency" : "normal",
@@ -2561,6 +2566,8 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
     durationMs: pickFirst(appointment?.duration_ms, appointment?.durationMs),
     diagnosis: appointment?.diagnosis,
     medicine: appointment?.medicine,
+    medicines: appointment?.medicines || [],
+    recommendedTests: appointment?.recommendedTests || appointment?.recommended_tests || [],
     advice: appointment?.advice,
     additionalNotes: pickFirst(appointment?.additional_notes, appointment?.additionalNotes),
     followUpRequired,
@@ -3471,82 +3478,32 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
   );
 };
 
-// Summary Modal (simplified version - keeping core functionality)
-const SummaryModal = ({ show, onHide, appointmentData, onPrint, onCompleteWithoutPrint }) => {
-  const [selectedTheme, setSelectedTheme] = useState(COLOR_THEMES[0]);
-
+const SummaryModal = ({ show, onHide, appointmentData, doctorName, onCompleteWithoutPrint }) => {
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState("");
   if (!appointmentData) return null;
-
-  const clinicName = "City Hospital & Medical Center";
-  const clinicAddress = "Indore Saket Nagar, Madhya Pradesh 452001";
-  const clinicContact = "+91 9876543210";
-  const clinicEmail = "info@cityhospital.com";
-
-  const currentTheme = selectedTheme;
-
+  const download = async () => {
+    setDownloading(true);
+    setDownloadError("");
+    try { await downloadConsultationPrescription(appointmentData, doctorName); }
+    catch { setDownloadError("Unable to download prescription. Please try again."); }
+    finally { setDownloading(false); }
+  };
   return (
-    <Modal show={show} onHide={onHide} centered size="xl" className="dd-summary-modal">
-      <Modal.Header closeButton className="dd-summary-modal-header" style={{
-        background: `linear-gradient(135deg, ${currentTheme.colors.primary} 0%, ${currentTheme.colors.secondary} 100%)`
-      }}>
-        <Modal.Title className="dd-summary-modal-title">
-          Consultation Summary
-        </Modal.Title>
+    <Modal show={show} onHide={onHide} centered size="lg" className="dd-summary-modal">
+      <Modal.Header closeButton className="dd-summary-modal-header">
+        <Modal.Title className="dd-summary-modal-title">Consultation Prescription</Modal.Title>
       </Modal.Header>
-      
-      <Modal.Body className="dd-summary-modal-body p-0" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-        <div id="printable-summary" className="dd-printable-summary p-4">
-          <div className="text-center mb-4">
-            <motion.img
-              src={logo}
-              alt="Hospital Logo"
-              width={220}
-              height={35}
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-            />
-            <h4 className="mt-3" style={{ color: currentTheme.colors.primary }}>{clinicName}</h4>
-            <p>{clinicAddress}</p>
-            <p>{clinicContact} | {clinicEmail}</p>
-          </div>
-
-          <div className="mb-4">
-            <h5 style={{ color: currentTheme.colors.primary }}>Patient Information</h5>
-            <p><strong>Name:</strong> {appointmentData.name}</p>
-            <p><strong>Gender:</strong> {appointmentData.gender}</p>
-            <p><strong>Issue:</strong> {appointmentData.issue}</p>
-          </div>
-
-          <div className="mb-4">
-            <h5 style={{ color: currentTheme.colors.primary }}>Medical Information</h5>
-            <p><strong>Diagnosis:</strong> {appointmentData.diagnosis}</p>
-            <p><strong>Medicine:</strong> {appointmentData.medicine}</p>
-            <p><strong>Advice:</strong> {appointmentData.advice}</p>
-            {appointmentData.additionalNotes && (
-              <p><strong>Additional Notes:</strong> {appointmentData.additionalNotes}</p>
-            )}
-          </div>
-
-          <div className="mb-4">
-            <h5 style={{ color: currentTheme.colors.primary }}>Follow-up</h5>
-            {appointmentData.followUpRequired ? (
-              <p><strong>Follow-up Date:</strong> {formatDate(appointmentData.followUpDate)}</p>
-            ) : (
-              <p>No follow-up required</p>
-            )}
-          </div>
-
-          <div className="mt-5 pt-3 text-right">
-            <p><strong>Dr. Ramesh Kumar</strong></p>
-            <p>MBBS, MD (General Medicine)</p>
-          </div>
-        </div>
+      <Modal.Body className="dd-summary-modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
+        {downloadError && <div className="alert alert-danger" role="alert">{downloadError}</div>}
+        <PrescriptionDocument record={appointmentData} doctorName={doctorName} />
       </Modal.Body>
-      
       <Modal.Footer className="dd-summary-modal-footer">
         <Button className="dd-summary-close-btn" variant="outline-secondary" onClick={onHide}>Close</Button>
         <Button className="dd-summary-complete-btn" variant="success" onClick={onCompleteWithoutPrint}>Mark as Complete</Button>
-        <Button className="dd-summary-print-btn" variant="primary" onClick={() => onPrint(appointmentData, currentTheme)}>Print Summary</Button>
+        <Button className="dd-summary-print-btn" variant="primary" onClick={download} disabled={downloading}>
+          <i className="bi bi-download me-2" aria-hidden="true" />{downloading ? "Downloading..." : "Download PDF"}
+        </Button>
       </Modal.Footer>
     </Modal>
   );
@@ -3631,7 +3588,7 @@ const DoctorDashboard = () => {
         const status = normalizeAppointmentStatus(apt);
         return (
           isTodayAppointment(apt) &&
-          ["pending", "confirmed", "in-progress"].includes(status)
+          ["pending", "confirmed", "in-progress", "skipped"].includes(status)
         );
       });
 
@@ -3654,11 +3611,28 @@ const DoctorDashboard = () => {
         return dateA - dateB;
       });
 
-      setAppointments(todayAppointments.map((apt) => formatAppointment(apt, undefined, availabilityRanges)));
+      const formattedTodayAppointments = todayAppointments.map((apt) => formatAppointment(apt, undefined, availabilityRanges));
+      setAppointments(formattedTodayAppointments);
+      const serverActiveAppointment = formattedTodayAppointments.find((apt) => apt.status === "in-progress");
+      if (serverActiveAppointment) {
+        setActiveSession((current) => {
+          if (current?.appt) return current;
+          const startTime = Date.parse(serverActiveAppointment.consultationStartedAt) || Date.now();
+          if (current?.status === "break") return { ...current, appt: serverActiveAppointment, startTime };
+          return {
+            appt: serverActiveAppointment,
+            startTime,
+            accumulatedPauseMs: 0,
+            pauseStartMs: null,
+            breakStartMs: null,
+            breakEndMs: null,
+            breakDurationMs: null,
+            status: "started",
+          };
+        });
+      }
       setCancelledAppointments(
-        appointmentList
-          .filter((apt) => normalizeAppointmentStatus(apt) === "cancelled")
-          .map((apt) => formatAppointment(apt, undefined, availabilityRanges)),
+        getCancelledAppointmentHistory(appointmentList.map((apt) => formatAppointment(apt, undefined, availabilityRanges))),
       );
 
       const completedList = appointmentList;
@@ -3726,18 +3700,14 @@ const DoctorDashboard = () => {
       .then((response) => {
         if (!response.data?.active || !response.data?.break) return;
         const serverBreak = response.data.break;
-        const breakEndMs = new Date(serverBreak.expected_end_at).getTime();
-        const breakStartMs = new Date(serverBreak.started_at).getTime();
-        if (!breakEndMs || breakEndMs <= Date.now()) return;
+        const timing = getDoctorBreakTiming(serverBreak);
+        if (!timing) return;
         setActiveSession((current) => ({
           appt: current?.appt || null,
-          startTime: current?.startTime || breakStartMs,
+          startTime: current?.startTime || timing.breakStartMs,
           accumulatedPauseMs: current?.accumulatedPauseMs || 0,
           pauseStartMs: null,
-          breakId: serverBreak.id,
-          breakStartMs,
-          breakEndMs,
-          breakDurationMs: Math.max(0, breakEndMs - breakStartMs),
+          ...timing,
           status: "break",
         }));
       })
@@ -3760,9 +3730,29 @@ const DoctorDashboard = () => {
   };
 
   // Start appointment from consent modal
-  const handleStartFromConsent = async () => {
-    if (!selectedAppointment) return;
-    if (!["pending", "confirmed"].includes(selectedAppointment.status)) {
+  const [queueActionBusy, setQueueActionBusy] = useState(false);
+  const handleNextPatient = async () => {
+    if (!selectedAppointment || queueActionBusy || activeSession?.appt || activeSession?.status === "break") return;
+    setQueueActionBusy(true);
+    try {
+      const payload = getAppointmentSource(selectedAppointment) === "walkin"
+        ? { appointment_status: "skipped" }
+        : { queue_status: "skipped" };
+      await axios.patch(getAppointmentApiUrl(selectedAppointment), payload, { headers: getAuthHeaders() });
+      const next = appointments.find((appt) => appt.id !== selectedAppointment.id &&
+        ["pending", "confirmed"].includes(appt.status) && !isAppointmentSlotExpired(appt, Date.now()));
+      setAppointments((current) => current.map((appt) => appt.id === selectedAppointment.id
+        ? { ...appt, status: "skipped", queueStatus: "skipped" } : appt));
+      setSelectedAppointment(next || null);
+      if (!next) { setShowConsentModal(false); setActiveQueueTab("next"); }
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Unable to move patient to Next.");
+    } finally { setQueueActionBusy(false); }
+  };
+
+  const handleStartFromConsent = async (appointment = selectedAppointment) => {
+    if (!appointment || queueActionBusy) return;
+    if (!["pending", "confirmed", "skipped"].includes(appointment.status)) {
       setError("This appointment is not ready to start.");
       return;
     }
@@ -3770,21 +3760,22 @@ const DoctorDashboard = () => {
       setError("Finish the current consultation or break before starting another appointment.");
       return;
     }
-    if (!canStartAppointment(selectedAppointment)) {
+    if (!canStartAppointment(appointment)) {
       setError(
         activeSession?.appt || activeSession?.status === "break"
           ? "Finish the current consultation or break before starting another appointment."
-          : `Consultation can start at ${selectedAppointment.scheduledTime || "the appointment time"}.`,
+          : `Consultation can start at ${appointment.scheduledTime || "the appointment time"}.`,
       );
       return;
     }
 
     let saved;
+    setQueueActionBusy(true);
     try {
-      const isWalkIn = getAppointmentSource(selectedAppointment) === "walkin";
-      const statusUrl = getAppointmentStatusUrl(API_BASE_URL, selectedAppointment);
+      const isWalkIn = getAppointmentSource(appointment) === "walkin";
+      const statusUrl = getAppointmentStatusUrl(API_BASE_URL, appointment);
       const statusPayload = isWalkIn
-        ? getStatusUpdatePayload(selectedAppointment, "in-progress")
+        ? getStatusUpdatePayload(appointment, "in-progress")
         : { status: "in-progress" };
       const response = await axios.patch(statusUrl, statusPayload, { headers: getAuthHeaders() });
       saved = response.data?.appointment || response.data?.data;
@@ -3796,12 +3787,14 @@ const DoctorDashboard = () => {
       }
       setError(err.response?.data?.message || err.message || "Checkup could not be started.");
       return;
+    } finally {
+      setQueueActionBusy(false);
     }
     const startTime = new Date(saved?.consultation_timing?.startedAt || saved?.consultation_started_at || Date.now()).getTime();
     const savedPauses = saved?.consultation_timing?.pauses || [];
     const openPause = savedPauses.find((pause) => !pause.endedAt);
     const session = {
-      appt: selectedAppointment,
+      appt: { ...appointment, status: "in-progress", queueStatus: "in_progress" },
       startTime,
       accumulatedPauseMs: savedPauses.reduce((total, pause) => total + (pause.endedAt ? Math.max(0, Date.parse(pause.endedAt) - Date.parse(pause.startedAt)) : 0), 0),
       pauseStartMs: openPause ? Date.parse(openPause.startedAt) : null,
@@ -3814,12 +3807,13 @@ const DoctorDashboard = () => {
     setActiveSession(session);
     setAppointments((prev) =>
       prev.map((a) =>
-        a.id === selectedAppointment.id ? { ...a, status: "in-progress" } : a
+        a.id === appointment.id ? { ...a, status: "in-progress", queueStatus: "in_progress" } : a
       )
     );
 
     setShowConsentModal(false);
     setSelectedAppointment(null);
+    setActiveQueueTab("in-progress");
   };
 
   // Pause / Resume
@@ -3862,9 +3856,8 @@ const DoctorDashboard = () => {
         reason: "Personal break",
       }, { headers: getAuthHeaders() });
       const serverBreak = response.data?.break || response.data?.data?.break || response.data?.data || response.data;
-      const breakStart = new Date(serverBreak.started_at || Date.now()).getTime();
-      const breakEnd = new Date(serverBreak.expected_end_at || (Date.now() + minutes * 60000)).getTime();
-      const breakDurationMs = Math.max(0, breakEnd - breakStart);
+      const timing = getDoctorBreakTiming(serverBreak, minutes);
+      if (!timing) throw new Error("Active break timing is invalid. Please refresh and try again.");
 
       // The persisted break now owns the pause interval; close a manual pause
       // so the patient's timer resumes when that break ends.
@@ -3878,10 +3871,7 @@ const DoctorDashboard = () => {
         startTime: Date.now(),
         accumulatedPauseMs: 0,
         pauseStartMs: null,
-        breakStartMs: breakStart,
-        breakEndMs: breakEnd,
-        breakDurationMs,
-        breakId: serverBreak.id,
+        ...timing,
         status: "break",
         });
       } else {
@@ -3891,10 +3881,7 @@ const DoctorDashboard = () => {
           ? s.accumulatedPauseMs + (Date.now() - s.pauseStartMs)
           : s.accumulatedPauseMs,
         pauseStartMs: null,
-        breakStartMs: breakStart,
-        breakEndMs: breakEnd,
-        breakDurationMs,
-        breakId: serverBreak.id,
+        ...timing,
         status: "break",
         }));
       }
@@ -3978,24 +3965,31 @@ const DoctorDashboard = () => {
 
   // Complete appointment immediately
   const handleCompleteNow = async () => {
-    if (!activeSession) return;
+    const currentSession = activeSession || (activeAppt ? {
+      appt: activeAppt,
+      startTime: Date.parse(activeAppt.consultationStartedAt) || Date.now(),
+      accumulatedPauseMs: 0,
+      pauseStartMs: null,
+      breakStartMs: null,
+    } : null);
+    if (!currentSession?.appt) return;
     const endTime = Date.now();
 
-    let finalAccumulated = activeSession.accumulatedPauseMs;
-    if (activeSession.pauseStartMs)
-      finalAccumulated += Date.now() - activeSession.pauseStartMs;
-    if (activeSession.breakStartMs)
-      finalAccumulated += Date.now() - activeSession.breakStartMs;
+    let finalAccumulated = currentSession.accumulatedPauseMs;
+    if (currentSession.pauseStartMs)
+      finalAccumulated += Date.now() - currentSession.pauseStartMs;
+    if (currentSession.breakStartMs)
+      finalAccumulated += Date.now() - currentSession.breakStartMs;
 
     const totalTreatmentMs = Math.max(
       0,
-      endTime - activeSession.startTime - finalAccumulated
+      endTime - currentSession.startTime - finalAccumulated
     );
 
     const completedRecord = {
-      ...activeSession.appt,
+      ...currentSession.appt,
       status: "completed",
-      startTime: activeSession.startTime,
+      startTime: currentSession.startTime,
       endTime,
       durationMs: totalTreatmentMs,
       diagnosis: "Not specified",
@@ -4008,14 +4002,14 @@ const DoctorDashboard = () => {
 
     // Update appointment status in API
     try {
-      await axios.patch(getAppointmentApiUrl(activeSession.appt), getStatusUpdatePayload(
-        activeSession.appt,
+      await axios.patch(getAppointmentApiUrl(currentSession.appt), getStatusUpdatePayload(
+        currentSession.appt,
         "completed"
       ), {
         headers: getAuthHeaders(),
       });
       setCompleted((prev) => [completedRecord, ...prev]);
-      setAppointments((prev) => prev.filter((a) => a.id !== activeSession.appt.id));
+      setAppointments((prev) => prev.filter((a) => a.id !== currentSession.appt.id));
       setActiveSession(null);
       await fetchAppointments();
     } catch (err) {
@@ -4026,24 +4020,31 @@ const DoctorDashboard = () => {
 
   // Save completed appointment from modal
   const saveCompleteModal = async (formData) => {
-    if (!activeSession) return;
+    const currentSession = activeSession || (activeAppt ? {
+      appt: activeAppt,
+      startTime: Date.parse(activeAppt.consultationStartedAt) || Date.now(),
+      accumulatedPauseMs: 0,
+      pauseStartMs: null,
+      breakStartMs: null,
+    } : null);
+    if (!currentSession?.appt) return;
     const endTime = Date.now();
 
-    let finalAccumulated = activeSession.accumulatedPauseMs;
-    if (activeSession.pauseStartMs)
-      finalAccumulated += Date.now() - activeSession.pauseStartMs;
-    if (activeSession.breakStartMs)
-      finalAccumulated += Date.now() - activeSession.breakStartMs;
+    let finalAccumulated = currentSession.accumulatedPauseMs;
+    if (currentSession.pauseStartMs)
+      finalAccumulated += Date.now() - currentSession.pauseStartMs;
+    if (currentSession.breakStartMs)
+      finalAccumulated += Date.now() - currentSession.breakStartMs;
 
     const totalTreatmentMs = Math.max(
       0,
-      endTime - activeSession.startTime - finalAccumulated
+      endTime - currentSession.startTime - finalAccumulated
     );
 
     const completedRecord = {
-      ...activeSession.appt,
+      ...currentSession.appt,
       status: "completed",
-      startTime: activeSession.startTime,
+      startTime: currentSession.startTime,
       endTime,
       durationMs: totalTreatmentMs,
       diagnosis: formData.diagnosis,
@@ -4068,7 +4069,7 @@ const DoctorDashboard = () => {
 
     // Update appointment status in API
     try {
-      await axios.patch(getAppointmentApiUrl(activeSession.appt), getStatusUpdatePayload(activeSession.appt, "completed", {
+      await axios.patch(getAppointmentApiUrl(currentSession.appt), getStatusUpdatePayload(currentSession.appt, "completed", {
         end_time: endTime,
         duration_ms: totalTreatmentMs,
         diagnosis: formData.diagnosis,
@@ -4090,7 +4091,7 @@ const DoctorDashboard = () => {
         headers: getAuthHeaders(),
       });
       setCompleted((prev) => [completedRecord, ...prev]);
-      setAppointments((prev) => prev.filter((a) => a.id !== activeSession.appt.id));
+      setAppointments((prev) => prev.filter((a) => a.id !== currentSession.appt.id));
       setLastCompletedAppointment(completedRecord);
       setActiveSession(null);
       setShowCompleteModal(false);
@@ -4154,50 +4155,6 @@ const DoctorDashboard = () => {
     setShowSummaryModal(false);
   };
 
-  // Print function
-  const handlePrintSummary = async (appointmentData, theme) => {
-    try {
-      const element = document.getElementById('printable-summary');
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
-
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      const fileName = `consultation_summary_${appointmentData.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
-
-      setTimeout(() => {
-        setShowSummaryModal(false);
-      }, 1000);
-      
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
-    }
-  };
-
   const computeElapsedMs = () => {
     if (!activeSession || !activeSession.startTime) return 0;
 
@@ -4224,14 +4181,20 @@ const DoctorDashboard = () => {
     return Math.max(0, activeSession.breakEndMs - Date.now());
   };
 
-  const activeAppt = activeSession?.appt || null;
+  const serverInProgressAppt = appointments.find((appt) => appt.status === "in-progress") || null;
+  const activeAppt = activeSession?.appt || serverInProgressAppt || null;
   const elapsedMs = computeElapsedMs();
   const breakRemainingMs = getBreakRemainingMs();
   const visibleAppointments = appointments.filter((appt) => !isAppointmentSlotExpired(appt, now));
+  const skippedAppointments = visibleAppointments.filter((appt) => appt.status === "skipped");
+  const visibleCancelledAppointments = getCancelledAppointmentHistory([
+    ...appointments.filter((appt) => appt.id !== activeAppt?.id),
+    ...cancelledAppointments,
+  ], now);
   const pendingAppointments = visibleAppointments.filter(
     (appt) => appt.status === "pending"
   );
-  const upcomingAppointments = visibleAppointments;
+  const upcomingAppointments = visibleAppointments.filter((appt) => appt.status !== "skipped");
   const inProgressAppointments = [
     ...(activeAppt ? [activeAppt] : []),
     ...upcomingAppointments.filter(
@@ -4239,22 +4202,29 @@ const DoctorDashboard = () => {
     ),
   ];
   const visibleQueue =
-    activeQueueTab === "cancelled"
-      ? cancelledAppointments
+    activeQueueTab === "next"
+      ? skippedAppointments
+      : activeQueueTab === "cancelled"
+      ? visibleCancelledAppointments
       : activeQueueTab === "completed"
       ? completed
       : activeQueueTab === "in-progress"
         ? inProgressAppointments
         : pendingAppointments;
   const nextPatient = activeAppt || pendingAppointments[0] || upcomingAppointments[0] || null;
-  const totalToday = upcomingAppointments.length + completed.length;
+  const totalToday = upcomingAppointments.length + skippedAppointments.length + completed.length;
   const completionPercent = totalToday ? Math.round((completed.length / totalToday) * 100) : 0;
+  const getPendingQueueIndex = (appointment) =>
+    pendingAppointments.findIndex((item) => item.id === appointment?.id);
+  const isQueueTurnAvailable = (appointment) =>
+    (completed.length > 0 || skippedAppointments.length > 0) && getPendingQueueIndex(appointment) === 0;
   const canStartAppointment = (appointment) =>
     canStartConsultation({
       appointment,
-      hasActiveConsultation: Boolean(activeSession?.appt),
+      hasActiveConsultation: Boolean(activeAppt),
       isOnBreak: activeSession?.status === "break",
       slotStartReached: isAppointmentStartTimeReached(appointment, now),
+      queueTurnReached: isQueueTurnAvailable(appointment),
     });
   const dateParts = new Date(now).toLocaleDateString("en-US", {
     weekday: "long",
@@ -4283,9 +4253,10 @@ const DoctorDashboard = () => {
 
   const getQueueStatusLabel = (appt, isActive) => {
     if (appt.status === "completed") return "Completed";
+    if (appt.status === "skipped") return "Waiting · Next";
     if (appt.status === "in-progress" || isActive) return "In Progress";
     if (appt.status === "confirmed") return "Confirmed";
-    if (appt.status === "cancelled") return "Cancelled";
+    if (appt.status === "cancelled") return appt.isNoShow ? "Cancelled · No-show" : "Cancelled";
     return "Pending";
   };
 
@@ -4368,7 +4339,7 @@ const DoctorDashboard = () => {
                     <i className="bi bi-clipboard-check"></i>
                     Checked
                   </button>
-                  <button type="button" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
+                  <button type="button" className="dd-complete-row-action" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
                     <i className="bi bi-check-circle"></i>
                     Complete
                   </button>
@@ -4379,7 +4350,7 @@ const DoctorDashboard = () => {
             <section className="dd-queue-card">
               <h2>Today's Appointment Queue</h2>
               <div className="dd-tabs">
-                {["pending", "in-progress", "completed", "cancelled"].map((tab) => (
+                {["pending", "in-progress", "next", "completed", "cancelled"].map((tab) => (
                   <button
                     type="button"
                     key={tab}
@@ -4399,7 +4370,7 @@ const DoctorDashboard = () => {
                     activeTab: activeQueueTab,
                     appointment: appt,
                     slotStartReached: isSlotStartReached,
-                    pendingIndex: pendingAppointments.findIndex((item) => item.id === appt.id),
+                    pendingIndex: getPendingQueueIndex(appt),
                   });
                   const canStartThisAppointment = canStartAppointment(appt);
 
@@ -4446,8 +4417,12 @@ const DoctorDashboard = () => {
                         </div>
                       </div>
                       <div className="dd-row-actions">
-                        {appt.status === "cancelled" ? (
-                          <Badge bg="secondary">Cancelled</Badge>
+                        {appt.status === "skipped" ? (
+                          <button type="button" onClick={() => handleStartFromConsent(appt)} disabled={queueActionBusy || !canStartThisAppointment}>
+                            <i className="bi bi-play-circle me-1" aria-hidden="true" /> Start Consultation
+                          </button>
+                        ) : appt.status === "cancelled" ? (
+                          <Badge bg="secondary">{appt.isNoShow ? "Cancelled · No-show" : "Cancelled"}</Badge>
                         ) : getRemoteConsultationMode(appt) && appt.status !== "completed" && (
                           <button
                             type="button"
@@ -4461,13 +4436,24 @@ const DoctorDashboard = () => {
                           </button>
                         )}
                         {appt.status === "completed" ? (
+                          <>
                           <button type="button" className="ghost" onClick={() => handleEditCompleted(appt)}>
                             View
                           </button>
-                        ) : !getRemoteConsultationMode(appt) && isActive ? (
-                          <button type="button" onClick={handleChecked} disabled={activeSession?.status === "break"}>
-                            Continue
+                          <button type="button" className="ghost" onClick={() => { setLastCompletedAppointment(appt); setShowSummaryModal(true); }}>
+                            <i className="bi bi-file-earmark-medical me-1" aria-hidden="true" /> Prescription
                           </button>
+                          </>
+                        ) : ["cancelled", "skipped"].includes(appt.status) ? null : !getRemoteConsultationMode(appt) && isActive ? (
+                          <>
+                            <button type="button" className="ghost" onClick={handleChecked} disabled={activeSession?.status === "break"}>
+                              Continue
+                            </button>
+                            <button type="button" className="dd-complete-row-action" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
+                              <i className="bi bi-check-circle"></i>
+                              Complete
+                            </button>
+                          </>
                         ) : !getRemoteConsultationMode(appt) ? (
                           <button
                             type="button"
@@ -4507,7 +4493,7 @@ const DoctorDashboard = () => {
           <aside className="dd-right-panel">
             <section className="dd-next-patient-card">
               <div className="dd-next-top">
-                <span><i className="bi bi-dot"></i> Next Patient</span>
+                <span><i className="bi bi-dot"></i> {activeAppt ? "Current Patient" : "Next Patient"}</span>
                 <strong>{nextPatient?.scheduledTime || "--:--"}</strong>
               </div>
               <div className="dd-next-body">
@@ -4525,22 +4511,28 @@ const DoctorDashboard = () => {
                 type="button"
                 onClick={() => {
                   if (!nextPatient) return;
+                  if (activeAppt) {
+                    handleCompleteNow();
+                    return;
+                  }
                   const remoteMode = getRemoteConsultationMode(nextPatient);
                   if (remoteMode) {
                     navigate('/patient-sms', { state: { callTargetId: nextPatient.patientId, autoStartCallType: remoteMode, appointment: nextPatient } });
                     return;
                   }
-                  activeAppt ? handleChecked() : handleConsentClick(nextPatient);
+                  handleConsentClick(nextPatient);
                 }}
                 disabled={
                   !nextPatient ||
                   activeSession?.status === "break" ||
                   (!activeAppt && !getRemoteConsultationMode(nextPatient) && !canStartAppointment(nextPatient)) ||
-                  (Boolean(getRemoteConsultationMode(nextPatient)) && (!isAppointmentCallWindowOpen(nextPatient) || !nextPatient?.patientId))
+                  (!activeAppt && Boolean(getRemoteConsultationMode(nextPatient)) && (!isAppointmentCallWindowOpen(nextPatient) || !nextPatient?.patientId))
                 }
               >
-                <i className={`bi ${getRemoteConsultationMode(nextPatient) === "video" ? "bi-camera-video-fill" : getRemoteConsultationMode(nextPatient) === "voice" ? "bi-telephone-fill" : "bi-clipboard2-pulse"}`}></i>
-                {getRemoteConsultationMode(nextPatient) === "video"
+                <i className={`bi ${activeAppt ? "bi-check-circle" : getRemoteConsultationMode(nextPatient) === "video" ? "bi-camera-video-fill" : getRemoteConsultationMode(nextPatient) === "voice" ? "bi-telephone-fill" : "bi-clipboard2-pulse"}`}></i>
+                {activeAppt
+                  ? "Complete Current"
+                  : getRemoteConsultationMode(nextPatient) === "video"
                   ? "Video Call"
                   : getRemoteConsultationMode(nextPatient) === "voice"
                     ? "Voice Call"
@@ -4698,14 +4690,20 @@ const DoctorDashboard = () => {
           >
             Cancel
           </Button>
+          <Button variant="outline-primary" className="dd-consent-next-btn" onClick={handleNextPatient} size="sm"
+            disabled={queueActionBusy || !selectedAppointment || Boolean(activeSession?.appt) || activeSession?.status === "break"}>
+            <i className="bi bi-skip-forward me-1" aria-hidden="true" />{queueActionBusy ? "Moving..." : "Next"}
+          </Button>
           <Button
             variant="primary"
-            onClick={handleStartFromConsent}
+            onClick={() => handleStartFromConsent()}
             className="dd-consent-start-btn"
             size="sm"
-            disabled={!canStartAppointment(selectedAppointment)}
+            disabled={queueActionBusy || !canStartAppointment(selectedAppointment)}
             title={
-              selectedAppointment && !isAppointmentStartTimeReached(selectedAppointment, now)
+              selectedAppointment &&
+              !isAppointmentStartTimeReached(selectedAppointment, now) &&
+              !isQueueTurnAvailable(selectedAppointment)
                 ? `Available at ${selectedAppointment.scheduledTime || "the appointment time"}`
                 : undefined
             }
@@ -4740,7 +4738,7 @@ const DoctorDashboard = () => {
         show={showSummaryModal}
         onHide={() => setShowSummaryModal(false)}
         appointmentData={lastCompletedAppointment}
-        onPrint={handlePrintSummary}
+        doctorName={doctorName}
         onCompleteWithoutPrint={handleCompleteWithoutPrint}
       />
     </div>

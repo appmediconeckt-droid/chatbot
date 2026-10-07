@@ -459,6 +459,13 @@
   color: #0052c8;
 }
 
+.dd-row-actions button.dd-complete-row-action,
+.dd-live-actions button.dd-complete-row-action {
+  background: #138a4b;
+  border: 1px solid #138a4b;
+  color: #ffffff;
+}
+
 .dd-row-actions button:disabled,
 .dd-next-patient-card button:disabled {
   cursor: not-allowed;
@@ -1698,6 +1705,7 @@
 .dd-edit-cancel-btn,
 .dd-edit-save-btn,
 .dd-consent-cancel-btn,
+.dd-consent-next-btn,
 .dd-consent-start-btn,
 .dd-complete-cancel-btn,
 .dd-complete-save-btn {
@@ -1711,6 +1719,7 @@
 .dd-close-btn:hover,
 .dd-edit-cancel-btn:hover,
 .dd-consent-cancel-btn:hover,
+.dd-consent-next-btn:hover,
 .dd-complete-cancel-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
@@ -2081,3 +2090,11 @@
   white-space: nowrap;
 }
 .dd-call-action:disabled { background: #94a3b8; opacity: .7; cursor: not-allowed; }
+
+.dd-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+}

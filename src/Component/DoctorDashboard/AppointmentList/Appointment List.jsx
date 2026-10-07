@@ -1,10 +1,11 @@
-import PatientProfileImage from "../../common/PatientProfileImage";
 import React, { useEffect, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./Appointment List.css";
 import { getAppointmentPatientDetails } from "./patientDetails.js";
+import { getAppointmentSource, getAppointmentApiId, mergeAppointmentLists } from "../appointmentFeed.js";
+import { todayAppointmentDate, getAppointmentListSummary, getConsultationDurationMs, getAppointmentListType } from "./appointmentListSummary.js";
 
 const getPatientInitials = (name = "") => {
   const words = String(name || "")
@@ -40,10 +41,10 @@ export default function AppointmentList() {
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [hideCompleted, setHideCompleted] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [selectedRows, setSelectedRows] = useState([]);
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(todayAppointmentDate);
+  const [appointmentTab, setAppointmentTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const [activeActionsId, setActiveActionsId] = useState(null);
@@ -189,10 +190,16 @@ export default function AppointmentList() {
   const normalizeAppointment = (appointment, index) => {
     const doctor = getDoctor(appointment);
     const clinic = getClinic(appointment);
+    const source = getAppointmentSource(appointment);
+    const apiId = getAppointmentApiId(appointment) || index;
 
     return {
-      id: appointment.id || appointment.appointment_id || appointment._id || index,
-      doctorId: appointment.doctor_id || appointment.doctorId || doctor.id || doctor._id,
+      id: `${source}:${apiId}`,
+      apiId,
+      apiSource: source,
+      appointmentType: getAppointmentListType(appointment),
+      consultationDurationMs: getConsultationDurationMs(appointment),
+      doctorId: appointment.doctor_id || appointment.doctorId || appointment.counselor?._id || appointment.counselor?.id || doctor.id || doctor._id,
       tokenNumber:
         appointment.token_number ||
         appointment.tokenNumber ||
@@ -230,12 +237,7 @@ export default function AppointmentList() {
         appointment.symptoms ||
         appointment.department ||
         normalizeType(appointment.consultation_mode || appointment.type || appointment.mode),
-<<<<<<< HEAD
-      ...getAppointmentPatientDetails(appointment),
-      profilePhoto: appointment.patient?.profilePhoto || appointment.patient?.avatarUrl || appointment.patient?.avatar || appointment.user?.profilePhoto,
-=======
       ...getAppointmentPatientDetails(appointment, API_BASE_URL),
->>>>>>> 950ee005708dc6f29e3f6c2828f40b33575e7215
       paymentMethod: String(appointment.payment_method || appointment.paymentMethod || "").toLowerCase(),
       paymentAmount: appointment.payment_amount || appointment.amount_paid || appointment.consultation_fee || appointment.paymentAmount || "",
       paymentReference: appointment.payment_reference || appointment.transaction_id || appointment.upi_reference || appointment.paymentReference || "",
@@ -257,13 +259,18 @@ export default function AppointmentList() {
       try {
         setStatus("loading");
         setError("");
-        const response = await axios.get(`${API_BASE_URL}/appointments`, {
+        const options = {
           headers: getAuthHeaders(),
           params: { doctor_id: doctorId },
           signal: controller.signal,
-        });
+        };
+        const [response, walkinResponse] = await Promise.all([
+          axios.get(`${API_BASE_URL}/appointments`, options),
+          axios.get(`${API_BASE_URL}/walkin-appointments`, options),
+        ]);
 
-        const rows = unwrapApiArray(response.data)
+        const rows = mergeAppointmentLists(unwrapApiArray(response.data),
+          unwrapApiArray(walkinResponse.data).map((record) => ({ ...record, __appointmentSource: "walkin" })))
           .map(normalizeAppointment)
           .filter((appointment) => !appointment.doctorId || String(appointment.doctorId) === String(doctorId));
 
@@ -322,18 +329,19 @@ export default function AppointmentList() {
   };
 
   const filteredAppointments = appointments.filter((appointment) => {
+    const matchesTab = appointmentTab === "all" || appointment.appointmentType === appointmentTab;
     const matchesStatus = statusFilter === "All" || appointment.status === statusFilter;
-    const matchesCompletedVisibility = !hideCompleted || appointment.status !== "Completed";
-    const matchesDate = !selectedDate || !appointment.rawDate || appointment.rawDate === selectedDate;
+    const matchesDate = !selectedDate || appointment.rawDate === selectedDate;
     const query = searchText.trim().toLowerCase();
     const matchesSearch =
       !query ||
-      [appointment.tokenNumber, appointment.patientName, appointment.phone, appointment.test, appointment.location]
+      [appointment.tokenNumber, appointment.patientName, appointment.phone, appointment.test, appointment.location, appointment.appointmentType]
         .join(" ")
         .toLowerCase()
         .includes(query);
-    return matchesStatus && matchesCompletedVisibility && matchesDate && matchesSearch;
+    return matchesTab && matchesStatus && matchesDate && matchesSearch;
   });
+  const summary = getAppointmentListSummary(appointments, selectedDate);
   const totalPages = Math.max(1, Math.ceil(filteredAppointments.length / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const firstRowIndex = filteredAppointments.length ? (safeCurrentPage - 1) * pageSize : 0;
@@ -342,7 +350,7 @@ export default function AppointmentList() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [statusFilter, hideCompleted, searchText, selectedDate]);
+  }, [statusFilter, searchText, selectedDate, appointmentTab]);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
@@ -396,6 +404,7 @@ export default function AppointmentList() {
   const buildAppointmentFromForm = (form, existing = {}) => ({
     ...existing,
     id: existing.id || `local-${Date.now()}`,
+    appointmentType: existing.appointmentType || "walkin",
     doctorId: existing.doctorId || getDoctorId(),
     patientName: form.patientName || "New Patient",
     doctorName: existing.doctorName || "N/A",
@@ -487,7 +496,7 @@ export default function AppointmentList() {
     if (String(appointment.id).startsWith("local-")) return;
 
     try {
-      await axios.delete(`${API_BASE_URL}/appointments/${appointment.id}`, {
+      await axios.delete(`${API_BASE_URL}/${appointment.apiSource === "walkin" ? "walkin-appointments" : "appointments"}/${appointment.apiId || appointment.id}`, {
         headers: getAuthHeaders(),
       });
     } catch (error) {
@@ -495,29 +504,11 @@ export default function AppointmentList() {
     }
   };
 
-  const handleCallAppointment = (appointment) => {
-    const rawPhone = String(appointment?.phone || "").trim();
-    if (!rawPhone || rawPhone.toUpperCase() === "N/A") {
-      setError(`Phone number is not available for ${appointment?.patientName || "this patient"}.`);
-      return;
-    }
-
-    const digits = rawPhone.replace(/\D/g, "");
-    if (digits.length < 7) {
-      setError(`Invalid phone number for ${appointment?.patientName || "this patient"}.`);
-      return;
-    }
-
-    setError("");
-    const dialNumber = rawPhone.startsWith("+") ? `+${digits}` : digits;
-    window.location.href = `tel:${dialNumber}`;
-  };
-
   const clearAllFilters = () => {
+    setAppointmentTab("all");
     setStatusFilter("All");
     setSearchText("");
     setSelectedDate("");
-    setHideCompleted(false);
   };
 
   const activeFilterChips = [
@@ -536,80 +527,50 @@ export default function AppointmentList() {
       label: `Search: ${searchText.trim()}`,
       onClear: () => setSearchText(""),
     },
-    hideCompleted && {
-      key: "hide-completed",
-      label: "Hide completed",
-      onClear: () => setHideCompleted(false),
-    },
   ].filter(Boolean);
 
   return (
     <div className="appointment-page">
       <section className="appointment-header">
-        <div>
-          <h1>Appointments</h1>
-          <p>Showing: <strong>{filteredAppointments.length}</strong> of {appointments.length} appointments</p>
+        <div><h1>Appointments</h1></div>
+        <div className="appointment-header-date">
+          <label className="appointment-date-selector">
+            <i className="fa-regular fa-calendar" aria-hidden="true"></i>
+            <input type="date" aria-label="Filter appointments by date" value={selectedDate}
+              onChange={(event) => setSelectedDate(event.target.value)} />
+          </label>
+          <button type="button" className="appointment-today-btn" onClick={() => setSelectedDate(todayAppointmentDate())}>Today</button>
         </div>
       </section>
 
-      <section className="appointment-toolbar" aria-label="Appointment filters">
-        <div className="appointment-searchbar">
-          <label>
-            <span>Status</span>
-            <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option>All</option>
-              <option>Pending</option>
-              <option>Confirmed</option>
-              <option>Completed</option>
-              <option>Cancelled</option>
+      <nav className="appointment-source-tabs" aria-label="Appointment type">
+        {[{key:"all",label:"All Appointments",count:summary.total}, {key:"online",label:"Online Appointments",count:summary.online}, {key:"walkin",label:"Walk-in Appointments",count:summary.walkin}].map((tab) => (
+          <button type="button" key={tab.key} className={`${tab.key} ${appointmentTab === tab.key ? "active" : ""}`} aria-pressed={appointmentTab === tab.key} onClick={() => setAppointmentTab(tab.key)}>
+            {tab.label}<span>{tab.count}</span>
+          </button>
+        ))}
+      </nav>
+
+      <section className="appointment-summary-grid" aria-label="Appointment summary for selected date">
+        <article className="appointment-summary-card total"><span className="appointment-summary-icon"><i className="fa-solid fa-users" aria-hidden="true" /></span><div><strong>{summary.total}</strong><h2>Total Appointments</h2><p>{selectedDate ? formatDateLabel(selectedDate) : "All dates"}</p></div></article>
+        <article className="appointment-summary-card online"><span className="appointment-summary-icon"><i className="fa-solid fa-wifi" aria-hidden="true" /></span><div><strong>{summary.online}</strong><h2>Online Appointments</h2><p>{summary.total ? Math.round(summary.online / summary.total * 100) : 0}% of total</p></div></article>
+        <article className="appointment-summary-card walkin"><span className="appointment-summary-icon"><i className="fa-solid fa-person-walking" aria-hidden="true" /></span><div><strong>{summary.walkin}</strong><h2>Walk-in Appointments</h2><p>{summary.total ? Math.round(summary.walkin / summary.total * 100) : 0}% of total</p></div></article>
+        <article className="appointment-summary-card average"><span className="appointment-summary-icon"><i className="fa-regular fa-clock" aria-hidden="true" /></span><div><h2>Avg. Consultation Time</h2><strong>{summary.averageMinutes === null ? "?" : `${summary.averageMinutes} min`}</strong><p>Per completed patient</p></div></article>
+      </section>
+
+      <section className="appointment-toolbar appointment-list-controls" aria-label="Appointment filters">
+        <h2>{selectedDate === todayAppointmentDate() ? "Today's Appointments" : "Appointments"} <span>({filteredAppointments.length})</span></h2>
+        <div className="appointment-list-filter-controls">
+          <div className="appointment-search-input">
+            <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
+            <input type="search" aria-label="Search appointments" placeholder="Search by name, phone, token..." value={searchText} onChange={(event) => setSearchText(event.target.value)} />
+          </div>
+          <label className="appointment-status-selector"><i className="fa-solid fa-filter" aria-hidden="true" />
+            <select aria-label="Filter by appointment status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <option>All</option><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option>
             </select>
           </label>
-
-          <label>
-            <span>Search</span>
-            <div className="appointment-search-input">
-            <i className="fa-solid fa-magnifying-glass"></i>
-            <input
-              type="search"
-              placeholder="Patient, phone, token, type..."
-              value={searchText}
-              onChange={(event) => setSearchText(event.target.value)}
-            />
-            </div>
-          </label>
-
-          <label className="date-picker-control">
-            <span>Date</span>
-            <input
-              type="date"
-              value={selectedDate}
-              title={formatDateLabel(selectedDate)}
-              onChange={(event) => setSelectedDate(event.target.value)}
-            />
-          </label>
-
-
-
-          <div className="appointment-date-actions" aria-label="Date shortcuts">
-            <button type="button" className="today-link" onClick={() => setSelectedDate(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date()))}>Today</button>
-          </div>
-          <label className="appointment-toggle">
-            <input
-              type="checkbox"
-              checked={hideCompleted}
-              onChange={(event) => setHideCompleted(event.target.checked)}
-            />
-            Hide completed
-          </label>
-
-          <button
-            type="button"
-            className="clear-filters-btn"
-            onClick={clearAllFilters}
-            disabled={activeFilterChips.length === 0}
-          >
-            Clear Filters
-          </button>
+          <button type="button" className="clear-filters-btn" onClick={clearAllFilters} disabled={activeFilterChips.length === 0}>Clear</button>
         </div>
       </section>
 
@@ -619,20 +580,6 @@ export default function AppointmentList() {
         </div>
       )}
 
-      <section className="appointment-filter-row">
-        <div className="filter-chips">
-          {activeFilterChips.length > 0 ? (
-            activeFilterChips.map((chip) => (
-              <button type="button" key={chip.key} onClick={chip.onClear}>
-                {chip.label} <i className="fa-solid fa-xmark"></i>
-              </button>
-            ))
-          ) : (
-            <span className="no-active-filters">No active filters</span>
-          )}
-        </div>
-      </section>
-
       <section className="appointment-table-shell">
         <table className="appointment-table">
           <thead>
@@ -641,11 +588,11 @@ export default function AppointmentList() {
               <th>Time <i className="fa-solid fa-arrow-up-short-wide"></i></th>
               <th>Token</th>
               <th>Patient</th>
+              <th>Type</th>
               <th>Phone No</th>
               <th>Test</th>
               <th>Location</th>
               <th>Status</th>
-              <th>Info</th>
               <th className="more-cell"><i className="fa-solid fa-ellipsis-vertical"></i></th>
             </tr>
           </thead>
@@ -677,9 +624,6 @@ export default function AppointmentList() {
                         ? <span className="token-badge">#{appointment.tokenNumber}</span>
                         : <span className="token-empty">—</span>}
                     </td>
-<<<<<<< HEAD
-                    <td><PatientProfileImage patient={appointment} size={32} />{appointment.patientName}{appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}</td>
-=======
                     <td>
                       <div className="appointment-patient-cell">
                         <PatientAvatar name={appointment.patientName} avatarUrl={appointment.patientAvatarUrl} />
@@ -689,7 +633,7 @@ export default function AppointmentList() {
                         </div>
                       </div>
                     </td>
->>>>>>> 950ee005708dc6f29e3f6c2828f40b33575e7215
+                    <td><span className={`appointment-source-badge ${appointment.appointmentType}`}><i className={`fa-solid ${appointment.appointmentType === "walkin" ? "fa-person-walking" : "fa-wifi"}`} aria-hidden="true" />{appointment.appointmentType === "walkin" ? "Walk-in" : "Online"}</span></td>
                     <td>{appointment.phone}</td>
                     <td className="test-cell">{appointment.test}</td>
                     <td className="location-cell">{appointment.location}</td>
@@ -698,17 +642,6 @@ export default function AppointmentList() {
                         <i className={statusMeta.icon}></i>
                         {statusMeta.label}
                       </span>
-                    </td>
-                    <td>
-                      <button
-                        type="button"
-                        className="call-btn"
-                        aria-label={`Call ${appointment.patientName}`}
-                        title={`Call ${appointment.phone}`}
-                        onClick={() => handleCallAppointment(appointment)}
-                      >
-                        <i className="fa-solid fa-phone"></i>
-                      </button>
                     </td>
                     <td className="more-cell">
                       {activeActionsId === appointment.id ? (
@@ -927,18 +860,12 @@ export default function AppointmentList() {
         <div className="appointment-modal-backdrop" role="dialog" aria-modal="true" onClick={() => setViewAppointment(null)}>
           <div className="appointment-modal appointment-view-modal" onClick={(event) => event.stopPropagation()}>
             <div className="appointment-modal-header">
-<<<<<<< HEAD
-              <div>
-                <h2>Appointment Details</h2>
-                <p><PatientProfileImage patient={viewAppointment} size={40} />{viewAppointment.patientName}</p>
-=======
               <div className="appointment-view-heading">
                 <PatientAvatar name={viewAppointment.patientName} avatarUrl={viewAppointment.patientAvatarUrl} size="lg" />
                 <div>
                   <h2>Appointment Details</h2>
                   <p>{viewAppointment.patientName}</p>
                 </div>
->>>>>>> 950ee005708dc6f29e3f6c2828f40b33575e7215
               </div>
               <button type="button" onClick={() => setViewAppointment(null)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>

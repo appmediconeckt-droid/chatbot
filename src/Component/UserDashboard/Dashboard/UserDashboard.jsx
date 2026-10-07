@@ -91,6 +91,26 @@ const getAiChatLanguage = (language) => {
 
 const AI_CHAT_ENDPOINT = `${API_BASE_URL}/api/ai-chat/send-message`;
 const TRANSLATION_ERROR_PATTERN = /please select two distinct languages|invalid language pair|translation failed/i;
+const CONSULTANTS_TAB_ID = "Live Chat";
+
+const normalizeDashboardTab = (tab) => {
+  const value = String(tab || "").trim();
+  const normalized = value.toLowerCase();
+
+  if (["consultants", "consultant", "counselor", "counsellor", "counsellors", "live chat"].includes(normalized)) {
+    return CONSULTANTS_TAB_ID;
+  }
+
+  if (["appointments", "my appointments", "myappointments"].includes(normalized)) {
+    return "MyAppointments";
+  }
+
+  if (["call history", "calls", "video"].includes(normalized)) {
+    return "Video";
+  }
+
+  return value || "Chat";
+};
 
 const isEnglishLanguage = (language) =>
   String(language || 'en-IN').split('-')[0].toLowerCase() === 'en';
@@ -108,7 +128,7 @@ export default function UserDashboard() {
   const isDirectChatRoute = location.pathname === "/chat" || location.pathname.startsWith("/chat/");
   const { t, lang, setLang } = useUserTranslation();
   const [, setLanguageUpdate] = useState(0);
-  const [active, setActive] = useState(() => location.state?.activePortalTab || "Chat");
+  const [active, setActive] = useState(() => normalizeDashboardTab(location.state?.activePortalTab));
   const [openPrivacySection, setOpenPrivacySection] = useState("Chats & Calls");
   const [helpSearch, setHelpSearch] = useState("");
   const [openHelpQuestion, setOpenHelpQuestion] = useState("");
@@ -152,7 +172,7 @@ export default function UserDashboard() {
 
   const handleAIContactClick = (name) => {
     setTargetCounselor(name);
-    setActive("Live Chat");
+    setActive(CONSULTANTS_TAB_ID);
     setChatOpen(false);
   };
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -800,6 +820,7 @@ export default function UserDashboard() {
   };
 
   const handleMenuItemClick = (id) => {
+    const nextActive = normalizeDashboardTab(id);
     vibrate(30);
     // A counselor conversation opened from Appointments uses /chat/:id.
     // Once the user navigates through the sidebar, discard that direct-chat
@@ -808,10 +829,10 @@ export default function UserDashboard() {
     if (isDirectChatRoute) {
       navigate("/user-dashboard", {
         replace: true,
-        state: { activePortalTab: id },
+        state: { activePortalTab: nextActive },
       });
     }
-    setActive(id);
+    setActive(nextActive);
     setTargetCounselor(""); // Reset search when navigating manually
     if (isMobile) {
       setShowMoreModal(false);
@@ -987,7 +1008,7 @@ export default function UserDashboard() {
 
   const allMenuItems = [
     { id: "Chat", icon: <FaCommentDots />, label: t('chat') },
-    { id: "Live Chat", icon: <FaUserMd />, label: t("consultants") },
+    { id: CONSULTANTS_TAB_ID, icon: <FaUserMd />, label: t("consultants") },
     { id: "MyAppointments", icon: <FaCalendarAlt />, label: t('appointments') },
     { id: "Prescriptions", icon: <FaFileAlt />, label: t('prescriptions') },
     { id: "Wallet", icon: <FaWallet />, label: t('wallet') },
@@ -1028,7 +1049,7 @@ export default function UserDashboard() {
       title: "Consultant support",
       text: "Browse counselors by name, specialization, language, location, rating, and online status before starting care.",
       action: "Find counselor",
-      onClick: () => handleMenuItemClick("Live Chat"),
+      onClick: () => handleMenuItemClick(CONSULTANTS_TAB_ID),
     },
     {
       icon: <FaCalendarAlt />,
@@ -1195,11 +1216,11 @@ export default function UserDashboard() {
     if (!consultantName) return;
     setSelectedConversation(null);
     setTargetCounselor(consultantName);
-    setActive("Live Chat");
+    setActive(CONSULTANTS_TAB_ID);
     if (isDirectChatRoute) {
       navigate("/user-dashboard", {
         replace: true,
-        state: { activePortalTab: "Live Chat", consultantName },
+        state: { activePortalTab: CONSULTANTS_TAB_ID, consultantName },
       });
     }
   };
@@ -1658,7 +1679,7 @@ export default function UserDashboard() {
                   )}
                 </div>
               )}
-              {active === "Live Chat" && (
+              {normalizeDashboardTab(active) === CONSULTANTS_TAB_ID && (
                 <div>
                   <CounselorRequestChat initialSearch={targetCounselor} onOpenConversation={handleOpenCounselorConversation} />
                 </div>

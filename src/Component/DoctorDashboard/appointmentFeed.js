@@ -198,6 +198,7 @@ export const isAppointmentSlotExpired = (appointment, nowMs = Date.now()) => {
     ["completed", "in-progress", "in_progress"].includes(status)
   ) return false;
   if (["no_show", "no-show"].includes(queueStatus)) return true;
+  if (queueStatus === "skipped" || status === "skipped") return false;
   if (!["pending", "confirmed", "booked", "scheduled", "accepted", "active"].includes(status)) return false;
   if (
     String(appointment?.priority || "").toLowerCase() === "emergency" ||
@@ -250,25 +251,26 @@ export const shouldShowStartConsultation = ({
   slotStartReached,
   pendingIndex,
 }) =>
-  activeTab === "pending" &&
+  ((activeTab === "next" && appointment?.status === "skipped") || (activeTab === "pending" &&
   ["pending", "confirmed"].includes(
     String(pickFirst(appointment?.status, appointment?.appointment_status, "")).toLowerCase(),
   ) &&
-  (slotStartReached || (pendingIndex >= 0 && pendingIndex < 2));
+  (slotStartReached || (pendingIndex >= 0 && pendingIndex < 2))));
 
 export const canStartConsultation = ({
   appointment,
   hasActiveConsultation,
   isOnBreak,
   slotStartReached,
+  queueTurnReached = false,
 }) =>
   Boolean(appointment) &&
-  ["pending", "confirmed"].includes(
+  ["pending", "confirmed", "skipped"].includes(
     String(pickFirst(appointment.status, appointment.appointment_status, "")).toLowerCase(),
   ) &&
   !hasActiveConsultation &&
   !isOnBreak &&
-  slotStartReached;
+  (appointment.status === "skipped" || slotStartReached || queueTurnReached);
 
 export const isBookedAppointmentStartTimeReached = (appointment, nowMs = Date.now()) => {
   const dateValue = pickFirst(
@@ -373,6 +375,12 @@ export const getAppointmentApiId = (appointment) => pickFirst(
   appointment?.walkinId,
 );
 
+// Booking category can differ from the API/table storing the record.
+export const getAppointmentBookingType = (appointment) => {
+  const bookingSource = String(appointment.booking_source || appointment.bookingSource || appointment.source || "").trim().toLowerCase();
+  return bookingSource === "qr" ? "walkin" : getAppointmentSource(appointment);
+};
+
 export const getAppointmentStatusUrl = (baseUrl, appointment) => {
   const source = getAppointmentSource(appointment);
   const id = getAppointmentApiId(appointment);
@@ -398,6 +406,18 @@ export const mergeAppointmentLists = (...lists) => {
   }
   return [...records.values(), ...withoutId];
 };
+
+export const getCancelledAppointmentHistory = (appointments, nowMs = Date.now()) =>
+  mergeAppointmentLists(appointments).flatMap((appointment) => {
+    const status = String(appointment.status || appointment.appointment_status || "").toLowerCase().replace(/-/g, "_");
+    const queueStatus = String(appointment.queueStatus || appointment.queue_status || "").toLowerCase().replace(/-/g, "_");
+    if (["completed", "in_progress"].includes(status) || ["completed", "in_progress"].includes(queueStatus)) return [];
+    const noShow = status === "no_show" || queueStatus === "no_show" || appointment.isNoShow;
+    const cancelled = ["cancelled", "canceled"].includes(status) || ["cancelled", "canceled"].includes(queueStatus);
+    const expired = !cancelled && isAppointmentSlotExpired(appointment, nowMs);
+    if (!cancelled && !noShow && !expired) return [];
+    return [{ ...appointment, status: "cancelled", isNoShow: Boolean(noShow || expired) }];
+  });
 
 export const loadDoctorAppointmentFeed = async (client, baseUrl, doctorId, headers) => {
   const options = { headers, params: { doctor_id: doctorId } };
