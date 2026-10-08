@@ -178,6 +178,7 @@ export const getAppointmentSchedule = (appointment, availabilityRanges = []) => 
     label: `Schedule ${scheduleIndex + 1}`,
     range: `${formatScheduleTime(range.start)} - ${formatScheduleTime(range.end)}`,
     durationMinutes: range.durationMinutes,
+    endTime: range.end,
   };
 };
 
@@ -194,10 +195,11 @@ export const isAppointmentSlotExpired = (appointment, nowMs = Date.now()) => {
   );
   if (
     ["in_progress", "completed"].includes(queueStatus) ||
+    ["waiting", "called"].includes(queueStatus) ||
+    appointment?.checked_in_at || appointment?.checkedInAt ||
     consultationStartedAt ||
     ["completed", "in-progress", "in_progress"].includes(status)
   ) return false;
-  if (["no_show", "no-show"].includes(queueStatus)) return true;
   if (queueStatus === "skipped" || status === "skipped") return false;
   if (!["pending", "confirmed", "booked", "scheduled", "accepted", "active"].includes(status)) return false;
   if (
@@ -227,21 +229,14 @@ export const isAppointmentSlotExpired = (appointment, nowMs = Date.now()) => {
     appointment?.bookedSlotTime,
     appointment?.time
   ));
-  const durationMinutes = Number(pickFirst(
-    appointment?.slot_duration,
-    appointment?.slotDuration,
-    appointment?.slot_duration_minutes,
-    appointment?.duration_minutes,
-    appointment?.slotDurationMinutes,
-    appointment?.bookedSchedule?.durationMinutes
-  ));
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || startMinutes == null || !Number.isFinite(durationMinutes) || durationMinutes <= 0) {
+  const endMinutes = getTimeInMinutes(pickFirst(appointment?.bookedSchedule?.endTime, appointment?.session_end_time));
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || startMinutes == null || endMinutes == null || endMinutes <= startMinutes) {
     return false;
   }
 
-  const date = new Date(`${dateKey}T00:00:00`);
+  const date = new Date(`${dateKey}T00:00:00+05:30`);
   if (Number.isNaN(date.getTime())) return false;
-  const slotEnd = date.getTime() + (startMinutes + durationMinutes) * 60000;
+  const slotEnd = date.getTime() + endMinutes * 60000;
   return slotEnd <= nowMs;
 };
 
@@ -415,6 +410,7 @@ export const getCancelledAppointmentHistory = (appointments, nowMs = Date.now())
     const noShow = status === "no_show" || queueStatus === "no_show" || appointment.isNoShow;
     const cancelled = ["cancelled", "canceled"].includes(status) || ["cancelled", "canceled"].includes(queueStatus);
     const expired = !cancelled && isAppointmentSlotExpired(appointment, nowMs);
+    if (expired) return []; // Absent bookings are removed at session end, not moved into cancellation history.
     if (!cancelled && !noShow && !expired) return [];
     return [{ ...appointment, status: "cancelled", isNoShow: Boolean(noShow || expired) }];
   });

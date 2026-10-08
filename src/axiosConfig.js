@@ -5,7 +5,7 @@ const DEV_TUNNEL_PORT_PATTERN = /-(\d+)\.inc\d+\.devtunnels\.ms\/?$/i;
 
 const rawEnvApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://s5jl7g4z-5004.inc1.devtunnels.ms";
+  "https://s5jl7g4z-5005.inc1.devtunnels.ms";
 
 const resolveApiBaseUrl = (url) => {
   const normalizedUrl = String(url || "").replace(/^hhttps:\/\//i, "https://");
@@ -14,7 +14,7 @@ const resolveApiBaseUrl = (url) => {
     ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 
   if (isLocalFrontend && /\.devtunnels\.ms\/?$/i.test(normalizedUrl)) {
-    return "https://s5jl7g4z-5004.inc1.devtunnels.ms";
+    return "https://s5jl7g4z-5005.inc1.devtunnels.ms";
   }
 
   return normalizedUrl;

@@ -2512,6 +2512,7 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
       bookedSchedule?.durationMinutes
     )) || 0,
     queueStatus: pickFirst(appointment?.queue_status, appointment?.queueStatus, ""),
+    checkedInAt: pickFirst(appointment?.checked_in_at, appointment?.checkedInAt),
     consultationStartedAt: pickFirst(
       appointment?.consultation_started_at,
       appointment?.consultationStartedAt,

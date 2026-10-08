@@ -45,6 +45,7 @@ test("booked appointments are assigned to their matching doctor calendar schedul
     label: "Schedule 1",
     range: "09:00 AM - 12:00 PM",
     durationMinutes: 0,
+    endTime: "12:00",
   });
   assert.deepEqual(getAppointmentSchedule({
     appointment_date: "2026-10-05",
@@ -54,6 +55,7 @@ test("booked appointments are assigned to their matching doctor calendar schedul
     label: "Schedule 2",
     range: "02:00 PM - 05:00 PM",
     durationMinutes: 0,
+    endTime: "17:00",
   });
   assert.deepEqual(getAppointmentSchedule({
     appointment_date: "2026-10-05",
@@ -68,6 +70,7 @@ test("booked appointments are assigned to their matching doctor calendar schedul
     label: "Schedule 1",
     range: "10:00 AM - 11:00 AM",
     durationMinutes: 0,
+    endTime: "11:00",
   });
   assert.equal(getAppointmentSchedule({
     appointment_date: "2026-10-05",
@@ -76,19 +79,22 @@ test("booked appointments are assigned to their matching doctor calendar schedul
   }, ranges).range, "08:00 AM - 10:00 AM");
 });
 
-test("scheduled patient remains visible for the full booked slot duration", () => {
+test("scheduled patient remains visible for the full doctor availability session", () => {
   const appointment = {
     appointmentSource: "online",
     status: "pending",
     appointmentDate: "2026-10-05",
     bookedSlotTime: "10:00 AM",
     slotDurationMinutes: 30,
+    bookedSchedule: { endTime: "12:00" },
   };
-  const slotStart = new Date("2026-10-05T10:00:00").getTime();
+  const slotStart = new Date("2026-10-05T10:00:00+05:30").getTime();
   assert.equal(isAppointmentSlotExpired(appointment, slotStart + 29 * 60000), false);
-  assert.equal(isAppointmentSlotExpired(appointment, slotStart + 30 * 60000), true);
+  assert.equal(isAppointmentSlotExpired(appointment, slotStart + 119 * 60000), false);
+  assert.equal(isAppointmentSlotExpired(appointment, slotStart + 120 * 60000), true);
+  assert.equal(isAppointmentSlotExpired(appointment, slotStart + 30 * 60000), false);
   assert.equal(isAppointmentSlotExpired({ ...appointment, status: "in-progress" }, slotStart + 60 * 60000), false);
-  assert.equal(isAppointmentSlotExpired({ ...appointment, slotDurationMinutes: 0 }, slotStart + 24 * 60 * 60000), false);
+  assert.equal(isAppointmentSlotExpired({ ...appointment, bookedSchedule: null }, slotStart + 24 * 60 * 60000), false);
 });
 
 test("started consultations and cancelled appointments are not expired by slot timeout", () => {
@@ -97,15 +103,16 @@ test("started consultations and cancelled appointments are not expired by slot t
     appointmentDate: "2026-10-05",
     bookedSlotTime: "10:00 AM",
     slotDurationMinutes: 15,
+    bookedSchedule: { endTime: "12:00" },
   };
-  const afterSlotEnd = new Date("2026-10-05T10:30:00").getTime();
+  const afterSlotEnd = new Date("2026-10-05T10:30:00+05:30").getTime();
   assert.equal(isAppointmentSlotExpired({
     ...appointment,
     queueStatus: "in_progress",
     consultationStartedAt: "2026-10-05T10:05:00",
   }, afterSlotEnd), false);
   assert.equal(isAppointmentSlotExpired({ ...appointment, status: "cancelled" }, afterSlotEnd), false);
-  assert.equal(isAppointmentSlotExpired({ ...appointment, queueStatus: "no_show" }, afterSlotEnd), true);
+  assert.equal(isAppointmentSlotExpired({ ...appointment, queueStatus: "no_show" }, afterSlotEnd), false);
 });
 
 test("shows consultation buttons for the next two pending appointments", () => {
@@ -186,10 +193,11 @@ test("started appointments remain visible until the doctor completes them", () =
       appointmentDate: "2026-10-05",
       bookedSlotTime: "10:00 AM",
       slotDurationMinutes: 15,
+    bookedSchedule: { endTime: "12:00" },
     },
     queue_status: "in_progress",
   };
-  const slotStart = new Date("2026-10-05T10:00:00").getTime();
+  const slotStart = new Date("2026-10-05T10:00:00+05:30").getTime();
   assert.equal(isAppointmentSlotExpired(appointment, slotStart + 60 * 60000), false);
   assert.equal(isAppointmentSlotExpired({
     ...appointment,
@@ -198,17 +206,18 @@ test("started appointments remain visible until the doctor completes them", () =
   }, slotStart + 60 * 60000), false);
 });
 
-test("unstarted appointments expire after the slot duration and no-show records stay out of the queue", () => {
+test("unstarted appointments expire at doctor session end rather than their consultation duration", () => {
   const appointment = {
     status: "pending",
     appointmentDate: "2026-10-05",
     bookedSlotTime: "10:00 AM",
     slotDurationMinutes: 15,
+    bookedSchedule: { endTime: "12:00" },
   };
-  const slotStart = new Date("2026-10-05T10:00:00").getTime();
+  const slotStart = new Date("2026-10-05T10:00:00+05:30").getTime();
   assert.equal(isAppointmentSlotExpired(appointment, slotStart + 14 * 60000), false);
-  assert.equal(isAppointmentSlotExpired(appointment, slotStart + 15 * 60000), true);
-  assert.equal(isAppointmentSlotExpired({ ...appointment, queue_status: "no_show" }, slotStart), true);
+  assert.equal(isAppointmentSlotExpired(appointment, slotStart + 15 * 60000), false);
+  assert.equal(isAppointmentSlotExpired({ ...appointment, queue_status: "no_show" }, slotStart), false);
   assert.equal(isAppointmentSlotExpired({ ...appointment, status: "cancelled" }, slotStart + 60 * 60000), false);
 });
 
@@ -231,6 +240,16 @@ test("dashboard loads online and walk-in appointments for the same doctor", asyn
   assert.equal(rows.filter((row) => getAppointmentSource(row) === "walkin").length, 2);
   assert.equal(rows.find((row) => getAppointmentSource(row) === "walkin" && row.id === 1).patient_name, "Walk-in patient");
   assert.equal(rows.filter((row) => row.status === "completed").length, 2);
+});
+
+test("14:15 appointment stays through the doctor's 17:00 session end and protects arrived patients", () => {
+  const appointment = { status: "pending", appointmentDate: "2026-10-08", bookedSlotTime: "14:15", slotDurationMinutes: 15, bookedSchedule: { endTime: "17:00" } };
+  const at = (time) => Date.parse(`2026-10-08T${time}+05:30`);
+  assert.equal(isAppointmentSlotExpired(appointment, at("14:30:00")), false);
+  assert.equal(isAppointmentSlotExpired(appointment, at("16:59:59")), false);
+  assert.equal(isAppointmentSlotExpired(appointment, at("17:00:00")), true);
+  assert.equal(isAppointmentSlotExpired({ ...appointment, checkedInAt: "2026-10-08T16:50:00+05:30" }, at("18:00:00")), false);
+  assert.equal(isAppointmentSlotExpired({ ...appointment, queueStatus: "waiting" }, at("18:00:00")), false);
 });
 
 test("same record from multiple responses appears once, distinct bookings are retained", () => {

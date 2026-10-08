@@ -48,7 +48,7 @@ const dateTimePartsInZone = (value, timeZone = "Asia/Kolkata") => {
 export const appointmentRecordToSlot = (record, { timeZone = "Asia/Kolkata" } = {}) => {
   if (!record) return null;
 
-  const directDate = String(record.appointment_date || record.dateOnly || record.appointmentDate || "").slice(0, 10);
+  const directDate = String(record.appointment_date || record.dateOnly || record.appointmentDate || record.date || "").slice(0, 10);
   const directMinutes = timeToMinutes(record.time || record.appointment_time || record.appointmentTime || record.slot_start_time);
   if (/^\d{4}-\d{2}-\d{2}$/.test(directDate) && directMinutes != null) {
     return { date: directDate, minutes: directMinutes };

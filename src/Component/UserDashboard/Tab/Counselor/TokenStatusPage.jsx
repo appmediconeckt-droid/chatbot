@@ -9,7 +9,7 @@ import axiosInstance from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import "./TokenStatusPage.css";
-import { formatTimer, formatWaitLabel, getLiveTokenTiming } from "./tokenTiming.js";
+import { formatTimer, formatWaitLabel, getLiveTokenTiming, getTokenDisplayTime, formatQueueStatus } from "./tokenTiming.js";
 
 const TOKEN_STATUS_ENDPOINT = "/api/appointments/my-token-status";
 const POLL_INTERVAL_MS = 10000;
@@ -74,13 +74,8 @@ const formatAppointmentDateTime = (appointment) => {
 };
 
 const formatEstimatedTurnTime = (value) => {
-  if (!value) return "--";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "--";
-  }
+  const date = getTokenDisplayTime(value);
+  if (!date) return "--";
 
   return date.toLocaleTimeString(undefined, {
     hour: "2-digit",
@@ -125,7 +120,7 @@ const getTimingMessage = (appointment = {}, queue = {}, liveTiming = {}) => {
 };
 
 const getWaitDisplay = (queue = {}, liveTiming = {}) => (
-  queue.estimateUncertain ? "Anytime" : formatWaitLabel(liveTiming.waiting)
+  queue.estimateUncertain ? (queue.patientsAhead === 1 ? "Expected shortly" : "ETA updating") : formatWaitLabel(liveTiming.waiting)
 );
 
 const getDoctorName = (item) => {
@@ -474,7 +469,7 @@ const TokenStatusPage = () => {
                 <div className="token-stat">
                   <span className="token-stat-label">Your number in</span>
                   <span className="token-stat-value">
-                    {getWaitDisplay(queueData, liveTiming)}
+                    {currentData.isYourTurn ? "Consultation in progress" : getWaitDisplay(queueData, liveTiming)}
                   </span>
                   <span className="token-stat-help">{queueData.estimateUncertain ? "Can be called anytime" : "Approximate"}</span>
                 </div>
@@ -515,7 +510,7 @@ const TokenStatusPage = () => {
                 <div className="token-stat">
                   <span className="token-stat-label">Appointment Timing</span>
                   <span className="token-stat-value token-stat-value-small">
-                    {formatMinuteDifference(queueData.timingDifferenceMinutes ?? appointment.timingDifferenceMinutes) || "--"}
+                    {appointment.timingLabel || queueData.timingLabel || formatMinuteDifference(queueData.timingDifferenceMinutes ?? appointment.timingDifferenceMinutes) || "--"}
                   </span>
                 </div>
 
@@ -531,7 +526,7 @@ const TokenStatusPage = () => {
                 <div className="token-stat">
                   <span className="token-stat-label">Queue Status</span>
                   <span className="token-stat-value">
-                    {tokenData.queueStatus || "--"}
+                    {formatQueueStatus(tokenData.queueStatus)}
                   </span>
                 </div>
 
@@ -545,7 +540,7 @@ const TokenStatusPage = () => {
                 <div className="token-stat">
                   <span className="token-stat-label">Live Start</span>
                   <span className="token-stat-value token-stat-value-small">
-                    {formatEstimatedTurnTime(appointment.estimatedStartAt || queueData.estimatedTurnTime)}
+                    {formatEstimatedTurnTime(appointment.actualStartAt)}
                   </span>
                 </div>
               </div>
