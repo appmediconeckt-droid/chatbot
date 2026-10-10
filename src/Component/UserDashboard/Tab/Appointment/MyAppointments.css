@@ -237,9 +237,10 @@
 
 .user-appointment-card {
   width: 100%;
-  height: 256.5px;
+  height: auto;
+  min-height: 260px;
   min-width: 0;
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -258,17 +259,18 @@
 
 .user-appointment-profile {
   position: relative;
-  display: flex;
-  align-items: flex-start;
-  min-height: 68px;
-  padding-right: 100px;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px 12px;
+  min-height: 0;
+  padding-right: 0;
 }
 
 .user-appointment-avatar {
-  width: 55px;
-  height: 55px;
-  flex: 0 0 55px;
-  margin-right: 13px;
+  width: 50px;
+  height: 50px;
+  margin: 0;
   border: 0;
   border-radius: 50%;
   object-fit: cover;
@@ -310,9 +312,12 @@
 }
 
 .user-appointment-meta {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  line-height: 1.5;
   color: #667085;
   font-size: 9px;
 }
@@ -332,9 +337,11 @@
 }
 
 .user-appointment-status {
-  position: absolute;
-  top: 0;
-  right: 0;
+  grid-column: 3;
+  grid-row: 1;
+  position: static;
+  align-self: start;
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -367,7 +374,9 @@
 .user-appointment-schedule {
   display: flex;
   align-items: center;
-  gap: 7px;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  line-height: 1.5;
   min-height: 48px;
   margin: 0;
   padding: 12px 0;
@@ -400,10 +409,23 @@
 }
 
 .user-appointment-actions {
-  display: grid;
-  grid-template-columns: minmax(135px, 1fr) 38px 38px 38px;
-  gap: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-top: auto;
+  padding-top: 4px;
+}
+.user-appointment-actions .secondary { flex: 1 1 112px; min-height: 40px; }
+.user-appointment-actions .icon { flex: 0 0 40px; min-height: 40px; }
+.user-appointment-schedule-item { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.user-appointment-schedule-item svg { flex: 0 0 14px; width: 14px; height: 14px; color: #587064; }
+.user-appointment-live-timing { display: grid; gap: 6px; padding: 12px; border-radius: 10px; background: #f3fbf6; color: #436251; font-size: 12px; line-height: 1.6; overflow-wrap: anywhere; }
+.user-appointments-page .professional-role-badge { background: #e6f7ed; color: #006b2c; }
+@media (max-width: 380px) {
+  .user-appointment-profile { grid-template-columns: 44px minmax(0, 1fr); }
+  .user-appointment-avatar { width: 44px; height: 44px; }
+  .user-appointment-status { grid-column: 2; grid-row: 2; justify-self: start; margin-left: 0; }
+  .user-appointment-meta { grid-row: 3; }
 }
 
 .user-appointment-action {

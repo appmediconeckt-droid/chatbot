@@ -1349,6 +1349,8 @@ const MyAppointments = () => {
             </div>
           </div>
 
+          {/* Doctor appointment call buttons are temporarily hidden. */}
+          {!getProfessionalRole(selectedApt).isDoctor && (
           <div className="appointment-detail-actions">
             <button
               type="button"
@@ -1380,6 +1382,7 @@ const MyAppointments = () => {
               {actionLoading === `voice-${selectedApt._id}` ? t('loading') : t('voice_call')}
             </button>
           </div>
+          )}
         </div>
       </div>,
       document.body,
@@ -1483,7 +1486,7 @@ const MyAppointments = () => {
                       className="user-appointment-avatar"
                     />
                     <div className="user-appointment-person">
-                      <h2>
+                      <h2 title={apt.counselor?.fullName || "Consultant"}>
                         {apt.counselor?.fullName || "Consultant"}
                         {/* <FaCheckCircle aria-label="Verified" /> */}
                       </h2>
@@ -1494,25 +1497,27 @@ const MyAppointments = () => {
                           ? apt.counselor.specialization.join(" | ")
                           : apt.counselor?.specialization || t('medical_specialist')}
                       </p>
-                      <div className="user-appointment-meta">
-                        <span><FaBriefcase /> {apt.counselor?.experience || 0} {t('years')}</span>
-                        <span className="rating">★ {apt.counselor?.rating || 4.9}</span>
-                      </div>
                     </div>
                     <span className={`user-appointment-status ${apt.status || "pending"}`}>
                       <i></i>{t(apt.status || "pending")}
                     </span>
+                    <div className="user-appointment-meta">
+                      <span><FaBriefcase /> {apt.counselor?.experience || 0} {t('years')}</span>
+                      <span className="rating">★ {apt.counselor?.rating || 4.9}</span>
+                    </div>
                   </div>
 
                   <div className="user-appointment-schedule">
-                    <FaCalendarAlt aria-hidden="true" />
-                    <span>{appointmentSchedule.date}</span>
-                    <b></b>
-                    <FaClock aria-hidden="true" />
-                    <span>{appointmentSchedule.time}</span>
+                    <span className="user-appointment-schedule-item">
+                      <FaCalendarAlt aria-hidden="true" />
+                      <span>{appointmentSchedule.date}</span>
+                    </span>
+                    <span className="user-appointment-schedule-item">
+                      <FaClock aria-hidden="true" />
+                      <span>{appointmentSchedule.time}</span>
+                    </span>
                     {appointmentToken != null && (
                       <>
-                        <b></b>
                         <span className="user-appointment-token">
                           Token #{appointmentToken}
                         </span>
@@ -1520,17 +1525,17 @@ const MyAppointments = () => {
                     )}
                   </div>
 
-                  <div className="user-appointment-schedule" style={{ flexWrap: 'wrap' }}>
-                    {apt.delay_minutes > 0 && apt.estimatedTime && <span>Updated estimate: {new Date(apt.estimatedTime).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} ? Doctor/queue delay: {apt.delay_minutes} min</span>}
+                  {(apt.delay_minutes > 0 && apt.estimatedTime || ['pending', 'confirmed'].includes(apt.status) || apt.cancellationReason === 'PATIENT_LATE') && <div className="user-appointment-live-timing">
+                    {apt.delay_minutes > 0 && apt.estimatedTime && <span>{apt.status === 'completed' ? 'Consultation started' : 'Updated estimate'}: {new Date(apt.estimatedTime).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} · Doctor/queue delay: {apt.delay_minutes} min</span>}
                     {['pending', 'confirmed'].includes(apt.status) && <>
                       <span>Current token: {apt.currentToken ?? '--'}</span>
                       {apt.waiting_minutes != null && <span>Approximate wait: {apt.waiting_minutes} min</span>}
                       {apt.patientArrivalTime || ['waiting', 'in_progress'].includes(apt.queue_status)
-                        ? <span>Checked in ? Waiting for your turn</span>
+                        ? <span>Checked in · Waiting for your turn</span>
                         : apt.cancelDeadline && <span>Please arrive before: {new Date(apt.cancelDeadline).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}</span>}
                     </>}
-                    {apt.cancellationReason === 'PATIENT_LATE' && <span>Appointment Cancelled ? Patient did not arrive before the adjusted appointment deadline.</span>}
-                  </div>
+                    {apt.cancellationReason === 'PATIENT_LATE' && <span>Appointment Cancelled · Patient did not arrive before the adjusted appointment deadline.</span>}
+                  </div>}
 
                     <div className="user-appointment-actions">
                       <button
@@ -1543,6 +1548,9 @@ const MyAppointments = () => {
                         <FaEye aria-hidden="true" />
                         {t('view_details')}
                       </button>
+                      {/* Doctor appointment call shortcuts are temporarily hidden. */}
+                      {!getProfessionalRole(apt).isDoctor && (
+                        <>
                       <button
                         className="user-appointment-action icon"
                         onClick={() => handleCall(apt, "video")}
@@ -1561,6 +1569,8 @@ const MyAppointments = () => {
                       >
                         <FaPhoneAlt aria-hidden="true" />
                       </button>
+                        </>
+                      )}
                       {!getProfessionalRole(apt).isDoctor && (
                         <button
                           className="user-appointment-action icon"
