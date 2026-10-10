@@ -1,247 +1,127 @@
 .token-status-page {
-    padding: 24px;
+  --token-blue: #1460ff;
+  --token-ink: #080e32;
+  --token-muted: #5d6b91;
+  padding: 28px;
+  color: var(--token-ink);
+  background: radial-gradient(circle at 96% 8%, #dce9ff 0, transparent 220px), linear-gradient(135deg, #f0f6ff, #eaf2ff);
+  border-radius: 24px;
+  min-height: 100%;
+  position: relative;
+  isolation: isolate;
+}
+.token-status-page *, .token-status-page *::before, .token-status-page *::after { box-sizing: border-box; }
+.token-status-page .token-page-header { display: flex; align-items: center; gap: 22px; margin: 0 0 22px; padding: 0 12px; }
+.token-status-page .token-header-icon { flex: 0 0 52px; height: 52px; display: grid; place-items: center; position: relative; color: white; background: linear-gradient(145deg, #1754fa, #0969ff); border: 1px solid #89b2ff; border-radius: 15px; box-shadow: 0 8px 20px #1762ff30; font-size: 22px; }
+.token-status-page .token-header-clock { position: absolute; right: 5px; bottom: 5px; background: white; color: #1460ff; border: 3px solid white; border-radius: 50%; width: 20px; height: 20px; }
+.token-status-page .token-page-title { color: var(--token-ink); font-size: clamp(24px, 2vw, 30px); font-weight: 800; line-height: 1.15; margin: 0 0 6px; letter-spacing: -1.2px; }
+.token-status-page .token-page-title span { color: var(--token-blue); }
+.token-status-page .token-page-subtitle { color: var(--token-muted); font-size: 14px; margin: 0; line-height: 1.5; }
+.token-status-page .token-page-body { display: grid; grid-template-columns: minmax(255px, 28%) minmax(0, 1fr); gap: 16px; align-items: stretch; }
+.token-status-page .appointment-picker, .token-status-page .token-detail-panel { border: 1px solid #e1ebff; border-radius: 23px; padding: 24px; background: #ffffffed; box-shadow: 0 6px 22px #2c6bcd0b; min-width: 0; }
+.token-status-page .picker-heading { display: flex; gap: 14px; align-items: center; font-size: 17px; font-weight: 750; margin: 0 0 20px; color: var(--token-ink); }
+.token-status-page .picker-heading-icon { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; color: var(--token-blue); background: #f0f5ff; font-size: 19px; }
+.token-status-page .picker-state { color: var(--token-muted); padding: 18px 0; font-size: 14px; }
+.token-status-page .picker-state.error { color: #d92d20; }
+.token-status-page .appointment-list { display: flex; flex-direction: column; gap: 16px; list-style: none; padding: 0; margin: 0; max-height: 720px; overflow-y: auto; }
+.token-status-page .appointment-item { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; position: relative; width: 100%; min-height: 120px; padding: 15px 28px 14px 56px; border: 1px solid #e6ecf7; border-radius: 14px; background: #f8fafded; color: var(--token-ink); text-align: left; cursor: pointer; overflow: hidden; transition: background .16s, border-color .16s; }
+.token-status-page .appointment-item:hover { background: #f0f5ff; border-color: #adc8ff; }
+.token-status-page .appointment-item.selected { background: #eaf2ff; border-color: #eaf2ff; }
+.token-status-page .appointment-item.selected::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--token-blue); }
+.token-status-page .appointment-item-icon { position: absolute; left: 20px; top: 21px; color: var(--token-blue); font-size: 22px; }
+.token-status-page .appointment-item-chevron { position: absolute; right: 18px; top: calc(50% - 7px); color: #7282a4; font-size: 15px; }
+.token-status-page .appointment-item.selected .appointment-item-chevron { color: var(--token-blue); }
+.token-status-page .appointment-doctor { font-size: 15px; font-weight: 750; overflow-wrap: anywhere; }
+.token-status-page .appointment-datetime { font-size: 12px; color: var(--token-muted); }
+.token-status-page .appointment-status { font-size: 12px; line-height: 1.4; color: #185dff; background: #e9edff; padding: 1px 6px; border-radius: 7px; text-transform: capitalize; }
+.token-status-page .appointment-token-number { font-size: 20px; line-height: 1.3; font-weight: 800; margin-top: 3px; }
+.token-status-page .token-detail-panel { display: flex; align-items: flex-start; min-height: 620px; }
+.token-status-page .token-card { width: 100%; min-width: 0; }
+.token-status-page .token-detail-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 9px; }
+.token-status-page .token-doctor-line { font-size: 22px; font-weight: 800; letter-spacing: -.6px; overflow-wrap: anywhere; }
+.token-status-page .token-status-pill { display: inline-flex; align-items: center; gap: 9px; flex-shrink: 0; color: #00a878; background: #e5f8f0; border-radius: 24px; padding: 6px 12px; text-transform: capitalize; font-weight: 650; font-size: 13px; }
+.token-status-page .token-status-pill > span { width: 11px; height: 11px; border-radius: 50%; background: currentColor; }
+.token-status-page .token-status-pill.rejected, .token-status-page .token-status-pill.canceled { color: #d74262; background: #fff0f3; }
+.token-status-page .token-appointment-meta { display: flex; flex-wrap: wrap; gap: 10px 20px; color: var(--token-muted); font-size: 13px; line-height: 1.5; margin-bottom: 16px; }
+.token-status-page .token-appointment-meta > span { display: inline-flex; align-items: center; gap: 12px; }
+.token-status-page .token-appointment-meta > span + span { padding-left: 22px; border-left: 1px solid #cbd6ee; }
+.token-status-page .token-appointment-meta svg { color: var(--token-blue); font-size: 18px; flex-shrink: 0; }
+.token-status-page .token-live-timing { display: flex; align-items: center; gap: 16px; color: #075aff; background: linear-gradient(110deg, #f0f5ff, #eaf2ff); border: 1px solid #becfff; border-radius: 12px; padding: 13px 20px; margin-bottom: 18px; min-height: 59px; }
+.token-status-page .token-notice-icon { flex-shrink: 0; font-size: 23px; }
+.token-status-page .token-live-timing p { margin: 0; font-size: 13px; line-height: 1.5; }
+.token-status-page .token-live-timing strong { display: block; font-size: 13px; margin-bottom: 3px; }
+.token-status-page .token-stats-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.token-status-page .token-stat { display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto auto; column-gap: 12px; align-content: center; align-items: center; padding: 14px 16px; border: 1px solid #e4edff; border-radius: 16px; background: linear-gradient(130deg, #fff, #fcfdff); box-shadow: 0 3px 10px #326bdc0a; min-width: 0; min-height: 88px; position: relative; overflow: hidden; }
+.token-status-page .token-stat-icon { grid-column: 1; grid-row: 1 / 4; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; font-size: 23px; }
+.token-status-page .token-stat-icon.blue { color: #1460ff; background: #e7f0ff; }
+.token-status-page .token-stat-icon.indigo { color: #4855ff; background: #eae9ff; }
+.token-status-page .token-stat-icon.green { color: #00b58a; background: #e1f7ef; }
+.token-status-page .token-stat-icon.pink { color: #f24970; background: #ffe9ee; }
+.token-status-page .token-stat-icon.purple { color: #7946fc; background: #eee7ff; }
+.token-status-page .token-stat-icon.orange { color: #ff9e12; background: #fff3e3; }
+.token-status-page .token-stat-label, .token-status-page .token-stat-value, .token-status-page .token-stat-help { grid-column: 2; position: relative; z-index: 1; }
+.token-status-page .token-stat-label { font-size: 12px; color: var(--token-muted); line-height: 1.35; margin-bottom: 8px; }
+.token-status-page .token-stat-value { font-size: clamp(20px, 1.6vw, 24px); font-weight: 800; line-height: 1.2; color: var(--token-ink); letter-spacing: -.65px; overflow-wrap: anywhere; }
+.token-status-page .token-stat-value-small { font-size: clamp(18px, 1.4vw, 21px); }
+.token-status-page .token-stat-help { font-size: 11px; color: var(--token-muted); margin-top: 5px; }
+.token-status-page .token-stats-grid:first-of-type .token-stat { min-height: 112px; }
+.token-status-page .token-stat.your-token { background: linear-gradient(130deg, #0d50f9, #2377ff); border-color: #0c57ff; box-shadow: 0 5px 14px #145dff20; min-height: 112px; }
+.token-status-page .token-stat.your-token::after { content: ''; position: absolute; width: 190px; height: 190px; border: 25px solid #ffffff09; border-radius: 45%; right: -70px; bottom: -115px; transform: rotate(-25deg); }
+.token-status-page .your-token .token-stat-icon { background: #ffffff30; color: white; width: 52px; height: 52px; font-size: 22px; }
+.token-status-page .your-token { grid-template-columns: 52px minmax(0, 1fr); }
+.token-status-page .your-token .token-stat-label { color: white; }
+.token-status-page .your-token .token-stat-value { color: white; font-size: 38px; }
+.token-status-page .token-refresh-button { display: inline-flex; align-items: center; gap: 7px; border: 0; border-radius: 9px; padding: 7px 10px; background: #f0f5ff; color: #42618e; font-size: 12px; }
+.token-status-page .token-refresh-button:hover { background: #e4eeff; color: #1460ff; }
+.token-status-page button:focus-visible { outline: 3px solid #89b5ff; outline-offset: 3px; }
+.token-status-page .token-empty-state { width: 100%; text-align: center; padding: 36px 14px; color: var(--token-muted); }
+.token-status-page .emergency-banner { color: #a8690b; background: #fff6e6; border: 1px solid #ffe0a8; border-radius: 12px; padding: 12px 16px; margin-bottom: 15px; }
+@media (max-width: 1250px) {
+  .token-status-page { padding: 20px; }
+  .token-status-page .appointment-picker, .token-status-page .token-detail-panel { padding: 18px; }
+  .token-status-page .token-stat { grid-template-columns: 48px minmax(0, 1fr); gap: 10px; padding: 15px 12px; }
+  .token-status-page .token-stat-icon { width: 48px; height: 48px; font-size: 22px; }
+  .token-status-page .your-token .token-stat-icon { width: 48px; height: 48px; font-size: 26px; }
+  .token-status-page .token-stat-label { font-size: 13px; }
+  .token-status-page .picker-heading { font-size: 18px; }
+  .token-status-page .appointment-item { padding-left: 53px; }
+  .token-status-page .appointment-item-icon { left: 17px; font-size: 23px; }
+  .token-status-page .appointment-doctor { font-size: 16px; }
+  .token-status-page .appointment-datetime { font-size: 13px; }
+}
+@media (max-width: 1050px) {
+  .token-status-page .token-page-body { grid-template-columns: 245px minmax(0, 1fr); }
+  .token-status-page .token-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .token-status-page .token-page-header { gap: 20px; padding: 0; }
+}
+@media (max-width: 760px) {
+  .token-status-page { padding: 16px; border-radius: 16px; }
+  .token-status-page .token-page-body { grid-template-columns: 1fr; }
+  .token-status-page .token-page-title { font-size: 24px; letter-spacing: -.7px; }
+  .token-status-page .token-page-subtitle { font-size: 14px; }
+  .token-status-page .token-header-icon { flex-basis: 44px; height: 44px; font-size: 23px; }
+  .token-status-page .token-header-clock { width: 19px; height: 19px; right: 4px; bottom: 4px; }
+  .token-status-page .appointment-list { max-height: 270px; }
+  .token-status-page .appointment-item { min-height: 112px; }
+  .token-status-page .token-detail-panel { min-height: 0; }
+  .token-status-page .token-appointment-meta { font-size: 13px; }
+  .token-status-page .token-appointment-meta > span + span { border-left: 0; padding-left: 0; }
+  .token-status-page .token-doctor-line { font-size: 20px; }
+}
+@media (max-width: 430px) {
+  .token-status-page .token-page-header { gap: 14px; }
+  .token-status-page .token-page-title { font-size: 22px; }
+  .token-status-page .token-stat { grid-template-columns: 38px minmax(0, 1fr); padding: 14px 10px; gap: 8px; }
+  .token-status-page .token-stat-icon, .token-status-page .your-token .token-stat-icon { width: 38px; height: 38px; font-size: 21px; }
+  .token-status-page .token-stat-label { font-size: 11px; }
+  .token-status-page .token-stat-value, .token-status-page .token-stat-value-small { font-size: 20px; }
+  .token-status-page .your-token .token-stat-value { font-size: 30px; }
+  .token-status-page .token-live-timing { padding: 12px; gap: 10px; }
+  .token-status-page .token-live-timing p { font-size: 13px; }
+  .token-status-page .token-status-pill { font-size: 12px; padding: 6px 10px; }
 }
 
-.token-page-header {
-    margin-bottom: 20px;
-}
+.token-status-page .your-token .token-stat-icon > svg { width: 31px; height: 31px; }
+@media (max-width: 1250px) { .token-status-page .your-token .token-stat-icon > svg { width: 31px; height: 31px; } }
 
-.token-page-title {
-    font-size: 22px;
-    font-weight: 700;
-    margin: 0 0 4px;
-}
-
-.token-page-subtitle {
-    color: #6b7280;
-    font-size: 14px;
-    margin: 0;
-}
-
-.token-page-body {
-    display: grid;
-    grid-template-columns: 320px 1fr;
-    gap: 20px;
-}
-
-@media (max-width: 768px) {
-    .token-page-body {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Appointment picker */
-.appointment-picker {
-    border: 1px solid #e5e9f2;
-    border-radius: 12px;
-    padding: 16px;
-    background: #fff;
-}
-
-.picker-heading {
-    font-size: 15px;
-    font-weight: 600;
-    margin: 0 0 12px;
-}
-
-.picker-state {
-    color: #6b7280;
-    font-size: 13px;
-    padding: 12px 0;
-}
-
-.picker-state.error {
-    color: #d92d20;
-}
-
-.appointment-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 480px;
-    overflow-y: auto;
-}
-
-.appointment-item {
-    width: 100%;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 10px 12px;
-    border: 1px solid #e5e9f2;
-    border-radius: 10px;
-    background: #f9fafc;
-    cursor: pointer;
-    transition: border-color 0.15s ease, background 0.15s ease;
-}
-
-.appointment-item:hover {
-    border-color: #2c50cd;
-}
-
-.appointment-item.selected {
-    border-color: #2c50cd;
-    background: #eef1ff;
-}
-
-.appointment-doctor {
-    font-weight: 600;
-    font-size: 13px;
-}
-
-.appointment-datetime {
-    font-size: 12px;
-    color: #6b7280;
-}
-
-.appointment-status {
-    font-size: 11px;
-    text-transform: capitalize;
-    color: #2c50cd;
-    width: fit-content;
-}
-
-/* Token detail panel */
-.token-detail-panel {
-    border: 1px solid #e5e9f2;
-    border-radius: 12px;
-    padding: 24px;
-    background: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 320px;
-}
-
-.token-empty-state {
-    color: #6b7280;
-    font-size: 14px;
-    text-align: center;
-}
-
-.token-empty-state.error {
-    color: #d92d20;
-}
-
-.token-card {
-    width: 100%;
-}
-
-.emergency-banner {
-    background: #fff4e5;
-    color: #b54708;
-    border: 1px solid #fedf89;
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 13px;
-    margin-bottom: 16px;
-}
-
-.token-doctor-line {
-    font-size: 15px;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 8px;
-}
-
-.token-appointment-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    margin-bottom: 14px;
-    color: #6b7280;
-    font-size: 13px;
-}
-
-.token-live-timing {
-    border: 1px solid #c7d2fe;
-    border-radius: 10px;
-    background: #eef2ff;
-    color: #1f2a68;
-    padding: 12px 14px;
-    margin-bottom: 14px;
-}
-
-.token-live-timing strong {
-    display: block;
-    font-size: 15px;
-    margin-bottom: 4px;
-}
-
-.token-live-timing p {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.45;
-}
-
-.token-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-}
-
-.token-stat {
-    border: 1px solid #e5e9f2;
-    border-radius: 10px;
-    padding: 16px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-}
-
-.token-stat.your-token {
-    background: #2c50cd;
-    border-color: #2c50cd;
-}
-
-.token-stat.your-token .token-stat-label,
-.token-stat.your-token .token-stat-value {
-    color: #fff;
-}
-
-.token-stat-label {
-    font-size: 12px;
-    color: #6b7280;
-}
-
-.token-stat-value {
-    font-size: 26px;
-    font-weight: 700;
-    color: #111827;
-    overflow-wrap: anywhere;
-}
-
-.token-stat-value-small {
-    font-size: 18px;
-}
-
-.token-stat-help {
-    color: #6b7280;
-    font-size: 11px;
-}
-
-@media (max-width: 980px) {
-    .token-stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-@media (max-width: 520px) {
-    .token-status-page {
-        padding: 16px;
-    }
-
-    .token-detail-panel {
-        padding: 16px;
-    }
-
-    .token-stats-grid {
-        grid-template-columns: 1fr;
-    }
-}
+.token-status-page .token-header-copy { min-width: 0; }

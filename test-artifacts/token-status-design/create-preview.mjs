@@ -1,0 +1,14 @@
+﻿import { build } from 'esbuild';
+import { readFile, writeFile } from 'node:fs/promises';
+const folder = 'test-artifacts/token-status-design';
+const snapshot = '2026-10-08T12:54:30Z';
+const fixtures = [3, 2, 1].map(token => ({ appointment: { appointmentId: `online:${token}`, _id: String(token), source: 'online', appointmentDate: '2026-10-08', appointmentTime: token === 3 ? '18:45:00' : token === 2 ? '18:35:00' : '18:25:00', doctor: { fullName: 'mediconeckt' }, bookedAt: '2026-10-08T12:52:00Z', status: 'pending', scheduledStartAt: '2026-10-08T12:55:00Z', actualStartAt: null, timingLabel: 'on time' }, token: { myToken: token, queueStatus: 'booked' }, current: { currentToken: null, doctorStatus: 'waiting', serverTime: snapshot }, queue: { totalWaiting: 3, patientsAhead: 0, queuePosition: 1, estimatedTurnTime: '2026-10-08T12:55:00Z', notice: 'Your number may come within 30 minutes. Please stay near the clinic.' }, emergency: {} }));
+await build({ stdin: { contents: `import React from 'react'; import { renderToStaticMarkup } from 'react-dom/server'; import TokenStatusPage from './src/Component/UserDashboard/Tab/Counselor/TokenStatusPage.jsx'; export const html = renderToStaticMarkup(React.createElement(TokenStatusPage));`, resolveDir: process.cwd(), sourcefile: 'token-design-preview.jsx' }, outfile: `${folder}/render.mjs`, bundle: true, platform: 'node', format: 'esm', packages: 'external', loader: { '.css': 'empty' }, plugins: [{ name: 'preview-fixtures', setup(b) {
+ b.onResolve({ filter: /axiosConfig|socketService|LanguageContext/ }, args => ({ path: args.path, namespace: 'preview-mock' }));
+ b.onLoad({ filter: /.*/, namespace: 'preview-mock' }, () => ({ contents: `export default {}; export const useUserTranslation = () => ({ t: key => ({ your_token_status: 'Your Token Status', my_appointments: 'My Appointments', your_token: 'Your Token', now_serving: 'Now Serving', token_page_subtitle: 'View your appointment token, current serving token and live waiting status.' }[key] || '') });` }));
+ b.onLoad({ filter: /TokenStatusPage\.jsx$/ }, async args => ({ loader: 'jsx', contents: (await readFile(args.path, 'utf8')).replace('useState([])', `useState(${JSON.stringify(fixtures)})`).replace('useState(null)', `useState('online:1')`).replace('useState(true)', 'useState(false)').replace('useState(Date.now())', `useState(Date.parse('${snapshot}'))`) }));
+} }] });
+const { html } = await import(`./render.mjs`);
+const css = await readFile('src/Component/UserDashboard/Tab/Counselor/TokenStatusPage.css', 'utf8');
+await writeFile(`${folder}/index.html`, `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;font-family:Arial,sans-serif}button{font-family:inherit}${css}</style></head><body>${html}</body></html>`);
+console.log('Rendered the actual token component with isolated preview fixtures.');

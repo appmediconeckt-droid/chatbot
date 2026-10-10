@@ -8,9 +8,8 @@ import {
   ClipboardClock,
   Download,
   Eye,
-  Filter,
   FlaskConical,
-  ListFilter,
+  Mail,
   MoreVertical,
   Pencil,
   Plus,
@@ -198,11 +197,17 @@ const roleLabels = {
   nurse: "Nurse",
   assistant: "Medical Assistant",
   technician: "Lab Technician",
+  lab_technician: "Lab Technician",
   housekeeping: "Housekeeping",
   supervisor: "Supervisor",
   manager: "Department Manager",
+  department_manager: "Department Manager",
   billing: "Billing",
   receptionist: "Receptionist",
+};
+const staffApiRole = value => {
+  const role = Object.keys(roleLabels).find(key => roleLabels[key] === value) || String(value || '').toLowerCase();
+  return ({ technician: 'lab_technician', manager: 'department_manager' })[role] || role;
 };
 
 const avatarTones = ["teal", "blue", "amber", "green"];
@@ -270,10 +275,12 @@ const getNestedArray = (payload) => {
     payload?.staff,
     payload?.members,
     payload?.results,
+    payload?.clinics,
     payload?.data?.users,
     payload?.data?.staff,
     payload?.data?.members,
     payload?.data?.results,
+    payload?.data?.clinics,
   ];
   return possibleArrays.find(Array.isArray) || [];
 };
@@ -401,7 +408,11 @@ const DoctorUserManagement = () => {
   }, [doctorId]);
 
   useEffect(() => {
-    if (!doctorId) return;
+    if (!doctorId) {
+      setIsLoadingClinics(false);
+      setClinicError('Doctor account could not be loaded. Please sign in again.');
+      return;
+    }
     const controller = new AbortController();
     setIsLoadingClinics(true);
     setClinicError("");
@@ -409,10 +420,10 @@ const DoctorUserManagement = () => {
       headers: getAuthHeaders(), params: { doctor_id: doctorId }, signal: controller.signal,
     }).then(({ data }) => {
       setClinics(getNestedArray(data).map((clinic) => ({
-        id: String(clinic.id || clinic._id),
-        name: clinic.clinic_name || clinic.name,
+        id: String(clinic.id || clinic._id || clinic.clinic_id || ''),
+        name: clinic.clinic_name || clinic.name || 'Clinic',
         location: clinic.location || "",
-      })));
+      })).filter(clinic => clinic.id));
     }).catch((error) => {
       if (!axios.isCancel(error)) {
         setClinics([]);
@@ -522,6 +533,18 @@ const DoctorUserManagement = () => {
     setOpenActionId(null);
   };
 
+  const handleResendStaffEmail = async (staff) => {
+    setOpenActionId(null);
+    if (!staff.rawId) return;
+    try {
+      const result = await axios.post(`${API_BASE_URL}/staff/${staff.rawId}/resend-welcome-email`,
+        { password: 'Temp@12345' }, { headers: getAuthHeaders() });
+      alert(result.data?.message || 'Staff login email sent.');
+    } catch (error) {
+      alert(error.response?.data?.message || 'Staff login email nahi bheja ja saka. Please try again.');
+    }
+  };
+
   const handleActionMenuToggle = (event, staffId) => {
     event.stopPropagation();
 
@@ -531,7 +554,7 @@ const DoctorUserManagement = () => {
     }
 
     const triggerRect = event.currentTarget.getBoundingClientRect();
-    const menuWidth = 136;
+    const menuWidth = 180;
     const menuHeight = 58;
     const shouldOpenAbove = triggerRect.bottom + menuHeight + 6 > window.innerHeight;
 
@@ -601,15 +624,16 @@ const DoctorUserManagement = () => {
     try {
       setIsSavingStaff(true);
       if (editingStaff.rawId) {
-        const response = await axios.put(
+        const response = await axios.patch(
           `${API_BASE_URL}/staff/${editingStaff.rawId}`,
           {
             full_name: editForm.name,
+            fullName: editForm.name,
             clinic_id: editForm.clinicId,
             name: editForm.name,
             email: editForm.email,
             department: editForm.department,
-            role: editForm.role,
+            role: staffApiRole(editForm.role),
             shift: editForm.shift,
             status: editForm.status,
             isActive: editForm.status === "Active",
@@ -750,7 +774,7 @@ const DoctorUserManagement = () => {
           name: fullName,
           email: newStaffForm.email,
           contact_number: newStaffForm.phone.trim(),
-          role: selectedNewRole,
+          role: staffApiRole(selectedNewRole),
           department: newStaff.department,
           shift: newStaffForm.shift,
           date_of_birth: newStaffForm.dateOfBirth,
@@ -777,6 +801,11 @@ const DoctorUserManagement = () => {
       setCurrentPage(1);
       setClinicFilter(newStaffForm.clinicId);
       closeAddStaffModal();
+      if (response.data?.emailSent === false) {
+        alert(response.data.message || 'Staff account ban gaya hai, lekin login email nahi gaya. Staff ke actions se Resend login email karein.');
+      } else if (response.data?.emailSent === undefined) {
+        alert('Staff account ban gaya hai, lekin backend ne email delivery confirm nahi ki. Updated backend restart/deploy karein, phir Resend login email karein.');
+      }
     } catch (error) {
       alert(error.response?.data?.message || error.response?.data?.error || "Staff create nahi ho paya.");
     } finally { setIsSavingStaff(false); }
@@ -836,7 +865,7 @@ const DoctorUserManagement = () => {
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </label>
-            <button className="docstaff-screen-add-btn" type="button" disabled={isLoadingClinics || !clinics.length} onClick={() => {
+            <button className="docstaff-screen-add-btn" type="button" disabled={isLoadingClinics} onClick={() => {
               setNewStaffForm((form) => ({ ...form, clinicId: clinics.some((c) => c.id === clinicFilter) ? clinicFilter : clinics.length === 1 ? clinics[0].id : "" }));
               setShowAddStaffModal(true);
             }}>
@@ -899,12 +928,6 @@ const DoctorUserManagement = () => {
           </div>
 
           <div className="docstaff-screen-toolbar-actions">
-            <button className="docstaff-screen-icon-btn" type="button" aria-label="List filters">
-              <ListFilter size={16} />
-            </button>
-            <button className="docstaff-screen-icon-btn" type="button" aria-label="Advanced filter">
-              <Filter size={16} />
-            </button>
             <button className="docstaff-screen-export-btn" type="button">
               <Download size={15} />
               Export
@@ -1000,6 +1023,9 @@ const DoctorUserManagement = () => {
                             </button>
                             <button type="button" title="Edit" onClick={() => handleUpdateStaff(staff)}>
                               <Pencil size={15} />
+                            </button>
+                            <button type="button" title="Resend login email" aria-label={`Resend login email to ${staff.name}`} onClick={() => handleResendStaffEmail(staff)}>
+                              <Mail size={15} />
                             </button>
                             <button className="docstaff-screen-action-danger" type="button" title="Delete" onClick={() => handleDeleteStaff(staff)}>
                               <Trash2 size={15} />

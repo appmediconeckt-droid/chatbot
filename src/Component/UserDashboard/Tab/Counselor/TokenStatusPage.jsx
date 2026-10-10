@@ -5,11 +5,19 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { FaCalendarAlt, FaFileAlt, FaUsers, FaRegClock, FaListUl, FaUserMd, FaPlay, FaInfoCircle, FaChevronRight, FaSyncAlt } from "react-icons/fa";
 import axiosInstance from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import "./TokenStatusPage.css";
 import { formatTimer, formatWaitLabel, getLiveTokenTiming, getTokenDisplayTime, formatQueueStatus } from "./tokenTiming.js";
+
+const TokenTicketIcon = () => (
+  <svg viewBox="0 0 48 48" fill="none" aria-hidden="true">
+    <path d="M7 9h34v9a6 6 0 0 0 0 12v9H7v-9a6 6 0 0 0 0-12V9Z" stroke="currentColor" strokeWidth="3.5" strokeLinejoin="round" />
+    <path d="M28 15v1m0 7v1m0 7v1" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+  </svg>
+);
 
 const TOKEN_STATUS_ENDPOINT = "/api/appointments/my-token-status";
 const POLL_INTERVAL_MS = 10000;
@@ -308,20 +316,24 @@ const TokenStatusPage = () => {
   return (
     <div className="token-status-page">
       <div className="token-page-header">
+        <span className="token-header-icon" aria-hidden="true"><FaCalendarAlt /><FaRegClock className="token-header-clock" /></span>
+        <div className="token-header-copy">
         <h2 className="token-page-title">
-          {t("your_token_status") || "Your Token Status"}
+          {t("your_token_status") === "Your Token Status" ? <>Your <span>Token Status</span></> : (t("your_token_status") || <>Your <span>Token Status</span></>)}
         </h2>
 
         <p className="token-page-subtitle">
           {t("token_page_subtitle") ||
             "View your appointment token, current serving token and live waiting status."}
         </p>
+        </div>
       </div>
 
       <div className="token-page-body">
         {/* LEFT SIDE - APPOINTMENT LIST */}
         <div className="appointment-picker">
           <h3 className="picker-heading">
+            <span className="picker-heading-icon" aria-hidden="true"><FaCalendarAlt /></span>
             {t("my_appointments") || "My Appointments"}
           </h3>
 
@@ -367,8 +379,11 @@ const TokenStatusPage = () => {
                       className={`appointment-item ${
                         isSelected ? "selected" : ""
                       }`}
+                      aria-pressed={isSelected}
                       onClick={() => setSelectedAppointmentId(id)}
                     >
+                      <FaCalendarAlt className="appointment-item-icon" aria-hidden="true" />
+                      <FaChevronRight className="appointment-item-chevron" aria-hidden="true" />
                       <span className="appointment-doctor">
                         {getDoctorName(item)}
                       </span>
@@ -421,13 +436,14 @@ const TokenStatusPage = () => {
               )}
 
               {/* Doctor */}
-              <div className="token-doctor-line">
-                {getDoctorName(selectedItem)}
+              <div className="token-detail-heading">
+                <div className="token-doctor-line">{getDoctorName(selectedItem)}</div>
+                <span className={`token-status-pill ${appointment.status || "pending"}`}><span aria-hidden="true" />{formatQueueStatus(appointment.status || "pending")}</span>
               </div>
 
               <div className="token-appointment-meta">
-                <span>Booked: {formatDateTimeValue(bookedAt)}</span>
-                <span>Appointment: {formatAppointmentDateTime(appointment) || "--"}</span>
+                <span><FaCalendarAlt aria-hidden="true" />Booked: {formatDateTimeValue(bookedAt)}</span>
+                <span><FaRegClock aria-hidden="true" />Appointment: {formatAppointmentDateTime(appointment) || "--"}</span>
               </div>
 
               {isTerminalAppointment ? (
@@ -438,6 +454,8 @@ const TokenStatusPage = () => {
               ) : <>
               {/* Main token stats */}
               <div className="token-live-timing" role="status">
+                <FaInfoCircle className="token-notice-icon" aria-hidden="true" />
+                <div>
                 {currentData.consultationStartedAt ? (
                   <>
                     <strong>{currentData.isYourTurn ? "Your checkup" : "Current checkup"}: {formatTimer(liveTiming.elapsed)}</strong>
@@ -445,9 +463,11 @@ const TokenStatusPage = () => {
                     {(currentData.doctorStatus === "paused" || currentData.doctorStatus === "break") && <p>Timer paused while the doctor is {currentData.doctorStatus === "break" ? "on break" : "paused"}.</p>}
                   </>
                 ) : <p>{timingMessage}</p>}
+                </div>
               </div>
               <div className="token-stats-grid">
                 <div className="token-stat your-token">
+                  <span className="token-stat-icon blue" aria-hidden="true"><TokenTicketIcon /></span>
                   <span className="token-stat-label">
                     {t("your_token") || "Your Token"}
                   </span>
@@ -457,6 +477,7 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-icon indigo" aria-hidden="true"><FaUsers /></span>
                   <span className="token-stat-label">
                     {t("now_serving") || "Now Serving"}
                   </span>
@@ -467,6 +488,7 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-icon green" aria-hidden="true"><FaRegClock /></span>
                   <span className="token-stat-label">Your number in</span>
                   <span className="token-stat-value">
                     {currentData.isYourTurn ? "Consultation in progress" : getWaitDisplay(queueData, liveTiming)}
@@ -478,6 +500,7 @@ const TokenStatusPage = () => {
               {/* Additional live queue info */}
               <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
+                  <span className="token-stat-icon pink" aria-hidden="true"><FaUsers /></span>
                   <span className="token-stat-label">Patients Ahead</span>
                   <span className="token-stat-value">
                     {queueData.patientsAhead ?? "--"}
@@ -485,6 +508,7 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-icon purple" aria-hidden="true"><FaListUl /></span>
                   <span className="token-stat-label">Queue Position</span>
                   <span className="token-stat-value">
                     {queueData.queuePosition ?? "--"}
@@ -492,6 +516,7 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-icon orange" aria-hidden="true"><FaUsers /></span>
                   <span className="token-stat-label">Total Waiting</span>
                   <span className="token-stat-value">
                     {queueData.totalWaiting ?? "--"}
@@ -501,6 +526,7 @@ const TokenStatusPage = () => {
 
               <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
+                  <span className="token-stat-icon blue" aria-hidden="true"><FaRegClock /></span>
                   <span className="token-stat-label" title="Approximate time your consultation will begin, based on the live queue.">Estimated Consultation Time</span>
                   <span className="token-stat-value">
                     {formatEstimatedTurnTime(queueData.estimatedTurnTime)}
@@ -508,6 +534,7 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-icon green" aria-hidden="true"><FaCalendarAlt /></span>
                   <span className="token-stat-label">Appointment Timing</span>
                   <span className="token-stat-value token-stat-value-small">
                     {appointment.timingLabel || queueData.timingLabel || formatMinuteDifference(queueData.timingDifferenceMinutes ?? appointment.timingDifferenceMinutes) || "--"}
@@ -515,6 +542,7 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-icon pink" aria-hidden="true"><FaUserMd /></span>
                   <span className="token-stat-label">Doctor Status</span>
                   <span className="token-stat-value">
                     {doctorStatusLabel}
@@ -524,6 +552,7 @@ const TokenStatusPage = () => {
 
               <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
+                  <span className="token-stat-icon purple" aria-hidden="true"><FaFileAlt /></span>
                   <span className="token-stat-label">Queue Status</span>
                   <span className="token-stat-value">
                     {formatQueueStatus(tokenData.queueStatus)}
@@ -531,6 +560,7 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-icon blue" aria-hidden="true"><FaCalendarAlt /></span>
                   <span className="token-stat-label">Scheduled Time</span>
                   <span className="token-stat-value token-stat-value-small">
                     {formatEstimatedTurnTime(appointment.scheduledStartAt)}
@@ -538,6 +568,7 @@ const TokenStatusPage = () => {
                 </div>
 
                 <div className="token-stat">
+                  <span className="token-stat-icon blue" aria-hidden="true"><FaPlay /></span>
                   <span className="token-stat-label">Live Start</span>
                   <span className="token-stat-value token-stat-value-small">
                     {formatEstimatedTurnTime(appointment.actualStartAt)}
@@ -575,8 +606,9 @@ const TokenStatusPage = () => {
                   marginTop: 16,
                   cursor: "pointer",
                 }}
+                className="token-refresh-button"
               >
-                Refresh Status
+                <FaSyncAlt aria-hidden="true" /> Refresh Status
               </button>
             </div>
           )}
