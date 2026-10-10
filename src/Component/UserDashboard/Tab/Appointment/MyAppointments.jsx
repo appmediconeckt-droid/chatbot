@@ -812,6 +812,7 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import axios from "axios";
+import socketService from "../../../../services/socketService";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
@@ -871,8 +872,30 @@ const MyAppointments = () => {
   };
 
   useEffect(() => {
+    let disposed = false;
+    let socket;
+    let debounce;
+    const refresh = () => {
+      window.clearTimeout(debounce);
+      debounce = window.setTimeout(() => { if (!disposed) fetchAppointments(); }, 500);
+    };
     fetchAppointments();
-  }, []);
+    socketService.connect().then((connection) => {
+      if (disposed) return;
+      socket = connection;
+      socket.on('queueUpdated', refresh);
+      socket.on('connect', refresh);
+    }).catch((error) => console.warn('Appointment updates unavailable:', error.message));
+    const visible = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', visible);
+    return () => {
+      disposed = true;
+      window.clearTimeout(debounce);
+      socket?.off('queueUpdated', refresh);
+      socket?.off('connect', refresh);
+      document.removeEventListener('visibilitychange', visible);
+    };
+  }, [token]);
 
   useEffect(() => {
     const fetchCounselors = async () => {
@@ -1495,6 +1518,18 @@ const MyAppointments = () => {
                         </span>
                       </>
                     )}
+                  </div>
+
+                  <div className="user-appointment-schedule" style={{ flexWrap: 'wrap' }}>
+                    {apt.delay_minutes > 0 && apt.estimatedTime && <span>Updated estimate: {new Date(apt.estimatedTime).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} ? Doctor/queue delay: {apt.delay_minutes} min</span>}
+                    {['pending', 'confirmed'].includes(apt.status) && <>
+                      <span>Current token: {apt.currentToken ?? '--'}</span>
+                      {apt.waiting_minutes != null && <span>Approximate wait: {apt.waiting_minutes} min</span>}
+                      {apt.patientArrivalTime || ['waiting', 'in_progress'].includes(apt.queue_status)
+                        ? <span>Checked in ? Waiting for your turn</span>
+                        : apt.cancelDeadline && <span>Please arrive before: {new Date(apt.cancelDeadline).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}</span>}
+                    </>}
+                    {apt.cancellationReason === 'PATIENT_LATE' && <span>Appointment Cancelled ? Patient did not arrive before the adjusted appointment deadline.</span>}
                   </div>
 
                     <div className="user-appointment-actions">

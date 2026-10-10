@@ -8,8 +8,9 @@ export const filterAppointments = (appointments, status = "All", period = "All",
     const value = normalizeStatus(apt.status);
     if (status !== "All" && value !== normalizeStatus(status)) return false;
     const pendingEmergency = isUnscheduledEmergency(apt) && !terminal.has(value);
-    if (period === "Upcoming") return !terminal.has(value) && (pendingEmergency || timestamp(apt) > now);
-    if (period === "Past") return terminal.has(value) || (!pendingEmergency && timestamp(apt) <= now);
+    const activeQueue = !terminal.has(value) && Boolean(apt.queue_status || apt.token_number);
+    if (period === "Upcoming") return !terminal.has(value) && (activeQueue || pendingEmergency || timestamp(apt) > now);
+    if (period === "Past") return terminal.has(value) || (!activeQueue && !pendingEmergency && timestamp(apt) <= now);
     return true;
   }).sort((a, b) => (Date.parse(b.createdAt || b.created_at) || timestamp(b)) - (Date.parse(a.createdAt || a.created_at) || timestamp(a)));
 };

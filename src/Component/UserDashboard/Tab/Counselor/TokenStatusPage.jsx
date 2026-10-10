@@ -576,6 +576,17 @@ const TokenStatusPage = () => {
                 </div>
               </div>
 
+              <div className="token-stats-grid" style={{ marginTop: 14 }}>
+                <div className="token-stat">
+                  <span className="token-stat-label">Arrival</span>
+                  <span className="token-stat-value token-stat-value-small">
+                    {appointment.patientArrivalTime || ['waiting', 'in_progress'].includes(tokenData.queueStatus)
+                      ? 'Checked in ? Waiting for your turn'
+                      : appointment.cancelDeadline ? `Please arrive before ${formatEstimatedTurnTime(appointment.cancelDeadline)}` : 'Waiting for the updated queue estimate'}
+                  </span>
+                </div>
+              </div>
+
               {/* Emergency details */}
               {emergencyData.active && (
                 <div

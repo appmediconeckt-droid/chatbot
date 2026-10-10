@@ -1,4 +1,7 @@
-import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctorAppointmentFeed, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, getCancelledAppointmentHistory, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../appointmentFeed.js";
+import socketService from "../../../services/socketService";
+import { getDoctorDashboardSummary } from './doctorDashboardSummary.js';
+import { getConsultationDurationMs } from '../AppointmentList/appointmentListSummary.js';
+import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctorAppointmentFeed, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, getCancelledAppointmentHistory, getAppointmentCancellationState, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../appointmentFeed.js";
 // // DoctorDashboard.jsx
 // import React, { useEffect, useRef, useState } from "react";
 // import {
@@ -2392,6 +2395,9 @@ const formatAppointmentTime = (appointment) => {
 };
 
 const normalizeAppointmentStatus = (appointment, forcedStatus) => {
+  const historyState = getAppointmentCancellationState(appointment);
+  if (!forcedStatus && historyState.cancelled) return "cancelled";
+  if (!forcedStatus && historyState.completed) return "completed";
   const queueStatus = String(
     pickFirst(appointment?.queue_status, appointment?.queueStatus, ""),
   ).toLowerCase().trim().replace(/\s+/g, "-");
@@ -2512,7 +2518,8 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
       bookedSchedule?.durationMinutes
     )) || 0,
     queueStatus: pickFirst(appointment?.queue_status, appointment?.queueStatus, ""),
-    checkedInAt: pickFirst(appointment?.checked_in_at, appointment?.checkedInAt),
+    checkedInAt: pickFirst(appointment?.patientArrivalTime, appointment?.checked_in_at, appointment?.checkedInAt),
+    cancellationReason: pickFirst(appointment?.cancellationReason, appointment?.cancellation_reason),
     consultationStartedAt: pickFirst(
       appointment?.consultation_started_at,
       appointment?.consultationStartedAt,
@@ -2564,7 +2571,7 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
       resolveProfileImage(appointment, API_BASE_URL),
     startTime: pickFirst(appointment?.start_time, appointment?.startTime),
     endTime: pickFirst(appointment?.end_time, appointment?.endTime),
-    durationMs: pickFirst(appointment?.duration_ms, appointment?.durationMs),
+    durationMs: getConsultationDurationMs(appointment),
     diagnosis: appointment?.diagnosis,
     medicine: appointment?.medicine,
     medicines: appointment?.medicines || [],
@@ -3559,9 +3566,9 @@ const DoctorDashboard = () => {
   );
 
   // Fetch appointments from API
-  const fetchAppointments = async () => {
+  const fetchAppointments = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError(null);
       
       if (!doctorId) {
@@ -3691,7 +3698,27 @@ const DoctorDashboard = () => {
   };
 
   useEffect(() => {
+    let disposed = false;
+    let socket;
+    let debounce;
+    const refresh = (event) => {
+      if (event?.doctorId && String(event.doctorId) !== String(doctorId)) return;
+      clearTimeout(debounce);
+      debounce = setTimeout(() => { if (!disposed) fetchAppointments(true); }, 500);
+    };
     fetchAppointments();
+    socketService.connect().then((connection) => {
+      if (disposed) return;
+      socket = connection;
+      socket.on('queueUpdated', refresh);
+      socket.on('connect', refresh);
+    }).catch((error) => console.warn('Doctor queue updates unavailable:', error.message));
+    return () => {
+      disposed = true;
+      clearTimeout(debounce);
+      socket?.off('queueUpdated', refresh);
+      socket?.off('connect', refresh);
+    };
   }, [doctorId]);
 
   // Restore an active server break after refresh/login.
@@ -4213,12 +4240,13 @@ const DoctorDashboard = () => {
         ? inProgressAppointments
         : pendingAppointments;
   const nextPatient = activeAppt || pendingAppointments[0] || upcomingAppointments[0] || null;
-  const totalToday = upcomingAppointments.length + skippedAppointments.length + completed.length;
-  const completionPercent = totalToday ? Math.round((completed.length / totalToday) * 100) : 0;
+  const { totalToday, completedToday, pendingToday, completionPercent, averageConsultMinutes } = getDoctorDashboardSummary([
+    ...visibleAppointments, ...visibleCancelledAppointments, ...completed,
+  ], now);
   const getPendingQueueIndex = (appointment) =>
     pendingAppointments.findIndex((item) => item.id === appointment?.id);
   const isQueueTurnAvailable = (appointment) =>
-    (completed.length > 0 || skippedAppointments.length > 0) && getPendingQueueIndex(appointment) === 0;
+    (completedToday > 0 || skippedAppointments.length > 0) && getPendingQueueIndex(appointment) === 0;
   const canStartAppointment = (appointment) =>
     canStartConsultation({
       appointment,
@@ -4233,14 +4261,11 @@ const DoctorDashboard = () => {
     day: "numeric",
     year: "numeric",
   }).split(", ");
-  const averageConsultMin = completed.length
-    ? Math.max(1, Math.round(completed.reduce((sum, appt) => sum + (appt.durationMs || 0), 0) / completed.length / 60000))
-    : 15;
   const statCards = [
-    { label: "Today's Appointments", value: totalToday || appointments.length, icon: "bi-calendar-event" },
-    { label: "Pending Consultations", value: pendingAppointments.length, icon: "bi-hourglass-split" },
-    { label: "Completed Today", value: completed.length, icon: "bi-check-circle" },
-    { label: "Avg. Consult Time", value: averageConsultMin, suffix: "min", icon: "bi-stopwatch" },
+    { label: "Today's Appointments", value: totalToday, icon: "bi-calendar-event" },
+    { label: "Pending Consultations", value: pendingToday, icon: "bi-hourglass-split" },
+    { label: "Completed Today", value: completedToday, icon: "bi-check-circle" },
+    { label: "Avg. Consult Time", value: averageConsultMinutes ?? '--', suffix: "min", icon: "bi-stopwatch" },
   ];
 
   const StatusBadge = ({ status }) => {
@@ -4401,6 +4426,8 @@ const DoctorDashboard = () => {
                               ? `${appt.bookedSchedule.label} (${appt.bookedSchedule.range}) · Slot ${appt.bookedSlotTime}`
                               : `Scheduled time: ${appt.bookedSlotTime || "Not available"}`}
                           </span>
+                          {['pending', 'confirmed'].includes(appt.status) && <span>{appt.checkedInAt || appt.queueStatus === 'waiting' ? 'Checked in ? Waiting' : 'Not checked in'}</span>}
+                          {appt.cancellationReason === 'PATIENT_LATE' && <span>Patient did not arrive before the adjusted appointment deadline.</span>}
                           {appt.delayMinutes > 0 && appt.estimatedTime && (
                             <span><i className="bi bi-hourglass-split"></i>Estimated: {appt.estimatedTime} (+{appt.delayMinutes}m)</span>
                           )}
@@ -4595,7 +4622,7 @@ const DoctorDashboard = () => {
                   <span>Complete</span>
                 </div>
               </div>
-              <p>{completed.length} of {totalToday || appointments.length} appointments completed</p>
+              <p>{completedToday} of {totalToday} appointments completed</p>
             </section>
           </aside>
       </div>

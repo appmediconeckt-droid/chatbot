@@ -182,63 +182,9 @@ export const getAppointmentSchedule = (appointment, availabilityRanges = []) => 
   };
 };
 
-export const isAppointmentSlotExpired = (appointment, nowMs = Date.now()) => {
-  const status = String(pickFirst(appointment?.status, appointment?.appointment_status, "")).toLowerCase();
-  const queueStatus = String(
-    pickFirst(appointment?.queueStatus, appointment?.queue_status, ""),
-  ).toLowerCase().replace(/-/g, "_");
-  const consultationStartedAt = pickFirst(
-    appointment?.consultationStartedAt,
-    appointment?.consultation_started_at,
-    appointment?.consultation_timing?.startedAt,
-    appointment?.consultation_timing?.started_at,
-  );
-  if (
-    ["in_progress", "completed"].includes(queueStatus) ||
-    ["waiting", "called"].includes(queueStatus) ||
-    appointment?.checked_in_at || appointment?.checkedInAt ||
-    consultationStartedAt ||
-    ["completed", "in-progress", "in_progress"].includes(status)
-  ) return false;
-  if (queueStatus === "skipped" || status === "skipped") return false;
-  if (!["pending", "confirmed", "booked", "scheduled", "accepted", "active"].includes(status)) return false;
-  if (
-    String(appointment?.priority || "").toLowerCase() === "emergency" ||
-    appointment?.isEmergency
-  ) return false;
-
-  const dateValue = pickFirst(
-    appointment?.appointment_date,
-    appointment?.appointmentDate,
-    appointment?.date,
-    appointment?.scheduled_date,
-    appointment?.scheduledDate
-  );
-  const dateKey = String(dateValue || "").slice(0, 10);
-  const startMinutes = getTimeInMinutes(pickFirst(
-    appointment?.appointment_time,
-    appointment?.appointmentTime,
-    appointment?.slot_start_time,
-    appointment?.slotStartTime,
-    appointment?.slot_time,
-    appointment?.slotTime,
-    appointment?.original_appointment_time,
-    appointment?.originalAppointmentTime,
-    appointment?.scheduled_time,
-    appointment?.scheduledTime,
-    appointment?.bookedSlotTime,
-    appointment?.time
-  ));
-  const endMinutes = getTimeInMinutes(pickFirst(appointment?.bookedSchedule?.endTime, appointment?.session_end_time));
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || startMinutes == null || endMinutes == null || endMinutes <= startMinutes) {
-    return false;
-  }
-
-  const date = new Date(`${dateKey}T00:00:00+05:30`);
-  if (Number.isNaN(date.getTime())) return false;
-  const slotEnd = date.getTime() + endMinutes * 60000;
-  return slotEnd <= nowMs;
-};
+// Active queue membership is determined by server status, never session time.
+// Keep this export for existing callers; no client-side automatic expiry.
+export const isAppointmentSlotExpired = () => false;
 
 export const shouldShowStartConsultation = ({
   activeTab,
@@ -402,31 +348,46 @@ export const mergeAppointmentLists = (...lists) => {
   return [...records.values(), ...withoutId];
 };
 
-export const getCancelledAppointmentHistory = (appointments, nowMs = Date.now()) =>
+export const getAppointmentCancellationState = (appointment) => {
+  const normalize = (value) => String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+  const status = normalize(getAppointmentSource(appointment) === 'walkin'
+    ? pickFirst(appointment.appointment_status, appointment.status, appointment.walkin_status)
+    : pickFirst(appointment.status, appointment.appointment_status, appointment.walkin_status));
+  const queueStatus = normalize(pickFirst(appointment.queue_status, appointment.queueStatus));
+  // Persisted cancellation wins over stale consultation/queue metadata.
+  // A completed lifecycle still wins over an old canceled queue flag.
+  if (['canceled', 'cancelled'].includes(status)) return { cancelled: true, noShow: false };
+  if (['completed', 'complete', 'done'].includes(status)) return { cancelled: false, noShow: false, completed: true };
+  const cancelled = ['canceled', 'cancelled'].includes(queueStatus);
+  if (cancelled) return { cancelled: true, noShow: false };
+  if (['in_progress', 'in_consultation', 'consulting', 'serving'].includes(status) ||
+      ['completed', 'in_progress', 'in_consultation'].includes(queueStatus)) return { cancelled: false, noShow: false };
+  return { cancelled: false, noShow: status === 'no_show' || queueStatus === 'no_show' || Boolean(appointment.isNoShow) };
+};
+
+export const getCancelledAppointmentHistory = (appointments) =>
   mergeAppointmentLists(appointments).flatMap((appointment) => {
-    const status = String(appointment.status || appointment.appointment_status || "").toLowerCase().replace(/-/g, "_");
-    const queueStatus = String(appointment.queueStatus || appointment.queue_status || "").toLowerCase().replace(/-/g, "_");
-    if (["completed", "in_progress"].includes(status) || ["completed", "in_progress"].includes(queueStatus)) return [];
-    const noShow = status === "no_show" || queueStatus === "no_show" || appointment.isNoShow;
-    const cancelled = ["cancelled", "canceled"].includes(status) || ["cancelled", "canceled"].includes(queueStatus);
-    const expired = !cancelled && isAppointmentSlotExpired(appointment, nowMs);
-    if (expired) return []; // Absent bookings are removed at session end, not moved into cancellation history.
-    if (!cancelled && !noShow && !expired) return [];
-    return [{ ...appointment, status: "cancelled", isNoShow: Boolean(noShow || expired) }];
+    const { cancelled, noShow } = getAppointmentCancellationState(appointment);
+    if (!cancelled && !noShow) return [];
+    return [{ ...appointment, status: 'cancelled', isNoShow: noShow }];
   });
 
 export const loadDoctorAppointmentFeed = async (client, baseUrl, doctorId, headers) => {
   const options = { headers, params: { doctor_id: doctorId } };
-  const [online, walkins, completed] = await Promise.all([
+  const [online, walkins, completed, cancelled] = await Promise.all([
     client.get(`${baseUrl}/appointments`, options),
     client.get(`${baseUrl}/walkin-appointments`, options),
     client.get(`${baseUrl}/appointments`, {
       headers, params: { doctor_id: doctorId, appointment_status: "completed" },
     }),
+    client.get(`${baseUrl}/appointments`, {
+      headers, params: { doctor_id: doctorId, appointment_status: "cancelled" },
+    }),
   ]);
   return mergeAppointmentLists(
     normalizeApiList(online.data),
     normalizeApiList(completed.data),
+    normalizeApiList(cancelled.data),
     normalizeApiList(walkins.data).map((item) => ({ ...item, __appointmentSource: "walkin" })),
   );
 };

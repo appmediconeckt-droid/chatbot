@@ -79,7 +79,7 @@ test("booked appointments are assigned to their matching doctor calendar schedul
   }, ranges).range, "08:00 AM - 10:00 AM");
 });
 
-test("scheduled patient remains visible for the full doctor availability session", () => {
+test("scheduled patient remains visible beyond doctor availability session", () => {
   const appointment = {
     appointmentSource: "online",
     status: "pending",
@@ -91,7 +91,7 @@ test("scheduled patient remains visible for the full doctor availability session
   const slotStart = new Date("2026-10-05T10:00:00+05:30").getTime();
   assert.equal(isAppointmentSlotExpired(appointment, slotStart + 29 * 60000), false);
   assert.equal(isAppointmentSlotExpired(appointment, slotStart + 119 * 60000), false);
-  assert.equal(isAppointmentSlotExpired(appointment, slotStart + 120 * 60000), true);
+  assert.equal(isAppointmentSlotExpired(appointment, slotStart + 120 * 60000), false);
   assert.equal(isAppointmentSlotExpired(appointment, slotStart + 30 * 60000), false);
   assert.equal(isAppointmentSlotExpired({ ...appointment, status: "in-progress" }, slotStart + 60 * 60000), false);
   assert.equal(isAppointmentSlotExpired({ ...appointment, bookedSchedule: null }, slotStart + 24 * 60 * 60000), false);
@@ -206,7 +206,7 @@ test("started appointments remain visible until the doctor completes them", () =
   }, slotStart + 60 * 60000), false);
 });
 
-test("unstarted appointments expire at doctor session end rather than their consultation duration", () => {
+test("unstarted appointments remain active after consultation duration and session end", () => {
   const appointment = {
     status: "pending",
     appointmentDate: "2026-10-05",
@@ -229,25 +229,26 @@ test("dashboard loads online and walk-in appointments for the same doctor", asyn
       { id: 1, status: "booked", patient_name: "Walk-in patient" },
       { id: 2, status: "completed" },
     ] } };
+    if (options.params.appointment_status === "cancelled") return { data: [{ id: 4, status: "canceled" }] };
     if (options.params.appointment_status) return { data: [{ id: 3, status: "completed" }] };
     return { data: { online: [{ id: 1, status: "confirmed" }], walkins: [{ id: 1, status: "booked" }] } };
   } };
   const rows = await loadDoctorAppointmentFeed(client, "/api", "doctor-1", { Authorization: "Bearer test" });
-  assert.equal(calls.length, 3);
+  assert.equal(calls.length, 4);
   assert.ok(calls.every(({ options }) => options.params.doctor_id === "doctor-1"));
   assert.ok(calls.every(({ options }) => options.headers.Authorization === "Bearer test"));
-  assert.equal(rows.length, 4);
+  assert.equal(rows.length, 5);
   assert.equal(rows.filter((row) => getAppointmentSource(row) === "walkin").length, 2);
   assert.equal(rows.find((row) => getAppointmentSource(row) === "walkin" && row.id === 1).patient_name, "Walk-in patient");
   assert.equal(rows.filter((row) => row.status === "completed").length, 2);
 });
 
-test("14:15 appointment stays through the doctor's 17:00 session end and protects arrived patients", () => {
+test("14:15 appointment survives the doctor's 17:00 session end and protects arrived patients", () => {
   const appointment = { status: "pending", appointmentDate: "2026-10-08", bookedSlotTime: "14:15", slotDurationMinutes: 15, bookedSchedule: { endTime: "17:00" } };
   const at = (time) => Date.parse(`2026-10-08T${time}+05:30`);
   assert.equal(isAppointmentSlotExpired(appointment, at("14:30:00")), false);
   assert.equal(isAppointmentSlotExpired(appointment, at("16:59:59")), false);
-  assert.equal(isAppointmentSlotExpired(appointment, at("17:00:00")), true);
+  assert.equal(isAppointmentSlotExpired(appointment, at("17:00:00")), false);
   assert.equal(isAppointmentSlotExpired({ ...appointment, checkedInAt: "2026-10-08T16:50:00+05:30" }, at("18:00:00")), false);
   assert.equal(isAppointmentSlotExpired({ ...appointment, queueStatus: "waiting" }, at("18:00:00")), false);
 });
