@@ -156,7 +156,7 @@ export default function SessionsTab({
 
   return (
     <div className="couns-tab-content-stitch couns-sessions-page" aria-busy={loading}>
-      <header className="couns-sessions-page-title">
+      <header className="couns-sessions-page-title portal-page-header">
         <h1>{t("counselling_sessions_overview")}</h1>
       </header>
 

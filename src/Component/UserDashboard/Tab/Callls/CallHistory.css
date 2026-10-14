@@ -345,7 +345,7 @@
 
 /* CallHistory.css */
 
-* {
+.call-history-container * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -1831,5 +1831,49 @@
 
   .call-history-container .call-item {
     padding: 13px 12px;
+  }
+}
+
+/* Bounded split view: controls stay visible; each list scrolls independently. */
+.portal-call-history {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.portal-call-history > .pch-header.portal-page-header {
+  flex: 0 0 auto;
+  margin-bottom: 0;
+}
+.portal-call-history > .pch-layout {
+  display: grid;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+.portal-call-history .pch-sidebar {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.portal-call-history .pch-controls { flex: 0 0 auto; }
+.portal-call-history .pch-compact-list {
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.portal-call-history .pch-records {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+@media (max-width: 680px) {
+  .portal-call-history > .pch-layout {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(140px, 36%) minmax(0, 1fr);
   }
 }

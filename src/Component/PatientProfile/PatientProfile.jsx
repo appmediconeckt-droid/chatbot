@@ -725,6 +725,7 @@ const PatientProfile = () => {
 
   return (
     <div className="profile-container" aria-busy={isInitialLoading}>
+      <header className="portal-page-header"><h1>{t("profile")}</h1></header>
       {showNotification.show && (
         <div className={`notification ${showNotification.type}`}>
           {showNotification.message}

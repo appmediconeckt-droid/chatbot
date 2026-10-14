@@ -447,7 +447,7 @@ export default function Prescriptions() {
 
   return (
     <section className="rx-page">
-      <header className="rx-page-header">
+      <header className="rx-page-header portal-page-header">
         <div className="rx-page-heading">
           <span className="rx-page-icon"><FaFileMedical /></span>
           <div><p>{t('health_records') || <PortalText text={"Health records"} />}</p><h1>{t('my_prescriptions') || <PortalText text={"My Prescriptions"} />}</h1><span>{t('prescriptions_subtitle') || <PortalText text={"View and download prescriptions issued by your psychiatrist."} />}</span></div>

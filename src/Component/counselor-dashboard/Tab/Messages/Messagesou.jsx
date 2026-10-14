@@ -1383,7 +1383,7 @@ const SMSList = () => {
 
       <div className="smslist-container">
       {/* Header with Welcome */}
-      <div className="smslist-header">
+      <div className="smslist-header portal-page-header">
         <div className="smslist-welcome">
           <h1>{t(getTimeGreetingKey())}</h1>
         </div>

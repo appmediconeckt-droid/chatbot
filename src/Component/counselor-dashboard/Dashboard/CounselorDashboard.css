@@ -5832,3 +5832,31 @@ button:focus {
     box-sizing: border-box;
   }
 }
+
+/* The active call page owns its scrolling instead of growing the document. */
+.couns-main-content.couns-main-content--calls {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.couns-main-content--calls .couns-call-page:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  padding-block: 0;
+  overflow: hidden;
+}
+.couns-main-content--calls .couns-call-page > .portal-page-header {
+  margin-bottom: 0;
+}
+.couns-main-content--calls .portal-call-history {
+  flex: 1;
+  height: 0;
+}
+@media (max-width: 900px) {
+  .couns-main-content.couns-main-content--calls {
+    padding-top: calc(56px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+}

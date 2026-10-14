@@ -78,7 +78,7 @@ const Dashboard = () => {
     return (
         <div className="Coun-dashboard-content" style={{ padding: "15px" }} aria-busy={loading}>
             {/* Header Section */}
-            <div className="dashboard-header">
+            <div className="dashboard-header portal-page-header">
                 <div>
                     <h1 className="welcome-title">{t(getTimeGreetingKey())}, Dr. Sharma 👋</h1>
                     <p className="date-info">{new Date().toLocaleDateString(lang || undefined, {

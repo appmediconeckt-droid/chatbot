@@ -446,7 +446,7 @@ import { PortalElement, PortalText } from "../../../common/PortalTranslation";
 //       {/* ── Main Content ── */}
 //       <main className="flex-1 p-4 sm:p-8 min-w-0">
 //         {/* Header */}
-//         <header className="user-appointments-hero">
+//         <header className="user-appointments-hero portal-page-header">
 //           <div>
 //             <h1>{t('my_appointments')}</h1>
 //           <p>{t("appointments_subtitle")}</p>
@@ -1449,7 +1449,7 @@ const MyAppointments = () => {
       {/* ── Main Content ── */}
       <main className="flex-1 p-4 sm:p-8 min-w-0">
         {/* Header */}
-        <header className="user-appointments-hero">
+        <header className="user-appointments-hero portal-page-header">
           <div>
             <h1>{t('my_appointments')}</h1>
           <p>{t("appointments_subtitle")}</p>
@@ -1505,7 +1505,7 @@ const MyAppointments = () => {
         ) : (
           <>
           {selectedProviderKey && <div className="user-provider-history-header">
-            <button type="button" className="user-appointment-action secondary" onClick={() => setSelectedProviderKey(null)}><PortalText text="Back to doctors & consultants" /></button>
+            <button type="button" className="user-provider-back-button" onClick={() => setSelectedProviderKey(null)}><span aria-hidden="true">←</span><PortalText text="Back to doctors & consultants" /></button>
             {selectedProvider && <div className="user-provider-history-person">
               <ProfileAvatar photo={selectedProvider.latest.counselor?.profilePhoto} name={selectedProvider.latest.counselor?.fullName || 'Provider'} size={56} />
               <div><h2>{selectedProvider.latest.counselor?.fullName || <PortalText text="Provider unavailable" />}</h2>{renderRoleBadge(selectedProvider.latest)}<p>{selectedProviderAppointments.length} <PortalText text={selectedProviderAppointments.length === 1 ? 'appointment' : 'appointments'} /></p></div>

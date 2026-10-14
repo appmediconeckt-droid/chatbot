@@ -1,3 +1,4 @@
+import "../../common/PortalPageHeader.css";
 import { clearSessionPreservingLanguages } from '../../../i18n/languagePreferences';
 import React, { lazy, Suspense, useState, useEffect, useRef } from "react";
 import "./UserDashboard.css";
@@ -1276,7 +1277,7 @@ export default function UserDashboard() {
 
     return (
       <section className="ud-content-section ud-help-page">
-        <header className="ud-help-page-header">
+        <header className="ud-help-page-header portal-page-header">
           <h2>{t("help_support")}</h2>
           <p>{t("help_support_subtitle")}</p>
         </header>
@@ -1365,7 +1366,7 @@ export default function UserDashboard() {
 
     return (
       <section className="ud-content-section ud-privacy-page">
-        <header className="ud-privacy-page-header">
+        <header className="ud-privacy-page-header portal-page-header">
           <h2>{t("privacy_policy")}</h2>
           <p>{t("privacy_policy_subtitle")}</p>
         </header>
@@ -1649,9 +1650,12 @@ export default function UserDashboard() {
           </aside>
         )}
 
-        <div className={`ud-dashboard-content ${isMobile ? "ud-mobile" : ""}`}>
+        <div className={`ud-dashboard-content ${active === "Video" ? "ud-call-history-page" : ""} ${isMobile ? "ud-mobile" : ""}`}>
           <div className="ud-content-scrollable">
             <Suspense fallback={<DashboardPanelLoader />}>
+              {active === "Chat" && !isDirectChatRoute && (
+                <header className="portal-page-header"><h1>{t("chat")}</h1></header>
+              )}
               {active === "Chat" && (
                 <div className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""} ${isDirectChatRoute ? "direct-conversation" : ""}`}>
                   <div className="ud-chat-list-pane">

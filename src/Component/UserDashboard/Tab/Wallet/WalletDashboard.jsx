@@ -507,7 +507,7 @@ const WalletDashboard = ({ userData }) => {
     if (showHistory) {
         return (
             <div className="wallet-page wallet-history-page">
-                <header className="wallet-page__header">
+                <header className="wallet-page__header portal-page-header">
                     <h1>{t("your_wallet")}</h1>
                     <p>{t("wallet_tracking_subtitle")}</p>
                 </header>
@@ -584,7 +584,7 @@ const WalletDashboard = ({ userData }) => {
 
     return (
         <div className="wallet-page">
-            <header className="wallet-page__header">
+            <header className="wallet-page__header portal-page-header">
                 <h1>{t("your_wallet")}</h1>
                 <p>{t("wallet_tracking_subtitle")}</p>
             </header>

@@ -141,7 +141,7 @@ export default function PrescriptionReviews() {
   };
 
   return <section className="crx-page">
-    <header><div><span>Clinical records</span><h1>Prescriptions</h1><p>Review patient photos before releasing final prescriptions.</p></div><button onClick={load} disabled={loading}><FaRedo className={loading ? "spinning" : ""}/> Refresh</button></header>
+    <header className="portal-page-header"><div><span>Clinical records</span><h1>Prescriptions</h1><p>Review patient photos before releasing final prescriptions.</p></div><button onClick={load} disabled={loading}><FaRedo className={loading ? "spinning" : ""}/> Refresh</button></header>
     {error && <div className="crx-error">{error}</div>}
     {loading ? <div className="crx-state"><FaSpinner className="spinning"/> Loading prescriptions...</div> : items.length === 0 ? <div className="crx-state"><FaFilePrescription/> No prescriptions issued yet.</div> : <div className="crx-grid">
       {items.map((item) => <article className="crx-card" key={item.id}>

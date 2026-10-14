@@ -75,7 +75,7 @@ export default function PsychiatristsDirectory() {
 
   return (
     <section className="psychiatrists-directory">
-      <header className="psychiatrists-directory__header">
+      <header className="psychiatrists-directory__header portal-page-header">
         <div>
           <span>{t('professional_network') || 'Professional network'}</span>
           <h1>{t('psychiatrists')}</h1>

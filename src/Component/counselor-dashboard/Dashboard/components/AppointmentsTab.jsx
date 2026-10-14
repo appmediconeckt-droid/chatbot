@@ -95,7 +95,7 @@ export default function AppointmentsTab({
 
   return (
     <div className="couns-tab-content-stitch" aria-busy={loading}>
-      <div className="stitch-apt-page-title">{t("appointments")}</div>
+      <div className="stitch-apt-page-title portal-page-header">{t("appointments")}</div>
       <div className="stitch-apt-layout stitch-apt-layout-cards-only">
         <div className="stitch-apt-left">
           <section className="stitch-apt-summary">

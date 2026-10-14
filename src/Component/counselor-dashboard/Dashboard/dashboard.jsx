@@ -1,3 +1,4 @@
+import "../../common/PortalPageHeader.css";
 // import React, { useState, useEffect, useRef } from "react";
 // import socketService from "../../../services/socketService";
 // import "./CounselorDashboard.css";
@@ -804,7 +805,7 @@ export default function CounselorDashboard() {
         />
       )}
 
-      <div className={`couns-main-content ${isMobile ? "mobile" : ""}`}>
+      <div className={`couns-main-content ${activeTab === "call_history" ? "couns-main-content--calls" : ""} ${isMobile ? "mobile" : ""}`}>
         <Suspense fallback={<TabLoading />}>
         {visitedTabs.has("dashboard") && (
           <div hidden={activeTab !== "dashboard"} className="couns-tab-content">
@@ -844,7 +845,7 @@ export default function CounselorDashboard() {
 
         {visitedTabs.has("call_history") && (
           <div hidden={activeTab !== "call_history"} className="couns-tab-content couns-call-page">
-            <div className="couns-call-page-header">
+            <div className="couns-call-page-header portal-page-header">
               <div>
                 <span className="stitch-apt-eyebrow">{t("communication")}</span>
                 <h2>{t('call_history')}</h2>

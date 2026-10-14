@@ -133,7 +133,7 @@ const NotificationsPage = ({ role = "user" }) => {
 
   return (
     <div className={`notifications-page ${isCounselor ? "notifications-page--counselor" : ""}`}>
-      <header className="notifications-hero">
+      <header className="notifications-hero portal-page-header">
         <div>
           <h1>{t("notifications")}</h1>
           <p>{t("manage_reminders")}</p>

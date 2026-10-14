@@ -1,0 +1,73 @@
+/* Shared page-heading foundation for the patient and counselor portals. */
+:is(.ud-dashboard-content, .couns-main-content) .portal-page-header.portal-page-header {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px 20px;
+  flex-shrink: 0;
+  width: 100%;
+  height: auto;
+  min-height: 108px;
+  margin: 0 0 24px;
+  padding: 24px 28px;
+  border: 0;
+  border-bottom: 1px solid #e2e8f0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #fff;
+  color: #162238;
+  text-align: left;
+  position: relative;
+  top: auto;
+  font-family: Inter, Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+:is(.ud-dashboard-content, .couns-main-content) .portal-page-header.portal-page-header :is(h1, h2, .page-title-unique) {
+  margin: 0;
+  padding: 0;
+  color: #162238;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.35;
+  letter-spacing: -0.4px;
+}
+:is(.ud-dashboard-content, .couns-main-content) .portal-page-header.portal-page-header :is(p, .page-subtitle-unique, .rx-page-heading > div > span) {
+  margin: 6px 0 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+/* Headings with title and subtitle as siblings retain a vertical text block. */
+:is(.ud-dashboard-content, .couns-main-content) :is(.wallet-page__header, .directory-hero-unique, .earnings-page-title, .couns-sessions-page-title, .counselor-security-settings__page-title, .pch-header, .ud-help-page-header, .ud-privacy-page-header).portal-page-header {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+}
+:is(.ud-dashboard-content, .couns-main-content) :is(.pch-header, .couns-call-page-header).portal-page-header.portal-page-header {
+  margin-bottom: 0;
+}
+:is(.ud-dashboard-content, .couns-main-content) .portal-page-header :is(.stitch-apt-eyebrow, .account-settings__eyebrow, .rx-page-icon, .account-settings__header-icon, .rx-page-heading > div > p) {
+  display: none;
+}
+:is(.ud-dashboard-content, .couns-main-content) :is(.psychiatrists-directory__header, .crx-page > header).portal-page-header > div > span:first-child {
+  display: none;
+}
+:is(.ud-dashboard-content, .couns-main-content) .stitch-apt-page-title.portal-page-header {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+@media (max-width: 900px) {
+  :is(.ud-dashboard-content, .couns-main-content) .portal-page-header.portal-page-header {
+    min-height: 92px;
+    padding: 18px 16px;
+    margin-bottom: 16px;
+  }
+  :is(.ud-dashboard-content, .couns-main-content) .portal-page-header.portal-page-header :is(h1, h2, .page-title-unique) {
+    font-size: 21px;
+  }
+}

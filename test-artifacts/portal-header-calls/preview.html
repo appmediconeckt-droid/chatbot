@@ -1,0 +1,15 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Portal layout verification</title></head><body><div id="root"></div>
+<script type="module">
+import React from 'react';
+import {createRoot} from 'react-dom/client';
+import {LanguageProvider} from '/src/i18n/LanguageContext.jsx';
+import CallHistory from '/src/Component/UserDashboard/Tab/Callls/CallHistory.jsx';
+import '/src/Component/UserDashboard/Dashboard/UserDashboard.css';
+import '/src/Component/counselor-dashboard/Dashboard/CounselorDashboard.css';
+import '/src/Component/common/PortalPageHeader.css';
+localStorage.setItem('token','layout-test');
+const counselor=new URLSearchParams(location.search).get('role')==='counselor';
+const history=React.createElement(CallHistory,{currentUser:{id:'layout-test',role:counselor?'counsellor':'user'},showHeader:!counselor,translationRole:counselor?'counsellor':'user'});
+const page=counselor?React.createElement('div',{className:'couns-main-content couns-main-content--calls'},React.createElement('div',{className:'couns-tab-content couns-call-page'},React.createElement('header',{className:'couns-call-page-header portal-page-header'},React.createElement('div',null,React.createElement('h2',null,'Call History'),React.createElement('p',null,'Review your recent calls'))),history)):React.createElement('div',{className:'ud-dashboard-content ud-call-history-page'},React.createElement('div',{className:'ud-content-scrollable'},React.createElement('div',null,history)));
+createRoot(document.getElementById('root')).render(React.createElement(LanguageProvider,null,page));
+</script></body></html>

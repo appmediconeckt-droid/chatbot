@@ -2344,7 +2344,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       <div className="main-content-unique">
         {/* Counselors Grid */}
         <div className="counselors-section-unique">
-          <div className="directory-hero-unique">
+          <div className="directory-hero-unique portal-page-header">
             <h1 className="page-title-unique">{t('online_counselors')}</h1>
             <p className="page-subtitle-unique">{t("book_counselor_subtitle")}</p>
           </div>

@@ -451,7 +451,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
       }`}
     >
       {showHeader && (
-        <header className="pch-header">
+        <header className="pch-header portal-page-header">
           <h1>{t("call_history")}</h1>
           <p>{t("track_call_records")}</p>
         </header>
@@ -491,7 +491,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
           </div>
         </aside>
 
-        <main className="pch-records">
+        <main className="pch-records" tabIndex={0} aria-label={t("call_history")}>
           {callError && <div className="call-error-banner">{callError}</div>}
           {!isLoadingCalls && Object.keys(groupedCalls).map((date) => (
             <section className="pch-date-group" key={date}>

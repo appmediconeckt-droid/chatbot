@@ -2829,7 +2829,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     style={{ display: 'none' }}
                 />
                 {PhotoUploadModal()}
-                <header className="counselor-profile-reference__title"><h1>{t('profile.title')}</h1></header>
+                <header className="counselor-profile-reference__title portal-page-header"><h1>{t('profile.title')}</h1></header>
 
                 {successMessage && <div className={`${COUNSELOR_PROFILE_CLASS}__alert ${COUNSELOR_PROFILE_CLASS}__alert--success`}>{successMessage}</div>}
                 {error && <div className={`${COUNSELOR_PROFILE_CLASS}__alert ${COUNSELOR_PROFILE_CLASS}__alert--error`}>{error}</div>}

@@ -5024,3 +5024,39 @@
     min-height: 0;
   }
 }
+
+/* Align these page headers with the top of the content area. */
+.ud-dashboard-content :is(.rx-page, .ud-help-page, .ud-privacy-page) {
+  margin-top: 0;
+  padding-top: 0;
+}
+
+/* Keep Call History inside the available portal viewport. */
+.ud-dashboard-content.ud-call-history-page .ud-content-scrollable {
+  height: 100dvh;
+  min-height: 0;
+  overflow: hidden;
+}
+.ud-call-history-page .ud-content-scrollable > div {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+@media (max-width: 900px) {
+  .ud-dashboard-content.ud-call-history-page .ud-content-scrollable {
+    height: calc(100dvh - 128px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.ud-content-scrollable:has(> .ud-chat-workspace) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.ud-content-scrollable > .portal-page-header { margin-bottom: 0; }
+.ud-content-scrollable > .ud-chat-workspace {
+  flex: 1;
+  height: 0;
+  min-height: 0;
+}

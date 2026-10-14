@@ -257,7 +257,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
     return (
       <section className={`counselor-security-settings ${counselorSettingsSection === "support" ? "is-support-page" : ""}`}>
-        <header className="counselor-security-settings__page-title">
+        <header className="counselor-security-settings__page-title portal-page-header">
           <h1>{counselorSettingsSection === "support" ? t("help_support") : t("settings.title")}</h1>
         </header>
 
@@ -435,7 +435,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
   return (
     <section className={`account-settings settings-screen ${isCounselor ? "account-settings--counselor" : "account-settings--user"}`}>
-      <header className="settings-screen__header">
+      <header className="settings-screen__header portal-page-header">
         <div><h1>{title}</h1><p>{t('settings')} · {t('privacy')}</p></div>
         <label className="settings-search"><FaSearch /><input type="search" placeholder={t('search_settings')} aria-label={t('search_settings')} /></label>
       </header>
@@ -558,7 +558,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
   return (
     <section className={`account-settings ${isCounselor ? "account-settings--counselor" : "account-settings--user"}`}>
-      <div className="account-settings__header">
+      <div className="account-settings__header portal-page-header">
         <div className="account-settings__header-copy">
           <span className="account-settings__header-icon"><FaCog /></span>
           <div>

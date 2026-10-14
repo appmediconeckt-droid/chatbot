@@ -157,7 +157,7 @@ const CounselorEarnings = () => {
 
   return (
     <div className="counselor-earnings-page ml-2 mt-3 space-y-6 p-1 sm:ml-3 sm:mt-4 lg:ml-5 lg:mt-5" aria-busy={loading}>
-      <header className="earnings-page-title">
+      <header className="earnings-page-title portal-page-header">
         <h1>{t("earnings_overview")}</h1>
       </header>
 
