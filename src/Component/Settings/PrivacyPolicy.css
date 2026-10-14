@@ -353,7 +353,7 @@
   flex-shrink: 0;
 }
 
-.privacy-policy-expandable[open] summary svg {
+.privacy-policy-expandable[open] summary > svg {
   transform: rotate(180deg);
 }
 

@@ -360,7 +360,7 @@ const PrivacyPolicy = ({ variant = "dashboard", role = "user" }) => {
             <summary
               onClick={(event) => {
                 event.preventDefault();
-                setOpenSection(index);
+                setOpenSection((current) => current === index ? null : index);
               }}
             >
               <span className="privacy-policy-expandable-header">

@@ -3809,13 +3809,13 @@ html {
 .humaeli footer.footer .social-links a,
 .humaeli footer.footer .social-links span {
   display: grid;
-  width: 24px;
-  height: 24px;
+  width: 40px;
+  height: 40px;
   place-items: center;
   border-radius: 50%;
   background: rgba(255,255,255,.055);
   color: #b8c7c9;
-  font-size: .68rem;
+  font-size: 1.1rem;
 }
 .humaeli footer.footer .footer-links {
   display: grid;

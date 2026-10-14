@@ -1355,10 +1355,10 @@ const Footer = () => {
             {t('landing_footer_description')}
           </p>
           <div className="social-links">
-            <a href="#" aria-label="Website"><i className="fas fa-globe"></i></a>
-            <a href="#" aria-label="YouTube"><i className="fab fa-youtube"></i></a>
-            <a href="#" aria-label="Instagram"><i className="fab fa-instagram"></i></a>
-            <a href="#" aria-label="Work"><i className="fas fa-briefcase"></i></a>
+            <a href="https://www.facebook.com/share/1KPAChUMDL/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f" aria-hidden="true"></i></a>
+            <a href="https://youtube.com/@humaeli-mentalwellness?si=KlabfF7b2Vr3lYAD" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="fab fa-youtube" aria-hidden="true"></i></a>
+            <a href="https://instagram.com/humaeli_ai?rpxt=MXdwd2pmYnZjNWFsZA%3D%3D" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram" aria-hidden="true"></i></a>
+            <span role="img" aria-label="LinkedIn" title="LinkedIn"><i className="fab fa-linkedin-in" aria-hidden="true"></i></span>
           </div>
         </div>
         <div className="footer-links">
