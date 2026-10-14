@@ -1,9 +1,14 @@
+import { isStaffRole } from './staffRoles.js';
+
 export const isProfessionalRole = (role) =>
   ["counselor", "counsellor", "counsellour", "doctor", "consultant"].includes(
     String(role || "").toLowerCase(),
   );
 
 export const dashboardForRole = (role) =>
+  String(role || '').trim().toLowerCase() === 'receptionist' ? '/receptionist/dashboard' :
+  String(role || '').trim().toLowerCase() === 'nurse' ? '/hospital/nurse-dashboard' :
+  isStaffRole(role) ? "/staff-dashboard" :
   String(role || "").toLowerCase() === "doctor" ? "/doctordashboard" :
   isProfessionalRole(role) ? "/counselor-dashboard" : "/user-dashboard";
 
@@ -21,10 +26,11 @@ export function persistAuthSession(data) {
   const accountRole = String(data?.accountRole || user?.accountRole || data?.data?.accountRole || "")
     .trim()
     .toLowerCase();
+  const declaredRole = data?.role || user?.role || data?.data?.role;
   const role = String(
-    accountRole === "doctor"
+    isStaffRole(declaredRole) ? declaredRole : accountRole === "doctor"
       ? "doctor"
-      : data?.role || user?.role || data?.data?.role || accountRole,
+      : declaredRole || accountRole,
   )
     .trim()
     .toLowerCase();
@@ -55,3 +61,4 @@ export function persistAuthSession(data) {
   }
   return { role: accessRole, path: dashboardForRole(role) };
 }
+

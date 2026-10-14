@@ -1,3 +1,4 @@
+import { PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useDoctorUser } from "../doctorApi.js";
@@ -356,12 +357,12 @@ export default function WalkInAppointment() {
 
   const renderStatusBadge = (status) => {
     switch(status) {
-      case "BOOKED": return <span className="walkin-status waiting"><i></i> Waiting</span>;
-      case "WAITING": return <span className="walkin-status waiting"><i></i> Waiting</span>;
-      case "IN_CONSULTATION": return <span className="walkin-status consulting"><Stethoscope size={13} /> In Consultation</span>;
-      case "COMPLETED": return <span className="walkin-status completed"><CheckCircle size={13} /> Completed</span>;
-      case "CANCELLED": return <span className="walkin-status cancelled"><XCircle size={13} /> Cancelled</span>;
-      default: return <span className="walkin-status waiting"><i></i> Waiting</span>;
+      case "BOOKED": return <span className="walkin-status waiting"><i></i><PortalText text={" Waiting"} /></span>;
+      case "WAITING": return <span className="walkin-status waiting"><i></i><PortalText text={" Waiting"} /></span>;
+      case "IN_CONSULTATION": return <span className="walkin-status consulting"><Stethoscope size={13} /><PortalText text={" In Consultation"} /></span>;
+      case "COMPLETED": return <span className="walkin-status completed"><CheckCircle size={13} /><PortalText text={" Completed"} /></span>;
+      case "CANCELLED": return <span className="walkin-status cancelled"><XCircle size={13} /><PortalText text={" Cancelled"} /></span>;
+      default: return <span className="walkin-status waiting"><i></i><PortalText text={" Waiting"} /></span>;
     }
   };
 
@@ -402,8 +403,8 @@ export default function WalkInAppointment() {
           <div className="walkin-modal" onClick={(event) => event.stopPropagation()}>
             <div className="walkin-modal-header">
               <div>
-                <h3>New Walk-in Appointment</h3>
-                <p>Add same-day patient details to the live queue.</p>
+                <h3><PortalText text={"New Walk-in Appointment"} /></h3>
+                <p><PortalText text={"Add same-day patient details to the live queue."} /></p>
               </div>
               <button className="walkin-modal-close" onClick={closeModal} type="button">
                 &times;
@@ -412,57 +413,57 @@ export default function WalkInAppointment() {
 
             <div className="walkin-modal-body walkin-form-grid">
               <div className="walkin-form-group">
-                <label htmlFor="name">Patient Name <span>*</span></label>
-                <input type="text" id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Michael Johnson" className={errors.name ? "walkin-input-error" : ""} />
+                <label htmlFor="name"><PortalText text={"Patient Name "} /><span>*</span></label>
+                <PortalElement as="input" type="text" id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Michael Johnson" className={errors.name ? "walkin-input-error" : ""} />
                 {errors.name && <div className="walkin-error-message">{errors.name}</div>}
               </div>
               <div className="walkin-form-group">
-                <label htmlFor="phone">Phone Number <span>*</span></label>
+                <label htmlFor="phone"><PortalText text={"Phone Number "} /><span>*</span></label>
                 <input type="tel" id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="1234567890" className={errors.phone ? "walkin-input-error" : ""} />
                 {errors.phone && <div className="walkin-error-message">{errors.phone}</div>}
               </div>
               <div className="walkin-form-group">
-                <label htmlFor="gender">Gender</label>
+                <label htmlFor="gender"><PortalText text={"Gender"} /></label>
                 <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange}>
-                  <option value="">Select Gender</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
+                  <PortalElement as="option" value="">Select Gender</PortalElement>
+                  <PortalElement as="option" value="Male">Male</PortalElement>
+                  <PortalElement as="option" value="Female">Female</PortalElement>
+                  <PortalElement as="option" value="Other">Other</PortalElement>
                 </select>
               </div>
               <div className="walkin-form-group">
-                <label htmlFor="doctor">Doctor</label>
-                <input id="doctor" name="doctor" value={formData.doctor} onChange={handleInputChange} placeholder="Enter doctor name" />
+                <label htmlFor="doctor"><PortalText text={"Doctor"} /></label>
+                <PortalElement as="input" id="doctor" name="doctor" value={formData.doctor} onChange={handleInputChange} placeholder="Enter doctor name" />
               </div>
               <div className="walkin-form-group">
-                <label htmlFor="department">Department</label>
+                <label htmlFor="department"><PortalText text={"Department"} /></label>
                 <select id="department" name="department" value={formData.department} onChange={handleInputChange}>
-                  <option value="">Select Department</option>
-                  <option value="General Medicine">General Medicine</option>
-                  <option value="Orthopedics">Orthopedics</option>
-                  <option value="Cardiology">Cardiology</option>
-                  <option value="Pediatrics">Pediatrics</option>
+                  <PortalElement as="option" value="">Select Department</PortalElement>
+                  <PortalElement as="option" value="General Medicine">General Medicine</PortalElement>
+                  <PortalElement as="option" value="Orthopedics">Orthopedics</PortalElement>
+                  <PortalElement as="option" value="Cardiology">Cardiology</PortalElement>
+                  <PortalElement as="option" value="Pediatrics">Pediatrics</PortalElement>
                 </select>
               </div>
               <div className="walkin-form-group">
-                <label htmlFor="priority">Priority</label>
+                <label htmlFor="priority"><PortalText text={"Priority"} /></label>
                 <select id="priority" name="priority" value={formData.priority} onChange={handleInputChange}>
-                  <option value="Low">Low</option>
-                  <option value="Med">Med</option>
-                  <option value="High">High</option>
+                  <PortalElement as="option" value="Low">Low</PortalElement>
+                  <PortalElement as="option" value="Med">Med</PortalElement>
+                  <PortalElement as="option" value="High">High</PortalElement>
                 </select>
               </div>
               <div className="walkin-form-group walkin-wide-field">
-                <label htmlFor="problem">Problem/Symptoms <span>*</span></label>
-                <textarea id="problem" name="problem" value={formData.problem} onChange={handleInputChange} placeholder="Describe the problem or symptoms" rows="3" className={errors.problem ? "walkin-input-error" : ""} />
+                <label htmlFor="problem"><PortalText text={"Problem/Symptoms "} /><span>*</span></label>
+                <PortalElement as="textarea" id="problem" name="problem" value={formData.problem} onChange={handleInputChange} placeholder="Describe the problem or symptoms" rows="3" className={errors.problem ? "walkin-input-error" : ""} />
                 {errors.problem && <div className="walkin-error-message">{errors.problem}</div>}
               </div>
             </div>
 
             <div className="walkin-modal-footer">
-              <button className="walkin-btn-secondary" onClick={closeModal} type="button">Cancel</button>
+              <button className="walkin-btn-secondary" onClick={closeModal} type="button"><PortalText text={"Cancel"} /></button>
               <button className="walkin-primary-btn" onClick={submitRequest} disabled={submitting} type="button">
-                <CheckCircle size={18} /> {submitting ? "Creating..." : "Create Appointment"}
+                <CheckCircle size={18} /> {submitting ? <PortalText text={"Creating..."} /> : <PortalText text={"Create Appointment"} />}
               </button>
             </div>
           </div>
@@ -471,27 +472,27 @@ export default function WalkInAppointment() {
 
       <header className="walkin-page-header">
         <div>
-          <h1>Walk-in Appointments</h1>
-          <p>Manage same-day patient appointments and live queue status.</p>
+          <h1><PortalText text={"Walk-in Appointments"} /></h1>
+          <p><PortalText text={"Manage same-day patient appointments and live queue status."} /></p>
         </div>
       </header>
 
       {apiError && <div className="walkin-api-error">{apiError}</div>}
 
       <section className="walkin-summary-grid">
-        <article><div className="blue"><Users size={20} /></div><strong>{appointments.length}</strong><span>Total Walk-ins</span></article>
-        <article><div className="orange"><Clock size={20} /></div><strong>{waitingCount}</strong><span>Waiting</span></article>
-        <article><div className="green"><Stethoscope size={20} /></div><strong>{consultationCount}</strong><span>In Consultation</span></article>
-        <article><div className="teal"><CircleCheck size={20} /></div><strong>{completedCount}</strong><span>Completed</span></article>
-        <article><div className="red"><CircleX size={20} /></div><strong>{cancelledCount}</strong><span>Cancelled</span></article>
+        <article><div className="blue"><Users size={20} /></div><strong>{appointments.length}</strong><span><PortalText text={"Total Walk-ins"} /></span></article>
+        <article><div className="orange"><Clock size={20} /></div><strong>{waitingCount}</strong><span><PortalText text={"Waiting"} /></span></article>
+        <article><div className="green"><Stethoscope size={20} /></div><strong>{consultationCount}</strong><span><PortalText text={"In Consultation"} /></span></article>
+        <article><div className="teal"><CircleCheck size={20} /></div><strong>{completedCount}</strong><span><PortalText text={"Completed"} /></span></article>
+        <article><div className="red"><CircleX size={20} /></div><strong>{cancelledCount}</strong><span><PortalText text={"Cancelled"} /></span></article>
       </section>
 
       <section className="walkin-live-bar">
-        <div className="walkin-live-label"><Link2 size={18} /> Live Queue Status</div>
-        <div className="walkin-live-stat"><span>Current Token</span><strong>{currentToken}</strong></div>
-        <div className="walkin-live-stat"><span>Avg Wait</span><strong className="orange-text">—</strong></div>
-        <div className="walkin-live-stat"><span>Next Doctor Available</span><strong>{nextDoctor}</strong></div>
-        <div className="walkin-live-stat"><span>Est. Max Wait</span><strong>—</strong></div>
+        <div className="walkin-live-label"><Link2 size={18} /><PortalText text={" Live Queue Status"} /></div>
+        <div className="walkin-live-stat"><span><PortalText text={"Current Token"} /></span><strong>{currentToken}</strong></div>
+        <div className="walkin-live-stat"><span><PortalText text={"Avg Wait"} /></span><strong className="orange-text">—</strong></div>
+        <div className="walkin-live-stat"><span><PortalText text={"Next Doctor Available"} /></span><strong>{nextDoctor}</strong></div>
+        <div className="walkin-live-stat"><span><PortalText text={"Est. Max Wait"} /></span><strong>—</strong></div>
       </section>
 
       <section className="walkin-table-card">
@@ -499,7 +500,7 @@ export default function WalkInAppointment() {
         <div className="walkin-table-toolbar">
           <label>
             <Search size={16} />
-            <input
+            <PortalElement as="input"
               placeholder="Search patient name, phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -515,81 +516,78 @@ export default function WalkInAppointment() {
             />
           </label>
 
-          <select
+          <PortalElement as="select"
             value={doctorFilter}
             onChange={(e) => setDoctorFilter(e.target.value)}
             aria-label="Filter by doctor"
           >
-            <option value="">All Doctors</option>
+            <PortalElement as="option" value="">All Doctors</PortalElement>
             {doctorOptions.map((doctor) => (
               <option key={doctor} value={doctor}>{doctor}</option>
             ))}
-          </select>
+          </PortalElement>
 
-          <select
+          <PortalElement as="select"
             value={departmentFilter}
             onChange={(e) => setDepartmentFilter(e.target.value)}
             aria-label="Filter by department"
           >
-            <option value="">All Departments</option>
+            <PortalElement as="option" value="">All Departments</PortalElement>
             {departmentOptions.map((dept) => (
               <option key={dept} value={dept}>{dept}</option>
             ))}
-          </select>
+          </PortalElement>
 
-          <select
+          <PortalElement as="select"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
             aria-label="Filter by status"
           >
-            <option value="">Status: All</option>
-            <option value="BOOKED">Waiting / Booked</option>
-            <option value="WAITING">Waiting</option>
-            <option value="IN_CONSULTATION">In Consultation</option>
-            <option value="COMPLETED">Completed</option>
-            <option value="CANCELLED">Cancelled</option>
-          </select>
+            <PortalElement as="option" value="">Status: All</PortalElement>
+            <PortalElement as="option" value="BOOKED">Waiting / Booked</PortalElement>
+            <PortalElement as="option" value="WAITING">Waiting</PortalElement>
+            <PortalElement as="option" value="IN_CONSULTATION">In Consultation</PortalElement>
+            <PortalElement as="option" value="COMPLETED">Completed</PortalElement>
+            <PortalElement as="option" value="CANCELLED">Cancelled</PortalElement>
+          </PortalElement>
 
           {hasActiveFilters && (
-            <button
+            <PortalElement as="button"
               type="button"
               className="walkin-clear-filters-btn"
               onClick={clearAllFilters}
               title="Clear all filters"
             >
-              <X size={14} /> Clear
-            </button>
+              <X size={14} /><PortalText text={" Clear"} /></PortalElement>
           )}
         </div>
 
         {/* ===== Filter Summary ===== */}
         {hasActiveFilters && status === "succeeded" && (
-          <div className="walkin-filter-summary">
-            Showing <strong>{filteredAppointments.length}</strong> of <strong>{appointments.length}</strong> appointments
-          </div>
+          <div className="walkin-filter-summary"><PortalText text={"Showing "} /><strong>{filteredAppointments.length}</strong><PortalText text={" of "} /><strong>{appointments.length}</strong><PortalText text={" appointments"} /></div>
         )}
 
         <div className="walkin-table-wrapper">
           <table className="walkin-appointment-table">
             <thead>
               <tr>
-                <th>Token</th>
-                <th>Patient</th>
-                <th>Time</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th><PortalText text={"Token"} /></th>
+                <th><PortalText text={"Patient"} /></th>
+                <th><PortalText text={"Time"} /></th>
+                <th><PortalText text={"Priority"} /></th>
+                <th><PortalText text={"Status"} /></th>
+                <th><PortalText text={"Actions"} /></th>
               </tr>
             </thead>
             <tbody>
               {status === "loading" ? (
-                <tr><td colSpan="6" className="walkin-empty-row">Loading appointments...</td></tr>
+                <tr><td colSpan="6" className="walkin-empty-row"><PortalText text={"Loading appointments..."} /></td></tr>
               ) : filteredAppointments.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="walkin-empty-row">
                     {hasActiveFilters
-                      ? "No appointments match your filters. Try clearing them."
-                      : "No walk-in appointments found"}
+                      ? <PortalText text={"No appointments match your filters. Try clearing them."} />
+                      : <PortalText text={"No walk-in appointments found"} />}
                   </td>
                 </tr>
               ) : (
@@ -598,7 +596,7 @@ export default function WalkInAppointment() {
                     <td className="walkin-token">{getToken(apt)}</td>
                     <td>
                       <div className="walkin-patient-cell">
-                        <span>{apt.name?.split(" ").map((part) => part[0]).slice(0, 2).join("") || "NA"}</span>
+                        <span>{apt.name?.split(" ").map((part) => part[0]).slice(0, 2).join("") || <PortalText text={"NA"} />}</span>
                         <div><strong>{apt.name}</strong><small>{apt.phone}</small></div>
                       </div>
                     </td>
@@ -611,16 +609,12 @@ export default function WalkInAppointment() {
                           onClick={() => cancelAppointment(apt.id)}
                           className="walkin-action-btn walkin-btn-cancel"
                           type="button"
-                        >
-                          Cancel
-                        </button>
+                        ><PortalText text={"Cancel"} /></button>
                         <button
                           onClick={() => deleteAppointment(apt.id)}
                           className="walkin-action-btn walkin-btn-delete"
                           type="button"
-                        >
-                          Delete
-                        </button>
+                        ><PortalText text={"Delete"} /></button>
                       </div>
                     </td>
                   </tr>
@@ -631,15 +625,13 @@ export default function WalkInAppointment() {
         </div>
 
         <div className="walkin-pagination">
-          <span>
-            Showing {filteredAppointments.length ? firstRowIndex + 1 : 0} to {lastRowIndex} of {filteredAppointments.length} entries
-          </span>
+          <span><PortalText text={"Showing "} />{filteredAppointments.length ? firstRowIndex + 1 : 0}<PortalText text={" to "} />{lastRowIndex}<PortalText text={" of "} />{filteredAppointments.length}<PortalText text={" entries"} /></span>
           <div>
-            <button type="button" aria-label="Previous page" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>‹</button>
+            <PortalElement as="button" type="button" aria-label="Previous page" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>‹</PortalElement>
             {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
               <button type="button" key={page} className={page === safeCurrentPage ? "active" : ""} onClick={() => setCurrentPage(page)}>{page}</button>
             ))}
-            <button type="button" aria-label="Next page" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>›</button>
+            <PortalElement as="button" type="button" aria-label="Next page" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>›</PortalElement>
           </div>
         </div>
       </section>

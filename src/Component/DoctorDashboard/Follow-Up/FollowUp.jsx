@@ -1,3 +1,5 @@
+import { buildFollowUpPatients, followUpPatient, recordId } from "./followUpPatients.js";
+import { PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
@@ -72,12 +74,12 @@ function FollowUp() {
     return [];
   };
 
-  const getPatient = (record) => record.patient || record.patient_details || {};
+  const getPatient = followUpPatient;
   const getDoctor = (record) => record.doctor || record.doctor_details || {};
 
   const getPatientId = (record) => {
     const patient = getPatient(record);
-    return record.patient_id || record.patientId || patient.id || patient._id || "";
+    return recordId(record.patient_id || record.patientId || record.patient || patient);
   };
 
   const formatDate = (dateStr) => {
@@ -95,7 +97,7 @@ function FollowUp() {
     if (!dateStr) return "";
     const date = new Date(dateStr);
     if (Number.isNaN(date.getTime())) return String(dateStr).slice(0, 10);
-    return date.toISOString().split("T")[0];
+    return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
   };
 
   const normalizeStatus = (value) => {
@@ -112,40 +114,7 @@ function FollowUp() {
     return "routine";
   };
 
-  const buildAppointmentPatients = (appointments) => {
-    const patientMap = new Map();
-
-    appointments.forEach((appointment) => {
-      const patient = getPatient(appointment);
-      const patientId = getPatientId(appointment);
-      if (!patientId) return;
-
-      const patientName =
-        appointment.patient_name ||
-        patient.name ||
-        patient.full_name ||
-        patient.patient_name ||
-        "Unnamed Patient";
-
-      const existing = patientMap.get(String(patientId));
-      const appointmentDate = appointment.appointment_date || appointment.date || appointment.created_at || "";
-      const patientRecord = {
-        id: patientId,
-        appointmentId: appointment.id || appointment.appointment_id || appointment._id || "",
-        name: patientName,
-        age: appointment.age || patient.age || "N/A",
-        phone: appointment.phone_number || appointment.phone || patient.phone_number || patient.phone || patient.mobile || "N/A",
-        lastVisit: appointmentDate,
-        issue: appointment.symptoms || appointment.health_issue || appointment.problem || appointment.reason || appointment.notes || "N/A",
-      };
-
-      if (!existing || new Date(appointmentDate) > new Date(existing.lastVisit || 0)) {
-        patientMap.set(String(patientId), patientRecord);
-      }
-    });
-
-    return Array.from(patientMap.values());
-  };
+  const buildAppointmentPatients = buildFollowUpPatients;
 
   const normalizeFollowUp = (followUp, index) => {
     const patient = getPatient(followUp);
@@ -155,25 +124,26 @@ function FollowUp() {
 
     return {
       id: followUp.id || followUp.followup_id || followUp.follow_up_id || followUp._id || index,
-      doctorId: followUp.doctor_id || followUp.doctorId || doctor.id || doctor._id,
+      doctorId: recordId(followUp.doctor_id || followUp.doctorId || doctor),
       patientId,
+      walkinId: recordId(followUp.walkin_id),
       appointmentId: followUp.appointment_id || followUp.appointmentId || "",
       name:
         followUp.patient_name ||
         patient.name ||
-        patient.full_name ||
+        patient.fullName || patient.full_name ||
         matchedPatient?.name ||
         "N/A",
       age: followUp.age || patient.age || matchedPatient?.age || "N/A",
       phone:
         followUp.phone_number ||
         followUp.phone ||
-        patient.phone_number ||
+        patient.phoneNumber || patient.phone_number ||
         patient.phone ||
         matchedPatient?.phone ||
         "N/A",
       lastVisit: followUp.last_visit || followUp.lastVisit || matchedPatient?.lastVisit || followUp.created_at,
-      followUpDate: followUp.follow_up_date || followUp.follow_up_date || followUp.follow_up_date || followUp.date,
+      followUpDate: followUp.follow_up_date || followUp.followUpDate || followUp.date,
       followUpTime: followUp.followup_time || followUp.follow_up_time || followUp.followUpTime || followUp.time || "",
       followUpStatus: normalizeStatus(followUp.status || followUp.followup_status || followUp.followUpStatus),
       followUpType: normalizeType(
@@ -188,11 +158,15 @@ function FollowUp() {
   };
 
   const loadAppointmentPatients = async (doctorId, signal) => {
-    const response = await axios.get(`${API_BASE_URL}/appointments`, {
+    const options = {
       headers: getAuthHeaders(),
       params: { doctor_id: doctorId },
       signal,
-    });
+    };
+    const [response, walkins] = await Promise.all([
+      axios.get(`${API_BASE_URL}/appointments`, options),
+      axios.get(`${API_BASE_URL}/walkin-appointments`, options),
+    ]);
 
     const appointments = unwrapApiArray(response.data).filter((appointment) => {
       const doctor = getDoctor(appointment);
@@ -200,7 +174,9 @@ function FollowUp() {
       return !appointmentDoctorId || String(appointmentDoctorId) === String(doctorId);
     });
 
-    setAppointmentPatients(buildAppointmentPatients(appointments));
+    setAppointmentPatients(buildAppointmentPatients([...appointments,
+      ...unwrapApiArray(walkins.data).map((row) => ({ ...row, __appointmentSource: 'walkin' })),
+    ]));
   };
 
   const loadFollowUps = async (doctorId, signal) => {
@@ -330,8 +306,9 @@ function FollowUp() {
 
     const payload = {
       doctor_id: doctorId,
-      patient_id: newPatient.patientId,
-      appointment_id: newPatient.appointmentId || selectedPatient?.appointmentId || undefined,
+      patient_id: selectedPatient?.patientId || undefined,
+      appointment_id: selectedPatient?.walkinId ? undefined : newPatient.appointmentId || selectedPatient?.appointmentId || undefined,
+      walkin_id: selectedPatient?.walkinId || undefined,
       follow_up_date: newPatient.followUpDate,
       follow_up_time: newPatient.followUpTime || undefined,
       follow_up_type: newPatient.followUpType,
@@ -527,7 +504,7 @@ function FollowUp() {
     start = Math.max(1, end - maxVisible + 1);
     return Array.from({ length: end - start + 1 }, (_, index) => start + index);
   };
-  const totalCount = appointmentPatients.length;
+  const totalCount = displayRows.length;
   const pendingCount = followUps.filter((p) => p.followUpStatus === "pending").length;
   const todayCount = getDueTodayCount();
   const completedCount = followUps.filter((p) => p.followUpStatus === "completed").length;
@@ -537,17 +514,15 @@ function FollowUp() {
     <div className="fup-container fup-screen">
       <header className="fup-page-header">
         <div>
-          <h1>Patient Follow-up Management</h1>
-          <p>Track, schedule, and manage patient follow-ups efficiently.</p>
+          <h1><PortalText text={"Patient Follow-up Management"} /></h1>
+          <p><PortalText text={"Track, schedule, and manage patient follow-ups efficiently."} /></p>
         </div>
 
         <div className="fup-header-actions">
           <button className="fup-export-button" type="button">
-            <Download size={15} /> Export
-          </button>
+            <Download size={15} /><PortalText text={" Export"} /></button>
           <button className="fup-add-button" onClick={() => setShowAddModal(true)} type="button">
-            <Plus size={16} /> Add Follow-up
-          </button>
+            <Plus size={16} /><PortalText text={" Add Follow-up"} /></button>
         </div>
       </header>
 
@@ -561,36 +536,36 @@ function FollowUp() {
         <article className="fup-stat-card">
           <div className="fup-stat-top">
             <span className="fup-stat-icon fup-blue"><Users size={18} /></span>
-            <span className="fup-trend muted">Live data</span>
+            <span className="fup-trend muted"><PortalText text={"Live data"} /></span>
           </div>
-          <p>Total Patients</p>
-          <strong>{totalCount.toLocaleString("en-IN")}</strong>
+          <p><PortalText text={"Total Patients"} /></p>
+          <strong aria-live="polite">{status === 'loading' ? '…' : totalCount.toLocaleString("en-IN")}</strong>
         </article>
 
         <article className="fup-stat-card">
           <div className="fup-stat-top">
             <span className="fup-stat-icon fup-orange"><CalendarDays size={18} /></span>
-            <span className="fup-trend muted">Live data</span>
+            <span className="fup-trend muted"><PortalText text={"Live data"} /></span>
           </div>
-          <p>Pending Follow-ups</p>
+          <p><PortalText text={"Pending Follow-ups"} /></p>
           <strong>{pendingCount.toLocaleString("en-IN")}</strong>
         </article>
 
         <article className="fup-stat-card">
           <div className="fup-stat-top">
             <span className="fup-stat-icon fup-blue"><CalendarDays size={18} /></span>
-            <span className="fup-trend muted">Live data</span>
+            <span className="fup-trend muted"><PortalText text={"Live data"} /></span>
           </div>
-          <p>Due Today</p>
+          <p><PortalText text={"Due Today"} /></p>
           <strong>{todayCount.toLocaleString("en-IN")}</strong>
         </article>
 
         <article className="fup-stat-card">
           <div className="fup-stat-top">
             <span className="fup-stat-icon fup-green"><CheckCircle size={18} /></span>
-            <span className="fup-trend muted">Live data</span>
+            <span className="fup-trend muted"><PortalText text={"Live data"} /></span>
           </div>
-          <p>Completed</p>
+          <p><PortalText text={"Completed"} /></p>
           <strong>{completedCount.toLocaleString("en-IN")}</strong>
         </article>
       </section>
@@ -599,7 +574,7 @@ function FollowUp() {
         <div className="fup-toolbar">
           <label className="fup-search-box">
             <Search size={18} />
-            <input
+            <PortalElement as="input"
               type="text"
               placeholder="Search patient..."
               value={searchTerm}
@@ -609,23 +584,22 @@ function FollowUp() {
 
           <div className="fup-toolbar-actions">
             <select className="fup-filter-select" value={filterType} onChange={(e) => setFilterType(e.target.value)}>
-              <option value="all">Doctor</option>
-              <option value="routine">Routine</option>
-              <option value="urgent">Urgent</option>
-              <option value="consultation">Consultation</option>
+              <PortalElement as="option" value="all">Doctor</PortalElement>
+              <PortalElement as="option" value="routine">Routine</PortalElement>
+              <PortalElement as="option" value="urgent">Urgent</PortalElement>
+              <PortalElement as="option" value="consultation">Consultation</PortalElement>
             </select>
             <select className="fup-filter-select" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}>
-              <option value="all">Status</option>
-              <option value="pending">Pending</option>
-              <option value="scheduled">Scheduled</option>
-              <option value="completed">Completed</option>
+              <PortalElement as="option" value="all">Status</PortalElement>
+              <PortalElement as="option" value="pending">Pending</PortalElement>
+              <PortalElement as="option" value="scheduled">Scheduled</PortalElement>
+              <PortalElement as="option" value="completed">Completed</PortalElement>
             </select>
-            <button className="fup-date-button" type="button">
-              Date Range <CalendarDays size={15} />
+            <button className="fup-date-button" type="button"><PortalText text={"Date Range "} /><CalendarDays size={15} />
             </button>
-            <button className="fup-icon-button" type="button" aria-label="More filters">
+            <PortalElement as="button" className="fup-icon-button" type="button" aria-label="More filters">
               <Filter size={16} />
-            </button>
+            </PortalElement>
           </div>
         </div>
 
@@ -633,19 +607,19 @@ function FollowUp() {
           <table className="fup-followup-table">
             <thead>
               <tr>
-                <th>Patient</th>
-                <th>Age/Gen</th>
-                <th>Next Follow-up</th>
-                <th>Doctor</th>
-                <th>Priority</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th><PortalText text={"Patient"} /></th>
+                <th><PortalText text={"Age/Gen"} /></th>
+                <th><PortalText text={"Next Follow-up"} /></th>
+                <th><PortalText text={"Doctor"} /></th>
+                <th><PortalText text={"Priority"} /></th>
+                <th><PortalText text={"Status"} /></th>
+                <th><PortalText text={"Actions"} /></th>
               </tr>
             </thead>
             <tbody>
               {status === "loading" ? (
                 <tr>
-                  <td colSpan="7" className="fup-empty-cell">Loading follow-ups...</td>
+                  <td colSpan="7" className="fup-empty-cell"><PortalText text={"Loading follow-ups..."} /></td>
                 </tr>
               ) : paginatedRows.length ? (
                 paginatedRows.map((patient) => (
@@ -677,26 +651,26 @@ function FollowUp() {
                       <div className="fup-row-actions">
                         {activeActionsId === patient.id ? (
                           <>
-                            <button type="button" title="Refresh" aria-label="Refresh follow-ups" onClick={handleRefreshFollowUps}>
+                            <PortalElement as="button" type="button" title="Refresh" aria-label="Refresh follow-ups" onClick={handleRefreshFollowUps}>
                               <i className="fa-solid fa-rotate-left"></i>
-                            </button>
-                            <button type="button" title="Update" aria-label={`Update ${patient.name}`} onClick={() => openEditFollowUp(patient)}>
+                            </PortalElement>
+                            <PortalElement as="button" type="button" title="Update" aria-label={`Update ${patient.name}`} onClick={() => openEditFollowUp(patient)}>
                               <i className="fa-solid fa-pen"></i>
-                            </button>
-                            <button type="button" title="View" aria-label={`View ${patient.name}`} onClick={() => { setViewFollowUp(patient); setActiveActionsId(null); }}>
+                            </PortalElement>
+                            <PortalElement as="button" type="button" title="View" aria-label={`View ${patient.name}`} onClick={() => { setViewFollowUp(patient); setActiveActionsId(null); }}>
                               <i className="fa-solid fa-eye"></i>
-                            </button>
-                            <button type="button" className="danger" title="Delete" aria-label={`Delete ${patient.name}`} onClick={() => handleDeleteFollowUp(patient.id)}>
+                            </PortalElement>
+                            <PortalElement as="button" type="button" className="danger" title="Delete" aria-label={`Delete ${patient.name}`} onClick={() => handleDeleteFollowUp(patient.id)}>
                               <i className="fa-solid fa-trash"></i>
-                            </button>
-                            <button type="button" title="Close" aria-label="Close actions" onClick={() => setActiveActionsId(null)}>
+                            </PortalElement>
+                            <PortalElement as="button" type="button" title="Close" aria-label="Close actions" onClick={() => setActiveActionsId(null)}>
                               <i className="fa-solid fa-ellipsis-vertical"></i>
-                            </button>
+                            </PortalElement>
                           </>
                         ) : (
-                          <button type="button" className="fup-more-btn" title="More actions" aria-label={`More actions for ${patient.name}`} onClick={() => setActiveActionsId(patient.id)}>
+                          <PortalElement as="button" type="button" className="fup-more-btn" title="More actions" aria-label={`More actions for ${patient.name}`} onClick={() => setActiveActionsId(patient.id)}>
                             <i className="fa-solid fa-ellipsis-vertical"></i>
-                          </button>
+                          </PortalElement>
                         )}
                       </div>
                     </td>
@@ -704,7 +678,7 @@ function FollowUp() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="7" className="fup-empty-cell">No follow-ups found</td>
+                  <td colSpan="7" className="fup-empty-cell"><PortalText text={"No follow-ups found"} /></td>
                 </tr>
               )}
             </tbody>
@@ -712,18 +686,16 @@ function FollowUp() {
         </div>
 
         <footer className="fup-table-footer">
-          <span>
-            Showing {displayRows.length ? firstRowIndex + 1 : 0} to {lastRowIndex} of {displayRows.length} entries
-          </span>
-          <div className="fup-pagination" aria-label="Follow-up table pagination">
-            <button
+          <span><PortalText text={"Showing "} />{displayRows.length ? firstRowIndex + 1 : 0}<PortalText text={" to "} />{lastRowIndex}<PortalText text={" of "} />{displayRows.length}<PortalText text={" entries"} /></span>
+          <PortalElement as="div" className="fup-pagination" aria-label="Follow-up table pagination">
+            <PortalElement as="button"
               type="button"
               aria-label="Previous page"
               disabled={safeCurrentPage === 1}
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
             >
               ‹
-            </button>
+            </PortalElement>
             {getVisiblePageNumbers().map((pageNumber) => (
               <button
                 type="button"
@@ -735,15 +707,15 @@ function FollowUp() {
                 {pageNumber}
               </button>
             ))}
-            <button
+            <PortalElement as="button"
               type="button"
               aria-label="Next page"
               disabled={safeCurrentPage === totalPages}
               onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
             >
               ›
-            </button>
-          </div>
+            </PortalElement>
+          </PortalElement>
         </footer>
       </section>
 
@@ -751,7 +723,7 @@ function FollowUp() {
         <div className="fup-modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="fup-modal" onClick={(event) => event.stopPropagation()}>
             <div className="fup-modal-header">
-              <h2 className="fup-modal-title">Add New Follow-up</h2>
+              <h2 className="fup-modal-title"><PortalText text={"Add New Follow-up"} /></h2>
               <button className="fup-modal-close" onClick={() => setShowAddModal(false)} type="button">
                 ×
               </button>
@@ -759,9 +731,9 @@ function FollowUp() {
 
             <div className="fup-modal-body">
               <div className="fup-form-group">
-                <label className="fup-form-label">Patient *</label>
+                <label className="fup-form-label"><PortalText text={"Patient *"} /></label>
                 <select name="patientId" className="fup-form-input" value={newPatient.patientId} onChange={handleInputChange}>
-                  <option value="">Select patient</option>
+                  <PortalElement as="option" value="">Select patient</PortalElement>
                   {appointmentPatients.map((patient) => (
                     <option key={patient.id} value={patient.id}>
                       {patient.name} - {patient.phone}
@@ -772,44 +744,42 @@ function FollowUp() {
 
               {selectedPatient && (
                 <div className="fup-form-group">
-                  <label className="fup-form-label">Last Appointment Issue</label>
+                  <label className="fup-form-label"><PortalText text={"Last Appointment Issue"} /></label>
                   <input type="text" className="fup-form-input" value={selectedPatient.issue} disabled />
                 </div>
               )}
 
               <div className="fup-form-row">
                 <div className="fup-form-group fup-form-half">
-                  <label className="fup-form-label">Follow-up Date *</label>
+                  <label className="fup-form-label"><PortalText text={"Follow-up Date *"} /></label>
                   <input type="date" name="followUpDate" className="fup-form-input" value={newPatient.followUpDate} onChange={handleInputChange} />
                 </div>
 
                 <div className="fup-form-group fup-form-half">
-                  <label className="fup-form-label">Follow-up Time</label>
+                  <label className="fup-form-label"><PortalText text={"Follow-up Time"} /></label>
                   <input type="time" name="followUpTime" className="fup-form-input" value={newPatient.followUpTime} onChange={handleInputChange} />
                 </div>
               </div>
 
               <div className="fup-form-group">
-                <label className="fup-form-label">Priority</label>
+                <label className="fup-form-label"><PortalText text={"Priority"} /></label>
                 <select name="followUpType" className="fup-form-input" value={newPatient.followUpType} onChange={handleInputChange}>
-                  <option value="routine">Routine</option>
-                  <option value="urgent">Urgent</option>
-                  <option value="consultation">Medium</option>
+                  <PortalElement as="option" value="routine">Routine</PortalElement>
+                  <PortalElement as="option" value="urgent">Urgent</PortalElement>
+                  <PortalElement as="option" value="consultation">Medium</PortalElement>
                 </select>
               </div>
 
               <div className="fup-form-group">
-                <label className="fup-form-label">Notes</label>
-                <textarea name="notes" className="fup-form-textarea" value={newPatient.notes} onChange={handleInputChange} placeholder="Additional notes..." rows="3"></textarea>
+                <label className="fup-form-label"><PortalText text={"Notes"} /></label>
+                <PortalElement as="textarea" name="notes" className="fup-form-textarea" value={newPatient.notes} onChange={handleInputChange} placeholder="Additional notes..." rows="3"></PortalElement>
               </div>
             </div>
 
             <div className="fup-modal-footer">
-              <button className="fup-btn-secondary" onClick={() => setShowAddModal(false)} disabled={isSaving} type="button">
-                Cancel
-              </button>
+              <button className="fup-btn-secondary" onClick={() => setShowAddModal(false)} disabled={isSaving} type="button"><PortalText text={"Cancel"} /></button>
               <button className="fup-btn-primary" onClick={handleAddPatient} disabled={isSaving} type="button">
-                {isSaving ? "Saving..." : "Add Follow-up"}
+                {isSaving ? <PortalText text={"Saving..."} /> : <PortalText text={"Add Follow-up"} />}
               </button>
             </div>
           </div>
@@ -821,48 +791,48 @@ function FollowUp() {
           <form className="fup-modal" onSubmit={handleUpdateFollowUp} onClick={(event) => event.stopPropagation()}>
             <div className="fup-modal-header">
               <div>
-                <h2 className="fup-modal-title">Update Follow-up</h2>
+                <h2 className="fup-modal-title"><PortalText text={"Update Follow-up"} /></h2>
                 <p>{editFollowUp.name}</p>
               </div>
-              <button className="fup-modal-close" type="button" onClick={() => setEditFollowUp(null)} aria-label="Close">×</button>
+              <PortalElement as="button" className="fup-modal-close" type="button" onClick={() => setEditFollowUp(null)} aria-label="Close">×</PortalElement>
             </div>
             <div className="fup-modal-body">
               <div className="fup-form-row">
                 <div className="fup-form-group fup-form-half">
-                  <label className="fup-form-label">Follow-up Date *</label>
+                  <label className="fup-form-label"><PortalText text={"Follow-up Date *"} /></label>
                   <input required type="date" className="fup-form-input" value={editFollowUp.form.followUpDate} onChange={(event) => updateEditFollowUp("followUpDate", event.target.value)} />
                 </div>
                 <div className="fup-form-group fup-form-half">
-                  <label className="fup-form-label">Follow-up Time</label>
+                  <label className="fup-form-label"><PortalText text={"Follow-up Time"} /></label>
                   <input type="time" className="fup-form-input" value={editFollowUp.form.followUpTime} onChange={(event) => updateEditFollowUp("followUpTime", event.target.value)} />
                 </div>
               </div>
               <div className="fup-form-row">
                 <div className="fup-form-group fup-form-half">
-                  <label className="fup-form-label">Priority</label>
+                  <label className="fup-form-label"><PortalText text={"Priority"} /></label>
                   <select className="fup-form-input" value={editFollowUp.form.followUpType} onChange={(event) => updateEditFollowUp("followUpType", event.target.value)}>
-                    <option value="routine">Routine</option>
-                    <option value="urgent">Urgent</option>
-                    <option value="consultation">Medium</option>
+                    <PortalElement as="option" value="routine">Routine</PortalElement>
+                    <PortalElement as="option" value="urgent">Urgent</PortalElement>
+                    <PortalElement as="option" value="consultation">Medium</PortalElement>
                   </select>
                 </div>
                 <div className="fup-form-group fup-form-half">
-                  <label className="fup-form-label">Status</label>
+                  <label className="fup-form-label"><PortalText text={"Status"} /></label>
                   <select className="fup-form-input" value={editFollowUp.form.followUpStatus} onChange={(event) => updateEditFollowUp("followUpStatus", event.target.value)}>
-                    <option value="pending">Pending</option>
-                    <option value="scheduled">Scheduled</option>
-                    <option value="completed">Completed</option>
+                    <PortalElement as="option" value="pending">Pending</PortalElement>
+                    <PortalElement as="option" value="scheduled">Scheduled</PortalElement>
+                    <PortalElement as="option" value="completed">Completed</PortalElement>
                   </select>
                 </div>
               </div>
               <div className="fup-form-group">
-                <label className="fup-form-label">Notes</label>
+                <label className="fup-form-label"><PortalText text={"Notes"} /></label>
                 <textarea className="fup-form-textarea" rows="3" value={editFollowUp.form.notes} onChange={(event) => updateEditFollowUp("notes", event.target.value)} />
               </div>
             </div>
             <div className="fup-modal-footer">
-              <button className="fup-btn-secondary" type="button" onClick={() => setEditFollowUp(null)}>Cancel</button>
-              <button className="fup-btn-primary" type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Update Follow-up"}</button>
+              <button className="fup-btn-secondary" type="button" onClick={() => setEditFollowUp(null)}><PortalText text={"Cancel"} /></button>
+              <button className="fup-btn-primary" type="submit" disabled={isSaving}>{isSaving ? <PortalText text={"Saving..."} /> : <PortalText text={"Update Follow-up"} />}</button>
             </div>
           </form>
         </div>
@@ -873,23 +843,23 @@ function FollowUp() {
           <div className="fup-modal fup-view-modal" onClick={(event) => event.stopPropagation()}>
             <div className="fup-modal-header">
               <div>
-                <h2 className="fup-modal-title">Follow-up Details</h2>
+                <h2 className="fup-modal-title"><PortalText text={"Follow-up Details"} /></h2>
                 <p>{viewFollowUp.name}</p>
               </div>
-              <button className="fup-modal-close" type="button" onClick={() => setViewFollowUp(null)} aria-label="Close">×</button>
+              <PortalElement as="button" className="fup-modal-close" type="button" onClick={() => setViewFollowUp(null)} aria-label="Close">×</PortalElement>
             </div>
             <div className="fup-modal-body fup-detail-grid">
-              <div><span>Patient</span><strong>{viewFollowUp.name}</strong></div>
-              <div><span>Age / Gender</span><strong>{viewFollowUp.age || "N/A"} / {viewFollowUp.gender || "N/A"}</strong></div>
-              <div><span>Next Follow-up</span><strong>{formatFollowUpDateTime(viewFollowUp)}</strong></div>
-              <div><span>Doctor</span><strong>{viewFollowUp.doctor}</strong></div>
-              <div><span>Priority</span><strong>{getPriorityLabel(viewFollowUp.followUpType)}</strong></div>
-              <div><span>Status</span><strong>{viewFollowUp.followUpStatus}</strong></div>
-              <div className="wide-field"><span>Notes</span><strong>{viewFollowUp.notes || "N/A"}</strong></div>
+              <div><span><PortalText text={"Patient"} /></span><strong>{viewFollowUp.name}</strong></div>
+              <div><span><PortalText text={"Age / Gender"} /></span><strong>{viewFollowUp.age || "N/A"} / {viewFollowUp.gender || "N/A"}</strong></div>
+              <div><span><PortalText text={"Next Follow-up"} /></span><strong>{formatFollowUpDateTime(viewFollowUp)}</strong></div>
+              <div><span><PortalText text={"Doctor"} /></span><strong>{viewFollowUp.doctor}</strong></div>
+              <div><span><PortalText text={"Priority"} /></span><strong>{getPriorityLabel(viewFollowUp.followUpType)}</strong></div>
+              <div><span><PortalText text={"Status"} /></span><strong>{viewFollowUp.followUpStatus}</strong></div>
+              <div className="wide-field"><span><PortalText text={"Notes"} /></span><strong>{viewFollowUp.notes || "N/A"}</strong></div>
             </div>
             <div className="fup-modal-footer">
-              <button className="fup-btn-secondary" type="button" onClick={() => setViewFollowUp(null)}>Close</button>
-              <button className="fup-btn-primary" type="button" onClick={() => openEditFollowUp(viewFollowUp)}>Update</button>
+              <button className="fup-btn-secondary" type="button" onClick={() => setViewFollowUp(null)}><PortalText text={"Close"} /></button>
+              <button className="fup-btn-primary" type="button" onClick={() => openEditFollowUp(viewFollowUp)}><PortalText text={"Update"} /></button>
             </div>
           </div>
         </div>

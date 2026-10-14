@@ -1,3 +1,4 @@
+import { PortalText } from "../../../common/PortalTranslation";
 import React, { useEffect, useState } from "react";
 import axios from "../../../../axiosConfig.js";
 import { API_BASE_URL, getDoctorUser } from "../../doctorApi.js";
@@ -44,8 +45,8 @@ export default function ProfileCard() {
     return () => { active = false; };
   }, [attempt]);
 
-  if (loading) return <p role="status">Loading doctor profile QR...</p>;
-  if (error) return <div role="alert"><p>{error}</p><button type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></div>;
+  if (loading) return <p role="status"><PortalText text={"Loading doctor profile QR..."} /></p>;
+  if (error) return <div role="alert"><p>{error}</p><button type="button" onClick={() => setAttempt((value) => value + 1)}><PortalText text={"Retry"} /></button></div>;
 
   return (
     <section className="doctor-profile-qr">
@@ -54,18 +55,18 @@ export default function ProfileCard() {
           <img src="/favicon-96.png" width="64" height="64" alt="Humaeli" />
           <h2>{profile.name}</h2>
           {profile.speciality && <p>{profile.speciality}</p>}
-          <p><strong>Email:</strong> {profile.email || "Not provided"}</p>
-          <p><strong>Phone:</strong> {profile.phone || "Not provided"}</p>
-          {profile.qualification && <p><strong>Qualification:</strong> {profile.qualification}</p>}
-          {profile.clinic && <p><strong>Clinic:</strong> {profile.clinic}</p>}
+          <p><strong><PortalText text={"Email:"} /></strong> {profile.email || <PortalText text={"Not provided"} />}</p>
+          <p><strong><PortalText text={"Phone:"} /></strong> {profile.phone || <PortalText text={"Not provided"} />}</p>
+          {profile.qualification && <p><strong><PortalText text={"Qualification:"} /></strong> {profile.qualification}</p>}
+          {profile.clinic && <p><strong><PortalText text={"Clinic:"} /></strong> {profile.clinic}</p>}
         </div>
         <div className="doctor-profile-qr-code">
-          {qrError ? <p role="alert">QR image could not load. <button type="button" onClick={() => setAttempt((value) => value + 1)}>Retry</button></p> : <img src={qrSrc} alt={`Scan to view ${profile.name}'s profile`} onError={() => setQrError(true)} />}
-          <p>Scan for Doctor Profile</p>
-          <a href={profileLink} target="_blank" rel="noopener noreferrer">View profile</a>
+          {qrError ? <p role="alert"><PortalText text={"QR image could not load. "} /><button type="button" onClick={() => setAttempt((value) => value + 1)}><PortalText text={"Retry"} /></button></p> : <img src={qrSrc} alt={`Scan to view ${profile.name}'s profile`} onError={() => setQrError(true)} />}
+          <p><PortalText text={"Scan for Doctor Profile"} /></p>
+          <a href={profileLink} target="_blank" rel="noopener noreferrer"><PortalText text={"View profile"} /></a>
         </div>
       </div>
-      <p className="doctor-profile-qr-note">Your permanent doctor profile QR shows your latest profile and available clinics. Clinic changes do not require a new profile QR.</p>
+      <p className="doctor-profile-qr-note"><PortalText text={"Your permanent doctor profile QR shows your latest profile and available clinics. Clinic changes do not require a new profile QR."} /></p>
     </section>
   );
 }

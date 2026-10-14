@@ -6,6 +6,8 @@ import { translationService } from './translationService';
 
 const USER_LANG_KEY = 'userLang';
 const COUNSELOR_LANG_KEY = 'counselorLang';
+const DOCTOR_LANG_KEY = 'doctorLang';
+const RECEPTIONIST_LANG_KEY = 'receptionistLang';
 // Public/landing pages have no role yet, so they get their own scope. Picking a
 // language before signing in also seeds both portals, so the choice carries over.
 const SITE_LANG_KEY = 'siteLang';
@@ -206,6 +208,8 @@ export function LanguageProvider({ children }) {
     const saved = localStorage.getItem(SITE_LANG_KEY) || localStorage.getItem(USER_LANG_KEY);
     return normalizeLanguageCode(saved);
   });
+  const [doctorLang, setDoctorLangState] = useState(() => normalizeLanguageCode(localStorage.getItem(DOCTOR_LANG_KEY) || localStorage.getItem(SITE_LANG_KEY)));
+  const [receptionistLang, setReceptionistLangState] = useState(() => normalizeLanguageCode(localStorage.getItem(RECEPTIONIST_LANG_KEY) || localStorage.getItem(SITE_LANG_KEY)));
   const [loadedTranslations, setLoadedTranslations] = useState(DEFAULT_TRANSLATIONS);
 
   const ensureLanguageLoaded = useCallback((lang) => {
@@ -254,7 +258,9 @@ export function LanguageProvider({ children }) {
     ensureLanguageLoaded(userLang);
     ensureLanguageLoaded(counselorLang);
     ensureLanguageLoaded(siteLang);
-  }, [counselorLang, ensureLanguageLoaded, siteLang, userLang]);
+    ensureLanguageLoaded(doctorLang);
+    ensureLanguageLoaded(receptionistLang);
+  }, [counselorLang, doctorLang, receptionistLang, ensureLanguageLoaded, siteLang, userLang]);
 
   const setUserLang = useCallback((lang) => {
     const normalized = normalizeLanguageCode(lang);
@@ -268,6 +274,18 @@ export function LanguageProvider({ children }) {
     setCounselorLangState(normalized);
   }, []);
 
+  const setDoctorLang = useCallback((lang) => {
+    const normalized = normalizeLanguageCode(lang);
+    localStorage.setItem(DOCTOR_LANG_KEY, normalized);
+    setDoctorLangState(normalized);
+  }, []);
+
+  const setReceptionistLang = useCallback((lang) => {
+    const normalized = normalizeLanguageCode(lang);
+    localStorage.setItem(RECEPTIONIST_LANG_KEY, normalized);
+    setReceptionistLangState(normalized);
+  }, []);
+
   // Choosing a language on a public page also seeds both portals, so the
   // preference survives sign-up/login instead of resetting to English.
   const setSiteLang = useCallback(async (lang) => {
@@ -275,6 +293,10 @@ export function LanguageProvider({ children }) {
     localStorage.setItem(SITE_LANG_KEY, normalized);
     localStorage.setItem(USER_LANG_KEY, normalized);
     localStorage.setItem(COUNSELOR_LANG_KEY, normalized);
+    localStorage.setItem(DOCTOR_LANG_KEY, normalized);
+    setDoctorLangState(normalized);
+    localStorage.setItem(RECEPTIONIST_LANG_KEY, normalized);
+    setReceptionistLangState(normalized);
     setUserLangState(normalized);
     setCounselorLangState(normalized);
     setSiteLangState(normalized);
@@ -312,6 +334,10 @@ export function LanguageProvider({ children }) {
         setUserLang,
         counselorLang,
         setCounselorLang,
+        doctorLang,
+        setDoctorLang,
+        receptionistLang,
+        setReceptionistLang,
         siteLang,
         setSiteLang,
         translations: loadedTranslations,
@@ -685,4 +711,17 @@ export function useCounselorApiTranslation() {
     lang: ctx.counselorLang,
     setLang: ctx.setCounselorLang,
   };
+}
+
+export function useDoctorTranslation() {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) throw new Error('useDoctorTranslation must be used within LanguageProvider');
+  return { t: makeT(ctx.doctorLang, ctx.translations), lang: ctx.doctorLang, setLang: ctx.setDoctorLang };
+}
+export function usePortalLanguage(scope = 'patient') {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) throw new Error('usePortalLanguage must be used within LanguageProvider');
+  const lang = scope === 'doctor' ? ctx.doctorLang : scope === 'receptionist' ? ctx.receptionistLang : ctx.userLang;
+  const setLang = scope === 'doctor' ? ctx.setDoctorLang : scope === 'receptionist' ? ctx.setReceptionistLang : ctx.setUserLang;
+  return { lang, messages: ctx.translations[lang] || {}, setLang, t: makeT(lang, ctx.translations) };
 }

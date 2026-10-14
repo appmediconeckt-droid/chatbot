@@ -7,6 +7,7 @@ import "./CounselorDirectory.css";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import AppointmentBookingModal from "../Appointment/AppointmentBookingModal";
 import StarRating from "../../../../components/StarRating";
+import { getProfessionalId, mergeUniqueProfessionals } from './professionalDirectoryMerge.js';
 import {
   formatPresenceText,
   getPresence,
@@ -58,28 +59,6 @@ const readProfessionalsFromResponse = (payload = {}) => {
   ];
 
   return candidates.find(Array.isArray) || [];
-};
-
-const getProfessionalId = (professional = {}) =>
-  professional._id ||
-  professional.id ||
-  professional.userId ||
-  professional.user_id ||
-  professional.doctorId ||
-  professional.doctor_id ||
-  professional.consultantId ||
-  professional.consultant_id ||
-  professional.counselorId ||
-  professional.counsellorId;
-
-const mergeUniqueProfessionals = (...lists) => {
-  const unique = new Map();
-  lists.flat().forEach((item) => {
-    const id = getProfessionalId(item);
-    if (!id) return;
-    unique.set(String(id), item);
-  });
-  return Array.from(unique.values());
 };
 
 const getProfessionalDisplayRole = (professional = {}) => {

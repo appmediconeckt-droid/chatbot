@@ -1,3 +1,4 @@
+import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
@@ -43,7 +44,7 @@ export default function AppointmentList() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [searchText, setSearchText] = useState("");
   const [selectedRows, setSelectedRows] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(todayAppointmentDate);
+  const [selectedDate, setSelectedDate] = useState("");
   const [appointmentTab, setAppointmentTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -532,47 +533,48 @@ export default function AppointmentList() {
   return (
     <div className="appointment-page">
       <section className="appointment-header">
-        <div><h1>Appointments</h1></div>
+        <div><h1><PortalText text={"Appointments"} /></h1></div>
         <div className="appointment-header-date">
           <label className="appointment-date-selector">
             <i className="fa-regular fa-calendar" aria-hidden="true"></i>
-            <input type="date" aria-label="Filter appointments by date" value={selectedDate}
+            <PortalElement as="input" type="date" aria-label="Filter appointments by date" value={selectedDate}
               onChange={(event) => setSelectedDate(event.target.value)} />
           </label>
-          <button type="button" className="appointment-today-btn" onClick={() => setSelectedDate(todayAppointmentDate())}>Today</button>
+          <button type="button" className="appointment-today-btn" onClick={() => setSelectedDate(todayAppointmentDate())}><PortalText text={"Today"} /></button>
+          <button type="button" className="appointment-today-btn" aria-pressed={!selectedDate} onClick={() => setSelectedDate("")}><PortalText text={"All dates"} /></button>
         </div>
       </section>
 
-      <nav className="appointment-source-tabs" aria-label="Appointment type">
+      <PortalElement as="nav" className="appointment-source-tabs" aria-label="Appointment type">
         {[{key:"all",label:"All Appointments",count:summary.total}, {key:"online",label:"Online Appointments",count:summary.online}, {key:"walkin",label:"Walk-in Appointments",count:summary.walkin}].map((tab) => (
           <button type="button" key={tab.key} className={`${tab.key} ${appointmentTab === tab.key ? "active" : ""}`} aria-pressed={appointmentTab === tab.key} onClick={() => setAppointmentTab(tab.key)}>
             {tab.label}<span>{tab.count}</span>
           </button>
         ))}
-      </nav>
+      </PortalElement>
 
-      <section className="appointment-summary-grid" aria-label="Appointment summary for selected date">
-        <article className="appointment-summary-card total"><span className="appointment-summary-icon"><i className="fa-solid fa-users" aria-hidden="true" /></span><div><strong>{summary.total}</strong><h2>Total Appointments</h2><p>{selectedDate ? formatDateLabel(selectedDate) : "All dates"}</p></div></article>
-        <article className="appointment-summary-card online"><span className="appointment-summary-icon"><i className="fa-solid fa-wifi" aria-hidden="true" /></span><div><strong>{summary.online}</strong><h2>Online Appointments</h2><p>{summary.total ? Math.round(summary.online / summary.total * 100) : 0}% of total</p></div></article>
-        <article className="appointment-summary-card walkin"><span className="appointment-summary-icon"><i className="fa-solid fa-person-walking" aria-hidden="true" /></span><div><strong>{summary.walkin}</strong><h2>Walk-in Appointments</h2><p>{summary.total ? Math.round(summary.walkin / summary.total * 100) : 0}% of total</p></div></article>
-        <article className="appointment-summary-card average"><span className="appointment-summary-icon"><i className="fa-regular fa-clock" aria-hidden="true" /></span><div><h2>Avg. Consultation Time</h2><strong>{summary.averageMinutes === null ? "?" : `${summary.averageMinutes} min`}</strong><p>Per completed patient</p></div></article>
-      </section>
+      <PortalElement as="section" className="appointment-summary-grid" aria-label="Appointment summary for selected date">
+        <article className="appointment-summary-card total"><span className="appointment-summary-icon"><i className="fa-solid fa-users" aria-hidden="true" /></span><div><strong>{summary.total}</strong><h2><PortalText text={"Total Appointments"} /></h2><p>{selectedDate ? formatDateLabel(selectedDate) : <PortalText text={"All dates"} />}</p></div></article>
+        <article className="appointment-summary-card online"><span className="appointment-summary-icon"><i className="fa-solid fa-wifi" aria-hidden="true" /></span><div><strong>{summary.online}</strong><h2><PortalText text={"Online Appointments"} /></h2><p>{summary.total ? Math.round(summary.online / summary.total * 100) : 0}<PortalText text={"% of total"} /></p></div></article>
+        <article className="appointment-summary-card walkin"><span className="appointment-summary-icon"><i className="fa-solid fa-person-walking" aria-hidden="true" /></span><div><strong>{summary.walkin}</strong><h2><PortalText text={"Walk-in Appointments"} /></h2><p>{summary.total ? Math.round(summary.walkin / summary.total * 100) : 0}<PortalText text={"% of total"} /></p></div></article>
+        <article className="appointment-summary-card average"><span className="appointment-summary-icon"><i className="fa-regular fa-clock" aria-hidden="true" /></span><div><h2><PortalText text={"Avg. Consultation Time"} /></h2><strong>{summary.averageMinutes === null ? "?" : <PortalTemplate text={"{0} min"} values={[summary.averageMinutes]} />}</strong><p><PortalText text={"Per completed patient"} /></p></div></article>
+      </PortalElement>
 
-      <section className="appointment-toolbar appointment-list-controls" aria-label="Appointment filters">
-        <h2>{selectedDate === todayAppointmentDate() ? "Today's Appointments" : "Appointments"} <span>({filteredAppointments.length})</span></h2>
+      <PortalElement as="section" className="appointment-toolbar appointment-list-controls" aria-label="Appointment filters">
+        <h2>{selectedDate === todayAppointmentDate() ? <PortalText text={"Today's Appointments"} /> : <PortalText text={"Appointments"} />} <span>({filteredAppointments.length})</span></h2>
         <div className="appointment-list-filter-controls">
           <div className="appointment-search-input">
             <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
-            <input type="search" aria-label="Search appointments" placeholder="Search by name, phone, token..." value={searchText} onChange={(event) => setSearchText(event.target.value)} />
+            <PortalElement as="input" type="search" aria-label="Search appointments" placeholder="Search by name, phone, token..." value={searchText} onChange={(event) => setSearchText(event.target.value)} />
           </div>
           <label className="appointment-status-selector"><i className="fa-solid fa-filter" aria-hidden="true" />
-            <select aria-label="Filter by appointment status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <option>All</option><option>Pending</option><option>Confirmed</option><option>Completed</option><option>Cancelled</option>
-            </select>
+            <PortalElement as="select" aria-label="Filter by appointment status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <PortalElement as="option" value={"All"}>All</PortalElement><PortalElement as="option" value={"Pending"}>Pending</PortalElement><PortalElement as="option" value={"Confirmed"}>Confirmed</PortalElement><PortalElement as="option" value={"Completed"}>Completed</PortalElement><PortalElement as="option" value={"Cancelled"}>Cancelled</PortalElement>
+            </PortalElement>
           </label>
-          <button type="button" className="clear-filters-btn" onClick={clearAllFilters} disabled={activeFilterChips.length === 0}>Clear</button>
+          <button type="button" className="clear-filters-btn" onClick={clearAllFilters} disabled={activeFilterChips.length === 0}><PortalText text={"Clear"} /></button>
         </div>
-      </section>
+      </PortalElement>
 
       {status === "failed" && (
         <div className="appointment-alert" role="alert">
@@ -585,32 +587,32 @@ export default function AppointmentList() {
           <thead>
             <tr>
               <th className="check-cell"><input type="checkbox" checked={allVisibleSelected} onChange={toggleAllVisible} /></th>
-              <th>Time <i className="fa-solid fa-arrow-up-short-wide"></i></th>
-              <th>Token</th>
-              <th>Patient</th>
-              <th>Type</th>
-              <th>Phone No</th>
-              <th>Test</th>
-              <th>Location</th>
-              <th>Status</th>
+              <th><PortalText text={"Time "} /><i className="fa-solid fa-arrow-up-short-wide"></i></th>
+              <th><PortalText text={"Token"} /></th>
+              <th><PortalText text={"Patient"} /></th>
+              <th><PortalText text={"Type"} /></th>
+              <th><PortalText text={"Phone No"} /></th>
+              <th><PortalText text={"Test"} /></th>
+              <th><PortalText text={"Location"} /></th>
+              <th><PortalText text={"Status"} /></th>
               <th className="more-cell"><i className="fa-solid fa-ellipsis-vertical"></i></th>
             </tr>
           </thead>
           <tbody>
             {status === "loading" ? (
               <tr>
-                <td colSpan="10" className="appointment-empty">Loading appointments...</td>
+                <td colSpan="10" className="appointment-empty"><PortalText text={"Loading appointments..."} /></td>
               </tr>
             ) : filteredAppointments.length === 0 ? (
               <tr>
-                <td colSpan="10" className="appointment-empty">No appointments found</td>
+                <td colSpan="10" className="appointment-empty"><PortalText text={"No appointments found"} /></td>
               </tr>
             ) : (
               paginatedAppointments.map((appointment, index) => {
                 const statusMeta = getUiStatus(appointment.status);
                 const isSelected = selectedRows.includes(appointment.id);
                 return (
-                  <tr key={appointment.id} className={isSelected ? "selected" : ""}>
+                  <tr key={appointment.id} className={`${isSelected ? "selected" : ""} ${appointment.isEmergency ? "doctor-emergency-row" : ""}`}>
                     <td className="check-cell">
                       <input type="checkbox" checked={isSelected} onChange={() => toggleRow(appointment.id)} />
                     </td>
@@ -629,11 +631,11 @@ export default function AppointmentList() {
                         <PatientAvatar name={appointment.patientName} avatarUrl={appointment.patientAvatarUrl} />
                         <div className="appointment-patient-copy">
                           <span>{appointment.patientName}</span>
-                          {appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}>Emergency</span>}
+                          {appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}><i className="fa-solid fa-triangle-exclamation" aria-hidden="true" /><PortalText text={"Emergency"} /></span>}
                         </div>
                       </div>
                     </td>
-                    <td><span className={`appointment-source-badge ${appointment.appointmentType}`}><i className={`fa-solid ${appointment.appointmentType === "walkin" ? "fa-person-walking" : "fa-wifi"}`} aria-hidden="true" />{appointment.appointmentType === "walkin" ? "Walk-in" : "Online"}</span></td>
+                    <td><span className={`appointment-source-badge ${appointment.appointmentType}`}><i className={`fa-solid ${appointment.appointmentType === "walkin" ? "fa-person-walking" : "fa-wifi"}`} aria-hidden="true" />{appointment.appointmentType === "walkin" ? <PortalText text={"Walk-in"} /> : <PortalText text={"Online"} />}</span></td>
                     <td>{appointment.phone}</td>
                     <td className="test-cell">{appointment.test}</td>
                     <td className="location-cell">{appointment.location}</td>
@@ -646,16 +648,16 @@ export default function AppointmentList() {
                     <td className="more-cell">
                       {activeActionsId === appointment.id ? (
                         <div className="row-actions">
-                          <button type="button" title="Refresh" onClick={() => setReloadKey((key) => key + 1)}><i className="fa-solid fa-rotate-left"></i></button>
-                          <button type="button" title="Update" onClick={() => openEditAppointment(appointment)}><i className="fa-solid fa-pen"></i></button>
-                          <button type="button" title="View" onClick={() => { setViewAppointment(appointment); setActiveActionsId(null); }}><i className="fa-solid fa-eye"></i></button>
-                          <button type="button" className="danger" title="Delete" onClick={() => handleDeleteAppointment(appointment)}><i className="fa-solid fa-trash"></i></button>
-                          <button type="button" onClick={() => setActiveActionsId(null)} title="Close"><i className="fa-solid fa-ellipsis-vertical"></i></button>
+                          <PortalElement as="button" type="button" title="Refresh" onClick={() => setReloadKey((key) => key + 1)}><i className="fa-solid fa-rotate-left"></i></PortalElement>
+                          <PortalElement as="button" type="button" title="Update" onClick={() => openEditAppointment(appointment)}><i className="fa-solid fa-pen"></i></PortalElement>
+                          <PortalElement as="button" type="button" title="View" onClick={() => { setViewAppointment(appointment); setActiveActionsId(null); }}><i className="fa-solid fa-eye"></i></PortalElement>
+                          <PortalElement as="button" type="button" className="danger" title="Delete" onClick={() => handleDeleteAppointment(appointment)}><i className="fa-solid fa-trash"></i></PortalElement>
+                          <PortalElement as="button" type="button" onClick={() => setActiveActionsId(null)} title="Close"><i className="fa-solid fa-ellipsis-vertical"></i></PortalElement>
                         </div>
                       ) : (
-                        <button type="button" className="more-btn" aria-label="More actions" onClick={() => setActiveActionsId(appointment.id)}>
+                        <PortalElement as="button" type="button" className="more-btn" aria-label="More actions" onClick={() => setActiveActionsId(appointment.id)}>
                           <i className="fa-solid fa-ellipsis-vertical"></i>
-                        </button>
+                        </PortalElement>
                       )}
                     </td>
                   </tr>
@@ -667,13 +669,13 @@ export default function AppointmentList() {
       </section>
 
       <section className="appointment-pagination">
-        <p>Showing <strong>{filteredAppointments.length ? firstRowIndex + 1 : 0}</strong> to <strong>{lastRowIndex}</strong> of <strong>{filteredAppointments.length}</strong> appointments</p>
+        <p><PortalText text={"Showing "} /><strong>{filteredAppointments.length ? firstRowIndex + 1 : 0}</strong><PortalText text={" to "} /><strong>{lastRowIndex}</strong><PortalText text={" of "} /><strong>{filteredAppointments.length}</strong><PortalText text={" appointments"} /></p>
         <div className="appointment-pagination-buttons">
-          <button type="button" aria-label="Previous page" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>‹</button>
+          <PortalElement as="button" type="button" aria-label="Previous page" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>‹</PortalElement>
           {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
             <button type="button" key={page} className={page === safeCurrentPage ? "active" : ""} onClick={() => setCurrentPage(page)}>{page}</button>
           ))}
-          <button type="button" aria-label="Next page" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>›</button>
+          <PortalElement as="button" type="button" aria-label="Next page" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>›</PortalElement>
         </div>
       </section>
 
@@ -682,100 +684,84 @@ export default function AppointmentList() {
           <form className="appointment-modal" onSubmit={handleCreateAppointment} onClick={(event) => event.stopPropagation()}>
             <div className="appointment-modal-header">
               <div>
-                <h2>New Appointment</h2>
-                <p>Create appointment details. API connection can be wired after UI approval.</p>
+                <h2><PortalText text={"New Appointment"} /></h2>
+                <p><PortalText text={"Create appointment details. API connection can be wired after UI approval."} /></p>
               </div>
-              <button type="button" onClick={() => setShowNewModal(false)} aria-label="Close">
+              <PortalElement as="button" type="button" onClick={() => setShowNewModal(false)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>
-              </button>
+              </PortalElement>
             </div>
 
             <div className="appointment-form-grid">
-              <label>
-                Patient Name
-                <input
+              <label><PortalText text={"Patient Name"} /><PortalElement as="input"
                   required
                   value={newAppointment.patientName}
                   onChange={(event) => updateNewAppointment("patientName", event.target.value)}
                   placeholder="Enter patient name"
                 />
               </label>
-              <label>
-                Phone No
-                <input
+              <label><PortalText text={"Phone No"} /><PortalElement as="input"
                   value={newAppointment.phone}
                   onChange={(event) => updateNewAppointment("phone", event.target.value)}
                   placeholder="Enter phone number"
                 />
               </label>
-              <label>
-                Appointment Date
-                <input
+              <label><PortalText text={"Appointment Date"} /><input
                   type="date"
                   required
                   value={newAppointment.appointmentDate}
                   onChange={(event) => updateNewAppointment("appointmentDate", event.target.value)}
                 />
               </label>
-              <label>
-                Appointment Time
-                <input
+              <label><PortalText text={"Appointment Time"} /><input
                   type="time"
                   required
                   value={newAppointment.appointmentTime}
                   onChange={(event) => updateNewAppointment("appointmentTime", event.target.value)}
                 />
               </label>
-              <label>
-                Test / Reason
-                <input
+              <label><PortalText text={"Test / Reason"} /><PortalElement as="input"
                   value={newAppointment.test}
                   onChange={(event) => updateNewAppointment("test", event.target.value)}
                   placeholder="Digestive Disorders"
                 />
               </label>
-              <label className="wide-field">
-                Location
-                <input
+              <label className="wide-field"><PortalText text={"Location"} /><PortalElement as="input"
                   value={newAppointment.location}
                   onChange={(event) => updateNewAppointment("location", event.target.value)}
                   placeholder="Patient location"
                 />
               </label>
-              <label>
-                Type
-                <select value={newAppointment.type} onChange={(event) => updateNewAppointment("type", event.target.value)}>
-                  <option>Clinic</option>
-                  <option>Video Call</option>
-                  <option>Voice Call</option>
-                  <option>Online</option>
+              <label><PortalText text={"Type"} /><select value={newAppointment.type} onChange={(event) => updateNewAppointment("type", event.target.value)}>
+                  <PortalElement as="option" value={"Clinic"}>Clinic</PortalElement>
+                  <PortalElement as="option" value={"Video Call"}>Video Call</PortalElement>
+                  <PortalElement as="option" value={"Voice Call"}>Voice Call</PortalElement>
+                  <PortalElement as="option" value={"Online"}>Online</PortalElement>
                 </select>
               </label>
-              <label>
-                Status
-                <select value={newAppointment.status} onChange={(event) => updateNewAppointment("status", event.target.value)}>
-                  <option value="Pending">Pending</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
+              <label><PortalText text={"Status"} /><select value={newAppointment.status} onChange={(event) => updateNewAppointment("status", event.target.value)}>
+                  <PortalElement as="option" value="Pending">Pending</PortalElement>
+                  <PortalElement as="option" value="Confirmed">Confirmed</PortalElement>
+                  <PortalElement as="option" value="Completed">Completed</PortalElement>
+                  <PortalElement as="option" value="Cancelled">Cancelled</PortalElement>
                 </select>
               </label>
               <div className="appointment-payment-section wide-field">
-                <div className="appointment-payment-heading"><span><i className="fa-solid fa-wallet" /> Payment Details</span><small>Methods enabled in Doctor Settings</small></div>
+                <div className="appointment-payment-heading"><span><i className="fa-solid fa-wallet" /><PortalText text={" Payment Details"} /></span><small><PortalText text={"Methods enabled in Doctor Settings"} /></small></div>
                 {getEnabledPaymentMethods().length ? (
                   <div className="appointment-payment-grid">
-                    <label>Payment Method<select value={newAppointment.paymentMethod} onChange={(event) => updateNewAppointment("paymentMethod", event.target.value)}>{getEnabledPaymentMethods().map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}</select></label>
-                    <label>{newAppointment.paymentMethod === "cash" ? "Cash Amount" : "Payment Amount"}<input type="number" min="1" step="0.01" required value={newAppointment.paymentAmount} onChange={(event) => updateNewAppointment("paymentAmount", event.target.value)} placeholder="Enter amount" /></label>
-                    {newAppointment.paymentMethod !== "cash" && <label>{newAppointment.paymentMethod === "upi" ? "UPI Reference ID" : "Transaction ID"}<input required value={newAppointment.paymentReference} onChange={(event) => updateNewAppointment("paymentReference", event.target.value)} placeholder="Enter payment reference" /></label>}
-                    <label>Payment Status<select value={newAppointment.paymentStatus} onChange={(event) => updateNewAppointment("paymentStatus", event.target.value)}><option value="pending">Pending</option><option value="paid">Paid</option><option value="partial">Partially Paid</option></select></label>
+                    <label><PortalText text={"Payment Method"} /><select value={newAppointment.paymentMethod} onChange={(event) => updateNewAppointment("paymentMethod", event.target.value)}>{getEnabledPaymentMethods().map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}</select></label>
+                    <label>{newAppointment.paymentMethod === "cash" ? <PortalText text={"Cash Amount"} /> : <PortalText text={"Payment Amount"} />}<PortalElement as="input" type="number" min="1" step="0.01" required value={newAppointment.paymentAmount} onChange={(event) => updateNewAppointment("paymentAmount", event.target.value)} placeholder="Enter amount" /></label>
+                    {newAppointment.paymentMethod !== "cash" && <label>{newAppointment.paymentMethod === "upi" ? <PortalText text={"UPI Reference ID"} /> : <PortalText text={"Transaction ID"} />}<PortalElement as="input" required value={newAppointment.paymentReference} onChange={(event) => updateNewAppointment("paymentReference", event.target.value)} placeholder="Enter payment reference" /></label>}
+                    <label><PortalText text={"Payment Status"} /><select value={newAppointment.paymentStatus} onChange={(event) => updateNewAppointment("paymentStatus", event.target.value)}><PortalElement as="option" value="pending">Pending</PortalElement><PortalElement as="option" value="paid">Paid</PortalElement><PortalElement as="option" value="partial">Partially Paid</PortalElement></select></label>
                   </div>
-                ) : <p className="appointment-payment-empty">No payment method is enabled. Enable one from Settings → Payment.</p>}
+                ) : <p className="appointment-payment-empty"><PortalText text={"No payment method is enabled. Enable one from Settings → Payment."} /></p>}
               </div>
             </div>
 
             <div className="appointment-modal-actions">
-              <button type="button" className="modal-cancel-btn" onClick={() => setShowNewModal(false)}>Cancel</button>
-              <button type="submit" className="modal-save-btn">Create Appointment</button>
+              <button type="button" className="modal-cancel-btn" onClick={() => setShowNewModal(false)}><PortalText text={"Cancel"} /></button>
+              <button type="submit" className="modal-save-btn"><PortalText text={"Create Appointment"} /></button>
             </div>
           </form>
         </div>
@@ -786,71 +772,55 @@ export default function AppointmentList() {
           <form className="appointment-modal" onSubmit={handleUpdateAppointment} onClick={(event) => event.stopPropagation()}>
             <div className="appointment-modal-header">
               <div>
-                <h2>Update Appointment</h2>
-                <p>Edit appointment details for the selected patient.</p>
+                <h2><PortalText text={"Update Appointment"} /></h2>
+                <p><PortalText text={"Edit appointment details for the selected patient."} /></p>
               </div>
-              <button type="button" onClick={() => setEditAppointment(null)} aria-label="Close">
+              <PortalElement as="button" type="button" onClick={() => setEditAppointment(null)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>
-              </button>
+              </PortalElement>
             </div>
 
             <div className="appointment-form-grid">
-              <label>
-                Patient Name
-                <input required value={editAppointment.form.patientName} onChange={(event) => updateEditAppointment("patientName", event.target.value)} />
+              <label><PortalText text={"Patient Name"} /><input required value={editAppointment.form.patientName} onChange={(event) => updateEditAppointment("patientName", event.target.value)} />
               </label>
-              <label>
-                Phone No
-                <input value={editAppointment.form.phone} onChange={(event) => updateEditAppointment("phone", event.target.value)} />
+              <label><PortalText text={"Phone No"} /><input value={editAppointment.form.phone} onChange={(event) => updateEditAppointment("phone", event.target.value)} />
               </label>
-              <label>
-                Appointment Date
-                <input type="date" required value={editAppointment.form.appointmentDate} onChange={(event) => updateEditAppointment("appointmentDate", event.target.value)} />
+              <label><PortalText text={"Appointment Date"} /><input type="date" required value={editAppointment.form.appointmentDate} onChange={(event) => updateEditAppointment("appointmentDate", event.target.value)} />
               </label>
-              <label>
-                Appointment Time
-                <input type="time" required value={editAppointment.form.appointmentTime} onChange={(event) => updateEditAppointment("appointmentTime", event.target.value)} />
+              <label><PortalText text={"Appointment Time"} /><input type="time" required value={editAppointment.form.appointmentTime} onChange={(event) => updateEditAppointment("appointmentTime", event.target.value)} />
               </label>
-              <label>
-                Test / Reason
-                <input value={editAppointment.form.test} onChange={(event) => updateEditAppointment("test", event.target.value)} />
+              <label><PortalText text={"Test / Reason"} /><input value={editAppointment.form.test} onChange={(event) => updateEditAppointment("test", event.target.value)} />
               </label>
-              <label className="wide-field">
-                Location
-                <input value={editAppointment.form.location} onChange={(event) => updateEditAppointment("location", event.target.value)} />
+              <label className="wide-field"><PortalText text={"Location"} /><input value={editAppointment.form.location} onChange={(event) => updateEditAppointment("location", event.target.value)} />
               </label>
-              <label>
-                Type
-                <select value={editAppointment.form.type} onChange={(event) => updateEditAppointment("type", event.target.value)}>
-                  <option>Clinic</option>
-                  <option>Video Call</option>
-                  <option>Voice Call</option>
-                  <option>Online</option>
+              <label><PortalText text={"Type"} /><select value={editAppointment.form.type} onChange={(event) => updateEditAppointment("type", event.target.value)}>
+                  <PortalElement as="option" value={"Clinic"}>Clinic</PortalElement>
+                  <PortalElement as="option" value={"Video Call"}>Video Call</PortalElement>
+                  <PortalElement as="option" value={"Voice Call"}>Voice Call</PortalElement>
+                  <PortalElement as="option" value={"Online"}>Online</PortalElement>
                 </select>
               </label>
-              <label>
-                Status
-                <select value={editAppointment.form.status} onChange={(event) => updateEditAppointment("status", event.target.value)}>
-                  <option value="Pending">Pending</option>
-                  <option value="Confirmed">Confirmed</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
+              <label><PortalText text={"Status"} /><select value={editAppointment.form.status} onChange={(event) => updateEditAppointment("status", event.target.value)}>
+                  <PortalElement as="option" value="Pending">Pending</PortalElement>
+                  <PortalElement as="option" value="Confirmed">Confirmed</PortalElement>
+                  <PortalElement as="option" value="Completed">Completed</PortalElement>
+                  <PortalElement as="option" value="Cancelled">Cancelled</PortalElement>
                 </select>
               </label>
               <div className="appointment-payment-section wide-field">
-                <div className="appointment-payment-heading"><span><i className="fa-solid fa-wallet" /> Payment Details</span><small>Methods enabled in Doctor Settings</small></div>
+                <div className="appointment-payment-heading"><span><i className="fa-solid fa-wallet" /><PortalText text={" Payment Details"} /></span><small><PortalText text={"Methods enabled in Doctor Settings"} /></small></div>
                 <div className="appointment-payment-grid">
-                  <label>Payment Method<select value={editAppointment.form.paymentMethod} onChange={(event) => { updateEditAppointment("paymentMethod", event.target.value); updateEditAppointment("paymentReference", ""); }}>{getEnabledPaymentMethods().map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}</select></label>
-                  <label>{editAppointment.form.paymentMethod === "cash" ? "Cash Amount" : "Payment Amount"}<input type="number" min="1" step="0.01" required value={editAppointment.form.paymentAmount} onChange={(event) => updateEditAppointment("paymentAmount", event.target.value)} /></label>
-                  {editAppointment.form.paymentMethod !== "cash" && <label>{editAppointment.form.paymentMethod === "upi" ? "UPI Reference ID" : "Transaction ID"}<input required value={editAppointment.form.paymentReference} onChange={(event) => updateEditAppointment("paymentReference", event.target.value)} /></label>}
-                  <label>Payment Status<select value={editAppointment.form.paymentStatus} onChange={(event) => updateEditAppointment("paymentStatus", event.target.value)}><option value="pending">Pending</option><option value="paid">Paid</option><option value="partial">Partially Paid</option></select></label>
+                  <label><PortalText text={"Payment Method"} /><select value={editAppointment.form.paymentMethod} onChange={(event) => { updateEditAppointment("paymentMethod", event.target.value); updateEditAppointment("paymentReference", ""); }}>{getEnabledPaymentMethods().map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}</select></label>
+                  <label>{editAppointment.form.paymentMethod === "cash" ? <PortalText text={"Cash Amount"} /> : <PortalText text={"Payment Amount"} />}<input type="number" min="1" step="0.01" required value={editAppointment.form.paymentAmount} onChange={(event) => updateEditAppointment("paymentAmount", event.target.value)} /></label>
+                  {editAppointment.form.paymentMethod !== "cash" && <label>{editAppointment.form.paymentMethod === "upi" ? <PortalText text={"UPI Reference ID"} /> : <PortalText text={"Transaction ID"} />}<input required value={editAppointment.form.paymentReference} onChange={(event) => updateEditAppointment("paymentReference", event.target.value)} /></label>}
+                  <label><PortalText text={"Payment Status"} /><select value={editAppointment.form.paymentStatus} onChange={(event) => updateEditAppointment("paymentStatus", event.target.value)}><PortalElement as="option" value="pending">Pending</PortalElement><PortalElement as="option" value="paid">Paid</PortalElement><PortalElement as="option" value="partial">Partially Paid</PortalElement></select></label>
                 </div>
               </div>
             </div>
 
             <div className="appointment-modal-actions">
-              <button type="button" className="modal-cancel-btn" onClick={() => setEditAppointment(null)}>Cancel</button>
-              <button type="submit" className="modal-save-btn">Update Appointment</button>
+              <button type="button" className="modal-cancel-btn" onClick={() => setEditAppointment(null)}><PortalText text={"Cancel"} /></button>
+              <button type="submit" className="modal-save-btn"><PortalText text={"Update Appointment"} /></button>
             </div>
           </form>
         </div>
@@ -863,33 +833,33 @@ export default function AppointmentList() {
               <div className="appointment-view-heading">
                 <PatientAvatar name={viewAppointment.patientName} avatarUrl={viewAppointment.patientAvatarUrl} size="lg" />
                 <div>
-                  <h2>Appointment Details</h2>
+                  <h2><PortalText text={"Appointment Details"} /></h2>
                   <p>{viewAppointment.patientName}</p>
                 </div>
               </div>
-              <button type="button" onClick={() => setViewAppointment(null)} aria-label="Close">
+              <PortalElement as="button" type="button" onClick={() => setViewAppointment(null)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>
-              </button>
+              </PortalElement>
             </div>
 
             <div className="appointment-detail-grid">
-              <div><span>Time</span><strong>{getTimeRange(viewAppointment)}</strong></div>
-              <div><span>Token</span><strong>{viewAppointment.tokenNumber}</strong></div>
-              <div><span>Patient</span><strong>{viewAppointment.patientName}</strong></div>
-              {viewAppointment.isEmergency && <div><span>Emergency reason</span><strong>{viewAppointment.emergencyReason || 'Emergency appointment'}</strong></div>}
-              <div><span>Phone No</span><strong>{viewAppointment.phone}</strong></div>
-              <div><span>Test</span><strong>{viewAppointment.test}</strong></div>
-              <div><span>Status</span><strong>{getUiStatus(viewAppointment.status).label}</strong></div>
-              <div><span>Payment Method</span><strong>{viewAppointment.paymentMethod ? viewAppointment.paymentMethod.toUpperCase() : "N/A"}</strong></div>
-              <div><span>Amount</span><strong>{viewAppointment.paymentAmount ? `₹${viewAppointment.paymentAmount}` : "N/A"}</strong></div>
-              <div><span>Payment Status</span><strong>{viewAppointment.paymentStatus || "N/A"}</strong></div>
-              {viewAppointment.paymentReference && <div><span>Payment Reference</span><strong>{viewAppointment.paymentReference}</strong></div>}
-              <div className="wide-field"><span>Location</span><strong>{viewAppointment.location}</strong></div>
+              <div><span><PortalText text={"Time"} /></span><strong>{getTimeRange(viewAppointment)}</strong></div>
+              <div><span><PortalText text={"Token"} /></span><strong>{viewAppointment.tokenNumber}</strong></div>
+              <div><span><PortalText text={"Patient"} /></span><strong>{viewAppointment.patientName}</strong></div>
+              {viewAppointment.isEmergency && <div className="doctor-emergency-reason"><span><PortalText text={"Emergency reason"} /></span><strong>{viewAppointment.emergencyReason || <PortalText text={"Emergency appointment"} />}</strong></div>}
+              <div><span><PortalText text={"Phone No"} /></span><strong>{viewAppointment.phone}</strong></div>
+              <div><span><PortalText text={"Test"} /></span><strong>{viewAppointment.test}</strong></div>
+              <div><span><PortalText text={"Status"} /></span><strong>{getUiStatus(viewAppointment.status).label}</strong></div>
+              <div><span><PortalText text={"Payment Method"} /></span><strong>{viewAppointment.paymentMethod ? viewAppointment.paymentMethod.toUpperCase() : "N/A"}</strong></div>
+              <div><span><PortalText text={"Amount"} /></span><strong>{viewAppointment.paymentAmount ? `₹${viewAppointment.paymentAmount}` : "N/A"}</strong></div>
+              <div><span><PortalText text={"Payment Status"} /></span><strong>{viewAppointment.paymentStatus || "N/A"}</strong></div>
+              {viewAppointment.paymentReference && <div><span><PortalText text={"Payment Reference"} /></span><strong>{viewAppointment.paymentReference}</strong></div>}
+              <div className="wide-field"><span><PortalText text={"Location"} /></span><strong>{viewAppointment.location}</strong></div>
             </div>
 
             <div className="appointment-modal-actions">
-              <button type="button" className="modal-cancel-btn" onClick={() => setViewAppointment(null)}>Close</button>
-              <button type="button" className="modal-save-btn" onClick={() => openEditAppointment(viewAppointment)}>Update</button>
+              <button type="button" className="modal-cancel-btn" onClick={() => setViewAppointment(null)}><PortalText text={"Close"} /></button>
+              <button type="button" className="modal-save-btn" onClick={() => openEditAppointment(viewAppointment)}><PortalText text={"Update"} /></button>
             </div>
           </div>
         </div>

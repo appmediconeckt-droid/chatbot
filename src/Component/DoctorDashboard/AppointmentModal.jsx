@@ -1,3 +1,4 @@
+import { PortalText } from "../common/PortalTranslation";
 // AppointmentModal.jsx
 import React from "react";
 import { Modal, Button, Form } from "react-bootstrap";
@@ -106,17 +107,17 @@ export function CompleteModal({
   return (
     <Modal show={show} onHide={onHide} centered size="lg" style={{ background: "none" }}>
       <Modal.Header closeButton>
-        <Modal.Title>Complete Appointment — {patientName}</Modal.Title>
+        <Modal.Title><PortalText text={"Complete Appointment — "} />{patientName}</Modal.Title>
       </Modal.Header>
 
       {/* Scrollable Body */}
       <Modal.Body style={modalBodyStyle}>
         <Form>
-          <h6 className="fw-bold mb-3">Final Vitals</h6>
+          <h6 className="fw-bold mb-3"><PortalText text={"Final Vitals"} /></h6>
 
           <div className="row">
             <div className="col-md-4 mb-2">
-              <Form.Label>Blood Pressure</Form.Label>
+              <Form.Label><PortalText text={"Blood Pressure"} /></Form.Label>
               <Form.Control
                 value={form.bp}
                 onChange={(e) => setForm({ ...form, bp: e.target.value })}
@@ -124,7 +125,7 @@ export function CompleteModal({
             </div>
 
             <div className="col-md-4 mb-2">
-              <Form.Label>Sugar Level</Form.Label>
+              <Form.Label><PortalText text={"Sugar Level"} /></Form.Label>
               <Form.Control
                 value={form.sugar}
                 onChange={(e) => setForm({ ...form, sugar: e.target.value })}
@@ -132,7 +133,7 @@ export function CompleteModal({
             </div>
 
             <div className="col-md-4 mb-2">
-              <Form.Label>Temperature (°C)</Form.Label>
+              <Form.Label><PortalText text={"Temperature (°C)"} /></Form.Label>
               <Form.Control
                 value={form.temperature}
                 onChange={(e) =>
@@ -142,7 +143,7 @@ export function CompleteModal({
             </div>
 
             <div className="col-md-4 mb-2">
-              <Form.Label>BMI</Form.Label>
+              <Form.Label><PortalText text={"BMI"} /></Form.Label>
               <Form.Control
                 value={form.bmi}
                 onChange={(e) => setForm({ ...form, bmi: e.target.value })}
@@ -150,7 +151,7 @@ export function CompleteModal({
             </div>
 
             <div className="col-md-4 mb-2">
-              <Form.Label>SpO2 (%)</Form.Label>
+              <Form.Label><PortalText text={"SpO2 (%)"} /></Form.Label>
               <Form.Control
                 value={form.spo2}
                 onChange={(e) => setForm({ ...form, spo2: e.target.value })}
@@ -158,7 +159,7 @@ export function CompleteModal({
             </div>
 
             <div className="col-md-4 mb-2">
-              <Form.Label>Weight (kg)</Form.Label>
+              <Form.Label><PortalText text={"Weight (kg)"} /></Form.Label>
               <Form.Control
                 value={form.weight}
                 onChange={(e) => setForm({ ...form, weight: e.target.value })}
@@ -169,7 +170,7 @@ export function CompleteModal({
           <hr />
 
           <Form.Group className="mb-2">
-            <Form.Label>Diagnosis</Form.Label>
+            <Form.Label><PortalText text={"Diagnosis"} /></Form.Label>
             <Form.Control
               as="textarea"
               rows={2}
@@ -179,7 +180,7 @@ export function CompleteModal({
           </Form.Group>
 
           <Form.Group className="mb-2">
-            <Form.Label>Medicine / Prescription</Form.Label>
+            <Form.Label><PortalText text={"Medicine / Prescription"} /></Form.Label>
             <Form.Control
               as="textarea"
               rows={3}
@@ -189,7 +190,7 @@ export function CompleteModal({
           </Form.Group>
 
           <Form.Group className="mb-2">
-            <Form.Label>Advice / Follow-up</Form.Label>
+            <Form.Label><PortalText text={"Advice / Follow-up"} /></Form.Label>
             <Form.Control
               as="textarea"
               rows={2}
@@ -202,8 +203,8 @@ export function CompleteModal({
 
       {/* Buttons stay fixed */}
       <Modal.Footer>
-        <Button variant="secondary" onClick={onHide}>Cancel</Button>
-        <Button variant="success" onClick={onSave}>Save & Complete</Button>
+        <Button variant="secondary" onClick={onHide}><PortalText text={"Cancel"} /></Button>
+        <Button variant="success" onClick={onSave}><PortalText text={"Save & Complete"} /></Button>
       </Modal.Footer>
     </Modal>
   );

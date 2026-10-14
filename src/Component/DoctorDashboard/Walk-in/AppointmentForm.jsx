@@ -1,3 +1,4 @@
+import { PatientLanguageControl, PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -126,12 +127,12 @@ export default function AppointmentForm() {
   };
 
   return (
-    <main className="qr-appointment-page">
+    <main className="qr-appointment-page"><PatientLanguageControl />
       <header className="qr-appointment-header">
-        <button type="button" onClick={() => navigate(-1)}>← Back to Scanner</button>
-        <h1>Book Appointment</h1>
+        <button type="button" onClick={() => navigate(-1)}><PortalText text={"← Back to Scanner"} /></button>
+        <h1><PortalText text={"Book Appointment"} /></h1>
         {doctor && <p><strong>{doctor.full_name}</strong> · {Array.isArray(doctor.specialization) ? doctor.specialization.join(", ") : doctor.specialization}</p>}
-        <p>Fill in your details to confirm appointment</p>
+        <p><PortalText text={"Fill in your details to confirm appointment"} /></p>
       </header>
       <div className="qr-appointment-layout">
         <form className="qr-appointment-form" onSubmit={handleSubmit} autoComplete="off">
@@ -150,20 +151,20 @@ export default function AppointmentForm() {
             <Field label="Preferred Time" name="appointmentTime" value={formData.appointmentTime} onChange={updateField} type="time" />
           </div>
           <Field label="Email (Optional)" name="email" value={formData.email} onChange={updateField} type="email" />
-          {appointmentToken && <div className="qr-token-success"><h3>Appointment Confirmed!</h3><strong>{appointmentToken}</strong></div>}
+          {appointmentToken && <div className="qr-token-success"><h3><PortalText text={"Appointment Confirmed!"} /></h3><strong>{appointmentToken}</strong></div>}
           {apiError && <div className="qr-form-error">{apiError}</div>}
-          <div className="qr-form-actions"><button type="button" onClick={resetForm}>Reset Form</button><button type="submit" disabled={isSubmitting}>{isSubmitting ? "Processing..." : "Confirm Appointment"}</button></div>
+          <div className="qr-form-actions"><button type="button" onClick={resetForm}><PortalText text={"Reset Form"} /></button><button type="submit" disabled={isSubmitting}>{isSubmitting ? <PortalText text={"Processing..."} /> : <PortalText text={"Confirm Appointment"} />}</button></div>
         </form>
-        <aside className="qr-appointment-aside"><h3>ⓘ What to expect</h3><ul><li>Fill your details to book your appointment</li><li>Get an instant appointment token</li><li>Estimated wait: 15-30 minutes</li><li>Carry a valid ID and past reports</li></ul></aside>
+        <aside className="qr-appointment-aside"><h3><PortalText text={"ⓘ What to expect"} /></h3><ul><li><PortalText text={"Fill your details to book your appointment"} /></li><li><PortalText text={"Get an instant appointment token"} /></li><li><PortalText text={"Estimated wait: 15-30 minutes"} /></li><li><PortalText text={"Carry a valid ID and past reports"} /></li></ul></aside>
       </div>
     </main>
   );
 }
 
 function Field({ label, name, value, onChange, error, multiline, ...props }) {
-  return <label className="qr-form-field">{label}{multiline ? <textarea name={name} value={value} onChange={onChange} {...props} /> : <input name={name} value={value} onChange={onChange} {...props} />}{error && <small>{error}</small>}</label>;
+  return <label className="qr-form-field"><PortalText text={label} />{multiline ? <textarea name={name} value={value} onChange={onChange} {...props} /> : <input name={name} value={value} onChange={onChange} {...props} />}{error && <small>{error}</small>}</label>;
 }
 
 function SelectField({ label, name, value, onChange, error, options }) {
-  return <label className="qr-form-field">{label}<select name={name} value={value} onChange={onChange}><option value="">Select Gender</option>{options.map((option) => <option key={option} value={option}>{option.replace(/-/g, " ")}</option>)}</select>{error && <small>{error}</small>}</label>;
+  return <label className="qr-form-field"><PortalText text={label} /><select name={name} value={value} onChange={onChange}><PortalElement as="option" value="">Select Gender</PortalElement>{options.map((option) => <option key={option} value={option}><PortalText text={option.replace(/-/g, " ")} /></option>)}</select>{error && <small>{error}</small>}</label>;
 }

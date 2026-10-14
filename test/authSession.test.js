@@ -1,6 +1,7 @@
 import { test, beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { persistAuthSession, dashboardForRole } from "../src/authtication/authSession.js";
+import { staffRoles } from "../src/authtication/staffRoles.js";
 
 beforeEach(() => {
   const values = new Map();
@@ -10,6 +11,24 @@ beforeEach(() => {
     removeItem: (key) => values.delete(key),
   };
 });
+
+for (const role of staffRoles) {
+  test(`${role} password and OTP logins open the assigned dashboard with their own identity`, () => {
+    persistAuthSession({ role: 'doctor', accessToken: 'old-token', user: { _id: 'doctor-id', role: 'doctor' } });
+    for (const payload of [
+      { accessToken: 'password-token', role, accountRole: 'doctor', user: { _id: 'staff-id', role, assignedDoctor: 'doctor-id' } },
+      { data: { accessToken: 'otp-token', refreshToken: 'refresh-token', user: { _id: 'staff-id', role, assignedDoctor: 'doctor-id' } } },
+    ]) {
+      const session = persistAuthSession(payload);
+      assert.equal(session.path, role === 'receptionist' ? '/receptionist/dashboard' : role === 'nurse' ? '/hospital/nurse-dashboard' : '/staff-dashboard');
+      assert.equal(session.role, role);
+      assert.equal(localStorage.getItem('userRole'), role);
+      assert.equal(localStorage.getItem('userId'), 'staff-id');
+      assert.equal(localStorage.getItem('counselorId'), null);
+      assert.equal(JSON.parse(localStorage.getItem('userData')).assignedDoctor, 'doctor-id');
+    }
+  });
+}
 
 for (const role of ["user", "doctor", "counselor", "consultant", "counsellor"]) {
   test(`preserves ${role} identity while routing to the correct dashboard`, () => {

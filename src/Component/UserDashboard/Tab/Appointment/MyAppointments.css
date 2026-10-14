@@ -1865,3 +1865,18 @@
 }
 .user-emergency-badge { display: inline-block; margin: 6px; padding: 4px 9px; border-radius: 6px; background: #fff1f2; color: #be123c; font-size: 12px; font-weight: 700; }
 .user-emergency-notice { margin: 16px 0; padding: 14px; border: 1px solid #fda4af; border-radius: 10px; background: #fff1f2; color: #9f1239; overflow-wrap: anywhere; }
+.user-appointments-page .user-appointment-action.user-appointment-emergency { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 10px 16px; border-radius: 9px; font-size: 13px; font-weight: 700; line-height: 1.25; white-space: nowrap; color: #fff; background: #b42318; border: 1px solid #b42318; }
+.user-appointments-page .user-appointment-action.user-appointment-emergency:hover:not(:disabled) { background: #912018; border-color: #912018; }
+.user-appointments-page .user-appointment-action.user-appointment-emergency:focus-visible { outline: 3px solid #fda4af; outline-offset: 3px; }
+.user-appointments-page .user-appointment-action.user-appointment-emergency.is-sent:disabled { color: #9f1239; background: #fff1f2; border-color: #fda4af; opacity: 1; cursor: default; }
+.patient-emergency-dialog { width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); margin: auto; padding: 24px; border: 0; border-radius: 16px; color: #24344b; background: white; }
+.patient-emergency-dialog::backdrop { background: #0007; }
+.patient-emergency-dialog form { display: grid; gap: 14px; }
+.patient-emergency-dialog h2, .patient-emergency-dialog p { margin: 0; }
+.patient-emergency-dialog textarea { box-sizing: border-box; width: 100%; padding: 12px; border: 1px solid #ccd5df; border-radius: 8px; resize: vertical; font: inherit; }
+.patient-emergency-dialog small { color: #64748b; }
+.patient-emergency-dialog [role="alert"] { color: #b42318; }
+.patient-emergency-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; }
+.patient-emergency-actions button { padding: 10px 14px; border: 1px solid #ccd5df; border-radius: 8px; background: white; }
+.patient-emergency-actions button[type="submit"] { color: white; background: #b42318; border-color: #b42318; }
+.patient-emergency-actions button:disabled { opacity: .6; cursor: wait; }

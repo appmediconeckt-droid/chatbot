@@ -4,9 +4,30 @@ import "./App.css";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import "../setupAxios";
 import ProtectedRoute from "./Component/common/ProtectedRoute";
+import { staffRoles } from "./authtication/staffRoles.js";
 import axiosInstance from "./axiosConfig";
 
 import { isDoctorRoute } from "./Component/DoctorDashboard/doctorRoutes";
+import { isNurseRoute } from "./Component/Nurse/nurseRoutes.js";
+import { isReceptionistRoute } from './Component/Receptionist/receptionistRoutes.js';
+const StaffAppointments = lazy(() => import('./Component/StaffDashboard/StaffAppointments.jsx'));
+const StaffPatientHistory = lazy(() => import('./Component/StaffDashboard/StaffPatientHistory.jsx'));
+const ReceptionistSettings = lazy(() => import('./Component/Receptionist/ReceptionistSettings.jsx'));
+const ReceptionistLedDisplay = lazy(() => import('./Component/Receptionist/ReceptionistLedDisplay.jsx'));
+const ReceptionistLayout = lazy(() => import('./Component/Receptionist/ReceptionistLayout.jsx'));
+const ReceptionistOverview = lazy(() => import('./Component/Receptionist/ReceptionistPages.jsx').then(m => ({ default: m.ReceptionistOverview })));
+const ReceptionistAppointments = lazy(() => import('./Component/Receptionist/ReceptionistPages.jsx').then(m => ({ default: m.ReceptionistAppointments })));
+const ReceptionistLiveQueue = lazy(() => import('./Component/Receptionist/ReceptionistPages.jsx').then(m => ({ default: m.ReceptionistLiveQueue })));
+const ReceptionistDoctor = lazy(() => import('./Component/Receptionist/ReceptionistPages.jsx').then(m => ({ default: m.ReceptionistDoctor })));
+const ReceptionistProfile = lazy(() => import('./Component/Receptionist/ReceptionistPages.jsx').then(m => ({ default: m.ReceptionistProfile })));
+const NurseLayout = lazy(() => import('./Component/Nurse/NurseLayout.jsx'));
+const NurseDashboard = lazy(() => import('./Component/Nurse/NurseDashboard/NurseDashboard.jsx'));
+const NursePatientList = lazy(() => import('./Component/Nurse/PatientList/NursePatientList.jsx'));
+const NurseVitalSigns = lazy(() => import('./Component/Nurse/VitalSigns/VitalSigns.jsx'));
+const NurseMedication = lazy(() => import('./Component/Nurse/Medication/NurseMedicationPage.jsx'));
+const NurseShiftReport = lazy(() => import('./Component/Nurse/Shift & Duty Management/NurseShiftManagement.jsx'));
+const NurseEmergency = lazy(() => import('./Component/Nurse/Emergency/NurseEmergencyMenu.jsx'));
+const NurseNotifications = lazy(() => import('./Component/Nurse/NurseNotifications/NurseNotifications.jsx'));
 
 const DoctorProfilePage = lazy(() => import('./Component/DoctorDashboard/ClinicQrPages.jsx').then(m => ({ default: m.DoctorProfilePage })));
 const ClinicWalkinPage = lazy(() => import('./Component/DoctorDashboard/ClinicQrPages.jsx').then(m => ({ default: m.ClinicWalkinPage })));
@@ -25,6 +46,7 @@ const ChatBox = lazy(
 );
 const Signup = lazy(() => import("./authtication/Signup"));
 const UserSignup = lazy(() => import("./authtication/UserSignup"));
+const StaffDashboard = lazy(() => import("./Component/StaffDashboard/StaffDashboard.jsx"));
 
 // Add .jsx extension explicitly
 const ForgotPassword = lazy(() => import("./authtication/ForgotPassword.jsx"));
@@ -97,13 +119,14 @@ function App() {
   // release the one-device lock automatically.
   useEffect(() => {
     const protectedPaths = [
+      "/staff-dashboard",
       "/user-dashboard",
       "/counselor-dashboard",
       "/counselor-directory",
       "/chat",
       "/sms-input",
     ];
-    const isProtectedPage = isDoctorRoute(location.pathname) || protectedPaths.some(
+    const isProtectedPage = isDoctorRoute(location.pathname) || isNurseRoute(location.pathname) || isReceptionistRoute(location.pathname) || protectedPaths.some(
       (path) =>
         location.pathname === path || location.pathname.startsWith(`${path}/`),
     );
@@ -168,6 +191,39 @@ function App() {
           <Route path="/walkin/:doctorClinicId" element={<ClinicWalkinPage />} />
           <Route path="/doctor-profile-qr" element={<PublicDoctorProfile />} />
           <Route path="/walk-in-appointment" element={<AppointmentForm />} />
+
+          <Route element={<ProtectedRoute allowedRoles={['nurse']} exactRoles><NurseLayout /></ProtectedRoute>}>
+            <Route path="/hospital/nurse-dashboard" element={<div className="nurse-view-dashboard"><NurseDashboard /></div>} />
+            <Route path="/hospital/nurse-profile" element={<StaffDashboard initialSection="profile" embedded />} />
+            <Route path="/hospital/patient-list" element={<div className="nurse-view-patients"><NursePatientList /></div>} />
+            <Route path="/hospital/vital-signs" element={<div className="nurse-view-vitals"><NurseVitalSigns /></div>} />
+            <Route path="/hospital/medication" element={<div className="nurse-view-medication"><NurseMedication /></div>} />
+            <Route path="/hospital/shift-report" element={<div className="nurse-view-shifts"><NurseShiftReport /></div>} />
+            <Route path="/hospital/emergency-cases" element={<div className="nurse-view-emergency"><NurseEmergency /></div>} />
+            <Route path="/hospital/nurse-notifications" element={<div className="nurse-view-notifications"><NurseNotifications /></div>} />
+            <Route path="/hospital/staff-appointments" element={<StaffAppointments />} />
+            <Route path="/hospital/patient-history" element={<StaffPatientHistory />} />
+            <Route path="/hospital/nurse-settings" element={<StaffDashboard initialSection="settings" embedded />} />
+          </Route>
+
+          <Route path="/receptionist" element={<ProtectedRoute allowedRoles={['receptionist']} exactRoles><ReceptionistLayout /></ProtectedRoute>}>
+            <Route index element={<Navigate to="dashboard" replace />} />
+            <Route path="dashboard" element={<ReceptionistOverview />} />
+            <Route path="appointments" element={<ReceptionistAppointments />} />
+            <Route path="live-queue" element={<ReceptionistLiveQueue />} />
+            <Route path="led-display" element={<ReceptionistLedDisplay />} />
+            <Route path="doctor" element={<ReceptionistDoctor />} />
+            <Route path="patients" element={<StaffPatientHistory />} />
+            <Route path="profile" element={<ReceptionistProfile />} />
+            <Route path="settings" element={<ReceptionistSettings />} />
+            <Route path="*" element={<Navigate to="/receptionist/dashboard" replace />} />
+          </Route>
+
+          <Route path="/staff-dashboard" element={
+            <ProtectedRoute allowedRoles={staffRoles} exactRoles>
+              <StaffDashboard />
+            </ProtectedRoute>
+          } />
 
           {/* User Protected Routes */}
           <Route

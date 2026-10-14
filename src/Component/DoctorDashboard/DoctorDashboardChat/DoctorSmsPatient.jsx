@@ -1,3 +1,4 @@
+import { PortalTemplate, PortalElement, PortalText } from "../../common/PortalTranslation";
 import PatientProfileImage from "../../common/PatientProfileImage";
 // import React, { useEffect, useMemo, useRef, useState } from "react";
 // import { useLocation } from "react-router-dom";
@@ -1589,9 +1590,9 @@ const AttachmentPreviewImage = ({ file }) => {
   if (!previewUrl) return null;
 
   return (
-    <a href={previewUrl} target="_blank" rel="noreferrer" className="sms-file-preview" title="Open attachment">
+    <PortalElement as="a" href={previewUrl} target="_blank" rel="noreferrer" className="sms-file-preview" title="Open attachment">
       <img src={previewUrl} alt="Attachment preview" />
-    </a>
+    </PortalElement>
   );
 };
 
@@ -2571,9 +2572,9 @@ function PatientList() {
         <div className="sms-file-details">
           <FaPaperclip />
           {file.url ? (
-            <a href={file.url} target="_blank" rel="noreferrer">{file.name || "Attachment"}</a>
+            <a href={file.url} target="_blank" rel="noreferrer">{file.name || <PortalText text={"Attachment"} />}</a>
           ) : (
-            <span>{file.name || "Attachment"}</span>
+            <span>{file.name || <PortalText text={"Attachment"} />}</span>
           )}
           {file.size && <small>{file.size}</small>}
         </div>
@@ -2602,15 +2603,15 @@ function PatientList() {
   return (
     <div className="patient-list-container sms-communications-screen">
       <header className="sms-page-header">
-        <h1>Patient Communications</h1>
-        <p>Manage patient conversations and urgent communications.</p>
+        <h1><PortalText text={"Patient Communications"} /></h1>
+        <p><PortalText text={"Manage patient conversations and urgent communications."} /></p>
       </header>
 
       <section className="sms-stats-grid">
-        <article><span className="sms-stat-icon critical">△</span><b>Live</b><strong>{criticalCount}</strong><h3>Critical Patients</h3></article>
-        <article><span className="sms-stat-icon unread">✉</span><b className="blue">Live</b><strong>{unreadCount}</strong><h3>Unread Messages</h3></article>
-        <article><span className="sms-stat-icon waiting">▣</span><b className="muted">Live</b><strong>{waitingCount}</strong><h3>Waiting for Reply</h3></article>
-        <article><span className="sms-stat-icon resolved">✓</span><b className="green">Live</b><strong>{resolvedCount}</strong><h3>Resolved Today</h3></article>
+        <article><span className="sms-stat-icon critical">△</span><b><PortalText text={"Live"} /></b><strong>{criticalCount}</strong><h3><PortalText text={"Critical Patients"} /></h3></article>
+        <article><span className="sms-stat-icon unread">✉</span><b className="blue"><PortalText text={"Live"} /></b><strong>{unreadCount}</strong><h3><PortalText text={"Unread Messages"} /></h3></article>
+        <article><span className="sms-stat-icon waiting">▣</span><b className="muted"><PortalText text={"Live"} /></b><strong>{waitingCount}</strong><h3><PortalText text={"Waiting for Reply"} /></h3></article>
+        <article><span className="sms-stat-icon resolved">✓</span><b className="green"><PortalText text={"Live"} /></b><strong>{resolvedCount}</strong><h3><PortalText text={"Resolved Today"} /></h3></article>
       </section>
 
       <div className="sms-filter-bar">
@@ -2625,32 +2626,32 @@ function PatientList() {
             ["archived", "Archived"],
           ].map(([value, label]) => (
             <button className={statusFilter === value ? "active" : ""} key={value} onClick={() => setStatusFilter(value)} type="button">
-              {label}
+              {<PortalText text={label} />}
               {value === "unread" && <span>{unreadCount}</span>}
             </button>
           ))}
         </div>
         <div className="sms-sort-actions">
-          <button type="button">☰ Recent</button>
-          <button type="button">≡ Filter</button>
+          <button type="button"><PortalText text={"☰ Recent"} /></button>
+          <button type="button"><PortalText text={"≡ Filter"} /></button>
         </div>
       </div>
 
       <div className="sms-communications-layout">
         <aside className="sms-conversations-card">
           <div className="sms-conversations-header">
-            <h2>Conversations</h2>
+            <h2><PortalText text={"Conversations"} /></h2>
             <button type="button">+</button>
           </div>
 
           <label className="sms-search-box">
             <FaSearch />
-            <input value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search conversations..." />
+            <PortalElement as="input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search conversations..." />
           </label>
 
           <div className="sms-conversation-list">
             {filteredPatients.length === 0 ? (
-              <div className="no-patients"><p>{status === "loading" ? "Loading conversations..." : status === "failed" ? error : "No conversations found."}</p></div>
+              <div className="no-patients"><p>{status === "loading" ? <PortalText text={"Loading conversations..."} /> : status === "failed" ? error : <PortalText text={"No conversations found."} />}</p></div>
             ) : filteredPatients.map((patient) => (
               <button
                 className={`sms-conversation-item ${String(selectedPatient?.id) === String(patient.id) ? "active" : ""}`}
@@ -2664,10 +2665,10 @@ function PatientList() {
                     <span className={`sms-status-pill ${getStatusClass(patient.status)}`}>{patient.status}</span>
                   </div>
                   <small>{patient.previewTitle || patient.condition}</small>
-                  <p>{patient.lastMessage || "No messages yet"}</p>
+                  <p>{patient.lastMessage || <PortalText text={"No messages yet"} />}</p>
                 </div>
                 <div className="sms-conversation-meta">
-                  <span>{patient.messageTime || "Yesterday"}</span>
+                  <span>{patient.messageTime || <PortalText text={"Yesterday"} />}</span>
                   {(patient.unread || 0) > 0 && <b>{patient.unread}</b>}
                 </div>
               </button>
@@ -2680,28 +2681,28 @@ function PatientList() {
             <div className="sms-chat-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</div>
             <div className="sms-chat-title">
               <h2>
-                {selectedPatient?.name || "Select a patient"}
+                {selectedPatient?.name || <PortalText text={"Select a patient"} />}
                 {selectedPatient?.status && <span className={`sms-status-pill ${getStatusClass(selectedPatient.status)}`}>{selectedPatient.status}</span>}
               </h2>
               <p>
                 {selectedPatient
-                  ? `${selectedPatient.age}${selectedPatient.gender?.[0] || ""} - Blood ${selectedPatient.bloodGroup || "N/A"} - ${selectedPatient.condition}`
-                  : "Choose a conversation to view messages"}
+                  ? <PortalTemplate text={"{0}{1} - Blood {2} - {3}"} values={[selectedPatient.age,selectedPatient.gender?.[0] || "",selectedPatient.bloodGroup || "N/A",selectedPatient.condition]} />
+                  : <PortalText text={"Choose a conversation to view messages"} />}
               </p>
             </div>
             <div className="sms-chat-actions">
-              <button type="button" onClick={() => startCall("voice")} title="Voice call"><FaPhone /></button>
-              <button type="button" onClick={() => startCall("video")} title="Video call"><FaVideo /></button>
+              <PortalElement as="button" type="button" onClick={() => startCall("voice")} title="Voice call"><FaPhone /></PortalElement>
+              <PortalElement as="button" type="button" onClick={() => startCall("video")} title="Video call"><FaVideo /></PortalElement>
             </div>
           </div>
 
           <div className="sms-message-area" ref={messageAreaRef}>
-            <div className="sms-date-chip">{selectedPatient ? "Today" : "No conversation selected"}</div>
+            <div className="sms-date-chip">{selectedPatient ? <PortalText text={"Today"} /> : <PortalText text={"No conversation selected"} />}</div>
             {selectedMessages.slice(0, 1).map((msg) => (
               <div className={`sms-message-row ${msg.sender}`} key={msg.id}>
                 <span className="sms-message-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</span>
                 <div>
-                  <div className="sms-message-meta">{msg.sender === "doctor" ? "You" : selectedPatient?.name} <span>{msg.time}</span></div>
+                  <div className="sms-message-meta">{msg.sender === "doctor" ? <PortalText text={"You"} /> : selectedPatient?.name} <span>{msg.time}</span></div>
                   <div className="sms-message-bubble">
                     {msg.text}
                     {msg.file && renderAttachment(msg.file)}
@@ -2709,27 +2710,27 @@ function PatientList() {
                 </div>
               </div>
             ))}
-            {selectedMessages.length > 1 && <div className="sms-new-divider"><span>New Messages</span></div>}
+            {selectedMessages.length > 1 && <div className="sms-new-divider"><span><PortalText text={"New Messages"} /></span></div>}
             {selectedMessages.slice(1).map((msg) => (
               <div className={`sms-message-row ${msg.sender}`} key={msg.id}>
                 {msg.sender === "patient" && <span className="sms-message-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</span>}
                 <div>
-                  <div className="sms-message-meta">{msg.sender === "doctor" ? "You" : selectedPatient?.name} <span>{msg.time}</span></div>
+                  <div className="sms-message-meta">{msg.sender === "doctor" ? <PortalText text={"You"} /> : selectedPatient?.name} <span>{msg.time}</span></div>
                   <div className="sms-message-bubble">
                     {msg.text}
                     {msg.file && renderAttachment(msg.file)}
                   </div>
                 </div>
-                {msg.sender === "doctor" && <span className="sms-message-avatar doctor">YU</span>}
+                {msg.sender === "doctor" && <span className="sms-message-avatar doctor"><PortalText text={"YU"} /></span>}
               </div>
             ))}
           </div>
 
           <div className="sms-quick-actions">
-            <button type="button">▣ Schedule Appointment</button>
-            <button type="button">▤ Request Reports</button>
-            <button type="button">☤ Upload Prescription</button>
-            <button type="button">⟳ Follow Up</button>
+            <button type="button"><PortalText text={"▣ Schedule Appointment"} /></button>
+            <button type="button"><PortalText text={"▤ Request Reports"} /></button>
+            <button type="button"><PortalText text={"☤ Upload Prescription"} /></button>
+            <button type="button"><PortalText text={"⟳ Follow Up"} /></button>
           </div>
 
           {error && <div className="sms-send-error">{error}</div>}
@@ -2739,13 +2740,13 @@ function PatientList() {
           {pendingAttachment && (
             <div className="sms-pending-attachment">
               <FaPaperclip />
-              <span><strong>{pendingAttachment.file.name}</strong><small>{formatFileSize(pendingAttachment.file.size)} · Ready to send</small></span>
-              <button type="button" onClick={removePendingAttachment} aria-label="Remove attachment"><i className="fa-solid fa-xmark" /></button>
+              <span><strong>{pendingAttachment.file.name}</strong><small>{formatFileSize(pendingAttachment.file.size)}<PortalText text={" · Ready to send"} /></small></span>
+              <PortalElement as="button" type="button" onClick={removePendingAttachment} aria-label="Remove attachment"><i className="fa-solid fa-xmark" /></PortalElement>
             </div>
           )}
 
           <form className="sms-message-form" onSubmit={sendLocalMessage}>
-            <button type="button" onClick={handleAttachmentClick} disabled={!selectedPatient?.id} title="Attach file"><FaPaperclip /></button>
+            <PortalElement as="button" type="button" onClick={handleAttachmentClick} disabled={!selectedPatient?.id} title="Attach file"><FaPaperclip /></PortalElement>
             <button type="button">☺</button>
             <input value={message} onChange={(event) => setMessage(event.target.value)} placeholder={`Type a message to ${selectedPatient?.name?.split(" ")[0] || "patient"}...`} />
             <button type="button">♩</button>
@@ -2758,17 +2759,17 @@ function PatientList() {
         <div className="sms-call-overlay" role="dialog" aria-modal="true">
           <div className={`sms-call-card ${activeCall.type} ${activeCall.status}`}>
             <div className="sms-call-top">
-              <span>{activeCall.type === "video" ? "Video call" : "Voice call"}</span>
+              <span>{activeCall.type === "video" ? <PortalText text={"Video call"} /> : <PortalText text={"Voice call"} />}</span>
               <strong>{activeCall.status === "connected" ? formatCallDuration(callSeconds) : getCallStatusText()}</strong>
             </div>
             <div className="sms-call-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</div>
-            <h2>{selectedPatient?.name || "Patient"}</h2>
+            <h2>{selectedPatient?.name || <PortalText text={"Patient"} />}</h2>
             <p>
               {activeCall.status === "missed"
-                ? "Patient did not answer. Call marked as missed."
+                ? <PortalText text={"Patient did not answer. Call marked as missed."} />
                 : activeCall.status === "ringing"
-                  ? "Calling patient..."
-                  : `Connected • ${formatCallDuration(callSeconds)}`}
+                  ? <PortalText text={"Calling patient..."} />
+                  : <PortalTemplate text={"Connected • {0}"} values={[formatCallDuration(callSeconds)]} />}
             </p>
 
             {activeCall.status === "connected" && (
@@ -2794,9 +2795,9 @@ function PatientList() {
                   }}
                 />
                 {activeCall.status !== "connected" ? (
-                  <span className="sms-local-video sms-local-video-off">Waiting for patient to accept...</span>
+                  <span className="sms-local-video sms-local-video-off"><PortalText text={"Waiting for patient to accept..."} /></span>
                 ) : activeCall.isVideoOff ? (
-                  <span className="sms-local-video sms-local-video-off">Camera off</span>
+                  <span className="sms-local-video sms-local-video-off"><PortalText text={"Camera off"} /></span>
                 ) : (
                   <video className="sms-local-video" ref={videoPreviewRef} autoPlay playsInline muted />
                 )}
@@ -2805,7 +2806,7 @@ function PatientList() {
 
             <div className="sms-call-controls">
               {activeCall.direction === "incoming" && activeCall.status === "ringing" && (
-                <button type="button" className="accept incoming-action" onClick={acceptIncomingCall} title="Accept incoming call"><FaPhone /><span>Accept Call</span></button>
+                <PortalElement as="button" type="button" className="accept incoming-action" onClick={acceptIncomingCall} title="Accept incoming call"><FaPhone /><span><PortalText text={"Accept Call"} /></span></PortalElement>
               )}
               <button
                 type="button"
@@ -2855,7 +2856,7 @@ function PatientList() {
               )}
               <button type="button" className={activeCall.direction === "incoming" && activeCall.status === "ringing" ? "reject incoming-action" : "end"} onClick={() => endCall(activeCall.status === "ringing" ? (activeCall.direction === "incoming" ? "rejected" : "cancelled") : "ended")} title={activeCall.status === "ringing" && activeCall.direction === "incoming" ? "Reject incoming call" : "End call"}>
                 <FaPhoneSlash />
-                {activeCall.direction === "incoming" && activeCall.status === "ringing" && <span>Reject Call</span>}
+                {activeCall.direction === "incoming" && activeCall.status === "ringing" && <span><PortalText text={"Reject Call"} /></span>}
               </button>
             </div>
           </div>
@@ -2865,23 +2866,23 @@ function PatientList() {
       {showPostCallForm && postCallAppointment && (
         <div className="sms-consult-overlay" role="dialog" aria-modal="true">
           <div className="sms-consult-modal">
-            <div className="sms-consult-head"><div><span>Remote Consultation</span><h2>Check & Complete Appointment</h2><p>Add the prescription and recommended tests for {selectedPatient?.name || "this patient"}.</p></div><button type="button" onClick={() => setShowPostCallForm(false)}><i className="fa-solid fa-xmark"></i></button></div>
+            <div className="sms-consult-head"><div><span><PortalText text={"Remote Consultation"} /></span><h2><PortalText text={"Check & Complete Appointment"} /></h2><p><PortalText text={"Add the prescription and recommended tests for "} />{selectedPatient?.name || <PortalText text={"this patient"} />}.</p></div><button type="button" onClick={() => setShowPostCallForm(false)}><i className="fa-solid fa-xmark"></i></button></div>
             <div className="sms-consult-body">
-              <label>Diagnosis <b>*</b><textarea rows="2" value={remoteConsultationForm.diagnosis} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, diagnosis: event.target.value }))} placeholder="Clinical diagnosis and findings" /></label>
-              <label>Medicine / Prescription <b>*</b><textarea rows="4" value={remoteConsultationForm.medicine} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, medicine: event.target.value }))} placeholder="Medicine name, dosage, timing and duration" /></label>
-              <label>Doctor's Advice <b>*</b><textarea rows="2" value={remoteConsultationForm.advice} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, advice: event.target.value }))} placeholder="Diet, care and follow-up advice" /></label>
-              <div className="sms-consult-tests-head"><strong>Recommended Tests / Investigations</strong><button type="button" onClick={addRemoteTest}><i className="fa-solid fa-plus"></i> Add Test</button></div>
+              <label><PortalText text={"Diagnosis "} /><b>*</b><PortalElement as="textarea" rows="2" value={remoteConsultationForm.diagnosis} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, diagnosis: event.target.value }))} placeholder="Clinical diagnosis and findings" /></label>
+              <label><PortalText text={"Medicine / Prescription "} /><b>*</b><PortalElement as="textarea" rows="4" value={remoteConsultationForm.medicine} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, medicine: event.target.value }))} placeholder="Medicine name, dosage, timing and duration" /></label>
+              <label><PortalText text={"Doctor's Advice "} /><b>*</b><PortalElement as="textarea" rows="2" value={remoteConsultationForm.advice} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, advice: event.target.value }))} placeholder="Diet, care and follow-up advice" /></label>
+              <div className="sms-consult-tests-head"><strong><PortalText text={"Recommended Tests / Investigations"} /></strong><button type="button" onClick={addRemoteTest}><i className="fa-solid fa-plus"></i><PortalText text={" Add Test"} /></button></div>
               {remoteConsultationForm.recommendedTests.map((test, index) => (
                 <div className="sms-consult-test" key={`remote-test-${index}`}>
-                  <input value={test.testName} onChange={(event) => updateRemoteTest(index, "testName", event.target.value)} placeholder="Test name (e.g. CBC)" />
+                  <PortalElement as="input" value={test.testName} onChange={(event) => updateRemoteTest(index, "testName", event.target.value)} placeholder="Test name (e.g. CBC)" />
                   <input type="date" value={test.completeBy} onChange={(event) => updateRemoteTest(index, "completeBy", event.target.value)} />
-                  <input value={test.reason} onChange={(event) => updateRemoteTest(index, "reason", event.target.value)} placeholder="Reason" />
-                  <input value={test.instructions} onChange={(event) => updateRemoteTest(index, "instructions", event.target.value)} placeholder="Instructions (e.g. fasting)" />
-                  <button type="button" onClick={() => removeRemoteTest(index)} aria-label="Remove test"><i className="fa-solid fa-trash"></i></button>
+                  <PortalElement as="input" value={test.reason} onChange={(event) => updateRemoteTest(index, "reason", event.target.value)} placeholder="Reason" />
+                  <PortalElement as="input" value={test.instructions} onChange={(event) => updateRemoteTest(index, "instructions", event.target.value)} placeholder="Instructions (e.g. fasting)" />
+                  <PortalElement as="button" type="button" onClick={() => removeRemoteTest(index)} aria-label="Remove test"><i className="fa-solid fa-trash"></i></PortalElement>
                 </div>
               ))}
             </div>
-            <div className="sms-consult-actions"><button type="button" className="secondary" onClick={() => setShowPostCallForm(false)}>Save Later</button><button type="button" className="primary" disabled={savingConsultation || !remoteConsultationForm.diagnosis.trim() || !remoteConsultationForm.medicine.trim() || !remoteConsultationForm.advice.trim()} onClick={saveRemoteConsultation}>{savingConsultation ? "Saving..." : "Save & Complete"}</button></div>
+            <div className="sms-consult-actions"><button type="button" className="secondary" onClick={() => setShowPostCallForm(false)}><PortalText text={"Save Later"} /></button><button type="button" className="primary" disabled={savingConsultation || !remoteConsultationForm.diagnosis.trim() || !remoteConsultationForm.medicine.trim() || !remoteConsultationForm.advice.trim()} onClick={saveRemoteConsultation}>{savingConsultation ? <PortalText text={"Saving..."} /> : <PortalText text={"Save & Complete"} />}</button></div>
           </div>
         </div>
       )}

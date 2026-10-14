@@ -1,11 +1,10 @@
 import axios from "axios";
 
-const DEFAULT_LOCAL_API_BASE_URL = "https://m429gbrg-5006.inc1.devtunnels.ms";
-const DEV_TUNNEL_PORT_PATTERN = /-(\d+)\.inc\d+\.devtunnels\.ms\/?$/i;
+const DEFAULT_LOCAL_API_BASE_URL = "http://localhost:5006";
 
 const rawEnvApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
-  "https://s5jl7g4z-5005.inc1.devtunnels.ms";
+  "";
 
 const resolveApiBaseUrl = (url) => {
   const normalizedUrl = String(url || "").replace(/^hhttps:\/\//i, "https://");
@@ -13,11 +12,11 @@ const resolveApiBaseUrl = (url) => {
     typeof window !== "undefined" &&
     ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
 
-  if (isLocalFrontend && /\.devtunnels\.ms\/?$/i.test(normalizedUrl)) {
-    return "https://s5jl7g4z-5005.inc1.devtunnels.ms";
+  if (isLocalFrontend && (!normalizedUrl || /\.devtunnels\.ms\/?$/i.test(normalizedUrl))) {
+    return DEFAULT_LOCAL_API_BASE_URL;
   }
 
-  return normalizedUrl;/*  */
+  return normalizedUrl;
 };
 
 const envApiBaseUrl = resolveApiBaseUrl(rawEnvApiBaseUrl);

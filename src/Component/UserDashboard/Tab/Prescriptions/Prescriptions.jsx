@@ -1,3 +1,4 @@
+import { PortalTemplate, PortalText, PortalElement } from "../../../common/PortalTranslation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { FaArrowLeft, FaCalendarAlt, FaCamera, FaDownload, FaEye, FaFileMedical, FaNotesMedical, FaPrint, FaRedo, FaSpinner, FaTimes, FaUserMd } from "react-icons/fa";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
@@ -306,7 +307,7 @@ export default function Prescriptions() {
       <div className="rx-detail-panel">
         <div className="rx-card-actions rx-detail-actions" style={{ marginBottom: 20 }}>
           <button type="button" className="rx-download-btn" onClick={() => downloadPrescription(prescription)} disabled={downloadingId === prescription.id}>
-            {downloadingId === prescription.id ? <FaSpinner className="spinning" /> : <FaDownload />} {downloadingId === prescription.id ? "Downloading..." : "Download Prescription PDF"}
+            {downloadingId === prescription.id ? <FaSpinner className="spinning" /> : <FaDownload />} {downloadingId === prescription.id ? <PortalText text={"Downloading..."} /> : <PortalText text={"Download Prescription PDF"} />}
           </button>
         </div>
         <PrescriptionDocument record={prescription} />
@@ -326,15 +327,15 @@ export default function Prescriptions() {
       <div className="rx-detail-panel">
         <div className="rx-detail-head">
           <span className={`rx-record-type ${prescription.source === "appointment" ? "appointment" : "pdf"}`}>
-            {prescription.source === "appointment" ? "Completed by doctor" : "PDF prescription"}
+            {prescription.source === "appointment" ? <PortalText text={"Completed by doctor"} /> : <PortalText text={"PDF prescription"} />}
           </span>
-          <h3>Patient details</h3>
+          <h3><PortalText text={"Patient details"} /></h3>
           <p><FaCalendarAlt /> {formatDate(prescription.issuedAt)}</p>
         </div>
 
         <div className="rx-detail-summary">
           <div>
-            <span>Patient</span>
+            <span><PortalText text={"Patient"} /></span>
             <strong>{getPatientName(prescription)}</strong>
             {(patientPhone || patientEmail) && <p>{[patientPhone, patientEmail].filter(Boolean).join(" · ")}</p>}
           </div>
@@ -344,33 +345,33 @@ export default function Prescriptions() {
             <p>{doctorSpecialization}</p>
           </div>
           <div>
-            <span>Date</span>
+            <span><PortalText text={"Date"} /></span>
             <strong>{formatDate(prescription.issuedAt) || "-"}</strong>
             {prescription.appointmentTime && <p>{prescription.appointmentTime}</p>}
           </div>
           <div>
-            <span>Status</span>
+            <span><PortalText text={"Status"} /></span>
             <strong>{getRecordStatus(prescription)}</strong>
-            <p>{followUpDate ? `Follow-up ${formatDate(followUpDate)}` : "No follow-up required"}</p>
+            <p>{followUpDate ? <PortalTemplate text={"Follow-up {0}"} values={[formatDate(followUpDate)]} /> : <PortalText text={"No follow-up required"} />}</p>
           </div>
         </div>
 
         <div className="rx-detail-block rx-problem-block">
-          <h4>Problem / Diagnosis</h4>
+          <h4><PortalText text={"Problem / Diagnosis"} /></h4>
           <p className="rx-preserve-lines">{getRecordTitle(prescription)}</p>
         </div>
 
         {medicines.length > 0 && (
           <div className="rx-detail-block">
-            <h4>Medicines / Tablets</h4>
+            <h4><PortalText text={"Medicines / Tablets"} /></h4>
             <div className="rx-medicine-table-wrap">
               <table className="rx-medicine-table">
-                <thead><tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Timing</th><th>Duration</th></tr></thead>
+                <thead><tr><th>#</th><th><PortalText text={"Medicine"} /></th><th><PortalText text={"Dosage"} /></th><th><PortalText text={"Timing"} /></th><th><PortalText text={"Duration"} /></th></tr></thead>
                 <tbody>
                   {medicines.map((medicine, index) => (
                     <tr key={`${prescription.id}-medicine-${index}`}>
                       <td>{index + 1}</td>
-                      <td>{medicine.name || medicine.medicine || "Medicine"}</td>
+                      <td>{medicine.name || medicine.medicine || <PortalText text={"Medicine"} />}</td>
                       <td>{medicine.dosage || "-"}</td>
                       <td>{getMedicineTiming(medicine) || "-"}</td>
                       <td>{getMedicineDuration(medicine) || "-"}</td>
@@ -384,14 +385,14 @@ export default function Prescriptions() {
 
         {advice && (
           <div className="rx-detail-block">
-            <h4>Advice / Instructions</h4>
+            <h4><PortalText text={"Advice / Instructions"} /></h4>
             <p className="rx-preserve-lines">{advice}</p>
           </div>
         )}
 
         {additionalNotes && additionalNotes !== advice && (
           <div className="rx-detail-block">
-            <h4>Additional Notes</h4>
+            <h4><PortalText text={"Additional Notes"} /></h4>
             <p className="rx-preserve-lines">{additionalNotes}</p>
           </div>
         )}
@@ -399,18 +400,18 @@ export default function Prescriptions() {
         {(prescription.followUpRequired || followUpDate) && (
           <div className="rx-followup-box">
             <FaNotesMedical />
-            <div><span>Follow-up</span><strong>{followUpDate ? formatDate(followUpDate) : "Required"}</strong></div>
+            <div><span><PortalText text={"Follow-up"} /></span><strong>{followUpDate ? formatDate(followUpDate) : <PortalText text={"Required"} />}</strong></div>
           </div>
         )}
 
         {recommendedTests.length > 0 && (
           <div className="rx-detail-block">
-            <h4>Recommended Tests</h4>
+            <h4><PortalText text={"Recommended Tests"} /></h4>
             <div className="rx-tests-grid">
               {recommendedTests.map((test, index) => (
                 <div className="rx-test-card" key={`${prescription.id}-test-${index}`}>
-                  <strong>{test.testName || test.name || `Test ${index + 1}`}</strong>
-                  {test.completeBy && <span>Complete by {formatDate(test.completeBy)}</span>}
+                  <strong>{test.testName || test.name || <PortalTemplate text={"Test {0}"} values={[index + 1]} />}</strong>
+                  {test.completeBy && <span><PortalText text={"Complete by "} />{formatDate(test.completeBy)}</span>}
                   {test.reason && <p>{test.reason}</p>}
                   {test.instructions && <p>{test.instructions}</p>}
                 </div>
@@ -421,7 +422,7 @@ export default function Prescriptions() {
 
         {getApprovedPrescriptionSignature(prescription, API_BASE_URL) && (
           <div className="rx-detail-block rx-consultant-signature">
-            <h4>Consultant signature</h4>
+            <h4><PortalText text={"Consultant signature"} /></h4>
             <img src={getApprovedPrescriptionSignature(prescription, API_BASE_URL)} alt="Consultant signature" />
             <p>{getDoctorName(prescription)}</p>
           </div>
@@ -429,11 +430,11 @@ export default function Prescriptions() {
 
         {hasFileActions(prescription) && (
           <div className="rx-card-actions rx-detail-actions">
-            <button type="button" className="rx-photo-btn" onClick={() => choosePatientPhoto(prescription)} disabled={uploadingPhotoId === prescription.id}>{uploadingPhotoId === prescription.id ? <FaSpinner className="spinning" /> : <FaCamera />} {prescription.hasPatientPhoto ? (t('change_photo') || 'Change Photo') : (t('add_photo') || 'Add Photo')}</button>
-            <button type="button" className="rx-view-btn" onClick={() => viewPrescription(prescription)} disabled={viewingId === prescription.id}>{viewingId === prescription.id ? <FaSpinner className="spinning" /> : <FaEye />} {t('view') || 'View'}</button>
-            <button type="button" className="rx-print-btn" onClick={() => printPrescription(prescription)} disabled={printingId === prescription.id || prescription.verificationStatus !== "verified"}>{printingId === prescription.id ? <FaSpinner className="spinning" /> : <FaPrint />} {t('print') || 'Print'}</button>
+            <button type="button" className="rx-photo-btn" onClick={() => choosePatientPhoto(prescription)} disabled={uploadingPhotoId === prescription.id}>{uploadingPhotoId === prescription.id ? <FaSpinner className="spinning" /> : <FaCamera />} {prescription.hasPatientPhoto ? (t('change_photo') || <PortalText text={"Change Photo"} />) : (t('add_photo') || <PortalText text={"Add Photo"} />)}</button>
+            <button type="button" className="rx-view-btn" onClick={() => viewPrescription(prescription)} disabled={viewingId === prescription.id}>{viewingId === prescription.id ? <FaSpinner className="spinning" /> : <FaEye />} {t('view') || <PortalText text={"View"} />}</button>
+            <button type="button" className="rx-print-btn" onClick={() => printPrescription(prescription)} disabled={printingId === prescription.id || prescription.verificationStatus !== "verified"}>{printingId === prescription.id ? <FaSpinner className="spinning" /> : <FaPrint />} {t('print') || <PortalText text={"Print"} />}</button>
             <button type="button" className="rx-download-btn" onClick={() => downloadPrescription(prescription)} disabled={downloadingId === prescription.id || prescription.verificationStatus !== "verified"}>
-              {downloadingId === prescription.id ? <FaSpinner className="spinning" /> : <FaDownload />} {downloadingId === prescription.id ? (t('downloading') || 'Downloading...') : (t('download') || 'Download')}
+              {downloadingId === prescription.id ? <FaSpinner className="spinning" /> : <FaDownload />} {downloadingId === prescription.id ? (t('downloading') || <PortalText text={"Downloading..."} />) : (t('download') || <PortalText text={"Download"} />)}
             </button>
           </div>
         )}
@@ -449,19 +450,19 @@ export default function Prescriptions() {
       <header className="rx-page-header">
         <div className="rx-page-heading">
           <span className="rx-page-icon"><FaFileMedical /></span>
-          <div><p>{t('health_records') || 'Health records'}</p><h1>{t('my_prescriptions') || 'My Prescriptions'}</h1><span>{t('prescriptions_subtitle') || 'View and download prescriptions issued by your psychiatrist.'}</span></div>
+          <div><p>{t('health_records') || <PortalText text={"Health records"} />}</p><h1>{t('my_prescriptions') || <PortalText text={"My Prescriptions"} />}</h1><span>{t('prescriptions_subtitle') || <PortalText text={"View and download prescriptions issued by your psychiatrist."} />}</span></div>
         </div>
-        <button type="button" className="rx-refresh-btn" onClick={loadPrescriptions} disabled={loading}><FaRedo className={loading ? "spinning" : ""} /> {t('refresh') || 'Refresh'}</button>
+        <button type="button" className="rx-refresh-btn" onClick={loadPrescriptions} disabled={loading}><FaRedo className={loading ? "spinning" : ""} /> {t('refresh') || <PortalText text={"Refresh"} />}</button>
       </header>
 
       {actionError && <div className="rx-action-error">{actionError}<button type="button" onClick={() => setActionError("")}><FaTimes /></button></div>}
 
       {loading ? (
-        <div className="rx-page-state"><FaSpinner className="spinning" /><p>{t('loading_prescriptions') || 'Loading prescriptions...'}</p></div>
+        <div className="rx-page-state"><FaSpinner className="spinning" /><p>{t('loading_prescriptions') || <PortalText text={"Loading prescriptions..."} />}</p></div>
       ) : error ? (
-        <div className="rx-page-state rx-error"><FaFileMedical /><p>{error}</p><button onClick={loadPrescriptions}>{t('try_again') || 'Try again'}</button></div>
+        <div className="rx-page-state rx-error"><FaFileMedical /><p>{error}</p><button onClick={loadPrescriptions}>{t('try_again') || <PortalText text={"Try again"} />}</button></div>
       ) : prescriptions.length === 0 ? (
-        <div className="rx-page-state"><FaFileMedical /><h2>{t('no_prescriptions_yet') || 'No prescriptions yet'}</h2><p>{t('prescriptions_empty_state') || 'Prescriptions sent by your psychiatrist will appear here.'}</p></div>
+        <div className="rx-page-state"><FaFileMedical /><h2>{t('no_prescriptions_yet') || <PortalText text={"No prescriptions yet"} />}</h2><p>{t('prescriptions_empty_state') || <PortalText text={"Prescriptions sent by your psychiatrist will appear here."} />}</p></div>
       ) : !activeDoctorGroup ? (
         <div className="rx-doctor-list">
           {groupedPrescriptions.map((group) => (
@@ -478,13 +479,13 @@ export default function Prescriptions() {
                 <div className="rx-doctor-avatar"><FaUserMd /></div>
                 <div>
                   <span>{getPrescriptionProviderLabel(group.doctor, group.records[0])}</span>
-                  <h2>{group.doctor?.name || "Doctor"}</h2>
-                  <p>{group.records.length} record{group.records.length === 1 ? "" : "s"}</p>
+                  <h2>{group.doctor?.name || <PortalText text={"Doctor"} />}</h2>
+                  <p>{group.records.length}<PortalText text={" record"} />{group.records.length === 1 ? "" : "s"}</p>
                 </div>
               </div>
               <div className="rx-doctor-card-footer">
-                <span>Latest: {formatDate(group.records[0]?.issuedAt)}</span>
-                <strong>View records</strong>
+                <span><PortalText text={"Latest: "} />{formatDate(group.records[0]?.issuedAt)}</span>
+                <strong><PortalText text={"View records"} /></strong>
               </div>
             </button>
           ))}
@@ -493,18 +494,17 @@ export default function Prescriptions() {
         <article className="rx-doctor-card rx-detail-page">
           <div className="rx-doctor-header rx-record-browser-header">
             <button type="button" className="rx-back-btn" onClick={() => setDetailRecordId("")}>
-              <FaArrowLeft /> Records
-            </button>
+              <FaArrowLeft /><PortalText text={" Records"} /></button>
             <div className="rx-doctor-avatar"><FaUserMd /></div>
             <div>
               <span>{getPrescriptionProviderLabel(activeDetailRecord.psychiatrist || activeDetailRecord.doctor || activeDoctorGroup.doctor, activeDetailRecord)}</span>
-              <h2>{activeDoctorGroup.doctor?.name || "Doctor"}</h2>
-              <p>{formatDate(activeDetailRecord.issuedAt)} patient record</p>
+              <h2>{activeDoctorGroup.doctor?.name || <PortalText text={"Doctor"} />}</h2>
+              <p>{formatDate(activeDetailRecord.issuedAt)}<PortalText text={" patient record"} /></p>
             </div>
           </div>
 
           {renderRecordDetails(activeDetailRecord)}
-          {activeDetailRecord.verificationStatus === "rejected" && activeDetailRecord.rejectionReason && <p className="rx-rejection">Photo rejected: {activeDetailRecord.rejectionReason}</p>}
+          {activeDetailRecord.verificationStatus === "rejected" && activeDetailRecord.rejectionReason && <p className="rx-rejection"><PortalText text={"Photo rejected: "} />{activeDetailRecord.rejectionReason}</p>}
         </article>
       ) : (
         <article className="rx-doctor-card rx-record-browser">
@@ -513,28 +513,27 @@ export default function Prescriptions() {
               setActiveDoctorKey("");
               setDetailRecordId("");
             }}>
-              <FaArrowLeft /> All providers
-            </button>
+              <FaArrowLeft /><PortalText text={" All providers"} /></button>
             <div className="rx-doctor-avatar"><FaUserMd /></div>
             <div>
               <span>{getPrescriptionProviderLabel(activeDoctorGroup.doctor, activeDoctorGroup.records[0])}</span>
-              <h2>{activeDoctorGroup.doctor?.name || "Doctor"}</h2>
-              <p>{activeDoctorGroup.records.length} record{activeDoctorGroup.records.length === 1 ? "" : "s"}</p>
+              <h2>{activeDoctorGroup.doctor?.name || <PortalText text={"Doctor"} />}</h2>
+              <p>{activeDoctorGroup.records.length}<PortalText text={" record"} />{activeDoctorGroup.records.length === 1 ? "" : "s"}</p>
             </div>
           </div>
 
           <div className="rx-record-table-section">
-            <h3>Date wise records</h3>
+            <h3><PortalText text={"Date wise records"} /></h3>
             <div className="rx-record-table-wrap">
               <table className="rx-record-table">
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Problem / Diagnosis</th>
-                    <th>Status</th>
-                    <th>Medicines</th>
-                    <th>Follow-up</th>
-                    <th>Action</th>
+                    <th><PortalText text={"Date"} /></th>
+                    <th><PortalText text={"Problem / Diagnosis"} /></th>
+                    <th><PortalText text={"Status"} /></th>
+                    <th><PortalText text={"Medicines"} /></th>
+                    <th><PortalText text={"Follow-up"} /></th>
+                    <th><PortalText text={"Action"} /></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -546,15 +545,14 @@ export default function Prescriptions() {
                         <td>{getRecordTitle(prescription)}</td>
                         <td><span className={`rx-table-status ${prescription.source === "appointment" ? "completed" : prescription.verificationStatus || "pending"}`}>{getRecordStatus(prescription)}</span></td>
                         <td>{(prescription.medicines || []).length || "-"}</td>
-                        <td>{followUpDate ? formatDate(followUpDate) : "Not required"}</td>
+                        <td>{followUpDate ? formatDate(followUpDate) : <PortalText text={"Not required"} />}</td>
                         <td>
                           <button
                             type="button"
                             className="rx-table-view-btn"
                             onClick={() => setDetailRecordId(prescription.id)}
                           >
-                            <FaEye /> View
-                          </button>
+                            <FaEye /><PortalText text={" View"} /></button>
                         </td>
                       </tr>
                     );
@@ -568,10 +566,10 @@ export default function Prescriptions() {
 
       {preview && (
         <div className="rx-preview-overlay" onMouseDown={(event) => event.target === event.currentTarget && closePreview()}>
-          <section className="rx-preview-modal" role="dialog" aria-modal="true" aria-label="Prescription preview">
-            <header><div><FaFileMedical /><span>{preview.name}</span></div><button type="button" onClick={closePreview} aria-label="Close prescription preview"><FaTimes /></button></header>
+          <PortalElement as="section" className="rx-preview-modal" role="dialog" aria-modal="true" aria-label="Prescription preview">
+            <header><div><FaFileMedical /><span>{preview.name}</span></div><PortalElement as="button" type="button" onClick={closePreview} aria-label="Close prescription preview"><FaTimes /></PortalElement></header>
             <iframe src={preview.url} title={preview.name} />
-          </section>
+          </PortalElement>
         </div>
       )}
     </section>

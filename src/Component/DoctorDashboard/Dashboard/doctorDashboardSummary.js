@@ -18,6 +18,13 @@ const appointmentDay = (record) => dashboardIndiaDate(
 const normalize = (value) => String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
 const isStarted = (record) => Boolean(record.consultationStartedAt || record.consultation_started_at || record.consultation_timing?.startedAt);
 
+export const getTodayCompletedAppointments = (records, now = Date.now()) => {
+  const today = dashboardIndiaDate(now);
+  return mergeAppointmentLists(records).filter((record) =>
+    appointmentDay(record) === today && getAppointmentCancellationState(record).completed,
+  );
+};
+
 export const getDoctorDashboardSummary = (records, now = Date.now()) => {
   const today = dashboardIndiaDate(now);
   const appointments = mergeAppointmentLists(records).filter((record) => appointmentDay(record) === today);

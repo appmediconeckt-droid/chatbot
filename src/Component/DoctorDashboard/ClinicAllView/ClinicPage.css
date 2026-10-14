@@ -599,3 +599,9 @@
   cursor: pointer;
 }
 .doctor-clinic-delete:disabled { opacity: 0.6; cursor: not-allowed; }
+
+
+.doctor-clinic-doctor-card > .doctor-clinic-doctor-avatar { position: relative; display: grid; place-items: center; height: 160px; padding: 0; color: #1167b1; background: #eef6ff; }
+.doctor-clinic-doctor-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #eef6ff; }
+.doctor-clinic-doctor-card .doctor-clinic-doctor-name-note { color: #64748b; font-size: 12px; line-height: 1.5; }
+.doctor-clinic-doctor-profile-link { display: inline-block; margin-top: 12px; color: #1167b1; font-size: 13px; font-weight: 600; }

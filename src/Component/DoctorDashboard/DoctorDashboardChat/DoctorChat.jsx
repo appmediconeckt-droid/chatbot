@@ -1,3 +1,4 @@
+import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import PatientProfileImage from "../../common/PatientProfileImage";
 // DoctorChat.js
 import React, { useState, useEffect, useRef } from 'react';
@@ -505,7 +506,7 @@ const PatientChat = () => {
   if (!currentPatient && chatStatus === 'loading') {
     return (
       <div className="patient-not-found">
-        <h2>Loading chat...</h2>
+        <h2><PortalText text={"Loading chat..."} /></h2>
       </div>
     );
   }
@@ -513,10 +514,9 @@ const PatientChat = () => {
   if (!currentPatient) {
     return (
       <div className="patient-not-found">
-        <h2>Patient not found</h2>
+        <h2><PortalText text={"Patient not found"} /></h2>
         <button onClick={() => navigate('/patient-sms')} className="back-btn">
-          <FaArrowLeft /> Back to Patient List
-        </button>
+          <FaArrowLeft /><PortalText text={" Back to Patient List"} /></button>
       </div>
     );
   }
@@ -525,39 +525,39 @@ const PatientChat = () => {
     <div className="patient-chat-container dc-communications-screen">
       <header className="dc-comms-page-header">
         <div>
-          <h1>Patient Communications</h1>
-          <p>Manage patient conversations and urgent communications.</p>
+          <h1><PortalText text={"Patient Communications"} /></h1>
+          <p><PortalText text={"Manage patient conversations and urgent communications."} /></p>
         </div>
       </header>
 
       <section className="dc-comms-stats">
         <article>
           <span className="dc-stat-icon critical">△</span>
-          <span className="dc-stat-chip danger">+2 since 8am</span>
+          <span className="dc-stat-chip danger"><PortalText text={"+2 since 8am"} /></span>
           <strong>5</strong>
-          <b>Critical Patients</b>
-          <small>Require immediate attention</small>
+          <b><PortalText text={"Critical Patients"} /></b>
+          <small><PortalText text={"Require immediate attention"} /></small>
         </article>
         <article>
           <span className="dc-stat-icon unread">✉</span>
-          <span className="dc-stat-chip blue">-4 trend</span>
+          <span className="dc-stat-chip blue"><PortalText text={"-4 trend"} /></span>
           <strong>11</strong>
-          <b>Unread Messages</b>
-          <small>New patient inquiries</small>
+          <b><PortalText text={"Unread Messages"} /></b>
+          <small><PortalText text={"New patient inquiries"} /></small>
         </article>
         <article>
           <span className="dc-stat-icon waiting">▣</span>
-          <span className="dc-stat-chip neutral">stable</span>
+          <span className="dc-stat-chip neutral"><PortalText text={"stable"} /></span>
           <strong>8</strong>
-          <b>Waiting for Reply</b>
-          <small>Awaiting clinical response</small>
+          <b><PortalText text={"Waiting for Reply"} /></b>
+          <small><PortalText text={"Awaiting clinical response"} /></small>
         </article>
         <article>
           <span className="dc-stat-icon resolved">✓</span>
-          <span className="dc-stat-chip success">+12% vs yesterday</span>
+          <span className="dc-stat-chip success"><PortalText text={"+12% vs yesterday"} /></span>
           <strong>23</strong>
-          <b>Resolved Today</b>
-          <small>Closed conversations</small>
+          <b><PortalText text={"Resolved Today"} /></b>
+          <small><PortalText text={"Closed conversations"} /></small>
         </article>
       </section>
 
@@ -565,21 +565,21 @@ const PatientChat = () => {
         <div className="dc-filter-tabs">
           {['All', 'Unread', 'Critical', 'Needs Attention', 'Stable', 'Improving', 'Archived'].map((tab) => (
             <button className={tab === 'All' ? 'active' : ''} type="button" key={tab}>
-              {tab}
+              {<PortalText text={tab} />}
               {tab === 'Unread' && <span>11</span>}
             </button>
           ))}
         </div>
         <div className="dc-sort-actions">
-          <button type="button">☰ Recent</button>
-          <button type="button">≡ Filter</button>
+          <button type="button"><PortalText text={"☰ Recent"} /></button>
+          <button type="button"><PortalText text={"≡ Filter"} /></button>
         </div>
       </div>
 
       <main className="dc-comms-layout">
         <aside className="dc-conversation-list">
           <div className="dc-conversation-title">
-            <h2>Conversations</h2>
+            <h2><PortalText text={"Conversations"} /></h2>
             <button type="button">+</button>
           </div>
 
@@ -611,22 +611,22 @@ const PatientChat = () => {
             <div className="dc-chat-avatar">{<PatientProfileImage patient={currentPatient} fallback={getInitials(currentPatient.name)} />}</div>
             <div className="dc-chat-profile-info">
               <h2>{currentPatient.name} <span className={`dc-status-tag ${currentPatient.status.toLowerCase().replace(/\s+/g, '-')}`}>{currentPatient.status}</span></h2>
-              <p>{currentPatient.age}{currentPatient.gender?.[0] || 'M'} • Blood {currentPatient.bloodGroup || 'O+'} • {currentPatient.condition}</p>
+              <p>{currentPatient.age}{currentPatient.gender?.[0] || 'M'}<PortalText text={" • Blood "} />{currentPatient.bloodGroup || 'O+'} • {currentPatient.condition}</p>
             </div>
             <div className="dc-profile-actions">
-              <button type="button" onClick={handlePhoneCall} title="Voice call"><FaPhone /></button>
-              <button type="button" onClick={handleVideoCall} title="Video call"><FaVideo /></button>
+              <PortalElement as="button" type="button" onClick={handlePhoneCall} title="Voice call"><FaPhone /></PortalElement>
+              <PortalElement as="button" type="button" onClick={handleVideoCall} title="Video call"><FaVideo /></PortalElement>
             </div>
           </div>
 
           <div className="dc-chat-body">
-            <div className="dc-chat-date">Today</div>
+            <div className="dc-chat-date"><PortalText text={"Today"} /></div>
             {messages.map((msg, index) => (
               <div className={`dc-message-row ${msg.sender}`} key={msg.id} style={{ '--message-index': index }}>
                 {msg.sender !== 'doctor' && <span className="dc-message-avatar">{<PatientProfileImage patient={currentPatient} fallback={getInitials(currentPatient.name)} />}</span>}
                 <div className="dc-message-stack">
                   <div className="dc-message-meta">
-                    <strong>{msg.sender === 'doctor' ? 'You' : currentPatient.name}</strong>
+                    <strong>{msg.sender === 'doctor' ? <PortalText text={"You"} /> : currentPatient.name}</strong>
                     <span>{formatTime(msg.time)}</span>
                   </div>
                   <div className="dc-message-bubble">
@@ -638,9 +638,7 @@ const PatientChat = () => {
                           <span className="file-name">{msg.file.name}</span>
                           <span className="file-size">{msg.file.size}</span>
                           {msg.file.url && (
-                            <a href={msg.file.url} target="_blank" rel="noreferrer" className="file-download-link">
-                              Open attachment
-                            </a>
+                            <a href={msg.file.url} target="_blank" rel="noreferrer" className="file-download-link"><PortalText text={"Open attachment"} /></a>
                           )}
                         </div>
                       </div>
@@ -650,23 +648,23 @@ const PatientChat = () => {
                 {msg.sender === 'doctor' && <span className="dc-message-avatar doctor">{getInitials(authUser?.name || 'You')}</span>}
               </div>
             ))}
-            <div className="dc-new-divider"><span>New Messages</span></div>
+            <div className="dc-new-divider"><span><PortalText text={"New Messages"} /></span></div>
             <div ref={messagesEndRef} />
           </div>
 
           <div className="dc-quick-actions">
-            <button type="button">▣ Schedule Appointment</button>
-            <button type="button">▤ Request Reports</button>
-            <button type="button">☤ Upload Prescription</button>
-            <button type="button">⟳ Follow Up</button>
+            <button type="button"><PortalText text={"▣ Schedule Appointment"} /></button>
+            <button type="button"><PortalText text={"▤ Request Reports"} /></button>
+            <button type="button"><PortalText text={"☤ Upload Prescription"} /></button>
+            <button type="button"><PortalText text={"⟳ Follow Up"} /></button>
           </div>
 
           {showFileOptions && (
             <div className="file-options-popup dc-file-popup">
               <div className="file-options-content">
-                <button className="file-option-btn" onClick={() => handleFileSelect('image')} type="button"><FaImage /> Image</button>
-                <button className="file-option-btn" onClick={() => handleFileSelect('document')} type="button"><FaFilePdf /> Document</button>
-                <button className="file-option-btn" onClick={() => handleFileSelect('medical')} type="button"><FaFileMedical /> Medical Record</button>
+                <button className="file-option-btn" onClick={() => handleFileSelect('image')} type="button"><FaImage /><PortalText text={" Image"} /></button>
+                <button className="file-option-btn" onClick={() => handleFileSelect('document')} type="button"><FaFilePdf /><PortalText text={" Document"} /></button>
+                <button className="file-option-btn" onClick={() => handleFileSelect('medical')} type="button"><FaFileMedical /><PortalText text={" Medical Record"} /></button>
               </div>
             </div>
           )}
@@ -674,18 +672,18 @@ const PatientChat = () => {
           {activeCall && (
             <div className={`dc-call-status ${activeCall.status}`}>
               {activeCall.status === 'ringing'
-                ? `${activeCall.type === 'video' ? 'Video' : 'Voice'} call ringing... auto cut in ${activeCall.timeoutSeconds}s if not accepted`
-                : `${activeCall.type === 'video' ? 'Video' : 'Voice'} call missed / auto cut`}
+                ? <PortalTemplate text={"{0} call ringing... auto cut in {1}s if not accepted"} values={[activeCall.type === 'video' ? 'Video' : 'Voice',activeCall.timeoutSeconds]} />
+                : <PortalTemplate text={"{0} call missed / auto cut"} values={[activeCall.type === 'video' ? 'Video' : 'Voice']} />}
             </div>
           )}
 
           <input type="file" ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} />
 
           <form className="message-input-form dc-message-input-form" onSubmit={handleSendMessage}>
-            <button type="button" className="attach-btn" onClick={() => setShowFileOptions(!showFileOptions)} aria-label="Attach file">
+            <PortalElement as="button" type="button" className="attach-btn" onClick={() => setShowFileOptions(!showFileOptions)} aria-label="Attach file">
               <FaPaperclip />
-            </button>
-            <button type="button" className="dc-smile-btn" aria-label="Emoji">☺</button>
+            </PortalElement>
+            <PortalElement as="button" type="button" className="dc-smile-btn" aria-label="Emoji">☺</PortalElement>
             <input
               type="text"
               placeholder={`Type a message to ${currentPatient.name.split(' ')[0]}...`}
@@ -693,10 +691,10 @@ const PatientChat = () => {
               onChange={(e) => setMessage(e.target.value)}
               className="message-input"
             />
-            <button type="button" className="dc-mic-btn" aria-label="Voice">♩</button>
-            <button type="submit" className="send-btn" disabled={!message.trim() || isSending} aria-label="Send message">
+            <PortalElement as="button" type="button" className="dc-mic-btn" aria-label="Voice">♩</PortalElement>
+            <PortalElement as="button" type="submit" className="send-btn" disabled={!message.trim() || isSending} aria-label="Send message">
               <FaPaperPlane />
-            </button>
+            </PortalElement>
           </form>
         </section>
       </main>

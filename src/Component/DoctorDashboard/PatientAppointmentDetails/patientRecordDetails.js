@@ -1,6 +1,13 @@
 const first = (...values) => values.find(value => value !== null && value !== undefined && value !== "");
 const object = value => value && typeof value === "object" ? value : {};
 
+export const isPatientDirectoryRecord = appointment => {
+  if (appointment.patient_deleted === true || appointment.patient?.isActive === false || appointment.patient?.isActive === 0) return false;
+  if (appointment.appointment_type === 'online' && !appointment.patient) return false;
+  const name = patientCardDetails(appointment).name;
+  return typeof name === 'string' && Boolean(name.trim()) && !/^unknown patient$/i.test(name.trim());
+};
+
 export const ageFromBirthDate = (value, today = new Date()) => {
   if (!value) return undefined;
   const birth = new Date(value);

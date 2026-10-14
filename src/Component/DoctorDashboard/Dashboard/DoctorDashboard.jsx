@@ -1,5 +1,6 @@
+import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import socketService from "../../../services/socketService";
-import { getDoctorDashboardSummary } from './doctorDashboardSummary.js';
+import { getDoctorDashboardSummary, getTodayCompletedAppointments } from './doctorDashboardSummary.js';
 import { getConsultationDurationMs } from '../AppointmentList/appointmentListSummary.js';
 import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctorAppointmentFeed, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, getCancelledAppointmentHistory, getAppointmentCancellationState, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../appointmentFeed.js";
 // // DoctorDashboard.jsx
@@ -2159,6 +2160,7 @@ import {
 } from "react-bootstrap";
 import "./DoctorDashboard.css";
 import PrescriptionDocument from "../../common/PrescriptionDocument";
+import { consultationData } from "../../common/consultationData.js";
 import { getDoctorBreakTiming } from "../doctorBreakState.js";
 import { getAppointmentBookingType } from "../appointmentFeed.js";
 import { downloadConsultationPrescription } from "../../common/downloadPrescription";
@@ -2428,6 +2430,7 @@ const normalizeAppointmentStatus = (appointment, forcedStatus) => {
 };
 
 const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) => {
+  appointment = consultationData(appointment);
   const patient = pickFirstObject(
     appointment?.patient,
     appointment?.patient_details,
@@ -2988,19 +2991,19 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
   return (
     <Modal show={show} onHide={onHide} centered size="lg" className="dd-complete-modal">
       <Modal.Header closeButton className="dd-complete-modal-header">
-        <Modal.Title className="dd-complete-modal-title">Complete Appointment</Modal.Title>
+        <Modal.Title className="dd-complete-modal-title"><PortalText text={"Complete Appointment"} /></Modal.Title>
       </Modal.Header>
       <Modal.Body className="dd-complete-modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
         <div className="dd-patient-info-summary mb-3">
-          <h6 className="dd-patient-summary-title">Completing appointment for:</h6>
+          <h6 className="dd-patient-summary-title"><PortalText text={"Completing appointment for:"} /></h6>
           <div className="dd-patient-name-display">
             <i className="bi bi-person-circle me-2"></i>
             <span className="fs-6 fw-bold">{patientName}</span>
           </div>
           <div className="dd-complete-patient-meta">
-            <span>ID: {patientIdLabel}</span>
-            <span>Temperature (°C): {temperature}</span>
-            <span>Blood Pressure: {bloodPressure}</span>
+            <span><PortalText text={"ID: "} />{patientIdLabel}</span>
+            <span><PortalText text={"Temperature (°C): "} />{temperature}</span>
+            <span><PortalText text={"Blood Pressure: "} />{bloodPressure}</span>
           </div>
         </div>
 
@@ -3008,8 +3011,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
           <Row className="mb-2">
             <Col md={12}>
               <Form.Group>
-                <Form.Label className="dd-form-label">
-                  Diagnosis <span className="text-danger">*</span>
+                <Form.Label className="dd-form-label"><PortalText text={"Diagnosis "} /><span className="text-danger">*</span>
                 </Form.Label>
                 <Form.Control
                   as="textarea"
@@ -3020,9 +3022,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
                   className="dd-form-control-sm dd-diagnosis-textarea"
                   required
                 />
-                <div className="dd-form-text text-muted mt-1">
-                  Include symptoms, observations, medical findings.
-                </div>
+                <div className="dd-form-text text-muted mt-1"><PortalText text={"Include symptoms, observations, medical findings."} /></div>
               </Form.Group>
             </Col>
           </Row>
@@ -3031,23 +3031,22 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
             <Col md={12}>
               <div className="dd-medicines-section">
                 <div className="dd-section-heading-row">
-                  <Form.Label className="dd-form-label mb-0">Recommended Tests / Investigations (Optional)</Form.Label>
+                  <Form.Label className="dd-form-label mb-0"><PortalText text={"Recommended Tests / Investigations (Optional)"} /></Form.Label>
                   <Button type="button" variant="outline-success" size="sm" onClick={addRecommendedTest}>
-                    <i className="bi bi-plus-circle me-1"></i>Add Test
-                  </Button>
+                    <i className="bi bi-plus-circle me-1"></i><PortalText text={"Add Test"} /></Button>
                 </div>
                 {recommendedTests.map((test, index) => (
                   <div className="dd-medicine-card" key={`recommended-test-${index}`}>
-                    <div className="dd-medicine-card-header"><strong>Test #{index + 1}</strong><button type="button" onClick={() => removeRecommendedTest(index)} aria-label={`Remove test ${index + 1}`}><i className="bi bi-x-lg"></i></button></div>
+                    <div className="dd-medicine-card-header"><strong><PortalText text={"Test #"} />{index + 1}</strong><button type="button" onClick={() => removeRecommendedTest(index)} aria-label={`Remove test ${index + 1}`}><i className="bi bi-x-lg"></i></button></div>
                     <Row className="g-2">
-                      <Col md={6}><Form.Group><Form.Label className="dd-form-label">Test Name</Form.Label><Form.Control value={test.testName} placeholder="e.g., CBC, Blood Sugar, X-Ray" onChange={(e) => updateRecommendedTest(index, "testName", e.target.value)} /></Form.Group></Col>
-                      <Col md={6}><Form.Group><Form.Label className="dd-form-label">Complete By</Form.Label><Form.Control type="date" min={minDate} value={test.completeBy} onChange={(e) => updateRecommendedTest(index, "completeBy", e.target.value)} /></Form.Group></Col>
-                      <Col md={6}><Form.Group><Form.Label className="dd-form-label">Reason</Form.Label><Form.Control value={test.reason} placeholder="Why this test is required" onChange={(e) => updateRecommendedTest(index, "reason", e.target.value)} /></Form.Group></Col>
-                      <Col md={6}><Form.Group><Form.Label className="dd-form-label">Instructions</Form.Label><Form.Control value={test.instructions} placeholder="e.g., 8 hours fasting" onChange={(e) => updateRecommendedTest(index, "instructions", e.target.value)} /></Form.Group></Col>
+                      <Col md={6}><Form.Group><Form.Label className="dd-form-label"><PortalText text={"Test Name"} /></Form.Label><Form.Control value={test.testName} placeholder="e.g., CBC, Blood Sugar, X-Ray" onChange={(e) => updateRecommendedTest(index, "testName", e.target.value)} /></Form.Group></Col>
+                      <Col md={6}><Form.Group><Form.Label className="dd-form-label"><PortalText text={"Complete By"} /></Form.Label><Form.Control type="date" min={minDate} value={test.completeBy} onChange={(e) => updateRecommendedTest(index, "completeBy", e.target.value)} /></Form.Group></Col>
+                      <Col md={6}><Form.Group><Form.Label className="dd-form-label"><PortalText text={"Reason"} /></Form.Label><Form.Control value={test.reason} placeholder="Why this test is required" onChange={(e) => updateRecommendedTest(index, "reason", e.target.value)} /></Form.Group></Col>
+                      <Col md={6}><Form.Group><Form.Label className="dd-form-label"><PortalText text={"Instructions"} /></Form.Label><Form.Control value={test.instructions} placeholder="e.g., 8 hours fasting" onChange={(e) => updateRecommendedTest(index, "instructions", e.target.value)} /></Form.Group></Col>
                     </Row>
                   </div>
                 ))}
-                {!recommendedTests.length && <div className="dd-form-text text-muted mt-2">Add tests only when the patient needs an investigation or lab report.</div>}
+                {!recommendedTests.length && <div className="dd-form-text text-muted mt-2"><PortalText text={"Add tests only when the patient needs an investigation or lab report."} /></div>}
               </div>
             </Col>
           </Row>
@@ -3056,19 +3055,16 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
             <Col md={12}>
               <div className="dd-medicines-section">
                 <div className="dd-section-heading-row">
-                  <Form.Label className="dd-form-label mb-0">
-                    Prescribed Medicines <span className="text-danger">*</span>
+                  <Form.Label className="dd-form-label mb-0"><PortalText text={"Prescribed Medicines "} /><span className="text-danger">*</span>
                   </Form.Label>
                   <Button type="button" variant="outline-primary" size="sm" onClick={addMedicine}>
-                    <i className="bi bi-plus-circle me-1"></i>
-                    Add Medicine
-                  </Button>
+                    <i className="bi bi-plus-circle me-1"></i><PortalText text={"Add Medicine"} /></Button>
                 </div>
 
                 {medicines.map((medicine, index) => (
                   <div className="dd-medicine-card" key={`medicine-${index}`}>
                     <div className="dd-medicine-card-header">
-                      <strong>Medicine #{index + 1}</strong>
+                      <strong><PortalText text={"Medicine #"} />{index + 1}</strong>
                       {medicines.length > 1 && (
                         <button type="button" onClick={() => removeMedicine(index)} aria-label={`Remove medicine ${index + 1}`}>
                           <i className="bi bi-x-lg"></i>
@@ -3079,7 +3075,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
                     <Row className="g-2">
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="dd-form-label">Medicine Name <span className="text-danger">*</span></Form.Label>
+                          <Form.Label className="dd-form-label"><PortalText text={"Medicine Name "} /><span className="text-danger">*</span></Form.Label>
                           <Form.Control
                             value={medicine.name}
                             placeholder="e.g., Paracetamol 500mg"
@@ -3091,7 +3087,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
                       </Col>
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="dd-form-label">Dosage <span className="text-danger">*</span></Form.Label>
+                          <Form.Label className="dd-form-label"><PortalText text={"Dosage "} /><span className="text-danger">*</span></Form.Label>
                           <Form.Control
                             value={medicine.dosage}
                             placeholder="e.g., 1 Tablet"
@@ -3104,7 +3100,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
                     </Row>
 
                     <Form.Group className="mt-2">
-                      <Form.Label className="dd-form-label">Timing <span className="text-danger">*</span></Form.Label>
+                      <Form.Label className="dd-form-label"><PortalText text={"Timing "} /><span className="text-danger">*</span></Form.Label>
                       <div className="dd-medicine-timing-grid">
                         {MEDICINE_TIMINGS.map((timing) => (
                           <Form.Check
@@ -3122,7 +3118,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
                     <Row className="g-2 mt-1">
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="dd-form-label">Duration Value <span className="text-danger">*</span></Form.Label>
+                          <Form.Label className="dd-form-label"><PortalText text={"Duration Value "} /><span className="text-danger">*</span></Form.Label>
                           <Form.Control
                             value={medicine.durationValue}
                             placeholder="e.g., 7"
@@ -3134,29 +3130,26 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
                       </Col>
                       <Col md={6}>
                         <Form.Group>
-                          <Form.Label className="dd-form-label">Duration Type <span className="text-danger">*</span></Form.Label>
+                          <Form.Label className="dd-form-label"><PortalText text={"Duration Type "} /><span className="text-danger">*</span></Form.Label>
                           <Form.Select
                             value={medicine.durationType}
                             onChange={(e) => updateMedicine(index, "durationType", e.target.value)}
                             className="dd-form-control-sm"
                           >
-                            <option>Days</option>
-                            <option>Weeks</option>
-                            <option>Months</option>
+                            <PortalElement as="option" value={"Days"}>Days</PortalElement>
+                            <PortalElement as="option" value={"Weeks"}>Weeks</PortalElement>
+                            <PortalElement as="option" value={"Months"}>Months</PortalElement>
                           </Form.Select>
                         </Form.Group>
                       </Col>
                     </Row>
 
-                    <div className="dd-medicine-preview">
-                      Preview: {formatMedicineLine(medicine)}
+                    <div className="dd-medicine-preview"><PortalText text={"Preview: "} />{formatMedicineLine(medicine)}
                     </div>
                   </div>
                 ))}
 
-                <div className="dd-form-text text-muted mt-1">
-                  Each medicine will be formatted as: Medicine Name - Dosage (Timing) - Duration
-                </div>
+                <div className="dd-form-text text-muted mt-1"><PortalText text={"Each medicine will be formatted as: Medicine Name - Dosage (Timing) - Duration"} /></div>
               </div>
             </Col>
           </Row>
@@ -3164,8 +3157,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
           <Row className="mb-2">
             <Col md={12}>
               <Form.Group>
-                <Form.Label className="dd-form-label">
-                  Advice <span className="text-danger">*</span>
+                <Form.Label className="dd-form-label"><PortalText text={"Advice "} /><span className="text-danger">*</span>
                 </Form.Label>
                 <Form.Control
                   as="textarea"
@@ -3176,9 +3168,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
                   className="dd-form-control-sm dd-advice-textarea"
                   required
                 />
-                <div className="dd-form-text text-muted mt-1">
-                  Include lifestyle recommendations and instructions.
-                </div>
+                <div className="dd-form-text text-muted mt-1"><PortalText text={"Include lifestyle recommendations and instructions."} /></div>
               </Form.Group>
             </Col>
           </Row>
@@ -3199,8 +3189,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
 
                 {form.followUpRequired && (
                   <Form.Group>
-                    <Form.Label className="dd-form-label">
-                      Follow-up Date <span className="text-danger">*</span>
+                    <Form.Label className="dd-form-label"><PortalText text={"Follow-up Date "} /><span className="text-danger">*</span>
                     </Form.Label>
                     <div className="d-flex align-items-center gap-2">
                       <Form.Control
@@ -3212,13 +3201,12 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
                         required={form.followUpRequired}
                       />
                       <div className="text-muted">
-                        <small>Select date for follow-up</small>
+                        <small><PortalText text={"Select date for follow-up"} /></small>
                       </div>
                     </div>
                     {form.followUpDate && (
                       <div className="mt-1 text-info dd-follow-up-date-info">
-                        <i className="bi bi-calendar-check me-1"></i>
-                        Follow-up: {new Date(form.followUpDate).toLocaleDateString('en-US', { 
+                        <i className="bi bi-calendar-check me-1"></i><PortalText text={"Follow-up: "} />{new Date(form.followUpDate).toLocaleDateString('en-US', { 
                           day: '2-digit',
                           month: 'short', 
                           year: 'numeric' 
@@ -3235,9 +3223,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
             <Col md={12}>
               <div className="dd-additional-notes-section p-2 border rounded">
                 <Form.Group>
-                  <Form.Label className="dd-form-label">
-                    Additional Notes (Optional)
-                  </Form.Label>
+                  <Form.Label className="dd-form-label"><PortalText text={"Additional Notes (Optional)"} /></Form.Label>
                   <Form.Control
                     as="textarea"
                     rows={2}
@@ -3256,9 +3242,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
         <div className="d-flex justify-content-between w-100 align-items-center">
           <div className="dd-form-requirements">
             <small className="text-muted">
-              <i className="bi bi-exclamation-circle me-1"></i>
-              Fields marked with <span className="text-danger">*</span> are required
-            </small>
+              <i className="bi bi-exclamation-circle me-1"></i><PortalText text={"Fields marked with "} /><span className="text-danger">*</span><PortalText text={" are required"} /></small>
           </div>
           <div className="dd-modal-actions">
             <Button
@@ -3266,9 +3250,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
               onClick={onHide}
               className="dd-complete-cancel-btn me-2"
               size="sm"
-            >
-              Cancel
-            </Button>
+            ><PortalText text={"Cancel"} /></Button>
             <Button
               variant="success"
               onClick={handleSave}
@@ -3276,9 +3258,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
               size="sm"
               disabled={!canSave}
             >
-              <i className="bi bi-check-circle me-1"></i>
-              Save & Continue
-            </Button>
+              <i className="bi bi-check-circle me-1"></i><PortalText text={"Save & Continue"} /></Button>
           </div>
         </div>
       </Modal.Footer>
@@ -3337,21 +3317,18 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
     <Modal show={show} onHide={onHide} centered size="lg" className="dd-edit-modal">
       <Modal.Header closeButton className="dd-edit-modal-header">
         <Modal.Title className="dd-edit-modal-title">
-          <i className="bi bi-pencil-square me-2"></i>
-          Edit Completed Appointment
-        </Modal.Title>
+          <i className="bi bi-pencil-square me-2"></i><PortalText text={"Edit Completed Appointment"} /></Modal.Title>
       </Modal.Header>
       <Modal.Body className="dd-edit-modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
         <div className="dd-patient-info-summary mb-3">
-          <h6 className="dd-patient-summary-title">Editing appointment for:</h6>
+          <h6 className="dd-patient-summary-title"><PortalText text={"Editing appointment for:"} /></h6>
           <div className="dd-patient-name-display">
             <i className="bi bi-person-circle me-2"></i>
             <span className="fs-6 fw-bold">{appointment?.name}</span>
           </div>
           <div className="dd-patient-details">
             <small className="text-muted">
-              <i className="bi bi-calendar me-1"></i>
-              Completed on: {appointment?.endTime ? formatDateTime(appointment.endTime) : 'N/A'}
+              <i className="bi bi-calendar me-1"></i><PortalText text={"Completed on: "} />{appointment?.endTime ? formatDateTime(appointment.endTime) : 'N/A'}
             </small>
           </div>
         </div>
@@ -3360,9 +3337,7 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
           <Row className="mb-2">
             <Col md={12}>
               <Form.Group>
-                <Form.Label className="dd-form-label">
-                  Diagnosis
-                </Form.Label>
+                <Form.Label className="dd-form-label"><PortalText text={"Diagnosis"} /></Form.Label>
                 <Form.Control
                   as="textarea"
                   rows={3}
@@ -3378,9 +3353,7 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
           <Row className="mb-2">
             <Col md={12}>
               <Form.Group>
-                <Form.Label className="dd-form-label">
-                  Prescribed Medicine
-                </Form.Label>
+                <Form.Label className="dd-form-label"><PortalText text={"Prescribed Medicine"} /></Form.Label>
                 <Form.Control
                   as="textarea"
                   rows={3}
@@ -3396,9 +3369,7 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
           <Row className="mb-2">
             <Col md={12}>
               <Form.Group>
-                <Form.Label className="dd-form-label">
-                  Advice
-                </Form.Label>
+                <Form.Label className="dd-form-label"><PortalText text={"Advice"} /></Form.Label>
                 <Form.Control
                   as="textarea"
                   rows={3}
@@ -3427,9 +3398,7 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
 
                 {form.followUpRequired && (
                   <Form.Group>
-                    <Form.Label className="dd-form-label">
-                      Follow-up Date
-                    </Form.Label>
+                    <Form.Label className="dd-form-label"><PortalText text={"Follow-up Date"} /></Form.Label>
                     <Form.Control
                       type="date"
                       value={form.followUpDate}
@@ -3446,9 +3415,7 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
             <Col md={12}>
               <div className="dd-additional-notes-section p-2 border rounded">
                 <Form.Group>
-                  <Form.Label className="dd-form-label">
-                    Additional Notes
-                  </Form.Label>
+                  <Form.Label className="dd-form-label"><PortalText text={"Additional Notes"} /></Form.Label>
                   <Form.Control
                     as="textarea"
                     rows={2}
@@ -3469,18 +3436,14 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
           onClick={onHide}
           className="dd-edit-cancel-btn me-2"
           size="sm"
-        >
-          Cancel
-        </Button>
+        ><PortalText text={"Cancel"} /></Button>
         <Button
           variant="primary"
           onClick={handleSave}
           className="dd-edit-save-btn"
           size="sm"
         >
-          <i className="bi bi-save me-1"></i>
-          Save Changes
-        </Button>
+          <i className="bi bi-save me-1"></i><PortalText text={"Save Changes"} /></Button>
       </Modal.Footer>
     </Modal>
   );
@@ -3500,17 +3463,17 @@ const SummaryModal = ({ show, onHide, appointmentData, doctorName, onCompleteWit
   return (
     <Modal show={show} onHide={onHide} centered size="lg" className="dd-summary-modal">
       <Modal.Header closeButton className="dd-summary-modal-header">
-        <Modal.Title className="dd-summary-modal-title">Consultation Prescription</Modal.Title>
+        <Modal.Title className="dd-summary-modal-title"><PortalText text={"Consultation Prescription"} /></Modal.Title>
       </Modal.Header>
       <Modal.Body className="dd-summary-modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
         {downloadError && <div className="alert alert-danger" role="alert">{downloadError}</div>}
         <PrescriptionDocument record={appointmentData} doctorName={doctorName} />
       </Modal.Body>
       <Modal.Footer className="dd-summary-modal-footer">
-        <Button className="dd-summary-close-btn" variant="outline-secondary" onClick={onHide}>Close</Button>
-        <Button className="dd-summary-complete-btn" variant="success" onClick={onCompleteWithoutPrint}>Mark as Complete</Button>
+        <Button className="dd-summary-close-btn" variant="outline-secondary" onClick={onHide}><PortalText text={"Close"} /></Button>
+        <Button className="dd-summary-complete-btn" variant="success" onClick={onCompleteWithoutPrint}><PortalText text={"Mark as Complete"} /></Button>
         <Button className="dd-summary-print-btn" variant="primary" onClick={download} disabled={downloading}>
-          <i className="bi bi-download me-2" aria-hidden="true" />{downloading ? "Downloading..." : "Download PDF"}
+          <i className="bi bi-download me-2" aria-hidden="true" />{downloading ? <PortalText text={"Downloading..."} /> : <PortalText text={"Download PDF"} />}
         </Button>
       </Modal.Footer>
     </Modal>
@@ -3538,6 +3501,7 @@ const DoctorDashboard = () => {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [prescriptionLoadingId, setPrescriptionLoadingId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingAppointment, setEditingAppointment] = useState(null);
   const [lastCompletedAppointment, setLastCompletedAppointment] = useState(null);
@@ -4132,6 +4096,27 @@ const DoctorDashboard = () => {
   };
 
   // Edit completed appointment
+  const openCompletedPrescription = async (appointment) => {
+    if (prescriptionLoadingId) return;
+    setPrescriptionLoadingId(appointment.id);
+    setError(null);
+    try {
+      const { data } = await axios.get(getAppointmentApiUrl(appointment), { headers: getAuthHeaders(), timeout: 15000 });
+      const raw = data.appointment || data.data?.appointment || data.data || data;
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Prescription details could not be loaded.');
+      const updated = formatAppointment({ ...raw, __appointmentSource: getAppointmentSource(appointment) });
+      const record = { ...appointment, ...updated,
+        followUpRequired: updated.followUpRequired || appointment.followUpRequired,
+        followUpDate: updated.followUpDate || appointment.followUpDate,
+      };
+      setLastCompletedAppointment(record);
+      setCompleted((rows) => rows.map((row) => row.id === appointment.id ? record : row));
+      setShowSummaryModal(true);
+    } catch (error) {
+      setError(error.response?.data?.message || error.message || 'Prescription could not be loaded. Please try again.');
+    } finally { setPrescriptionLoadingId(null); }
+  };
+
   const handleEditCompleted = (appointment) => {
     setEditingAppointment(appointment);
     setShowEditModal(true);
@@ -4229,13 +4214,14 @@ const DoctorDashboard = () => {
       (appt) => ["confirmed", "in-progress"].includes(appt.status) && appt.id !== activeAppt?.id
     ),
   ];
+  const todayCompletedAppointments = getTodayCompletedAppointments(completed, now);
   const visibleQueue =
     activeQueueTab === "next"
       ? skippedAppointments
       : activeQueueTab === "cancelled"
       ? visibleCancelledAppointments
       : activeQueueTab === "completed"
-      ? completed
+      ? todayCompletedAppointments
       : activeQueueTab === "in-progress"
         ? inProgressAppointments
         : pendingAppointments;
@@ -4269,11 +4255,11 @@ const DoctorDashboard = () => {
   ];
 
   const StatusBadge = ({ status }) => {
-    if (status === "pending") return <Badge bg="danger">Pending</Badge>;
-    if (status === "confirmed") return <Badge bg="primary">Confirmed</Badge>;
-    if (status === "in-progress") return <Badge bg="primary">In Progress</Badge>;
-    if (status === "completed") return <Badge bg="success">Completed</Badge>;
-    if (status === "cancelled") return <Badge bg="secondary">Cancelled</Badge>;
+    if (status === "pending") return <Badge bg="danger"><PortalText text={"Pending"} /></Badge>;
+    if (status === "confirmed") return <Badge bg="primary"><PortalText text={"Confirmed"} /></Badge>;
+    if (status === "in-progress") return <Badge bg="primary"><PortalText text={"In Progress"} /></Badge>;
+    if (status === "completed") return <Badge bg="success"><PortalText text={"Completed"} /></Badge>;
+    if (status === "cancelled") return <Badge bg="secondary"><PortalText text={"Cancelled"} /></Badge>;
     return <Badge bg="secondary">{status}</Badge>;
   };
 
@@ -4296,7 +4282,7 @@ const DoctorDashboard = () => {
     return (
       <div className="dd-loading-container d-flex justify-content-center align-items-center" style={{ minHeight: '100vh' }}>
         <Spinner animation="border" variant="primary" />
-        <span className="ms-3">Loading appointments...</span>
+        <span className="ms-3"><PortalText text={"Loading appointments..."} /></span>
       </div>
     );
   }
@@ -4305,11 +4291,9 @@ const DoctorDashboard = () => {
     return (
       <div className="dd-error-container p-4">
         <Alert variant="danger">
-          <Alert.Heading>Error Loading Dashboard</Alert.Heading>
+          <Alert.Heading><PortalText text={"Error Loading Dashboard"} /></Alert.Heading>
           <p>{error}</p>
-          <Button onClick={fetchAppointments} variant="outline-danger">
-            Retry
-          </Button>
+          <Button onClick={fetchAppointments} variant="outline-danger"><PortalText text={"Retry"} /></Button>
         </Alert>
       </div>
     );
@@ -4320,10 +4304,8 @@ const DoctorDashboard = () => {
       <div className="dd-dashboard-content">
           <div className="dd-hero-row">
             <div>
-              <h1>Good evening, Dr. {doctorName.replace(/^Dr\.?\s*/i, "")}</h1>
-              <p>
-                You have {pendingAppointments.length} appointments today.
-                {nextPatient ? ` Next appointment at ${nextPatient.scheduledTime}.` : " No pending appointment right now."}
+              <h1><PortalText text={"Good evening, Dr. "} />{doctorName.replace(/^Dr\.?\s*/i, "")}</h1>
+              <p><PortalText text={"You have "} />{pendingAppointments.length}<PortalText text={" appointments today."} />{nextPatient ? <PortalTemplate text={" Next appointment at {0}."} values={[nextPatient.scheduledTime]} /> : <PortalText text={" No pending appointment right now."} />}
               </p>
             </div>
             <div className="dd-date-block">
@@ -4352,29 +4334,25 @@ const DoctorDashboard = () => {
             {activeAppt && (
               <section className="dd-live-consult">
                 <div>
-                  <span>Currently with</span>
+                  <span><PortalText text={"Currently with"} /></span>
                   <strong>{activeAppt.name}</strong>
                   <small>{activeAppt.issue} - {formatDuration(elapsedMs)}</small>
                 </div>
                 <div className="dd-live-actions">
                   <button type="button" onClick={handlePause} disabled={activeSession?.status === "break"}>
                     <i className={`bi ${activeSession?.status === "paused" ? "bi-play-fill" : "bi-pause-fill"}`}></i>
-                    {activeSession?.status === "paused" ? "Resume" : "Pause"}
+                    {activeSession?.status === "paused" ? <PortalText text={"Resume"} /> : <PortalText text={"Pause"} />}
                   </button>
                   <button type="button" onClick={handleChecked} disabled={activeSession?.status === "break"}>
-                    <i className="bi bi-clipboard-check"></i>
-                    Checked
-                  </button>
+                    <i className="bi bi-clipboard-check"></i><PortalText text={"Checked"} /></button>
                   <button type="button" className="dd-complete-row-action" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
-                    <i className="bi bi-check-circle"></i>
-                    Complete
-                  </button>
+                    <i className="bi bi-check-circle"></i><PortalText text={"Complete"} /></button>
                 </div>
               </section>
             )}
 
             <section className="dd-queue-card">
-              <h2>Today's Appointment Queue</h2>
+              <h2><PortalText text={"Today's Appointment Queue"} /></h2>
               <div className="dd-tabs">
                 {["pending", "in-progress", "next", "completed", "cancelled"].map((tab) => (
                   <button
@@ -4383,7 +4361,7 @@ const DoctorDashboard = () => {
                     className={activeQueueTab === tab ? "active" : ""}
                     onClick={() => setActiveQueueTab(tab)}
                   >
-                    {tab === "in-progress" ? "In Progress" : tab[0].toUpperCase() + tab.slice(1)}
+                    {tab === "in-progress" ? <PortalText text={"In Progress"} /> : tab[0].toUpperCase() + tab.slice(1)}
                   </button>
                 ))}
               </div>
@@ -4401,7 +4379,7 @@ const DoctorDashboard = () => {
                   const canStartThisAppointment = canStartAppointment(appt);
 
                   return (
-                    <article className={`dd-queue-row ${isActive || index === 0 ? "highlight" : ""}`} key={`${activeQueueTab}-${appt.id}`}>
+                    <article className={`dd-queue-row ${isActive || index === 0 ? "highlight" : ""} ${appt.isEmergency ? "dd-emergency-row" : ""}`} key={`${activeQueueTab}-${appt.id}`}>
                       <DashboardPatientAvatar
                         name={appt.name}
                         avatarUrl={appt.avatarUrl}
@@ -4416,41 +4394,39 @@ const DoctorDashboard = () => {
                           </em>
                         </div>
                         <div className="dd-queue-meta">
-                          <span>{appt.appointmentType}</span>
-                          {getRemoteConsultationMode(appt) && <span><i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video" : "bi-telephone"}`}></i>{getRemoteConsultationMode(appt) === "video" ? "Video" : "Voice"}</span>}
+                          <span className={appt.isEmergency ? "dd-emergency-label" : ""}>{appt.isEmergency && <i className="bi bi-exclamation-triangle-fill" aria-hidden="true" />}{appt.isEmergency ? <PortalText text="Emergency Request" /> : appt.appointmentType}</span>
+                          {getRemoteConsultationMode(appt) && <span><i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video" : "bi-telephone"}`}></i>{getRemoteConsultationMode(appt) === "video" ? <PortalText text={"Video"} /> : <PortalText text={"Voice"} />}</span>}
                           <span>{appt.gender}</span>
                           <span className="issue">{appt.issue}</span>
                           <span>
                             <i className="bi bi-clock"></i>
                             {appt.bookedSchedule
-                              ? `${appt.bookedSchedule.label} (${appt.bookedSchedule.range}) · Slot ${appt.bookedSlotTime}`
-                              : `Scheduled time: ${appt.bookedSlotTime || "Not available"}`}
+                              ? <PortalTemplate text={"{0} ({1}) · Slot {2}"} values={[appt.bookedSchedule.label,appt.bookedSchedule.range,appt.bookedSlotTime]} />
+                              : <PortalTemplate text={"Scheduled time: {0}"} values={[appt.bookedSlotTime || "Not available"]} />}
                           </span>
-                          {['pending', 'confirmed'].includes(appt.status) && <span>{appt.checkedInAt || appt.queueStatus === 'waiting' ? 'Checked in ? Waiting' : 'Not checked in'}</span>}
-                          {appt.cancellationReason === 'PATIENT_LATE' && <span>Patient did not arrive before the adjusted appointment deadline.</span>}
+                          {['pending', 'confirmed'].includes(appt.status) && <span>{appt.checkedInAt || appt.queueStatus === 'waiting' ? <PortalText text={"Checked in ? Waiting"} /> : <PortalText text={"Not checked in"} />}</span>}
+                          {appt.cancellationReason === 'PATIENT_LATE' && <span><PortalText text={"Patient did not arrive before the adjusted appointment deadline."} /></span>}
                           {appt.delayMinutes > 0 && appt.estimatedTime && (
-                            <span><i className="bi bi-hourglass-split"></i>Estimated: {appt.estimatedTime} (+{appt.delayMinutes}m)</span>
+                            <span><i className="bi bi-hourglass-split"></i><PortalText text={"Estimated: "} />{appt.estimatedTime} (+{appt.delayMinutes}m)</span>
                           )}
-                          {appt.delayMinutes > 0 && <span className="issue"><i className="bi bi-hourglass-split"></i>Delayed {appt.delayMinutes} min{appt.delayReason ? ` - ${appt.delayReason}` : ""}</span>}
+                          {appt.delayMinutes > 0 && <span className="issue"><i className="bi bi-hourglass-split"></i><PortalText text={"Delayed "} />{appt.delayMinutes}<PortalText text={" min"} />{appt.delayReason ? ` - ${appt.delayReason}` : ""}</span>}
                           {appt.status === "completed" && appt.followUpRequired && (
                             <span className="dd-follow-up-history-date">
-                              <i className="bi bi-calendar-check"></i>
-                              Follow-up: {appt.followUpDate ? formatDate(appt.followUpDate) : "Date not available"}
+                              <i className="bi bi-calendar-check"></i><PortalText text={"Follow-up: "} />{appt.followUpDate ? formatDate(appt.followUpDate) : <PortalText text={"Date not available"} />}
                             </span>
                           )}
                         </div>
                         <div className="dd-vital-tags">
-                          <span>BP: {appt.bp || "N/A"}</span>
-                          <span>BG: {appt.bloodGroup || "N/A"}</span>
+                          <span><PortalText text={"BP: "} />{appt.bp || "N/A"}</span>
+                          <span><PortalText text={"BG: "} />{appt.bloodGroup || "N/A"}</span>
                         </div>
                       </div>
                       <div className="dd-row-actions">
                         {appt.status === "skipped" ? (
                           <button type="button" onClick={() => handleStartFromConsent(appt)} disabled={queueActionBusy || !canStartThisAppointment}>
-                            <i className="bi bi-play-circle me-1" aria-hidden="true" /> Start Consultation
-                          </button>
+                            <i className="bi bi-play-circle me-1" aria-hidden="true" /><PortalText text={" Start Consultation"} /></button>
                         ) : appt.status === "cancelled" ? (
-                          <Badge bg="secondary">{appt.isNoShow ? "Cancelled · No-show" : "Cancelled"}</Badge>
+                          <Badge bg="secondary">{appt.isNoShow ? <PortalText text={"Cancelled · No-show"} /> : <PortalText text={"Cancelled"} />}</Badge>
                         ) : getRemoteConsultationMode(appt) && appt.status !== "completed" && (
                           <button
                             type="button"
@@ -4460,27 +4436,20 @@ const DoctorDashboard = () => {
                             onClick={() => navigate('/patient-sms', { state: { callTargetId: appt.patientId, autoStartCallType: getRemoteConsultationMode(appt), appointment: appt } })}
                           >
                             <i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video-fill" : "bi-telephone-fill"}`}></i>
-                            {getRemoteConsultationMode(appt) === "video" ? "Video Call" : "Voice Call"}
+                            {getRemoteConsultationMode(appt) === "video" ? <PortalText text={"Video Call"} /> : <PortalText text={"Voice Call"} />}
                           </button>
                         )}
                         {appt.status === "completed" ? (
                           <>
-                          <button type="button" className="ghost" onClick={() => handleEditCompleted(appt)}>
-                            View
-                          </button>
-                          <button type="button" className="ghost" onClick={() => { setLastCompletedAppointment(appt); setShowSummaryModal(true); }}>
-                            <i className="bi bi-file-earmark-medical me-1" aria-hidden="true" /> Prescription
-                          </button>
+                          <button type="button" className="ghost" onClick={() => handleEditCompleted(appt)}><PortalText text={"View"} /></button>
+                          <button type="button" className="ghost" disabled={Boolean(prescriptionLoadingId)} onClick={() => openCompletedPrescription(appt)}>
+                            <i className="bi bi-file-earmark-medical me-1" aria-hidden="true" /><PortalText text={prescriptionLoadingId === appt.id ? "Loading prescription..." : " Prescription"} /></button>
                           </>
                         ) : ["cancelled", "skipped"].includes(appt.status) ? null : !getRemoteConsultationMode(appt) && isActive ? (
                           <>
-                            <button type="button" className="ghost" onClick={handleChecked} disabled={activeSession?.status === "break"}>
-                              Continue
-                            </button>
+                            <button type="button" className="ghost" onClick={handleChecked} disabled={activeSession?.status === "break"}><PortalText text={"Continue"} /></button>
                             <button type="button" className="dd-complete-row-action" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
-                              <i className="bi bi-check-circle"></i>
-                              Complete
-                            </button>
+                              <i className="bi bi-check-circle"></i><PortalText text={"Complete"} /></button>
                           </>
                         ) : !getRemoteConsultationMode(appt) ? (
                           <button
@@ -4500,7 +4469,7 @@ const DoctorDashboard = () => {
                                 : undefined
                             }
                           >
-                            {showStartConsultation ? "Start Consultation" : "View"}
+                            {showStartConsultation ? <PortalText text={"Start Consultation"} /> : <PortalText text={"View"} />}
                           </button>
                         ) : null}
                       </div>
@@ -4511,7 +4480,7 @@ const DoctorDashboard = () => {
                 {visibleQueue.length === 0 && (
                   <div className="dd-empty-queue">
                     <i className="bi bi-calendar-check"></i>
-                    <span>No appointments in this queue</span>
+                    <span><PortalText text={"No appointments in this queue"} /></span>
                   </div>
                 )}
               </div>
@@ -4521,7 +4490,7 @@ const DoctorDashboard = () => {
           <aside className="dd-right-panel">
             <section className="dd-next-patient-card">
               <div className="dd-next-top">
-                <span><i className="bi bi-dot"></i> {activeAppt ? "Current Patient" : "Next Patient"}</span>
+                <span><i className="bi bi-dot"></i> {activeAppt ? <PortalText text={"Current Patient"} /> : <PortalText text={"Next Patient"} />}</span>
                 <strong>{nextPatient?.scheduledTime || "--:--"}</strong>
               </div>
               <div className="dd-next-body">
@@ -4531,8 +4500,8 @@ const DoctorDashboard = () => {
                   className="dd-next-avatar"
                 />
                 <div>
-                  <h3>{nextPatient?.name || "No Patient"}</h3>
-                  <p>{nextPatient ? `${getTokenLabel(nextPatient)} - ${nextPatient.issue}` : "Queue is clear"}</p>
+                  <h3>{nextPatient?.name || <PortalText text={"No Patient"} />}</h3>
+                  <p>{nextPatient ? `${getTokenLabel(nextPatient)} - ${nextPatient.issue}` : <PortalText text={"Queue is clear"} />}</p>
                 </div>
               </div>
               <button
@@ -4559,19 +4528,19 @@ const DoctorDashboard = () => {
               >
                 <i className={`bi ${activeAppt ? "bi-check-circle" : getRemoteConsultationMode(nextPatient) === "video" ? "bi-camera-video-fill" : getRemoteConsultationMode(nextPatient) === "voice" ? "bi-telephone-fill" : "bi-clipboard2-pulse"}`}></i>
                 {activeAppt
-                  ? "Complete Current"
+                  ? <PortalText text={"Complete Current"} />
                   : getRemoteConsultationMode(nextPatient) === "video"
-                  ? "Video Call"
+                  ? <PortalText text={"Video Call"} />
                   : getRemoteConsultationMode(nextPatient) === "voice"
-                    ? "Voice Call"
-                    : "Start Consultation"}
+                    ? <PortalText text={"Voice Call"} />
+                    : <PortalText text={"Start Consultation"} />}
               </button>
             </section>
 
             <section className="dd-break-widget">
               <div className="dd-widget-title">
-                <h3>Break Control</h3>
-                <span>{activeSession?.status === "break" ? "On Break" : "On Duty"}</span>
+                <h3><PortalText text={"Break Control"} /></h3>
+                <span>{activeSession?.status === "break" ? <PortalText text={"On Break"} /> : <PortalText text={"On Duty"} />}</span>
               </div>
               <div className="dd-break-options">
                 {[10, 15, 30].map((min) => (
@@ -4584,8 +4553,7 @@ const DoctorDashboard = () => {
                     }}
                     className={selectedBreakMin === min && !customBreakMin ? "active" : ""}
                   >
-                    {min} min
-                  </button>
+                    {min}<PortalText text={" min"} /></button>
                 ))}
                 <InputGroup size="sm" className="dd-custom-break-input-group">
                   <FormControl
@@ -4602,27 +4570,25 @@ const DoctorDashboard = () => {
                     animated
                     now={((activeSession.breakDurationMs - breakRemainingMs) / (activeSession.breakDurationMs || 1)) * 100}
                   />
-                  <button type="button" onClick={handleEndBreakAndResume}>End Break</button>
+                  <button type="button" onClick={handleEndBreakAndResume}><PortalText text={"End Break"} /></button>
                 </div>
               ) : (
-                <button type="button" className="dd-start-break" onClick={handleBreak}>
-                  Start Break
-                </button>
+                <button type="button" className="dd-start-break" onClick={handleBreak}><PortalText text={"Start Break"} /></button>
               )}
             </section>
 
             <section className="dd-overview-card">
-              <h3>Today Overview</h3>
+              <h3><PortalText text={"Today Overview"} /></h3>
               <div
                 className="dd-progress-ring"
                 style={{ "--progress": `${completionPercent * 3.6}deg` }}
               >
                 <div>
                   <strong>{completionPercent}%</strong>
-                  <span>Complete</span>
+                  <span><PortalText text={"Complete"} /></span>
                 </div>
               </div>
-              <p>{completedToday} of {totalToday} appointments completed</p>
+              <p>{completedToday}<PortalText text={" of "} />{totalToday}<PortalText text={" appointments completed"} /></p>
             </section>
           </aside>
       </div>
@@ -4637,40 +4603,38 @@ const DoctorDashboard = () => {
       >
         <Modal.Header closeButton className="dd-consent-modal-header p-3">
           <Modal.Title className="dd-consent-modal-title">
-            <i className="bi bi-person-check me-2"></i>
-            Patient Form
-          </Modal.Title>
+            <i className="bi bi-person-check me-2"></i><PortalText text={"Patient Form"} /></Modal.Title>
         </Modal.Header>
         <Modal.Body className="dd-consent-modal-body p-4" style={{ maxHeight: '50vh', overflowY: 'auto' }}>
           <div className="dd-patient-summary mb-4">
-            <h6 className="dd-patient-summary-title mb-3">Patient Information</h6>
+            <h6 className="dd-patient-summary-title mb-3"><PortalText text={"Patient Information"} /></h6>
             <div className="dd-patient-details-grid">
               <div className="dd-patient-detail">
-                <span className="dd-detail-label">Name:</span>
+                <span className="dd-detail-label"><PortalText text={"Name:"} /></span>
                 <span className="dd-detail-value fw-bold">{selectedAppointment?.name}</span>
               </div>
               <div className="dd-patient-detail">
-                <span className="dd-detail-label">Gender:</span>
+                <span className="dd-detail-label"><PortalText text={"Gender:"} /></span>
                 <span className="dd-detail-value">{selectedAppointment?.gender}</span>
               </div>
               <div className="dd-patient-detail">
-                <span className="dd-detail-label">Issue:</span>
+                <span className="dd-detail-label"><PortalText text={"Issue:"} /></span>
                 <span className="dd-detail-value">{selectedAppointment?.issue}</span>
               </div>
               <div className="dd-patient-detail">
-                <span className="dd-detail-label">Schedule:</span>
+                <span className="dd-detail-label"><PortalText text={"Schedule:"} /></span>
                 <span className="dd-detail-value">
                   {selectedAppointment?.bookedSchedule
-                    ? `${selectedAppointment.bookedSchedule.label} (${selectedAppointment.bookedSchedule.range}) · Slot ${selectedAppointment.bookedSlotTime}`
-                    : selectedAppointment?.bookedSlotTime || "Not available"}
+                    ? <PortalTemplate text={"{0} ({1}) · Slot {2}"} values={[selectedAppointment.bookedSchedule.label,selectedAppointment.bookedSchedule.range,selectedAppointment.bookedSlotTime]} />
+                    : selectedAppointment?.bookedSlotTime || <PortalText text={"Not available"} />}
                 </span>
               </div>
               <div className="dd-patient-detail">
-                <span className="dd-detail-label">Token:</span>
+                <span className="dd-detail-label"><PortalText text={"Token:"} /></span>
                 <span className="dd-detail-value">{selectedAppointment ? getTokenLabel(selectedAppointment) : "N/A"}</span>
               </div>
               <div className="dd-patient-detail">
-                <span className="dd-detail-label">Phone:</span>
+                <span className="dd-detail-label"><PortalText text={"Phone:"} /></span>
                 <span className="dd-detail-value">
                   {selectedAppointment?.phone && selectedAppointment.phone !== "N/A" ? (
                     <a href={`tel:${selectedAppointment.phone}`} className="dd-phone-link">
@@ -4685,27 +4649,27 @@ const DoctorDashboard = () => {
           </div>
 
           <div className="dd-patient-vitals-section mb-4">
-            <h6 className="dd-patient-summary-title mb-3">Patient Vitals</h6>
+            <h6 className="dd-patient-summary-title mb-3"><PortalText text={"Patient Vitals"} /></h6>
             <div className="dd-vitals-display">
               <div className="dd-vital-item">
-                <span className="dd-vital-label">Blood Pressure:</span>
-                <span className="dd-vital-value fw-bold">{selectedAppointment?.bp || 'Not recorded'}</span>
+                <span className="dd-vital-label"><PortalText text={"Blood Pressure:"} /></span>
+                <span className="dd-vital-value fw-bold">{selectedAppointment?.bp || <PortalText text={"Not recorded"} />}</span>
               </div>
               <div className="dd-vital-item">
-                <span className="dd-vital-label">Blood Group:</span>
-                <span className="dd-vital-value fw-bold">{selectedAppointment?.bloodGroup || 'Not recorded'}</span>
+                <span className="dd-vital-label"><PortalText text={"Blood Group:"} /></span>
+                <span className="dd-vital-value fw-bold">{selectedAppointment?.bloodGroup || <PortalText text={"Not recorded"} />}</span>
               </div>
             </div>
           </div>
 
           <div className="dd-consent-agreement">
-            <h6 className="dd-patient-summary-title mb-3">Agreement</h6>
+            <h6 className="dd-patient-summary-title mb-3"><PortalText text={"Agreement"} /></h6>
             <div className="dd-consent-text">
-              <p>I confirm that I have reviewed the patient's information and vitals.</p>
-              <p>I understand that starting will begin tracking consultation time.</p>
-              <p>I acknowledge my responsibility for providing appropriate medical care.</p>
-              <p>I confirm I will maintain patient confidentiality.</p>
-              <p className="mb-0">Click "Start Appointment" to begin consultation.</p>
+              <p><PortalText text={"I confirm that I have reviewed the patient's information and vitals."} /></p>
+              <p><PortalText text={"I understand that starting will begin tracking consultation time."} /></p>
+              <p><PortalText text={"I acknowledge my responsibility for providing appropriate medical care."} /></p>
+              <p><PortalText text={"I confirm I will maintain patient confidentiality."} /></p>
+              <p className="mb-0"><PortalText text={"Click \"Start Appointment\" to begin consultation."} /></p>
             </div>
           </div>
         </Modal.Body>
@@ -4715,12 +4679,10 @@ const DoctorDashboard = () => {
             onClick={() => setShowConsentModal(false)}
             className="dd-consent-cancel-btn"
             size="sm"
-          >
-            Cancel
-          </Button>
+          ><PortalText text={"Cancel"} /></Button>
           <Button variant="outline-primary" className="dd-consent-next-btn" onClick={handleNextPatient} size="sm"
             disabled={queueActionBusy || !selectedAppointment || Boolean(activeSession?.appt) || activeSession?.status === "break"}>
-            <i className="bi bi-skip-forward me-1" aria-hidden="true" />{queueActionBusy ? "Moving..." : "Next"}
+            <i className="bi bi-skip-forward me-1" aria-hidden="true" />{queueActionBusy ? <PortalText text={"Moving..."} /> : <PortalText text={"Next"} />}
           </Button>
           <Button
             variant="primary"
@@ -4736,9 +4698,7 @@ const DoctorDashboard = () => {
                 : undefined
             }
           >
-            <i className="bi bi-play-circle me-1"></i>
-            Start Consultation
-          </Button>
+            <i className="bi bi-play-circle me-1"></i><PortalText text={"Start Consultation"} /></Button>
         </Modal.Footer>
       </Modal>
 

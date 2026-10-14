@@ -1,3 +1,4 @@
+import { PortalText, PortalElement } from "../../../common/PortalTranslation";
 import React, { useState } from "react";
 import { useDoctorUser } from "../../doctorApi.js";
 import axios from "../../../../axiosConfig.js";
@@ -36,19 +37,6 @@ export default function ClinicSettings() {
   
   const doctorId = extractDoctorId(user);
 
-  React.useEffect(() => {
-    console.log('=== ClinicUpload Debug ===');
-    console.log('authUser:', authUser);
-    console.log('storedUser:', storedUser);
-    console.log('user:', user);
-    console.log('doctorId:', doctorId);
-    if (user) {
-      console.log('User object keys:', Object.keys(user));
-      console.log('Full user object:', JSON.stringify(user, null, 2));
-    }
-    console.log('========================');
-  }, [authUser, storedUser, user, doctorId]);
-
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
       alert("Geolocation not supported");
@@ -67,7 +55,12 @@ export default function ClinicSettings() {
   };
 
   const handlePhotoUpload = (e) => {
-    const files = Array.from(e.target.files);
+    const files = Array.from(e.target.files || []).slice(0, 1);
+    if (files.some(file => !['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
+      setMessage('Choose a JPG, PNG or WebP clinic image of 5 MB or smaller.');
+      setStatus('failed'); e.target.value = ''; return;
+    }
+    previewUrls.forEach(url => URL.revokeObjectURL(url));
     setPhotos(files);
 
     const urls = files.map((file) => URL.createObjectURL(file));
@@ -98,9 +91,7 @@ export default function ClinicSettings() {
     formData.append('phone_number', phone);
     formData.append('location', address);
 
-    photos.forEach((photo) => {
-      formData.append('clinic_photo', photo);
-    });
+    if (photos[0]) formData.append('clinic_photo', photos[0]);
 
     try {
       setStatus('loading');
@@ -139,17 +130,16 @@ export default function ClinicSettings() {
     <div className="clinic-settings">
       <div className="clinic-settings-container">
         <div className="clinic-header">
-          <h2>Clinic Settings</h2>
-          <p>Manage your clinic information and location</p>
+          <h2><PortalText text={"Clinic Settings"} /></h2>
+          <p><PortalText text={"Manage your clinic information and location"} /></p>
         </div>
 
         <div className="clinic-form">
           {/* Clinic Name */}
           <div className="form-group">
             <label className="form-label">
-              <span className="required-star">*</span> Clinic Name
-            </label>
-            <input
+              <span className="required-star">*</span><PortalText text={" Clinic Name"} /></label>
+            <PortalElement as="input"
               type="text"
               className="form-input"
               value={clinicName}
@@ -161,9 +151,8 @@ export default function ClinicSettings() {
           {/* Phone Number */}
           <div className="form-group">
             <label className="form-label">
-              <span className="required-star">*</span> Phone Number
-            </label>
-            <input
+              <span className="required-star">*</span><PortalText text={" Phone Number"} /></label>
+            <PortalElement as="input"
               type="tel"
               className="form-input"
               value={phone}
@@ -176,15 +165,14 @@ export default function ClinicSettings() {
           {/* Location Section */}
           <div className="form-section">
             <div className="section-header">
-              <h3>📍 Location Details</h3>
-              <span className="required-badge">Required</span>
+              <h3><PortalText text={"📍 Location Details"} /></h3>
+              <span className="required-badge"><PortalText text={"Required"} /></span>
             </div>
             
             <div className="form-group">
               <label className="form-label">
-                <span className="required-star">*</span> Full Address
-              </label>
-              <textarea
+                <span className="required-star">*</span><PortalText text={" Full Address"} /></label>
+              <PortalElement as="textarea"
                 className="form-textarea"
                 placeholder="Enter complete clinic address"
                 value={address}
@@ -193,18 +181,16 @@ export default function ClinicSettings() {
               />
             </div>
 
-            <button className="btn-location" onClick={getCurrentLocation}>
-              📍 Get Current Location
-            </button>
+            <button className="btn-location" onClick={getCurrentLocation}><PortalText text={"📍 Get Current Location"} /></button>
 
             {location.lat && (
               <div className="location-coordinates">
                 <div className="coord-box">
-                  <span className="coord-label">Latitude:</span>
+                  <span className="coord-label"><PortalText text={"Latitude:"} /></span>
                   <span className="coord-value">{location.lat}</span>
                 </div>
                 <div className="coord-box">
-                  <span className="coord-label">Longitude:</span>
+                  <span className="coord-label"><PortalText text={"Longitude:"} /></span>
                   <span className="coord-value">{location.lng}</span>
                 </div>
               </div>
@@ -214,23 +200,22 @@ export default function ClinicSettings() {
           {/* Upload Photos */}
           <div className="form-section">
             <div className="section-header">
-              <h3>📸 Clinic Photos</h3>
-              <span className="optional-badge">Optional</span>
+              <h3><PortalText text={"📸 Clinic Photos"} /></h3>
+              <span className="optional-badge"><PortalText text={"Optional"} /></span>
             </div>
             
             <div className="upload-area">
               <label className="upload-label">
                 <input
                   type="file"
-                  multiple
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   onChange={handlePhotoUpload}
                   className="upload-input"
                 />
                 <div className="upload-content">
                   <span className="upload-icon">📷</span>
-                  <p>Click or drag to upload clinic photos</p>
-                  <small>Supports JPG, PNG, GIF (Max 5MB each)</small>
+                  <p><PortalText text={"Click to upload clinic image"} /></p>
+                  <small><PortalText text={"Supports JPG, PNG, WebP (Max 5MB)"} /></small>
                 </div>
               </label>
             </div>
@@ -239,13 +224,13 @@ export default function ClinicSettings() {
           {/* Photo Preview */}
           {previewUrls.length > 0 && (
             <div className="photo-preview-section">
-              <h4>Photo Preview ({previewUrls.length})</h4>
+              <h4><PortalText text={"Photo Preview ("} />{previewUrls.length})</h4>
               <div className="preview-grid">
                 {previewUrls.map((src, i) => (
                   <div className="preview-card" key={i}>
                     <img src={src} alt={`preview-${i}`} />
                     <div className="preview-info">
-                      <span>Photo {i + 1}</span>
+                      <span><PortalText text={"Photo "} />{i + 1}</span>
                       <button 
                         className="remove-photo"
                         onClick={() => {
@@ -276,17 +261,17 @@ export default function ClinicSettings() {
 
           {/* Action Buttons */}
           {savedQr?.walkinQrCode && <section className="clinic-qr-management">
-            <h3>{savedQr.name} — Walk-in QR</h3>
-            <p>Print this QR at this clinic. Patients will join this doctor's queue here.</p>
+            <h3>{savedQr.name}<PortalText text={" — Walk-in QR"} /></h3>
+            <p><PortalText text={"Print this QR at this clinic. Patients will join this doctor's queue here."} /></p>
             <img src={savedQr.walkinQrCode} width="220" height="220" alt={`Walk-in QR for ${savedQr.name}`} />
-            <p><a href={savedQr.walkinQrCode} download={`clinic-${savedQr.doctorClinicId}-qr.png`}>Download QR</a> · <a href={savedQr.walkinQrUrl} target="_blank" rel="noreferrer">Open walk-in page</a></p>
+            <p><a href={savedQr.walkinQrCode} download={`clinic-${savedQr.doctorClinicId}-qr.png`}><PortalText text={"Download QR"} /></a> · <a href={savedQr.walkinQrUrl} target="_blank" rel="noreferrer"><PortalText text={"Open walk-in page"} /></a></p>
           </section>}
           <div className="action-buttons">
             <button className="btn-cancel" disabled={status === 'loading'} onClick={handleCancel}>
-              {status === 'succeeded' ? 'Add another clinic' : 'Cancel'}
+              {status === 'succeeded' ? <PortalText text={"Add another clinic"} /> : <PortalText text={"Cancel"} />}
             </button>
             <button className="btn-save" disabled={status === 'loading' || status === 'succeeded'} onClick={handleSave}>
-              {status === 'loading' ? 'Saving...' : 'Save Clinic'}
+              {status === 'loading' ? <PortalText text={"Saving..."} /> : <PortalText text={"Save Clinic"} />}
             </button>
           </div>
         </div>

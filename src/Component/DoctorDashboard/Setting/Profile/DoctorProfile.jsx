@@ -1,3 +1,4 @@
+import { PortalText, PortalElement } from "../../../common/PortalTranslation";
 // ProfessionalProfileTable.jsx
 import React, { useState, useEffect, useRef } from "react";
 import "./ProfessionalProfileTable.css";
@@ -518,8 +519,7 @@ const handleFileUpload = (e) => {
           onClick={() => handleAddArrayItem(field)}
           className="js-add-item-btn"
         >
-          <i className="fas fa-plus"></i> Add Item
-        </button>
+          <i className="fas fa-plus"></i><PortalText text={" Add Item"} /></button>
       </div>
     );
   };
@@ -542,7 +542,7 @@ const handleFileUpload = (e) => {
           style={{ animationDelay: `${rows.length * 0.05}s` }}
         >
           <td className="js-label-cell">
-            <span className="js-label-text">{label}</span>
+            <span className="js-label-text">{<PortalText text={label} />}</span>
           </td>
           <td className="js-value-cell">
             {editingSection === section ? (
@@ -572,14 +572,14 @@ const handleFileUpload = (e) => {
             id={`${section}-${key}`}
           />
           <label htmlFor={`${section}-${key}`} className="js-checkbox-label">
-            {editFormData[key] ? "Yes" : "No"}
+            {editFormData[key] ? <PortalText text={"Yes"} /> : <PortalText text={"No"} />}
           </label>
         </div>
       );
     } else if (key === "googleMapLink") {
       return (
         <div className="js-map-link-container">
-          <input
+          <PortalElement as="input"
             type="text"
             value={editFormData[key] || ""}
             onChange={(e) => handleInputChange(e, key)}
@@ -626,7 +626,7 @@ const handleFileUpload = (e) => {
       return (
         <span className={`js-availability ${value ? 'js-available' : 'js-not-available'}`}>
           <span className="js-availability-dot"></span>
-          {value ? "Available" : "Not Available"}
+          {value ? <PortalText text={"Available"} /> : <PortalText text={"Not Available"} />}
         </span>
       );
     } else if (key === "contact") {
@@ -644,8 +644,7 @@ const handleFileUpload = (e) => {
           rel="noopener noreferrer"
           className="js-map-link"
         >
-          <i className="fas fa-map-marker-alt"></i> View on Google Maps
-        </a>
+          <i className="fas fa-map-marker-alt"></i><PortalText text={" View on Google Maps"} /></a>
       );
     } else if (key === "address") {
       return (
@@ -675,9 +674,7 @@ const handleFileUpload = (e) => {
     <div className="js-profile-container">
       {/* Success Message */}
       <div className="js-save-success">
-        <i className="fas fa-check-circle"></i>
-        Profile updated successfully!
-      </div>
+        <i className="fas fa-check-circle"></i><PortalText text={"Profile updated successfully!"} /></div>
 
       <header className="js-profile-header">
         <div className="js-header-content">
@@ -693,32 +690,28 @@ const handleFileUpload = (e) => {
                   e.target.src = DEFAULT_PROFILE_IMAGE;
                 }}
               />
-              <button 
+              <PortalElement as="button" 
                 className="js-edit-image-btn"
                 onClick={handleOpenImageModal}
                 title="Change Profile Picture"
               >
                 <i className="fas fa-camera"></i>
-              </button>
+              </PortalElement>
             </div>
             <div className="js-profile-header-info">
               <h1 className="js-profile-title">
                 <span className="js-title-text">{profileData.personalDetails.fullName}</span>
-                <span className="js-title-sub">Professional Profile</span>
+                <span className="js-title-sub"><PortalText text={"Professional Profile"} /></span>
               </h1>
               <p className="js-profile-subtitle">
-                {profileData.personalDetails.position} | Mount Sinai Health System
-              </p>
+                {profileData.personalDetails.position}<PortalText text={" | Mount Sinai Health System"} /></p>
               <div className="js-profile-badges">
                 <span className="js-badge js-badge-primary">
-                  <i className="fas fa-video"></i> Video Visits Available
-                </span>
+                  <i className="fas fa-video"></i><PortalText text={" Video Visits Available"} /></span>
                 <span className="js-badge js-badge-success">
-                  <i className="fas fa-check-circle"></i> Accepting New Patients
-                </span>
+                  <i className="fas fa-check-circle"></i><PortalText text={" Accepting New Patients"} /></span>
                 <span className="js-badge js-badge-info">
-                  <i className="fas fa-award"></i> Award-Winning Physician
-                </span>
+                  <i className="fas fa-award"></i><PortalText text={" Award-Winning Physician"} /></span>
               </div>
             </div>
           </div>
@@ -745,7 +738,7 @@ const handleFileUpload = (e) => {
                         onClick={() => handleEditClick(section.id)}
                       >
                         <i className="fas fa-edit"></i> 
-                        <span className="js-edit-btn-text">Edit</span>
+                        <span className="js-edit-btn-text"><PortalText text={"Edit"} /></span>
                       </button>
                     </div>
                   </td>
@@ -772,9 +765,7 @@ const handleFileUpload = (e) => {
           <div className="js-modal js-modal-image" onClick={(e) => e.stopPropagation()}>
             <div className="js-modal-header">
               <h3 className="js-modal-title">
-                <i className="fas fa-user-circle"></i>
-                Update Profile Picture
-              </h3>
+                <i className="fas fa-user-circle"></i><PortalText text={"Update Profile Picture"} /></h3>
               <button 
                 className="js-modal-close"
                 onClick={() => setShowImageModal(false)}
@@ -805,8 +796,8 @@ const handleFileUpload = (e) => {
                 />
                 
                 <div className="js-image-url-input">
-                  <label className="js-input-label">Image URL</label>
-                  <input
+                  <label className="js-input-label"><PortalText text={"Image URL"} /></label>
+                  <PortalElement as="input"
                     type="text"
                     value={imageUrlInput}
                     onChange={(e) => setImageUrlInput(e.target.value)}
@@ -820,14 +811,12 @@ const handleFileUpload = (e) => {
                     className="js-btn js-btn-upload"
                     onClick={handleUploadClick}
                   >
-                    <i className="fas fa-upload"></i> Upload Image
-                  </button>
+                    <i className="fas fa-upload"></i><PortalText text={" Upload Image"} /></button>
                   <button
                     className="js-btn js-btn-default"
                     onClick={() => setImageUrlInput(DEFAULT_PROFILE_IMAGE)}
                   >
-                    <i className="fas fa-user"></i> Use Default
-                  </button>
+                    <i className="fas fa-user"></i><PortalText text={" Use Default"} /></button>
                 </div>
               </div>
               
@@ -836,15 +825,11 @@ const handleFileUpload = (e) => {
                   <button 
                     className="js-btn js-btn-secondary"
                     onClick={() => setShowImageModal(false)}
-                  >
-                    Cancel
-                  </button>
+                  ><PortalText text={"Cancel"} /></button>
                   <button 
                     className="js-btn js-btn-primary"
                     onClick={handleSaveImageUrl}
-                  >
-                    Save Image
-                  </button>
+                  ><PortalText text={"Save Image"} /></button>
                 </div>
               </div>
             </div>
@@ -859,9 +844,7 @@ const handleFileUpload = (e) => {
           <div className="js-modal js-modal-map" onClick={(e) => e.stopPropagation()}>
             <div className="js-modal-header">
               <h3 className="js-modal-title">
-                <i className="fas fa-map-marker-alt"></i>
-                Update Location Map
-              </h3>
+                <i className="fas fa-map-marker-alt"></i><PortalText text={"Update Location Map"} /></h3>
               <button 
                 className="js-modal-close"
                 onClick={() => setShowMapModal(false)}
@@ -871,8 +854,8 @@ const handleFileUpload = (e) => {
             </div>
             <div className="js-modal-body">
               <div className="js-map-input-group">
-                <label className="js-input-label">Google Maps Link</label>
-                <input
+                <label className="js-input-label"><PortalText text={"Google Maps Link"} /></label>
+                <PortalElement as="input"
                   type="text"
                   value={mapLinkInput}
                   onChange={(e) => setMapLinkInput(e.target.value)}
@@ -882,8 +865,7 @@ const handleFileUpload = (e) => {
               </div>
               <div className="js-map-preview">
                 <h4 className="js-preview-title">
-                  <i className="fas fa-eye"></i> Preview
-                </h4>
+                  <i className="fas fa-eye"></i><PortalText text={" Preview"} /></h4>
                 <a 
                   href={mapLinkInput} 
                   target="_blank" 
@@ -891,7 +873,7 @@ const handleFileUpload = (e) => {
                   className="js-preview-link"
                 >
                   <i className="fas fa-external-link-alt"></i>
-                  {mapLinkInput || "No link provided"}
+                  {mapLinkInput || <PortalText text={"No link provided"} />}
                 </a>
               </div>
               <div className="js-modal-buttons">
@@ -899,21 +881,16 @@ const handleFileUpload = (e) => {
                   className="js-btn js-btn-location"
                   onClick={handleGetCurrentLocation}
                 >
-                  <i className="fas fa-location-dot"></i> Use Current Location
-                </button>
+                  <i className="fas fa-location-dot"></i><PortalText text={" Use Current Location"} /></button>
                 <div className="js-action-buttons">
                   <button 
                     className="js-btn js-btn-secondary"
                     onClick={() => setShowMapModal(false)}
-                  >
-                    Cancel
-                  </button>
+                  ><PortalText text={"Cancel"} /></button>
                   <button 
                     className="js-btn js-btn-primary"
                     onClick={handleSaveMapLink}
-                  >
-                    Save Map Link
-                  </button>
+                  ><PortalText text={"Save Map Link"} /></button>
                 </div>
               </div>
             </div>
@@ -927,7 +904,7 @@ const handleFileUpload = (e) => {
           <div className="js-edit-controls-inner">
             <div className="js-edit-status">
               <i className="fas fa-edit"></i>
-              <span>Editing: {sections.find(s => s.id === editingSection)?.title}</span>
+              <span><PortalText text={"Editing: "} />{sections.find(s => s.id === editingSection)?.title}</span>
             </div>
             <div className="js-edit-actions">
               <button 
@@ -937,14 +914,10 @@ const handleFileUpload = (e) => {
               >
                 {isLoading ? (
                   <>
-                    <i className="fas fa-spinner fa-spin"></i>
-                    Saving...
-                  </>
+                    <i className="fas fa-spinner fa-spin"></i><PortalText text={"Saving..."} /></>
                 ) : (
                   <>
-                    <i className="fas fa-check"></i>
-                    Save Changes
-                  </>
+                    <i className="fas fa-check"></i><PortalText text={"Save Changes"} /></>
                 )}
               </button>
               <button 
@@ -952,9 +925,7 @@ const handleFileUpload = (e) => {
                 onClick={handleCancelClick}
                 disabled={isLoading}
               >
-                <i className="fas fa-times"></i>
-                Cancel
-              </button>
+                <i className="fas fa-times"></i><PortalText text={"Cancel"} /></button>
             </div>
           </div>
         </div>
@@ -965,40 +936,29 @@ const handleFileUpload = (e) => {
         <div className="js-loading-overlay">
           <div className="js-loading-content">
             <div className="js-loading-spinner"></div>
-            <p className="js-loading-text">Updating Profile Madiconeckt...</p>
+            <p className="js-loading-text"><PortalText text={"Updating Profile Madiconeckt..."} /></p>
           </div>
         </div>
       )}
 
       <div className="js-instructions">
         <h3 className="js-instructions-title">
-          <i className="fas fa-info-circle"></i> Profile Management Instructions
-        </h3>
+          <i className="fas fa-info-circle"></i><PortalText text={" Profile Management Instructions"} /></h3>
         <ul className="js-instructions-list">
           <li className="js-instruction-item">
-            <span className="js-instruction-icon">📷</span>
-            Click the camera icon to update profile picture
-          </li>
+            <span className="js-instruction-icon">📷</span><PortalText text={"Click the camera icon to update profile picture"} /></li>
           <li className="js-instruction-item">
-            <span className="js-instruction-icon">📝</span>
-            Click "Edit" on any section to modify information
-          </li>
+            <span className="js-instruction-icon">📝</span><PortalText text={"Click \"Edit\" on any section to modify information"} /></li>
           <li className="js-instruction-item">
-            <span className="js-instruction-icon">➕</span>
-            Click "+ Add Item" to add multiple entries in lists
-          </li>
+            <span className="js-instruction-icon">➕</span><PortalText text={"Click \"+ Add Item\" to add multiple entries in lists"} /></li>
           <li className="js-instruction-item">
-            <span className="js-instruction-icon">💾</span>
-            Click "Save Changes" to apply all modifications
-          </li>
+            <span className="js-instruction-icon">💾</span><PortalText text={"Click \"Save Changes\" to apply all modifications"} /></li>
         </ul>
       </div>
 
       <footer className="js-profile-footer">
         <p className="js-footer-text">
-          <i className="fas fa-shield-alt"></i>
-          Last updated: {new Date().toLocaleDateString()} | Mount Sinai Health System
-        </p>
+          <i className="fas fa-shield-alt"></i><PortalText text={"Last updated: "} />{new Date().toLocaleDateString()}<PortalText text={" | Mount Sinai Health System"} /></p>
       </footer>
     </div>
   );

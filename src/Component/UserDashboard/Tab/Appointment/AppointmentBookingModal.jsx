@@ -1,3 +1,4 @@
+import { PortalTemplate, PortalElement, PortalText } from "../../../common/PortalTranslation";
 import { getClinicSchedule } from "./clinicSchedule.js";
 import { canSendEmergency, emergencyBookingPayload } from "./emergencyBooking.js";
 import { appointmentRecordToSlot, buildSlotsFromAvailabilityRanges, getScheduleTokenForTime, isActiveAppointmentRecord } from "./appointmentSlotTokens.js";
@@ -26,8 +27,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
   const [selectedDate, setSelectedDate] = useState(null);
   const [selectedTime, setSelectedTime] = useState(null);
-  const [appointmentPriority, setAppointmentPriority] = useState('normal');
-  const [emergencyReason, setEmergencyReason] = useState('');
+  const appointmentPriority = 'normal';
+  const emergencyReason = '';
   const isEmergency = appointmentPriority === 'emergency';
   const todayIndia = getTodayIndiaDateKey();
   const [clinicOpen, setClinicOpen] = useState(false);
@@ -566,46 +567,44 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     return (
       <div className="abm-modal-overlay" onClick={onClose}>
         <div className="abm-modal-container" onClick={(e) => e.stopPropagation()}>
-          <button className="abm-modal-close-btn" onClick={onClose} type="button" aria-label="Close">
+          <PortalElement as="button" className="abm-modal-close-btn" onClick={onClose} type="button" aria-label="Close">
             <i className="fa-solid fa-xmark"></i>
-          </button>
+          </PortalElement>
 
           <div className="abm-page abm-success-page">
             <div className="abm-success">
               <div className="abm-success-hero">
                 <div className="abm-success-icon"><i className="fa-solid fa-check"></i></div>
-                <h2 className="abm-success-title">{isEmergency ? 'Emergency Appointment Requested' : 'Appointment Booked Successfully!'}</h2>
-                <p className="abm-success-sub">{isEmergency ? 'Your emergency request has been sent to the clinic for the doctor and care team to review. The clinic will confirm consultation timing.' : 'A confirmation notification with all the details has been generated for you.'}</p>
+                <h2 className="abm-success-title">{isEmergency ? <PortalText text={"Emergency Appointment Requested"} /> : <PortalText text={"Appointment Booked Successfully!"} />}</h2>
+                <p className="abm-success-sub">{isEmergency ? <PortalText text={"Your emergency request has been sent to the clinic for the doctor and care team to review. The clinic will confirm consultation timing."} /> : <PortalText text={"A confirmation notification with all the details has been generated for you."} />}</p>
               </div>
 
               <div className="abm-success-card">
                 <div className="abm-success-token">
                   <div className="abm-success-token-left">
-                    <span className="abm-success-token-label"><i className="fa-solid fa-ticket"></i> {isEmergency ? 'Request Status' : 'Token Number'}</span>
-                    <span className="abm-success-token-note">{isEmergency ? `Request ID: ${requestId}` : 'Arrive 15 minutes early'}</span>
+                    <span className="abm-success-token-label"><i className="fa-solid fa-ticket"></i> {isEmergency ? <PortalText text={"Request Status"} /> : <PortalText text={"Token Number"} />}</span>
+                    <span className="abm-success-token-note">{isEmergency ? <PortalTemplate text={"Request ID: {0}"} values={[requestId]} /> : <PortalText text={"Arrive 15 minutes early"} />}</span>
                   </div>
-                  <span className="abm-success-token-num">{isEmergency ? 'Sent' : token != null ? `#${token}` : 'Pending'}</span>
+                  <span className="abm-success-token-num">{isEmergency ? <PortalText text={"Sent"} /> : token != null ? `#${token}` : <PortalText text={"Pending"} />}</span>
                 </div>
 
                 <div className="abm-success-grid">
-                  <div className="abm-pay-row"><span><i className="fa-solid fa-user"></i> Patient</span><strong>{patientName}</strong></div>
-                  <div className="abm-pay-row"><span><i className="fa-solid fa-user-doctor"></i> Doctor</span><strong>{doctor.name}</strong></div>
-                  <div className="abm-pay-row"><span><i className="fa-solid fa-hospital"></i> Clinic</span><strong>{selectedClinic.name}</strong></div>
-                  <div className="abm-pay-row"><span><i className="fa-solid fa-location-dot"></i> Location</span><strong>{appointmentLocation}</strong></div>
-                  <div className="abm-pay-row"><span><i className={`fa-solid ${selectedMode.icon}`}></i> Consultation Mode</span><strong>{selectedMode.name}</strong></div>
-                  <div className="abm-pay-row"><span><i className="fa-regular fa-calendar"></i> Date</span><strong>{isEmergency ? 'Requested today' : dateStr}</strong></div>
-                  <div className="abm-pay-row"><span><i className="fa-regular fa-clock"></i> Time</span><strong>{isEmergency ? 'Clinic will confirm' : selectedTime}</strong></div>
+                  <div className="abm-pay-row"><span><i className="fa-solid fa-user"></i><PortalText text={" Patient"} /></span><strong>{patientName}</strong></div>
+                  <div className="abm-pay-row"><span><i className="fa-solid fa-user-doctor"></i><PortalText text={" Doctor"} /></span><strong>{doctor.name}</strong></div>
+                  <div className="abm-pay-row"><span><i className="fa-solid fa-hospital"></i><PortalText text={" Clinic"} /></span><strong>{selectedClinic.name}</strong></div>
+                  <div className="abm-pay-row"><span><i className="fa-solid fa-location-dot"></i><PortalText text={" Location"} /></span><strong>{appointmentLocation}</strong></div>
+                  <div className="abm-pay-row"><span><i className={`fa-solid ${selectedMode.icon}`}></i><PortalText text={" Consultation Mode"} /></span><strong>{selectedMode.name}</strong></div>
+                  <div className="abm-pay-row"><span><i className="fa-regular fa-calendar"></i><PortalText text={" Date"} /></span><strong>{isEmergency ? <PortalText text={"Requested today"} /> : dateStr}</strong></div>
+                  <div className="abm-pay-row"><span><i className="fa-regular fa-clock"></i><PortalText text={" Time"} /></span><strong>{isEmergency ? <PortalText text={"Clinic will confirm"} /> : selectedTime}</strong></div>
                 </div>
 
-                {!isEmergency && <div className="abm-pay-row abm-pay-total abm-success-total"><span>Total Fee</span><strong>${totalFee}</strong></div>}
+                {!isEmergency && <div className="abm-pay-row abm-pay-total abm-success-total"><span><PortalText text={"Total Fee"} /></span><strong>${totalFee}</strong></div>}
               </div>
 
               <button className="abm-confirm abm-success-btn" onClick={bookAnother}>
-                <i className="fa-solid fa-plus"></i> Book Another Appointment
-              </button>
+                <i className="fa-solid fa-plus"></i><PortalText text={" Book Another Appointment"} /></button>
               <div className="abm-success-redirect">
-                <i className="fa-solid fa-rotate-right"></i> Closing dialog shortly…
-              </div>
+                <i className="fa-solid fa-rotate-right"></i><PortalText text={" Closing dialog shortly…"} /></div>
             </div>
           </div>
         </div>
@@ -618,15 +617,15 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     return (
       <div className="abm-modal-overlay" onClick={onClose}>
         <div className="abm-modal-container" onClick={(e) => e.stopPropagation()}>
-          <button className="abm-modal-close-btn" onClick={onClose} type="button" aria-label="Close">
+          <PortalElement as="button" className="abm-modal-close-btn" onClick={onClose} type="button" aria-label="Close">
             <i className="fa-solid fa-xmark"></i>
-          </button>
+          </PortalElement>
 
           <div className="abm-page abm-pay-page">
             <div className="abm-pay">
               <div className="abm-pay-header">
-                <h2 className="abm-pay-heading">Review &amp; Payment</h2>
-                <p className="abm-pay-subheading">Please review your appointment details before confirming</p>
+                <h2 className="abm-pay-heading"><PortalText text={"Review & Payment"} /></h2>
+                <p className="abm-pay-subheading"><PortalText text={"Please review your appointment details before confirming"} /></p>
               </div>
 
               <div className="abm-pay-grid">
@@ -634,22 +633,22 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 <div className="abm-pay-main">
                   {/* Appointment summary */}
                   <div className="abm-pay-card">
-                    <h3 className="abm-pay-card-title"><i className="fa-regular fa-calendar-check"></i> Appointment Summary</h3>
-                    {isEmergency && <div className="abm-emergency-summary"><strong>Emergency appointment</strong><p>{emergencyReason}</p><small>Subject to clinic confirmation.</small></div>}
+                    <h3 className="abm-pay-card-title"><i className="fa-regular fa-calendar-check"></i><PortalText text={" Appointment Summary"} /></h3>
+                    {isEmergency && <div className="abm-emergency-summary"><strong><PortalText text={"Emergency appointment"} /></strong><p>{emergencyReason}</p><small><PortalText text={"Subject to clinic confirmation."} /></small></div>}
                     <div className="abm-pay-rows2">
-                      <div className="abm-pay-row"><span><i className="fa-solid fa-user"></i> Patient</span><strong>{patientName}</strong></div>
-                      <div className="abm-pay-row"><span><i className="fa-solid fa-user-doctor"></i> Doctor</span><strong>{doctor.name}</strong></div>
-                      <div className="abm-pay-row"><span><i className="fa-solid fa-hospital"></i> Clinic</span><strong>{selectedClinic.name}</strong></div>
-                      <div className="abm-pay-row"><span><i className="fa-solid fa-location-dot"></i> Location</span><strong>{appointmentLocation}</strong></div>
-                      <div className="abm-pay-row"><span><i className={`fa-solid ${selectedMode.icon}`}></i> Mode</span><strong>{selectedMode.name}</strong></div>
-                      <div className="abm-pay-row"><span><i className="fa-regular fa-calendar"></i> Date</span><strong>{dateStr}</strong></div>
-                      <div className="abm-pay-row"><span><i className="fa-regular fa-clock"></i> Time</span><strong>{selectedTime}</strong></div>
+                      <div className="abm-pay-row"><span><i className="fa-solid fa-user"></i><PortalText text={" Patient"} /></span><strong>{patientName}</strong></div>
+                      <div className="abm-pay-row"><span><i className="fa-solid fa-user-doctor"></i><PortalText text={" Doctor"} /></span><strong>{doctor.name}</strong></div>
+                      <div className="abm-pay-row"><span><i className="fa-solid fa-hospital"></i><PortalText text={" Clinic"} /></span><strong>{selectedClinic.name}</strong></div>
+                      <div className="abm-pay-row"><span><i className="fa-solid fa-location-dot"></i><PortalText text={" Location"} /></span><strong>{appointmentLocation}</strong></div>
+                      <div className="abm-pay-row"><span><i className={`fa-solid ${selectedMode.icon}`}></i><PortalText text={" Mode"} /></span><strong>{selectedMode.name}</strong></div>
+                      <div className="abm-pay-row"><span><i className="fa-regular fa-calendar"></i><PortalText text={" Date"} /></span><strong>{dateStr}</strong></div>
+                      <div className="abm-pay-row"><span><i className="fa-regular fa-clock"></i><PortalText text={" Time"} /></span><strong>{selectedTime}</strong></div>
                     </div>
                   </div>
 
                   {/* Payment methods */}
                   <div className="abm-pay-card">
-                    <h3 className="abm-pay-card-title"><i className="fa-solid fa-wallet"></i> Choose Payment Method</h3>
+                    <h3 className="abm-pay-card-title"><i className="fa-solid fa-wallet"></i><PortalText text={" Choose Payment Method"} /></h3>
                     <div className="abm-pay-methods">
                       {paymentMethods.map((pm) => (
                         <button
@@ -670,7 +669,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
                   <div className="abm-pay-info">
                     <i className="fa-solid fa-circle-info"></i>
-                    <span>Your appointment will be reserved immediately upon confirmation. All details will be stored in your dashboard.</span>
+                    <span><PortalText text={"Your appointment will be reserved immediately upon confirmation. All details will be stored in your dashboard."} /></span>
                   </div>
                 </div>
 
@@ -678,33 +677,32 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 <aside className="abm-pay-side">
                   <div className="abm-token-banner">
                     <div className="abm-token-ic"><i className="fa-solid fa-ticket"></i></div>
-                    <div className="abm-token-label">Final Token</div>
-                    <div className="abm-token-num">{selectedTime ? '1 Token' : 'Select a time'}</div>
-                    <div className="abm-token-note">{selectedTime ? `${selectedTime} appointment slot` : 'Select a time slot'}</div>
-                    <div className="abm-token-note">One confirmed booking creates one backend token. Your final token appears after booking.</div>
-                    <div className="abm-token-note"><i className="fa-regular fa-clock"></i> Arrive 15 minutes early</div>
+                    <div className="abm-token-label"><PortalText text={"Final Token"} /></div>
+                    <div className="abm-token-num">{selectedTime ? <PortalText text={"1 Token"} /> : <PortalText text={"Select a time"} />}</div>
+                    <div className="abm-token-note">{selectedTime ? <PortalTemplate text={"{0} appointment slot"} values={[selectedTime]} /> : <PortalText text={"Select a time slot"} />}</div>
+                    <div className="abm-token-note"><PortalText text={"One confirmed booking creates one backend token. Your final token appears after booking."} /></div>
+                    <div className="abm-token-note"><i className="fa-regular fa-clock"></i><PortalText text={" Arrive 15 minutes early"} /></div>
                   </div>
 
                   <div className="abm-pay-card">
-                    <h3 className="abm-pay-card-title"><i className="fa-solid fa-receipt"></i> Fee Breakdown</h3>
-                    <div className="abm-pay-row"><span>Consultation Fee</span><strong>${selectedClinic.fee}</strong></div>
+                    <h3 className="abm-pay-card-title"><i className="fa-solid fa-receipt"></i><PortalText text={" Fee Breakdown"} /></h3>
+                    <div className="abm-pay-row"><span><PortalText text={"Consultation Fee"} /></span><strong>${selectedClinic.fee}</strong></div>
                     {selectedMode.fee > 0 && (
                       <div className="abm-pay-row"><span>{selectedMode.name}</span><strong>+${selectedMode.fee}</strong></div>
                     )}
-                    <div className="abm-pay-row abm-pay-total"><span>Total</span><strong>${totalFee}</strong></div>
+                    <div className="abm-pay-row abm-pay-total"><span><PortalText text={"Total"} /></span><strong>${totalFee}</strong></div>
                   </div>
 
                   <button className="abm-btn-confirm2 abm-pay-confirm-full" onClick={confirmBooking} disabled={booking} type="button">
                     {booking ? (
-                      <><i className="fa-solid fa-spinner fa-spin"></i> Booking…</>
+                      <><i className="fa-solid fa-spinner fa-spin"></i><PortalText text={" Booking…"} /></>
                     ) : (
-                      <><i className="fa-solid fa-lock"></i> Confirm &amp; Book · ${totalFee}</>
+                      <><i className="fa-solid fa-lock"></i><PortalText text={" Confirm & Book · $"} />{totalFee}</>
                     )}
                   </button>
                   {bookError && <p className="abm-pay-error">{bookError}</p>}
                   <button className="abm-btn-back2 abm-pay-back-full" onClick={() => setStep('select')} disabled={booking} type="button">
-                    <i className="fa-solid fa-arrow-left"></i> Back
-                  </button>
+                    <i className="fa-solid fa-arrow-left"></i><PortalText text={" Back"} /></button>
                 </aside>
               </div>
             </div>
@@ -718,9 +716,9 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   return (
     <div className="abm-modal-overlay" onClick={onClose}>
       <div className="abm-modal-container" onClick={(e) => e.stopPropagation()}>
-        <button className="abm-modal-close-btn" onClick={onClose} type="button" aria-label="Close">
+        <PortalElement as="button" className="abm-modal-close-btn" onClick={onClose} type="button" aria-label="Close">
           <i className="fa-solid fa-xmark"></i>
-        </button>
+        </PortalElement>
 
         <div className="abm-page">
           <div className="abm-grid">
@@ -751,18 +749,18 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                   <div className="abm-doctor-divider"></div>
                   <div className="abm-doctor-badges">
                     <span className="abm-badge"><i className="fa-solid fa-globe"></i> {doctor.languages}</span>
-                    <span className="abm-badge"><i className="fa-regular fa-clock"></i> Next available: {doctor.nextAvailable}</span>
+                    <span className="abm-badge"><i className="fa-regular fa-clock"></i><PortalText text={" Next available: "} />{doctor.nextAvailable}</span>
                   </div>
                 </div>
 
                 {/* Clinic details */}
                 <div className="abm-side-stack">
                   <div className="abm-card abm-clinic-details">
-                    <div className="abm-cd-title"><i className="fa-solid fa-hospital"></i> Clinic Details</div>
-                    <div className="abm-cd-row"><span className="abm-cd-key">Location:</span> {selectedClinic.address || 'Not specified'}</div>
-                    <div className="abm-cd-row"><span className="abm-cd-key">Available Days:</span> {selectedClinic.days}</div>
-                    <div className="abm-cd-row"><span className="abm-cd-key">Timings:</span> {selectedClinic.timings}</div>
-                    <div className="abm-cd-row"><span className="abm-cd-key">Consultation Fee:</span> ${selectedClinic.fee}</div>
+                    <div className="abm-cd-title"><i className="fa-solid fa-hospital"></i><PortalText text={" Clinic Details"} /></div>
+                    <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Location:"} /></span> {selectedClinic.address || <PortalText text={"Not specified"} />}</div>
+                    <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Available Days:"} /></span> {selectedClinic.days}</div>
+                    <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Timings:"} /></span> {selectedClinic.timings}</div>
+                    <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Consultation Fee:"} /></span> ${selectedClinic.fee}</div>
                   </div>
                 </div>
               </div>
@@ -774,7 +772,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                   <button className="abm-select-head" type="button" onClick={() => { setClinicOpen(!clinicOpen); setModeOpen(false); }}>
                     <span className="abm-select-icon"><i className="fa-solid fa-hospital"></i></span>
                     <span className="abm-select-headtext">
-                      <span className="abm-select-eyebrow">CLINIC</span>
+                      <span className="abm-select-eyebrow"><PortalText text={"CLINIC"} /></span>
                       <span className="abm-select-current">{selectedClinic.name}</span>
                     </span>
                     <i className={`fa-solid fa-chevron-${clinicOpen ? 'up' : 'down'} abm-select-caret`}></i>
@@ -782,8 +780,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
                   {clinicOpen && (
                     <div className="abm-select-body">
-                      <div className="abm-select-subtitle"><i className="fa-solid fa-hospital"></i> Select Clinic for {doctor.name}</div>
-                      {clinicsLoading && <div className="abm-opt-loading"><i className="fa-solid fa-spinner fa-spin"></i> Loading clinics...</div>}
+                      <div className="abm-select-subtitle"><i className="fa-solid fa-hospital"></i><PortalText text={" Select Clinic for "} />{doctor.name}</div>
+                      {clinicsLoading && <div className="abm-opt-loading"><i className="fa-solid fa-spinner fa-spin"></i><PortalText text={" Loading clinics..."} /></div>}
                       {clinics.map((c) => (
                         <div
                           key={c.id || c.name}
@@ -816,7 +814,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                   <button className="abm-select-head" type="button" onClick={() => { setModeOpen(!modeOpen); setClinicOpen(false); }}>
                     <span className="abm-select-icon"><i className={`fa-solid ${selectedMode.icon}`}></i></span>
                     <span className="abm-select-headtext">
-                      <span className="abm-select-eyebrow">CONSULTATION MODE</span>
+                      <span className="abm-select-eyebrow"><PortalText text={"CONSULTATION MODE"} /></span>
                       <span className="abm-select-current">{selectedMode.name}</span>
                     </span>
                     <i className={`fa-solid fa-chevron-${modeOpen ? 'up' : 'down'} abm-select-caret`}></i>
@@ -824,7 +822,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
                   {modeOpen && (
                     <div className="abm-select-body">
-                      <div className="abm-select-subtitle"><i className="fa-solid fa-comment-medical"></i> Select Consultation Mode</div>
+                      <div className="abm-select-subtitle"><i className="fa-solid fa-comment-medical"></i><PortalText text={" Select Consultation Mode"} /></div>
                       {modes.map((m) => (
                         <div
                           key={m.id}
@@ -835,7 +833,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                           <div className="abm-opt-main">
                             <div className="abm-opt-name">{m.name}</div>
                             <div className="abm-opt-addr">{m.desc}</div>
-                            <span className="abm-opt-fee">Additional Fee: ${m.fee}</span>
+                            <span className="abm-opt-fee"><PortalText text={"Additional Fee: $"} />{m.fee}</span>
                           </div>
                           {selectedModeId === m.id && <span className="abm-opt-check"><i className="fa-solid fa-check"></i></span>}
                         </div>
@@ -845,25 +843,9 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 </div>}
               </div>
 
-              <fieldset className="abm-priority-field" disabled={booking}>
-                <legend>Appointment Type</legend>
-                <label><input type="radio" name="appointment-priority" value="normal" checked={!isEmergency} onChange={() => { setAppointmentPriority('normal'); setSelectedTime(null); }} /> Regular appointment</label>
-                {!['counsellor', 'counselor', 'consultant'].includes(String(incoming?.role || '').toLowerCase()) &&
-                  <label><input type="radio" name="appointment-priority" value="emergency" checked={isEmergency} onChange={() => { setAppointmentPriority('emergency'); setSelectedTime(null); setSelectedModeId('in-clinic'); }} /> Emergency appointment — send now</label>}
-                {isEmergency && <div className="abm-emergency-summary">
-                  <label htmlFor="emergency-reason">Reason for emergency *</label>
-                  <textarea id="emergency-reason" value={emergencyReason} onChange={(event) => setEmergencyReason(event.target.value)} minLength={1} maxLength={1000} required rows={3} aria-describedby="emergency-booking-help" placeholder="Describe why you need an urgent appointment" />
-                  <p id="emergency-booking-help">Enter 10–1000 characters. No date, time slot or payment selection is needed. Your request alerts the doctor and the selected clinic's nurse/reception team. The clinic confirms consultation timing.</p>
-                  {bookError && <p role="alert">{bookError}</p>}
-                  <button className="abm-confirm abm-emergency-submit" type="button" disabled={booking || clinicsLoading} onClick={confirmBooking}>
-                    {booking ? 'Sending Emergency Request...' : 'Send Emergency Request'}
-                  </button>
-                </div>}
-              </fieldset>
-
               <div className="abm-location-field">
-                <label htmlFor="appointment-location"><i className="fa-solid fa-location-dot"></i> {isEmergency ? 'Your Location (optional)' : 'Appointment Location'}</label>
-                <input
+                <label htmlFor="appointment-location"><i className="fa-solid fa-location-dot"></i> {isEmergency ? <PortalText text={"Your Location (optional)"} /> : <PortalText text={"Appointment Location"} />}</label>
+                <PortalElement as="input"
                   id="appointment-location"
                   type="text"
                   value={appointmentLocation}
@@ -875,7 +857,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
               {!isEmergency && <div className="abm-main">
                 <div className="abm-section-head">
-                  <h3 className="abm-section-title">Choose Appointment Date</h3>
+                  <h3 className="abm-section-title"><PortalText text={"Choose Appointment Date"} /></h3>
                   <div className="abm-month-nav">
                     <span>{calendarMonthLabel}</span>
                   </div>
@@ -906,8 +888,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                         <span className="abm-date-num">{d.date}</span>
                         <span className="abm-date-slots">
                           {d.status === 'available'
-                            ? `${slotsForDate(d).filter((slot) => !slot.disabled && !slot.isPast).length} slots`
-                            : 'No slots'}
+                            ? <PortalTemplate text={"{0} slots"} values={[slotsForDate(d).filter((slot) => !slot.disabled && !slot.isPast).length]} />
+                            : <PortalText text={"No slots"} />}
                         </span>
                         {d.note && <span className="abm-date-note">{d.note}</span>}
                       </button>
@@ -920,14 +902,12 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 {/* Time slots */}
                 {availabilityLoading && (
                   <div className="abm-availability-state">
-                    <i className="fa-solid fa-spinner fa-spin"></i> Loading doctor availability...
-                  </div>
+                    <i className="fa-solid fa-spinner fa-spin"></i><PortalText text={" Loading doctor availability..."} /></div>
                 )}
                 {selectedDate && !availabilityLoading && (
                   <div className="abm-times">
-                    <h4 className="abm-times-title">
-                      Available Times for {selectedDate.day}, {selectedDate.label}
-                      <span>{selectedDateAvailableCount} separate appointment slot{selectedDateAvailableCount === 1 ? '' : 's'}</span>
+                    <h4 className="abm-times-title"><PortalText text={"Available Times for "} />{selectedDate.day}, {selectedDate.label}
+                      <span>{selectedDateAvailableCount}<PortalText text={" separate appointment slot"} />{selectedDateAvailableCount === 1 ? '' : 's'}</span>
                     </h4>
                     {slotGroups.length > 0 ? (
                       slotGroups.map((group) => (
@@ -944,7 +924,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                                 onClick={() => handleTimeSelect(slot)}
                               >
                                 <span>{slot.time}</span>
-                                <small>Token {slot.tokenNumber}</small>
+                                <small><PortalText text={"Token "} />{slot.tokenNumber}</small>
                               </button>
                             ))}
                           </div>
@@ -952,22 +932,20 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                       ))
                     ) : (
                       <div className="abm-availability-state">
-                        <i className="fa-regular fa-clock"></i> No specific time slots for this date.
-                      </div>
+                        <i className="fa-regular fa-clock"></i><PortalText text={" No specific time slots for this date."} /></div>
                     )}
                   </div>
                 )}
                 {!availabilityLoading && !selectedDate && (
                   <div className="abm-availability-state">
-                    <i className="fa-regular fa-calendar-xmark"></i> No slots available in the next 7 days for this clinic.
-                  </div>
+                    <i className="fa-regular fa-calendar-xmark"></i><PortalText text={" No slots available in the next 7 days for this clinic."} /></div>
                 )}
               </div>}
             </div>
 
             {/* Right: Booking Summary (timeline, sticky) */}
             <aside className="abm-summary">
-              <h3 className="abm-summary-title">Booking Summary</h3>
+              <h3 className="abm-summary-title"><PortalText text={"Booking Summary"} /></h3>
               <div className="abm-summary-doctor">{doctor.name}</div>
 
               <div className="abm-timeline">
@@ -983,14 +961,13 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
               </div>
 
               {!isEmergency && <div className="abm-total">
-                <span className="abm-total-label">Total Fee</span>
+                <span className="abm-total-label"><PortalText text={"Total Fee"} /></span>
                 <span className="abm-total-amount">${totalFee}.00</span>
               </div>}
 
               {!hasClinics && (
                 <p className="abm-no-clinic">
-                  <i className="fa-solid fa-circle-exclamation"></i> This doctor has no clinic available yet, so booking isn't possible.
-                </p>
+                  <i className="fa-solid fa-circle-exclamation"></i><PortalText text={" This doctor has no clinic available yet, so booking isn't possible."} /></p>
               )}
 
               <button
@@ -999,7 +976,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                 type="button"
                 disabled={isEmergency ? booking || clinicsLoading : !selectedDate || !selectedTime || !hasClinics || !appointmentLocation.trim()}
               >
-                {isEmergency ? booking ? 'Sending...' : 'Send Emergency Request' : 'Confirm Selection'} <i className="fa-solid fa-arrow-right"></i>
+                {isEmergency ? booking ? <PortalText text={"Sending..."} /> : <PortalText text={"Send Emergency Request"} /> : <PortalText text={"Confirm Selection"} />} <i className="fa-solid fa-arrow-right"></i>
               </button>
             </aside>
 

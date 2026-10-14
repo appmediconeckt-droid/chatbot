@@ -1,138 +1,19 @@
+import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
+import { medicineTiming, medicineDuration } from "../../common/prescriptionDetails.js";
 import PatientProfileImage from "../../common/PatientProfileImage";
 import { filterPatients, dateKey } from "./patientFilters.js";
 // ===============================
 // PatientDetailsPage.jsx (ReactJS)
 // ===============================
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
-import { User, Phone, Calendar, Clock, Heart, Pill, Stethoscope, ChevronLeft, FileText, Download, Users, UserPlus, ClipboardList, TrendingUp, X } from "lucide-react";
+import { User, Phone, Calendar, Clock, Heart, Pill, Stethoscope, ChevronLeft, RefreshCw, FileText, Download, Users, UserPlus, ClipboardList, TrendingUp, X } from "lucide-react";
 import "./PatientDetailsPage.css";
-import { patientCardDetails, appointmentDoctorName, appointmentVitals } from "./patientRecordDetails.js";
+import PatientPagination from "./PatientPagination.jsx";
+import { patientCardDetails, appointmentDoctorName, appointmentVitals, isPatientDirectoryRecord } from "./patientRecordDetails.js";
 import { generatePrescriptionPDF } from "./pdfGenerator";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
-
-const patientData = [
-  {
-    id: 1,
-    name: "Ramesh Kumar",
-    age: 45,
-    gender: "Male",
-    phone: "9876543210",
-    bloodGroup: "O+",
-    lastVisit: "2026-01-08",
-    records: [
-      {
-        id: 101,
-        date: "2026-01-05",
-        time: "10:30 AM",
-        bp: "120/80",
-        pulse: "72",
-        temperature: "98.6°F",
-        problem: "Fever & Cold",
-        diagnosis: "Viral Infection",
-        tablets: "Paracetamol 500mg (1-0-1), Cetirizine 10mg (0-0-1)",
-        days: "5 Days",
-        doctor: "Dr. A. Sharma",
-        prescription: "Take medicine after meals. Rest well.",
-        followUp: "2026-01-10",
-      },
-      {
-        id: 102,
-        date: "2026-01-08",
-        time: "11:15 AM",
-        bp: "118/78",
-        pulse: "68",
-        temperature: "98.4°F",
-        problem: "Migraine Headache",
-        diagnosis: "Tension Headache",
-        tablets: "Ibuprofen 400mg (1-0-0), Sumatriptan 50mg (SOS)",
-        days: "3 Days",
-        doctor: "Dr. A. Sharma",
-        prescription: "Avoid screen time. Drink plenty of water.",
-        followUp: "2026-01-12",
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Sita Patil",
-    age: 52,
-    gender: "Female",
-    phone: "9123456789",
-    bloodGroup: "B+",
-    lastVisit: "2026-01-07",
-    records: [
-      {
-        id: 201,
-        date: "2026-01-07",
-        time: "09:45 AM",
-        bp: "130/85",
-        pulse: "76",
-        temperature: "98.8°F",
-        problem: "Hypertension",
-        diagnosis: "Stage 1 Hypertension",
-        tablets: "Amlodipine 5mg (0-0-1), Losartan 50mg (1-0-0)",
-        days: "30 Days",
-        doctor: "Dr. M. Deshmukh",
-        prescription: "Monitor BP daily. Low salt diet.",
-        followUp: "2026-02-07",
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: "Amit Verma",
-    age: 38,
-    gender: "Male",
-    phone: "9988776655",
-    bloodGroup: "A+",
-    lastVisit: "2026-01-09",
-    records: [
-      {
-        id: 301,
-        date: "2026-01-09",
-        time: "03:20 PM",
-        bp: "125/82",
-        pulse: "80",
-        temperature: "99.1°F",
-        problem: "Back Pain",
-        diagnosis: "Muscle Spasm",
-        tablets: "Diclofenac 50mg (1-0-1), Muscle Relaxant",
-        days: "7 Days",
-        doctor: "Dr. R. Gupta",
-        prescription: "Hot compression. Avoid lifting weights.",
-        followUp: "2026-01-16",
-      },
-    ],
-  },
-  {
-    id: 4,
-    name: "Priya Sharma",
-    age: 29,
-    gender: "Female",
-    phone: "8877665544",
-    bloodGroup: "AB+",
-    lastVisit: "2026-01-06",
-    records: [
-      {
-        id: 401,
-        date: "2026-01-06",
-        time: "02:15 PM",
-        bp: "110/70",
-        pulse: "65",
-        temperature: "98.9°F",
-        problem: "Allergic Rhinitis",
-        diagnosis: "Seasonal Allergy",
-        tablets: "Levocetirizine 5mg (0-0-1), Nasal Spray",
-        days: "10 Days",
-        doctor: "Dr. A. Sharma",
-        prescription: "Avoid dust and pollen. Use mask outside.",
-        followUp: "2026-01-16",
-      },
-    ],
-  },
-];
 
 export default function PatientDetailsPage() {
   const authUser = useDoctorUser();
@@ -147,6 +28,8 @@ export default function PatientDetailsPage() {
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
   const [patientPage, setPatientPage] = useState(1);
   const [recordPage, setRecordPage] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const pageSize = 10;
 
   // ===== Filter & Sort States =====
@@ -169,7 +52,7 @@ export default function PatientDetailsPage() {
   const getStoredAuthUser = () => {
     try {
       return JSON.parse(localStorage.getItem("userData") || "null");
-    } catch (error) {
+    } catch {
       return null;
     }
   };
@@ -234,21 +117,16 @@ export default function PatientDetailsPage() {
     const medicines = parseMedicines(appointment.medicines);
     if (!medicines.length) return appointment.tablets || appointment.medication || "N/A";
     return medicines.map((medicine) => {
-      const timing = Array.isArray(medicine.timings) && medicine.timings.length
-        ? medicine.timings.join(", ")
-        : "Timing not specified";
-      const duration = medicine.durationValue
-        ? ` - ${medicine.durationValue} ${medicine.durationType || "days"}`
-        : "";
+      const timing = medicineTiming(medicine) || "Timing not specified";
+      const durationText = medicineDuration(medicine);
+      const duration = durationText ? ` - ${durationText}` : "";
       return `${medicine.name || "Medicine"}${medicine.dosage ? ` - ${medicine.dosage}` : ""} (${timing})${duration}`;
     }).join("\n");
   };
 
   const getMedicineDuration = (appointment) => {
     const medicines = parseMedicines(appointment.medicines);
-    const durations = medicines
-      .filter((medicine) => medicine.durationValue)
-      .map((medicine) => `${medicine.durationValue} ${medicine.durationType || "Days"}`);
+    const durations = medicines.map(medicineDuration).filter(Boolean);
     return durations.length ? durations.join(", ") : appointment.days || appointment.duration || "N/A";
   };
 
@@ -283,6 +161,7 @@ export default function PatientDetailsPage() {
     const byPatient = new Map();
 
     [...appointments].sort((a,b) => Date.parse(b.appointment_date || b.date || b.createdAt || 0) - Date.parse(a.appointment_date || a.date || a.createdAt || 0)).forEach((appointment) => {
+      if (!isPatientDirectoryRecord(appointment)) return;
       const patient = patientCardDetails(appointment);
       const patientId = String(patient.id || `record-${appointment.id || appointment._id}`);
       const record = normalizeRecord(appointment);
@@ -310,38 +189,56 @@ export default function PatientDetailsPage() {
     return Array.from(byPatient.values());
   };
 
-  useEffect(() => {
-    const loadPatients = async () => {
-      if (!doctorId) {
-        setStatus("failed");
-        setError("Doctor ID not found. Please login again.");
-        setPatients([]);
-        return;
-      }
+  const patientBuilder = useRef(buildPatientsFromAppointments);
+  patientBuilder.current = buildPatientsFromAppointments;
 
+  useEffect(() => {
+    const controller = new AbortController();
+    let timer;
+    let inFlight = false;
+    setStatus("loading");
+    const loadPatients = async () => {
+      if (inFlight || controller.signal.aborted) return;
+      clearTimeout(timer);
+      if (!doctorId) {
+        setStatus("failed"); setError("Doctor ID not found. Please login again."); setPatients([]); return;
+      }
+      inFlight = true; setRefreshing(true);
       try {
-        setStatus("loading");
         setError("");
         const responses = await Promise.allSettled(['/appointments', '/walkin-appointments'].map(path => axios.get(`${API_BASE_URL}${path}`, {
-          headers: getAuthHeaders(), params: { doctor_id: doctorId },
+          headers: getAuthHeaders(), params: { doctor_id: doctorId, patient_directory: 'true' }, signal: controller.signal, timeout: 15000,
         })));
+        if (controller.signal.aborted) return;
         if (responses.every(result => result.status === 'rejected')) throw responses[0].reason;
         if (responses.some(result => result.status === 'rejected')) setError('Some visit records could not load. Refresh to try again.');
-        const appointments = responses.flatMap(result => result.status === 'fulfilled' ? unwrapApiArray(result.value.data) : []).filter((appointment) => {
+        const appointments = responses.flatMap((result, index) => result.status === 'fulfilled' ? unwrapApiArray(result.value.data).map(record => ({ ...record, appointment_type: record.appointment_type || (index === 0 ? 'online' : 'walkin') })) : []).filter((appointment) => {
           const appointmentDoctorId = appointment.doctor_id || appointment.doctorId || appointment.doctor?.id || appointment.doctor?._id || appointment.counselor?._id || appointment.counselor?.id;
           return !appointmentDoctorId || String(typeof appointmentDoctorId === "object" ? appointmentDoctorId._id || appointmentDoctorId.id : appointmentDoctorId) === String(doctorId);
         });
-        setPatients(buildPatientsFromAppointments(appointments));
-        setStatus("succeeded");
+        setPatients(patientBuilder.current(appointments)); setStatus("succeeded");
       } catch (error) {
-        setStatus("failed");
-        setError(error.response?.data?.message || error.response?.data?.error || error.message || "Failed to load patient details");
-        setPatients([]);
+        if (controller.signal.aborted) return;
+        setStatus("failed"); setError(error.response?.data?.message || error.response?.data?.error || error.message || "Failed to load patient details"); setPatients([]);
+      } finally {
+        inFlight = false;
+        if (!controller.signal.aborted) { setRefreshing(false); timer = setTimeout(loadPatients, 15000); }
       }
     };
-
+    const onFocus = () => { if (document.visibilityState !== 'hidden') loadPatients(); };
     loadPatients();
-  }, [doctorId]);
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onFocus);
+    return () => { controller.abort(); clearTimeout(timer); window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onFocus); };
+  }, [doctorId, refreshKey]);
+
+  useEffect(() => {
+    if (!selectedPatient) return;
+    const updated = patients.find(patient => patient.id === selectedPatient.id);
+    if (!updated) { setSelectedPatient(null); setSelectedRecord(null); setShowPatientList(true); return; }
+    setSelectedPatient(updated);
+    setSelectedRecord(previous => previous ? updated.records.find(record => record.id === previous.id) || null : null);
+  }, [patients, selectedPatient]);
 
   const filteredPatients = filterPatients(patients, { search, genderFilter, bloodGroupFilter, ageFilter, lastVisitFilter, sortBy });
 
@@ -370,7 +267,6 @@ export default function PatientDetailsPage() {
     if (recordPage > recordTotalPages) setRecordPage(recordTotalPages);
   }, [recordPage, recordTotalPages]);
 
-  const todayLabel = new Date().toLocaleDateString();
   const todaysAppointments = patients.reduce(
     (count, patient) => count + patient.records.filter((record) => record.dateKey === dateKey(new Date())).length,
     0
@@ -485,46 +381,47 @@ export default function PatientDetailsPage() {
         <>
           <div className="pd-overview-header">
             <div>
-              <h2 className="pd-title">Patients Medical Records</h2>
-              <p className="pd-subtitle">Comprehensive patient history and visit details</p>
+              <h2 className="pd-title"><PortalText text={"Patients Medical Records"} /></h2>
+              <p className="pd-subtitle"><PortalText text={"Comprehensive patient history and visit details"} /></p>
             </div>
-            <button type="button" className="pd-add-patient-btn" onClick={() => setShowAddPatientModal(true)}>+ Add Patient</button>
+            <div className="pd-header-actions"><button type="button" className="pd-refresh-btn" disabled={refreshing} onClick={() => setRefreshKey(value => value + 1)}><RefreshCw size={16} />{refreshing ? <PortalText text={"Refreshing..."} /> : <PortalText text={"Refresh"} />}</button><button type="button" className="pd-add-patient-btn" onClick={() => setShowAddPatientModal(true)}><UserPlus size={16} /><PortalText text={"Add Patient"} /></button></div>
           </div>
 
           <div className="pd-stats-strip">
             <div className="pd-stat-tile active">
               <div className="pd-stat-icon teal"><Users size={22} /></div>
               <span className="pd-stat-trend"><TrendingUp size={12} /> 12%</span>
-              <small>Total Patients</small>
+              <small><PortalText text={"Total Patients"} /></small>
               <strong>{patients.length || 0}</strong>
             </div>
             <div className="pd-stat-tile">
               <div className="pd-stat-icon blue"><UserPlus size={22} /></div>
-              <small>New Admissions</small>
+              <small><PortalText text={"New Admissions"} /></small>
               <strong>{patients.filter((patient) => patient.records.length === 1).length}</strong>
             </div>
             <div className="pd-stat-tile">
               <div className="pd-stat-icon red"><ClipboardList size={22} /></div>
-              <small>Pending Reports</small>
+              <small><PortalText text={"Pending Reports"} /></small>
               <strong>{pendingReports}</strong>
             </div>
             <div className="pd-stat-tile">
               <div className="pd-stat-icon slate"><Calendar size={22} /></div>
-              <small>Today's Appts</small>
+              <small><PortalText text={"Today's Appts"} /></small>
               <strong>{todaysAppointments}</strong>
             </div>
           </div>
         </>
       )}
 
+      {error && status !== "failed" && <p className="pd-directory-error" role="alert">{error}</p>}
       <div className="pd-main-layout">
         {/* Patient List Section - Only shown when no patient selected */}
         {showPatientList && (
           <div className="pd-patient-list-section">
             <div className="pd-directory-header">
-              <h3 className="pd-section-title">Patients Directory</h3>
+              <h3 className="pd-section-title"><PortalText text={"Patients Directory"} /></h3>
               <div className="pd-directory-search">
-                <input
+                <PortalElement as="input"
                   type="text"
                   placeholder="Search patient"
                   value={search}
@@ -536,83 +433,80 @@ export default function PatientDetailsPage() {
             {/* ===== Working Filter Row ===== */}
             <div className="pd-directory-tools">
               <div className="pd-filter-row">
-                <select
+                <PortalElement as="select"
                   className="pd-filter-select"
                   value={genderFilter}
                   onChange={(e) => setGenderFilter(e.target.value)}
                   aria-label="Filter by gender"
                 >
-                  <option value="All">Gender: All</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female</option>
-                  <option value="Other">Other</option>
-                </select>
+                  <PortalElement as="option" value="All">Gender: All</PortalElement>
+                  <PortalElement as="option" value="Male">Male</PortalElement>
+                  <PortalElement as="option" value="Female">Female</PortalElement>
+                  <PortalElement as="option" value="Other">Other</PortalElement>
+                </PortalElement>
 
-                <select
+                <PortalElement as="select"
                   className="pd-filter-select"
                   value={bloodGroupFilter}
                   onChange={(e) => setBloodGroupFilter(e.target.value)}
                   aria-label="Filter by blood group"
                 >
-                  <option value="All">Blood Group: All</option>
-                  <option value="O+">O+</option>
-                  <option value="O-">O-</option>
-                  <option value="A+">A+</option>
-                  <option value="A-">A-</option>
-                  <option value="B+">B+</option>
-                  <option value="B-">B-</option>
-                  <option value="AB+">AB+</option>
-                  <option value="AB-">AB-</option>
-                </select>
+                  <PortalElement as="option" value="All">Blood Group: All</PortalElement>
+                  <PortalElement as="option" value="O+">O+</PortalElement>
+                  <PortalElement as="option" value="O-">O-</PortalElement>
+                  <PortalElement as="option" value="A+">A+</PortalElement>
+                  <PortalElement as="option" value="A-">A-</PortalElement>
+                  <PortalElement as="option" value="B+">B+</PortalElement>
+                  <PortalElement as="option" value="B-">B-</PortalElement>
+                  <PortalElement as="option" value="AB+">AB+</PortalElement>
+                  <PortalElement as="option" value="AB-">AB-</PortalElement>
+                </PortalElement>
 
-                <select
+                <PortalElement as="select"
                   className="pd-filter-select"
                   value={ageFilter}
                   onChange={(e) => setAgeFilter(e.target.value)}
                   aria-label="Filter by age"
                 >
-                  <option value="All">Age: All</option>
-                  <option value="0-18">0 - 18</option>
-                  <option value="19-35">19 - 35</option>
-                  <option value="36-50">36 - 50</option>
-                  <option value="51-64">51 - 65</option>
-                  <option value="65+">65+</option>
-                </select>
+                  <PortalElement as="option" value="All">Age: All</PortalElement>
+                  <PortalElement as="option" value="0-18">0 - 18</PortalElement>
+                  <PortalElement as="option" value="19-35">19 - 35</PortalElement>
+                  <PortalElement as="option" value="36-50">36 - 50</PortalElement>
+                  <PortalElement as="option" value="51-64">51 - 65</PortalElement>
+                  <PortalElement as="option" value="65+">65+</PortalElement>
+                </PortalElement>
 
-                <select
+                <PortalElement as="select"
                   className="pd-filter-select"
                   value={lastVisitFilter}
                   onChange={(e) => setLastVisitFilter(e.target.value)}
                   aria-label="Filter by last visit"
                 >
-                  <option value="All">Last Visit: All</option>
-                  <option value="Today">Today</option>
-                  <option value="This Week">This Week</option>
-                  <option value="This Month">This Month</option>
-                  <option value="Last 3 Months">Last 3 Months</option>
-                </select>
+                  <PortalElement as="option" value="All">Last Visit: All</PortalElement>
+                  <PortalElement as="option" value="Today">Today</PortalElement>
+                  <PortalElement as="option" value="This Week">This Week</PortalElement>
+                  <PortalElement as="option" value="This Month">This Month</PortalElement>
+                  <PortalElement as="option" value="Last 3 Months">Last 3 Months</PortalElement>
+                </PortalElement>
 
                 {hasActiveFilters && (
-                  <button
+                  <PortalElement as="button"
                     type="button"
                     className="pd-clear-filters-btn"
                     onClick={clearAllFilters}
                     title="Clear all filters"
                   >
-                    <X size={14} /> Clear
-                  </button>
+                    <X size={14} /><PortalText text={" Clear"} /></PortalElement>
                 )}
               </div>
 
-              <label className="pd-sort-control">
-                Sort by:
-                <select
+              <label className="pd-sort-control"><PortalText text={"Sort by:"} /><select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
-                  <option>Newest First</option>
-                  <option>Oldest First</option>
-                  <option>Name A-Z</option>
+                  <PortalElement as="option" value={"Newest First"}>Newest First</PortalElement>
+                  <PortalElement as="option" value={"Oldest First"}>Oldest First</PortalElement>
+                  <PortalElement as="option" value={"Name A-Z"}>Name A-Z</PortalElement>
                 </select>
               </label>
             </div>
@@ -621,17 +515,15 @@ export default function PatientDetailsPage() {
             {/* ===== Active Filter Summary ===== */}
             {hasActiveFilters && status === "succeeded" && (
               <div className="pd-filter-summary">
-                <span>
-                  Showing <strong>{filteredPatients.length}</strong> of{" "}
-                  <strong>{patients.length}</strong> patients
-                </span>
+                <span><PortalText text={"Showing "} /><strong>{filteredPatients.length}</strong><PortalText text={" of"} />{" "}
+                  <strong>{patients.length}</strong><PortalText text={" patients"} /></span>
               </div>
             )}
 
             {status === "loading" ? (
               <div className="pd-empty-state">
                 <FileText size={48} />
-                <p>Loading patients...</p>
+                <p><PortalText text={"Loading patients..."} /></p>
               </div>
             ) : status === "failed" ? (
               <div className="pd-empty-state">
@@ -643,8 +535,8 @@ export default function PatientDetailsPage() {
                 <FileText size={48} />
                 <p>
                   {hasActiveFilters
-                    ? "No patients match your filters. Try clearing them."
-                    : "No patients found for this doctor"}
+                    ? <PortalText text={"No patients match your filters. Try clearing them."} />
+                    : <PortalText text={"No patients found for this doctor"} />}
                 </p>
                 {hasActiveFilters && (
                   <button
@@ -653,8 +545,7 @@ export default function PatientDetailsPage() {
                     onClick={clearAllFilters}
                     style={{ marginTop: 12 }}
                   >
-                    <X size={14} /> Clear Filters
-                  </button>
+                    <X size={14} /><PortalText text={" Clear Filters"} /></button>
                 )}
               </div>
             ) : (
@@ -673,9 +564,9 @@ export default function PatientDetailsPage() {
                         <div className="pd-patient-info">
                           <h4 className="pd-patient-name">{patient.name}</h4>
                           <div className="pd-patient-meta">
-                            <span className="pd-patient-age">{patient.age === "N/A" ? "Age not provided" : `${patient.age} yrs`} • {patient.gender}</span>
+                            <span className="pd-patient-age"><span>{patient.age === "N/A" ? <PortalText text={"Age not provided"} /> : <PortalTemplate text={"{0} years"} values={[patient.age]} />}</span><span>{patient.gender === "N/A" ? <PortalText text={"Gender not provided"} /> : patient.gender}</span></span>
                             {patient.bloodGroup && patient.bloodGroup !== "N/A" && (
-                              <span className="pd-patient-blood" title="Blood group">{patient.bloodGroup}</span>
+                              <PortalElement as="span" className="pd-patient-blood" title="Blood group">{patient.bloodGroup}</PortalElement>
                             )}
                           </div>
                         </div>
@@ -686,26 +577,17 @@ export default function PatientDetailsPage() {
                       </div>
                       <div className="pd-patient-footer">
                         <div className="pd-patient-doctor">
-                          <span>Last visit: {patient.lastVisit}</span><span>Doctor</span>
+                          <span><PortalText text={"Last visit: "} />{patient.lastVisit}</span><span><PortalText text={"Doctor"} /></span>
                           <strong>{patient.records[0]?.doctor || appointmentDoctorName({}, authUser || getStoredAuthUser())}</strong>
                         </div>
                         <span className="pd-record-count">
-                          {patient.records.length} {patient.records.length === 1 ? 'Visit' : 'Visits'}
+                          {patient.records.length} {patient.records.length === 1 ? <PortalText text={"Visit"} /> : <PortalText text={"Visits"} />}
                         </span>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="pd-pagination">
-                  <span>Showing {filteredPatients.length ? patientFirstIndex + 1 : 0} to {patientLastIndex} of {filteredPatients.length} patients</span>
-                  <div>
-                    <button type="button" aria-label="Previous page" disabled={safePatientPage === 1} onClick={() => setPatientPage((page) => Math.max(1, page - 1))}>‹</button>
-                    {Array.from({ length: patientTotalPages }, (_, index) => index + 1).map((page) => (
-                      <button type="button" key={page} className={page === safePatientPage ? "active" : ""} onClick={() => setPatientPage(page)}>{page}</button>
-                    ))}
-                    <button type="button" aria-label="Next page" disabled={safePatientPage === patientTotalPages} onClick={() => setPatientPage((page) => Math.min(patientTotalPages, page + 1))}>›</button>
-                  </div>
-                </div>
+                <PatientPagination page={safePatientPage} totalPages={patientTotalPages} total={filteredPatients.length} first={patientFirstIndex} last={patientLastIndex} label="patients" onChange={setPatientPage} />
               </>
             )}
           </div>
@@ -716,8 +598,7 @@ export default function PatientDetailsPage() {
           <div className="pd-records-section">
             <div className="pd-records-header">
               <button className="pd-back-btn" onClick={handleBackToPatients}>
-                <ChevronLeft size={18} /> Back to Patients
-              </button>
+                <ChevronLeft size={18} /><PortalText text={" Back to Patients"} /></button>
               <div className="pd-selected-patient-info">
                 <div className="pd-patient-avatar-large">
                   {<PatientProfileImage patient={selectedPatient} fallback={selectedPatient.name.charAt(0)} />}
@@ -725,34 +606,33 @@ export default function PatientDetailsPage() {
                 <div>
                   <h3 className="pd-patient-name-large">{selectedPatient.name}</h3>
                   <div className="pd-patient-details">
-                    <span><User size={14} /> {selectedPatient.age} yrs • {selectedPatient.gender}</span>
+                    <span className="pd-age-gender"><User size={14} /><span>{selectedPatient.age === "N/A" ? <PortalText text={"Age not provided"} /> : <PortalTemplate text={"{0} years"} values={[selectedPatient.age]} />}</span><span>{selectedPatient.gender === "N/A" ? <PortalText text={"Gender not provided"} /> : selectedPatient.gender}</span></span>
                     <span><Phone size={14} /> {selectedPatient.phone}</span>
-                    <span><Heart size={14} /> Blood Group: {selectedPatient.bloodGroup}</span>
+                    <span><Heart size={14} /><PortalText text={" Blood Group: "} />{selectedPatient.bloodGroup}</span>
                   </div>
                 </div>
               </div>
             </div>
 
             <h3 className="pd-section-title">
-              <Calendar size={20} /> Visit History ({selectedPatient.records.length} appointments)
-            </h3>
+              <Calendar size={20} /><PortalText text={" Visit History ("} />{selectedPatient.records.length}<PortalText text={" appointments)"} /></h3>
 
             {selectedPatient.records.length === 0 ? (
               <div className="pd-empty-state">
                 <FileText size={48} />
-                <p>No visit records found for this patient</p>
+                <p><PortalText text={"No visit records found for this patient"} /></p>
               </div>
             ) : (
               <div className="pd-records-table-container">
                 <table className="pd-records-table">
                   <thead>
                     <tr>
-                      <th>Date</th>
-                      <th>Time</th>
-                      <th>Problem</th>
-                      <th>Doctor</th>
-                      <th>Follow-up</th>
-                      <th>Action</th>
+                      <th><PortalText text={"Date"} /></th>
+                      <th><PortalText text={"Time"} /></th>
+                      <th><PortalText text={"Problem"} /></th>
+                      <th><PortalText text={"Doctor"} /></th>
+                      <th><PortalText text={"Follow-up"} /></th>
+                      <th><PortalText text={"Action"} /></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -782,23 +662,13 @@ export default function PatientDetailsPage() {
                             className="pd-view-detail-btn"
                             onClick={() => setSelectedRecord(record)}
                           >
-                            <FileText size={14} /> View Details
-                          </button>
+                            <FileText size={14} /><PortalText text={" View Details"} /></button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
-                <div className="pd-pagination">
-                  <span>Showing {selectedRecords.length ? recordFirstIndex + 1 : 0} to {recordLastIndex} of {selectedRecords.length} visits</span>
-                  <div>
-                    <button type="button" aria-label="Previous page" disabled={safeRecordPage === 1} onClick={() => setRecordPage((page) => Math.max(1, page - 1))}>‹</button>
-                    {Array.from({ length: recordTotalPages }, (_, index) => index + 1).map((page) => (
-                      <button type="button" key={page} className={page === safeRecordPage ? "active" : ""} onClick={() => setRecordPage(page)}>{page}</button>
-                    ))}
-                    <button type="button" aria-label="Next page" disabled={safeRecordPage === recordTotalPages} onClick={() => setRecordPage((page) => Math.min(recordTotalPages, page + 1))}>›</button>
-                  </div>
-                </div>
+                <PatientPagination page={safeRecordPage} totalPages={recordTotalPages} total={selectedRecords.length} first={recordFirstIndex} last={recordLastIndex} label="visits" onChange={setRecordPage} />
               </div>
             )}
           </div>
@@ -809,11 +679,9 @@ export default function PatientDetailsPage() {
           <div className="pd-record-detail-section">
             <div className="pd-detail-header">
               <button className="pd-back-btn" onClick={handleBackToRecords}>
-                <ChevronLeft size={18} /> Back to Visits
-              </button>
+                <ChevronLeft size={18} /><PortalText text={" Back to Visits"} /></button>
               <h3 className="pd-section-title">
-                <FileText size={20} /> Visit Details
-              </h3>
+                <FileText size={20} /><PortalText text={" Visit Details"} /></h3>
             </div>
 
             <div className="pd-detail-card">
@@ -822,10 +690,10 @@ export default function PatientDetailsPage() {
                 <div>
                   <h4 className="pd-detail-patient-name">{selectedPatient.name}</h4>
                   <div className="pd-detail-patient-meta">
-                    <span>{selectedPatient.age} yrs • {selectedPatient.gender}</span>
-                    <span>•</span>
+                    <span className="pd-age-gender"><span>{selectedPatient.age === "N/A" ? <PortalText text={"Age not provided"} /> : <PortalTemplate text={"{0} years"} values={[selectedPatient.age]} />}</span><span>{selectedPatient.gender === "N/A" ? <PortalText text={"Gender not provided"} /> : selectedPatient.gender}</span></span>
+                    
                     <span>{selectedPatient.bloodGroup}</span>
-                    <span>•</span>
+                    
                     <span>{selectedPatient.phone}</span>
                   </div>
                 </div>
@@ -833,27 +701,27 @@ export default function PatientDetailsPage() {
 
               <div className="pd-detail-grid">
                 <div className="pd-detail-column">
-                  <h5 className="pd-detail-column-title">Visit Information</h5>
+                  <h5 className="pd-detail-column-title"><PortalText text={"Visit Information"} /></h5>
                   <div className="pd-detail-item">
-                    <span className="pd-detail-label">Date</span>
+                    <span className="pd-detail-label"><PortalText text={"Date"} /></span>
                     <span className="pd-detail-value">
                       <Calendar size={14} /> {selectedRecord.date}
                     </span>
                   </div>
                   <div className="pd-detail-item">
-                    <span className="pd-detail-label">Time</span>
+                    <span className="pd-detail-label"><PortalText text={"Time"} /></span>
                     <span className="pd-detail-value">
                       <Clock size={14} /> {selectedRecord.time}
                     </span>
                   </div>
                   <div className="pd-detail-item">
-                    <span className="pd-detail-label">Consulting Doctor</span>
+                    <span className="pd-detail-label"><PortalText text={"Consulting Doctor"} /></span>
                     <span className="pd-detail-value pd-doctor-highlight">
                       <Stethoscope size={14} /> {selectedRecord.doctor}
                     </span>
                   </div>
                   <div className="pd-detail-item">
-                    <span className="pd-detail-label">Follow-up Date</span>
+                    <span className="pd-detail-label"><PortalText text={"Follow-up Date"} /></span>
                     <span className="pd-detail-value pd-followup-highlight">
                       {selectedRecord.followUp}
                     </span>
@@ -861,15 +729,15 @@ export default function PatientDetailsPage() {
                 </div>
 
                 <div className="pd-detail-column">
-                  <h5 className="pd-detail-column-title">Vital Signs</h5>
+                  <h5 className="pd-detail-column-title"><PortalText text={"Vital Signs"} /></h5>
                   <div className="pd-vitals-grid">
                     <div className="pd-vital-card">
                       <div className="pd-vital-icon bp-icon">
                         <Heart size={18} />
                       </div>
                       <div>
-                        <div className="pd-vital-label">Blood Pressure</div>
-                        <div className="pd-vital-value">{selectedRecord.bp} mmHg</div>
+                        <div className="pd-vital-label"><PortalText text={"Blood Pressure"} /></div>
+                        <div className="pd-vital-value">{selectedRecord.bp}<PortalText text={" mmHg"} /></div>
                       </div>
                     </div>
                     <div className="pd-vital-card">
@@ -879,8 +747,8 @@ export default function PatientDetailsPage() {
                         </svg>
                       </div>
                       <div>
-                        <div className="pd-vital-label">Pulse Rate</div>
-                        <div className="pd-vital-value">{selectedRecord.pulse} bpm</div>
+                        <div className="pd-vital-label"><PortalText text={"Pulse Rate"} /></div>
+                        <div className="pd-vital-value">{selectedRecord.pulse}<PortalText text={" bpm"} /></div>
                       </div>
                     </div>
                     <div className="pd-vital-card">
@@ -890,7 +758,7 @@ export default function PatientDetailsPage() {
                         </svg>
                       </div>
                       <div>
-                        <div className="pd-vital-label">Temperature</div>
+                        <div className="pd-vital-label"><PortalText text={"Temperature"} /></div>
                         <div className="pd-vital-value">{selectedRecord.temperature}</div>
                       </div>
                     </div>
@@ -898,34 +766,33 @@ export default function PatientDetailsPage() {
                 </div>
 
                 <div className="pd-detail-column">
-                  <h5 className="pd-detail-column-title">Medical Information</h5>
+                  <h5 className="pd-detail-column-title"><PortalText text={"Medical Information"} /></h5>
                   <div className="pd-detail-item">
-                    <span className="pd-detail-label">Presenting Problem</span>
+                    <span className="pd-detail-label"><PortalText text={"Presenting Problem"} /></span>
                     <span className="pd-detail-value pd-problem-value">{selectedRecord.problem}</span>
                   </div>
                   <div className="pd-detail-item">
-                    <span className="pd-detail-label">Diagnosis</span>
+                    <span className="pd-detail-label"><PortalText text={"Diagnosis"} /></span>
                     <span className="pd-detail-value">{selectedRecord.diagnosis}</span>
                   </div>
                 </div>
 
                 <div className="pd-detail-column pd-prescription-column">
                   <h5 className="pd-detail-column-title">
-                    <Pill size={18} /> Prescription
-                  </h5>
+                    <Pill size={18} /><PortalText text={" Prescription"} /></h5>
                   <div className="pd-prescription-box">
                     <div className="pd-medication-list">
                       <div className="pd-medication-item">
-                        <div className="pd-medication-name">Medication</div>
+                        <div className="pd-medication-name"><PortalText text={"Medication"} /></div>
                         <div className="pd-medication-details">{selectedRecord.tablets}</div>
                       </div>
                       <div className="pd-medication-item">
-                        <div className="pd-medication-name">Duration</div>
+                        <div className="pd-medication-name"><PortalText text={"Duration"} /></div>
                         <div className="pd-medication-details">{selectedRecord.days}</div>
                       </div>
                     </div>
                     <div className="pd-instructions">
-                      <h6>Doctor's Instructions:</h6>
+                      <h6><PortalText text={"Doctor's Instructions:"} /></h6>
                       <p>{selectedRecord.prescription}</p>
                     </div>
                   </div>
@@ -940,14 +807,10 @@ export default function PatientDetailsPage() {
                 >
                   {isDownloading ? (
                     <>
-                      <span className="pd-spinner"></span>
-                      Downloading...
-                    </>
+                      <span className="pd-spinner"></span><PortalText text={"Downloading..."} /></>
                   ) : (
                     <>
-                      <Download size={16} />
-                      Download Prescription
-                    </>
+                      <Download size={16} /><PortalText text={"Download Prescription"} /></>
                   )}
                 </button>
               </div>
@@ -961,62 +824,48 @@ export default function PatientDetailsPage() {
           <form className="pd-add-patient-modal" onSubmit={handleAddPatient} onClick={(event) => event.stopPropagation()}>
             <div className="pd-modal-header">
               <div>
-                <h3>Add Patient</h3>
-                <p>Create a patient profile for the doctor portal.</p>
+                <h3><PortalText text={"Add Patient"} /></h3>
+                <p><PortalText text={"Create a patient profile for the doctor portal."} /></p>
               </div>
-              <button type="button" onClick={() => setShowAddPatientModal(false)} aria-label="Close">
+              <PortalElement as="button" type="button" onClick={() => setShowAddPatientModal(false)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>
-              </button>
+              </PortalElement>
             </div>
 
             <div className="pd-add-form-grid">
-              <label>
-                Patient Name
-                <input required value={newPatient.name} onChange={(event) => updateNewPatient("name", event.target.value)} placeholder="Robert Chen" />
+              <label><PortalText text={"Patient Name"} /><PortalElement as="input" required value={newPatient.name} onChange={(event) => updateNewPatient("name", event.target.value)} placeholder="Robert Chen" />
               </label>
-              <label>
-                Phone No
-                <input value={newPatient.phone} onChange={(event) => updateNewPatient("phone", event.target.value)} placeholder="+1 (555) 019-2834" />
+              <label><PortalText text={"Phone No"} /><input value={newPatient.phone} onChange={(event) => updateNewPatient("phone", event.target.value)} placeholder="+1 (555) 019-2834" />
               </label>
-              <label>
-                Age
-                <input type="number" min="0" value={newPatient.age} onChange={(event) => updateNewPatient("age", event.target.value)} placeholder="54" />
+              <label><PortalText text={"Age"} /><input type="number" min="0" value={newPatient.age} onChange={(event) => updateNewPatient("age", event.target.value)} placeholder="54" />
               </label>
-              <label>
-                Gender
-                <select value={newPatient.gender} onChange={(event) => updateNewPatient("gender", event.target.value)}>
-                  <option>Male</option>
-                  <option>Female</option>
-                  <option>Other</option>
+              <label><PortalText text={"Gender"} /><select value={newPatient.gender} onChange={(event) => updateNewPatient("gender", event.target.value)}>
+                  <PortalElement as="option" value={"Male"}>Male</PortalElement>
+                  <PortalElement as="option" value={"Female"}>Female</PortalElement>
+                  <PortalElement as="option" value={"Other"}>Other</PortalElement>
                 </select>
               </label>
-              <label>
-                Blood Group
-                <select value={newPatient.bloodGroup} onChange={(event) => updateNewPatient("bloodGroup", event.target.value)}>
-                  <option value="">Select blood group</option>
-                  <option>O+</option>
-                  <option>O-</option>
-                  <option>A+</option>
-                  <option>A-</option>
-                  <option>B+</option>
-                  <option>B-</option>
-                  <option>AB+</option>
-                  <option>AB-</option>
+              <label><PortalText text={"Blood Group"} /><select value={newPatient.bloodGroup} onChange={(event) => updateNewPatient("bloodGroup", event.target.value)}>
+                  <PortalElement as="option" value="">Select blood group</PortalElement>
+                  <PortalElement as="option" value={"O+"}>O+</PortalElement>
+                  <PortalElement as="option" value={"O-"}>O-</PortalElement>
+                  <PortalElement as="option" value={"A+"}>A+</PortalElement>
+                  <PortalElement as="option" value={"A-"}>A-</PortalElement>
+                  <PortalElement as="option" value={"B+"}>B+</PortalElement>
+                  <PortalElement as="option" value={"B-"}>B-</PortalElement>
+                  <PortalElement as="option" value={"AB+"}>AB+</PortalElement>
+                  <PortalElement as="option" value={"AB-"}>AB-</PortalElement>
                 </select>
               </label>
-              <label>
-                Doctor
-                <input value={newPatient.doctor} onChange={(event) => updateNewPatient("doctor", event.target.value)} placeholder="Doctor name" />
+              <label><PortalText text={"Doctor"} /><PortalElement as="input" value={newPatient.doctor} onChange={(event) => updateNewPatient("doctor", event.target.value)} placeholder="Doctor name" />
               </label>
-              <label className="pd-wide-field">
-                Last Visit
-                <input type="date" value={newPatient.lastVisit} onChange={(event) => updateNewPatient("lastVisit", event.target.value)} />
+              <label className="pd-wide-field"><PortalText text={"Last Visit"} /><input type="date" value={newPatient.lastVisit} onChange={(event) => updateNewPatient("lastVisit", event.target.value)} />
               </label>
             </div>
 
             <div className="pd-modal-actions">
-              <button type="button" className="pd-modal-cancel" onClick={() => setShowAddPatientModal(false)}>Cancel</button>
-              <button type="submit" className="pd-modal-save">Add Patient</button>
+              <button type="button" className="pd-modal-cancel" onClick={() => setShowAddPatientModal(false)}><PortalText text={"Cancel"} /></button>
+              <button type="submit" className="pd-modal-save"><PortalText text={"Add Patient"} /></button>
             </div>
           </form>
         </div>

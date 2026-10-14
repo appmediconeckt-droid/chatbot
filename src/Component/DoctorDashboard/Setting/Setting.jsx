@@ -1,3 +1,4 @@
+import { PortalText, PortalElement } from "../../common/PortalTranslation";
 // // SettingsPage.jsx
 // import React, { useState } from "react";
 // import "./Setting.css";
@@ -301,7 +302,7 @@ export default function SettingsPage() {
         className={`settingitem ${isActive ? "active" : ""}`}
       >
         <span className="settingicon" aria-hidden="true">{icon}</span>
-        <span className="settingtext">{label}</span>
+        <span className="settingtext">{<PortalText text={label} />}</span>
       </button>
     );
   }
@@ -312,7 +313,7 @@ export default function SettingsPage() {
         <aside className="set-side">
           <div className="set-side-box">
             <div className="header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
-              <h2 className="mb-3">Settings</h2>
+              <h2 className="mb-3"><PortalText text={"Settings"} /></h2>
             </div>
 
             <MenuItem id="profile" icon={<Stethoscope />} label="Profile" />
@@ -331,20 +332,18 @@ export default function SettingsPage() {
               className="settingitem"
               onClick={() => setShowChangePassword(true)}
             >
-              <span className="settingicon" aria-hidden="true"><KeyRound /></span> Change Password
-            </button>
+              <span className="settingicon" aria-hidden="true"><KeyRound /></span><PortalText text={" Change Password"} /></button>
 
             <button
               type="button"
               className="settingitem logout"
               onClick={() => setShowLogoutConfirm(true)}
             >
-              <span className="settingicon" aria-hidden="true"><LogOut /></span> Logout
-            </button>
+              <span className="settingicon" aria-hidden="true"><LogOut /></span><PortalText text={" Logout"} /></button>
           </div>
 
           <div className="set-side-box mt-2">
-            <div className="set-side-sub">More</div>
+            <div className="set-side-sub"><PortalText text={"More"} /></div>
             <MenuItem id="Help" icon={<CircleHelp />} label="Help & Support" />
             <MenuItem id="Privacy" icon={<ShieldCheck />} label="Privacy" />
 
@@ -353,8 +352,7 @@ export default function SettingsPage() {
               className="more-item text-center"
               onClick={() => setShowDeleteConfirm(true)}
             >
-              <span className="settingicon" aria-hidden="true"><Trash2 /></span> Delete Account
-            </button>
+              <span className="settingicon" aria-hidden="true"><Trash2 /></span><PortalText text={" Delete Account"} /></button>
           </div>
         </aside>
 
@@ -366,36 +364,36 @@ export default function SettingsPage() {
             {active === "profileQR" && <ProfileCard />}
             {active === "Help" && (
               <div className="settings-info-panel">
-                <h2>Help & Support</h2>
-                <p>Use these settings to keep your doctor profile, clinic details, payment options, and QR profile updated.</p>
+                <h2><PortalText text={"Help & Support"} /></h2>
+                <p><PortalText text={"Use these settings to keep your doctor profile, clinic details, payment options, and QR profile updated."} /></p>
                 <div className="settings-info-grid">
                   <div>
-                    <strong>Profile</strong>
-                    <span>Update professional details, education, experience, awards, and availability.</span>
+                    <strong><PortalText text={"Profile"} /></strong>
+                    <span><PortalText text={"Update professional details, education, experience, awards, and availability."} /></span>
                   </div>
                   <div>
-                    <strong>Clinic</strong>
-                    <span>Add clinic contact information, location, and photos for patients.</span>
+                    <strong><PortalText text={"Clinic"} /></strong>
+                    <span><PortalText text={"Add clinic contact information, location, and photos for patients."} /></span>
                   </div>
                   <div>
-                    <strong>Payment</strong>
-                    <span>Choose which payment methods are available for appointments.</span>
+                    <strong><PortalText text={"Payment"} /></strong>
+                    <span><PortalText text={"Choose which payment methods are available for appointments."} /></span>
                   </div>
                 </div>
               </div>
             )}
             {active === "Privacy" && (
               <div className="settings-info-panel">
-                <h2>Privacy</h2>
-                <p>Your doctor profile and clinic information are used to support appointment booking and patient communication.</p>
+                <h2><PortalText text={"Privacy"} /></h2>
+                <p><PortalText text={"Your doctor profile and clinic information are used to support appointment booking and patient communication."} /></p>
                 <div className="settings-info-grid">
                   <div>
-                    <strong>Public Information</strong>
-                    <span>Only profile and clinic details intended for patients are displayed publicly.</span>
+                    <strong><PortalText text={"Public Information"} /></strong>
+                    <span><PortalText text={"Only profile and clinic details intended for patients are displayed publicly."} /></span>
                   </div>
                   <div>
-                    <strong>Account Security</strong>
-                    <span>Change your password regularly and log out from shared devices.</span>
+                    <strong><PortalText text={"Account Security"} /></strong>
+                    <span><PortalText text={"Change your password regularly and log out from shared devices."} /></span>
                   </div>
                 </div>
               </div>
@@ -407,10 +405,10 @@ export default function SettingsPage() {
       {showChangePassword && (
         <div className="modal-overlay">
           <div className="modal-box">
-            <div className="modal-title">Change Password</div>
+            <div className="modal-title"><PortalText text={"Change Password"} /></div>
 
             <form onSubmit={handleChangePassword}>
-              <input
+              <PortalElement as="input"
                 type="password"
                 placeholder="Current Password"
                 value={passwordData.current_password}
@@ -422,7 +420,7 @@ export default function SettingsPage() {
                 }
               />
 
-              <input
+              <PortalElement as="input"
                 type="password"
                 placeholder="New Password"
                 value={passwordData.new_password}
@@ -434,7 +432,7 @@ export default function SettingsPage() {
                 }
               />
 
-              <input
+              <PortalElement as="input"
                 type="password"
                 placeholder="Confirm Password"
                 value={passwordData.confirm_password}
@@ -451,12 +449,10 @@ export default function SettingsPage() {
                   type="button"
                   className="btn-light"
                   onClick={() => setShowChangePassword(false)}
-                >
-                  Cancel
-                </button>
+                ><PortalText text={"Cancel"} /></button>
 
                 <button type="submit" className="btn-primary m-lg-2" disabled={loading}>
-                  {loading ? "Saving..." : "Save"}
+                  {loading ? <PortalText text={"Saving..."} /> : <PortalText text={"Save"} />}
                 </button>
               </div>
             </form>
@@ -467,21 +463,17 @@ export default function SettingsPage() {
       {showLogoutConfirm && (
         <div className="modal-overlay">
           <div className="modal-box">
-            <div className="modal-title">Confirm Logout</div>
-            <p>Are you sure?</p>
+            <div className="modal-title"><PortalText text={"Confirm Logout"} /></div>
+            <p><PortalText text={"Are you sure?"} /></p>
             <div className="show">
               <button
                 type="button"
                 className="btn-light"
                 onClick={() => setShowLogoutConfirm(false)}
-              >
-                Cancel
-              </button>
+              ><PortalText text={"Cancel"} /></button>
 
               <Link to="/login">
-                <button type="button" className="btn-danger m-lg-2">
-                  Logout
-                </button>
+                <button type="button" className="btn-danger m-lg-2"><PortalText text={"Logout"} /></button>
               </Link>
             </div>
           </div>
@@ -491,16 +483,14 @@ export default function SettingsPage() {
       {showDeleteConfirm && (
         <div className="modal-overlay">
           <div className="modal-box">
-            <div className="modal-title">Delete Account</div>
-            <p>This action cannot be undone. Are you sure?</p>
+            <div className="modal-title"><PortalText text={"Delete Account"} /></div>
+            <p><PortalText text={"This action cannot be undone. Are you sure?"} /></p>
             <div className="show">
               <button
                 type="button"
                 className="btn-light"
                 onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </button>
+              ><PortalText text={"Cancel"} /></button>
 
               <button
                 type="button"
@@ -508,7 +498,7 @@ export default function SettingsPage() {
                 onClick={handleDeleteAccount}
                 disabled={loading}
               >
-                {loading ? "Deleting..." : "Delete"}
+                {loading ? <PortalText text={"Deleting..."} /> : <PortalText text={"Delete"} />}
               </button>
             </div>
           </div>
@@ -518,8 +508,8 @@ export default function SettingsPage() {
       {deleteSuccess && (
         <div className="modal-overlay">
           <div className="modal-box">
-            <div className="modal-title text-success">Account Deleted!</div>
-            <p>Your account has been deleted successfully.</p>
+            <div className="modal-title text-success"><PortalText text={"Account Deleted!"} /></div>
+            <p><PortalText text={"Your account has been deleted successfully."} /></p>
           </div>
         </div>
       )}

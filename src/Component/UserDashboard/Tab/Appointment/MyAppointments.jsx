@@ -1,3 +1,4 @@
+import { PortalElement, PortalText } from "../../../common/PortalTranslation";
 // import React, { useState, useEffect } from "react";
 // import { createPortal } from "react-dom";
 // import axios from "axios";
@@ -817,6 +818,8 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import VideoCallModal from "../CallModal/VideoCallModal";
+import RatingModal from "../../../../components/RatingModal";
+import PatientEmergencyModal from "./PatientEmergencyModal";
 import {
   FaBriefcase,
   FaCalendarAlt,
@@ -832,6 +835,7 @@ import {
 import './MyAppointments.css'; // Import the CSS file for styling
 import { isUnscheduledEmergency } from './emergencyBooking.js';
 import { filterAppointments } from './appointmentFilters.js';
+import { canCancelAppointment } from '../../../../utils/appointmentCancellation.js';
 const MyAppointments = () => {
   const { t, lang } = useUserTranslation();
   const tr = (key, fallback) => {
@@ -854,9 +858,47 @@ const MyAppointments = () => {
   const [actionLoading, setActionLoading] = useState(null);
   const [isCallModalOpen, setIsCallModalOpen] = useState(false);
   const [selectedCall, setSelectedCall] = useState(null);
+  const [ratingAppointment, setRatingAppointment] = useState(null);
+  const [ratingBusy, setRatingBusy] = useState(false);
+  const [ratingError, setRatingError] = useState("");
+  const [ratingSuccess, setRatingSuccess] = useState(false);
+  const [emergencyAppointment, setEmergencyAppointment] = useState(null);
+
+  const submitDoctorRating = async ({ rating, review }) => {
+    if (ratingBusy || !ratingAppointment) return;
+    setRatingBusy(true);
+    setRatingError("");
+    try {
+      const { data } = await axios.post(`${API_BASE_URL}/api/appointments/${ratingAppointment._id}/doctor-rating`,
+        { rating, review }, { headers: { Authorization: `Bearer ${token}` }, timeout: 15000 });
+      setAppointments((rows) => rows.map((row) => row._id === ratingAppointment._id
+        ? { ...row, doctorRating: data.doctorRating } : row));
+      setRatingSuccess(true);
+    } catch (error) {
+      setRatingError(error.response?.data?.error || "Rating could not be saved. Please try again.");
+      if (error.response?.status === 409) void fetchAppointments();
+    } finally {
+      setRatingBusy(false);
+    }
+  };
 
   const token =
     localStorage.getItem("token") || localStorage.getItem("accessToken");
+
+  const cancelAppointment = async apt => {
+    if (actionLoading || !canCancelAppointment(apt)) return;
+    if (!window.confirm(tr('confirm_cancel_appointment', 'Cancel this appointment?'))) return;
+    setActionLoading(`cancel-${apt._id}`);
+    try {
+      await axios.patch(`${API_BASE_URL}/api/appointments/${apt._id}/cancel`, { source: 'online' },
+        { headers: { Authorization: `Bearer ${token}` } });
+      setSelectedApt(current => current?._id === apt._id ? { ...current, status: 'canceled', queue_status: 'canceled' } : current);
+      await fetchAppointments();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Appointment could not be cancelled. Please try again.');
+      if (error.response?.status === 409) await fetchAppointments();
+    } finally { setActionLoading(null); }
+  };
 
   const fetchAppointments = async () => {
     try {
@@ -926,7 +968,7 @@ const MyAppointments = () => {
     )
       .trim()
       .toLowerCase();
-    const isDoctor = rawRole === "doctor";
+    const isDoctor = rawRole === "doctor" || apt?.counselor?.accountType === "doctor";
     return {
       isDoctor,
       label: isDoctor
@@ -1257,7 +1299,7 @@ const MyAppointments = () => {
       selectedApt.duration || selectedApt.durationMinutes || 45;
 
     return createPortal(
-      <div
+      <PortalElement as="div"
         className="appointment-detail-overlay"
         onClick={() => setShowModal(false)}
         role="dialog"
@@ -1268,14 +1310,14 @@ const MyAppointments = () => {
           className="appointment-detail-modal"
           onClick={(event) => event.stopPropagation()}
         >
-          <button
+          <PortalElement as="button"
             type="button"
             className="appointment-detail-close"
             onClick={() => setShowModal(false)}
             aria-label="Close appointment details"
           >
             &times;
-          </button>
+          </PortalElement>
 
           <div className="appointment-detail-title">
             <h2>{t('appointment_details')}</h2>
@@ -1304,7 +1346,7 @@ const MyAppointments = () => {
             </span>
           </div>
 
-          {selectedApt.priority === 'emergency' && <div className="user-emergency-notice"><strong>Emergency appointment</strong><p>{selectedApt.emergency_reason}</p></div>}
+          {selectedApt.priority === 'emergency' && <div className="user-emergency-notice"><strong><PortalText text={"Emergency appointment"} /></strong><p>{selectedApt.emergency_reason}</p></div>}
 
           {!awaitingEmergency && <div className="appointment-detail-countdown">
             <span className="countdown-icon"><FaClock /></span>
@@ -1359,8 +1401,11 @@ const MyAppointments = () => {
               disabled={actionLoading === `video-${selectedApt._id}`}
             >
               <FaVideo />
-              {actionLoading === `video-${selectedApt._id}` ? t('loading') : t('start_video_call')}
+              {actionLoading === `video-${selectedApt._id}` ? tr('loading', 'Loading...') : tr('start_video_call', 'Start Video Call')}
             </button>
+            {canCancelAppointment(selectedApt) && <button type="button" disabled={Boolean(actionLoading)} onClick={() => cancelAppointment(selectedApt)}>
+              <PortalText text={actionLoading === `cancel-${selectedApt._id}` ? 'Cancelling...' : 'Cancel Appointment'} />
+            </button>}
             {!getProfessionalRole(selectedApt).isDoctor && (
               <button
                 type="button"
@@ -1384,7 +1429,7 @@ const MyAppointments = () => {
           </div>
           )}
         </div>
-      </div>,
+      </PortalElement>,
       document.body,
     );
   };
@@ -1454,9 +1499,7 @@ const MyAppointments = () => {
           <div className="user-appointments-grid">
             {displayApts.length === 0 ? (
               <div className="bg-white rounded-xl p-8 sm:p-16 border border-dashed border-slate-200 text-center shadow-[0px_4px_20px_rgba(0,0,0,0.05)]">
-                <span className="material-symbols-outlined text-slate-300 text-5xl block mb-3">
-                  calendar_today
-                </span>
+                <span className="material-symbols-outlined text-slate-300 text-5xl block mb-3"><PortalText text={"calendar_today"} /></span>
                 <p className="text-[#464554] text-sm">
                   {t('no_appointments_found').replace('{tab}', activeTab.toLowerCase())}
                 </p>
@@ -1466,7 +1509,7 @@ const MyAppointments = () => {
                 <section className="user-appointment-date-group" key={group.dateKey}>
                   <div className="user-appointment-date-heading">
                     <span>{group.label}</span>
-                    <strong>{group.items.length} appointment{group.items.length === 1 ? "" : "s"}</strong>
+                    <strong>{group.items.length}<PortalText text={" appointment"} />{group.items.length === 1 ? "" : "s"}</strong>
                   </div>
                   <div className="user-appointment-date-grid">
                     {group.items.map((apt) => {
@@ -1487,11 +1530,11 @@ const MyAppointments = () => {
                     />
                     <div className="user-appointment-person">
                       <h2 title={apt.counselor?.fullName || "Consultant"}>
-                        {apt.counselor?.fullName || "Consultant"}
+                        {apt.counselor?.fullName || <PortalText text={"Consultant"} />}
                         {/* <FaCheckCircle aria-label="Verified" /> */}
                       </h2>
                       {renderRoleBadge(apt)}
-                      {apt.priority === 'emergency' && <span className="user-emergency-badge">Emergency</span>}
+                      {apt.priority === 'emergency' && <span className="user-emergency-badge"><PortalText text={"Emergency"} /></span>}
                       <p>
                         {Array.isArray(apt.counselor?.specialization)
                           ? apt.counselor.specialization.join(" | ")
@@ -1518,26 +1561,42 @@ const MyAppointments = () => {
                     </span>
                     {appointmentToken != null && (
                       <>
-                        <span className="user-appointment-token">
-                          Token #{appointmentToken}
+                        <span className="user-appointment-token"><PortalText text={"Token #"} />{appointmentToken}
                         </span>
                       </>
                     )}
                   </div>
 
                   {(apt.delay_minutes > 0 && apt.estimatedTime || ['pending', 'confirmed'].includes(apt.status) || apt.cancellationReason === 'PATIENT_LATE') && <div className="user-appointment-live-timing">
-                    {apt.delay_minutes > 0 && apt.estimatedTime && <span>{apt.status === 'completed' ? 'Consultation started' : 'Updated estimate'}: {new Date(apt.estimatedTime).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })} · Doctor/queue delay: {apt.delay_minutes} min</span>}
+                    {apt.delay_minutes > 0 && apt.estimatedTime && <span>{apt.status === 'completed' ? <PortalText text={"Consultation started"} /> : <PortalText text={"Updated estimate"} />}: {new Date(apt.estimatedTime).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}<PortalText text={" · Doctor/queue delay: "} />{apt.delay_minutes}<PortalText text={" min"} /></span>}
                     {['pending', 'confirmed'].includes(apt.status) && <>
-                      <span>Current token: {apt.currentToken ?? '--'}</span>
-                      {apt.waiting_minutes != null && <span>Approximate wait: {apt.waiting_minutes} min</span>}
+                      <span><PortalText text={"Current token: "} />{apt.currentToken ?? '--'}</span>
+                      {apt.waiting_minutes != null && <span><PortalText text={"Approximate wait: "} />{apt.waiting_minutes}<PortalText text={" min"} /></span>}
                       {apt.patientArrivalTime || ['waiting', 'in_progress'].includes(apt.queue_status)
-                        ? <span>Checked in · Waiting for your turn</span>
-                        : apt.cancelDeadline && <span>Please arrive before: {new Date(apt.cancelDeadline).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}</span>}
+                        ? <span><PortalText text={"Checked in · Waiting for your turn"} /></span>
+                        : apt.cancelDeadline && <span><PortalText text={"Please arrive before: "} />{new Date(apt.cancelDeadline).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit' })}</span>}
                     </>}
-                    {apt.cancellationReason === 'PATIENT_LATE' && <span>Appointment Cancelled · Patient did not arrive before the adjusted appointment deadline.</span>}
+                    {apt.cancellationReason === 'PATIENT_LATE' && <span><PortalText text={"Appointment Cancelled · Patient did not arrive before the adjusted appointment deadline."} /></span>}
                   </div>}
 
                     <div className="user-appointment-actions">
+                      {getProfessionalRole(apt).isDoctor && ['pending', 'confirmed', 'accepted', 'booked', 'in-progress'].includes(apt.status)
+                        && !['completed', 'canceled', 'cancelled', 'no_show', 'skipped'].includes(apt.queue_status) && (
+                        <button type="button" className={`user-appointment-action user-appointment-emergency ${apt.priority === 'emergency' ? 'is-sent' : ''}`}
+                          disabled={apt.priority === 'emergency'} onClick={() => setEmergencyAppointment(apt)}>
+                          {apt.priority === 'emergency' ? <FaCheckCircle aria-hidden="true" /> : <i className="fa-solid fa-triangle-exclamation" aria-hidden="true" />}
+                          <PortalText text={apt.priority === 'emergency' ? 'Emergency sent' : 'Emergency'} />
+                        </button>
+                      )}
+                      {getProfessionalRole(apt).isDoctor && apt.status === 'completed' && (
+                        <button type="button" className="user-appointment-action secondary"
+                          disabled={Boolean(apt.doctorRating)}
+                          onClick={() => { setRatingAppointment(apt); setRatingError(""); setRatingSuccess(false); }}>
+                          {apt.doctorRating
+                            ? <><FaCheckCircle aria-hidden="true" /><PortalText text={"Rated"} /> ({apt.doctorRating.stars}/5)</>
+                            : <><span aria-hidden="true">★</span><PortalText text={"Rate Doctor"} /></>}
+                        </button>
+                      )}
                       <button
                         className="user-appointment-action secondary"
                         onClick={() => {
@@ -1549,9 +1608,12 @@ const MyAppointments = () => {
                         {t('view_details')}
                       </button>
                       {/* Doctor appointment call shortcuts are temporarily hidden. */}
+                      {canCancelAppointment(apt) && <button type="button" className="user-appointment-action secondary" disabled={Boolean(actionLoading)} onClick={() => cancelAppointment(apt)}>
+                        <PortalText text={actionLoading === `cancel-${apt._id}` ? 'Cancelling...' : 'Cancel Appointment'} />
+                      </button>}
                       {!getProfessionalRole(apt).isDoctor && (
                         <>
-                      <button
+                      <PortalElement as="button"
                         className="user-appointment-action icon"
                         onClick={() => handleCall(apt, "video")}
                         disabled={actionLoading === `video-${apt._id}`}
@@ -1559,8 +1621,8 @@ const MyAppointments = () => {
                         aria-label="Video Call"
                       >
                         <FaVideo aria-hidden="true" />
-                      </button>
-                      <button
+                      </PortalElement>
+                      <PortalElement as="button"
                         className="user-appointment-action icon"
                         onClick={() => handleCall(apt, "voice")}
                         disabled={actionLoading === `voice-${apt._id}`}
@@ -1568,11 +1630,11 @@ const MyAppointments = () => {
                         aria-label="Voice Call"
                       >
                         <FaPhoneAlt aria-hidden="true" />
-                      </button>
+                      </PortalElement>
                         </>
                       )}
                       {!getProfessionalRole(apt).isDoctor && (
-                        <button
+                        <PortalElement as="button"
                           className="user-appointment-action icon"
                           onClick={() => handleChat(apt)}
                           disabled={actionLoading === `chat-${apt._id}`}
@@ -1580,7 +1642,7 @@ const MyAppointments = () => {
                           aria-label="Chat"
                         >
                           <FaCommentDots aria-hidden="true" />
-                        </button>
+                        </PortalElement>
                       )}
                     </div>
                   </div>
@@ -1594,6 +1656,18 @@ const MyAppointments = () => {
         )}
 
         {renderAppointmentDetailsModal()}
+        {emergencyAppointment && createPortal(<PatientEmergencyModal appointment={emergencyAppointment} token={token}
+          onClose={() => setEmergencyAppointment(null)} onSent={(id, reason) => {
+            setAppointments((rows) => rows.map((row) => row._id === id ? { ...row, priority: 'emergency', emergency_reason: reason } : row));
+            void fetchAppointments();
+          }} />, document.body)}
+        {ratingAppointment && createPortal(<>
+          <RatingModal visible key={ratingAppointment._id} professionalType="doctor"
+            counselorName={ratingAppointment.counselor?.fullName || ratingAppointment.counselor?.name || "your doctor"}
+            counselorPhoto={ratingAppointment.counselor?.profilePhoto}
+            submitting={ratingBusy} success={ratingSuccess} error={ratingError}
+            onSubmit={submitDoctorRating} onClose={() => { if (!ratingBusy) setRatingAppointment(null); }} />
+        </>, document.body)}
 
         <VideoCallModal
           isOpen={isCallModalOpen}
@@ -1623,9 +1697,7 @@ const MyAppointments = () => {
           </div>
           <div className="absolute right-[-10%] top-[-50%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
           <div className="absolute right-[5%] bottom-[-20%] w-48 h-48 bg-white/10 rounded-full blur-2xl"></div>
-          <span className="material-symbols-outlined absolute right-12 top-1/2 -translate-y-1/2 text-[140px] opacity-10">
-            health_and_safety
-          </span>
+          <span className="material-symbols-outlined absolute right-12 top-1/2 -translate-y-1/2 text-[140px] opacity-10"><PortalText text={"health_and_safety"} /></span>
         </section>
 
         {showBookingModal && (
@@ -1646,13 +1718,13 @@ const MyAppointments = () => {
                     {t('choose_counselor_text')}
                   </p>
                 </div>
-                <button
+                <PortalElement as="button"
                   onClick={() => setShowBookingModal(false)}
                   className="text-slate-400 hover:text-slate-700 text-2xl leading-none"
                   aria-label="Close booking modal"
                 >
                   ×
-                </button>
+                </PortalElement>
               </div>
 
               <form onSubmit={handleConfirmBooking} className="space-y-4">
@@ -1672,8 +1744,8 @@ const MyAppointments = () => {
                         key={counselor._id || counselor.id}
                         value={counselor._id || counselor.id}
                       >
-                        {String(counselor.role || "").toLowerCase() === "doctor" ? "Dr. " : ""}
-                        {counselor.fullName || counselor.name || "Consultant"}
+                        {String(counselor.role || "").toLowerCase() === "doctor" ? <PortalText text={"Dr. "} /> : ""}
+                        {counselor.fullName || counselor.name || <PortalText text={"Consultant"} />}
                         {counselor.specialization?.length
                           ? ` - ${Array.isArray(counselor.specialization) ? counselor.specialization.join(", ") : counselor.specialization}`
                           : ""}

@@ -9,7 +9,7 @@ export default function PrescriptionDocument({ record, doctorName }) {
   return <article className="prescription-document">
     <header className="prescription-document-header">
       <div className="prescription-brand"><img src={logoIcon} alt="Humaeli" /><div><span>CONSULTATION RECORD</span><h2>Prescription</h2></div></div>
-      <div className="prescription-issuer"><strong>{data.doctor}</strong><span>{data.date}</span></div>
+      <div className="prescription-issuer"><span className="prescription-issuer-label">Prescribing doctor</span><strong>{data.doctor}</strong><span>{data.date}</span></div>
     </header>
     <section className="prescription-patient"><div><span>Patient name</span><strong>{data.patient}</strong></div><div><span>Gender</span><strong>{data.gender}</strong></div><div><span>Consultation for</span><strong>{data.issue}</strong></div></section>
     <section className="prescription-section"><h3>Diagnosis</h3><p>{data.diagnosis}</p></section>

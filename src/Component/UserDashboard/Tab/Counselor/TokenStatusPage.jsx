@@ -1,3 +1,4 @@
+import { PortalTemplate, PortalText, PortalElement } from "../../../common/PortalTranslation";
 import React, {
   useCallback,
   useEffect,
@@ -10,6 +11,7 @@ import axiosInstance from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import "./TokenStatusPage.css";
+import { isDoctorTokenItem } from './doctorTokenFilter.js';
 import { formatTimer, formatWaitLabel, getLiveTokenTiming, getTokenDisplayTime, formatQueueStatus } from "./tokenTiming.js";
 
 const TokenTicketIcon = () => (
@@ -39,6 +41,7 @@ const isActiveTokenItem = (item) => {
   const token = item?.token || {};
 
   return (
+    isDoctorTokenItem(item) &&
     !TERMINAL_APPOINTMENT_STATUSES.has(normalizeStatus(appointment.status)) &&
     !TERMINAL_APPOINTMENT_STATUSES.has(normalizeStatus(token.queueStatus)) &&
     !appointment.consultationEndedAt &&
@@ -319,12 +322,12 @@ const TokenStatusPage = () => {
         <span className="token-header-icon" aria-hidden="true"><FaCalendarAlt /><FaRegClock className="token-header-clock" /></span>
         <div className="token-header-copy">
         <h2 className="token-page-title">
-          {t("your_token_status") === "Your Token Status" ? <>Your <span>Token Status</span></> : (t("your_token_status") || <>Your <span>Token Status</span></>)}
+          {t("your_token_status") === "Your Token Status" ? <><PortalText text={"Your "} /><span><PortalText text={"Token Status"} /></span></> : (t("your_token_status") || <><PortalText text={"Your "} /><span><PortalText text={"Token Status"} /></span></>)}
         </h2>
 
         <p className="token-page-subtitle">
           {t("token_page_subtitle") ||
-            "View your appointment token, current serving token and live waiting status."}
+            <PortalText text={"View your appointment token, current serving token and live waiting status."} />}
         </p>
         </div>
       </div>
@@ -334,11 +337,11 @@ const TokenStatusPage = () => {
         <div className="appointment-picker">
           <h3 className="picker-heading">
             <span className="picker-heading-icon" aria-hidden="true"><FaCalendarAlt /></span>
-            {t("my_appointments") || "My Appointments"}
+            {t("my_appointments") || <PortalText text={"My Appointments"} />}
           </h3>
 
           {isLoading && (
-            <div className="picker-state">{t("loading") || "Loading..."}</div>
+            <div className="picker-state">{t("loading") || <PortalText text={"Loading..."} />}</div>
           )}
 
           {!isLoading && error && (
@@ -353,15 +356,13 @@ const TokenStatusPage = () => {
                   margin: "12px auto 0",
                   cursor: "pointer",
                 }}
-              >
-                Retry
-              </button>
+              ><PortalText text={"Retry"} /></button>
             </div>
           )}
 
           {!isLoading && !error && appointments.length === 0 && (
             <div className="picker-state">
-              {t("no_appointments") || "You don't have any active appointments."}
+              <PortalText text={"No active doctor tokens. Consultant appointments are available in the Appointment menu."} />
             </div>
           )}
 
@@ -397,12 +398,11 @@ const TokenStatusPage = () => {
                           itemAppointment.status || ""
                         }`}
                       >
-                        {itemAppointment.status || "pending"}
+                        {itemAppointment.status || <PortalText text={"pending"} />}
                       </span>
 
                       {item?.token?.myToken != null && (
-                        <span className="appointment-token-number">
-                          Token #{item.token.myToken}
+                        <span className="appointment-token-number"><PortalText text={"Token #"} />{item.token.myToken}
                         </span>
                       )}
                     </button>
@@ -421,7 +421,7 @@ const TokenStatusPage = () => {
             appointments.length > 0 && (
               <div className="token-empty-state">
                 {t("select_appointment_prompt") ||
-                  "Select an appointment to see your token status."}
+                  <PortalText text={"Select an appointment to see your token status."} />}
               </div>
             )}
 
@@ -431,7 +431,7 @@ const TokenStatusPage = () => {
               {emergencyData.active && (
                 <div className="emergency-banner">
                   {emergencyData.message ||
-                    "⚠ Emergency patient is present in the queue. Your waiting time may change."}
+                    <PortalText text={"⚠ Emergency patient is present in the queue. Your waiting time may change."} />}
                 </div>
               )}
 
@@ -442,14 +442,14 @@ const TokenStatusPage = () => {
               </div>
 
               <div className="token-appointment-meta">
-                <span><FaCalendarAlt aria-hidden="true" />Booked: {formatDateTimeValue(bookedAt)}</span>
-                <span><FaRegClock aria-hidden="true" />Appointment: {formatAppointmentDateTime(appointment) || "--"}</span>
+                <span><FaCalendarAlt aria-hidden="true" /><PortalText text={"Booked: "} />{formatDateTimeValue(bookedAt)}</span>
+                <span><FaRegClock aria-hidden="true" /><PortalText text={"Appointment: "} />{formatAppointmentDateTime(appointment) || "--"}</span>
               </div>
 
               {isTerminalAppointment ? (
                 <div className="token-empty-state">
-                  <p>Appointment status: <strong>{appointment.status}</strong></p>
-                  {tokenData.myToken != null && <p>Token #{tokenData.myToken}</p>}
+                  <p><PortalText text={"Appointment status: "} /><strong>{appointment.status}</strong></p>
+                  {tokenData.myToken != null && <p><PortalText text={"Token #"} />{tokenData.myToken}</p>}
                 </div>
               ) : <>
               {/* Main token stats */}
@@ -458,9 +458,9 @@ const TokenStatusPage = () => {
                 <div>
                 {currentData.consultationStartedAt ? (
                   <>
-                    <strong>{currentData.isYourTurn ? "Your checkup" : "Current checkup"}: {formatTimer(liveTiming.elapsed)}</strong>
-                    <p>{currentData.isYourTurn ? "The doctor is checking your appointment." : timingMessage}</p>
-                    {(currentData.doctorStatus === "paused" || currentData.doctorStatus === "break") && <p>Timer paused while the doctor is {currentData.doctorStatus === "break" ? "on break" : "paused"}.</p>}
+                    <strong>{currentData.isYourTurn ? <PortalText text={"Your checkup"} /> : <PortalText text={"Current checkup"} />}: {formatTimer(liveTiming.elapsed)}</strong>
+                    <p>{currentData.isYourTurn ? <PortalText text={"The doctor is checking your appointment."} /> : timingMessage}</p>
+                    {(currentData.doctorStatus === "paused" || currentData.doctorStatus === "break") && <p><PortalText text={"Timer paused while the doctor is "} />{currentData.doctorStatus === "break" ? <PortalText text={"on break"} /> : <PortalText text={"paused"} />}.</p>}
                   </>
                 ) : <p>{timingMessage}</p>}
                 </div>
@@ -469,7 +469,7 @@ const TokenStatusPage = () => {
                 <div className="token-stat your-token">
                   <span className="token-stat-icon blue" aria-hidden="true"><TokenTicketIcon /></span>
                   <span className="token-stat-label">
-                    {t("your_token") || "Your Token"}
+                    {t("your_token") || <PortalText text={"Your Token"} />}
                   </span>
                   <span className="token-stat-value">
                     {tokenData.myToken ?? "--"}
@@ -479,21 +479,21 @@ const TokenStatusPage = () => {
                 <div className="token-stat">
                   <span className="token-stat-icon indigo" aria-hidden="true"><FaUsers /></span>
                   <span className="token-stat-label">
-                    {t("now_serving") || "Now Serving"}
+                    {t("now_serving") || <PortalText text={"Now Serving"} />}
                   </span>
                   <span className="token-stat-value">
                     {currentData.currentToken ?? "--"}
                   </span>
-                  <span className="token-stat-help">Current token</span>
+                  <span className="token-stat-help"><PortalText text={"Current token"} /></span>
                 </div>
 
                 <div className="token-stat">
                   <span className="token-stat-icon green" aria-hidden="true"><FaRegClock /></span>
-                  <span className="token-stat-label">Your number in</span>
+                  <span className="token-stat-label"><PortalText text={"Your number in"} /></span>
                   <span className="token-stat-value">
-                    {currentData.isYourTurn ? "Consultation in progress" : getWaitDisplay(queueData, liveTiming)}
+                    {currentData.isYourTurn ? <PortalText text={"Consultation in progress"} /> : getWaitDisplay(queueData, liveTiming)}
                   </span>
-                  <span className="token-stat-help">{queueData.estimateUncertain ? "Can be called anytime" : "Approximate"}</span>
+                  <span className="token-stat-help">{queueData.estimateUncertain ? <PortalText text={"Can be called anytime"} /> : <PortalText text={"Approximate"} />}</span>
                 </div>
               </div>
 
@@ -501,7 +501,7 @@ const TokenStatusPage = () => {
               <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
                   <span className="token-stat-icon pink" aria-hidden="true"><FaUsers /></span>
-                  <span className="token-stat-label">Patients Ahead</span>
+                  <span className="token-stat-label"><PortalText text={"Patients Ahead"} /></span>
                   <span className="token-stat-value">
                     {queueData.patientsAhead ?? "--"}
                   </span>
@@ -509,7 +509,7 @@ const TokenStatusPage = () => {
 
                 <div className="token-stat">
                   <span className="token-stat-icon purple" aria-hidden="true"><FaListUl /></span>
-                  <span className="token-stat-label">Queue Position</span>
+                  <span className="token-stat-label"><PortalText text={"Queue Position"} /></span>
                   <span className="token-stat-value">
                     {queueData.queuePosition ?? "--"}
                   </span>
@@ -517,7 +517,7 @@ const TokenStatusPage = () => {
 
                 <div className="token-stat">
                   <span className="token-stat-icon orange" aria-hidden="true"><FaUsers /></span>
-                  <span className="token-stat-label">Total Waiting</span>
+                  <span className="token-stat-label"><PortalText text={"Total Waiting"} /></span>
                   <span className="token-stat-value">
                     {queueData.totalWaiting ?? "--"}
                   </span>
@@ -527,7 +527,7 @@ const TokenStatusPage = () => {
               <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
                   <span className="token-stat-icon blue" aria-hidden="true"><FaRegClock /></span>
-                  <span className="token-stat-label" title="Approximate time your consultation will begin, based on the live queue.">Estimated Consultation Time</span>
+                  <PortalElement as="span" className="token-stat-label" title="Approximate time your consultation will begin, based on the live queue."><PortalText text={"Estimated Consultation Time"} /></PortalElement>
                   <span className="token-stat-value">
                     {formatEstimatedTurnTime(queueData.estimatedTurnTime)}
                   </span>
@@ -535,7 +535,7 @@ const TokenStatusPage = () => {
 
                 <div className="token-stat">
                   <span className="token-stat-icon green" aria-hidden="true"><FaCalendarAlt /></span>
-                  <span className="token-stat-label">Appointment Timing</span>
+                  <span className="token-stat-label"><PortalText text={"Appointment Timing"} /></span>
                   <span className="token-stat-value token-stat-value-small">
                     {appointment.timingLabel || queueData.timingLabel || formatMinuteDifference(queueData.timingDifferenceMinutes ?? appointment.timingDifferenceMinutes) || "--"}
                   </span>
@@ -543,7 +543,7 @@ const TokenStatusPage = () => {
 
                 <div className="token-stat">
                   <span className="token-stat-icon pink" aria-hidden="true"><FaUserMd /></span>
-                  <span className="token-stat-label">Doctor Status</span>
+                  <span className="token-stat-label"><PortalText text={"Doctor Status"} /></span>
                   <span className="token-stat-value">
                     {doctorStatusLabel}
                   </span>
@@ -553,7 +553,7 @@ const TokenStatusPage = () => {
               <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
                   <span className="token-stat-icon purple" aria-hidden="true"><FaFileAlt /></span>
-                  <span className="token-stat-label">Queue Status</span>
+                  <span className="token-stat-label"><PortalText text={"Queue Status"} /></span>
                   <span className="token-stat-value">
                     {formatQueueStatus(tokenData.queueStatus)}
                   </span>
@@ -561,7 +561,7 @@ const TokenStatusPage = () => {
 
                 <div className="token-stat">
                   <span className="token-stat-icon blue" aria-hidden="true"><FaCalendarAlt /></span>
-                  <span className="token-stat-label">Scheduled Time</span>
+                  <span className="token-stat-label"><PortalText text={"Scheduled Time"} /></span>
                   <span className="token-stat-value token-stat-value-small">
                     {formatEstimatedTurnTime(appointment.scheduledStartAt)}
                   </span>
@@ -569,7 +569,7 @@ const TokenStatusPage = () => {
 
                 <div className="token-stat">
                   <span className="token-stat-icon blue" aria-hidden="true"><FaPlay /></span>
-                  <span className="token-stat-label">Live Start</span>
+                  <span className="token-stat-label"><PortalText text={"Live Start"} /></span>
                   <span className="token-stat-value token-stat-value-small">
                     {formatEstimatedTurnTime(appointment.actualStartAt)}
                   </span>
@@ -578,11 +578,11 @@ const TokenStatusPage = () => {
 
               <div className="token-stats-grid" style={{ marginTop: 14 }}>
                 <div className="token-stat">
-                  <span className="token-stat-label">Arrival</span>
+                  <span className="token-stat-label"><PortalText text={"Arrival"} /></span>
                   <span className="token-stat-value token-stat-value-small">
                     {appointment.patientArrivalTime || ['waiting', 'in_progress'].includes(tokenData.queueStatus)
-                      ? 'Checked in ? Waiting for your turn'
-                      : appointment.cancelDeadline ? `Please arrive before ${formatEstimatedTurnTime(appointment.cancelDeadline)}` : 'Waiting for the updated queue estimate'}
+                      ? <PortalText text={"Checked in ? Waiting for your turn"} />
+                      : appointment.cancelDeadline ? <PortalTemplate text={"Please arrive before {0}"} values={[formatEstimatedTurnTime(appointment.cancelDeadline)]} /> : <PortalText text={"Waiting for the updated queue estimate"} />}
                   </span>
                 </div>
               </div>
@@ -597,13 +597,11 @@ const TokenStatusPage = () => {
                     background: "rgba(255, 193, 7, 0.12)",
                   }}
                 >
-                  <div>
-                    Emergency waiting:{" "}
+                  <div><PortalText text={"Emergency waiting:"} />{" "}
                     <strong>{emergencyData.totalEmergencyPatients ?? 0}</strong>
                   </div>
 
-                  <div>
-                    Emergency patients ahead of you:{" "}
+                  <div><PortalText text={"Emergency patients ahead of you:"} />{" "}
                     <strong>{emergencyData.emergencyPatientsAhead ?? 0}</strong>
                   </div>
                 </div>
@@ -619,8 +617,7 @@ const TokenStatusPage = () => {
                 }}
                 className="token-refresh-button"
               >
-                <FaSyncAlt aria-hidden="true" /> Refresh Status
-              </button>
+                <FaSyncAlt aria-hidden="true" /><PortalText text={" Refresh Status"} /></button>
             </div>
           )}
         </div>

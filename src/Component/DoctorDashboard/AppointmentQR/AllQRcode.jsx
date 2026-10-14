@@ -1,4 +1,5 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import { PortalText, PortalElement } from "../../common/PortalTranslation";
+import React, { useEffect, useMemo, useState } from 'react';
 import axios from '../../../axiosConfig.js';
 import { API_BASE_URL, getAuthHeaders, getDoctorUser } from '../doctorApi.js';
 import './QRcode.css';
@@ -63,47 +64,47 @@ export default function QRcode() {
     catch { setNotice('Copy unavailable. Open the link and copy it from the address bar.'); }
   };
   return <div className="doctor-qr-page">
-    <header className="doctor-qr-header"><h1>Clinic QR Code</h1><p>Select a clinic to view its appointment QR and live LED display.</p></header>
+    <header className="doctor-qr-header"><h1><PortalText text={"Clinic QR Code"} /></h1><p><PortalText text={"Select a clinic to view its appointment QR and live LED display."} /></p></header>
     <div className="doctor-qr-clinic-selector">
-      <label htmlFor="qr-clinic">Clinic</label>
+      <label htmlFor="qr-clinic"><PortalText text={"Clinic"} /></label>
       <select id="qr-clinic" value={selectedId} disabled={loading || savingRoom || !clinics.length} onChange={event => { setSelectedId(event.target.value); setNotice(''); }}>
-        {!clinics.length && <option value="">Select clinic</option>}
+        {!clinics.length && <PortalElement as="option" value="">Select clinic</PortalElement>}
         {clinics.map(c => <option key={c.doctorClinicId} value={c.doctorClinicId}>{c.clinic.name}</option>)}
       </select>
-      <button type="button" disabled={loading || savingRoom} onClick={() => setRefresh(n => n + 1)}>Refresh</button>
+      <button type="button" disabled={loading || savingRoom} onClick={() => setRefresh(n => n + 1)}><PortalText text={"Refresh"} /></button>
     </div>
-    {loading && <p role="status">Fetching clinics...</p>}
+    {loading && <p role="status"><PortalText text={"Fetching clinics..."} /></p>}
     {error && <p role="alert">{error}</p>}
-    {!loading && !error && !clinics.length && <p>Add a clinic in Clinic Settings to view its QR.</p>}
+    {!loading && !error && !clinics.length && <p><PortalText text={"Add a clinic in Clinic Settings to view its QR."} /></p>}
     {!loading && !error && selected && <div className="doctor-qr-layout">
       <section className="doctor-qr-card">
         <h2>{selected.clinic.name}</h2><p>{selected.doctor.name}</p>
-        {selected.clinic.room && <p><strong>Room {selected.clinic.room}</strong></p>}
+        {selected.clinic.room && <p><strong><PortalText text={"Room "} />{selected.clinic.room}</strong></p>}
         <div className="doctor-qr-frame"><img src={selected.walkinQrCode} alt={`Appointment QR for ${selected.clinic.name}`} /></div>
-        <p>Scan to join today's queue at {selected.clinic.name}.</p>
+        <p><PortalText text={"Scan to join today's queue at "} />{selected.clinic.name}.</p>
       </section>
       <aside className="doctor-qr-side">
-        <section className="doctor-qr-panel"><h3>QR Management</h3>
-          <p><a href={selected.walkinQrCode} download={`clinic-${selected.doctorClinicId}-qr.png`}>Download QR</a></p>
-          <div className="doctor-qr-actions"><button type="button" onClick={shareQr}>Share QR</button>
-            <button type="button" onClick={() => window.print()}>Print QR</button></div>
+        <section className="doctor-qr-panel"><h3><PortalText text={"QR Management"} /></h3>
+          <p><a href={selected.walkinQrCode} download={`clinic-${selected.doctorClinicId}-qr.png`}><PortalText text={"Download QR"} /></a></p>
+          <div className="doctor-qr-actions"><button type="button" onClick={shareQr}><PortalText text={"Share QR"} /></button>
+            <button type="button" onClick={() => window.print()}><PortalText text={"Print QR"} /></button></div>
         </section>
-        <section className="doctor-qr-panel"><h3>Clinic LED Display</h3><p>Shows this doctor's current and waiting tokens at {selected.clinic.name}.</p>
+        <section className="doctor-qr-panel"><h3><PortalText text={"Clinic LED Display"} /></h3><p><PortalText text={"Shows this doctor's current and waiting tokens at "} />{selected.clinic.name}.</p>
           <form onSubmit={saveRoom} className="doctor-qr-room-form">
-            <label htmlFor="qr-room">Doctor room number at this clinic</label>
-            <input id="qr-room" required maxLength={100} placeholder="e.g. 101 or OPD-2" value={room} disabled={savingRoom} onChange={event => setRoom(event.target.value)} />
-            <button disabled={savingRoom}>{savingRoom ? 'Saving...' : 'Save room number'}</button>
+            <label htmlFor="qr-room"><PortalText text={"Doctor room number at this clinic"} /></label>
+            <PortalElement as="input" id="qr-room" required maxLength={100} placeholder="e.g. 101 or OPD-2" value={room} disabled={savingRoom} onChange={event => setRoom(event.target.value)} />
+            <button disabled={savingRoom}>{savingRoom ? <PortalText text={"Saving..."} /> : <PortalText text={"Save room number"} />}</button>
             {roomNotice && <p role="alert">{roomNotice}</p>}
           </form>
-          <ol><li>Connect the outside LED to this laptop with HDMI.</li>
-            <li>Press Win + P and choose Extend.</li>
-            <li>Open the LED window below. With that window focused, press Win + Shift + Left/Right Arrow to move it to the outside LED.</li>
-            <li>Press F11 for full screen. Keep your doctor dashboard on the laptop.</li></ol>
-          <button type="button" onClick={() => window.open(ledUrl, '_blank', 'popup,width=1280,height=720,noopener,noreferrer')}>Open separate LED window</button>
-          <input aria-label="LED screen link" readOnly value={ledUrl} onFocus={event => event.target.select()} className="doctor-qr-led-url" />
-          <button type="button" onClick={() => copy(ledUrl, 'LED link')}>Copy LED link</button>
-          <p><a href={ledUrl} target="_blank" rel="noreferrer">Preview on this device</a></p>
-          <p>The LED refreshes every 3 seconds. Keep the laptop awake and connected to the internet. If the window is blocked, allow pop-ups or open the preview in a separate browser window.</p>
+          <ol><li><PortalText text={"Connect the outside LED to this laptop with HDMI."} /></li>
+            <li><PortalText text={"Press Win + P and choose Extend."} /></li>
+            <li><PortalText text={"Open the LED window below. With that window focused, press Win + Shift + Left/Right Arrow to move it to the outside LED."} /></li>
+            <li><PortalText text={"Press F11 for full screen. Keep your doctor dashboard on the laptop."} /></li></ol>
+          <button type="button" onClick={() => window.open(ledUrl, '_blank', 'popup,width=1280,height=720,noopener,noreferrer')}><PortalText text={"Open separate LED window"} /></button>
+          <PortalElement as="input" aria-label="LED screen link" readOnly value={ledUrl} onFocus={event => event.target.select()} className="doctor-qr-led-url" />
+          <button type="button" onClick={() => copy(ledUrl, 'LED link')}><PortalText text={"Copy LED link"} /></button>
+          <p><a href={ledUrl} target="_blank" rel="noreferrer"><PortalText text={"Preview on this device"} /></a></p>
+          <p><PortalText text={"The LED refreshes every 3 seconds. Keep the laptop awake and connected to the internet. If the window is blocked, allow pop-ups or open the preview in a separate browser window."} /></p>
         </section>
         {notice && <p role="status">{notice}</p>}
       </aside>

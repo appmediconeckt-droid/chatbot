@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { patientCardDetails, appointmentDoctorName, appointmentVitals, ageFromBirthDate } from "../src/Component/DoctorDashboard/PatientAppointmentDetails/patientRecordDetails.js";
+import { patientCardDetails, appointmentDoctorName, appointmentVitals, ageFromBirthDate, isPatientDirectoryRecord } from "../src/Component/DoctorDashboard/PatientAppointmentDetails/patientRecordDetails.js";
 
 test("patient cards read registered profile fields and derive age from DOB", () => {
   const patient = { _id: "patient-1", fullName: "Vishal", phoneNumber: "+919876543210", gender: "Male", bloodGroup: "O+", dateOfBirth: "2000-09-24", age: 99 };
@@ -29,4 +29,12 @@ test("saved vitals support JSON and object representations without inventing mis
   assert.deepEqual(appointmentVitals({ vitals: JSON.stringify(vitals) }), { bp: "120/80", pulse: 72, temperature: 98.6 });
   assert.equal(appointmentVitals({ vitals }).pulse, 72);
   assert.equal(appointmentVitals({ vitals: "bad JSON" }).bp, "N/A");
+});
+
+test("patient directory hides orphaned and inactive accounts without hiding unregistered walk-ins", () => {
+  assert.equal(isPatientDirectoryRecord({ appointment_type: 'online', patient: null, patient_name: 'Deleted snapshot' }), false);
+  assert.equal(isPatientDirectoryRecord({ appointment_type: 'online', patient: { fullName: 'Inactive', isActive: false } }), false);
+  assert.equal(isPatientDirectoryRecord({ appointment_type: 'online', patient: { fullName: 'Active', isActive: true } }), true);
+  assert.equal(isPatientDirectoryRecord({ appointment_type: 'walkin', patient_id: null, patient_name: 'Walk-in visitor' }), true);
+  assert.equal(isPatientDirectoryRecord({ appointment_type: 'walkin', patient_name: 'Unknown Patient' }), false);
 });

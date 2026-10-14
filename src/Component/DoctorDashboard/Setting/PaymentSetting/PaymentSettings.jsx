@@ -1,3 +1,4 @@
+import { PortalText, PortalElement } from "../../../common/PortalTranslation";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDoctorUser } from "../../doctorApi.js";
 import "./PaymentSettings.css";
@@ -75,11 +76,11 @@ export default function PaymentSettings() {
     <section className="payment-container doctor-payment-settings">
       <header className="doctor-payment-header">
         <div>
-          <span className="doctor-payment-eyebrow">Billing preferences</span>
-          <h2 className="heading">Payment Settings</h2>
-          <p>Choose how patients can pay for appointments and consultations.</p>
+          <span className="doctor-payment-eyebrow"><PortalText text={"Billing preferences"} /></span>
+          <h2 className="heading"><PortalText text={"Payment Settings"} /></h2>
+          <p><PortalText text={"Choose how patients can pay for appointments and consultations."} /></p>
         </div>
-        <div className="doctor-payment-security"><i className="fa-solid fa-shield-halved" /> Secure settings</div>
+        <div className="doctor-payment-security"><i className="fa-solid fa-shield-halved" /><PortalText text={" Secure settings"} /></div>
       </header>
 
       <div className="doctor-payment-methods">
@@ -92,11 +93,11 @@ export default function PaymentSettings() {
                 <strong>{method.title}</strong>
                 <span>{method.description}</span>
               </div>
-              <span className={`doctor-payment-status ${enabled ? "on" : "off"}`}>{enabled ? "Available" : "Unavailable"}</span>
+              <span className={`doctor-payment-status ${enabled ? "on" : "off"}`}>{enabled ? <PortalText text={"Available"} /> : <PortalText text={"Unavailable"} />}</span>
               <label className="doctor-payment-switch">
                 <input type="checkbox" checked={enabled} onChange={(event) => updateSetting(method.key, event.target.checked)} />
                 <span aria-hidden="true" />
-                <span className="visually-hidden">Toggle {method.title}</span>
+                <span className="visually-hidden"><PortalText text={"Toggle "} />{method.title}</span>
               </label>
             </div>
           );
@@ -107,24 +108,24 @@ export default function PaymentSettings() {
         <div className="doctor-bank-panel">
           <div className="doctor-bank-panel-title">
             <div><i className="fa-solid fa-building-columns" /></div>
-            <span><strong>UPI & Bank Details</strong><small>Enter either a UPI ID or bank account details.</small></span>
+            <span><strong><PortalText text={"UPI & Bank Details"} /></strong><small><PortalText text={"Enter either a UPI ID or bank account details."} /></small></span>
           </div>
           <div className="doctor-payment-form-grid">
-            <label className="wide">UPI ID<input value={settings.upiId} onChange={(event) => updateSetting("upiId", event.target.value)} placeholder="doctor@upi" /></label>
-            <label>Account Holder<input value={settings.accountHolder} onChange={(event) => updateSetting("accountHolder", event.target.value)} placeholder="Account holder name" /></label>
-            <label>Bank Name<input value={settings.bankName} onChange={(event) => updateSetting("bankName", event.target.value)} placeholder="Bank name" /></label>
-            <label>Account Number<input inputMode="numeric" value={settings.accountNumber} onChange={(event) => updateSetting("accountNumber", event.target.value.replace(/\D/g, ""))} placeholder="Account number" /></label>
-            <label>IFSC Code<input value={settings.ifscCode} onChange={(event) => updateSetting("ifscCode", event.target.value.toUpperCase())} placeholder="ABCD0123456" maxLength={11} /></label>
+            <label className="wide"><PortalText text={"UPI ID"} /><input value={settings.upiId} onChange={(event) => updateSetting("upiId", event.target.value)} placeholder="doctor@upi" /></label>
+            <label><PortalText text={"Account Holder"} /><PortalElement as="input" value={settings.accountHolder} onChange={(event) => updateSetting("accountHolder", event.target.value)} placeholder="Account holder name" /></label>
+            <label><PortalText text={"Bank Name"} /><PortalElement as="input" value={settings.bankName} onChange={(event) => updateSetting("bankName", event.target.value)} placeholder="Bank name" /></label>
+            <label><PortalText text={"Account Number"} /><PortalElement as="input" inputMode="numeric" value={settings.accountNumber} onChange={(event) => updateSetting("accountNumber", event.target.value.replace(/\D/g, ""))} placeholder="Account number" /></label>
+            <label><PortalText text={"IFSC Code"} /><PortalElement as="input" value={settings.ifscCode} onChange={(event) => updateSetting("ifscCode", event.target.value.toUpperCase())} placeholder="ABCD0123456" maxLength={11} /></label>
           </div>
         </div>
       )}
 
       {error && <div className="doctor-payment-message error"><i className="fa-solid fa-circle-exclamation" /> {error}</div>}
-      {saved && <div className="doctor-payment-message success"><i className="fa-solid fa-circle-check" /> Payment settings saved successfully.</div>}
+      {saved && <div className="doctor-payment-message success"><i className="fa-solid fa-circle-check" /><PortalText text={" Payment settings saved successfully."} /></div>}
 
       <footer className="doctor-payment-actions">
-        <span>Changes apply to this doctor profile.</span>
-        <button type="button" onClick={handleSave}><i className="fa-solid fa-floppy-disk" /> Save Payment Settings</button>
+        <span><PortalText text={"Changes apply to this doctor profile."} /></span>
+        <button type="button" onClick={handleSave}><i className="fa-solid fa-floppy-disk" /><PortalText text={" Save Payment Settings"} /></button>
       </footer>
     </section>
   );

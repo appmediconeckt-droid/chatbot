@@ -2098,3 +2098,5 @@
   flex-wrap: wrap;
   gap: 12px;
 }
+.dd-queue-row.dd-emergency-row { background: #fff1f2; border-left: 4px solid #b42318; }
+.dd-queue-row.dd-emergency-row .dd-emergency-label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 6px; color: #fff; background: #b42318; font-weight: 800; }

@@ -1,0 +1,1287 @@
+/* Nurse Shift Management - Pink Theme */
+:where(.nurse-view-shifts) .nurse-shift-management-container {
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #fff5f9;
+  min-height: 100vh;
+}
+
+/* Header Styles */
+:where(.nurse-view-shifts) .nurse-shift-header {
+  background: linear-gradient(135deg, #ff85b3 0%, #ffd6e7 100%);
+  border-radius: 15px;
+  padding: 25px;
+  margin-bottom: 25px;
+  box-shadow: 0 4px 12px rgba(255, 133, 179, 0.2);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-title {
+  color: #8a1e5c;
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-date {
+  background-color: white;
+  padding: 10px 20px;
+  border-radius: 50px;
+  font-weight: 600;
+  color: #c2185b;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 8px rgba(194, 24, 91, 0.15);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat {
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat:hover {
+  transform: translateY(-5px);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: white;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat-icon.total {
+  background: linear-gradient(135deg, #ff85b3, #ff6ba3);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat-icon.present {
+  background: linear-gradient(135deg, #4CAF50, #66BB6A);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat-icon.leave {
+  background: linear-gradient(135deg, #2196F3, #42A5F5);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat-icon.pending {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat-info h3 {
+  margin: 0;
+  font-size: 28px;
+  color: #333;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-stat-info p {
+  margin: 5px 0 0;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Navigation Tabs */
+:where(.nurse-view-shifts) .nurse-shift-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  border-bottom: 2px solid #ffcfe0;
+  padding-bottom: 10px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-tab {
+  padding: 12px 25px;
+  background-color: white;
+  border: 2px solid #ffcfe0;
+  border-radius: 10px 10px 0 0;
+  color: #c2185b;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  position: relative;
+  bottom: -2px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-tab:hover {
+  background-color: #fff5f9;
+  border-color: #ff85b3;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-tab.active {
+  background-color: #ff85b3;
+  color: white;
+  border-color: #ff85b3;
+  box-shadow: 0 -2px 10px rgba(255, 133, 179, 0.2);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-tab.active i {
+  color: white;
+}
+
+/* Tab Content */
+:where(.nurse-view-shifts) .nurse-shift-content {
+  background-color: white;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-tab-title {
+  color: #8a1e5c;
+  margin: 0;
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Form Styles */
+:where(.nurse-view-shifts) .nurse-shift-form,
+:where(.nurse-view-shifts) .nurse-leave-form {
+  background-color: #fff9fb;
+  border-radius: 12px;
+  padding: 25px;
+  margin-bottom: 25px;
+  border-left: 4px solid #ff85b3;
+}
+
+:where(.nurse-view-shifts) .nurse-form-title {
+  color: #8a1e5c;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-form-grid,
+:where(.nurse-view-shifts) .nurse-leave-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 25px;
+}
+
+:where(.nurse-view-shifts) .nurse-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #c2185b;
+}
+
+:where(.nurse-view-shifts) .nurse-form-group input,
+:where(.nurse-view-shifts) .nurse-form-group select,
+:where(.nurse-view-shifts) .nurse-form-group textarea {
+  width: 100%;
+  padding: 12px 15px;
+  border: 2px solid #ffcfe0;
+  border-radius: 8px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  background-color: #fff;
+}
+
+:where(.nurse-view-shifts) .nurse-form-group input:focus,
+:where(.nurse-view-shifts) .nurse-form-group select:focus,
+:where(.nurse-view-shifts) .nurse-form-group textarea:focus {
+  outline: none;
+  border-color: #ff85b3;
+  box-shadow: 0 0 0 3px rgba(255, 133, 179, 0.2);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-form-actions,
+:where(.nurse-view-shifts) .nurse-leave-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+}
+
+:where(.nurse-view-shifts) .nurse-form-cancel-btn {
+  padding: 12px 25px;
+  background-color: #f0f0f0;
+  color: #666;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-form-cancel-btn:hover {
+  background-color: #e0e0e0;
+}
+
+:where(.nurse-view-shifts) .nurse-form-submit-btn {
+  padding: 12px 30px;
+  background: linear-gradient(to right, #ff85b3, #ff6ba3);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 133, 179, 0.3);
+}
+
+:where(.nurse-view-shifts) .nurse-form-submit-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 133, 179, 0.4);
+}
+
+/* Shift Cards Grid */
+:where(.nurse-view-shifts) .nurse-shifts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  border: 1px solid #ffe9f2;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-card:hover {
+  transform: translateY(-5px);
+}
+
+:where(.nurse-view-shifts) .nurse-shift-color-bar {
+  height: 6px;
+  width: 100%;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-content {
+  padding: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-name {
+  margin: 0;
+  color: #333;
+  font-size: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-status.active {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-status.inactive {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-timing {
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-staffing {
+  margin-bottom: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-staffing-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-staffing-label {
+  color: #666;
+  font-weight: 500;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-staffing-count {
+  font-weight: 700;
+  color: #333;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-progress {
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-actions {
+  display: flex;
+  gap: 10px;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-action-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-action-btn.edit {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-action-btn.edit:hover {
+  background-color: #bbdefb;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-action-btn.assign {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-action-btn.assign:hover {
+  background-color: #c8e6c9;
+}
+
+/* Ward Cards Grid */
+:where(.nurse-view-shifts) .nurse-wards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-card {
+  background-color: white;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  border: 1px solid #ffe9f2;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-card:hover {
+  transform: translateY(-5px);
+}
+
+:where(.nurse-view-shifts) .nurse-ward-header {
+  padding: 20px;
+  color: white;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-capacity {
+  margin-top: 5px;
+  opacity: 0.9;
+  font-size: 14px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-content {
+  padding: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-info {
+  margin-bottom: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  color: #555;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-info-item i {
+  color: #ff85b3;
+  width: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-staffing {
+  margin-bottom: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-staffing-label {
+  color: #666;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-progress {
+  height: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-progress-bar {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-staffing-percent {
+  text-align: right;
+  font-weight: 700;
+  color: #333;
+  font-size: 14px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-actions {
+  display: flex;
+  gap: 10px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-action-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-action-btn.view {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-action-btn.view:hover {
+  background-color: #bbdefb;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-action-btn.assign {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-action-btn.assign:hover {
+  background-color: #ffe0b2;
+}
+
+/* Duty Roster */
+:where(.nurse-view-shifts) .nurse-roster-controls {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-btn {
+  padding: 10px 15px;
+  background-color: #ff85b3;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-btn:hover {
+  background-color: #ff6ba3;
+  transform: translateY(-2px);
+}
+
+:where(.nurse-view-shifts) .nurse-roster-week {
+  font-weight: 700;
+  color: #8a1e5c;
+  font-size: 16px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-table-container {
+  overflow-x: auto;
+  margin-bottom: 25px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1000px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-table thead {
+  background: linear-gradient(to right, #ff85b3, #ff6ba3);
+}
+
+:where(.nurse-view-shifts) .nurse-roster-table th {
+  padding: 15px;
+  text-align: center;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+  border-right: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+:where(.nurse-view-shifts) .nurse-roster-table th:last-child {
+  border-right: none;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-table tbody tr {
+  border-bottom: 1px solid #ffe9f2;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-table tbody tr:hover {
+  background-color: #fff9fb;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-table td {
+  padding: 12px;
+  text-align: center;
+  vertical-align: middle;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-id {
+  background-color: #f0f0f0;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-cell {
+  padding: 10px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-cell.morning {
+  background-color: #fff3e0;
+  color: #ef6c00;
+  border: 1px solid #ffcc80;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-cell.evening {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-cell.night {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+  border: 1px solid #ce93d8;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-cell.off {
+  background-color: #f5f5f5;
+  color: #757575;
+  border: 1px solid #e0e0e0;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-ward {
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.8;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend {
+  background-color: #fff9fb;
+  border-radius: 8px;
+  padding: 15px;
+  border-left: 4px solid #ff85b3;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend-title {
+  font-weight: 700;
+  color: #8a1e5c;
+  margin-bottom: 10px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend-color {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend-color.morning {
+  background-color: #fff3e0;
+  border: 2px solid #ffcc80;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend-color.evening {
+  background-color: #e3f2fd;
+  border: 2px solid #90caf9;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend-color.night {
+  background-color: #f3e5f5;
+  border: 2px solid #ce93d8;
+}
+
+:where(.nurse-view-shifts) .nurse-roster-legend-color.off {
+  background-color: #f5f5f5;
+  border: 2px solid #e0e0e0;
+}
+
+/* Attendance */
+:where(.nurse-view-shifts) .nurse-attendance-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-filter-btn {
+  padding: 8px 16px;
+  border: 2px solid #ffcfe0;
+  background-color: white;
+  color: #c2185b;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-filter-btn:hover {
+  background-color: #fff5f9;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-filter-btn.active {
+  background-color: #ff85b3;
+  color: white;
+  border-color: #ff85b3;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-table-container {
+  overflow-x: auto;
+  margin-bottom: 25px;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-table thead {
+  background: linear-gradient(to right, #ff85b3, #ff6ba3);
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-table th {
+  padding: 15px;
+  text-align: left;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-table tbody tr {
+  border-bottom: 1px solid #ffe9f2;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-table tbody tr:hover {
+  background-color: #fff9fb;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-table td {
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-shift {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-block;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-shift.morning {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-shift.evening {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-shift.night {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-time {
+  font-weight: 600;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-time.present {
+  color: #2e7d32;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-time.absent {
+  color: #c62828;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-overtime {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-status {
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:where(.nurse-view-shifts) .nurse-status-approved {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+:where(.nurse-view-shifts) .nurse-status-pending {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+:where(.nurse-view-shifts) .nurse-status-rejected {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-actions {
+  display: flex;
+  gap: 8px;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-action-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-action-btn.mark-present {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-action-btn.mark-present:hover {
+  background-color: #c8e6c9;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-action-btn.mark-absent {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-action-btn.mark-absent:hover {
+  background-color: #ffcdd2;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-action-btn.edit {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-action-btn.edit:hover {
+  background-color: #bbdefb;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary {
+  margin-top: 30px;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-card {
+  background: linear-gradient(135deg, #ff85b3 0%, #ffd6e7 100%);
+  border-radius: 12px;
+  padding: 20px;
+  color: white;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-card h4 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-stat {
+  text-align: center;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-value {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-value.present {
+  color: #e8f5e9;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-value.absent {
+  color: #ffebee;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-value.on-duty {
+  color: #e3f2fd;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-value.total {
+  color: #f3e5f5;
+}
+
+:where(.nurse-view-shifts) .nurse-attendance-summary-label {
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* Leave Requests */
+:where(.nurse-view-shifts) .nurse-leave-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-filter-btn {
+  padding: 8px 16px;
+  border: 2px solid #ffcfe0;
+  background-color: white;
+  color: #c2185b;
+  border-radius: 20px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-filter-btn:hover {
+  background-color: #fff5f9;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-filter-btn.active {
+  background-color: #ff85b3;
+  color: white;
+  border-color: #ff85b3;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-add-btn {
+  padding: 10px 20px;
+  background: linear-gradient(to right, #ff85b3, #ff6ba3);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 133, 179, 0.3);
+}
+
+:where(.nurse-view-shifts) .nurse-leave-requests-container {
+  overflow-x: auto;
+  margin-bottom: 25px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 1200px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-table thead {
+  background: linear-gradient(to right, #ff85b3, #ff6ba3);
+}
+
+:where(.nurse-view-shifts) .nurse-leave-table th {
+  padding: 15px;
+  text-align: left;
+  color: white;
+  font-weight: 700;
+  font-size: 15px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-table tbody tr {
+  border-bottom: 1px solid #ffe9f2;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-table tbody tr:hover {
+  background-color: #fff9fb;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-table td {
+  padding: 12px 15px;
+  vertical-align: middle;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-nurse-name {
+  font-weight: 600;
+  color: #333;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-id {
+  font-size: 12px;
+  color: #666;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-type {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-period {
+  font-weight: 600;
+  color: #333;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-days {
+  background-color: #fff3e0;
+  color: #ef6c00;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-reason {
+  max-width: 250px;
+  font-size: 14px;
+  color: #555;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-status {
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-actions {
+  display: flex;
+  gap: 8px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-action-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-action-btn.approve {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-action-btn.approve:hover {
+  background-color: #c8e6c9;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-action-btn.reject {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-action-btn.reject:hover {
+  background-color: #ffcdd2;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-action-btn.view {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-action-btn.view:hover {
+  background-color: #bbdefb;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-stats {
+  margin-top: 30px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-stat-card {
+  background-color: #fff9fb;
+  border-radius: 12px;
+  padding: 20px;
+  border-left: 4px solid #ff85b3;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-stat-card h4 {
+  color: #8a1e5c;
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-balance {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-balance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  background-color: white;
+  border-radius: 8px;
+  border: 1px solid #ffe9f2;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-balance-label {
+  font-weight: 600;
+  color: #666;
+}
+
+:where(.nurse-view-shifts) .nurse-leave-balance-value {
+  font-weight: 700;
+  color: #ff85b3;
+  font-size: 20px;
+}
+
+/* Common Button Styles */
+:where(.nurse-view-shifts) .nurse-shift-add-btn,
+:where(.nurse-view-shifts) .nurse-ward-search-input,
+:where(.nurse-view-shifts) .nurse-leave-search-input {
+  padding: 10px 20px;
+  border: 2px solid #ffcfe0;
+  background-color: white;
+  border-radius: 20px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-add-btn {
+  background: linear-gradient(to right, #ff85b3, #ff6ba3);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+:where(.nurse-view-shifts) .nurse-shift-add-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 133, 179, 0.3);
+}
+
+:where(.nurse-view-shifts) .nurse-ward-search {
+  position: relative;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-search-input {
+  padding-left: 40px;
+  width: 250px;
+}
+
+:where(.nurse-view-shifts) .nurse-ward-search i {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ff85b3;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  :where(.nurse-view-shifts) .nurse-shift-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  :where(.nurse-view-shifts) .nurse-shift-header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-shift-tabs {
+    flex-direction: column;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-shift-tab {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-shift-tab-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-shift-stats,
+  :where(.nurse-view-shifts) .nurse-leave-balance {
+    grid-template-columns: 1fr;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-shifts-grid,
+  :where(.nurse-view-shifts) .nurse-wards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-leave-header-actions {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-ward-search-input {
+    width: 100%;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-attendance-summary-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  :where(.nurse-view-shifts) .nurse-shift-title {
+    font-size: 22px;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-shift-tab-title {
+    font-size: 18px;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-form-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  :where(.nurse-view-shifts) .nurse-attendance-summary-stats {
+    grid-template-columns: 1fr;
+  }
+}

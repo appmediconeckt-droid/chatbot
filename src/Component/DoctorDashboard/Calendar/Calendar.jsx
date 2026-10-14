@@ -1,3 +1,4 @@
+import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 // DoctorCalendar.jsx
 import { useEffect, useRef, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
@@ -1052,7 +1053,7 @@ const DoctorCalendar = () => {
                       title={isPast ? "Cannot edit past dates" : "Open editor"}
                       aria-label={`Open editor for ${dateKey}`}
                     >
-                      <small>Edit</small>
+                      <small><PortalText text={"Edit"} /></small>
                     </button>
                   </div>
                 )}
@@ -1062,34 +1063,26 @@ const DoctorCalendar = () => {
                 {day && (
                   <>
                     {isPast ? (
-                      <small className="text-muted">Past date</small>
+                      <small className="text-muted"><PortalText text={"Past date"} /></small>
                     ) : (
                       <>
                         <small>
                           {isBlocked ? (
-                            <span className="text-danger">Unavailable</span>
+                            <span className="text-danger"><PortalText text={"Unavailable"} /></span>
                           ) : (
                             <span>
-                              {getRangesForDateOrWeek(year, month, day).length}{" "}
-                              ranges
-                            </span>
+                              {getRangesForDateOrWeek(year, month, day).length}{" "}<PortalText text={"ranges"} /></span>
                           )}
                         </small>
                         <div className="mt-2 small-legend">
                           {isManual && (
-                            <span className="badge badge-pill badge-manual">
-                              Manual
-                            </span>
+                            <span className="badge badge-pill badge-manual"><PortalText text={"Manual"} /></span>
                           )}
                           {isRecurring && (
-                            <span className="badge badge-pill badge-recurring">
-                              Week
-                            </span>
+                            <span className="badge badge-pill badge-recurring"><PortalText text={"Week"} /></span>
                           )}
                           {isBlocked && (
-                            <span className="badge badge-pill badge-blocked">
-                              Blocked
-                            </span>
+                            <span className="badge badge-pill badge-blocked"><PortalText text={"Blocked"} /></span>
                           )}
                         </div>
 
@@ -1122,9 +1115,7 @@ const DoctorCalendar = () => {
                                 />
                                 <label
                                   style={{ fontSize: "0.7rem", paddingLeft: 6 }}
-                                >
-                                  Start
-                                </label>
+                                ><PortalText text={"Start"} /></label>
                               </div>
 
                               <div
@@ -1150,18 +1141,14 @@ const DoctorCalendar = () => {
                                 />
                                 <label
                                   style={{ fontSize: "0.7rem", paddingLeft: 6 }}
-                                >
-                                  End
-                                </label>
+                                ><PortalText text={"End"} /></label>
                               </div>
 
                               <div style={{ minWidth: 120 }}>
                                 <label
                                   className="form-label mb-1 small"
                                   style={{ fontSize: "0.75rem" }}
-                                >
-                                  Duration (min)
-                                </label>
+                                ><PortalText text={"Duration (min)"} /></label>
                                 <div className="d-flex gap-1 align-items-center">
                                   <select
                                     className="form-select form-select-sm"
@@ -1205,13 +1192,13 @@ const DoctorCalendar = () => {
                                         {d} min
                                       </option>
                                     ))}
-                                    <option value="custom">Custom</option>
+                                    <PortalElement as="option" value="custom">Custom</PortalElement>
                                   </select>
 
                                   {quickRanges[dateKey] &&
                                     quickRanges[dateKey].durationMode ===
                                     "custom" && (
-                                      <input
+                                      <PortalElement as="input"
                                         type="number"
                                         min={1}
                                         className="form-control form-control-sm"
@@ -1248,16 +1235,12 @@ const DoctorCalendar = () => {
                                     );
                                   }}
                                   title={`Add time range to this date at ${selectedClinic.name}`}
-                                >
-                                  Add Time
-                                </button>
+                                ><PortalText text={"Add Time"} /></button>
                               </div>
                             </div>
 
                             <div className="mt-2 small text-muted">
-                              <small>
-                                Quick add: adds date-specific range (overrides weekday ranges for this date).
-                              </small>
+                              <small><PortalText text={"Quick add: adds date-specific range (overrides weekday ranges for this date)."} /></small>
                             </div>
                           </div>
                         )}
@@ -1772,14 +1755,14 @@ const DoctorCalendar = () => {
     <div className="doctor-calendar-root calendar-portal">
       <header className="calendar-portal-header">
         <div>
-          <h1>Calendar & Availability</h1>
-          <p>Recurring & date-specific availability</p>
+          <h1><PortalText text={"Calendar & Availability"} /></h1>
+          <p><PortalText text={"Recurring & date-specific availability"} /></p>
         </div>
         <div className="calendar-header-actions">
           <div className="calendar-clinic-select">
             <button type="button" onClick={() => setShowClinicDropdown((open) => !open)}>
               <i className="fa-solid fa-square-plus"></i>
-              {selectedClinic?.name || "Main Hospital"}
+              {selectedClinic?.name || <PortalText text={"Main Hospital"} />}
               <i className="fa-solid fa-chevron-down"></i>
             </button>
             {showClinicDropdown && (
@@ -1812,44 +1795,38 @@ const DoctorCalendar = () => {
               </div>
             )}
           </div>
-          <button type="button" className="calendar-clear-btn" onClick={clearAll}>Clear All</button>
+          <button type="button" className="calendar-clear-btn" onClick={clearAll}><PortalText text={"Clear All"} /></button>
         </div>
       </header>
 
-      <nav className="calendar-tabs" role="tablist" aria-label="Availability type">
+      <PortalElement as="nav" className="calendar-tabs" role="tablist" aria-label="Availability type">
         <button
           type="button"
           role="tab"
           aria-selected={activeCalendarTab === "recurring"}
           className={activeCalendarTab === "recurring" ? "active" : ""}
           onClick={() => setActiveCalendarTab("recurring")}
-        >
-          Recurring Schedule
-        </button>
+        ><PortalText text={"Recurring Schedule"} /></button>
         <button
           type="button"
           role="tab"
           aria-selected={activeCalendarTab === "specific"}
           className={activeCalendarTab === "specific" ? "active" : ""}
           onClick={() => setActiveCalendarTab("specific")}
-        >
-          Specific Dates
-        </button>
+        ><PortalText text={"Specific Dates"} /></button>
         <button
           type="button"
           role="tab"
           aria-selected={activeCalendarTab === "unavailable"}
           className={activeCalendarTab === "unavailable" ? "active" : ""}
           onClick={() => setActiveCalendarTab("unavailable")}
-        >
-          Exceptions / Unavailable
-        </button>
-      </nav>
+        ><PortalText text={"Exceptions / Unavailable"} /></button>
+      </PortalElement>
 
       <p className="calendar-tab-help" role="status">
-        {activeCalendarTab === "recurring" && "Select weekdays to create a schedule that repeats every week."}
-        {activeCalendarTab === "specific" && "Select a calendar date to add or update slots for that date."}
-        {activeCalendarTab === "unavailable" && "Select a calendar date to mark it unavailable or make it available again."}
+        {activeCalendarTab === "recurring" && <PortalText text={"Select weekdays to create a schedule that repeats every week."} />}
+        {activeCalendarTab === "specific" && <PortalText text={"Select a calendar date to add or update slots for that date."} />}
+        {activeCalendarTab === "unavailable" && <PortalText text={"Select a calendar date to mark it unavailable or make it available again."} />}
       </p>
 
       {apiError && <div className="calendar-api-note">{apiError}</div>}
@@ -1860,17 +1837,17 @@ const DoctorCalendar = () => {
             <div className="calendar-month-header">
               <div className="calendar-month-title">
                 <strong>{monthName} {year}</strong>
-                <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month">
+                <PortalElement as="button" type="button" onClick={() => changeMonth(-1)} aria-label="Previous month">
                   <i className="fa-solid fa-chevron-left"></i>
-                </button>
-                <button type="button" onClick={() => changeMonth(1)} aria-label="Next month">
+                </PortalElement>
+                <PortalElement as="button" type="button" onClick={() => changeMonth(1)} aria-label="Next month">
                   <i className="fa-solid fa-chevron-right"></i>
-                </button>
+                </PortalElement>
               </div>
               <div className="calendar-legend">
-                <span><i className="configured"></i> Configured</span>
-                <span><i className="selected"></i> Selected</span>
-                <span><i className="empty"></i> Empty</span>
+                <span><i className="configured"></i><PortalText text={" Configured"} /></span>
+                <span><i className="selected"></i><PortalText text={" Selected"} /></span>
+                <span><i className="empty"></i><PortalText text={" Empty"} /></span>
               </div>
             </div>
 
@@ -1932,20 +1909,20 @@ const DoctorCalendar = () => {
                   >
                     <span>{cell.day}</span>
                     {activeCalendarTab === "unavailable" && isBlocked && (
-                      <em className="unavailable-label">Unavailable</em>
+                      <em className="unavailable-label"><PortalText text={"Unavailable"} /></em>
                     )}
                     {activeCalendarTab !== "unavailable" && rangeCount > 0 && (
-                      <em>{rangeCount} ranges</em>
+                      <em>{rangeCount}<PortalText text={" ranges"} /></em>
                     )}
                     {activeCalendarTab === "recurring" && tabSelected && rangeCount === 0 && (
-                      <em>Weekly selected</em>
+                      <em><PortalText text={"Weekly selected"} /></em>
                     )}
                     {activeCalendarTab === "recurring" && isRecurring && (
                       <small>{selectedClinic?.name}</small>
                     )}
                     {!cell.muted && !tabSelected && !isConfigured && (
                       <small>
-                        {activeCalendarTab === "unavailable" ? "Available" : "No timings"}
+                        {activeCalendarTab === "unavailable" ? <PortalText text={"Available"} /> : <PortalText text={"No timings"} />}
                       </small>
                     )}
                   </button>
@@ -1955,23 +1932,23 @@ const DoctorCalendar = () => {
           </section>
 
           <section className="calendar-slot-preview">
-            <h2>Slot Preview &mdash; {selectedClinic?.name || "Main Hospital"}</h2>
+            <h2><PortalText text={"Slot Preview — "} />{selectedClinic?.name || <PortalText text={"Main Hospital"} />}</h2>
             <div className="slot-preview-box">
               {visibleSlotPreview.length === 0 ? (
                 <div className="slot-empty">
                   <i className="fa-regular fa-calendar-minus"></i>
-                  <p>No slots generated yet. Configure availability and click <button type="button" onClick={generateAllSlots}>Generate Slots</button> to preview.</p>
+                  <p><PortalText text={"No slots generated yet. Configure availability and click "} /><button type="button" onClick={generateAllSlots}><PortalText text={"Generate Slots"} /></button><PortalText text={" to preview."} /></p>
                 </div>
               ) : (
                 <div className="slot-preview-list">
                   {visibleSlotPreview.map((entry, index) => (
                     <article key={`${entry.date}-${index}`}>
                       <strong>{entry.date}</strong>
-                      <span>{entry.blocked ? "Unavailable" : `${entry.slots?.length || 0} slots`}</span>
+                      <span>{entry.blocked ? <PortalText text={"Unavailable"} /> : <PortalTemplate text={"{0} slots"} values={[entry.slots?.length || 0]} />}</span>
                       {entry.blocked && (
                         <div className="slot-unavailable-message">
                           <i className="fa-solid fa-ban"></i>
-                          <small>{entry.reason || "Doctor unavailable"}</small>
+                          <small>{entry.reason || <PortalText text={"Doctor unavailable"} />}</small>
                         </div>
                       )}
                       {!entry.blocked && (
@@ -1979,9 +1956,9 @@ const DoctorCalendar = () => {
                           {groupSlotsBySchedule(entry.slots || []).map((group, scheduleIndex) => (
                             <div key={`${group.rangeIndex}-${group.rangeLabel}`} className="slot-period-group slot-schedule-group">
                               <span className="slot-period-label slot-schedule-label">
-                                <span>Schedule {scheduleIndex + 1}</span>
+                                <span><PortalText text={"Schedule "} />{scheduleIndex + 1}</span>
                                 <strong>{group.rangeLabel}</strong>
-                                <em>{group.period} • {group.slots.length} slots</em>
+                                <em>{group.period} • {group.slots.length}<PortalText text={" slots"} /></em>
                               </span>
                               <div className="slot-period-pills">
                                 {group.slots.map((slot, slotIndex) => (
@@ -2007,46 +1984,41 @@ const DoctorCalendar = () => {
           <section className="calendar-date-card">
             <div className="side-card-title">
               <div>
-                <h3>{activeCalendarTab === "unavailable" ? "Unavailable Dates" : selectedDateLabel}</h3>
+                <h3>{activeCalendarTab === "unavailable" ? <PortalText text={"Unavailable Dates"} /> : selectedDateLabel}</h3>
                 <p>
                   {activeCalendarTab === "unavailable"
-                    ? `${Object.values(availabilityDateMap).filter((item) => item?.blocked).length} dates blocked`
-                    : `${selectedDays.length || 0} days selected`}
+                    ? <PortalTemplate text={"{0} dates blocked"} values={[Object.values(availabilityDateMap).filter((item) => item?.blocked).length]} />
+                    : <PortalTemplate text={"{0} days selected"} values={[selectedDays.length || 0]} />}
                 </p>
               </div>
               <i className="fa-solid fa-ban"></i>
             </div>
             <hr />
             {activeCalendarTab === "unavailable" ? (
-              <p className="calendar-empty-note">
-                Select a date to stop new bookings at this clinic, or restore its saved timings.
-              </p>
+              <p className="calendar-empty-note"><PortalText text={"Select a date to stop new bookings at this clinic, or restore its saved timings."} /></p>
             ) : (
               <>
-            <h4>Time Ranges</h4>
+            <h4><PortalText text={"Time Ranges"} /></h4>
             {selectedDays.length ? (
               getRangesForDateOrWeek(year, month, selectedDays[0]).length ? (
                 getRangesForDateOrWeek(year, month, selectedDays[0]).map((range, index) => (
                   <div className="time-range-row" key={`${range.start}-${index}`}>
                     <i className="fa-regular fa-clock"></i>
-                    <span>{range.start || "Start"}</span>
+                    <span>{range.start || <PortalText text={"Start"} />}</span>
                     <small>&rarr;</small>
-                    <span>{range.end || "End"}</span>
+                    <span>{range.end || <PortalText text={"End"} />}</span>
                   </div>
                 ))
               ) : (
-                <p className="calendar-empty-note">No saved ranges for selected date.</p>
+                <p className="calendar-empty-note"><PortalText text={"No saved ranges for selected date."} /></p>
               )
             ) : (
-              <p className="calendar-empty-note">Click any calendar date to edit availability or mark unavailable.</p>
+              <p className="calendar-empty-note"><PortalText text={"Click any calendar date to edit availability or mark unavailable."} /></p>
             )}
             <button type="button" className="add-range-btn" onClick={() => setShowAddTimeModal(true)}>
-              <i className="fa-solid fa-plus"></i> Add Another Range
-            </button>
+              <i className="fa-solid fa-plus"></i><PortalText text={" Add Another Range"} /></button>
             <hr />
-            <button type="button" className="apply-selected-btn" onClick={() => setShowAddTimeModal(true)}>
-              Apply to Selected Dates
-            </button>
+            <button type="button" className="apply-selected-btn" onClick={() => setShowAddTimeModal(true)}><PortalText text={"Apply to Selected Dates"} /></button>
               </>
             )}
           </section>
@@ -2056,15 +2028,15 @@ const DoctorCalendar = () => {
           <section className="recurring-rules-card">
             <div className="recurring-title">
               <div>
-                <h3>Recurring Rules</h3>
-                <p className="weekday-select-label">Select days</p>
+                <h3><PortalText text={"Recurring Rules"} /></h3>
+                <p className="weekday-select-label"><PortalText text={"Select days"} /></p>
               </div>
               <label className="calendar-switch">
                 <input type="checkbox" checked readOnly />
                 <span></span>
               </label>
             </div>
-            <p>Repeat these timings weekly on selected days.</p>
+            <p><PortalText text={"Repeat these timings weekly on selected days."} /></p>
             <div className="weekday-pills">
               {days.map((day, index) => (
                 <button
@@ -2079,9 +2051,7 @@ const DoctorCalendar = () => {
                 </button>
               ))}
             </div>
-            <button type="button" className="apply-weekdays-btn" onClick={() => setShowAddTimeModal(true)}>
-              Apply to weekdays
-            </button>
+            <button type="button" className="apply-weekdays-btn" onClick={() => setShowAddTimeModal(true)}><PortalText text={"Apply to weekdays"} /></button>
           </section>
           )}
         </aside>
@@ -2097,22 +2067,20 @@ const DoctorCalendar = () => {
           <div className="calendar-modal-card calendar-multi-range-card" onClick={(event) => event.stopPropagation()}>
             <div className="calendar-modal-title">
               <div>
-                <h3>Add Time Ranges</h3>
-                <p>Add separate windows such as morning, afternoon and evening.</p>
+                <h3><PortalText text={"Add Time Ranges"} /></h3>
+                <p><PortalText text={"Add separate windows such as morning, afternoon and evening."} /></p>
               </div>
-              <button type="button" onClick={() => setShowAddTimeModal(false)} aria-label="Close">
+              <PortalElement as="button" type="button" onClick={() => setShowAddTimeModal(false)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>
-              </button>
+              </PortalElement>
             </div>
 
             <div className="calendar-multi-range-list">
               {additionalTimeRows.map((range, index) => (
                 <div className="calendar-multi-range-row" key={index}>
-                  <div className="calendar-range-number">Range {index + 1}</div>
+                  <div className="calendar-range-number"><PortalText text={"Range "} />{index + 1}</div>
                   <div className="calendar-modal-grid">
-                    <label>
-                      Start Time
-                      <input
+                    <label><PortalText text={"Start Time"} /><input
                         type="time"
                         value={range.start}
                         onChange={(event) =>
@@ -2120,9 +2088,7 @@ const DoctorCalendar = () => {
                         }
                       />
                     </label>
-                    <label>
-                      End Time
-                      <input
+                    <label><PortalText text={"End Time"} /><input
                         type="time"
                         value={range.end}
                         onChange={(event) =>
@@ -2130,18 +2096,16 @@ const DoctorCalendar = () => {
                         }
                       />
                     </label>
-                    <label>
-                      Slot Duration
-                      <select
+                    <label><PortalText text={"Slot Duration"} /><select
                         value={range.duration}
                         onChange={(event) =>
                           updateAdditionalTimeRow(index, "duration", event.target.value)
                         }
                       >
-                        <option value={10}>10 min</option>
-                        <option value={15}>15 min</option>
-                        <option value={30}>30 min</option>
-                        <option value={45}>45 min</option>
+                        <PortalElement as="option" value={10}>10 min</PortalElement>
+                        <PortalElement as="option" value={15}>15 min</PortalElement>
+                        <PortalElement as="option" value={30}>30 min</PortalElement>
+                        <PortalElement as="option" value={45}>45 min</PortalElement>
                       </select>
                     </label>
                     <button
@@ -2163,17 +2127,12 @@ const DoctorCalendar = () => {
               className="add-range-btn calendar-add-row-btn"
               onClick={addAdditionalTimeRow}
             >
-              <i className="fa-solid fa-plus"></i> Add another time range
-            </button>
+              <i className="fa-solid fa-plus"></i><PortalText text={" Add another time range"} /></button>
 
             <div className="calendar-modal-actions">
-              <button type="button" className="save-draft-btn" onClick={() => setShowAddTimeModal(false)}>
-                Done
-              </button>
+              <button type="button" className="save-draft-btn" onClick={() => setShowAddTimeModal(false)}><PortalText text={"Done"} /></button>
               {activeCalendarTab === "recurring" && (
-                <button type="button" className="apply-weekdays-btn" onClick={() => saveAdditionalTimeRows("weekday")}>
-                  Save all for weekdays
-                </button>
+                <button type="button" className="apply-weekdays-btn" onClick={() => saveAdditionalTimeRows("weekday")}><PortalText text={"Save all for weekdays"} /></button>
               )}
               <button
                 type="button"
@@ -2190,10 +2149,10 @@ const DoctorCalendar = () => {
                 }
               >
                 {activeCalendarTab === "specific"
-                  ? "Save all ranges to dates"
+                  ? <PortalText text={"Save all ranges to dates"} />
                   : activeCalendarTab === "recurring"
-                    ? "Save all ranges to weekdays"
-                    : "Save availability ranges"}
+                    ? <PortalText text={"Save all ranges to weekdays"} />
+                    : <PortalText text={"Save availability ranges"} />}
               </button>
             </div>
           </div>
@@ -2211,16 +2170,16 @@ const DoctorCalendar = () => {
             <div className="calendar-modal-title">
               <div>
                 <h3>{editingTarget.key}</h3>
-                <p>{selectedClinic?.name} availability for this date.</p>
+                <p>{selectedClinic?.name}<PortalText text={" availability for this date."} /></p>
               </div>
-              <button type="button" onClick={() => setEditingTarget(null)} aria-label="Close">
+              <PortalElement as="button" type="button" onClick={() => setEditingTarget(null)} aria-label="Close">
                 <i className="fa-solid fa-xmark"></i>
-              </button>
+              </PortalElement>
             </div>
 
             <div className="calendar-unavailable-panel">
-              <p>Stop new bookings for this date at {selectedClinic?.name}. Your saved timings and existing appointments are kept.</p>
-              {availabilityDateMap[editingTarget.key]?.globalBlocked && <p>This date has an all-clinic block. Restoring it removes that block across clinics.</p>}
+              <p><PortalText text={"Stop new bookings for this date at "} />{selectedClinic?.name}<PortalText text={". Your saved timings and existing appointments are kept."} /></p>
+              {availabilityDateMap[editingTarget.key]?.globalBlocked && <p><PortalText text={"This date has an all-clinic block. Restoring it removes that block across clinics."} /></p>}
               {unavailableError && <p role="alert" className="text-danger">{unavailableError}</p>}
               <button
                 type="button"
@@ -2228,12 +2187,10 @@ const DoctorCalendar = () => {
                 disabled={savingUnavailable || !selectedClinic?.id}
                 onClick={() => toggleBlockDate(editingTarget.key, editingTarget.year, editingTarget.month, editingTarget.day)}
               >
-                {savingUnavailable ? "Saving..." : availabilityDateMap[editingTarget.key]?.globalBlocked ? "Remove All-Clinic Block" : availabilityDateMap[editingTarget.key]?.blocked ? "Mark Available Again" : "Mark Unavailable for This Date"}
+                {savingUnavailable ? <PortalText text={"Saving..."} /> : availabilityDateMap[editingTarget.key]?.globalBlocked ? <PortalText text={"Remove All-Clinic Block"} /> : availabilityDateMap[editingTarget.key]?.blocked ? <PortalText text={"Mark Available Again"} /> : <PortalText text={"Mark Unavailable for This Date"} />}
               </button>
               {availabilityDateMap[editingTarget.key]?.blocked && (
-                <small className="calendar-unavailable-note">
-                  This override applies only to {editingTarget.key}. Weekly availability remains active for other matching days.
-                </small>
+                <small className="calendar-unavailable-note"><PortalText text={"This override applies only to "} />{editingTarget.key}<PortalText text={". Weekly availability remains active for other matching days."} /></small>
               )}
             </div>
 
@@ -2241,7 +2198,7 @@ const DoctorCalendar = () => {
             <>
             <hr />
 
-            <h4 className="calendar-modal-section-title">Saved Slots</h4>
+            <h4 className="calendar-modal-section-title"><PortalText text={"Saved Slots"} /></h4>
             <div className="calendar-modal-range-list">
               {(availabilityDateMap[editingTarget.key]?.ranges || []).length ? (
                 availabilityDateMap[editingTarget.key].ranges.map((range, index) => (
@@ -2250,39 +2207,33 @@ const DoctorCalendar = () => {
                     <span>{range.start}</span>
                     <small>&rarr;</small>
                     <span>{range.end}</span>
-                    <button type="button" onClick={() => removeRange(index)} aria-label="Remove range">
+                    <PortalElement as="button" type="button" onClick={() => removeRange(index)} aria-label="Remove range">
                       <i className="fa-solid fa-trash"></i>
-                    </button>
+                    </PortalElement>
                   </div>
                 ))
               ) : (
-                <p className="calendar-empty-note">No date-specific slots. Weekly slots may still apply unless this date is unavailable.</p>
+                <p className="calendar-empty-note"><PortalText text={"No date-specific slots. Weekly slots may still apply unless this date is unavailable."} /></p>
               )}
             </div>
 
             {!availabilityDateMap[editingTarget.key]?.blocked && (
               <>
-                <h4 className="calendar-modal-section-title">Add Slot for This Date</h4>
+                <h4 className="calendar-modal-section-title"><PortalText text={"Add Slot for This Date"} /></h4>
                 <div className="calendar-modal-grid">
-                  <label>
-                    Start Time
-                    <input
+                  <label><PortalText text={"Start Time"} /><input
                       type="time"
                       value={newRange.start}
                       onChange={(event) => setNewRange((prev) => ({ ...prev, start: event.target.value }))}
                     />
                   </label>
-                  <label>
-                    End Time
-                    <input
+                  <label><PortalText text={"End Time"} /><input
                       type="time"
                       value={newRange.end}
                       onChange={(event) => setNewRange((prev) => ({ ...prev, end: event.target.value }))}
                     />
                   </label>
-                  <label>
-                    Slot Duration
-                    <select
+                  <label><PortalText text={"Slot Duration"} /><select
                       value={newRange.duration}
                       onChange={(event) => setNewRange((prev) => ({ ...prev, duration: Number(event.target.value) }))}
                     >
@@ -2298,18 +2249,14 @@ const DoctorCalendar = () => {
             )}
 
             <div className="calendar-modal-actions">
-              <button type="button" className="save-draft-btn" onClick={() => setEditingTarget(null)}>
-                Close
-              </button>
+              <button type="button" className="save-draft-btn" onClick={() => setEditingTarget(null)}><PortalText text={"Close"} /></button>
               {activeCalendarTab === "specific" && !availabilityDateMap[editingTarget.key]?.blocked && (
                 <button
                   type="button"
                   className="apply-selected-btn calendar-save-slot-btn"
                   onClick={saveRange}
                   disabled={!newRange.start || !newRange.end}
-                >
-                  Save Slot
-                </button>
+                ><PortalText text={"Save Slot"} /></button>
               )}
             </div>
           </div>
@@ -2318,17 +2265,16 @@ const DoctorCalendar = () => {
 
       <footer className="calendar-bottom-bar">
         <div className="calendar-status-meta">
-          <span><i className="selected"></i> Selected dates: {selectedDays.length}</span>
-          <span><i className="configured"></i> Configured dates: {configuredDatesCount}</span>
-          <span><i className="configured"></i> Weekly days: {recurringConfiguredCount}</span>
-          <span className="pending"><i></i> Pending changes: {selectedDays.length ? 2 : 0}</span>
+          <span><i className="selected"></i><PortalText text={" Selected dates: "} />{selectedDays.length}</span>
+          <span><i className="configured"></i><PortalText text={" Configured dates: "} />{configuredDatesCount}</span>
+          <span><i className="configured"></i><PortalText text={" Weekly days: "} />{recurringConfiguredCount}</span>
+          <span className="pending"><i></i><PortalText text={" Pending changes: "} />{selectedDays.length ? 2 : 0}</span>
         </div>
         <div className="calendar-bottom-actions">
-          <button type="button" className="clear-preview-btn" onClick={() => setSlotPreview([])}>Clear Preview</button>
-          <button type="button" className="save-draft-btn">Save Draft</button>
+          <button type="button" className="clear-preview-btn" onClick={() => setSlotPreview([])}><PortalText text={"Clear Preview"} /></button>
+          <button type="button" className="save-draft-btn"><PortalText text={"Save Draft"} /></button>
           <button type="button" className="generate-slots-btn" onClick={generateAllSlots}>
-            <i className="fa-solid fa-bolt"></i> Generate Slots
-          </button>
+            <i className="fa-solid fa-bolt"></i><PortalText text={" Generate Slots"} /></button>
         </div>
       </footer>
     </div>
@@ -2339,14 +2285,11 @@ const DoctorCalendar = () => {
 
       <div className="header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-3 gap-3">
         <div style={{ display: "grid" }}>
-          <h2 className="mb-3" >Calendar</h2>
-          <small className="text-muted">
-            Recurring & date-specific availability — Modern Blue Theme
-          </small>
+          <h2 className="mb-3" ><PortalText text={"Calendar"} /></h2>
+          <small className="text-muted"><PortalText text={"Recurring & date-specific availability — Modern Blue Theme"} /></small>
           <div className="mt-1">
             <small className="text-danger">
-              <strong>Note:</strong> Past dates cannot be edited or selected.
-            </small>
+              <strong><PortalText text={"Note:"} /></strong><PortalText text={" Past dates cannot be edited or selected."} /></small>
           </div>
         </div>
 
@@ -2395,7 +2338,7 @@ const DoctorCalendar = () => {
                   zIndex: 1001
                 }}
               >
-                <h6 className="mb-3">Select Clinic</h6>
+                <h6 className="mb-3"><PortalText text={"Select Clinic"} /></h6>
                 <div className="clinic-list mb-3" style={{ maxHeight: "200px", overflowY: "auto" }}>
                   {clinics.map(clinic => (
                     <div
@@ -2428,7 +2371,7 @@ const DoctorCalendar = () => {
                         </div>
                         <div>
                           {selectedClinic.id === clinic.id && (
-                            <span className="badge" style={{ backgroundColor: clinic.color }}>Selected</span>
+                            <span className="badge" style={{ backgroundColor: clinic.color }}><PortalText text={"Selected"} /></span>
                           )}
                           
                         </div>
@@ -2441,15 +2384,13 @@ const DoctorCalendar = () => {
           </div>
 
           <div className="d-flex gap-2">
-            <button className="btn btn-danger" onClick={clearAll}>
-              Clear All
-            </button>
+            <button className="btn btn-danger" onClick={clearAll}><PortalText text={"Clear All"} /></button>
           </div>
         </div>
       </div>
 
       {apiStatus === "loading" && (
-        <div className="alert alert-info py-2">Loading clinics and availability...</div>
+        <div className="alert alert-info py-2"><PortalText text={"Loading clinics and availability..."} /></div>
       )}
       {apiError && (
         <div className="alert alert-danger py-2">{apiError}</div>
@@ -2457,7 +2398,7 @@ const DoctorCalendar = () => {
 
       <div className="weekday-bar d-flex justify-content-between gap-2 mb-2">
         {days.map((d, i) => (
-          <button
+          <PortalElement as="button"
             key={d}
             className={`btn btn-sm weekday-btn ${recurringWeekdays.includes(i) ? "active" : ""
               }`}
@@ -2467,7 +2408,7 @@ const DoctorCalendar = () => {
             aria-pressed={recurringWeekdays.includes(i)}
           >
             {d}
-          </button>
+          </PortalElement>
         ))}
         <button
           className="btn btn-primary gap-2"
@@ -2481,18 +2422,16 @@ const DoctorCalendar = () => {
               height: "8px",
               backgroundColor: "white"
             }}
-          />
-          Add Timing to Selected
-        </button>
+          /><PortalText text={"Add Timing to Selected"} /></button>
       </div>
 
-      <div
+      <PortalElement as="div"
         className="nav-controls btn-group mt-4"
         role="group"
         aria-label="Month navigation"
         style={{ width: "500px", justifyContent: "center", alignItems: "center" }}
       >
-        <button
+        <PortalElement as="button"
           className="btn btn-outline-primary"
           onClick={() => changeMonth(-1)}
           style={{ boxShadow: "none" }}
@@ -2508,21 +2447,21 @@ const DoctorCalendar = () => {
               strokeLinejoin="round"
             />
           </svg>
-          <span className="ms-2 d-none d-sm-inline">Prev</span>
-        </button>
+          <span className="ms-2 d-none d-sm-inline"><PortalText text={"Prev"} /></span>
+        </PortalElement>
         <div className="month-title text-center px-3 mt-2">
           <strong>
             {currentDate.toLocaleString("default", { month: "long" })}{" "}
             {currentDate.getFullYear()}
           </strong>
         </div>
-        <button
+        <PortalElement as="button"
           className="btn btn-outline-primary"
           onClick={() => changeMonth(1)}
           style={{ boxShadow: "none" }}
           aria-label="Next month"
         >
-          <span className="me-2 d-none d-sm-inline">Next</span>
+          <span className="me-2 d-none d-sm-inline"><PortalText text={"Next"} /></span>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path
               d="M9 6l6 6-6 6"
@@ -2532,8 +2471,8 @@ const DoctorCalendar = () => {
               strokeLinejoin="round"
             />
           </svg>
-        </button>
-      </div>
+        </PortalElement>
+      </PortalElement>
 
       <div className="days-row d-md-grid mb-1 mt-5">
         {days.map((d) => (
@@ -2548,16 +2487,10 @@ const DoctorCalendar = () => {
       <div className="mt-4 p-3 bg-light rounded controls-card shadow-sm">
         <div className="d-flex justify-content-between align-items-center flex-column flex-md-row gap-2">
           <div>
-            <h6 className="m-0">Quick Actions</h6>
-            <small className="text-muted d-block">
-              Click a date cell to open the editor. Add ranges, mark
-              unavailable, or remove ranges. Or use inline Add Time on selected
-              days.
-            </small>
+            <h6 className="m-0"><PortalText text={"Quick Actions"} /></h6>
+            <small className="text-muted d-block"><PortalText text={"Click a date cell to open the editor. Add ranges, mark unavailable, or remove ranges. Or use inline Add Time on selected days."} /></small>
             <small className="text-danger">
-              <strong>Note:</strong> Past dates are grayed out and cannot be
-              edited.
-            </small>
+              <strong><PortalText text={"Note:"} /></strong><PortalText text={" Past dates are grayed out and cannot be edited."} /></small>
           </div>
 
           <div className="d-flex gap-2">
@@ -2565,27 +2498,23 @@ const DoctorCalendar = () => {
               className="btn btn-primary"
               onClick={generateAllSlots}
               style={{ backgroundColor: selectedClinic.color, borderColor: selectedClinic.color }}
-            >
-              Generate Slots for {selectedClinic.name}
+            ><PortalText text={"Generate Slots for "} />{selectedClinic.name}
             </button>
             <button
               className="btn btn-outline-secondary"
               onClick={() => setSlotPreview([])}
-            >
-              Clear Preview
-            </button>
+            ><PortalText text={"Clear Preview"} /></button>
           </div>
         </div>
         <div className="mt-2">
           <small className="text-primary">
-            <strong>Note:</strong> Generating slots will only show appointments for the currently selected clinic ({selectedClinic.name}).
+            <strong><PortalText text={"Note:"} /></strong><PortalText text={" Generating slots will only show appointments for the currently selected clinic ("} />{selectedClinic.name}).
           </small>
         </div>
       </div>
 
       <div className="mt-4">
-        <h5>
-          Slot Preview - {selectedClinic.name}
+        <h5><PortalText text={"Slot Preview - "} />{selectedClinic.name}
           <span
             className="badge ms-2"
             style={{
@@ -2593,12 +2522,10 @@ const DoctorCalendar = () => {
               color: "white",
               fontSize: "0.7em"
             }}
-          >
-            Current Clinic
-          </span>
+          ><PortalText text={"Current Clinic"} /></span>
         </h5>
         {futureSlotPreview.length === 0 ? (
-          <p className="text-muted">No slots generated yet for {selectedClinic.name}.</p>
+          <p className="text-muted"><PortalText text={"No slots generated yet for "} />{selectedClinic.name}.</p>
         ) : (
           <div className="row">
             {futureSlotPreview.map((e, i) => (
@@ -2607,24 +2534,24 @@ const DoctorCalendar = () => {
                   <div className="d-flex justify-content-between align-items-start">
                     <strong>{e.date}</strong>
                     {e.blocked ? (
-                      <span className="text-danger small">Unavailable</span>
+                      <span className="text-danger small"><PortalText text={"Unavailable"} /></span>
                     ) : (
                       <span className="text-muted small">
-                        {e.slots.length} slots for {selectedClinic.name}
+                        {e.slots.length}<PortalText text={" slots for "} />{selectedClinic.name}
                       </span>
                     )}
                   </div>
                   <div className="mt-2">
                     {e.blocked ? (
-                      <em className="text-danger">Date marked unavailable</em>
+                      <em className="text-danger"><PortalText text={"Date marked unavailable"} /></em>
                     ) : e.slots.length ? (
                       <div className="slot-list">
                         {groupSlotsBySchedule(e.slots).map((group, scheduleIndex) => (
                           <div key={`${group.rangeIndex}-${group.rangeLabel}`} className="slot-period-group slot-schedule-group mb-2">
                             <div className="slot-period-label slot-schedule-label small fw-semibold mb-1">
-                              <span>Schedule {scheduleIndex + 1}</span>
+                              <span><PortalText text={"Schedule "} />{scheduleIndex + 1}</span>
                               <strong>{group.rangeLabel}</strong>
-                              <em>{group.period} • {group.slots.length} slots</em>
+                              <em>{group.period} • {group.slots.length}<PortalText text={" slots"} /></em>
                             </div>
                             <div className="slot-period-pills">
                               {group.slots.map((slot, idx) => (
@@ -2645,7 +2572,7 @@ const DoctorCalendar = () => {
                         ))}
                       </div>
                     ) : (
-                      <em className="text-muted">No slots for {selectedClinic.name} on this date</em>
+                      <em className="text-muted"><PortalText text={"No slots for "} />{selectedClinic.name}<PortalText text={" on this date"} /></em>
                     )}
                   </div>
                 </div>
@@ -2681,13 +2608,12 @@ const DoctorCalendar = () => {
                     height: "12px",
                     backgroundColor: "white"
                   }}
-                />
-                Add Timing to Selected - {selectedClinic.name}
+                /><PortalText text={"Add Timing to Selected - "} />{selectedClinic.name}
               </h5>
             </div>
             <div className="card-body">
               <div className="mb-3">
-                <label className="form-label">Start Time</label>
+                <label className="form-label"><PortalText text={"Start Time"} /></label>
                 <input
                   type="time"
                   className="form-control"
@@ -2702,7 +2628,7 @@ const DoctorCalendar = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">End Time</label>
+                <label className="form-label"><PortalText text={"End Time"} /></label>
                 <input
                   type="time"
                   className="form-control"
@@ -2717,7 +2643,7 @@ const DoctorCalendar = () => {
               </div>
 
               <div className="mb-3">
-                <label className="form-label">Duration (minutes)</label>
+                <label className="form-label"><PortalText text={"Duration (minutes)"} /></label>
                 <div className="d-flex gap-2 align-items-center">
                   <select
                     className="form-select"
@@ -2748,11 +2674,11 @@ const DoctorCalendar = () => {
                         {d} min
                       </option>
                     ))}
-                    <option value="custom">Custom</option>
+                    <PortalElement as="option" value="custom">Custom</PortalElement>
                   </select>
 
                   {additionalTime.durationMode === "custom" && (
-                    <input
+                    <PortalElement as="input"
                       type="number"
                       min={1}
                       className="form-control"
@@ -2774,19 +2700,19 @@ const DoctorCalendar = () => {
                 <div className="d-flex gap-2 align-items-center justify-content-between">
                   <div className="small text-muted">
                     <div>
-                      <strong>Selected Clinic:</strong> {selectedClinic.name} ({selectedClinic.location})
+                      <strong><PortalText text={"Selected Clinic:"} /></strong> {selectedClinic.name} ({selectedClinic.location})
                     </div>
                     <div>
-                      <strong>Selected Days:</strong>{" "}
+                      <strong><PortalText text={"Selected Days:"} /></strong>{" "}
                       {selectedDays.length > 0
                         ? selectedDays.join(", ")
-                        : "None"}
+                        : <PortalText text={"None"} />}
                     </div>
                     <div>
-                      <strong>Recurring Weekdays:</strong>{" "}
+                      <strong><PortalText text={"Recurring Weekdays:"} /></strong>{" "}
                       {recurringWeekdays.length > 0
                         ? recurringWeekdays.map((w) => days[w]).join(", ")
-                        : "None"}
+                        : <PortalText text={"None"} />}
                     </div>
                   </div>
                 </div>
@@ -2802,8 +2728,7 @@ const DoctorCalendar = () => {
                     selectedDays.length === 0
                   }
                   style={{ backgroundColor: selectedClinic.color, borderColor: selectedClinic.color }}
-                >
-                  Add to Selected Days ({selectedDays.length})
+                ><PortalText text={"Add to Selected Days ("} />{selectedDays.length})
                 </button>
 
                 <button
@@ -2815,8 +2740,7 @@ const DoctorCalendar = () => {
                     recurringWeekdays.length === 0
                   }
                   style={{ backgroundColor: selectedClinic.color + "CC", borderColor: selectedClinic.color }}
-                >
-                  Add to Recurring Weekdays ({recurringWeekdays.length})
+                ><PortalText text={"Add to Recurring Weekdays ("} />{recurringWeekdays.length})
                 </button>
 
                 <button
@@ -2832,9 +2756,7 @@ const DoctorCalendar = () => {
                       recurringWeekdays.length === 0)
                   }
                   style={{ backgroundColor: selectedClinic.color + "99", borderColor: selectedClinic.color }}
-                >
-                  Add to Both
-                </button>
+                ><PortalText text={"Add to Both"} /></button>
               </div>
             </div>
             <div className="card-footer d-flex justify-content-between">
@@ -2849,9 +2771,7 @@ const DoctorCalendar = () => {
                     customDuration: "",
                   });
                 }}
-              >
-                Clear Timing
-              </button>
+              ><PortalText text={"Clear Timing"} /></button>
               <div className="d-flex gap-2">
                 <button
                   className="btn btn-success"
@@ -2867,15 +2787,11 @@ const DoctorCalendar = () => {
                       recurringWeekdays.length === 0)
                   }
                   style={{ backgroundColor: selectedClinic.color, borderColor: selectedClinic.color }}
-                >
-                  Save
-                </button>
+                ><PortalText text={"Save"} /></button>
                 <button
                   className="btn btn-secondary"
                   onClick={() => setShowAddTimeModal(false)}
-                >
-                  Close
-                </button>
+                ><PortalText text={"Close"} /></button>
               </div>
             </div>
           </div>
@@ -2898,11 +2814,10 @@ const DoctorCalendar = () => {
           >
             <div className="card-body">
               <div className="d-flex justify-content-between align-items-center mb-3">
-                <h5 className="card-title m-0">
-                  Edit{" "}
+                <h5 className="card-title m-0"><PortalText text={"Edit"} />{" "}
                   {editingTarget.type === "date"
-                    ? `Date: ${editingTarget.key}`
-                    : `Weekday: ${days[editingTarget.key]}`}
+                    ? <PortalTemplate text={"Date: {0}"} values={[editingTarget.key]} />
+                    : <PortalTemplate text={"Weekday: {0}"} values={[days[editingTarget.key]]} />}
                 </h5>
                 <div className="d-flex align-items-center gap-2">
                   <div
@@ -2917,14 +2832,12 @@ const DoctorCalendar = () => {
                   <button
                     className="btn btn-sm btn-outline-secondary"
                     onClick={() => setEditingTarget(null)}
-                  >
-                    Close
-                  </button>
+                  ><PortalText text={"Close"} /></button>
                 </div>
               </div>
 
               <div className="mb-4">
-                <h6>Existing Ranges</h6>
+                <h6><PortalText text={"Existing Ranges"} /></h6>
                 <ul className="list-group mb-2">
                   {editingTarget.type === "date"
                     ? (
@@ -2942,8 +2855,7 @@ const DoctorCalendar = () => {
                             <span className="fw-bold">
                               {r.start} → {r.end}
                             </span>{" "}
-                            — {r.duration || 15} min
-                            <span
+                            — {r.duration || 15}<PortalText text={" min"} /><span
                               className="badge ms-2"
                               style={{
                                 backgroundColor: clinic.color,
@@ -2958,9 +2870,7 @@ const DoctorCalendar = () => {
                             <button
                               className="btn btn-sm btn-danger me-2"
                               onClick={() => removeRange(idx)}
-                            >
-                              Remove
-                            </button>
+                            ><PortalText text={"Remove"} /></button>
                           </div>
                         </li>
                       );
@@ -2977,8 +2887,7 @@ const DoctorCalendar = () => {
                               <span className="fw-bold">
                                 {r.start} → {r.end}
                               </span>{" "}
-                              — {r.duration || 15} min
-                              <span
+                              — {r.duration || 15}<PortalText text={" min"} /><span
                                 className="badge ms-2"
                                 style={{
                                   backgroundColor: clinic.color,
@@ -2993,9 +2902,7 @@ const DoctorCalendar = () => {
                               <button
                                 className="btn btn-sm btn-danger me-2"
                                 onClick={() => removeRange(idx)}
-                              >
-                                Remove
-                              </button>
+                              ><PortalText text={"Remove"} /></button>
                             </div>
                           </li>
                         );
@@ -3007,10 +2914,7 @@ const DoctorCalendar = () => {
                       (availabilityDateMap[editingTarget.key].ranges || [])
                         .length === 0) && (
                       <li className="list-group-item">
-                        <em>
-                          No date-specific ranges (weekday ranges may still
-                          apply)
-                        </em>
+                        <em><PortalText text={"No date-specific ranges (weekday ranges may still apply)"} /></em>
                       </li>
                     )}
                 </ul>
@@ -3035,8 +2939,8 @@ const DoctorCalendar = () => {
                       >
                         {availabilityDateMap[editingTarget.key] &&
                           availabilityDateMap[editingTarget.key].blocked
-                          ? "Unmark Unavailable"
-                          : "Mark Date Unavailable"}
+                          ? <PortalText text={"Unmark Unavailable"} />
+                          : <PortalText text={"Mark Date Unavailable"} />}
                       </button>
 
                       <button
@@ -3053,26 +2957,20 @@ const DoctorCalendar = () => {
                             editingTarget.day
                           );
                         }}
-                      >
-                        Clear Date Ranges
-                      </button>
+                      ><PortalText text={"Clear Date Ranges"} /></button>
                     </div>
                     <div className="mt-2">
-                      <small className="text-muted">
-                        If a date is marked unavailable, it will be excluded
-                        even if weekday ranges exist. Date-specific ranges take
-                        precedence over weekday ranges.
-                      </small>
+                      <small className="text-muted"><PortalText text={"If a date is marked unavailable, it will be excluded even if weekday ranges exist. Date-specific ranges take precedence over weekday ranges."} /></small>
                     </div>
                   </div>
                 )}
               </div>
 
               <div className="mb-4">
-                <h6>Add New Range</h6>
+                <h6><PortalText text={"Add New Range"} /></h6>
                 <div className="row g-2 align-items-end">
                   <div className="col-md-4">
-                    <label className="form-label">Start (24-hour)</label>
+                    <label className="form-label"><PortalText text={"Start (24-hour)"} /></label>
                     <input
                       type="time"
                       className="form-control"
@@ -3083,7 +2981,7 @@ const DoctorCalendar = () => {
                     />
                   </div>
                   <div className="col-md-4">
-                    <label className="form-label">End (24-hour)</label>
+                    <label className="form-label"><PortalText text={"End (24-hour)"} /></label>
                     <input
                       type="time"
                       className="form-control"
@@ -3094,7 +2992,7 @@ const DoctorCalendar = () => {
                     />
                   </div>
                   <div className="col-md-3">
-                    <label className="form-label">Slot Duration (min)</label>
+                    <label className="form-label"><PortalText text={"Slot Duration (min)"} /></label>
                     <input
                       type="number"
                       min={1}
@@ -3114,21 +3012,15 @@ const DoctorCalendar = () => {
                       onClick={saveRange}
                       disabled={!newRange.start || !newRange.end}
                       style={{ backgroundColor: selectedClinic.color, borderColor: selectedClinic.color }}
-                    >
-                      Add
-                    </button>
+                    ><PortalText text={"Add"} /></button>
                   </div>
                 </div>
                 <div className="mt-2">
-                  <small className="text-muted">
-                    Click Add to add multiple ranges. Click Save & Close
-                    when done.
-                  </small>
+                  <small className="text-muted"><PortalText text={"Click Add to add multiple ranges. Click Save & Close when done."} /></small>
                   {editingTarget.type === "date" && (
                     <div className="mt-1">
                       <small className="text-danger">
-                        <strong>Note:</strong> Cannot add past time slots.
-                      </small>
+                        <strong><PortalText text={"Note:"} /></strong><PortalText text={" Cannot add past time slots."} /></small>
                     </div>
                   )}
                 </div>
@@ -3140,22 +3032,16 @@ const DoctorCalendar = () => {
                   onClick={() =>
                     setNewRange({ start: "", end: "", duration: 15 })
                   }
-                >
-                  Clear Form
-                </button>
+                ><PortalText text={"Clear Form"} /></button>
                 <button
                   className="btn btn-secondary"
                   onClick={() => setEditingTarget(null)}
-                >
-                  Cancel
-                </button>
+                ><PortalText text={"Cancel"} /></button>
                 <button
                   className="btn btn-success"
                   onClick={saveAndClose}
                   style={{ backgroundColor: selectedClinic.color, borderColor: selectedClinic.color }}
-                >
-                  Save & Close
-                </button>
+                ><PortalText text={"Save & Close"} /></button>
               </div>
             </div>
           </div>

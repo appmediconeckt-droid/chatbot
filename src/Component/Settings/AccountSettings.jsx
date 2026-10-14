@@ -354,7 +354,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
                   className="counselor-settings-signout"
                   onClick={() => document.querySelector(".couns-sidebar-item.couns-action, .couns-mobile-nav-item.logout")?.click()}
                 >
-                  <FaSignOutAlt /> {t("sign_out")}
+                  <FaSignOutAlt /> {t("logout")}
                 </button>
 
                 <section className="counselor-settings-delete-card">

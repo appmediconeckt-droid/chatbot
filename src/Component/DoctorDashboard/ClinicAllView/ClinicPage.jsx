@@ -1,3 +1,5 @@
+import { normalizeClinicDoctor } from './clinicDoctorDetails.js';
+import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
@@ -6,7 +8,6 @@ import {
   Building2,
   ChevronLeft,
   ChevronRight,
-  Clock3,
   ExternalLink,
   Hospital,
   Mail,
@@ -89,14 +90,11 @@ const getAssetUrl = (value) => {
   return `${apiOrigin}/${path.replace(/^\/+/, "")}`;
 };
 
-const getAlternateAssetUrl = (value) => {
-  if (!value || typeof value !== "string" || !value.trim().startsWith("/uploads/")) return "";
-  return `${API_BASE_URL}${value.trim()}`;
-};
-
-const getClinicPhotoUrl = (clinic) => {
-  const uploadedPhoto = clinic?.raw?.clinic_photo;
-  return getAssetUrl(uploadedPhoto) || clinic?.image || DEFAULT_CLINIC_IMAGE;
+const getClinicPhotoUrl = clinic => clinic?.image || DEFAULT_CLINIC_IMAGE;
+const handleClinicImageError = event => {
+  if (event.currentTarget.dataset.failed) return;
+  event.currentTarget.dataset.failed = 'true';
+  event.currentTarget.src = '/favicon-96.png';
 };
 
 const bufferToDataUrl = (bufferValue) => {
@@ -312,6 +310,7 @@ export default function ClinicPage() {
       }
 
       setResourceStatus("loading");
+      setClinicDoctors([]);
       const params = { clinic_id: clinic.id, doctor_id: clinic.doctorId || doctorId };
       const requestConfig = { headers: getAuthHeaders(), params, signal: controller.signal };
       const [doctorResult, appointmentResult] = await Promise.allSettled([
@@ -353,14 +352,7 @@ export default function ClinicPage() {
     return () => controller.abort();
   }, [clinic.id, clinic.doctorId, doctorId]);
 
-  const normalizedDoctors = useMemo(() => clinicDoctors.map((doctor, index) => ({
-    id: doctor.id || doctor.user_id || doctor.doctor_id || doctor._id || index,
-    name: doctor.fullName || doctor.full_name || doctor.fullname || doctor.name || doctor.doctor_name || "Doctor",
-    specialty: (Array.isArray(doctor.specialization) ? doctor.specialization.join(", ") : doctor.specialization) || doctor.speciality || doctor.specialty || doctor.department || "General Physician",
-    experience: doctor.experience || doctor.years_of_experience || doctor.experience_years || "N/A",
-    rating: doctor.rating || doctor.average_rating || "N/A",
-    image: getAssetUrl(doctor.profile_photo || doctor.profilePhoto || doctor.avatar || doctor.image) || DEFAULT_CLINIC_IMAGE,
-  })), [clinicDoctors]);
+  const normalizedDoctors = useMemo(() => clinicDoctors.map(doctor => normalizeClinicDoctor(doctor, clinic.doctorId || doctorId, API_BASE_URL)).filter(Boolean), [clinicDoctors, clinic.doctorId, doctorId]);
 
   const departmentNames = useMemo(() => {
     const names = new Set();
@@ -434,9 +426,9 @@ export default function ClinicPage() {
 
   if (!clinics.length) return (
     <div className="doctor-clinic-profile-page">
-      <h1>Clinics / Hospitals</h1>
+      <h1><PortalText text={"Clinics / Hospitals"} /></h1>
       {error && <p role="alert">{error}</p>}
-      <p>{status === "loading" || status === "idle" ? "Loading clinics..." : "No clinics or hospitals added. Add one from Clinic Settings."}</p>
+      <p>{status === "loading" || status === "idle" ? <PortalText text={"Loading clinics..."} /> : <PortalText text={"No clinics or hospitals added. Add one from Clinic Settings."} />}</p>
     </div>
   );
 
@@ -444,16 +436,14 @@ export default function ClinicPage() {
     <div className="doctor-clinic-profile-page">
       {error && <div className="doctor-clinic-profile-error">{error}</div>}
       <div className="doctor-clinic-management">
-        <label>
-          Clinic / Hospital
-          <select disabled={isDeleting} value={activeClinicIndex} onChange={(event) => {
+        <label><PortalText text={"Clinic / Hospital"} /><select disabled={isDeleting} value={activeClinicIndex} onChange={(event) => {
             setActiveClinicIndex(Number(event.target.value)); setActiveTab("Overview"); setDeleteError("");
           }}>
             {clinics.map((item, index) => <option key={item.id} value={index}>{item.name} — {item.address}</option>)}
           </select>
         </label>
         <button type="button" className="doctor-clinic-delete" disabled={isDeleting} onClick={handleDeleteClinic}>
-          {isDeleting ? "Deleting..." : "Delete Clinic / Hospital"}
+          {isDeleting ? <PortalText text={"Deleting..."} /> : <PortalText text={"Delete Clinic / Hospital"} />}
         </button>
       </div>
       {deleteError && <p className="doctor-clinic-profile-error" role="alert">{deleteError}</p>}
@@ -462,21 +452,14 @@ export default function ClinicPage() {
         <img
           src={getClinicPhotoUrl(clinic)}
           alt={clinic.name}
-          onError={(event) => {
-            const uploadedPhoto = clinic.raw?.clinic_photo;
-            const alternateUrl = getAlternateAssetUrl(uploadedPhoto);
-            if (alternateUrl && event.currentTarget.src !== alternateUrl) {
-              event.currentTarget.src = alternateUrl;
-              return;
-            }
-            event.currentTarget.src = DEFAULT_CLINIC_IMAGE;
-          }}
+          key={getClinicPhotoUrl(clinic)}
+          onError={handleClinicImageError}
         />
         <div className="doctor-clinic-hero-overlay" />
 
         <div className="doctor-clinic-hero-content">
           <div className="doctor-clinic-status-row">
-            <span className="doctor-clinic-open-badge">Open Now</span>
+            <span className="doctor-clinic-open-badge"><PortalText text={"Open Now"} /></span>
             <span className="doctor-clinic-type-badge">{clinic.subtitle}</span>
           </div>
 
@@ -488,14 +471,14 @@ export default function ClinicPage() {
             </span>
             <span>
               <Star size={14} fill="currentColor" />
-              {clinic.stats.rating !== "N/A" ? `${clinic.stats.rating} Rating` : "No rating available"}
+              {clinic.stats.rating !== "N/A" ? <PortalTemplate text={"{0} Rating"} values={[clinic.stats.rating]} /> : <PortalText text={"No rating available"} />}
             </span>
           </div>
         </div>
 
         {clinics.length > 1 && (
           <>
-            <button
+            <PortalElement as="button"
               type="button"
               className="doctor-clinic-switch-btn doctor-clinic-switch-prev"
               onClick={() => changeClinic(-1)}
@@ -503,8 +486,8 @@ export default function ClinicPage() {
               disabled={isDeleting}
             >
               <ChevronLeft size={20} />
-            </button>
-            <button
+            </PortalElement>
+            <PortalElement as="button"
               type="button"
               className="doctor-clinic-switch-btn doctor-clinic-switch-next"
               onClick={() => changeClinic(1)}
@@ -512,23 +495,23 @@ export default function ClinicPage() {
               disabled={isDeleting}
             >
               <ChevronRight size={20} />
-            </button>
+            </PortalElement>
           </>
         )}
       </section>
 
-      <nav className="doctor-clinic-tabs" aria-label="Clinic sections">
-        {["Overview", "Doctors", "Departments", "Facilities", "Reviews", "Contact"].map((tab) => (
+      <PortalElement as="nav" className="doctor-clinic-tabs" aria-label="Clinic sections">
+        {["Overview", "Departments", "Facilities", "Reviews", "Contact"].map((tab) => (
           <button type="button" className={activeTab === tab ? "is-active" : ""} key={tab} onClick={() => setActiveTab(tab)}>
-            {tab}
+            {<PortalText text={tab} />}
           </button>
         ))}
-      </nav>
+      </PortalElement>
 
       <div className="doctor-clinic-profile-body">
-        {status === "loading" && <div className="doctor-clinic-profile-state">Loading clinic profile...</div>}
+        {status === "loading" && <div className="doctor-clinic-profile-state"><PortalText text={"Loading clinic profile..."} /></div>}
 
-        {(activeTab === "Overview") && <section className="doctor-clinic-stats" aria-label="Clinic summary">
+        {(activeTab === "Overview") && <PortalElement as="section" className="doctor-clinic-stats" aria-label="Clinic summary">
           {stats.map((item) => {
             const Icon = item.icon;
             return (
@@ -537,33 +520,33 @@ export default function ClinicPage() {
                   <Icon size={20} />
                 </span>
                 <strong>{item.value}</strong>
-                <p>{item.label}</p>
+                <p>{<PortalText text={item.label} />}</p>
               </article>
             );
           })}
-        </section>}
+        </PortalElement>}
 
         {(activeTab === "Overview" || activeTab === "Contact") && <section className="doctor-clinic-info-grid">
           {activeTab === "Overview" && (
           <article className="doctor-clinic-panel doctor-clinic-about">
-            <h2>About Hospital</h2>
+            <h2><PortalText text={"About Hospital"} /></h2>
             <p>{clinic.about}</p>
 
-            <h3>Our Mission</h3>
+            <h3><PortalText text={"Our Mission"} /></h3>
             <p>{clinic.mission}</p>
 
-            <h3>Key Specialties</h3>
+            <h3><PortalText text={"Key Specialties"} /></h3>
             <div className="doctor-clinic-specialties">
               {clinic.specialties.map((item) => (
                 <span key={item}>{item}</span>
               ))}
-              {!clinic.specialties.length && <span>No specialties available</span>}
+              {!clinic.specialties.length && <span><PortalText text={"No specialties available"} /></span>}
             </div>
           </article>
           )}
 
           {(activeTab === "Overview" || activeTab === "Contact") && <aside className="doctor-clinic-panel doctor-clinic-contact">
-            <h2>Contact Information</h2>
+            <h2><PortalText text={"Contact Information"} /></h2>
             <div className="doctor-clinic-contact-list">
               <span>
                 <MapPin size={15} />
@@ -584,90 +567,49 @@ export default function ClinicPage() {
             </div>
 
             <div className="doctor-clinic-hours">
-              <h3>Hours</h3>
+              <h3><PortalText text={"Hours"} /></h3>
               <p>
-                <span>Emergency</span>
-                <strong>24/7 Open</strong>
+                <span><PortalText text={"Emergency"} /></span>
+                <strong><PortalText text={"24/7 Open"} /></strong>
               </p>
               <p>
-                <span>OPD Timings</span>
-                <strong>8:00 AM - 8:00 PM</strong>
+                <span><PortalText text={"OPD Timings"} /></span>
+                <strong><PortalText text={"8:00 AM - 8:00 PM"} /></strong>
               </p>
             </div>
           </aside>}
         </section>}
 
-        {(activeTab === "Overview" || activeTab === "Doctors") && <section className="doctor-clinic-specialists-section">
-          <div className="doctor-clinic-section-heading">
-            <div>
-              <h2>Featured Specialists</h2>
-              <p>Our team of experienced medical professionals</p>
-            </div>
-            {activeTab === "Overview" && <button type="button" onClick={() => setActiveTab("Doctors")}>View All Doctors</button>}
-          </div>
-
-          <div className="doctor-clinic-doctors">
-            {normalizedDoctors.map((doctor) => (
-              <article className="doctor-clinic-doctor-card" key={doctor.id}>
-                <img src={doctor.image} alt={doctor.name} />
-                <div>
-                  <h3>{doctor.name}</h3>
-                  <p>{doctor.specialty}</p>
-                  <div className="doctor-clinic-doctor-meta">
-                    <span>
-                      <Clock3 size={12} />
-                      {doctor.experience === "N/A" ? "Experience N/A" : `${doctor.experience} Exp`}
-                    </span>
-                    <span>
-                      <Star size={12} fill="currentColor" />
-                      {doctor.rating}
-                    </span>
-                    <span>
-                      <UsersRound size={12} />
-                      {patientCount} Patients
-                    </span>
-                  </div>
-                </div>
-              </article>
-            ))}
-            {resourceStatus !== "loading" && !normalizedDoctors.length && (
-              <div className="doctor-clinic-profile-state">No doctors found for this clinic.</div>
-            )}
-          </div>
-        </section>}
-
         {activeTab === "Departments" && (
           <section className="doctor-clinic-panel doctor-clinic-tab-panel">
-            <h2>Departments</h2>
+            <h2><PortalText text={"Departments"} /></h2>
             <div className="doctor-clinic-specialties">
               {departmentNames.map((department) => <span key={department}>{department}</span>)}
-              {!departmentNames.length && <p>No departments found for this clinic.</p>}
+              {!departmentNames.length && <p><PortalText text={"No departments found for this clinic."} /></p>}
             </div>
           </section>
         )}
 
         {activeTab === "Facilities" && (
           <section className="doctor-clinic-panel doctor-clinic-tab-panel">
-            <h2>Facilities</h2>
+            <h2><PortalText text={"Facilities"} /></h2>
             <div className="doctor-clinic-specialties">
               {facilities.map((facility) => <span key={facility}>{facility}</span>)}
-              {!facilities.length && <p>No facility information available.</p>}
+              {!facilities.length && <p><PortalText text={"No facility information available."} /></p>}
             </div>
           </section>
         )}
 
         {activeTab === "Reviews" && (
           <section className="doctor-clinic-panel doctor-clinic-tab-panel">
-            <h2>Reviews</h2>
-            <p>{clinic.stats.rating !== "N/A" ? `Current clinic rating: ${clinic.stats.rating}` : "No review data available."}</p>
+            <h2><PortalText text={"Reviews"} /></h2>
+            <p>{clinic.stats.rating !== "N/A" ? <PortalTemplate text={"Current clinic rating: {0}"} values={[clinic.stats.rating]} /> : <PortalText text={"No review data available."} />}</p>
           </section>
         )}
       </div>
 
       <span className="doctor-clinic-trust">
-        <ShieldCheck size={14} />
-        Verified clinic profile
-      </span>
+        <ShieldCheck size={14} /><PortalText text={"Verified clinic profile"} /></span>
     </div>
   );
 }

@@ -1,10 +1,22 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dashboardIndiaDate, getDoctorDashboardSummary } from '../src/Component/DoctorDashboard/Dashboard/doctorDashboardSummary.js';
+import { dashboardIndiaDate, getDoctorDashboardSummary, getTodayCompletedAppointments } from '../src/Component/DoctorDashboard/Dashboard/doctorDashboardSummary.js';
 
 const now = Date.parse('2026-10-10T12:00:00+05:30');
 const row = (id, status = 'completed', date = '2026-10-10', changes = {}) => ({
   id, appointmentSource: 'online', status, appointmentDate: date, ...changes,
+});
+
+test('completed tab contains only today online and walk-in completions and rolls over at India midnight', () => {
+  const records = [
+    row('old', 'completed', '2026-10-09'), row('today'), row('today'),
+    row('walkin', 'completed', '2026-10-10', { appointmentSource: 'walkin' }),
+    row('pending', 'confirmed'), row('cancelled', 'canceled'),
+    row('future', 'completed', '2026-10-11'), row('invalid', 'completed', 'invalid'),
+  ];
+  assert.deepEqual(getTodayCompletedAppointments(records, now).map((item) => item.id), ['today', 'walkin']);
+  assert.deepEqual(getTodayCompletedAppointments(records, Date.parse('2026-10-10T18:30:00Z')).map((item) => item.id), ['future']);
+  assert.deepEqual(getTodayCompletedAppointments([records[0]], now), []);
 });
 
 test('53 old completions never inflate today cards or completion progress', () => {

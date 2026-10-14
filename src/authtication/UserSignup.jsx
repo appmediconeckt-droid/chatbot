@@ -126,12 +126,15 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
 
   useEffect(() => {
     if (location.state?.email) setFormData((prev) => ({ ...prev, email: location.state.email }));
+    if (location.state?.passwordChanged) {
+      setNotification({ show: true, message: "Password changed successfully. Please sign in with your new password.", type: "success" });
+    }
     if (location.state?.registered) {
       setNotification({ show: true, message: "Account created successfully. Please log in.", type: "success" });
       const timer = setTimeout(() => setNotification({ show: false, message: "", type: "" }), 5000);
       return () => clearTimeout(timer);
     }
-  }, [location.state?.email, location.state?.registered]);
+  }, [location.state?.email, location.state?.registered, location.state?.passwordChanged]);
 
   useEffect(() => {
     let interval;

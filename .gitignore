@@ -14,6 +14,9 @@ dist
 dist-ssr
 *.local
 
+# Browser test profiles contain local caches, cookies and generated extensions.
+**/chrome-profile/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

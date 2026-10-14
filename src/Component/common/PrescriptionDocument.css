@@ -6,6 +6,8 @@
 .prescription-document .prescription-brand h2 { margin: 4px 0 0; color: #1e3a8a; font-size: 26px; font-weight: 700; }
 .prescription-issuer { display: grid; gap: 6px; text-align: right; font-size: 14px; }
 .prescription-issuer span { color: #64748b; }
+.prescription-issuer .prescription-issuer-label { font-size: 10px; font-weight: 600; letter-spacing: .6px; text-transform: uppercase; }
+.prescription-issuer strong { font-size: 17px; color: #1e3a8a; overflow-wrap: anywhere; }
 .prescription-patient { display: grid; grid-template-columns: 1.2fr .6fr 1.2fr; gap: 20px; padding: 20px; margin: 24px 0; background: #f3f6fb; border-radius: 10px; }
 .prescription-patient > div, .prescription-document-footer > div { display: grid; gap: 6px; overflow-wrap: anywhere; }
 .prescription-patient span, .prescription-document-footer span { font-size: 11px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: .6px; }

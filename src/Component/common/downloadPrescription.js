@@ -26,7 +26,8 @@ export async function downloadConsultationPrescription(record, doctorName) {
   };
   pdf.setTextColor(30, 58, 138); write("Prescription", 24, true);
   pdf.setTextColor(36, 50, 71);
-  write(`${data.doctor} | ${data.date}`);
+  write(`Prescribing doctor: ${data.doctor}`, 12, true);
+  write(`Date: ${data.date}`);
   write(`Patient: ${data.patient}`, 12, true);
   write(`Gender: ${data.gender} | Consultation for: ${data.issue}`);
   section("Diagnosis", data.diagnosis);

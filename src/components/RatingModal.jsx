@@ -35,6 +35,8 @@ const RatingModal = ({
   onRemindLater,
   onNeverAskAgain,
   onClose,
+  professionalType = "consultant",
+  error = "",
 }) => {
   const [rating, setRating] = useState(0);
   const [review, setReview] = useState("");
@@ -73,7 +75,7 @@ const RatingModal = ({
 
   return (
     <div className={styles.overlay} onClick={() => !busy && onClose?.()}>
-      <div className={styles.card} onClick={(e) => e.stopPropagation()}>
+      <div className={styles.card} role="dialog" aria-modal="true" aria-label={`Rate your ${professionalType}`} onClick={(e) => e.stopPropagation()}>
         {!success && (
           <button
             type="button"
@@ -91,6 +93,7 @@ const RatingModal = ({
             <span className={styles.successIcon}>🎉</span>
             <h2 className={styles.title}>Thank you!</h2>
             <p className={styles.subtitle}>Your rating has been submitted.</p>
+            {professionalType === "doctor" && <button type="button" className={styles.submitBtn} onClick={onClose}>Done</button>}
           </div>
         ) : (
           <>
@@ -107,7 +110,7 @@ const RatingModal = ({
               )}
             </div>
 
-            <h2 className={styles.title}>Rate your consultant</h2>
+            <h2 className={styles.title}>Rate your {professionalType}</h2>
             <p className={styles.subtitle}>
               How was your experience with{" "}
               <span className={styles.counselorName}>{counselorName}</span>?
@@ -126,6 +129,7 @@ const RatingModal = ({
             </p>
 
             <textarea
+              aria-label="Review (optional)"
               className={styles.input}
               placeholder="Add a review (optional)"
               value={review}
@@ -133,6 +137,7 @@ const RatingModal = ({
               disabled={busy}
             />
 
+            {error && <p role="alert" className={styles.subtitle}>{error}</p>}
             <button
               type="button"
               className={styles.submitBtn}
@@ -142,23 +147,23 @@ const RatingModal = ({
               {busy ? <span className={styles.spinner} /> : "Submit rating"}
             </button>
 
-            <button
+            {onRemindLater && <button
               type="button"
               className={styles.laterBtn}
               onClick={() => !busy && onRemindLater?.()}
               disabled={busy}
             >
               Remind me later
-            </button>
+            </button>}
 
-            <button
+            {onNeverAskAgain && <button
               type="button"
               className={styles.neverBtn}
               onClick={() => !busy && onNeverAskAgain?.()}
               disabled={busy}
             >
               Never ask again
-            </button>
+            </button>}
           </>
         )}
       </div>

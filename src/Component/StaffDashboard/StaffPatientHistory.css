@@ -1,0 +1,12 @@
+.rec-portal.rec-history-page { min-height: 0; background: transparent; font-family: inherit; }
+.rec-history-intro .rec-card-heading { margin-bottom: 12px; }
+.rec-history-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.rec-history-filters { align-items: flex-end; }
+.rec-history-filters label { min-width: 130px; }
+.rec-history-filters .rec-search { flex-basis: 240px; }
+.rec-history-diagnosis { white-space: normal; min-width: 160px; max-width: 240px; }
+.rec-history-dialog { width: min(930px, calc(100vw - 32px)); }
+.rec-history-dialog .prescription-document { width: 100%; box-shadow: none; border: 1px solid #e6ecf0; margin: 20px 0; }
+.rec-history-actions { display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
+.rec-history-visit-meta, .rec-history-symptoms { color: #728798; font-size: 12px; margin-bottom: 12px !important; line-height: 1.7; }
+@media (max-width: 600px) { .rec-history-stats { grid-template-columns: 1fr; } .rec-history-dialog { padding: 16px; } .rec-history-dialog .prescription-document { padding: 14px; } }

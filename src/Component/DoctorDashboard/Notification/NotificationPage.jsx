@@ -1,4 +1,6 @@
+import { PortalText, PortalElement } from "../../common/PortalTranslation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import {
@@ -95,6 +97,7 @@ const formatNotificationTime = (value) => {
 
 const normalizeType = (value = "") => {
   const type = String(value || "notification").toLowerCase();
+  if (type.includes("emergency") || type.includes("critical") || type.includes("alert")) return "emergency";
   if (type.includes("appoint")) return "appointment";
   if (type.includes("message") || type.includes("chat")) return "message";
   if (type.includes("emergency") || type.includes("critical") || type.includes("alert")) return "emergency";
@@ -112,7 +115,7 @@ const normalizePriority = (item, type) => {
 
 const normalizeNotification = (item, index) => {
   const title = item.title || item.type || item.notification_type || item.subject || "Notification";
-  const type = normalizeType(item.type || item.notification_type || title);
+  const type = normalizeType(item.data?.type || item.type || item.notification_type || title);
   const patient =
     item.patient_name ||
     item.patientName ||
@@ -142,7 +145,8 @@ const normalizeNotification = (item, index) => {
     priority: normalizePriority(item, type),
     patient,
     appointmentTime,
-    actions: type === "emergency"
+    actionUrl: item.actionUrl || '',
+    actions: item.data?.type === 'EMERGENCY_APPOINTMENT' ? ['View Appointment'] : type === "emergency"
       ? ["Open Case", "Call Patient", "Assign Doctor"]
       : type === "appointment"
         ? ["Accept", "View Details", "Reschedule"]
@@ -153,6 +157,7 @@ const normalizeNotification = (item, index) => {
 };
 
 export default function NotificationPage() {
+  const navigate = useNavigate();
   const authUser = useDoctorUser();
   const user = useMemo(() => authUser || getStoredAuthUser() || {}, [authUser]);
   const userId = useMemo(() => getDoctorId(user), [user]);
@@ -252,21 +257,19 @@ export default function NotificationPage() {
     <div className="doctor-notifications-page">
       <div className="doctor-notifications-shell">
         <header className="doctor-notifications-topbar">
-          <h1>Notifications</h1>
+          <h1><PortalText text={"Notifications"} /></h1>
           <button
             type="button"
             className="doctor-notifications-mark-all"
             onClick={markAllAsRead}
             disabled={!notifications.length || unreadCount === 0}
           >
-            <CheckCheck size={16} />
-            Mark All as Read
-          </button>
+            <CheckCheck size={16} /><PortalText text={"Mark All as Read"} /></button>
         </header>
 
         <div className="doctor-notifications-content">
           <div className="doctor-notifications-main">
-            <section className="doctor-notifications-stats" aria-label="Notification summary">
+            <PortalElement as="section" className="doctor-notifications-stats" aria-label="Notification summary">
               {stats.map((item) => {
                 const Icon = item.icon;
                 return (
@@ -275,16 +278,16 @@ export default function NotificationPage() {
                       <Icon size={21} />
                     </span>
                     <strong>{item.value}</strong>
-                    <span>{item.label}</span>
+                    <span>{<PortalText text={item.label} />}</span>
                   </div>
                 );
               })}
-            </section>
+            </PortalElement>
 
             <div className="doctor-notifications-toolbar">
               <label className="doctor-notifications-search">
                 <Search size={17} />
-                <input
+                <PortalElement as="input"
                   type="search"
                   placeholder="Search notifications..."
                   value={query}
@@ -292,7 +295,7 @@ export default function NotificationPage() {
                 />
               </label>
 
-              <div className="doctor-notifications-filters" aria-label="Notification filters">
+              <PortalElement as="div" className="doctor-notifications-filters" aria-label="Notification filters">
                 {[
                   ["all", "All"],
                   ["unread", "Unread"],
@@ -305,13 +308,13 @@ export default function NotificationPage() {
                     className={activeFilter === value ? "is-active" : ""}
                     onClick={() => setActiveFilter(value)}
                   >
-                    {label}
+                    {<PortalText text={label} />}
                   </button>
                 ))}
-                <button type="button" className="doctor-notifications-filter-icon" aria-label="More filters">
+                <PortalElement as="button" type="button" className="doctor-notifications-filter-icon" aria-label="More filters">
                   <Filter size={16} />
-                </button>
-              </div>
+                </PortalElement>
+              </PortalElement>
             </div>
 
             <div className="doctor-notifications-divider" />
@@ -319,12 +322,12 @@ export default function NotificationPage() {
             {error && <div className="doctor-notifications-error">{error}</div>}
 
             <section className="doctor-notifications-today">
-              <h2>Today</h2>
+              <h2><PortalText text={"Today"} /></h2>
 
               {status === "loading" ? (
-                <div className="doctor-notifications-state">Loading notifications...</div>
+                <div className="doctor-notifications-state"><PortalText text={"Loading notifications..."} /></div>
               ) : visibleNotifications.length === 0 ? (
-                <div className="doctor-notifications-state">No notifications found.</div>
+                <div className="doctor-notifications-state"><PortalText text={"No notifications found."} /></div>
               ) : (
                 <div className="doctor-notifications-list">
                   {visibleNotifications.map((item) => {
@@ -385,7 +388,10 @@ export default function NotificationPage() {
                                 type="button"
                                 key={action}
                                 className={action === "Open Case" ? "is-danger" : ""}
-                                onClick={(event) => event.stopPropagation()}
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  if (action === 'View Appointment' && item.actionUrl === '/appointmentlist') navigate(item.actionUrl);
+                                }}
                               >
                                 {action}
                               </button>
@@ -395,7 +401,7 @@ export default function NotificationPage() {
 
                         <div className="doctor-notifications-time-wrap">
                           <span>{item.time}</span>
-                          {!item.read && <i aria-label="Unread notification" />}
+                          {!item.read && <PortalElement as="i" aria-label="Unread notification" />}
                         </div>
                       </article>
                     );
@@ -406,7 +412,7 @@ export default function NotificationPage() {
           </div>
 
           <aside className="doctor-notifications-activity">
-            <h2>Today's Activity</h2>
+            <h2><PortalText text={"Today's Activity"} /></h2>
             <div className="doctor-notifications-activity-list">
               {[
                 ["Critical Alerts", criticalCount, AlertTriangle, "red"],
@@ -417,22 +423,18 @@ export default function NotificationPage() {
                   <span className={`doctor-notifications-icon doctor-notifications-icon-${tone}`}>
                     <Icon size={16} />
                   </span>
-                  <p>{label}</p>
+                  <p>{<PortalText text={label} />}</p>
                   <strong>{value}</strong>
                 </div>
               ))}
             </div>
 
             <div className="doctor-notifications-quick-links">
-              <span>Quick Links</span>
+              <span><PortalText text={"Quick Links"} /></span>
               <a href="#emergency-protocols">
-                <ExternalLink size={15} />
-                Emergency Protocols
-              </a>
+                <ExternalLink size={15} /><PortalText text={"Emergency Protocols"} /></a>
               <a href="#on-call-directory">
-                <ExternalLink size={15} />
-                On-Call Directory
-              </a>
+                <ExternalLink size={15} /><PortalText text={"On-Call Directory"} /></a>
             </div>
           </aside>
         </div>

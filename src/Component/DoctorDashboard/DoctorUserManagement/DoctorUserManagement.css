@@ -678,6 +678,45 @@
   font-weight: 800;
 }
 
+.docstaff-screen-edit-photo {
+  grid-column: 1 / -1;
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.docstaff-screen-edit-photo-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+.docstaff-screen-edit-photo-content img {
+  flex: 0 0 72px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.docstaff-screen-edit-photo-controls {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+  min-width: 0;
+}
+
+.docstaff-screen-edit-photo-filename {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: #384053;
+  font-size: 13px;
+}
+
+.docstaff-screen-edit-photo-controls small {
+  color: #64748b;
+  line-height: 1.5;
+}
+
 .docstaff-screen-edit-form input,
 .docstaff-screen-edit-form select {
   height: 38px;

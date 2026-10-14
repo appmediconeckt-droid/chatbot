@@ -391,3 +391,8 @@
     font-size: 14px;
   }
 }
+
+.patient-language-control { display: flex; justify-content: flex-end; margin-bottom: 16px; }
+
+.patient-language-control .language-selector-root { width: auto; }
+.patient-language-control .lang-selector-trigger { background: #fff; color: #244b41; border: 1px solid #ceded7; border-radius: 8px; }

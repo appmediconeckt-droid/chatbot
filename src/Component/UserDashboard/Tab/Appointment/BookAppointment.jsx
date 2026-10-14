@@ -1,3 +1,4 @@
+import { PortalText, PortalElement } from "../../../common/PortalTranslation";
 // import React, { useState, useEffect, useCallback } from "react";
 // import { useNavigate } from "react-router-dom";
 // import "./BookAppointment.css";
@@ -1184,6 +1185,7 @@ import {
 } from "../../../../utils/presence";
 import AppointmentBookingModal from "./AppointmentBookingModal";
 import TokenStatusPage from "../Counselor/TokenStatusPage";
+import { getProfessionalId, mergeUniqueProfessionals } from '../Counselor/professionalDirectoryMerge.js';
 
 const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const navigate = useNavigate();
@@ -1338,28 +1340,6 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
     ]
       .filter(Boolean)
       .join(", ");
-  };
-
-  const getProfessionalId = (professional = {}) =>
-    professional._id ||
-    professional.id ||
-    professional.userId ||
-    professional.user_id ||
-    professional.doctorId ||
-    professional.doctor_id ||
-    professional.consultantId ||
-    professional.consultant_id ||
-    professional.counselorId ||
-    professional.counsellorId;
-
-  const mergeUniqueProfessionals = (...lists) => {
-    const unique = new Map();
-    lists.flat().forEach((item) => {
-      const id = getProfessionalId(item);
-      if (!id) return;
-      unique.set(String(id), item);
-    });
-    return Array.from(unique.values());
   };
 
   const hasRenderableProfessionalProfile = (professional = {}) => {
@@ -2824,7 +2804,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 <div className="paid-session-preview-unique">
                   <div>
                     <span>{t("chat_session")}</span>
-                    <strong>₹{paymentConfig.fees?.chat || 100} / {paymentConfig.durationMinutes || 30} min</strong>
+                    <strong>₹{paymentConfig.fees?.chat || 100} / {paymentConfig.durationMinutes || 30}<PortalText text={" min"} /></strong>
                   </div>
                   <div>
                     <span>{t("wallet_balance")}</span>
@@ -2873,27 +2853,23 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="modal-header-unique">
-              <h2>Book Appointment with {selectedCounselorForRequest?.name || "Consultant"}</h2>
-              <button
+              <h2><PortalText text={"Book Appointment with "} />{selectedCounselorForRequest?.name || <PortalText text={"Consultant"} />}</h2>
+              <PortalElement as="button"
                 className="modal-close-unique"
                 onClick={() => setShowBookingModal(false)}
                 type="button"
                 aria-label="Close"
               >
                 &times;
-              </button>
+              </PortalElement>
             </div>
             <form onSubmit={handleConfirmBooking}>
               <div className="booking-form-unique">
-                <div className="booking-section-label-unique">
-                  Appointment Date &amp; Time
-                </div>
+                <div className="booking-section-label-unique"><PortalText text={"Appointment Date & Time"} /></div>
                 <div className="booking-datetime-row-unique">
                   <label className="booking-field-card-unique">
                     <span>
-                      <FaCalendarAlt aria-hidden="true" />
-                      Date
-                    </span>
+                      <FaCalendarAlt aria-hidden="true" /><PortalText text={"Date"} /></span>
                     <input
                       type="date"
                       value={bookingDate.split("T")[0] || ""}
@@ -2907,9 +2883,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   </label>
                   <label className="booking-field-card-unique">
                     <span>
-                      <FaClock aria-hidden="true" />
-                      Time
-                    </span>
+                      <FaClock aria-hidden="true" /><PortalText text={"Time"} /></span>
                     <input
                       type="time"
                       value={bookingDate.split("T")[1] || ""}
@@ -2940,15 +2914,13 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   type="button"
                   className="booking-cancel-btn-unique"
                   onClick={() => setShowBookingModal(false)}
-                >
-                  Cancel
-                </button>
+                ><PortalText text={"Cancel"} /></button>
                 <button
                   type="submit"
                   className="booking-confirm-btn-unique"
                   disabled={isLoading}
                 >
-                  {isLoading ? "Booking..." : "Confirm"}
+                  {isLoading ? <PortalText text={"Booking..."} /> : <PortalText text={"Confirm"} />}
                 </button>
               </div>
             </form>
@@ -2986,12 +2958,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             }}
           >
             <div style={{ fontSize: 42, marginBottom: 8 }}>🚫</div>
-            <h3 style={{ margin: "0 0 8px", color: "#c0392b", fontSize: 18 }}>
-              Chat Unavailable
-            </h3>
-            <p style={{ margin: "0 0 16px", color: "#444", fontSize: 14, lineHeight: 1.5 }}>
-              This counselor has been blocked by admin. You cannot start a chat right now.
-            </p>
+            <h3 style={{ margin: "0 0 8px", color: "#c0392b", fontSize: 18 }}><PortalText text={"Chat Unavailable"} /></h3>
+            <p style={{ margin: "0 0 16px", color: "#444", fontSize: 14, lineHeight: 1.5 }}><PortalText text={"This counselor has been blocked by admin. You cannot start a chat right now."} /></p>
             {blockedPopup.reason && (
               <p style={{ margin: "0 0 16px", color: "#888", fontSize: 12, fontStyle: "italic" }}>
                 {blockedPopup.reason}
@@ -3004,9 +2972,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 padding: "10px 24px", borderRadius: 8, cursor: "pointer",
                 fontSize: 14, fontWeight: 600,
               }}
-            >
-              OK
-            </button>
+            ><PortalText text={"OK"} /></button>
           </div>
         </div>
       )}

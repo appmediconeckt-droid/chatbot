@@ -1,3 +1,4 @@
+import { clearSessionPreservingLanguages } from '../../../i18n/languagePreferences';
 import React, { lazy, Suspense, useState, useEffect, useRef } from "react";
 import "./UserDashboard.css";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
@@ -965,12 +966,12 @@ export default function UserDashboard() {
 
       console.log("Logout success:", response.data);
       socketService.disconnect();
-      localStorage.clear();
+      clearSessionPreservingLanguages();
       navigate("/login");
     } catch (error) {
       console.error("Logout error:", error?.response?.data || error.message);
       socketService.disconnect();
-      localStorage.clear();
+      clearSessionPreservingLanguages();
       navigate("/login");
     }
   };

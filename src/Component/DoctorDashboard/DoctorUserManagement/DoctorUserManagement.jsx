@@ -1,3 +1,6 @@
+import { PortalText, PortalElement } from "../../common/PortalTranslation";
+import ProfileAvatar from '../../common/ProfileAvatar.jsx';
+import { defaultShiftTimes, staffIdentity, staffShiftTiming } from '../../StaffDashboard/staffProfileDetails.js';
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import axios from "../../../axiosConfig.js";
 import { useDoctorUser } from "../doctorApi.js";
@@ -26,7 +29,7 @@ const docStaffScreenRows = [
   {
     id: "#MC-4002",
     name: "Jane Cooper",
-    email: "jane.c@mediconeckt.com",
+    email: "jane.c@example.com",
     department: "Emergency",
     role: "Nurse",
     shift: "Morning",
@@ -44,7 +47,7 @@ const docStaffScreenRows = [
   {
     id: "#MC-4105",
     name: "Robert Fox",
-    email: "robert.f@mediconeckt.com",
+    email: "robert.f@example.com",
     department: "Pathology",
     role: "Lab Technician",
     shift: "Night",
@@ -62,7 +65,7 @@ const docStaffScreenRows = [
   {
     id: "#MC-3890",
     name: "Cameron Williamson",
-    email: "cameron.w@mediconeckt.com",
+    email: "cameron.w@example.com",
     department: "Finance",
     role: "Billing",
     shift: "Morning",
@@ -80,7 +83,7 @@ const docStaffScreenRows = [
   {
     id: "#MC-4211",
     name: "Jerome Bell",
-    email: "jerome.b@mediconeckt.com",
+    email: "jerome.b@example.com",
     department: "Admin",
     role: "Receptionist",
     shift: "Evening",
@@ -129,6 +132,11 @@ const docStaffScreenStats = [
 ];
 
 const docStaffRoleCards = [
+  {
+    id: "receptionist", title: "Receptionist",
+    description: "Views the assigned doctor's details, appointments, live tokens and ongoing checkups.",
+    count: 0, code: "REC-###", department: "Admin", category: "Administration", icon: CalendarClock,
+  },
   {
     id: "nurse",
     title: "Nurse",
@@ -309,21 +317,26 @@ const normalizeStaffRow = (staff, index = 0) => {
     rawId,
     clinicId: String(staff.clinic_id || ""),
     clinicName: staff.clinic_name || "Unassigned",
-    id: staff.employee_id || staff.employeeId || staff.staff_code || staff.code || (rawId ? `#MC-${rawId}` : `#MC-${4000 + index}`),
+    id: staff.employee_id || staff.employeeId || staff.staff_code || staff.code || staffIdentity(staff),
     name: fullName,
     email: staff.email || staff.email_address || "No email",
     department: toTitleCase(department),
     role,
     shift: normalizeShift(staff.shift || staff.shift_preference),
     verification: normalizeVerification(staff.verification || staff.emailVerified || staff.is_verified || staff.verified),
-    status: normalizeStatus(staff.status || staff.account_status),
+    status: normalizeStatus(staff.status || staff.account_status || (staff.isActive === false ? "Suspended" : "Active")),
     lastLogin: staff.lastLogin || staff.last_login || staff.last_seen || "Not logged in",
     avatar: getInitials(fullName),
     avatarTone: avatarTones[index % avatarTones.length],
-    profilePhoto: staff.profilePhoto || staff.profile_photo || staff.avatar || staff.image || `https://i.pravatar.cc/120?u=${encodeURIComponent(fullName)}`,
+    profilePhoto: (() => {
+      const photo = staff.profilePhoto?.url || (typeof staff.profilePhoto === "string" ? staff.profilePhoto : "") || staff.profile_photo?.url || (typeof staff.profile_photo === "string" ? staff.profile_photo : "") || staff.avatar || staff.image;
+      return photo ? (photo.startsWith("/") ? `${API_BASE_URL.replace(/\/api\/?$/, "")}${photo}` : photo) : `https://i.pravatar.cc/120?u=${encodeURIComponent(fullName)}`;
+    })(),
     joinDate: formatDate(staff.joinDate || staff.join_date || staff.hireDate || staff.hire_date || staff.createdAt),
     manager: staff.manager || staff.supervisor || staff.created_by_name || "Doctor",
-    shiftTime: staff.shiftTime || staff.shift_time || "06:00 - 14:00",
+    shiftTime: staffShiftTiming(staff),
+    shiftStartTime: staff.shiftStartTime || staff.shift_start_time || (staff.shiftTime || staff.shift_time || "").split(" - ")[0] || "",
+    shiftEndTime: staff.shiftEndTime || staff.shift_end_time || (staff.shiftTime || staff.shift_time || "").split(" - ")[1] || "",
     permissions: Array.isArray(staff.permissions) && staff.permissions.length ? staff.permissions : ["Patient Records (View)", "Messages (Send)"],
   };
 };
@@ -352,6 +365,15 @@ const DoctorUserManagement = () => {
   const [viewStaff, setViewStaff] = useState(null);
   const [editingStaff, setEditingStaff] = useState(null);
   const [editForm, setEditForm] = useState(null);
+  const [editPhoto, setEditPhoto] = useState(null);
+  const editPhotoInputRef = useRef(null);
+  const [editPhotoPreview, setEditPhotoPreview] = useState("");
+  useEffect(() => {
+    if (!editPhoto) { setEditPhotoPreview(""); return; }
+    const preview = URL.createObjectURL(editPhoto);
+    setEditPhotoPreview(preview);
+    return () => URL.revokeObjectURL(preview);
+  }, [editPhoto]);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
   const [selectedNewRole, setSelectedNewRole] = useState("nurse");
   const [roleSearchTerm, setRoleSearchTerm] = useState("");
@@ -372,6 +394,7 @@ const DoctorUserManagement = () => {
     department: "Nursing",
     hireDate: "",
     shift: "Morning",
+    shiftStartTime: "06:00", shiftEndTime: "14:00",
   });
 
   const loadStaffRows = async () => {
@@ -569,6 +592,7 @@ const DoctorUserManagement = () => {
   };
 
   const handleUpdateStaff = (staff) => {
+    setEditPhoto(null);
     setEditingStaff(staff);
     setEditForm({ ...staff });
     setOpenActionId(null);
@@ -596,7 +620,7 @@ const DoctorUserManagement = () => {
 
     try {
       if (staff.rawId) {
-        await axios.put(`${API_BASE_URL}/staff/${staff.rawId}`, { status: "Suspended", isActive: false }, { headers: getAuthHeaders() });
+        await axios.patch(`${API_BASE_URL}/staff/${staff.rawId}`, { status: "Suspended", isActive: false }, { headers: getAuthHeaders() });
       }
     } catch (error) {
       alert(error.response?.data?.message || "Staff suspend nahi ho paya.");
@@ -620,13 +644,12 @@ const DoctorUserManagement = () => {
     event.preventDefault();
     if (isSavingStaff) return;
     if (!editForm.clinicId) return alert("Please select a clinic or hospital.");
+    if (!editForm.shiftStartTime || !editForm.shiftEndTime) return alert("Please enter shift start and end timings.");
 
     try {
       setIsSavingStaff(true);
       if (editingStaff.rawId) {
-        const response = await axios.patch(
-          `${API_BASE_URL}/staff/${editingStaff.rawId}`,
-          {
+        const editPayload = {
             full_name: editForm.name,
             fullName: editForm.name,
             clinic_id: editForm.clinicId,
@@ -635,14 +658,28 @@ const DoctorUserManagement = () => {
             department: editForm.department,
             role: staffApiRole(editForm.role),
             shift: editForm.shift,
+            shift_start_time: editForm.shiftStartTime,
+            shift_end_time: editForm.shiftEndTime,
+            shift_time: editForm.shiftStartTime && editForm.shiftEndTime ? `${editForm.shiftStartTime} - ${editForm.shiftEndTime}` : "",
             status: editForm.status,
             isActive: editForm.status === "Active",
-          },
+        };
+        let requestBody = editPayload;
+        if (editPhoto) {
+          requestBody = new FormData();
+          Object.entries(editPayload).forEach(([key, value]) => requestBody.append(key, value ?? ""));
+          requestBody.append("profilePhoto", editPhoto);
+        }
+        const response = await axios.patch(
+          `${API_BASE_URL}/staff/${editingStaff.rawId}`,
+          requestBody,
           { headers: getAuthHeaders() }
         );
         const updated = normalizeStaffRow(response.data.data || response.data.user);
         setStaffRows((rows) => rows.map((staff) => staff.rawId === editingStaff.rawId ? updated : staff));
+        setViewStaff(current => current?.rawId === editingStaff.rawId ? updated : current);
       }
+      setEditPhoto(null);
       setEditingStaff(null);
       setEditForm(null);
     } catch (error) {
@@ -652,8 +689,20 @@ const DoctorUserManagement = () => {
 
   const closeUpdateModal = () => {
     if (isSavingStaff) return;
+    setEditPhoto(null);
     setEditingStaff(null);
     setEditForm(null);
+  };
+
+  const handleEditPhotoChange = event => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      alert("Please select a JPG, PNG or WebP image, 5 MB or smaller.");
+      event.target.value = "";
+      return;
+    }
+    setEditPhoto(file);
   };
 
   const closeAddStaffModal = () => {
@@ -677,6 +726,7 @@ const DoctorUserManagement = () => {
       department: "Nursing",
       hireDate: "",
       shift: "Morning",
+      shiftStartTime: "06:00", shiftEndTime: "14:00",
     });
   };
 
@@ -684,8 +734,8 @@ const DoctorUserManagement = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    if (!file.type.startsWith("image/")) {
-      alert("Please select an image file.");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      alert("Please select a JPG, PNG or WebP image.");
       event.target.value = "";
       return;
     }
@@ -722,6 +772,7 @@ const DoctorUserManagement = () => {
       if (!newStaffForm.lastName.trim()) missingFields.push("last name");
       if (!newStaffForm.email.trim()) missingFields.push("email");
       if (!newStaffForm.phone.trim()) missingFields.push("contact number");
+      if (!newStaffForm.shiftStartTime || !newStaffForm.shiftEndTime) missingFields.push("shift start and end timings");
 
       if (missingFields.length) {
         alert(`Please enter ${missingFields.join(", ")}.`);
@@ -743,7 +794,7 @@ const DoctorUserManagement = () => {
     const newStaff = {
       id: `#MC-${newStaffNumber}`,
       name: fullName,
-      email: newStaffForm.email || `${role.id}.${newStaffNumber}@mediconeckt.com`,
+      email: newStaffForm.email || `${role.id}.${newStaffNumber}@example.com`,
       department: newStaffForm.department || (role.department === "Clinical" ? "Emergency" : role.department),
       role: role.title,
       shift: newStaffForm.shift,
@@ -760,15 +811,13 @@ const DoctorUserManagement = () => {
       profilePhoto: staffPhotoPreview || `https://i.pravatar.cc/120?img=${staffRows.length + 20}`,
       joinDate: newStaffForm.hireDate || "Today",
       manager: "Dr. Sarah Jenkins",
-      shiftTime: "06:00 - 14:00",
+      shiftTime: `${newStaffForm.shiftStartTime} - ${newStaffForm.shiftEndTime}`,
       permissions: ["Patient Records (View)", "Messages (Send)"],
     };
 
     try {
       setIsSavingStaff(true);
-      const response = await axios.post(
-        `${API_BASE_URL}/staff`,
-        {
+      const staffPayload = {
           full_name: fullName,
           clinic_id: newStaffForm.clinicId,
           name: fullName,
@@ -777,11 +826,23 @@ const DoctorUserManagement = () => {
           role: staffApiRole(selectedNewRole),
           department: newStaff.department,
           shift: newStaffForm.shift,
+          shift_start_time: newStaffForm.shiftStartTime,
+          shift_end_time: newStaffForm.shiftEndTime,
+          shift_time: `${newStaffForm.shiftStartTime} - ${newStaffForm.shiftEndTime}`,
           date_of_birth: newStaffForm.dateOfBirth,
           gender: newStaffForm.gender,
           hire_date: newStaffForm.hireDate,
           password: "Temp@12345",
-        },
+      };
+      let requestBody = staffPayload;
+      if (staffPhoto) {
+        requestBody = new FormData();
+        Object.entries(staffPayload).forEach(([key, value]) => requestBody.append(key, value ?? ""));
+        requestBody.append("profilePhoto", staffPhoto);
+      }
+      const response = await axios.post(
+        `${API_BASE_URL}/staff`,
+        requestBody,
         { headers: getAuthHeaders() }
       );
       const createdStaff = normalizeStaffRow(response.data?.user || response.data?.data || response.data || newStaff, staffRows.length);
@@ -815,12 +876,13 @@ const DoctorUserManagement = () => {
     setNewStaffForm((currentForm) => ({
       ...currentForm,
       [field]: value,
+      ...(field === "shift" ? { shiftStartTime: defaultShiftTimes[value]?.[0] || "", shiftEndTime: defaultShiftTimes[value]?.[1] || "" } : {}),
     }));
   };
 
   const renderSelect = (label, value, setValue, options) => (
     <label className="docstaff-screen-select-shell">
-      <span className="docstaff-screen-sr-only">{label}</span>
+      <span className="docstaff-screen-sr-only">{<PortalText text={label} />}</span>
       <select
         className="docstaff-screen-select"
         value={value}
@@ -828,7 +890,7 @@ const DoctorUserManagement = () => {
       >
         {options.map((option) => (
           <option key={option} value={option}>
-            {label}: {option}
+            {<PortalText text={label} />}: {option}
           </option>
         ))}
       </select>
@@ -837,28 +899,26 @@ const DoctorUserManagement = () => {
 
   const selectedStaffRole = docStaffRoleCards.find((item) => item.id === selectedNewRole) || docStaffRoleCards[0];
   const reviewFullName = `${newStaffForm.firstName || "Jonathan"} ${newStaffForm.lastName || "Doe"}`.trim();
-  const reviewEmail = newStaffForm.email || `${selectedStaffRole.id}.new@mediconeckt.com`;
+  const reviewEmail = newStaffForm.email || `${selectedStaffRole.id}.new@example.com`;
   const reviewPhone = newStaffForm.phone || "+1 (555) 123-4567";
   const reviewDepartment = newStaffForm.department || (selectedStaffRole.title === "Nurse" ? "Nursing" : selectedStaffRole.department);
   const reviewHireDate = newStaffForm.hireDate || "October 15, 2023";
-  const reviewShift = newStaffForm.shift === "Night" ? "Night Shift (7 PM - 7 AM)" : `${newStaffForm.shift || "Morning"} Shift`;
-  const reviewEmployeeId = `${selectedStaffRole.code.split("-")[0]}004`;
+  const reviewShift = `${newStaffForm.shift} (${newStaffForm.shiftStartTime} - ${newStaffForm.shiftEndTime})`;
+  const reviewEmployeeId = "Assigned after account creation";
 
   return (
     <div className="docstaff-screen-page">
       <section className="docstaff-screen-main">
         <div className="docstaff-screen-header">
           <div>
-            <h1 className="docstaff-screen-title">Staff Management</h1>
-            <p className="docstaff-screen-subtitle">
-              Manage your staff separately for each clinic or hospital.
-            </p>
+            <h1 className="docstaff-screen-title"><PortalText text={"Staff Management"} /></h1>
+            <p className="docstaff-screen-subtitle"><PortalText text={"Manage your staff separately for each clinic or hospital."} /></p>
           </div>
 
           <div className="docstaff-screen-header-tools">
             <label className="docstaff-screen-top-search">
               <Search size={18} strokeWidth={2.2} />
-              <input
+              <PortalElement as="input"
                 type="search"
                 placeholder="Search staff..."
                 value={searchTerm}
@@ -869,20 +929,16 @@ const DoctorUserManagement = () => {
               setNewStaffForm((form) => ({ ...form, clinicId: clinics.some((c) => c.id === clinicFilter) ? clinicFilter : clinics.length === 1 ? clinics[0].id : "" }));
               setShowAddStaffModal(true);
             }}>
-              <Plus size={16} strokeWidth={2.4} />
-              Add Staff Member
-            </button>
+              <Plus size={16} strokeWidth={2.4} /><PortalText text={"Add Staff Member"} /></button>
           </div>
         </div>
 
         {clinicError && <p role="alert">{clinicError}</p>}
-        {!isLoadingClinics && !clinicError && !clinics.length && <p>Add a clinic or hospital in Clinic Settings before adding staff.</p>}
-        <label className="docstaff-clinic-filter">
-          Clinic / Hospital
-          <select value={clinicFilter} onChange={(event) => setClinicFilter(event.target.value)}>
-            <option value="all">All clinics / hospitals</option>
+        {!isLoadingClinics && !clinicError && !clinics.length && <p><PortalText text={"Add a clinic or hospital in Clinic Settings before adding staff."} /></p>}
+        <label className="docstaff-clinic-filter"><PortalText text={"Clinic / Hospital"} /><select value={clinicFilter} onChange={(event) => setClinicFilter(event.target.value)}>
+            <PortalElement as="option" value="all">All clinics / hospitals</PortalElement>
             {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
-            <option value="unassigned">Unassigned staff</option>
+            <PortalElement as="option" value="unassigned">Unassigned staff</PortalElement>
           </select>
         </label>
 
@@ -896,7 +952,7 @@ const DoctorUserManagement = () => {
                   <StatIcon size={22} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <p className="docstaff-screen-stat-label">{stat.label}</p>
+                  <p className="docstaff-screen-stat-label">{<PortalText text={stat.label} />}</p>
                   <div className="docstaff-screen-stat-value-row">
                     <strong>{stat.value}</strong>
                     <span className={`docstaff-screen-stat-note docstaff-screen-stat-note-${stat.type}`}>
@@ -912,7 +968,7 @@ const DoctorUserManagement = () => {
         <div className="docstaff-screen-toolbar">
           <label className="docstaff-screen-table-search">
             <Search size={17} strokeWidth={2.1} />
-            <input
+            <PortalElement as="input"
               type="search"
               placeholder="Search by name, ID or email..."
               value={searchTerm}
@@ -929,9 +985,7 @@ const DoctorUserManagement = () => {
 
           <div className="docstaff-screen-toolbar-actions">
             <button className="docstaff-screen-export-btn" type="button">
-              <Download size={15} />
-              Export
-            </button>
+              <Download size={15} /><PortalText text={"Export"} /></button>
           </div>
         </div>
 
@@ -940,21 +994,19 @@ const DoctorUserManagement = () => {
             <table className="docstaff-screen-table">
               <thead>
                 <tr>
-                  <th>Staff</th>
-                  <th>Dept & Role</th>
-                  <th>Shift</th>
-                  <th>Verification</th>
-                  <th>Status</th>
-                  <th>Last Login</th>
-                  <th>Actions</th>
+                  <th><PortalText text={"Staff"} /></th>
+                  <th><PortalText text={"Dept & Role"} /></th>
+                  <th><PortalText text={"Shift"} /></th>
+                  <th><PortalText text={"Verification"} /></th>
+                  <th><PortalText text={"Status"} /></th>
+                  <th><PortalText text={"Last Login"} /></th>
+                  <th><PortalText text={"Actions"} /></th>
                 </tr>
               </thead>
               <tbody>
                 {isLoadingStaff && (
                   <tr>
-                    <td className="docstaff-screen-empty" colSpan="7">
-                      Loading staff from API...
-                    </td>
+                    <td className="docstaff-screen-empty" colSpan="7"><PortalText text={"Loading staff from API..."} /></td>
                   </tr>
                 )}
                 {!isLoadingStaff && staffError && (
@@ -968,9 +1020,7 @@ const DoctorUserManagement = () => {
                   <tr key={staff.id}>
                     <td>
                       <button className="docstaff-screen-person" type="button" onClick={() => handleViewStaff(staff)}>
-                        <div className={`docstaff-screen-avatar docstaff-screen-avatar-${staff.avatarTone}`}>
-                          {staff.avatar}
-                        </div>
+                        <ProfileAvatar photo={staff.profilePhoto} name={staff.name} fallback={staff.avatar} className={`docstaff-screen-avatar docstaff-screen-avatar-${staff.avatarTone}`} />
                         <div>
                           <strong>{staff.name}</strong>
                           <span>{staff.email}</span>
@@ -1018,18 +1068,18 @@ const DoctorUserManagement = () => {
                             className="docstaff-screen-row-actions"
                             style={{ top: actionMenuPosition.top, left: actionMenuPosition.left }}
                           >
-                            <button type="button" title="View" onClick={() => handleViewStaff(staff)}>
+                            <PortalElement as="button" type="button" title="View" onClick={() => handleViewStaff(staff)}>
                               <Eye size={15} />
-                            </button>
-                            <button type="button" title="Edit" onClick={() => handleUpdateStaff(staff)}>
+                            </PortalElement>
+                            <PortalElement as="button" type="button" title="Edit" onClick={() => handleUpdateStaff(staff)}>
                               <Pencil size={15} />
-                            </button>
-                            <button type="button" title="Resend login email" aria-label={`Resend login email to ${staff.name}`} onClick={() => handleResendStaffEmail(staff)}>
+                            </PortalElement>
+                            <PortalElement as="button" type="button" title="Resend login email" aria-label={`Resend login email to ${staff.name}`} onClick={() => handleResendStaffEmail(staff)}>
                               <Mail size={15} />
-                            </button>
-                            <button className="docstaff-screen-action-danger" type="button" title="Delete" onClick={() => handleDeleteStaff(staff)}>
+                            </PortalElement>
+                            <PortalElement as="button" className="docstaff-screen-action-danger" type="button" title="Delete" onClick={() => handleDeleteStaff(staff)}>
                               <Trash2 size={15} />
-                            </button>
+                            </PortalElement>
                           </div>
                         )}
 
@@ -1049,9 +1099,7 @@ const DoctorUserManagement = () => {
                 ))}
                 {!isLoadingStaff && !staffError && filteredRows.length === 0 && (
                   <tr>
-                    <td className="docstaff-screen-empty" colSpan="7">
-                      No staff members match these filters.
-                    </td>
+                    <td className="docstaff-screen-empty" colSpan="7"><PortalText text={"No staff members match these filters."} /></td>
                   </tr>
                 )}
               </tbody>
@@ -1059,17 +1107,17 @@ const DoctorUserManagement = () => {
           </div>
 
           <div className="docstaff-screen-pagination">
-            <span>Showing {filteredRows.length ? firstRowIndex + 1 : 0} to {lastRowIndex} of {filteredRows.length} entries</span>
+            <span><PortalText text={"Showing "} />{filteredRows.length ? firstRowIndex + 1 : 0}<PortalText text={" to "} />{lastRowIndex}<PortalText text={" of "} />{filteredRows.length}<PortalText text={" entries"} /></span>
             <div className="docstaff-screen-pages">
-              <button type="button" aria-label="Previous page" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>
+              <PortalElement as="button" type="button" aria-label="Previous page" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}>
                 ‹
-              </button>
+              </PortalElement>
               {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
                 <button className={page === safeCurrentPage ? "docstaff-screen-page-active" : ""} type="button" key={page} onClick={() => setCurrentPage(page)}>
                   {page}
                 </button>
               ))}
-              <button type="button" aria-label="Next page" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>›</button>
+              <PortalElement as="button" type="button" aria-label="Next page" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}>›</PortalElement>
             </div>
           </div>
         </section>
@@ -1085,7 +1133,7 @@ const DoctorUserManagement = () => {
             onClick={(event) => event.stopPropagation()}
           >
             <div className="docstaff-screen-profile-header">
-              <h2 id="docstaff-view-title">Staff Profile</h2>
+              <h2 id="docstaff-view-title"><PortalText text={"Staff Profile"} /></h2>
               <button type="button" className="docstaff-screen-profile-close" onClick={() => setViewStaff(null)}>
                 <X size={18} />
               </button>
@@ -1093,7 +1141,7 @@ const DoctorUserManagement = () => {
 
             <div className="docstaff-screen-profile-body">
               <div className="docstaff-screen-profile-hero">
-                <img src={viewStaff.profilePhoto} alt={viewStaff.name} />
+                <ProfileAvatar photo={viewStaff.profilePhoto} name={viewStaff.name} size={80} />
                 <h3>{viewStaff.name}</h3>
                 <p>
                   {viewStaff.email} | {viewStaff.id.replace("#", "")}
@@ -1111,35 +1159,31 @@ const DoctorUserManagement = () => {
                   </span>
                 </div>
                 <div className="docstaff-screen-profile-actions">
-                  <button type="button" className="docstaff-screen-profile-message">
-                    Message
-                  </button>
-                  <button type="button" className="docstaff-screen-profile-edit" onClick={() => handleUpdateStaff(viewStaff)}>
-                    Edit Profile
-                  </button>
+                  <button type="button" className="docstaff-screen-profile-message"><PortalText text={"Message"} /></button>
+                  <button type="button" className="docstaff-screen-profile-edit" onClick={() => handleUpdateStaff(viewStaff)}><PortalText text={"Edit Profile"} /></button>
                 </div>
               </div>
 
               <section className="docstaff-screen-profile-section">
-                <h4>Employment Details</h4>
+                <h4><PortalText text={"Employment Details"} /></h4>
                 <div className="docstaff-screen-profile-details">
-                  <span>Clinic / Hospital</span>
+                  <span><PortalText text={"Clinic / Hospital"} /></span>
                   <strong>{viewStaff.clinicName}</strong>
-                  <span>Department</span>
+                  <span><PortalText text={"Department"} /></span>
                   <strong>{viewStaff.department}</strong>
-                  <span>Shift</span>
+                  <span><PortalText text={"Shift"} /></span>
                   <strong>
                     {viewStaff.shift} ({viewStaff.shiftTime})
                   </strong>
-                  <span>Join Date</span>
+                  <span><PortalText text={"Join Date"} /></span>
                   <strong>{viewStaff.joinDate}</strong>
-                  <span>Manager</span>
+                  <span><PortalText text={"Manager"} /></span>
                   <strong className="docstaff-screen-profile-link">{viewStaff.manager}</strong>
                 </div>
               </section>
 
               <section className="docstaff-screen-profile-section">
-                <h4>Permissions & Access</h4>
+                <h4><PortalText text={"Permissions & Access"} /></h4>
                 <div className="docstaff-screen-permissions">
                   {viewStaff.permissions.map((permission) => (
                     <label key={permission}>
@@ -1150,9 +1194,7 @@ const DoctorUserManagement = () => {
                 </div>
               </section>
 
-              <button type="button" className="docstaff-screen-suspend-btn" onClick={() => handleSuspendStaff(viewStaff)}>
-                Suspend Account
-              </button>
+              <button type="button" className="docstaff-screen-suspend-btn" onClick={() => handleSuspendStaff(viewStaff)}><PortalText text={"Suspend Account"} /></button>
             </div>
           </section>
         </div>
@@ -1171,11 +1213,11 @@ const DoctorUserManagement = () => {
           >
             <div className="docstaff-screen-add-header">
               <div>
-                <h2 id="docstaff-add-title">Create New Staff Member</h2>
+                <h2 id="docstaff-add-title"><PortalText text={"Create New Staff Member"} /></h2>
                 <p>
                   {addStaffStep === 1
-                    ? "Choose a staff role to begin creating a new account."
-                    : "Enter the personal and professional details for the new staff member."}
+                    ? <PortalText text={"Choose a staff role to begin creating a new account."} />
+                    : <PortalText text={"Enter the personal and professional details for the new staff member."} />}
                 </p>
               </div>
               <button type="button" className="docstaff-screen-add-close" onClick={closeAddStaffModal}>
@@ -1185,17 +1227,11 @@ const DoctorUserManagement = () => {
 
             <div className="docstaff-screen-add-steps">
               <div className="docstaff-screen-add-step docstaff-screen-add-step-active">
-                <span>1</span>
-                Choose Role
-              </div>
+                <span>1</span><PortalText text={"Choose Role"} /></div>
               <div className={`docstaff-screen-add-step ${addStaffStep >= 2 ? "docstaff-screen-add-step-active" : ""}`}>
-                <span>2</span>
-                Staff Details
-              </div>
+                <span>2</span><PortalText text={"Staff Details"} /></div>
               <div className={`docstaff-screen-add-step ${addStaffStep >= 3 ? "docstaff-screen-add-step-active" : ""}`}>
-                <span>3</span>
-                Review & Create
-              </div>
+                <span>3</span><PortalText text={"Review & Create"} /></div>
             </div>
 
             {addStaffStep === 1 && (
@@ -1203,7 +1239,7 @@ const DoctorUserManagement = () => {
             <div className="docstaff-screen-add-filters">
               <label className="docstaff-screen-add-search">
                 <Search size={17} />
-                <input
+                <PortalElement as="input"
                   type="search"
                   placeholder="Search staff roles..."
                   value={roleSearchTerm}
@@ -1211,19 +1247,20 @@ const DoctorUserManagement = () => {
                 />
               </label>
               <select value={roleDepartmentFilter} onChange={(event) => setRoleDepartmentFilter(event.target.value)}>
-                <option>All</option>
-                <option>Clinical</option>
-                <option>Pathology</option>
-                <option>Finance</option>
-                <option>Operations</option>
+                <PortalElement as="option" value={"All"}>All</PortalElement>
+                <PortalElement as="option" value={"Admin"}>Admin</PortalElement>
+                <PortalElement as="option" value={"Clinical"}>Clinical</PortalElement>
+                <PortalElement as="option" value={"Pathology"}>Pathology</PortalElement>
+                <PortalElement as="option" value={"Finance"}>Finance</PortalElement>
+                <PortalElement as="option" value={"Operations"}>Operations</PortalElement>
               </select>
               <select value={roleCategoryFilter} onChange={(event) => setRoleCategoryFilter(event.target.value)}>
-                <option>All</option>
-                <option>Care Team</option>
-                <option>Diagnostics</option>
-                <option>Administration</option>
-                <option>Support</option>
-                <option>Leadership</option>
+                <PortalElement as="option" value={"All"}>All</PortalElement>
+                <PortalElement as="option" value={"Care Team"}>Care Team</PortalElement>
+                <PortalElement as="option" value={"Diagnostics"}>Diagnostics</PortalElement>
+                <PortalElement as="option" value={"Administration"}>Administration</PortalElement>
+                <PortalElement as="option" value={"Support"}>Support</PortalElement>
+                <PortalElement as="option" value={"Leadership"}>Leadership</PortalElement>
               </select>
             </div>
 
@@ -1252,8 +1289,7 @@ const DoctorUserManagement = () => {
                     <div className="docstaff-screen-role-meta">
                       <span>
                         <Users size={12} />
-                        {role.count} Active
-                      </span>
+                        {role.count}<PortalText text={" Active"} /></span>
                       <b>{role.code}</b>
                     </div>
                   </button>
@@ -1261,9 +1297,7 @@ const DoctorUserManagement = () => {
               })}
             </div>
 
-            <div className="docstaff-screen-add-hint">
-              Select the staff role first. Details and permissions can be edited in the next step.
-            </div>
+            <div className="docstaff-screen-add-hint"><PortalText text={"Select the staff role first. Details and permissions can be edited in the next step."} /></div>
 
               </>
             )}
@@ -1271,11 +1305,9 @@ const DoctorUserManagement = () => {
             {addStaffStep === 2 && (
               <div className="docstaff-screen-staff-details-step">
                 <section className="docstaff-screen-details-section">
-                  <h3>Personal Information</h3>
-                  <label className="docstaff-clinic-filter">
-                    Clinic / Hospital *
-                    <select required value={newStaffForm.clinicId} onChange={(event) => handleNewStaffFormChange("clinicId", event.target.value)}>
-                      <option value="">Select a clinic or hospital</option>
+                  <h3><PortalText text={"Personal Information"} /></h3>
+                  <label className="docstaff-clinic-filter"><PortalText text={"Clinic / Hospital *"} /><select required value={newStaffForm.clinicId} onChange={(event) => handleNewStaffFormChange("clinicId", event.target.value)}>
+                      <PortalElement as="option" value="">Select a clinic or hospital</PortalElement>
                       {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
                     </select>
                   </label>
@@ -1300,41 +1332,33 @@ const DoctorUserManagement = () => {
                       onClick={() => photoInputRef.current?.click()}
                     >
                       <Download size={13} />
-                      {staffPhoto ? "Change Photo" : "Upload Photo"}
+                      {staffPhoto ? <PortalText text={"Change Photo"} /> : <PortalText text={"Upload Photo"} />}
                     </button>
                   </div>
 
                   <div className="docstaff-screen-details-grid">
-                    <label>
-                      First Name
-                      <input
+                    <label><PortalText text={"First Name"} /><PortalElement as="input"
                         type="text"
                         placeholder="e.g. Jane"
                         value={newStaffForm.firstName}
                         onChange={(event) => handleNewStaffFormChange("firstName", event.target.value)}
                       />
                     </label>
-                    <label>
-                      Last Name
-                      <input
+                    <label><PortalText text={"Last Name"} /><PortalElement as="input"
                         type="text"
                         placeholder="e.g. Doe"
                         value={newStaffForm.lastName}
                         onChange={(event) => handleNewStaffFormChange("lastName", event.target.value)}
                       />
                     </label>
-                    <label>
-                      Email Address
-                      <input
+                    <label><PortalText text={"Email Address"} /><input
                         type="email"
                         placeholder="jane.doe@example.com"
                         value={newStaffForm.email}
                         onChange={(event) => handleNewStaffFormChange("email", event.target.value)}
                       />
                     </label>
-                    <label>
-                      Phone Number
-                      <input
+                    <label><PortalText text={"Phone Number"} /><input
                         type="tel"
                         placeholder="(555) 123-4567"
                         value={newStaffForm.phone}
@@ -1345,11 +1369,9 @@ const DoctorUserManagement = () => {
                 </section>
 
                 <section className="docstaff-screen-details-section">
-                  <h3>Professional Details</h3>
+                  <h3><PortalText text={"Professional Details"} /></h3>
                   <div className="docstaff-screen-details-grid">
-                    <label>
-                      Date of Birth
-                      <input
+                    <label><PortalText text={"Date of Birth"} /><input
                         type="date"
                         max={new Date().toISOString().split("T")[0]}
                         value={newStaffForm.dateOfBirth}
@@ -1357,46 +1379,40 @@ const DoctorUserManagement = () => {
                         onChange={(event) => handleNewStaffFormChange("dateOfBirth", event.target.value)}
                       />
                     </label>
-                    <label>
-                      Gender
-                      <select value={newStaffForm.gender} onChange={(event) => handleNewStaffFormChange("gender", event.target.value)}>
-                        <option value="">Select gender</option>
-                        <option>Female</option>
-                        <option>Male</option>
-                        <option>Other</option>
+                    <label><PortalText text={"Gender"} /><select value={newStaffForm.gender} onChange={(event) => handleNewStaffFormChange("gender", event.target.value)}>
+                        <PortalElement as="option" value="">Select gender</PortalElement>
+                        <PortalElement as="option" value={"Female"}>Female</PortalElement>
+                        <PortalElement as="option" value={"Male"}>Male</PortalElement>
+                        <PortalElement as="option" value={"Other"}>Other</PortalElement>
                       </select>
                     </label>
-                    <label>
-                      Department
-                      <select
+                    <label><PortalText text={"Department"} /><select
                         value={newStaffForm.department}
                         onChange={(event) => handleNewStaffFormChange("department", event.target.value)}
                       >
-                        <option>Nursing</option>
-                        <option>Emergency</option>
-                        <option>Pathology</option>
-                        <option>Finance</option>
-                        <option>Operations</option>
-                        <option>Admin</option>
+                        <PortalElement as="option" value={"Nursing"}>Nursing</PortalElement>
+                        <PortalElement as="option" value={"Emergency"}>Emergency</PortalElement>
+                        <PortalElement as="option" value={"Pathology"}>Pathology</PortalElement>
+                        <PortalElement as="option" value={"Finance"}>Finance</PortalElement>
+                        <PortalElement as="option" value={"Operations"}>Operations</PortalElement>
+                        <PortalElement as="option" value={"Admin"}>Admin</PortalElement>
                       </select>
                     </label>
-                    <label>
-                      Hire Date
-                      <input
+                    <label><PortalText text={"Hire Date"} /><input
                         type="date"
                         value={newStaffForm.hireDate}
                         onClick={(event) => event.currentTarget.showPicker?.()}
                         onChange={(event) => handleNewStaffFormChange("hireDate", event.target.value)}
                       />
                     </label>
-                    <label>
-                      Shift Preference
-                      <select value={newStaffForm.shift} onChange={(event) => handleNewStaffFormChange("shift", event.target.value)}>
-                        <option>Morning</option>
-                        <option>Evening</option>
-                        <option>Night</option>
+                    <label><PortalText text={"Shift Preference"} /><select value={newStaffForm.shift} onChange={(event) => handleNewStaffFormChange("shift", event.target.value)}>
+                        <PortalElement as="option" value={"Morning"}>Morning</PortalElement>
+                        <PortalElement as="option" value={"Evening"}>Evening</PortalElement>
+                        <PortalElement as="option" value={"Night"}>Night</PortalElement>
                       </select>
                     </label>
+                    <label><PortalText text={"Shift start time"} /><input type="time" required value={newStaffForm.shiftStartTime || ''} onChange={event => handleNewStaffFormChange('shiftStartTime', event.target.value)} /></label>
+                    <label><PortalText text={"Shift end time"} /><input type="time" required value={newStaffForm.shiftEndTime || ''} onChange={event => handleNewStaffFormChange('shiftEndTime', event.target.value)} /></label>
                   </div>
                 </section>
               </div>
@@ -1408,38 +1424,32 @@ const DoctorUserManagement = () => {
                   <section className="docstaff-screen-review-card">
                     <div className="docstaff-screen-review-card-head">
                       <h3>
-                        <Users size={17} />
-                        Personal Information
-                      </h3>
+                        <Users size={17} /><PortalText text={"Personal Information"} /></h3>
                       <button type="button" onClick={() => setAddStaffStep(2)}>
-                        <Pencil size={13} />
-                        Edit
-                      </button>
+                        <Pencil size={13} /><PortalText text={"Edit"} /></button>
                     </div>
 
                     <div className="docstaff-screen-review-personal">
                       <div className="docstaff-screen-review-avatar-block">
                         <img src={staffPhotoPreview || `https://i.pravatar.cc/120?u=${reviewEmail}`} alt={reviewFullName} />
                         <span>
-                          <CheckCircle2 size={12} />
-                          Verified
-                        </span>
+                          <CheckCircle2 size={12} /><PortalText text={"Verified"} /></span>
                       </div>
 
                       <div className="docstaff-screen-review-field">
-                        <small>Full Name</small>
+                        <small><PortalText text={"Full Name"} /></small>
                         <strong>{reviewFullName}</strong>
                       </div>
                       <div className="docstaff-screen-review-field">
-                        <small>Email Address</small>
+                        <small><PortalText text={"Email Address"} /></small>
                         <strong>{reviewEmail}</strong>
                       </div>
                       <div className="docstaff-screen-review-field">
-                        <small>Phone Number</small>
+                        <small><PortalText text={"Phone Number"} /></small>
                         <strong>{reviewPhone}</strong>
                       </div>
                       <div className="docstaff-screen-review-field">
-                        <small>Temporary Password</small>
+                        <small><PortalText text={"Temporary Password"} /></small>
                         <strong className="docstaff-screen-password-preview">
                           <span>********</span>
                           <Eye size={14} />
@@ -1451,38 +1461,34 @@ const DoctorUserManagement = () => {
                   <section className="docstaff-screen-review-card">
                     <div className="docstaff-screen-review-card-head">
                       <h3>
-                        <CalendarClock size={17} />
-                        Professional Details
-                      </h3>
+                        <CalendarClock size={17} /><PortalText text={"Professional Details"} /></h3>
                       <button type="button" onClick={() => setAddStaffStep(2)}>
-                        <Pencil size={13} />
-                        Edit
-                      </button>
+                        <Pencil size={13} /><PortalText text={"Edit"} /></button>
                     </div>
 
                     <div className="docstaff-screen-review-professional">
                       <div className="docstaff-screen-review-field">
-                        <label>Clinic / Hospital</label>
-                        <strong>{clinics.find((clinic) => clinic.id === newStaffForm.clinicId)?.name || "Not selected"}</strong>
+                        <label><PortalText text={"Clinic / Hospital"} /></label>
+                        <strong>{clinics.find((clinic) => clinic.id === newStaffForm.clinicId)?.name || <PortalText text={"Not selected"} />}</strong>
                       </div>
                       <div className="docstaff-screen-review-field">
-                        <small>Role</small>
+                        <small><PortalText text={"Role"} /></small>
                         <span className="docstaff-screen-review-role">{selectedStaffRole.title}</span>
                       </div>
                       <div className="docstaff-screen-review-field">
-                        <small>Employee ID</small>
+                        <small><PortalText text={"Employee ID"} /></small>
                         <strong>{reviewEmployeeId}</strong>
                       </div>
                       <div className="docstaff-screen-review-field">
-                        <small>Department</small>
+                        <small><PortalText text={"Department"} /></small>
                         <strong>{reviewDepartment}</strong>
                       </div>
                       <div className="docstaff-screen-review-field">
-                        <small>Hire Date</small>
+                        <small><PortalText text={"Hire Date"} /></small>
                         <strong>{reviewHireDate}</strong>
                       </div>
                       <div className="docstaff-screen-review-field">
-                        <small>Shift Preference</small>
+                        <small><PortalText text={"Shift Preference"} /></small>
                         <strong>{reviewShift}</strong>
                       </div>
                     </div>
@@ -1490,29 +1496,26 @@ const DoctorUserManagement = () => {
                 </div>
 
                 <aside className="docstaff-screen-summary-card">
-                  <h3>Final Account Summary</h3>
+                  <h3><PortalText text={"Final Account Summary"} /></h3>
                   <div className="docstaff-screen-summary-list">
                     <div>
                       <CheckCircle2 size={17} />
                       <p>
-                        <strong>Personal Info Complete</strong>
-                        <span>All required fields filled.</span>
+                        <strong><PortalText text={"Personal Info Complete"} /></strong>
+                        <span><PortalText text={"All required fields filled."} /></span>
                       </p>
                     </div>
                     <div>
                       <CheckCircle2 size={17} />
                       <p>
-                        <strong>Professional Details Set</strong>
-                        <span>Role and ID assigned.</span>
+                        <strong><PortalText text={"Professional Details Set"} /></strong>
+                        <span><PortalText text={"Role and ID assigned."} /></span>
                       </p>
                     </div>
                   </div>
                   <div className="docstaff-screen-activation-note">
                     <CheckCircle2 size={18} />
-                    <p>
-                      An activation email will be sent to <strong>{reviewEmail}</strong> with instructions to set a
-                      permanent password.
-                    </p>
+                    <p><PortalText text={"An activation email will be sent to "} /><strong>{reviewEmail}</strong><PortalText text={" with instructions to set a permanent password."} /></p>
                   </div>
                 </aside>
               </div>
@@ -1524,10 +1527,10 @@ const DoctorUserManagement = () => {
                 className="docstaff-screen-add-cancel"
                 onClick={addStaffStep === 1 ? closeAddStaffModal : () => setAddStaffStep(addStaffStep - 1)}
               >
-                {addStaffStep === 1 ? "Cancel" : "Back"}
+                {addStaffStep === 1 ? <PortalText text={"Cancel"} /> : <PortalText text={"Back"} />}
               </button>
               <button type="button" className="docstaff-screen-add-continue" disabled={isSavingStaff} onClick={handleContinueNewStaff}>
-                {isSavingStaff ? "Saving..." : addStaffStep === 3 ? "Create Account" : "Continue"}
+                {isSavingStaff ? <PortalText text={"Saving..."} /> : addStaffStep === 3 ? <PortalText text={"Create Account"} /> : <PortalText text={"Continue"} />}
                 {addStaffStep !== 3 && <span>-&gt;</span>}
               </button>
             </div>
@@ -1546,7 +1549,7 @@ const DoctorUserManagement = () => {
           >
             <div className="docstaff-screen-modal-header">
               <div>
-                <h2 id="docstaff-update-title">Update Staff</h2>
+                <h2 id="docstaff-update-title"><PortalText text={"Update Staff"} /></h2>
                 <p>{editingStaff.id}</p>
               </div>
               <button type="button" className="docstaff-screen-modal-close" onClick={closeUpdateModal}>
@@ -1555,72 +1558,68 @@ const DoctorUserManagement = () => {
             </div>
 
             <form className="docstaff-screen-edit-form" onSubmit={handleSaveStaffUpdate}>
-              <label>
-                Clinic / Hospital *
-                <select required value={editForm.clinicId} onChange={(event) => handleEditFormChange("clinicId", event.target.value)}>
-                  <option value="">Select a clinic or hospital</option>
+              <div className="docstaff-screen-edit-photo">
+                <label htmlFor="docstaff-edit-photo"><PortalText text={"Profile photo"} /></label>
+                <div className="docstaff-screen-edit-photo-content">
+                  <img src={editPhotoPreview || editingStaff.profilePhoto} alt={editForm.name} width="72" height="72" />
+                  <div className="docstaff-screen-edit-photo-controls">
+                    <input ref={editPhotoInputRef} id="docstaff-edit-photo" type="file" accept="image/png,image/jpeg,image/webp" hidden disabled={isSavingStaff} onChange={handleEditPhotoChange} />
+                    <button type="button" className="docstaff-screen-upload-btn" disabled={isSavingStaff} onClick={() => editPhotoInputRef.current?.click()}><PortalText text={"Change photo"} /></button>
+                    {editPhoto && <span className="docstaff-screen-edit-photo-filename" title={editPhoto.name}>{editPhoto.name}</span>}
+                    <small><PortalText text={"JPG, PNG or WebP, up to 5 MB. Save to update the photo."} /></small>
+                  </div>
+                </div>
+              </div>
+              <label><PortalText text={"Clinic / Hospital *"} /><select required value={editForm.clinicId} onChange={(event) => handleEditFormChange("clinicId", event.target.value)}>
+                  <PortalElement as="option" value="">Select a clinic or hospital</PortalElement>
                   {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
                 </select>
               </label>
-              <label>
-                Name
-                <input
+              <label><PortalText text={"Name"} /><input
                   type="text"
                   value={editForm.name}
                   onChange={(event) => handleEditFormChange("name", event.target.value)}
                   required
                 />
               </label>
-              <label>
-                Email
-                <input
+              <label><PortalText text={"Email"} /><input
                   type="email"
                   value={editForm.email}
                   onChange={(event) => handleEditFormChange("email", event.target.value)}
                   required
                 />
               </label>
-              <label>
-                Department
-                <select
+              <label><PortalText text={"Department"} /><select
                   value={editForm.department}
                   onChange={(event) => handleEditFormChange("department", event.target.value)}
                 >
-                  <option>Emergency</option>
-                  <option>Pathology</option>
-                  <option>Finance</option>
-                  <option>Admin</option>
+                  <PortalElement as="option" value={"Emergency"}>Emergency</PortalElement>
+                  <PortalElement as="option" value={"Pathology"}>Pathology</PortalElement>
+                  <PortalElement as="option" value={"Finance"}>Finance</PortalElement>
+                  <PortalElement as="option" value={"Admin"}>Admin</PortalElement>
                 </select>
               </label>
-              <label>
-                Role
-                <select value={editForm.role} onChange={(event) => handleEditFormChange("role", event.target.value)}>
+              <label><PortalText text={"Role"} /><select value={editForm.role} onChange={(event) => handleEditFormChange("role", event.target.value)}>
                   {[...new Set([editForm.role, ...Object.values(roleLabels)])].map((role) => <option key={role}>{role}</option>)}
                 </select>
               </label>
-              <label>
-                Shift
-                <select value={editForm.shift} onChange={(event) => handleEditFormChange("shift", event.target.value)}>
-                  <option>Morning</option>
-                  <option>Night</option>
-                  <option>Evening</option>
+              <label><PortalText text={"Shift"} /><select value={editForm.shift} onChange={(event) => handleEditFormChange("shift", event.target.value)}>
+                  <PortalElement as="option" value={"Morning"}>Morning</PortalElement>
+                  <PortalElement as="option" value={"Night"}>Night</PortalElement>
+                  <PortalElement as="option" value={"Evening"}>Evening</PortalElement>
                 </select>
               </label>
-              <label>
-                Status
-                <select value={editForm.status} onChange={(event) => handleEditFormChange("status", event.target.value)}>
-                  <option>Active</option>
-                  <option>On Leave</option>
+              <label><PortalText text={"Shift start time"} /><input type="time" required value={editForm.shiftStartTime || ''} onChange={event => handleEditFormChange('shiftStartTime', event.target.value)} /></label>
+              <label><PortalText text={"Shift end time"} /><input type="time" required value={editForm.shiftEndTime || ''} onChange={event => handleEditFormChange('shiftEndTime', event.target.value)} /></label>
+              <label><PortalText text={"Status"} /><select value={editForm.status} onChange={(event) => handleEditFormChange("status", event.target.value)}>
+                  <PortalElement as="option" value={"Active"}>Active</PortalElement>
+                  <PortalElement as="option" value={"On Leave"}>On Leave</PortalElement>
                 </select>
               </label>
 
               <div className="docstaff-screen-modal-actions">
-                <button type="button" className="docstaff-screen-cancel-btn" onClick={closeUpdateModal}>
-                  Cancel
-                </button>
-                <button type="submit" disabled={isSavingStaff} className="docstaff-screen-save-btn">
-                  Update Staff
-                </button>
+                <button type="button" className="docstaff-screen-cancel-btn" onClick={closeUpdateModal}><PortalText text={"Cancel"} /></button>
+                <button type="submit" disabled={isSavingStaff} className="docstaff-screen-save-btn"><PortalText text={"Update Staff"} /></button>
               </div>
             </form>
           </section>

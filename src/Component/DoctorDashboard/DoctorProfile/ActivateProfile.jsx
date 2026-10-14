@@ -1,3 +1,4 @@
+import { PortalText, PortalElement } from "../../common/PortalTranslation";
 import { getProfileCompletion } from "../../../utils/profileCompletion";
 import useProfileCompletion from "../../../hooks/useProfileCompletion";
 import ProfileCompletion from "../../common/ProfileCompletion";
@@ -433,16 +434,15 @@ export default function DoctorProfileFlow() {
             )}
           </div>
           <div className="profile-info">
-            <h2>{profile.name || "Dr. Name"}</h2>
-            <p className="text-muted">{profile.qualification || "Qualification"}</p>
+            <h2>{profile.name || <PortalText text={"Dr. Name"} />}</h2>
+            <p className="text-muted">{profile.qualification || <PortalText text={"Qualification"} />}</p>
             <div className="profile-stats">
               <span className="stat-item">
                 <i className="bi bi-briefcase me-1"></i>
-                {profile.experience || "0"} Years Experience
-              </span>
+                {profile.experience || "0"}<PortalText text={" Years Experience"} /></span>
               <span className="stat-item">
                 <i className="bi bi-translate me-1"></i>
-                {profile.languages || "English"}
+                {profile.languages || <PortalText text={"English"} />}
               </span>
             </div>
           </div>
@@ -450,9 +450,7 @@ export default function DoctorProfileFlow() {
             className="btn-edit-profile"
             onClick={handleEditProfileClick}
           >
-            <i className="bi bi-pencil me-2"></i>
-            Edit Profile
-          </button>
+            <i className="bi bi-pencil me-2"></i><PortalText text={"Edit Profile"} /></button>
         </div>
 
         <div className="profile-tables">
@@ -471,9 +469,9 @@ export default function DoctorProfileFlow() {
               <div className="section-content">
                 {section.fields.map((field) => (
                   <div key={field.key} className="profile-field">
-                    <span className="field-label">{field.label}:</span>
+                    <span className="field-label"><PortalText text={field.label} />:</span>
                     <span className="field-value">
-                      {(field.key === "currentAddress" ? formatAddress({ ...profile.address, line1: profile.currentAddress }) : profile[field.key]) || "Not set"}
+                      {(field.key === "currentAddress" ? formatAddress({ ...profile.address, line1: profile.currentAddress }) : profile[field.key]) || <PortalText text={"Not set"} />}
                     </span>
                   </div>
                 ))}
@@ -493,32 +491,30 @@ export default function DoctorProfileFlow() {
     return (
       <div className="profile-flow">
         <div className="header d-flex justify-content-between align-items-center mb-4">
-          <h2 className="profile-header">Edit Profile</h2>
+          <h2 className="profile-header"><PortalText text={"Edit Profile"} /></h2>
           <button
             className="btn btn-outline-secondary"
             onClick={handleCancelClick}
           >
-            <i className="bi bi-arrow-left me-1"></i>
-            Back to View
-          </button>
+            <i className="bi bi-arrow-left me-1"></i><PortalText text={"Back to View"} /></button>
         </div>
 
         {/* Progress Tracker */}
         <div className="progress-track">
           <div className={`progress-step ${statusPersonal === "Completed" ? "active" : ""}`}>
             1
-            <span>Personal</span>
+            <span><PortalText text={"Personal"} /></span>
           </div>
           <div className={`progress-step ${statusProfessional === "Completed" ? "active" : ""}`}>
             2
-            <span>Professional</span>
+            <span><PortalText text={"Professional"} /></span>
           </div>
         </div>
 
         {/* PERSONAL DETAILS - Edit Mode */}
         <div className="profile-card">
           <div className="section-header">
-            <h3 className="section-title">Personal Details</h3>
+            <h3 className="section-title"><PortalText text={"Personal Details"} /></h3>
             <span className={`status-badge ${statusPersonal === "Completed" ? "status-completed" : "status-incomplete"}`}>
               {statusPersonal}
             </span>
@@ -526,8 +522,8 @@ export default function DoctorProfileFlow() {
 
           <div className="row mt-3">
             <div className="col-md-4 mb-3">
-              <label className="form-label">Full Name</label>
-              <input
+              <label className="form-label"><PortalText text={"Full Name"} /></label>
+              <PortalElement as="input"
                 className="form-input form-control"
                 value={profile.name}
                 onChange={(e) => setProfile({ ...profile, name: e.target.value })}
@@ -536,8 +532,8 @@ export default function DoctorProfileFlow() {
             </div>
 
             <div className="col-md-4 mb-3">
-              <label className="form-label">Email Address</label>
-              <input
+              <label className="form-label"><PortalText text={"Email Address"} /></label>
+              <PortalElement as="input"
                 className="form-input form-control"
                 type="email"
                 value={profile.email}
@@ -547,10 +543,10 @@ export default function DoctorProfileFlow() {
               {contactChanged("email") && (
                 <div className="profile-contact-verification">
                   <button type="button" onClick={() => sendContactOtp("email")} disabled={verification.email.loading}>
-                    {verification.email.loading ? "Please wait..." : verification.email.sent ? "Resend OTP" : "Send OTP"}
+                    {verification.email.loading ? <PortalText text={"Please wait..."} /> : verification.email.sent ? <PortalText text={"Resend OTP"} /> : <PortalText text={"Send OTP"} />}
                   </button>
                   {verification.email.sent && !verification.email.verified && (
-                    <><input inputMode="numeric" maxLength="6" value={verification.email.otp} onChange={(e) => setVerification((previous) => ({ ...previous, email: { ...previous.email, otp: e.target.value.replace(/\D/g, "") } }))} placeholder="OTP" /><button type="button" onClick={() => verifyContactOtp("email")}>Verify</button></>
+                    <><PortalElement as="input" inputMode="numeric" maxLength="6" value={verification.email.otp} onChange={(e) => setVerification((previous) => ({ ...previous, email: { ...previous.email, otp: e.target.value.replace(/\D/g, "") } }))} placeholder="OTP" /><button type="button" onClick={() => verifyContactOtp("email")}><PortalText text={"Verify"} /></button></>
                   )}
                   <small className={verification.email.verified ? "verified" : ""}>{verification.email.message}</small>
                 </div>
@@ -558,8 +554,8 @@ export default function DoctorProfileFlow() {
             </div>
 
             <div className="col-md-4 mb-3">
-              <label className="form-label">Mobile Number</label>
-              <input
+              <label className="form-label"><PortalText text={"Mobile Number"} /></label>
+              <PortalElement as="input"
                 className="form-input form-control"
                 type="tel"
                 value={profile.mobile}
@@ -569,10 +565,10 @@ export default function DoctorProfileFlow() {
               {contactChanged("mobile") && (
                 <div className="profile-contact-verification">
                   <button type="button" onClick={() => sendContactOtp("mobile")} disabled={verification.mobile.loading}>
-                    {verification.mobile.loading ? "Please wait..." : verification.mobile.sent ? "Resend OTP" : "Send OTP"}
+                    {verification.mobile.loading ? <PortalText text={"Please wait..."} /> : verification.mobile.sent ? <PortalText text={"Resend OTP"} /> : <PortalText text={"Send OTP"} />}
                   </button>
                   {verification.mobile.sent && !verification.mobile.verified && (
-                    <><input inputMode="numeric" maxLength="6" value={verification.mobile.otp} onChange={(e) => setVerification((previous) => ({ ...previous, mobile: { ...previous.mobile, otp: e.target.value.replace(/\D/g, "") } }))} placeholder="OTP" /><button type="button" onClick={() => verifyContactOtp("mobile")}>Verify</button></>
+                    <><PortalElement as="input" inputMode="numeric" maxLength="6" value={verification.mobile.otp} onChange={(e) => setVerification((previous) => ({ ...previous, mobile: { ...previous.mobile, otp: e.target.value.replace(/\D/g, "") } }))} placeholder="OTP" /><button type="button" onClick={() => verifyContactOtp("mobile")}><PortalText text={"Verify"} /></button></>
                   )}
                   <small className={verification.mobile.verified ? "verified" : ""}>{verification.mobile.message}</small>
                 </div>
@@ -582,7 +578,7 @@ export default function DoctorProfileFlow() {
 
           <div className="row mt-3">
             <div className="col-md-3 mb-3">
-              <label className="form-label">Date of Birth</label>
+              <label className="form-label"><PortalText text={"Date of Birth"} /></label>
               <input
                 type="date"
                 className="form-input form-control"
@@ -592,16 +588,16 @@ export default function DoctorProfileFlow() {
             </div>
 
             <div className="col-md-3 mb-3">
-              <label className="form-label">Gender</label>
+              <label className="form-label"><PortalText text={"Gender"} /></label>
               <select
                 className="form-input form-control"
                 value={profile.gender}
                 onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
               >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <PortalElement as="option" value="">Select Gender</PortalElement>
+                <PortalElement as="option" value="Male">Male</PortalElement>
+                <PortalElement as="option" value="Female">Female</PortalElement>
+                <PortalElement as="option" value="Other">Other</PortalElement>
               </select>
             </div>
 
@@ -610,8 +606,8 @@ export default function DoctorProfileFlow() {
 
           <div className="row mt-3">
             <div className="col-md-6 mb-3">
-              <label className="form-label">Current Address</label>
-              <textarea
+              <label className="form-label"><PortalText text={"Current Address"} /></label>
+              <PortalElement as="textarea"
                 className="form-input form-control"
                 rows="2"
                 value={profile.currentAddress}
@@ -624,7 +620,7 @@ export default function DoctorProfileFlow() {
           <div className="row mt-3">
             {['city', 'state', 'pincode', 'country'].map((field) => (
               <div className="col-md-3 mb-3" key={field}>
-                <label className="form-label" htmlFor={`doctor-address-${field}`}>{field === 'pincode' ? 'PIN Code' : field.charAt(0).toUpperCase() + field.slice(1)}</label>
+                <label className="form-label" htmlFor={`doctor-address-${field}`}>{field === 'pincode' ? <PortalText text={"PIN Code"} /> : field.charAt(0).toUpperCase() + field.slice(1)}</label>
                 <input id={`doctor-address-${field}`} className="form-input form-control" value={profile.address?.[field] || ''}
                   onChange={(event) => setProfile((previous) => ({ ...previous, address: { ...previous.address, [field]: event.target.value } }))} />
               </div>
@@ -632,14 +628,14 @@ export default function DoctorProfileFlow() {
           </div>
 
           <div className="mt-4">
-            <label className="form-label">Profile Photo</label>
+            <label className="form-label"><PortalText text={"Profile Photo"} /></label>
           <div className="photo-upload" onClick={() => document.getElementById('photoInput').click()}>
               {profile.photo ? (
                 <img src={profile.photo} alt="Profile" className="photo-preview" />
               ) : (
                 <>
                   <i className="bi bi-camera fs-1 text-muted mb-2"></i>
-                  <p className="text-muted mb-0">Click to upload profile photo</p>
+                  <p className="text-muted mb-0"><PortalText text={"Click to upload profile photo"} /></p>
                 </>
               )}
             </div>
@@ -654,15 +650,11 @@ export default function DoctorProfileFlow() {
 
           <div className="d-flex justify-content-between align-items-center mt-3 profile-form-actions">
             <button className="btn btn-secondary" onClick={handleCancelClick}>
-              <i className="bi bi-x-circle me-2"></i>
-              Cancel
-            </button>
+              <i className="bi bi-x-circle me-2"></i><PortalText text={"Cancel"} /></button>
             <button className="save-btn" onClick={saveProfileToApi} disabled={savingProfile}>
 
 
-              <i className="bi bi-check-circle me-2"></i>
-              Save Personal Details
-            </button>
+              <i className="bi bi-check-circle me-2"></i><PortalText text={"Save Personal Details"} /></button>
 
           </div>
         </div>
@@ -670,7 +662,7 @@ export default function DoctorProfileFlow() {
         {/* PROFESSIONAL DETAILS - Edit Mode */}
         <div className="profile-card">
           <div className="section-header">
-            <h3 className="section-title">Professional Details</h3>
+            <h3 className="section-title"><PortalText text={"Professional Details"} /></h3>
             <span className={`status-badge ${statusProfessional === "Completed" ? "status-completed" : "status-incomplete"}`}>
               {statusProfessional}
             </span>
@@ -678,8 +670,8 @@ export default function DoctorProfileFlow() {
 
           <div className="row mt-3">
             <div className="col-md-6 mb-3">
-              <label className="form-label">Qualification</label>
-              <input
+              <label className="form-label"><PortalText text={"Qualification"} /></label>
+              <PortalElement as="input"
                 className="form-input form-control"
                 value={profile.qualification}
                 onChange={(e) => setProfile({ ...profile, qualification: e.target.value })}
@@ -687,7 +679,7 @@ export default function DoctorProfileFlow() {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label">Experience (Years)</label>
+              <label className="form-label"><PortalText text={"Experience (Years)"} /></label>
               <input
                 className="form-input form-control"
                 type="number"
@@ -700,8 +692,8 @@ export default function DoctorProfileFlow() {
 
           <div className="row mt-3">
             <div className="col-md-6 mb-3">
-              <label className="form-label">Languages Known</label>
-              <input
+              <label className="form-label"><PortalText text={"Languages Known"} /></label>
+              <PortalElement as="input"
                 className="form-input form-control"
                 value={profile.languages}
                 onChange={(e) => setProfile({ ...profile, languages: e.target.value })}
@@ -709,8 +701,8 @@ export default function DoctorProfileFlow() {
               />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label">Specialization/Expertise</label>
-              <input
+              <label className="form-label"><PortalText text={"Specialization/Expertise"} /></label>
+              <PortalElement as="input"
                 className="form-input form-control"
                 value={profile.expertise}
                 onChange={(e) => setProfile({ ...profile, expertise: e.target.value })}
@@ -721,8 +713,8 @@ export default function DoctorProfileFlow() {
 
           <div className="row mt-3">
             <div className="col-md-12 mb-3">
-              <label className="form-label">Professional Summary</label>
-              <textarea
+              <label className="form-label"><PortalText text={"Professional Summary"} /></label>
+              <PortalElement as="textarea"
                 className="form-input form-control"
                 rows="3"
                 value={profile.about}
@@ -734,16 +726,16 @@ export default function DoctorProfileFlow() {
 
           <div className="row mt-3">
             <div className="col-md-12 mb-3">
-              <label className="form-label" htmlFor="doctor-consultation-mode">Consultation Modes</label>
-              <input id="doctor-consultation-mode" className="form-input form-control" value={profile.consultationMode || ''}
+              <label className="form-label" htmlFor="doctor-consultation-mode"><PortalText text={"Consultation Modes"} /></label>
+              <PortalElement as="input" id="doctor-consultation-mode" className="form-input form-control" value={profile.consultationMode || ''}
                 placeholder="online, offline" onChange={(event) => setProfile({ ...profile, consultationMode: event.target.value })} />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label" htmlFor="doctor-certificate-name">Certificate Name</label>
-              <input id="doctor-certificate-name" className="form-input form-control" value={certificateName} onChange={(event) => setCertificateName(event.target.value)} placeholder="Degree / registration certificate" />
+              <label className="form-label" htmlFor="doctor-certificate-name"><PortalText text={"Certificate Name"} /></label>
+              <PortalElement as="input" id="doctor-certificate-name" className="form-input form-control" value={certificateName} onChange={(event) => setCertificateName(event.target.value)} placeholder="Degree / registration certificate" />
             </div>
             <div className="col-md-6 mb-3">
-              <label className="form-label" htmlFor="doctor-certificate-file">Certificate Document</label>
+              <label className="form-label" htmlFor="doctor-certificate-file"><PortalText text={"Certificate Document"} /></label>
               <input id="doctor-certificate-file" type="file" accept="image/*,.pdf" className="form-control" disabled={(savedProfileData?.certifications?.length || 0) >= 5}
                 onChange={(event) => setCertificateFile(event.target.files?.[0] || null)} />
             </div>
@@ -752,21 +744,17 @@ export default function DoctorProfileFlow() {
 
           <div className="d-flex justify-content-between align-items-center mt-3 profile-form-actions">
             <button className="btn btn-secondary" onClick={handleCancelClick}>
-              <i className="bi bi-x-circle me-2"></i>
-              Cancel
-            </button>
+              <i className="bi bi-x-circle me-2"></i><PortalText text={"Cancel"} /></button>
 
             <button className="save-btn" onClick={saveProfileToApi} disabled={savingProfile}>
-              <i className="bi bi-check-circle me-2"></i>
-              Save Professional Details
-            </button>
+              <i className="bi bi-check-circle me-2"></i><PortalText text={"Save Professional Details"} /></button>
           </div>
 
         </div>
         <div className="text-center">
           <button className="save-btn" onClick={saveProfileToApi} disabled={savingProfile}>
           <i className="bi bi-check-circle me-2"></i>
-          {savingProfile ? "Saving..." : "Save"}
+          {savingProfile ? <PortalText text={"Saving..."} /> : <PortalText text={"Save"} />}
         </button>
         </div>
         {/* FINAL STATUS */}
@@ -783,7 +771,7 @@ export default function DoctorProfileFlow() {
       <div className="modal-overlay" onClick={handleCancelClick}>
         <div className="edit-modal" onClick={(e) => e.stopPropagation()}>
           <div className="modal-header">
-            <h3>Edit {editingSection.replace(/([A-Z])/g, ' $1').toUpperCase()}</h3>
+            <h3><PortalText text={"Edit "} />{editingSection.replace(/([A-Z])/g, ' $1').toUpperCase()}</h3>
             <button className="modal-close" onClick={handleCancelClick}>
               <i className="bi bi-x-lg"></i>
             </button>
@@ -804,7 +792,7 @@ export default function DoctorProfileFlow() {
                         onChange={(e) => handleInputChange(e, key)}
                       />
                       <label className="form-check-label">
-                        {editFormData[key] ? "Yes" : "No"}
+                        {editFormData[key] ? <PortalText text={"Yes"} /> : <PortalText text={"No"} />}
                       </label>
                     </div>
                   </div>
@@ -827,12 +815,8 @@ export default function DoctorProfileFlow() {
             })}
           </div>
           <div className="modal-footer">
-            <button className="btn btn-secondary" onClick={handleCancelClick}>
-              Cancel
-            </button>
-            <button className="btn btn-primary" onClick={handleSaveClick}>
-              Save Changes
-            </button>
+            <button className="btn btn-secondary" onClick={handleCancelClick}><PortalText text={"Cancel"} /></button>
+            <button className="btn btn-primary" onClick={handleSaveClick}><PortalText text={"Save Changes"} /></button>
           </div>
         </div>
       </div>
@@ -845,14 +829,14 @@ export default function DoctorProfileFlow() {
       {profileStatus === "succeeded" && savedProfileData && (
         <div className="alert alert-info" role="status">
           {savedProfileData.isActive === false
-            ? "Your account is inactive. Contact support to appear in the user directory."
+            ? <PortalText text={"Your account is inactive. Contact support to appear in the user directory."} />
             : !savedCompletion?.isComplete
-              ? "Your saved profile is incomplete. Fill the remaining fields shown above and save your changes to appear in the user directory."
-              : "Your saved profile meets the completion requirements for the user directory."}
+              ? <PortalText text={"Your saved profile is incomplete. Fill the remaining fields shown above and save your changes to appear in the user directory."} />
+              : <PortalText text={"Your saved profile meets the completion requirements for the user directory."} />}
         </div>
       )}
       {profileStatus === "loading" && (
-        <div className="alert alert-info" role="status">Loading doctor profile...</div>
+        <div className="alert alert-info" role="status"><PortalText text={"Loading doctor profile..."} /></div>
       )}
       {profileError && (
         <div className="alert alert-warning" role="alert">{profileError}</div>
