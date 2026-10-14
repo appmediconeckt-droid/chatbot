@@ -836,6 +836,8 @@ import './MyAppointments.css'; // Import the CSS file for styling
 import { isUnscheduledEmergency } from './emergencyBooking.js';
 import { filterAppointments } from './appointmentFilters.js';
 import { canCancelAppointment } from '../../../../utils/appointmentCancellation.js';
+import { groupAppointmentsByProvider } from './appointmentProviderGroups.js';
+import ProfileAvatar from '../../../common/ProfileAvatar.jsx';
 const MyAppointments = () => {
   const { t, lang } = useUserTranslation();
   const tr = (key, fallback) => {
@@ -844,6 +846,7 @@ const MyAppointments = () => {
   };
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
+  const [selectedProviderKey, setSelectedProviderKey] = useState(null);
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -1121,7 +1124,11 @@ const MyAppointments = () => {
     apt?.token ??
     null;
 
-  const appointmentDateGroups = displayApts.reduce((groups, apt) => {
+  const providerGroups = groupAppointmentsByProvider(displayApts);
+  const selectedProvider = selectedProviderKey
+    ? groupAppointmentsByProvider(appointments).find(group => group.key === selectedProviderKey) : null;
+  const selectedProviderAppointments = providerGroups.find(group => group.key === selectedProviderKey)?.appointments || [];
+  const appointmentDateGroups = selectedProviderAppointments.reduce((groups, apt) => {
     const key = getAppointmentDateKey(apt);
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(apt);
@@ -1496,13 +1503,37 @@ const MyAppointments = () => {
             <div className="user-appointments-spinner animate-spin rounded-full h-10 w-10 border-b-2"></div>
           </div>
         ) : (
+          <>
+          {selectedProviderKey && <div className="user-provider-history-header">
+            <button type="button" className="user-appointment-action secondary" onClick={() => setSelectedProviderKey(null)}><PortalText text="Back to doctors & consultants" /></button>
+            {selectedProvider && <div className="user-provider-history-person">
+              <ProfileAvatar photo={selectedProvider.latest.counselor?.profilePhoto} name={selectedProvider.latest.counselor?.fullName || 'Provider'} size={56} />
+              <div><h2>{selectedProvider.latest.counselor?.fullName || <PortalText text="Provider unavailable" />}</h2>{renderRoleBadge(selectedProvider.latest)}<p>{selectedProviderAppointments.length} <PortalText text={selectedProviderAppointments.length === 1 ? 'appointment' : 'appointments'} /></p></div>
+            </div>}
+          </div>}
+          {!selectedProviderKey && <div className="user-provider-list-heading"><h2><PortalText text="Doctors & consultants" /></h2><p><PortalText text="Select a doctor or consultant to view your appointment history." /></p></div>}
           <div className="user-appointments-grid">
-            {displayApts.length === 0 ? (
+            {(selectedProviderKey ? selectedProviderAppointments.length === 0 : providerGroups.length === 0) ? (
               <div className="bg-white rounded-xl p-8 sm:p-16 border border-dashed border-slate-200 text-center shadow-[0px_4px_20px_rgba(0,0,0,0.05)]">
                 <span className="material-symbols-outlined text-slate-300 text-5xl block mb-3"><PortalText text={"calendar_today"} /></span>
                 <p className="text-[#464554] text-sm">
                   {t('no_appointments_found').replace('{tab}', activeTab.toLowerCase())}
                 </p>
+              </div>
+            ) : !selectedProviderKey ? (
+              <div className="user-appointment-providers">
+                {providerGroups.map(provider => {
+                  const sample = provider.latest;
+                  const name = sample.counselor?.fullName || 'Provider unavailable';
+                  const latest = formatAppointmentDateTime(sample.date);
+                  const completed = provider.appointments.filter(apt => apt.status === 'completed').length;
+                  return <button type="button" className="user-provider-card" key={provider.key} onClick={() => setSelectedProviderKey(provider.key)} aria-label={`${name}: ${provider.appointments.length} appointments`}>
+                    <span className="user-provider-card-person"><ProfileAvatar photo={sample.counselor?.profilePhoto} name={name} size={64} className="user-provider-avatar" /><span><strong>{name}</strong>{renderRoleBadge(sample)}<span className="user-provider-specialization">{Array.isArray(sample.counselor?.specialization) ? sample.counselor.specialization.join(' | ') : sample.counselor?.specialization}</span></span></span>
+                    <span className="user-provider-card-counts"><span>{provider.appointments.length} <PortalText text={provider.appointments.length === 1 ? 'appointment' : 'appointments'} /></span><span>{completed} <PortalText text="completed" /></span></span>
+                    <span className="user-provider-card-latest"><PortalText text="Latest appointment" /><strong>{latest.date}{latest.time ? ` · ${latest.time}` : ''}</strong></span>
+                    <span className="user-provider-card-open"><PortalText text="View appointments" /><span aria-hidden="true">→</span></span>
+                  </button>;
+                })}
               </div>
             ) : (
               groupedDisplayApts.map((group) => (
@@ -1653,6 +1684,7 @@ const MyAppointments = () => {
               ))
             )}
           </div>
+          </>
         )}
 
         {renderAppointmentDetailsModal()}

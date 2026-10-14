@@ -34,6 +34,8 @@ await call('Runtime.enable'); await call('Page.enable');
 await call('Emulation.setDeviceMetricsOverride',{width:1440,height:1000,deviceScaleFactor:1,mobile:false});
 await call('Fetch.enable',{patterns:[{urlPattern:'*localhost:5006/*'},{urlPattern:'*socketService*'}]});
 await call('Page.navigate',{url:'http://localhost:5173/test-artifacts/manual-cancellation/preview.html'});
+await waitFor(`Boolean(document.querySelector('.user-provider-card'))`);
+await evaluate(`document.querySelector('.user-provider-card').click()`);
 await waitFor(`Boolean(${cancelButton})`);
 await evaluate(`(${cancelButton}).click()`);
 await waitForCancellation(1);
