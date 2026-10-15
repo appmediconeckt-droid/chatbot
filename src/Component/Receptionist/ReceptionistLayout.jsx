@@ -13,6 +13,7 @@ import { receptionistMenu } from './receptionistRoutes.js';
 import { indiaToday, displayTime } from './receptionistView.js';
 import { defaultPreferences, readPreferences } from './receptionistPreferences.js';
 import './ReceptionistPortal.css';
+import { logoIcon } from '../../assets/brandAssets.js';
 
 const icons = { dashboard: LayoutDashboard, appointments: CalendarDays, queue: ListOrdered, display: Monitor, patients: FileText, doctor: Stethoscope, profile: UserRound, settings: Settings };
 export default function ReceptionistLayout() {
@@ -108,7 +109,7 @@ export default function ReceptionistLayout() {
   return <PortalLanguageScope.Provider value="receptionist"><div lang={lang} dir={/^(ar|fa|he|ur)(-|$)/.test(lang) ? "rtl" : "ltr"} className={`rec-portal ${preferences.compactTables ? 'rec-compact-tables' : ''}`}>
     {open && <PortalElement as="button" className="rec-backdrop" aria-label="Close navigation" onClick={() => setOpen(false)} />}
     <aside id="receptionist-sidebar" className={`rec-sidebar ${open ? 'is-open' : ''}`}>
-      <NavLink to="/receptionist/dashboard" className="rec-brand"><span className="rec-brand-mark"><Stethoscope size={24} /></span><div>Humaeli<small><PortalText text={"RECEPTIONIST PORTAL"} /></small></div></NavLink>
+      <NavLink to="/receptionist/dashboard" className="rec-brand"><img className="rec-brand-logo" src={logoIcon} width="56" height="56" alt="Humaeli logo" /><div>Humaeli<small><PortalText text={"RECEPTIONIST PORTAL"} /></small></div></NavLink>
       <PortalElement as="button" className="rec-sidebar-close rec-icon-button" aria-label="Close navigation" onClick={() => setOpen(false)}><X size={20} /></PortalElement>
       <div className="rec-sidebar-account"><ProfileAvatar photo={profile?.profilePhoto} name={profile?.fullName} fallback={initials} className="rec-avatar" /><strong>{profile?.fullName || <PortalText text={"Receptionist"} />}<small><PortalText text={"Front desk team"} /></small></strong></div>
       <p className="rec-nav-label"><PortalText text={"WORKSPACE"} /></p>

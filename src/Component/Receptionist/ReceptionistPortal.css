@@ -5,9 +5,10 @@
 .rec-portal button, .rec-portal a, .rec-portal input, .rec-portal select { outline-offset: 4px; }
 .rec-portal :focus-visible { outline: 2px solid var(--rec-primary); }
 .rec-sidebar { position: fixed; inset: 0 auto 0 0; width: 258px; background: #fff; border-right: 1px solid var(--rec-line); padding: 28px 18px 20px; display: flex; flex-direction: column; z-index: 1100; overflow-y: auto; }
-.rec-brand { display: flex; align-items: center; gap: 11px; padding: 0 9px; text-decoration: none; color: var(--rec-primary); font-size: 24px; font-weight: 750; }
-.rec-brand-mark { display: grid; place-items: center; width: 42px; height: 42px; background: #e8f5f0; border-radius: 13px; }
-.rec-brand small { display: block; font-size: 9px; letter-spacing: 1.6px; color: var(--rec-muted); font-weight: 600; margin-top: 4px; }
+.rec-brand { display: flex; align-items: center; gap: 10px; padding: 0 4px; text-decoration: none; color: var(--rec-primary); font-size: 24px; font-weight: 750; }
+.rec-brand-logo { display: block; width: 56px; height: 56px; flex: 0 0 56px; object-fit: contain; }
+.rec-brand > div { min-width: 0; }
+.rec-brand small { display: block; font-size: 8px; letter-spacing: 1.2px; color: var(--rec-muted); font-weight: 600; margin-top: 4px; white-space: nowrap; }
 .rec-sidebar-account { display: flex; gap: 11px; align-items: center; margin: 30px 0 27px; padding: 16px 10px; border-block: 1px solid var(--rec-line); }
 .rec-sidebar-account strong { font-size: 14px; overflow-wrap: anywhere; min-width: 0; }
 .rec-sidebar-account small, .rec-topbar-user small { display: block; color: var(--rec-muted); font-size: 12px; font-weight: 400; margin-top: 4px; }
