@@ -1,4 +1,5 @@
 import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
+import EmergencyReason from '../../common/EmergencyReason.jsx';
 import React, { useEffect, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
@@ -225,7 +226,7 @@ export default function AppointmentList() {
       type: normalizeType(appointment.consultation_mode || appointment.type || appointment.mode),
       status: normalizeStatus(appointment.appointment_status || appointment.status),
       isEmergency: String(appointment.priority || '').toLowerCase() === 'emergency',
-      emergencyReason: appointment.emergency_reason || '',
+      emergencyReason: appointment.emergency_reason || appointment.emergencyReason || '',
       awaitingEmergency: String(appointment.priority || '').toLowerCase() === 'emergency' && !appointment.appointment_time,
       delayMinutes: Number(appointment.delay_minutes || appointment.delayMinutes || 0),
       delayReason: appointment.delay_reason || appointment.delayReason || '',
@@ -632,6 +633,7 @@ export default function AppointmentList() {
                         <div className="appointment-patient-copy">
                           <span>{appointment.patientName}</span>
                           {appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}><i className="fa-solid fa-triangle-exclamation" aria-hidden="true" /><PortalText text={"Emergency"} /></span>}
+                          <EmergencyReason appointment={appointment} />
                         </div>
                       </div>
                     </td>

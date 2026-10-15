@@ -4,6 +4,7 @@ import { readFile } from "node:fs/promises";
 import axios from "axios";
 
 const source = (await readFile(new URL("../src/axiosConfig.js", import.meta.url), "utf8"))
+  .replace("from './services/sessionActivity.js'", `from ${JSON.stringify(new URL('../src/services/sessionActivity.js', import.meta.url).href)}`)
   .replace('from "axios"', `from ${JSON.stringify(import.meta.resolve("axios"))}`)
   .replaceAll("import.meta.env.VITE_API_BASE_URL", '"https://backend.example/api/"');
 const loadClient = async () => import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}#${Math.random()}`);

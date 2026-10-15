@@ -1,4 +1,5 @@
 import axios from "axios";
+import { recordSessionActivity, shareTokenRefresh } from './services/sessionActivity.js';
 
 const DEFAULT_LOCAL_API_BASE_URL = "https://s5jl7g4z-5006.inc1.devtunnels.ms"
 
@@ -61,6 +62,7 @@ const processQueue = (error, token = null) => {
 
 axiosInstance.interceptors.response.use(
   (response) => {
+    if (response.config?.headers?.Authorization) recordSessionActivity();
     const token = response.headers?.["x-new-access-token"];
     if (token) {
       localStorage.setItem("accessToken", token);
@@ -105,11 +107,11 @@ axiosInstance.interceptors.response.use(
       try {
         const storedRefreshToken = localStorage.getItem("refreshToken");
 
-        const response = await axios.post(
+        const response = await shareTokenRefresh(() => axios.post(
           `${VITE_API_BASE_URL}/api/auth/refresh-token`,
           { refreshToken: storedRefreshToken },
           { withCredentials: true },
-        );
+        ));
 
         const newToken = response.data.accessToken || response.data.token;
         const newRefreshToken = response.data.refreshToken;

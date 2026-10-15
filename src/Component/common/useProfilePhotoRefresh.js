@@ -7,9 +7,11 @@ export default function useProfilePhotoRefresh(profile, setProfile) {
     if (!id) return;
     const controller = new AbortController();
     let pending = false;
-    const refresh = async () => {
-      if (pending || document.visibilityState === 'hidden') return;
+    let lastRefresh = Date.now();
+    const refresh = async (force = false) => {
+      if (pending || document.visibilityState === 'hidden' || navigator.onLine === false || (!force && Date.now() - lastRefresh < 60000)) return;
       pending = true;
+      lastRefresh = Date.now();
       try {
         const { data } = await axios.get('/api/auth/me', { signal: controller.signal });
         const user = data.user;
@@ -22,14 +24,19 @@ export default function useProfilePhotoRefresh(profile, setProfile) {
         // Keep the last loaded profile during transient connection failures.
       } finally { pending = false; }
     };
-    window.addEventListener('focus', refresh);
-    document.addEventListener('visibilitychange', refresh);
-    const timer = setInterval(refresh, 15000);
+    const wake = () => refresh();
+    const updated = () => refresh(true);
+    const storage = event => { if (event.key === 'userData' || event.key === `doctorProfile:${id}`) refresh(true); };
+    window.addEventListener('focus', wake);
+    window.addEventListener('profile-updated', updated);
+    window.addEventListener('storage', storage);
+    document.addEventListener('visibilitychange', wake);
     return () => {
       controller.abort();
-      clearInterval(timer);
-      window.removeEventListener('focus', refresh);
-      document.removeEventListener('visibilitychange', refresh);
+      window.removeEventListener('focus', wake);
+      window.removeEventListener('profile-updated', updated);
+      window.removeEventListener('storage', storage);
+      document.removeEventListener('visibilitychange', wake);
     };
   }, [id, setProfile]);
 }

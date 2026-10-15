@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_BASE_URL } from './src/axiosConfig.js';
+import { recordSessionActivity, shareTokenRefresh } from './src/services/sessionActivity.js';
 
 
 // ✅ REQUEST INTERCEPTOR
@@ -30,7 +31,7 @@ const processQueue = (error, token = null) => {
 };
 
 axios.interceptors.response.use(
-  (res) => res,
+  (res) => { if (res.config?.headers?.Authorization) recordSessionActivity(); return res; },
   async (error) => {
     const originalRequest = error.config;
     const requestUrl = originalRequest?.url || "";
@@ -93,14 +94,15 @@ axios.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const response = await axios.post(
+        const response = await shareTokenRefresh(() => axios.post(
           `${API_BASE_URL}/api/auth/refresh-token`,
           { refreshToken: storedRefreshToken },
           { withCredentials: true },
-        );
+        ));
 
         const newToken = response.data.accessToken || response.data.token;
         const newRefreshToken = response.data.refreshToken;
+        if (!newToken) throw new Error('No access token returned from refresh');
         
         if (newToken) {
           localStorage.setItem("accessToken", newToken);

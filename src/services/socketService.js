@@ -10,6 +10,7 @@ const CONNECTION_TIMEOUT_MS = 20_000;
 // Presence must survive temporary network changes. A valid login token stays
 // authenticated, so keep retrying until the user explicitly logs out.
 const MAX_RECONNECT_ATTEMPTS = Infinity;
+const FATAL_AUTH_CODES = new Set(['AUTH_TOKEN_EXPIRED', 'AUTH_TOKEN_INVALID', 'AUTH_TOKEN_MISSING', 'AUTH_USER_INACTIVE', 'AUTH_SESSION_INACTIVE']);
 
 class SocketService {
   constructor() {
@@ -17,17 +18,20 @@ class SocketService {
     this._connectionPromise = null;
     this._reconnectAttempts = 0;
     this._visibilityHandler = null;
+    this._cancelConnection = null;
   }
 
   // ── Public API ─────────────────────────────────────────────────────────────
 
   async connect() {
+    const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+    if (!token) throw new Error('[SocketService] No auth token — cannot connect');
     if (this._socket?.connected) return this._socket;
     if (this._connectionPromise) return this._connectionPromise;
     if (this._socket) {
       // Reuse the socket so mounted screens keep their event listeners.
       this._socket.auth = { token: localStorage.getItem('accessToken') || localStorage.getItem('token') };
-      this._socket.connect();
+      if (!this._socket.active) this._socket.connect();
       return this._socket;
     }
 
@@ -44,6 +48,7 @@ class SocketService {
   }
 
   disconnect() {
+    this._cancelConnection?.();
     this._teardownVisibility();
     if (this._socket) {
       this._socket.removeAllListeners();
@@ -93,20 +98,25 @@ class SocketService {
       }
 
       const socket = io(API_BASE_URL, {
-        // The backend is configured for polling-only Socket.IO connections.
-        // Trying WebSocket first caused short disconnect/reconnect cycles and
-        // incorrectly flipped a logged-in user to Offline.
-        transports: ['polling'],
+        // Keep one persistent WebSocket; polling is only a network fallback.
+        transports: ['websocket', 'polling'],
+        tryAllTransports: true,
+        withCredentials: true,
         auth: { token },
         reconnection: true,
         reconnectionAttempts: MAX_RECONNECT_ATTEMPTS,
-        reconnectionDelay: 1000,
-        reconnectionDelayMax: 10000,
+        reconnectionDelay: 2000,
+        reconnectionDelayMax: 30000,
         timeout: CONNECTION_TIMEOUT_MS,
         path: '/socket.io/',
         forceNew: false,
-        autoConnect: true,
+        autoConnect: false,
       });
+      // Own the socket immediately, including failures and timeouts. Otherwise
+      // an abandoned Manager can keep polling while another socket is created.
+      this._socket = socket;
+      this._setupPersistentListeners(socket);
+      this._setupVisibility(socket);
 
       // Read the latest access token before each reconnect attempt. This lets
       // the same socket session recover cleanly after an Axios token refresh.
@@ -121,6 +131,7 @@ class SocketService {
           clearTimeout(timer);
           socket.off('connect', onConnect);
           socket.off('connect_error', onError);
+          this._cancelConnection = null;
         };
 
         const timer = setTimeout(() => {
@@ -133,10 +144,7 @@ class SocketService {
           cleanup();
           this._reconnectAttempts = 0;
           this._connectionPromise = null;
-          this._socket = socket;
           console.log('[SocketService] Connected ✓ id:', socket.id);
-          this._setupPersistentListeners(socket);
-          this._setupVisibility(socket);
           resolve(socket);
         };
 
@@ -148,7 +156,7 @@ class SocketService {
             err?.message || err,
           );
           // Fatal auth errors — don't keep retrying, let caller handle re-login
-          if (code === 'AUTH_TOKEN_EXPIRED' || code === 'AUTH_TOKEN_INVALID' || code === 'AUTH_TOKEN_MISSING' || code === 'AUTH_USER_INACTIVE') {
+          if (FATAL_AUTH_CODES.has(code)) {
             cleanup();
             this._connectionPromise = null;
             socket.disconnect();
@@ -171,6 +179,11 @@ class SocketService {
           this._connectionPromise = null;
           reject(err);
         });
+        this._cancelConnection = () => {
+          cleanup();
+          reject(Object.assign(new Error('[SocketService] Connection cancelled'), { code: 'SOCKET_DISCONNECTED' }));
+        };
+        socket.connect();
       });
     } catch (err) {
       this._connectionPromise = null;
@@ -179,17 +192,20 @@ class SocketService {
   }
 
   _setupPersistentListeners(socket) {
+    socket.on('connect_error', error => {
+      if (FATAL_AUTH_CODES.has(error?.data?.code || error?.message)) socket.disconnect();
+    });
     socket.on('disconnect', (reason) => {
       console.warn('[SocketService] Disconnected:', reason);
     });
-    socket.on('reconnect', (attempt) => {
+    socket.io.on('reconnect', (attempt) => {
       console.log('[SocketService] Reconnected after', attempt, 'attempt(s)');
       this._reconnectAttempts = 0;
     });
-    socket.on('reconnect_error', (err) => {
+    socket.io.on('reconnect_error', (err) => {
       console.error('[SocketService] Reconnect error:', err?.message);
     });
-    socket.on('reconnect_failed', () => {
+    socket.io.on('reconnect_failed', () => {
       console.error('[SocketService] All reconnect attempts failed');
     });
   }
@@ -198,8 +214,9 @@ class SocketService {
   _setupVisibility(socket) {
     this._teardownVisibility();
     this._visibilityHandler = () => {
-      if (document.visibilityState === 'visible' && !socket.connected) {
+      if (document.visibilityState === 'visible' && !socket.connected && !socket.active && (localStorage.getItem('accessToken') || localStorage.getItem('token'))) {
         console.log('[SocketService] Tab visible — reconnecting socket…');
+        socket.auth = { token: localStorage.getItem('accessToken') || localStorage.getItem('token') };
         socket.connect();
       }
     };

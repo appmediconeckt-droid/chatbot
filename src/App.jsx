@@ -6,6 +6,8 @@ import "../setupAxios";
 import ProtectedRoute from "./Component/common/ProtectedRoute";
 import { staffRoles } from "./authtication/staffRoles.js";
 import axiosInstance from "./axiosConfig";
+import { createSessionHeartbeat, hasRecentSessionActivity } from "./services/sessionActivity.js";
+import { socketService } from './services/socketService.js';
 
 import { isDoctorRoute } from "./Component/DoctorDashboard/doctorRoutes";
 import { isNurseRoute } from "./Component/Nurse/nurseRoutes.js";
@@ -114,57 +116,28 @@ function App() {
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [navigate, location.pathname]);
 
-  // Keep the server-side login session alive while a protected web page is
-  // open. Closing the browser stops this signal, allowing the backend to
-  // release the one-device lock automatically.
+  const protectedPaths = ["/staff-dashboard", "/user-dashboard", "/counselor-dashboard", "/counselor-directory", "/chat", "/sms-input"];
+  const isProtectedPage = isDoctorRoute(location.pathname) || isNurseRoute(location.pathname) || isReceptionistRoute(location.pathname) || protectedPaths.some(path => location.pathname === path || location.pathname.startsWith(`${path}/`));
   useEffect(() => {
-    const protectedPaths = [
-      "/staff-dashboard",
-      "/user-dashboard",
-      "/counselor-dashboard",
-      "/counselor-directory",
-      "/chat",
-      "/sms-input",
-    ];
-    const isProtectedPage = isDoctorRoute(location.pathname) || isNurseRoute(location.pathname) || isReceptionistRoute(location.pathname) || protectedPaths.some(
-      (path) =>
-        location.pathname === path || location.pathname.startsWith(`${path}/`),
-    );
-    const hasToken =
-      localStorage.getItem("accessToken") || localStorage.getItem("token");
-
-    if (!isProtectedPage || !hasToken) return undefined;
-
-    let stopped = false;
-    const sendHeartbeat = async () => {
-      if (stopped) return;
-      try {
-        await axiosInstance.post("/api/auth/session-heartbeat");
-      } catch (error) {
-        // Token refresh/session expiry is handled by the shared interceptor.
-        // Temporary network loss must not immediately eject the user.
-        if (error.response?.status !== 401) {
-          console.debug("Session heartbeat delayed:", error.message);
-        }
-      }
-    };
-
-    sendHeartbeat();
-    const heartbeatTimer = window.setInterval(sendHeartbeat, 15_000);
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") sendHeartbeat();
-    };
-
-    window.addEventListener("focus", sendHeartbeat);
-    document.addEventListener("visibilitychange", handleVisibility);
-
+    if (!isProtectedPage) { socketService.disconnect(); return; }
+    const heartbeat = createSessionHeartbeat({
+      send: signal => axiosInstance.post("/api/auth/session-heartbeat", undefined, { signal, timeout: 15000 }),
+      eligible: () => Boolean(localStorage.getItem("accessToken") || localStorage.getItem("token")) && document.visibilityState === "visible" && navigator.onLine !== false,
+      recentActivity: hasRecentSessionActivity,
+      onError: error => { if (error.response?.status !== 401) console.debug("Session heartbeat delayed:", error.message); },
+    });
+    heartbeat.start();
+    const wake = () => heartbeat.run();
+    window.addEventListener("focus", wake);
+    window.addEventListener("online", wake);
+    document.addEventListener("visibilitychange", wake);
     return () => {
-      stopped = true;
-      window.clearInterval(heartbeatTimer);
-      window.removeEventListener("focus", sendHeartbeat);
-      document.removeEventListener("visibilitychange", handleVisibility);
+      heartbeat.stop();
+      window.removeEventListener("focus", wake);
+      window.removeEventListener("online", wake);
+      document.removeEventListener("visibilitychange", wake);
     };
-  }, [location.pathname]);
+  }, [isProtectedPage]);
 
   return (
     <>

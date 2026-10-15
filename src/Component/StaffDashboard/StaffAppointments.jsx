@@ -37,6 +37,7 @@ export default function StaffAppointments({clinicId} = {}) {
   setLoading(true);setData(null);setError('');
   if(filters.from && filters.to && filters.from>filters.to){setError('Start date must be before end date.');setLoading(false);return ()=>controller.abort();}
   const load=async()=>{
+   if(document.visibilityState==='hidden'||navigator.onLine===false){timer=setTimeout(load,15000);return;}
    try{
     const {data:result}=await axios.get('/api/staff/appointments',{params:{...filters,clinic_id:selectedClinic,page,limit:10},signal:controller.signal,timeout:15000});
     if(controller.signal.aborted)return;

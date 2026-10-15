@@ -34,11 +34,15 @@ export default function DoctorLayout() {
   } catch { /* Use the signed-in user's details if the profile cache is invalid. */ }
   useEffect(() => {
     let active = true;
+    let pending = false;
     const load = async () => {
+      if (pending) return;
+      pending = true;
       try {
         const { data } = await axiosInstance.get("/api/auth/me");
         if (active) setServerProfile(data?.data?.user || data?.data || data?.user || data?.profile || data);
       } catch { /* Keep the cached profile available when offline. */ }
+      finally { pending = false; }
     };
     const update = () => {
       setServerProfile(null);
@@ -46,12 +50,13 @@ export default function DoctorLayout() {
       load();
     };
     load();
+    const storageUpdate = event => { if (event.key === 'userData' || event.key === `doctorProfile:${doctorId}`) update(); };
     window.addEventListener("profile-updated", update);
-    window.addEventListener("storage", update);
+    window.addEventListener("storage", storageUpdate);
     return () => {
       active = false;
       window.removeEventListener("profile-updated", update);
-      window.removeEventListener("storage", update);
+      window.removeEventListener("storage", storageUpdate);
     };
   }, [doctorId]);
   const doctorPhoto = normalizeProfileImage(

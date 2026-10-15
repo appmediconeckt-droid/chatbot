@@ -1358,7 +1358,7 @@ const Footer = () => {
             <a href="https://www.facebook.com/share/1KPAChUMDL/" target="_blank" rel="noopener noreferrer" aria-label="Facebook"><i className="fab fa-facebook-f" aria-hidden="true"></i></a>
             <a href="https://youtube.com/@humaeli-mentalwellness?si=KlabfF7b2Vr3lYAD" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><i className="fab fa-youtube" aria-hidden="true"></i></a>
             <a href="https://instagram.com/humaeli_ai?rpxt=MXdwd2pmYnZjNWFsZA%3D%3D" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><i className="fab fa-instagram" aria-hidden="true"></i></a>
-            <span role="img" aria-label="LinkedIn" title="LinkedIn"><i className="fab fa-linkedin-in" aria-hidden="true"></i></span>
+            <a href="https://www.linkedin.com/company/humaeli/" target="_blank" rel="noopener noreferrer" aria-label="Humaeli on LinkedIn" title="LinkedIn"><i className="fab fa-linkedin-in" aria-hidden="true"></i></a>
           </div>
         </div>
         <div className="footer-links">

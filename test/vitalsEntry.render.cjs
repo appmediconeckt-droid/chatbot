@@ -11,6 +11,7 @@ async function check() {
       import { AppointmentTable, VitalsDialog } from './src/Component/Receptionist/AppointmentViews.jsx';
       import { indiaToday } from './src/Component/Receptionist/receptionistView.js';
       import { receptionistMenu } from './src/Component/Receptionist/receptionistRoutes.js';
+      import EmergencyReason from './src/Component/common/EmergencyReason.jsx';
       const patient = { id: 'visit', source: 'online', patientName: 'Test Patient', date: indiaToday(), phoneNumber: '9876543210', status: 'confirmed', queueStatus: 'waiting', timing: {} };
       function render(element, role = 'receptionist', state) {
         return renderToStaticMarkup(<MemoryRouter initialEntries={[{pathname:'/',state}]}><Routes><Route element={<Outlet context={{profile:{role},clinic:'clinic'}}/>}><Route path="/" element={element}/></Route></Routes></MemoryRouter>);
@@ -42,6 +43,9 @@ async function check() {
       assert.ok(!table.includes('href="/receptionist/vitals"'));
       const otherRole = render(<AppointmentTable rows={[patient]} clinics={[]} onView={()=>{}}/>, 'billing');
       assert.doesNotMatch(otherRole, /Add vitals|Edit vitals/);
+      assert.match(renderToStaticMarkup(<EmergencyReason appointment={{emergency_reason:'Patient reports worsening symptoms'}}/>), /Patient reports worsening symptoms/);
+      assert.match(renderToStaticMarkup(<EmergencyReason appointment={{emergencyReason:'Reason from appointment feed'}}/>), /Reason from appointment feed/);
+      assert.equal(renderToStaticMarkup(<EmergencyReason appointment={{}}/>), '');
       console.log('PASS: separate Add Vitals menu removed; appointment action, add/edit modal inputs, saved reading values, phone column and completed-visit read-only behavior pass.');
     ` },
     bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', loader: { '.css': 'empty' },
