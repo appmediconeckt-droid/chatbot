@@ -5,6 +5,7 @@ import { API_BASE_URL } from "../../axiosConfig";
 import { captureAndSendLocation } from "../../authtication/locationHelper";
 import { useUserTranslation } from "../../i18n/LanguageContext";
 import AvatarBuilder from "./AvatarBuilder";
+import PatientVitalsCard from './PatientVitalsCard';
 import {
   FaCamera,
   FaEdit,
@@ -829,6 +830,8 @@ const PatientProfile = () => {
             </div>
           </div>
         </div>
+
+        <PatientVitalsCard />
 
         {/* Address */}
         <div className="info-card-modern">

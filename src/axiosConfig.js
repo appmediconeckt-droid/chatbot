@@ -1,7 +1,7 @@
 import axios from "axios";
 import { recordSessionActivity, shareTokenRefresh } from './services/sessionActivity.js';
 
-const DEFAULT_LOCAL_API_BASE_URL = "https://s5jl7g4z-5006.inc1.devtunnels.ms"
+const DEFAULT_LOCAL_API_BASE_URL = "https://humaeli-backend-update-production.up.railway.app"
 
 const rawEnvApiBaseUrl =
   import.meta.env.VITE_API_BASE_URL ||
