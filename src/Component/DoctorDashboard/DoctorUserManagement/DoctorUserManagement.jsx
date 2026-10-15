@@ -137,6 +137,8 @@ const docStaffRoleCards = [
     description: "Views the assigned doctor's details, appointments, live tokens and ongoing checkups.",
     count: 0, code: "REC-###", department: "Admin", category: "Administration", icon: CalendarClock,
   },
+  // Temporarily disabled: remove this block comment to enable the other Add Staff roles.
+  /*
   {
     id: "nurse",
     title: "Nurse",
@@ -197,6 +199,7 @@ const docStaffRoleCards = [
     category: "Leadership",
     icon: ShieldCheck,
   },
+  */
 ];
 
 const staffRoleValues = ["staff", "nurse", "assistant", "technician", "receptionist", "housekeeping", "supervisor", "manager", "billing"];
@@ -375,7 +378,7 @@ const DoctorUserManagement = () => {
     return () => URL.revokeObjectURL(preview);
   }, [editPhoto]);
   const [showAddStaffModal, setShowAddStaffModal] = useState(false);
-  const [selectedNewRole, setSelectedNewRole] = useState("nurse");
+  const [selectedNewRole, setSelectedNewRole] = useState(docStaffRoleCards[0].id);
   const [roleSearchTerm, setRoleSearchTerm] = useState("");
   const [roleDepartmentFilter, setRoleDepartmentFilter] = useState("All");
   const [roleCategoryFilter, setRoleCategoryFilter] = useState("All");
@@ -708,7 +711,7 @@ const DoctorUserManagement = () => {
   const closeAddStaffModal = () => {
     if (isSavingStaff) return;
     setShowAddStaffModal(false);
-    setSelectedNewRole("nurse");
+    setSelectedNewRole(docStaffRoleCards[0].id);
     setRoleSearchTerm("");
     setRoleDepartmentFilter("All");
     setRoleCategoryFilter("All");

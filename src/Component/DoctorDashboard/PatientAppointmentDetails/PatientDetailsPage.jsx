@@ -12,6 +12,7 @@ import { User, Phone, Calendar, Clock, Heart, Pill, Stethoscope, ChevronLeft, Re
 import "./PatientDetailsPage.css";
 import PatientPagination from "./PatientPagination.jsx";
 import { patientCardDetails, appointmentDoctorName, appointmentVitals, isPatientDirectoryRecord } from "./patientRecordDetails.js";
+import { VitalsSummary } from '../../Receptionist/PatientVitals.jsx';
 import { generatePrescriptionPDF } from "./pdfGenerator";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 
@@ -145,6 +146,7 @@ export default function PatientDetailsPage() {
       date: formatDate(createdAt),
       time: formatTime(appointmentTime),
       ...appointmentVitals(appointment),
+      vitals: appointment.vitals,
       problem: getProblem(appointment),
       diagnosis: appointment.diagnosis || "N/A",
       tablets: formatMedicines(appointment),
@@ -730,7 +732,8 @@ export default function PatientDetailsPage() {
 
                 <div className="pd-detail-column">
                   <h5 className="pd-detail-column-title"><PortalText text={"Vital Signs"} /></h5>
-                  <div className="pd-vitals-grid">
+                  {selectedRecord.vitals && <VitalsSummary vitals={selectedRecord.vitals} />}
+                  {!selectedRecord.vitals && <div className="pd-vitals-grid">
                     <div className="pd-vital-card">
                       <div className="pd-vital-icon bp-icon">
                         <Heart size={18} />
@@ -762,7 +765,7 @@ export default function PatientDetailsPage() {
                         <div className="pd-vital-value">{selectedRecord.temperature}</div>
                       </div>
                     </div>
-                  </div>
+                  </div>}
                 </div>
 
                 <div className="pd-detail-column">

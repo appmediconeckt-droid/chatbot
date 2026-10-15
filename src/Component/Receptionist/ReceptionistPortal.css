@@ -46,6 +46,8 @@
 .rec-button.primary:hover { background: #0a615a; }
 .rec-button.compact { padding: 7px 11px; font-size: 11px; }
 .rec-button.full { width: 100%; }
+.rec-appointment-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.rec-appointment-dialog-actions { margin-top: 20px; }
 .rec-portal button:disabled { opacity: .5; cursor: default; }
 .rec-icon-button { display: grid; place-items: center; background: #f3f6f8; color: #536779; border: 0; border-radius: 8px; padding: 8px; cursor: pointer; }
 .rec-text-button { display: inline-flex; align-items: center; gap: 5px; color: var(--rec-primary); background: transparent; border: 0; text-decoration: none; font-size: 12px; font-weight: 650; cursor: pointer; }

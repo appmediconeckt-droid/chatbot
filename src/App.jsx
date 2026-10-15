@@ -210,6 +210,7 @@ function App() {
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<ReceptionistOverview />} />
             <Route path="appointments" element={<ReceptionistAppointments />} />
+            <Route path="vitals" element={<Navigate to="../appointments" replace />} />
             <Route path="live-queue" element={<ReceptionistLiveQueue />} />
             <Route path="led-display" element={<ReceptionistLedDisplay />} />
             <Route path="doctor" element={<ReceptionistDoctor />} />

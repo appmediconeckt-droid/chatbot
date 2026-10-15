@@ -1897,6 +1897,7 @@ const DoctorCalendar = () => {
                       activeCalendarTab === "unavailable" && isBlocked ? "unavailable" : "",
                       isPast ? "past" : "",
                     ].join(" ")}
+                    aria-pressed={Boolean(tabSelected && !cell.muted)}
                     onClick={() => {
                       if (cell.muted || isPast) return;
                       if (activeCalendarTab === "recurring") {

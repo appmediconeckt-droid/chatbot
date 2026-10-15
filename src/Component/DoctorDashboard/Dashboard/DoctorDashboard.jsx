@@ -2169,6 +2169,8 @@ import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import { useNavigate } from "react-router-dom";
 import { resolveProfileImage } from "../../../utils/profileImage.js";
+import { VitalsSummary } from '../../Receptionist/PatientVitals.jsx';
+import { appointmentVitals } from '../PatientAppointmentDetails/patientRecordDetails.js';
 
 const DEFAULT_BREAK_MIN = 30;
 const BREAK_OPTIONS_MIN = [5, 10, 15, 30, 45, 60];
@@ -2564,7 +2566,8 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
       appointment?.appointment_number,
       appointment?.appointmentNumber
     ),
-    bp: pickFirst(appointment?.blood_pressure, appointment?.bp, appointment?.bloodPressure, "Not recorded"),
+    vitals: appointment?.vitals,
+    bp: appointmentVitals(appointment).bp,
     temperature: pickFirst(appointment?.temperature, appointment?.temp),
     bloodGroup: pickFirst(appointment?.blood_group, appointment?.bloodGroup, patient?.blood_group, patient?.bloodGroup, "Not recorded"),
     patientId: pickFirst(patient?.user_id, patient?.userId, appointment?.patient_user_id, appointment?.patientUserId, appointment?.patient_id, appointment?.patientId, patient?.id, patient?._id),
@@ -2985,7 +2988,7 @@ const CompleteModal = ({ show, onHide, form, setForm, onSave, patientName, appoi
 
   const patientIdLabel = appointment?.id ? `P${String(appointment.id).padStart(3, "0")}` : "N/A";
   const temperature = appointment?.temperature || appointment?.temp || "36";
-  const bloodPressure = appointment?.bp || appointment?.bloodPressure || "120/80 mmHg";
+  const bloodPressure = appointmentVitals(appointment || {}).bp;
   const canSave = Boolean(form.diagnosis?.trim() && form.advice?.trim() && medicines.every(hasValidMedicine));
 
   return (
@@ -4650,7 +4653,8 @@ const DoctorDashboard = () => {
 
           <div className="dd-patient-vitals-section mb-4">
             <h6 className="dd-patient-summary-title mb-3"><PortalText text={"Patient Vitals"} /></h6>
-            <div className="dd-vitals-display">
+            {selectedAppointment?.vitals && <VitalsSummary vitals={selectedAppointment.vitals} />}
+            {!selectedAppointment?.vitals && <div className="dd-vitals-display">
               <div className="dd-vital-item">
                 <span className="dd-vital-label"><PortalText text={"Blood Pressure:"} /></span>
                 <span className="dd-vital-value fw-bold">{selectedAppointment?.bp || <PortalText text={"Not recorded"} />}</span>
@@ -4659,7 +4663,7 @@ const DoctorDashboard = () => {
                 <span className="dd-vital-label"><PortalText text={"Blood Group:"} /></span>
                 <span className="dd-vital-value fw-bold">{selectedAppointment?.bloodGroup || <PortalText text={"Not recorded"} />}</span>
               </div>
-            </div>
+            </div>}
           </div>
 
           <div className="dd-consent-agreement">
