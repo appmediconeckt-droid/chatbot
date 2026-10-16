@@ -61,9 +61,9 @@ export default function Prescriptions() {
   const [activeDoctorKey, setActiveDoctorKey] = useState("");
   const [detailRecordId, setDetailRecordId] = useState("");
 
-  const loadPrescriptions = useCallback(async () => {
+  const loadPrescriptions = useCallback(async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       setError("");
       const response = await axiosInstance.get(`${API_BASE_URL}/api/prescriptions/my`);
       const records = response.data?.prescriptions || [];
@@ -550,7 +550,7 @@ export default function Prescriptions() {
                           <button
                             type="button"
                             className="rx-table-view-btn"
-                            onClick={() => setDetailRecordId(prescription.id)}
+                            onClick={() => { setDetailRecordId(prescription.id); loadPrescriptions(true); }}
                           >
                             <FaEye /><PortalText text={" View"} /></button>
                         </td>

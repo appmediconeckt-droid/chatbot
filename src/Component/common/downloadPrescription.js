@@ -56,7 +56,7 @@ export async function downloadConsultationPrescription(record, doctorName) {
     pdf.setTextColor(...ink); write(content);
     y += 2;
   };
-  const block = (value, x, top, width, size = 9, bold = false, centered = false) => {
+  const block = (value, x, top, width, size = 10, bold = false, centered = false) => {
     pdf.setFont('helvetica', bold ? 'bold' : 'normal'); pdf.setFontSize(size); pdf.setTextColor(...ink);
     const lines = pdf.splitTextToSize(String(value || '-'), width);
     pdf.text(lines, centered ? x + width / 2 : x, top, { align: centered ? 'center' : 'left' }); return top + lines.length * size * .4;
@@ -72,8 +72,8 @@ export async function downloadConsultationPrescription(record, doctorName) {
   let referenceY = 20;
   for (const [label, value] of [['Date', data.date], ['OPD / Token No.', data.opd], ['Prescription No.', data.prescriptionId]]) {
     if (!value) continue;
-    referenceY = block(label, 158, referenceY, 38, 9, true) + 1;
-    referenceY = block(value, 158, referenceY, 38, 8) + 5;
+    referenceY = block(label, 158, referenceY, 38, 10, true) + 1;
+    referenceY = block(value, 158, referenceY, 38, 10) + 5;
   }
   y = Math.max(65, doctorY + 5, referenceY);
   pdf.setDrawColor(...line); pdf.line(56, 14, 56, y - 6); pdf.line(153, 14, 153, y - 6); pdf.line(14, y, 196, y);
@@ -83,7 +83,7 @@ export async function downloadConsultationPrescription(record, doctorName) {
       ['Patient name', data.patient, 'Patient ID', data.patientId || '-'],
       ['Age / Gender', [data.age && `${data.age} years`, data.gender].filter(Boolean).join(' / '), 'Weight', data.weight ? `${data.weight}${/kg/i.test(data.weight) ? '' : ' kg'}` : '-'],
       ['Contact No.', data.phone || '-', 'Allergies', data.allergies || 'Not recorded'],
-    ], styles: { fillColor: [241, 245, 244], textColor: ink, fontSize: 9, cellPadding: 3.5, overflow: 'linebreak' },
+    ], styles: { fillColor: [241, 245, 244], textColor: ink, fontSize: 10.5, cellPadding: 3.5, overflow: 'linebreak' },
     columnStyles: { 0: { fontStyle: 'bold', cellWidth: 30 }, 1: { cellWidth: 61 }, 2: { fontStyle: 'bold', cellWidth: 26 } },
   });
   y = pdf.lastAutoTable.finalY + 10;
@@ -95,7 +95,7 @@ export async function downloadConsultationPrescription(record, doctorName) {
     autoTable(pdf, { startY: y, margin: { left: 14, right: 14, top: 20, bottom: 30 },
       head: [['S. No.', 'Medicine name', 'Strength', 'Dosage', 'Duration', 'Instructions']],
       body: data.medicines.map((m, index) => [index + 1, m.name || m.medicine || '-', m.strength || '-', m.dosage || '-', medicineDuration(m) || '-', [medicineTiming(m), m.instructions].filter(Boolean).join(' / ') || '-']),
-      theme: 'grid', rowPageBreak: 'avoid', styles: { fontSize: 9, cellPadding: 3, overflow: 'linebreak', textColor: ink, lineColor: line, lineWidth: .2 },
+      theme: 'grid', rowPageBreak: 'avoid', styles: { fontSize: 10, cellPadding: 3, overflow: 'linebreak', textColor: ink, lineColor: line, lineWidth: .2 },
       headStyles: { fillColor: [223, 233, 230], textColor: ink },
       columnStyles: { 0: { cellWidth: 12 }, 1: { cellWidth: 40 }, 2: { cellWidth: 22 }, 3: { cellWidth: 26 }, 4: { cellWidth: 25 } },
     });
@@ -103,14 +103,14 @@ export async function downloadConsultationPrescription(record, doctorName) {
   } else section("Prescribed medicines", data.medicine || "No medicines prescribed.");
   autoTable(pdf, { startY: y, margin: { left: 14, right: 14, top: 20, bottom: 30 }, theme: 'plain',
     body: [[`Consultation for: ${data.issue}`, `Diagnosis: ${data.diagnosis}`]],
-    styles: { textColor: ink, fontSize: 8, cellPadding: 2, overflow: 'linebreak' },
+    styles: { textColor: ink, fontSize: 9.5, cellPadding: 2, overflow: 'linebreak' },
   });
   y = pdf.lastAutoTable.finalY + 6;
   if (data.advice) {
     if (y > 245) { pdf.addPage(); y = 22; }
     autoTable(pdf, { startY: y, margin: { left: 14, right: 14, top: 20, bottom: 30 }, theme: 'plain',
       head: [['Advice & Instructions']], body: [[data.advice.split(/\n+/).filter(Boolean).map(value => '- ' + value.replace(/^\s*[-*\u2022]\s*/, '')).join('\n')]],
-      styles: { fillColor: [243, 246, 245], textColor: ink, fontSize: 10, cellPadding: 3, overflow: 'linebreak' },
+      styles: { fillColor: [243, 246, 245], textColor: ink, fontSize: 11, cellPadding: 3, overflow: 'linebreak' },
       headStyles: { fontStyle: 'bold', fontSize: 13, cellPadding: { top: 5, bottom: 3, left: 15, right: 3 } },
       bodyStyles: { cellPadding: { top: 2, bottom: 5, left: 15, right: 5 } },
       didDrawCell: cell => { if (cell.section === 'head') drawClipboard(cell.cell.x + 4, cell.cell.y + 3); },
@@ -132,8 +132,8 @@ export async function downloadConsultationPrescription(record, doctorName) {
     pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 139 + (39 - width) / 2, y + 1 + (13 - height), width, height);
   }
   let signY = block(data.doctor, 120, y + 19, 76, 12, true, true);
-  if (data.qualification) signY = block(data.qualification, 120, signY + 2, 76, 9, false, true);
-  if (data.registration) block(`Reg. No.: ${data.registration}`, 120, signY + 2, 76, 9, false, true);
+  if (data.qualification) signY = block(data.qualification, 120, signY + 2, 76, 10, false, true);
+  if (data.registration) block(`Reg. No.: ${data.registration}`, 120, signY + 2, 76, 10, false, true);
   for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
     pdf.setPage(page);
     pdf.saveGraphicsState(); pdf.setGState(new pdf.GState({ opacity: .045 }));

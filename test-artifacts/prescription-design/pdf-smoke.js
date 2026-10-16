@@ -35425,7 +35425,7 @@
       write(content);
       y3 += 2;
     };
-    const block = (value, x2, top, width, size = 9, bold = false, centered = false) => {
+    const block = (value, x2, top, width, size = 10, bold = false, centered = false) => {
       pdf.setFont("helvetica", bold ? "bold" : "normal");
       pdf.setFontSize(size);
       pdf.setTextColor(...ink);
@@ -35446,8 +35446,8 @@
     let referenceY = 20;
     for (const [label, value] of [["Date", data.date], ["OPD / Token No.", data.opd], ["Prescription No.", data.prescriptionId]]) {
       if (!value) continue;
-      referenceY = block(label, 158, referenceY, 38, 9, true) + 1;
-      referenceY = block(value, 158, referenceY, 38, 8) + 5;
+      referenceY = block(label, 158, referenceY, 38, 10, true) + 1;
+      referenceY = block(value, 158, referenceY, 38, 10) + 5;
     }
     y3 = Math.max(65, doctorY + 5, referenceY);
     pdf.setDrawColor(...line);
@@ -35463,7 +35463,7 @@
         ["Age / Gender", [data.age && `${data.age} years`, data.gender].filter(Boolean).join(" / "), "Weight", data.weight ? `${data.weight}${/kg/i.test(data.weight) ? "" : " kg"}` : "-"],
         ["Contact No.", data.phone || "-", "Allergies", data.allergies || "Not recorded"]
       ],
-      styles: { fillColor: [241, 245, 244], textColor: ink, fontSize: 9, cellPadding: 3.5, overflow: "linebreak" },
+      styles: { fillColor: [241, 245, 244], textColor: ink, fontSize: 10.5, cellPadding: 3.5, overflow: "linebreak" },
       columnStyles: { 0: { fontStyle: "bold", cellWidth: 30 }, 1: { cellWidth: 61 }, 2: { fontStyle: "bold", cellWidth: 26 } }
     });
     y3 = pdf.lastAutoTable.finalY + 10;
@@ -35487,7 +35487,7 @@
         body: data.medicines.map((m4, index2) => [index2 + 1, m4.name || m4.medicine || "-", m4.strength || "-", m4.dosage || "-", medicineDuration(m4) || "-", [medicineTiming(m4), m4.instructions].filter(Boolean).join(" / ") || "-"]),
         theme: "grid",
         rowPageBreak: "avoid",
-        styles: { fontSize: 9, cellPadding: 3, overflow: "linebreak", textColor: ink, lineColor: line, lineWidth: 0.2 },
+        styles: { fontSize: 10, cellPadding: 3, overflow: "linebreak", textColor: ink, lineColor: line, lineWidth: 0.2 },
         headStyles: { fillColor: [223, 233, 230], textColor: ink },
         columnStyles: { 0: { cellWidth: 12 }, 1: { cellWidth: 40 }, 2: { cellWidth: 22 }, 3: { cellWidth: 26 }, 4: { cellWidth: 25 } }
       });
@@ -35498,7 +35498,7 @@
       margin: { left: 14, right: 14, top: 20, bottom: 30 },
       theme: "plain",
       body: [[`Consultation for: ${data.issue}`, `Diagnosis: ${data.diagnosis}`]],
-      styles: { textColor: ink, fontSize: 8, cellPadding: 2, overflow: "linebreak" }
+      styles: { textColor: ink, fontSize: 9.5, cellPadding: 2, overflow: "linebreak" }
     });
     y3 = pdf.lastAutoTable.finalY + 6;
     if (data.advice) {
@@ -35512,7 +35512,7 @@
         theme: "plain",
         head: [["Advice & Instructions"]],
         body: [[data.advice.split(/\n+/).filter(Boolean).map((value) => "- " + value.replace(/^\s*[-*\u2022]\s*/, "")).join("\n")]],
-        styles: { fillColor: [243, 246, 245], textColor: ink, fontSize: 10, cellPadding: 3, overflow: "linebreak" },
+        styles: { fillColor: [243, 246, 245], textColor: ink, fontSize: 11, cellPadding: 3, overflow: "linebreak" },
         headStyles: { fontStyle: "bold", fontSize: 13, cellPadding: { top: 5, bottom: 3, left: 15, right: 3 } },
         bodyStyles: { cellPadding: { top: 2, bottom: 5, left: 15, right: 5 } },
         didDrawCell: (cell) => {
@@ -35540,8 +35540,8 @@
       pdf.addImage(canvas.toDataURL("image/png"), "PNG", 139 + (39 - width) / 2, y3 + 1 + (13 - height), width, height);
     }
     let signY = block(data.doctor, 120, y3 + 19, 76, 12, true, true);
-    if (data.qualification) signY = block(data.qualification, 120, signY + 2, 76, 9, false, true);
-    if (data.registration) block(`Reg. No.: ${data.registration}`, 120, signY + 2, 76, 9, false, true);
+    if (data.qualification) signY = block(data.qualification, 120, signY + 2, 76, 10, false, true);
+    if (data.registration) block(`Reg. No.: ${data.registration}`, 120, signY + 2, 76, 10, false, true);
     for (let page = 1; page <= pdf.getNumberOfPages(); page++) {
       pdf.setPage(page);
       pdf.saveGraphicsState();

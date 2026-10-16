@@ -1,0 +1,31 @@
+<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{background:#f3f7f6;font-family:Arial;padding:24px}*{box-sizing:border-box}.doctor-signature-card { background: #fff; border: 1px solid #dce7e4; border-radius: 14px; padding: 24px; margin-bottom: 24px; color: #203b40; }
+.doctor-signature-heading { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 20px; }
+.doctor-signature-heading > span { background: #eaf5f1; color: #217566; padding: 11px; border-radius: 10px; }
+.doctor-signature-heading h3 { margin: 0 0 6px; font-size: 20px; font-weight: 650; }
+.doctor-signature-heading p, .doctor-signature-controls p { color: #70848b; font-size: 13px; line-height: 1.6; margin: 0; }
+.doctor-signature-content { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 24px; align-items: center; }
+.doctor-signature-preview { display: grid; place-items: center; height: 120px; padding: 14px; border: 1px dashed #b9ccc7; border-radius: 10px; background: #fafcfb; }
+.doctor-signature-preview img { max-width: 100%; max-height: 90px; object-fit: contain; }
+.doctor-signature-preview > span { display: grid; gap: 8px; justify-items: center; color: #7c928b; font-size: 12px; }
+.doctor-signature-controls label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 9px; }
+.doctor-signature-controls input { display: block; width: 100%; max-width: 100%; font-size: 13px; margin-bottom: 10px; }
+.doctor-signature-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+.doctor-signature-actions button { display: inline-flex; align-items: center; gap: 8px; padding: 10px 17px; border: 1px solid #d3e1dc; border-radius: 8px; background: #fff; color: #38564c; font-size: 13px; cursor: pointer; }
+.doctor-signature-actions .doctor-signature-save { background: #257b68; border-color: #257b68; color: #fff; }
+.doctor-signature-actions button:disabled { opacity: .55; cursor: not-allowed; }
+.doctor-signature-error { margin-top: 14px; color: #a62929; font-size: 13px; }
+.doctor-signature-success { display: flex; align-items: flex-start; gap: 7px; margin-top: 14px; color: #247354; font-size: 13px; }
+@media(max-width:650px) { .doctor-signature-card { padding: 18px; } .doctor-signature-content { grid-template-columns: 1fr; gap: 16px; } }
+
+.doctor-signature-modes { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+.doctor-signature-modes button, .doctor-signature-clear { display: inline-flex; align-items: center; gap: 7px; border: 1px solid #cfdfd8; border-radius: 8px; padding: 9px 14px; background: #fff; color: #4a6960; font-size: 13px; cursor: pointer; }
+.doctor-signature-modes button[aria-pressed=true] { background: #e9f5ef; color: #216c58; border-color: #70aa96; }
+.doctor-signature-modes button:disabled, .doctor-signature-clear:disabled { opacity: .55; cursor: not-allowed; }
+.doctor-signature-content[hidden], .doctor-signature-drawing[hidden] { display: none; }
+.doctor-signature-drawing > p { color: #70848b; font-size: 13px; margin: 0 0 10px; }
+.doctor-signature-pad { position: relative; border: 1px dashed #a9c5b9; border-radius: 10px; overflow: hidden; background: #fff; }
+.doctor-signature-pad canvas { display: block; width: 100%; height: 180px; touch-action: none; cursor: crosshair; }
+.doctor-signature-pad canvas[aria-disabled=true] { cursor: not-allowed; }
+.doctor-signature-pad > span { position: absolute; bottom: 12px; left: 18px; right: 18px; border-top: 1px solid #e1eae6; padding-top: 5px; font-size: 11px; color: #94a69f; pointer-events: none; }
+.doctor-signature-clear { margin-top: 10px; }
+</style></head><body><div id="root"></div><script src="./app.js"></script></body></html>

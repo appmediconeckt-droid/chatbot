@@ -8,6 +8,7 @@ import axios from "../../../axiosConfig.js";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "./ActivateProfile.css";
+import DoctorPrescriptionSignature from "./DoctorPrescriptionSignature.jsx";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 
 const PERSONAL_REQUIRED_FIELDS = [
@@ -809,6 +810,7 @@ export default function DoctorProfileFlow() {
 
   return (
     <div className="doctor-profile-container">
+      <DoctorPrescriptionSignature profile={savedProfileData} loading={profileStatus === "loading"} onSaved={updated => setSavedProfileData(current => ({ ...current, ...updated }))} />
       <ProfileCompletion {...completionPreview} completion={visibleCompletion} loading={profileStatus === "loading"} />
       {profileStatus === "succeeded" && savedProfileData && (
         <div className="alert alert-info" role="status">
