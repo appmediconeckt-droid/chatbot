@@ -501,7 +501,13 @@ export default function ClinicPage() {
       </section>
 
       <PortalElement as="nav" className="doctor-clinic-tabs" aria-label="Clinic sections">
-        {["Overview", "Departments", "Facilities", "Reviews", "Contact"].map((tab) => (
+        {[
+          "Overview",
+          "Departments",
+          // "Facilities", // Re-enable when this tab is needed.
+          // "Reviews", // Re-enable when this tab is needed.
+          "Contact",
+        ].map((tab) => (
           <button type="button" className={activeTab === tab ? "is-active" : ""} key={tab} onClick={() => setActiveTab(tab)}>
             {<PortalText text={tab} />}
           </button>

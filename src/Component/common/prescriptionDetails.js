@@ -8,15 +8,33 @@ export const prescriptionDate = (value) => {
 
 export const prescriptionDoctorName = (record = {}, doctorName) => {
   const candidates = [doctorName, record.psychiatrist?.name, record.psychiatrist?.fullName,
-    record.doctor?.name, record.doctor?.fullName, record.doctorName, record.doctor_name,
+    record.doctorProfile?.fullName, record.doctorProfile?.name, record.doctor?.name, record.doctor?.fullName, record.doctorName, record.doctor_name,
     record.psychiatristSnapshot?.name, record.counselor?.fullName];
   return candidates.find(value => typeof value === 'string' && value.trim() && !/^doctor$/i.test(value.trim()))?.trim() || 'Doctor name not recorded';
 };
 
 export const prescriptionDetails = (input, doctorName) => {
   const record = consultationData(input);
+  const provider = record.doctorProfile || record.psychiatrist || record.doctor || record.psychiatristSnapshot || {};
+  const patient = record.patient || record.patientSnapshot || {};
+  const clinic = record.clinic || (typeof record.clinic_id === 'object' ? record.clinic_id : null) || {};
+  const text = value => Array.isArray(value) ? value.filter(Boolean).join(', ') : typeof value === 'string' || typeof value === 'number' ? String(value) : '';
   return ({
-  patient: record.patient?.name || record.patient?.fullName || record.name || "Patient",
+  qualification: text(provider.qualification),
+  specialization: text(provider.specialization),
+  registration: text(provider.registrationNumber || provider.registration_number || provider.medicalRegistrationNumber || provider.licenseNumber),
+  clinic: text(clinic.clinic_name || clinic.name || record.clinic_name),
+  address: text(clinic.location || clinic.address),
+  doctorPhone: text(clinic.phone_number || clinic.phoneNumber || clinic.phone || provider.phoneNumber || provider.phone),
+  doctorEmail: text(provider.email),
+  prescriptionId: text(record.prescriptionNumber || record.id || record._id),
+  opd: text(record.opdNumber || record.token_number || record.token),
+  patientId: text(patient.id || patient._id || record.patientId),
+  age: text(patient.age ?? record.age),
+  phone: text(patient.phoneNumber || patient.phone || patient.mobile || record.phoneNumber || record.phone),
+  weight: text(record.vitals?.weight ?? patient.weight ?? patient.medicalInfo?.weight ?? record.weight),
+  allergies: text(patient.allergies || patient.medicalInfo?.allergies || record.allergies),
+  patient: record.patient?.name || record.patient?.fullName || record.patientSnapshot?.name || record.name || "Patient",
   doctor: prescriptionDoctorName(record, doctorName),
   date: prescriptionDate(record.issuedAt || record.appointmentDate || record.date || record.endTime),
   gender: record.patient?.gender || record.gender || "—",

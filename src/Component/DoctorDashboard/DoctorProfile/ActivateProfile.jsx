@@ -422,7 +422,8 @@ export default function DoctorProfileFlow() {
     ];
 
     return (
-      <div className="profile-view-container">
+      <div className="profile-view-container doctor-profile-overview">
+        <div className="doctor-overview-page-heading"><h1><PortalText text="My Profile" /></h1><p><PortalText text="Your personal information and professional background." /></p></div>
         <div className="profile-header-section">
           <div className="profile-photo-container">
             {profile.photo ? (
@@ -434,6 +435,7 @@ export default function DoctorProfileFlow() {
             )}
           </div>
           <div className="profile-info">
+            <span className="doctor-overview-eyebrow"><PortalText text="DOCTOR PROFILE" /></span>
             <h2>{profile.name || <PortalText text={"Dr. Name"} />}</h2>
             <p className="text-muted">{profile.qualification || <PortalText text={"Qualification"} />}</p>
             <div className="profile-stats">
@@ -442,7 +444,7 @@ export default function DoctorProfileFlow() {
                 {profile.experience || "0"}<PortalText text={" Years Experience"} /></span>
               <span className="stat-item">
                 <i className="bi bi-translate me-1"></i>
-                {profile.languages || <PortalText text={"English"} />}
+                {profile.languages || <PortalText text={"Not set"} />}
               </span>
             </div>
           </div>
@@ -457,7 +459,7 @@ export default function DoctorProfileFlow() {
           {sections.map((section) => (
             <div key={section.id} className="profile-section-card">
               <div className="section-header">
-                <h4>{section.title}</h4>
+                <div className="doctor-overview-section-heading"><span className="doctor-overview-section-icon"><i className={`bi ${section.id === 'personalDetails' ? 'bi-person' : 'bi-briefcase'}`} aria-hidden="true" /></span><div><h4><PortalText text={section.title} /></h4><p><PortalText text={section.id === 'personalDetails' ? 'Contact information and personal details' : 'Qualifications, experience and expertise'} /></p></div></div>
                 {/* <button
                   className="btn-edit-section"
                   onClick={() => handleEditClick(section.id)}
@@ -468,10 +470,10 @@ export default function DoctorProfileFlow() {
               </div>
               <div className="section-content">
                 {section.fields.map((field) => (
-                  <div key={field.key} className="profile-field">
-                    <span className="field-label"><PortalText text={field.label} />:</span>
+                  <div key={field.key} className={`profile-field ${['currentAddress', 'about', 'expertise'].includes(field.key) ? 'doctor-overview-field-wide' : ''}`}>
+                    <span className="field-label"><PortalText text={field.label} /></span>
                     <span className="field-value">
-                      {(field.key === "currentAddress" ? formatAddress({ ...profile.address, line1: profile.currentAddress }) : profile[field.key]) || <PortalText text={"Not set"} />}
+                      {field.key === 'expertise' && profile.expertise ? <span className="doctor-overview-specialties">{String(profile.expertise).split(',').map(item => item.trim()).filter(Boolean).map((item, index) => <span className="doctor-overview-specialty" key={`${item}-${index}`}>{item}</span>)}</span> : field.key === 'experience' && profile.experience !== '' && profile.experience != null ? <>{profile.experience} <PortalText text="Years" /></> : (field.key === "currentAddress" ? formatAddress({ ...profile.address, line1: profile.currentAddress }) : profile[field.key]) || <PortalText text={"Not set"} />}
                     </span>
                   </div>
                 ))}
@@ -489,9 +491,9 @@ export default function DoctorProfileFlow() {
   // Render Edit Form
   const renderEditForm = () => {
     return (
-      <div className="profile-flow">
-        <div className="header d-flex justify-content-between align-items-center mb-4">
-          <h2 className="profile-header"><PortalText text={"Edit Profile"} /></h2>
+      <div className="profile-flow doctor-profile-edit-form">
+        <div className="doctor-profile-edit-header">
+          <div><h2 className="doctor-profile-edit-title"><PortalText text="Edit Profile" /></h2><p className="doctor-edit-subtitle"><PortalText text="Keep your personal information and professional details up to date." /></p></div>
           <button
             className="btn btn-outline-secondary"
             onClick={handleCancelClick}
@@ -500,26 +502,37 @@ export default function DoctorProfileFlow() {
         </div>
 
         {/* Progress Tracker */}
-        <div className="progress-track">
-          <div className={`progress-step ${statusPersonal === "Completed" ? "active" : ""}`}>
-            1
-            <span><PortalText text={"Personal"} /></span>
+        <div className="progress-track" role="list" aria-label="Profile sections">
+          <div role="listitem" className={`progress-step ${statusPersonal === "Completed" ? "active" : ""}`}>
+            <div className="doctor-profile-step-number">{statusPersonal === "Completed" ? <i className="bi bi-check-lg" aria-label="Completed" /> : '1'}</div>
+            <div className="doctor-profile-step-label"><PortalText text={"Personal"} /></div>
           </div>
-          <div className={`progress-step ${statusProfessional === "Completed" ? "active" : ""}`}>
-            2
-            <span><PortalText text={"Professional"} /></span>
+          <div role="listitem" className={`progress-step ${statusProfessional === "Completed" ? "active" : ""}`}>
+            <div className="doctor-profile-step-number">{statusProfessional === "Completed" ? <i className="bi bi-check-lg" aria-label="Completed" /> : '2'}</div>
+            <div className="doctor-profile-step-label"><PortalText text={"Professional"} /></div>
           </div>
         </div>
 
         {/* PERSONAL DETAILS - Edit Mode */}
         <div className="profile-card">
           <div className="section-header">
-            <h3 className="section-title"><PortalText text={"Personal Details"} /></h3>
+            <div className="doctor-edit-section-heading"><div className="doctor-edit-section-icon"><i className="bi bi-person" aria-hidden="true" /></div><div><h3 className="section-title"><PortalText text="Personal Details" /></h3><p><PortalText text="Your contact information and address." /></p></div></div>
             <span className={`status-badge ${statusPersonal === "Completed" ? "status-completed" : "status-incomplete"}`}>
               {statusPersonal}
             </span>
           </div>
 
+          <div className="doctor-edit-photo-row">
+            <button type="button" className="doctor-edit-avatar" aria-label="Change profile photo" onClick={() => document.getElementById('photoInput').click()}>
+              {profile.photo ? <img src={profile.photo} alt="Profile" /> : <i className="bi bi-person" aria-hidden="true" />}
+              <span className="doctor-edit-avatar-camera"><i className="bi bi-camera-fill" aria-hidden="true" /></span>
+            </button>
+            <div><strong><PortalText text="Profile photo" /></strong><p><PortalText text="Add a clear photo so patients can recognise you." /></p>
+              <button type="button" className="doctor-edit-upload-button" onClick={() => document.getElementById('photoInput').click()}><PortalText text="Change photo" /></button>
+            </div>
+            <input id="photoInput" type="file" className="d-none" accept="image/*" onChange={handlePhotoUpload} />
+          </div>
+          <div className="doctor-edit-fields">
           <div className="row mt-3">
             <div className="col-md-4 mb-3">
               <label className="form-label"><PortalText text={"Full Name"} /></label>
@@ -605,7 +618,7 @@ export default function DoctorProfileFlow() {
           </div>
 
           <div className="row mt-3">
-            <div className="col-md-6 mb-3">
+            <div className="col-md-12 mb-3">
               <label className="form-label"><PortalText text={"Current Address"} /></label>
               <PortalElement as="textarea"
                 className="form-input form-control"
@@ -627,34 +640,8 @@ export default function DoctorProfileFlow() {
             ))}
           </div>
 
-          <div className="mt-4">
-            <label className="form-label"><PortalText text={"Profile Photo"} /></label>
-          <div className="photo-upload" onClick={() => document.getElementById('photoInput').click()}>
-              {profile.photo ? (
-                <img src={profile.photo} alt="Profile" className="photo-preview" />
-              ) : (
-                <>
-                  <i className="bi bi-camera fs-1 text-muted mb-2"></i>
-                  <p className="text-muted mb-0"><PortalText text={"Click to upload profile photo"} /></p>
-                </>
-              )}
-            </div>
-            <input
-              id="photoInput"
-              type="file"
-              className="d-none"
-              accept="image/*"
-              onChange={handlePhotoUpload}
-            />
-          </div>
-
-          <div className="d-flex justify-content-between align-items-center mt-3 profile-form-actions">
-            <button className="btn btn-secondary" onClick={handleCancelClick}>
-              <i className="bi bi-x-circle me-2"></i><PortalText text={"Cancel"} /></button>
-            <button className="save-btn" onClick={saveProfileToApi} disabled={savingProfile}>
 
 
-              <i className="bi bi-check-circle me-2"></i><PortalText text={"Save Personal Details"} /></button>
 
           </div>
         </div>
@@ -662,12 +649,13 @@ export default function DoctorProfileFlow() {
         {/* PROFESSIONAL DETAILS - Edit Mode */}
         <div className="profile-card">
           <div className="section-header">
-            <h3 className="section-title"><PortalText text={"Professional Details"} /></h3>
+            <div className="doctor-edit-section-heading"><div className="doctor-edit-section-icon"><i className="bi bi-briefcase" aria-hidden="true" /></div><div><h3 className="section-title"><PortalText text="Professional Details" /></h3><p><PortalText text="Your expertise, qualifications and credentials." /></p></div></div>
             <span className={`status-badge ${statusProfessional === "Completed" ? "status-completed" : "status-incomplete"}`}>
               {statusProfessional}
             </span>
           </div>
 
+          <div className="doctor-edit-fields">
           <div className="row mt-3">
             <div className="col-md-6 mb-3">
               <label className="form-label"><PortalText text={"Qualification"} /></label>
@@ -742,20 +730,16 @@ export default function DoctorProfileFlow() {
             {(savedProfileData?.certifications || []).map((cert, index) => <div className="col-12 mb-2" key={cert._id || index}><i className="bi bi-file-earmark-check me-2" />{cert.name}</div>)}
           </div>
 
-          <div className="d-flex justify-content-between align-items-center mt-3 profile-form-actions">
-            <button className="btn btn-secondary" onClick={handleCancelClick}>
-              <i className="bi bi-x-circle me-2"></i><PortalText text={"Cancel"} /></button>
 
-            <button className="save-btn" onClick={saveProfileToApi} disabled={savingProfile}>
-              <i className="bi bi-check-circle me-2"></i><PortalText text={"Save Professional Details"} /></button>
+
           </div>
-
         </div>
-        <div className="text-center">
-          <button className="save-btn" onClick={saveProfileToApi} disabled={savingProfile}>
-          <i className="bi bi-check-circle me-2"></i>
-          {savingProfile ? <PortalText text={"Saving..."} /> : <PortalText text={"Save"} />}
-        </button>
+        <div className="doctor-profile-edit-actions">
+          <button type="button" className="btn btn-secondary" onClick={handleCancelClick} disabled={savingProfile}><PortalText text="Cancel" /></button>
+          <button type="button" className="save-btn" onClick={saveProfileToApi} disabled={savingProfile}>
+            <i className="bi bi-check2 me-2" aria-hidden="true" />
+            <PortalText text={savingProfile ? 'Saving...' : 'Save Changes'} />
+          </button>
         </div>
         {/* FINAL STATUS */}
         

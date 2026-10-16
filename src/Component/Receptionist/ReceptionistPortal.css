@@ -59,9 +59,6 @@
 .rec-clinic-select { position: relative; }
 .rec-clinic-select select { background: transparent; border: 0; color: #496e66; font-size: 12px; cursor: pointer; appearance: none; padding: 5px 22px 5px 0; max-width: 260px; }
 .rec-clinic-select svg { pointer-events: none; position: absolute; right: 2px; top: 9px; }
-.rec-welcome { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 24px 26px; border: 1px solid #dcece5; border-radius: 13px; background: linear-gradient(110deg, #eaf5ef, #f5faf7); margin-bottom: 22px; }
-.rec-welcome h2 { font-size: 24px; margin: 7px 0; letter-spacing: -.4px; }
-.rec-welcome > div > p:last-child { color: #6b837c; font-size: 13px; }
 .rec-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 17px; margin-bottom: 24px; }
 .rec-stat { display: flex; align-items: center; gap: 14px; background: white; border: 1px solid var(--rec-line); padding: 21px 18px; border-radius: 12px; }
 .rec-stat p { font-size: 12px; color: var(--rec-muted); margin-bottom: 7px; }
@@ -162,7 +159,7 @@
 .rec-content .staff-dashboard button[type='submit'] { background: var(--rec-primary); border-color: var(--rec-primary); }
 @media (max-width: 1200px) { .rec-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } .rec-content { padding: 25px 22px; } .rec-page-heading { align-items: flex-start; } .rec-page-actions { flex-direction: column-reverse; align-items: flex-end; gap: 8px; } .rec-context-bar > small { display: none; } }
 @media (max-width: 960px) { .rec-sidebar { transform: translateX(-100%); visibility: hidden; transition: transform .2s, visibility .2s; } .rec-sidebar.is-open { transform: translateX(0); visibility: visible; } .rec-body { margin-left: 0; } .rec-menu-toggle { display: grid; } .rec-topbar { padding: 0 20px; height: 65px; } .rec-breadcrumb { margin-right: auto; } .rec-backdrop { display: block; position: fixed; inset: 0; background: #20324880; border: 0; z-index: 1090; } .rec-sidebar-close { display: grid; position: absolute; top: 8px; right: 8px; } }
-@media (max-width: 600px) { .rec-content { padding: 20px 14px; } .rec-topbar { padding: 0 14px; gap: 10px; } .rec-topbar-user > span:last-child { display: none; } .rec-breadcrumb span { margin: 0 6px; } .rec-page-heading h1 { font-size: 24px; } .rec-page-heading > div > p:last-child { font-size: 12px; } .rec-sync { display: none; } .rec-page-actions .rec-button { padding: 8px; } .rec-context-bar { padding: 10px; } .rec-context-bar > div { flex-wrap: wrap; font-size: 12px; } .rec-context-divider { display: none; } .rec-clinic-select select { max-width: 200px; } .rec-welcome { padding: 20px; align-items: flex-start; flex-direction: column; } .rec-welcome h2 { font-size: 22px; } .rec-stats { gap: 10px; } .rec-stat { padding: 16px 12px; gap: 10px; align-items: flex-start; } .rec-stat-icon { width: 32px; height: 32px; border-radius: 9px; } .rec-stat-icon svg { width: 18px; } .rec-stat strong { font-size: 24px; } .rec-stat p { font-size: 10px; line-height: 1.6; } .rec-overview-grid, .rec-clinic-grid { grid-template-columns: 1fr; gap: 0; } .rec-card { padding: 18px; margin-bottom: 18px; } .rec-card-heading { flex-wrap: wrap; gap: 10px; } .rec-current-main h3 { font-size: 18px; } .rec-current-footer { align-items: flex-start; flex-direction: column; } .rec-waiting-row { gap: 10px; flex-wrap: wrap; } .rec-waiting-name { min-width: 130px; } .rec-queue-position { display: none; } .rec-pagination { flex-direction: column; align-items: flex-start; } .rec-detail-grid { gap: 22px; } .rec-doctor-heading { flex-wrap: wrap; } .rec-doctor-heading h2 { font-size: 20px; } .rec-doctor-heading > .rec-badge { margin-left: 0; } .rec-doctor-avatar { width: 57px; height: 57px; } .rec-patient-dialog { padding: 20px; } .rec-filters label:not(.rec-search) { flex: 1; min-width: 130px; } .rec-filters input, .rec-filters select { width: 100%; min-width: 0; } }
+@media (max-width: 600px) { .rec-content { padding: 20px 14px; } .rec-topbar { padding: 0 14px; gap: 10px; } .rec-topbar-user > span:last-child { display: none; } .rec-breadcrumb span { margin: 0 6px; } .rec-page-heading h1 { font-size: 24px; } .rec-page-heading > div > p:last-child { font-size: 12px; } .rec-sync { display: none; } .rec-page-actions .rec-button { padding: 8px; } .rec-context-bar { padding: 10px; } .rec-context-bar > div { flex-wrap: wrap; font-size: 12px; } .rec-context-divider { display: none; } .rec-clinic-select select { max-width: 200px; } .rec-stats { gap: 10px; } .rec-stat { padding: 16px 12px; gap: 10px; align-items: flex-start; } .rec-stat-icon { width: 32px; height: 32px; border-radius: 9px; } .rec-stat-icon svg { width: 18px; } .rec-stat strong { font-size: 24px; } .rec-stat p { font-size: 10px; line-height: 1.6; } .rec-overview-grid, .rec-clinic-grid { grid-template-columns: 1fr; gap: 0; } .rec-card { padding: 18px; margin-bottom: 18px; } .rec-card-heading { flex-wrap: wrap; gap: 10px; } .rec-current-main h3 { font-size: 18px; } .rec-current-footer { align-items: flex-start; flex-direction: column; } .rec-waiting-row { gap: 10px; flex-wrap: wrap; } .rec-waiting-name { min-width: 130px; } .rec-queue-position { display: none; } .rec-pagination { flex-direction: column; align-items: flex-start; } .rec-detail-grid { gap: 22px; } .rec-doctor-heading { flex-wrap: wrap; } .rec-doctor-heading h2 { font-size: 20px; } .rec-doctor-heading > .rec-badge { margin-left: 0; } .rec-doctor-avatar { width: 57px; height: 57px; } .rec-patient-dialog { padding: 20px; } .rec-filters label:not(.rec-search) { flex: 1; min-width: 130px; } .rec-filters input, .rec-filters select { width: 100%; min-width: 0; } }
 @media (prefers-reduced-motion: reduce) { .rec-spin { animation: none; } .rec-sidebar { transition: none; } }
 
 .rec-queue-launch { display: flex; justify-content: space-between; align-items: center; gap: 18px; padding: 20px 23px; margin-bottom: 24px; border-radius: 12px; background: #eaf5ef; border: 1px solid #dcece5; }
@@ -195,7 +192,7 @@
 .rec-password-form { display: grid; gap: 17px; }
 .rec-password-field > label, .rec-preferences-form > label:not(.rec-settings-toggle) { display: block; font-size: 12px; font-weight: 550; color: #657b8c; margin-bottom: 8px; }
 .rec-password-input { position: relative; }
-.rec-password-input input, .rec-preferences-form select { border: 1px solid #dce5e9; border-radius: 8px; width: 100%; min-width: 0; padding: 12px 14px; background: white; color: #496070; font-size: 12px; }
+.rec-password-field > input, .rec-password-input input, .rec-preferences-form select { border: 1px solid #dce5e9; border-radius: 8px; width: 100%; min-width: 0; padding: 12px 14px; background: white; color: #496070; font-size: 12px; }
 .rec-password-input input { padding-right: 47px; }
 .rec-password-input input::placeholder { color: #a0aeb8; }
 .rec-password-input button { position: absolute; right: 7px; top: 5px; height: calc(100% - 10px); width: 34px; display: grid; place-items: center; border: 0; background: transparent; color: #94a5b0; border-radius: 5px; cursor: pointer; }
@@ -220,7 +217,7 @@
 .rec-compact-tables .rec-table-patient { gap: 8px; }
 .rec-compact-tables .rec-patient-avatar { width: 28px; height: 28px; }
 @media (max-width: 1100px) { .rec-settings-grid { grid-template-columns: 1fr; gap: 0; } }
-@media (max-width: 600px) { .rec-settings-title { align-items: flex-start; } .rec-settings-title .rec-stat-icon { width: 32px; height: 32px; } .rec-settings-grid .rec-card-heading { align-items: flex-start; } .rec-settings-grid .rec-card-heading h2 { font-size: 16px; } .rec-password-input input, .rec-preferences-form select { font-size: 16px; } .rec-settings-save { flex-wrap: wrap; } }
+@media (max-width: 600px) { .rec-settings-title { align-items: flex-start; } .rec-settings-title .rec-stat-icon { width: 32px; height: 32px; } .rec-settings-grid .rec-card-heading { align-items: flex-start; } .rec-settings-grid .rec-card-heading h2 { font-size: 16px; } .rec-password-field > input, .rec-password-input input, .rec-preferences-form select { font-size: 16px; } .rec-settings-save { flex-wrap: wrap; } }
 
 /* Shared clinic selector for all receptionist pages. */
 .rec-clinic-filter { display: flex; flex-direction: column; gap: 7px; color: #496e66; font-size: 11px; font-weight: 600; width: min(360px, 100%); }
@@ -240,3 +237,12 @@
 .rec-portal[dir="rtl"] .rec-sidebar { left: auto; right: 0; border-left: 1px solid #e1eae7; border-right: 0; }
 .rec-portal[dir="rtl"] .rec-body { margin-left: 0; margin-right: 258px; }
 @media (max-width: 960px) { .rec-portal[dir="rtl"] .rec-body { margin-right: 0; } .rec-portal[dir="rtl"] .rec-sidebar { transform: translateX(100%); } .rec-portal[dir="rtl"] .rec-sidebar.is-open { transform: translateX(0); } }
+
+.rec-profile-dialog { width: min(540px, calc(100vw - 32px)); box-shadow: 0 24px 80px #162d4533; }
+.rec-profile-dialog .rec-card-heading { align-items: flex-start; }
+.rec-profile-dialog .rec-card-heading h2 { margin-bottom: 8px; }
+.rec-profile-dialog .rec-card-heading p:last-child { color: #657b8c; font-size: 13px; }
+.rec-profile-dialog .rec-password-field > input { box-sizing: border-box; }
+.rec-profile-dialog .rec-password-field > small { display: block; margin-top: 8px; color: #657b8c; }
+.rec-profile-dialog .rec-settings-save { border-top: 1px solid var(--rec-line); padding-top: 18px; }
+

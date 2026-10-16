@@ -1,3 +1,4 @@
+import EmergencyReason from '../common/EmergencyReason.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import PatientVitals, { canRecordVitals } from './PatientVitals.jsx';
@@ -14,6 +15,7 @@ export function PatientDialog({ patient, clinics, close, doctorName, onCancelApp
   return <dialog ref={ref} className="rec-patient-dialog" onCancel={close} onClose={close}>
     {patient && <><div className="rec-card-heading"><div><p className="rec-eyebrow"><PortalText text={"PATIENT APPOINTMENT"} /></p><h2>{patient.patientName}</h2></div><PortalElement as="button" className="rec-icon-button" aria-label="Close patient details" onClick={() => ref.current.close()}><X size={20} /></PortalElement></div>
     <div className="rec-inline"><Badge value={patient.queueStatus} />{patient.emergency && <Badge emergency />}<span><PortalText text={"Token "} />{patient.token ?? '--'}</span></div>
+    {patient.emergency && <EmergencyReason appointment={patient} />}
     <PatientVitals key={patientKey(patient)} patient={patient} editable={context?.profile?.role === 'receptionist'} />
     <DetailFields fields={[
       ['Doctor name', doctorName || 'Doctor name not recorded'], ['Phone', patient.phoneNumber || 'Not recorded'], ['Age', patient.age], ['Gender', patient.gender], ['Clinic / Hospital', clinicName(clinics, patient.clinicId)],

@@ -1,3 +1,5 @@
+import axios from '../../axiosConfig.js';
+import { persistAuthSession } from '../../authtication/authSession.js';
 import StaffAppointments from '../StaffDashboard/StaffAppointments.jsx';
 import ProfileAvatar from '../common/ProfileAvatar.jsx';
 import { Badge, DetailFields, PatientDialog, AppointmentTable } from './AppointmentViews.jsx';
@@ -14,12 +16,12 @@ function CurrentCheckups({ data, clinics, onView }) {
   return <>{data.currentPatients.length ? <div className="rec-current-grid">{data.currentPatients.map(row => <article className="rec-current-patient" key={patientKey(row)}><div className="rec-inline"><span className="rec-dot" /><span className="rec-eyebrow">{row.queueStatus === 'called' ? <PortalText text={"PATIENT CALLED"} /> : <PortalText text={"CHECKUP IN PROGRESS"} />}</span>{row.emergency && <Badge emergency />}</div><div className="rec-current-main"><span className="rec-current-token">{row.token ?? '--'}<small><PortalText text={"TOKEN"} /></small></span><div><h3>{row.patientName}</h3><p>{clinicName(clinics, row.clinicId)}</p></div></div><div className="rec-current-footer"><span><Clock3 size={15} />{row.timing?.startedAt ? `Started ${displayTime(row.timing.startedAt)}` : <PortalText text={"Awaiting checkup"} />}{row.timing?.state === 'paused' ? <PortalText text={" / Paused"} /> : ''}</span><button className="rec-text-button" onClick={() => onView(patientKey(row))}><PortalText text={"View details "} /><ArrowUpRight size={15} /></button></div></article>)}</div> : <Empty title="No checkup in progress" description="The patient being examined will appear here when the doctor starts a checkup." />}</>;
 }
 export function ReceptionistOverview() {
-  const { profile, liveData: data, clinics, error } = useOutletContext();
+  const { liveData: data, clinics, error } = useOutletContext();
   const [selected, setSelected] = useState(null);
   if (!data) return <Loading error={error} />;
   const stats = [ ['Appointments today', data.summary.total, CalendarDays, 'blue'], ['Waiting patients', data.summary.waiting, Clock3, 'amber'], ['Ongoing checkups', data.summary.ongoing, Stethoscope, 'teal'], ['Completed today', data.summary.completed, CheckCircle2, 'green'] ];
   const patient = data.appointments.find(row => patientKey(row) === selected);
-  return <><section className="rec-welcome"><div><p className="rec-eyebrow">{new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p><h2><PortalText text={"Welcome, "} />{profile.fullName.split(' ')[0]}</h2><p><PortalText text={"Keep appointments and the patient queue running smoothly."} /></p></div><Link className="rec-button primary" to="/receptionist/appointments"><PortalText text={"View appointments "} /><ArrowUpRight size={17} /></Link></section>
+  return <>
     <div className="rec-stats">{stats.map(stat => { const [title, value, Icon, color] = stat; return <article className="rec-stat" key={title}><span className={`rec-stat-icon ${color}`}><Icon size={22} /></span><div><p><PortalText text={title} /></p><strong>{value}</strong></div></article>; })}</div>
     <div className="rec-overview-grid"><section className="rec-card"><div className="rec-card-heading"><h2><PortalText text={"Currently with the doctor"} /></h2><span className="rec-live-label"><span className="rec-dot" /><PortalText text={"Today / Live"} /></span></div><CurrentCheckups data={data} clinics={clinics} onView={setSelected} /></section>
     <section className="rec-card"><div className="rec-card-heading"><h2><PortalText text={"Up next"} /></h2><ListOrdered size={20} /></div>{data.waiting[0] ? <div className="rec-next"><span className="rec-next-token">#{data.waiting[0].token ?? '--'}</span><h3>{data.waiting[0].patientName}</h3><p>{clinicName(clinics, data.waiting[0].clinicId)}</p><Badge value={data.waiting[0].queueStatus} /><p>{data.summary.waiting}<PortalText text={" patients waiting"} /></p></div> : <Empty title="Queue is clear" description="No patients are waiting right now." />}<Link className="rec-button full" to="/receptionist/live-queue"><PortalText text={"Open live queue "} /><ArrowUpRight size={16} /></Link></section></div>
@@ -53,8 +55,64 @@ export function ReceptionistDoctor() {
   </>;
 }
 export function ReceptionistProfile() {
-  const { profile } = useOutletContext();
-  return <section className="rec-card"><div className="rec-doctor-heading"><ProfileAvatar photo={profile.profilePhoto} name={profile.fullName} className="rec-doctor-avatar" /><div><p className="rec-eyebrow"><PortalText text={"STAFF ACCOUNT"} /></p><h2>{profile.fullName}</h2><p><PortalText text={"Receptionist / Front desk team"} /></p></div><span className="rec-badge confirmed"><PortalText text={"Active account"} /></span></div><div className="rec-contact-links"><span><Mail size={17} />{profile.email}</span><span><Phone size={17} />{profile.phoneNumber}</span></div><DetailFields fields={[
+  const { profile, setProfile } = useOutletContext();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState({ fullName: '', phoneNumber: '' });
+  const [photo, setPhoto] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const dialogRef = useRef(null);
+  useEffect(() => {
+    if (!editing) { dialogRef.current?.close(); return; }
+    dialogRef.current?.showModal();
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [editing]);
+  const closeEditor = () => {
+    if (saving) return;
+    setEditing(false); setError(''); setPhoto(null);
+  };
+  const startEditing = () => {
+    setDraft({ fullName: profile.fullName || '', phoneNumber: profile.phoneNumber || '' });
+    setPhoto(null); setError(''); setNotice(''); setEditing(true);
+  };
+  const saveProfile = async event => {
+    event.preventDefault();
+    if (saving) return;
+    setError(''); setNotice('');
+    if (!draft.fullName.trim()) { setError('Please enter your full name.'); return; }
+    if (!draft.phoneNumber.trim()) { setError('Please enter your phone number.'); return; }
+    if (photo && (!['image/jpeg', 'image/png', 'image/webp'].includes(photo.type) || photo.size > 5 * 1024 * 1024)) {
+      setError('Choose a JPG, PNG or WebP photo smaller than 5 MB.'); return;
+    }
+    setSaving(true);
+    try {
+      const body = new FormData();
+      body.append('fullName', draft.fullName.trim());
+      body.append('phoneNumber', draft.phoneNumber.trim());
+      if (photo) body.append('profilePhoto', photo);
+      const { data } = await axios.patch(`/api/auth/update/${profile._id || profile.id}`, body, { timeout: 30000 });
+      const user = { ...profile, ...data.user };
+      persistAuthSession({ user, accessToken: localStorage.getItem('accessToken') || localStorage.getItem('token'), refreshToken: localStorage.getItem('refreshToken') });
+      setProfile(user); setEditing(false); setPhoto(null); setNotice('Profile updated successfully.');
+    } catch (err) { setError(err.response?.data?.message || 'Unable to update your profile. Please try again.'); }
+    finally { setSaving(false); }
+  };
+  return <section className="rec-card"><div className="rec-doctor-heading"><ProfileAvatar photo={profile.profilePhoto} name={profile.fullName} className="rec-doctor-avatar" /><div><p className="rec-eyebrow"><PortalText text={"STAFF ACCOUNT"} /></p><h2>{profile.fullName}</h2><p><PortalText text={"Receptionist / Front desk team"} /></p></div><span className="rec-badge confirmed"><PortalText text={"Active account"} /></span><button type="button" className="rec-button primary" onClick={startEditing} disabled={editing}><PortalText text="Edit Profile" /></button></div>
+    {notice && <p className="rec-settings-success" role="status">{notice}</p>}
+    <dialog ref={dialogRef} className="rec-patient-dialog rec-profile-dialog" aria-labelledby="rec-profile-dialog-title" aria-describedby="rec-profile-dialog-description" onCancel={event => { event.preventDefault(); closeEditor(); }} onClose={() => setEditing(false)}>
+    {editing && <><div className="rec-card-heading"><div><p className="rec-eyebrow"><PortalText text="STAFF ACCOUNT" /></p><h2 id="rec-profile-dialog-title"><PortalText text="Edit Profile" /></h2><p id="rec-profile-dialog-description"><PortalText text="Update your personal details and profile photo." /></p></div><PortalElement as="button" type="button" className="rec-icon-button" aria-label="Close edit profile" disabled={saving} onClick={closeEditor}><X size={20} /></PortalElement></div>
+    <form className="rec-password-form" onSubmit={saveProfile} aria-busy={saving}>
+      {error && <p className="rec-alert" role="alert">{error}</p>}
+      <div className="rec-password-field"><label htmlFor="rec-profile-name"><PortalText text="Full name" /></label><input id="rec-profile-name" autoFocus autoComplete="name" required maxLength={100} value={draft.fullName} disabled={saving} onChange={event => setDraft(current => ({ ...current, fullName: event.target.value }))} /></div>
+      <div className="rec-password-field"><label htmlFor="rec-profile-phone"><PortalText text="Phone number" /></label><input id="rec-profile-phone" type="tel" autoComplete="tel" required value={draft.phoneNumber} disabled={saving} onChange={event => setDraft(current => ({ ...current, phoneNumber: event.target.value }))} /></div>
+      <div className="rec-password-field"><label htmlFor="rec-profile-photo"><PortalText text="Profile photo" /></label><input id="rec-profile-photo" type="file" accept="image/jpeg,image/png,image/webp" disabled={saving} onChange={event => setPhoto(event.target.files?.[0] || null)} /><small><PortalText text="JPG, PNG or WebP, up to 5 MB." /></small></div>
+      <div className="rec-settings-save"><button type="button" className="rec-button" disabled={saving} onClick={closeEditor}><PortalText text="Cancel" /></button><button type="submit" className="rec-button primary" disabled={saving}><PortalText text={saving ? 'Saving...' : 'Save changes'} /></button></div>
+    </form></>}
+    </dialog>
+    <div className="rec-contact-links"><span><Mail size={17} />{profile.email}</span><span><Phone size={17} />{profile.phoneNumber}</span></div><DetailFields fields={[
     ['Assigned doctor', profile.assignedDoctorName], ['Assigned clinic', profile.clinic_name], ['Department', profile.department], ['Staff ID', staffIdentity(profile)], ['Shift', profile.shift], ['Shift timings', staffShiftTiming(profile)],
   ]} /><div className="rec-queue-notice"><Stethoscope size={20} /><p><PortalText text={"Your doctor manages your role, clinic assignment and staff details. Contact them to update these details."} /></p></div></section>;
 }

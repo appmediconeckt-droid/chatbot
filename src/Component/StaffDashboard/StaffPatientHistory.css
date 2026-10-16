@@ -6,7 +6,10 @@
 .rec-history-filters .rec-search { flex-basis: 240px; }
 .rec-history-diagnosis { white-space: normal; min-width: 160px; max-width: 240px; }
 .rec-history-dialog { width: min(930px, calc(100vw - 32px)); }
-.rec-history-dialog .prescription-document { width: 100%; box-shadow: none; border: 1px solid #e6ecf0; margin: 20px 0; }
+.rec-history-dialog .prescription-document { width: 100%; margin-left: auto; margin-right: auto; box-shadow: none; border: 1px solid #e6ecf0; margin: 0 auto 20px; }
 .rec-history-actions { display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap; }
-.rec-history-visit-meta, .rec-history-symptoms { color: #728798; font-size: 12px; margin-bottom: 12px !important; line-height: 1.7; }
+.rec-history-symptoms { color: #728798; font-size: 12px; margin-bottom: 12px !important; line-height: 1.7; }
 @media (max-width: 600px) { .rec-history-stats { grid-template-columns: 1fr; } .rec-history-dialog { padding: 16px; } .rec-history-dialog .prescription-document { padding: 14px; } }
+
+.rec-history-dialog-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.rec-history-visit-details { margin-bottom: 16px; }

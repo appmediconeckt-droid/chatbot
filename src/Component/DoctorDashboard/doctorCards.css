@@ -1,0 +1,74 @@
+/* One surface style for doctor pages. Appointment routes retain their own cards.
+   Explicit selectors keep buttons, status chips, dialogs and patient queue rows intact.
+   Surface properties use !important because lazy page CSS and Bootstrap shadow
+   utilities otherwise change the result depending on navigation order. */
+.doctor-layout {
+  --portal-card-background: #fff;
+  --portal-card-border: #e1e8f0;
+  --portal-card-radius: 12px;
+  --portal-card-shadow: 0 2px 10px rgb(36 52 75 / 4%);
+  --portal-card-padding: 20px;
+}
+
+.doctor-page-content[data-card-theme="shared"] :is(
+  .dd-stat-card, .dd-queue-card, .dd-overview-card,
+  .calendar-month-card, .calendar-slot-preview, .calendar-date-card, .recurring-rules-card,
+  .fup-stat-card, .fup-list-card,
+  .doctor-qr-card, .doctor-qr-panel,
+  .doctor-clinic-stat-card, .doctor-clinic-panel,
+  .docstaff-screen-stat-card, .docstaff-screen-table-card,
+  .docstaff-screen-review-card, .docstaff-screen-summary-card,
+  .pd-patient-card, .pd-detail-card, .pd-vital-card,
+  .profile-section-card, .doctor-profile-edit-form .profile-card,
+  .doctor-profile-qr-card, .doctor-bank-panel, .settings-info-panel,
+  .clinic-settings-container, .set-side-box, .form-box,
+  .dc-chat-panel
+) {
+  background: var(--portal-card-background) !important;
+  border: 1px solid var(--portal-card-border) !important;
+  border-radius: var(--portal-card-radius) !important;
+  box-shadow: var(--portal-card-shadow) !important;
+  box-sizing: border-box;
+}
+
+/* Content cards share spacing; table and split QR cards keep their own gutters. */
+.doctor-page-content[data-card-theme="shared"] :is(
+  .calendar-slot-preview, .calendar-date-card, .recurring-rules-card,
+  .doctor-qr-panel, .doctor-clinic-panel,
+  .docstaff-screen-review-card, .docstaff-screen-summary-card,
+  .pd-detail-card, .profile-section-card, .doctor-profile-edit-form .profile-card,
+  .doctor-bank-panel, .settings-info-panel
+) {
+  padding: var(--portal-card-padding);
+}
+
+/* Summary cards use the same dimensions while retaining their status colours. */
+.doctor-page-content[data-card-theme="shared"] :is(
+  .dd-stat-card, .fup-stat-card, .docstaff-screen-stat-card, .doctor-clinic-stat-card
+) {
+  min-height: 104px;
+  padding: var(--portal-card-padding) !important;
+  gap: 14px;
+  transform: none !important;
+}
+
+.doctor-page-content[data-card-theme="shared"] :is(
+  .fup-stat-icon, .docstaff-screen-stat-icon, .doctor-clinic-stat-icon
+) {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 10px;
+}
+
+.doctor-page-content[data-card-theme="shared"] :is(
+  .profile-section-card, .doctor-profile-edit-form .profile-card
+) > .section-header {
+  margin-bottom: 18px;
+  padding: 0 0 16px;
+  border-bottom: 1px solid #edf1f5;
+}
+
+@media (max-width: 600px) {
+  .doctor-layout { --portal-card-padding: 16px; }
+}

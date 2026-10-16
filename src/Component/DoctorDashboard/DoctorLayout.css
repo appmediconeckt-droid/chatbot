@@ -19,20 +19,26 @@
 .doctor-logout-button { color: #dc2626; cursor: pointer; }
 .doctor-logout-button svg { width: 20px; flex-shrink: 0; }
 .doctor-logout-button:hover { background: #fef2f2; color: #b91c1c; }
-.doctor-logout-dialog { margin: auto; width: min(440px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 0; border-radius: 20px; background: #fff; color: #24344b; box-shadow: 0 20px 60px #0003; }
-.doctor-logout-dialog::backdrop { background: #0008; }
-.doctor-logout-dialog-content { padding: 32px; text-align: center; }
-.doctor-logout-warning { color: #ed8936; font-size: 48px; margin-bottom: 16px; }
-.doctor-logout-dialog h3 { margin: 0 0 8px; font-size: 24px; font-weight: 700; }
-.doctor-logout-dialog p { margin: 0 0 32px; color: #64748b; }
-.doctor-logout-actions { display: flex; justify-content: center; gap: 16px; }
-.doctor-logout-actions button { flex: 1; padding: 12px 16px; border: 0; border-radius: 10px; font-size: 15px; font-weight: 500; cursor: pointer; }
-.doctor-logout-cancel { background: #f1f5f9; color: #24344b; }
+.doctor-logout-dialog { box-sizing: border-box; margin: auto; width: min(420px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; border: 1px solid #e2e8f0; border-radius: 16px; background: #fff; color: #24344b; box-shadow: 0 28px 80px #0f172a33, 0 4px 12px #0f172a0d; }
+.doctor-logout-dialog::backdrop { background: #15243b59; backdrop-filter: blur(4px); }
+.doctor-logout-dialog-content { position: relative; padding: 32px 24px 0; text-align: left; }
+.doctor-logout-close { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 7px; background: transparent; color: #94a3b8; cursor: pointer; }
+.doctor-logout-close:hover { background: #f1f5f9; color: #334155; }
+.doctor-logout-close:disabled { opacity: .5; cursor: wait; }
+.doctor-logout-heading { display: flex; align-items: flex-start; gap: 14px; padding: 8px 0 28px; }
+.doctor-logout-copy { min-width: 0; padding-top: 2px; }
+.doctor-logout-warning-wrap { display: grid; place-items: center; flex-shrink: 0; width: 46px; height: 46px; margin: 0; border: 1px solid #ffe0e3; border-radius: 13px; background: #fff1f2; color: #df334c; }
+.doctor-logout-warning { width: 21px; height: 21px; }
+.doctor-logout-dialog h3 { margin: 0 0 6px; font-size: 19px; line-height: 1.4; font-weight: 650; letter-spacing: -.35px; }
+.doctor-logout-dialog p { margin: 0; max-width: 270px; font-size: 13px; line-height: 1.65; color: #748094; }
+.doctor-logout-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin: 0 -24px; padding: 16px 24px; border-top: 1px solid #edf0f5; background: #f8fafc; }
+.doctor-logout-actions button { flex: 0 1 auto; min-width: 96px; min-height: 40px; padding: 9px 20px; border: 1px solid transparent; border-radius: 8px; font-size: 13px; line-height: 1.4; font-weight: 600; cursor: pointer; transition: background .15s ease; }
+.doctor-logout-actions .doctor-logout-cancel { border-color: #dce3eb; background: #fff; color: #334155; }
 .doctor-logout-cancel:hover { background: #e2e8f0; }
-.doctor-logout-confirm { background: #e53e3e; color: #fff; }
-.doctor-logout-confirm:hover { background: #c53030; }
+.doctor-logout-confirm { background: #dc3545; color: #fff; box-shadow: 0 2px 3px #be123c1a; }
+.doctor-logout-confirm:hover { background: #c52c3b; }
 .doctor-logout-actions button:disabled { opacity: .6; cursor: wait; }
-.doctor-logout-actions button:focus-visible, .doctor-logout-button:focus-visible { outline: 2px solid #1167b1; outline-offset: 3px; }
+.doctor-logout-actions button:focus-visible, .doctor-logout-button:focus-visible, .doctor-logout-close:focus-visible { outline: 2px solid #1167b1; outline-offset: 3px; }
 .doctor-layout-body { margin-left: 248px; min-width: 0; }
 .doctor-topbar { position: sticky; top: 0; z-index: 1000; height: 68px; padding: 0 26px; display: flex; align-items: center; gap: 16px; background: #fff; border-bottom: 1px solid #e5eaf1; }
 .doctor-topbar-title { font-weight: 700; }

@@ -141,6 +141,7 @@ export default function PatientDetailsPage() {
     const appointmentTime = appointment.appointment_time || appointment.time || createdAt;
     return {
       id: appointment.id || appointment._id,
+      prescriptionRecord: { ...appointment, doctorProfile: authUser || getStoredAuthUser() },
       timestamp: Date.parse(createdAt) || 0,
       dateKey: dateKey(createdAt),
       date: formatDate(createdAt),

@@ -2482,6 +2482,8 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
     id: `${appointmentSource}-${apiId}`,
     apiId,
     appointmentSource,
+    clinicId: appointment?.clinic_id?._id || appointment?.clinic_id?.id || appointment?.clinic_id || appointment?.clinicId || appointment?.clinic?.id || appointment?.clinic?._id || '',
+    clinic: appointment?.clinic || (typeof appointment?.clinic_id === 'object' ? appointment.clinic_id : null),
     appointmentType: String(pickFirst(appointment?.priority, "")).toLowerCase() === "emergency" ? "Emergency Request" : (getAppointmentBookingType(appointment) === "walkin" ? "Walk-in" : "Online"),
     isEmergency: String(pickFirst(appointment?.priority, appointment?.is_emergency, "")).toLowerCase() === "emergency" || appointment?.priority === "emergency" || appointment?.is_emergency === true,
     emergencyReason: pickFirst(appointment?.emergency_reason, appointment?.emergencyReason, ""),
@@ -3453,14 +3455,38 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
   );
 };
 
-const SummaryModal = ({ show, onHide, appointmentData, doctorName, onCompleteWithoutPrint }) => {
+const SummaryModal = ({ show, onHide, appointmentData, doctorName, doctorProfile, onCompleteWithoutPrint }) => {
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
+  const clinicId = String(appointmentData?.clinicId || appointmentData?.clinic_id?._id || appointmentData?.clinic_id?.id || appointmentData?.clinic_id || '');
+  const headerKey = `${appointmentData?.id || ''}:${clinicId}`;
+  const hasAppointment = Boolean(appointmentData);
+  const [header, setHeader] = useState(null);
+  const [headerError, setHeaderError] = useState('');
+  useEffect(() => {
+    if (!show || !hasAppointment) return;
+    const controller = new AbortController();
+    setHeader(null); setHeaderError('');
+    Promise.all([
+      axios.get('/api/auth/me', { signal: controller.signal, timeout: 15000 }),
+      clinicId ? axios.get(`/api/clinics/${encodeURIComponent(clinicId)}`, { signal: controller.signal, timeout: 15000 }) : Promise.resolve(null),
+    ]).then(([account, clinicResponse]) => {
+      if (controller.signal.aborted) return;
+      const doctor = account.data.user;
+      const clinic = clinicResponse?.data?.clinic || null;
+      const owner = clinic?.doctor_id?._id || clinic?.doctor_id?.id || clinic?.doctor_id;
+      if (!doctor || (clinic && String(owner) !== String(doctor._id || doctor.id))) throw new Error('The appointment clinic does not belong to this doctor.');
+      setHeader({ key: headerKey, doctor, clinic });
+    }).catch(error => { if (!controller.signal.aborted) setHeaderError(error.response?.data?.message || error.message || 'Prescription header details could not be loaded. Close and reopen to retry.'); });
+    return () => controller.abort();
+  }, [show, headerKey, clinicId, hasAppointment]);
   if (!appointmentData) return null;
+  const headerReady = header?.key === headerKey;
+  const prescriptionRecord = { ...appointmentData, clinicId, clinic: headerReady ? header.clinic : null, doctorProfile: headerReady ? header.doctor : doctorProfile, source: 'appointment', verificationStatus: 'completed' };
   const download = async () => {
     setDownloading(true);
     setDownloadError("");
-    try { await downloadConsultationPrescription(appointmentData, doctorName); }
+    try { await downloadConsultationPrescription(prescriptionRecord, doctorName); }
     catch { setDownloadError("Unable to download prescription. Please try again."); }
     finally { setDownloading(false); }
   };
@@ -3471,12 +3497,13 @@ const SummaryModal = ({ show, onHide, appointmentData, doctorName, onCompleteWit
       </Modal.Header>
       <Modal.Body className="dd-summary-modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
         {downloadError && <div className="alert alert-danger" role="alert">{downloadError}</div>}
-        <PrescriptionDocument record={appointmentData} doctorName={doctorName} />
+        {headerError && <div className="alert alert-danger" role="alert">{headerError}</div>}
+        {headerReady ? <PrescriptionDocument record={prescriptionRecord} doctorName={doctorName} /> : !headerError && <p role="status">Loading doctor and clinic details...</p>}
       </Modal.Body>
       <Modal.Footer className="dd-summary-modal-footer">
         <Button className="dd-summary-close-btn" variant="outline-secondary" onClick={onHide}><PortalText text={"Close"} /></Button>
         <Button className="dd-summary-complete-btn" variant="success" onClick={onCompleteWithoutPrint}><PortalText text={"Mark as Complete"} /></Button>
-        <Button className="dd-summary-print-btn" variant="primary" onClick={download} disabled={downloading}>
+        <Button className="dd-summary-print-btn" variant="primary" onClick={download} disabled={downloading || !headerReady}>
           <i className="bi bi-download me-2" aria-hidden="true" />{downloading ? <PortalText text={"Downloading..."} /> : <PortalText text={"Download PDF"} />}
         </Button>
       </Modal.Footer>
@@ -4734,6 +4761,7 @@ const DoctorDashboard = () => {
         onHide={() => setShowSummaryModal(false)}
         appointmentData={lastCompletedAppointment}
         doctorName={doctorName}
+        doctorProfile={authUser}
         onCompleteWithoutPrint={handleCompleteWithoutPrint}
       />
     </div>

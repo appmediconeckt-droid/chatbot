@@ -50,9 +50,9 @@ export default function ReceptionistSettings() {
   const dirty = draft.defaultClinic !== preferences.defaultClinic || draft.compactTables !== preferences.compactTables;
   return <div className="rec-settings-grid">
     <div>
-      <section className="rec-card"><div className="rec-card-heading"><div className="rec-settings-title"><span className="rec-stat-icon teal"><UserRound size={22} /></span><div><h2><PortalText text={"Account information"} /></h2><p><PortalText text={"Your receptionist account and clinic assignment."} /></p></div></div><Link className="rec-text-button" to="/receptionist/profile"><PortalText text={"View profile"} /></Link></div>
+      <section className="rec-card"><div className="rec-card-heading"><div className="rec-settings-title"><span className="rec-stat-icon teal"><UserRound size={22} /></span><div><h2><PortalText text={"Account information"} /></h2><p><PortalText text={"Your receptionist account and clinic assignment."} /></p></div></div><Link className="rec-text-button" to="/receptionist/profile"><PortalText text={"Edit Profile"} /></Link></div>
         <dl className="rec-detail-grid rec-settings-account">{[['Full name', profile.fullName], ['Email address', profile.email], ['Phone number', profile.phoneNumber], ['Role', 'Receptionist'], ['Assigned doctor', profile.assignedDoctorName], ['Assigned clinic', profile.clinic_name]].map(([label, value]) => <div key={label}><dt><PortalText text={label} /></dt><dd>{value || <PortalText text={"Not assigned"} />}</dd></div>)}</dl>
-        <div className="rec-settings-note"><ShieldCheck size={17} /><p><PortalText text={"Your doctor manages your account details, staff role and clinic assignment."} /></p></div>
+        <div className="rec-settings-note"><ShieldCheck size={17} /><p><PortalText text={"Edit your name, phone number and photo in My Profile. Your doctor manages your staff role and clinic assignment."} /></p></div>
       </section>
       <section className="rec-card"><div className="rec-card-heading"><div className="rec-settings-title"><span className="rec-stat-icon blue"><LockKeyhole size={22} /></span><div><h2><PortalText text={"Password & security"} /></h2><p><PortalText text={"Update the password you use to sign in."} /></p></div></div></div>
         <form className="rec-password-form" onSubmit={changePassword}>

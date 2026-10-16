@@ -4,7 +4,7 @@ import { useDoctorTranslation } from '../../i18n/LanguageContext';
 import { LanguageSelector } from '../common/LanguageSelector';
 import { PortalElement, PortalText } from "../common/PortalTranslation";
 import { useEffect, useRef, useState } from "react";
-import { FaSignOutAlt, FaExclamationTriangle } from "react-icons/fa";
+import { FaSignOutAlt, FaTimes } from "react-icons/fa";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { doctorMenuItems } from "./doctorRoutes";
 import { getDoctorUser } from "./doctorApi";
@@ -15,6 +15,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./DoctorLayout.css";
+import "./doctorCards.css";
 
 export default function DoctorLayout() {
   const { lang, setLang, t } = useDoctorTranslation();
@@ -119,9 +120,14 @@ export default function DoctorLayout() {
         onClose={() => setShowLogoutConfirm(false)}
         onClick={(event) => { if (event.target === event.currentTarget && !loggingOut) setShowLogoutConfirm(false); }}>
         <div className="doctor-logout-dialog-content">
-          <FaExclamationTriangle className="doctor-logout-warning" aria-hidden="true" />
+          <PortalElement as="button" type="button" className="doctor-logout-close" aria-label="Close logout confirmation" onClick={() => setShowLogoutConfirm(false)} disabled={loggingOut}><FaTimes aria-hidden="true" /></PortalElement>
+          <div className="doctor-logout-heading">
+          <div className="doctor-logout-warning-wrap"><FaSignOutAlt className="doctor-logout-warning" aria-hidden="true" /></div>
+          <div className="doctor-logout-copy">
           <h3 id="doctor-logout-title"><PortalText text={"Confirm Logout"} /></h3>
           <p id="doctor-logout-description"><PortalText text={"Are you sure you want to logout?"} /></p>
+          </div>
+          </div>
           <div className="doctor-logout-actions">
             <button type="button" className="doctor-logout-cancel" onClick={() => setShowLogoutConfirm(false)} disabled={loggingOut} autoFocus><PortalText text={"Cancel"} /></button>
             <button type="button" className="doctor-logout-confirm" onClick={logout} disabled={loggingOut}>{loggingOut ? <PortalText text={"Logging out..."} /> : <PortalText text={"Logout"} />}</button>
@@ -134,7 +140,7 @@ export default function DoctorLayout() {
           <span className="doctor-topbar-title"><PortalText text={"Doctor Portal"} /></span>
           <div className="doctor-topbar-actions"><Link to="/doctor-notifications" aria-label="Notifications"><i className="fa-solid fa-bell" aria-hidden="true" /></Link><Link to="/doctorprofile">{doctorName}</Link></div>
         </header>
-        <main className="doctor-page-content"><Outlet /></main>
+        <main className="doctor-page-content" data-card-theme={['/appointmentlist', '/walkinappointment'].includes(location.pathname.replace(/\/$/, '')) ? 'original' : 'shared'}><Outlet /></main>
       </div>
     </div></PortalLanguageScope.Provider>
   );

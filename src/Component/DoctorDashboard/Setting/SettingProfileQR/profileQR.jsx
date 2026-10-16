@@ -50,23 +50,29 @@ export default function ProfileCard() {
 
   return (
     <section className="doctor-profile-qr">
+      <header className="doctor-profile-qr-header"><div className="doctor-profile-qr-header-icon"><i className="bi bi-qr-code" aria-hidden="true" /></div><div><h1><PortalText text="Profile QR" /></h1><p><PortalText text="An easy way for patients to find your profile and clinics." /></p></div></header>
       <div className="doctor-profile-qr-card">
         <div className="doctor-profile-qr-info">
-          <img src="/favicon-96.png" width="64" height="64" alt="Humaeli" />
+          <div className="doctor-profile-qr-brand"><img src="/favicon-96.png" width="32" height="32" alt="" /><span>Humaeli</span></div>
+          <span className="doctor-profile-qr-eyebrow"><PortalText text="DOCTOR PROFILE" /></span>
           <h2>{profile.name}</h2>
-          {profile.speciality && <p>{profile.speciality}</p>}
-          <p><strong><PortalText text={"Email:"} /></strong> {profile.email || <PortalText text={"Not provided"} />}</p>
-          <p><strong><PortalText text={"Phone:"} /></strong> {profile.phone || <PortalText text={"Not provided"} />}</p>
-          {profile.qualification && <p><strong><PortalText text={"Qualification:"} /></strong> {profile.qualification}</p>}
-          {profile.clinic && <p><strong><PortalText text={"Clinic:"} /></strong> {profile.clinic}</p>}
+          {profile.speciality && <p className="doctor-profile-qr-speciality">{profile.speciality}</p>}
+          <dl className="doctor-profile-qr-details">
+            <div><i className="bi bi-envelope" aria-hidden="true" /><div><dt><PortalText text="Email address" /></dt><dd>{profile.email || <PortalText text="Not provided" />}</dd></div></div>
+            <div><i className="bi bi-telephone" aria-hidden="true" /><div><dt><PortalText text="Phone number" /></dt><dd>{profile.phone || <PortalText text="Not provided" />}</dd></div></div>
+            {profile.qualification && <div><i className="bi bi-mortarboard" aria-hidden="true" /><div><dt><PortalText text="Qualification" /></dt><dd>{profile.qualification}</dd></div></div>}
+            {profile.clinic && <div><i className="bi bi-hospital" aria-hidden="true" /><div><dt><PortalText text="Clinic" /></dt><dd>{profile.clinic}</dd></div></div>}
+          </dl>
         </div>
         <div className="doctor-profile-qr-code">
-          {qrError ? <p role="alert"><PortalText text={"QR image could not load. "} /><button type="button" onClick={() => setAttempt((value) => value + 1)}><PortalText text={"Retry"} /></button></p> : <img src={qrSrc} alt={`Scan to view ${profile.name}'s profile`} onError={() => setQrError(true)} />}
+          <span className="doctor-profile-qr-scan-label"><PortalText text="SCAN TO CONNECT" /></span>
+          <div className="doctor-profile-qr-image-frame">{qrError ? <p role="alert"><PortalText text={"QR image could not load. "} /><button type="button" onClick={() => setAttempt((value) => value + 1)}><PortalText text={"Retry"} /></button></p> : <img src={qrSrc} alt={`Scan to view ${profile.name}'s profile`} onError={() => setQrError(true)} />}</div>
           <p><PortalText text={"Scan for Doctor Profile"} /></p>
-          <a href={profileLink} target="_blank" rel="noopener noreferrer"><PortalText text={"View profile"} /></a>
+          <small><PortalText text="Open your phone camera and scan the code." /></small>
+          <a href={profileLink} target="_blank" rel="noopener noreferrer"><PortalText text={"View profile"} /><i className="bi bi-arrow-up-right" aria-hidden="true" /></a>
         </div>
       </div>
-      <p className="doctor-profile-qr-note"><PortalText text={"Your permanent doctor profile QR shows your latest profile and available clinics. Clinic changes do not require a new profile QR."} /></p>
+      <div className="doctor-profile-qr-note"><i className="bi bi-info-circle" aria-hidden="true" /><p><strong><PortalText text="One QR, always up to date" /></strong><PortalText text={"Your permanent doctor profile QR shows your latest profile and available clinics. Clinic changes do not require a new profile QR."} /></p></div>
     </section>
   );
 }

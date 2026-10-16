@@ -7,6 +7,7 @@ export default function PatientVitalsCard() {
   const [latest, setLatest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refreshKey, setRefreshKey] = useState(0);
   useEffect(() => {
     let disposed = false;
     let pending = false;
@@ -21,6 +22,7 @@ export default function PatientVitalsCard() {
       pending = true;
       try {
         const { data } = await axios.get('/api/auth/me/vitals', { signal: controller.signal });
+        if (!data.success) throw new Error('Invalid vitals response');
         if (!disposed) { setLatest(data.latest); setError(''); lastLoaded = Date.now(); }
       } catch (err) {
         if (!disposed && !axios.isCancel(err)) setError('Unable to load vitals. Please try again.');
@@ -52,10 +54,14 @@ export default function PatientVitalsCard() {
       window.removeEventListener('online', refresh);
       document.removeEventListener('visibilitychange', refresh);
     };
-  }, []);
+  }, [refreshKey]);
+  const retry = () => { setLoading(true); setError(''); setRefreshKey(key => key + 1); };
   return <section className="info-card-modern" aria-label="Latest recorded vitals">
-    <div className="card-header"><h2>Latest recorded vitals</h2></div>
+    <div className="card-header"><h2>Latest recorded vitals</h2><button type="button" className="profile-card-edit" onClick={retry} disabled={loading}>Refresh vitals</button></div>
     <p>These readings are recorded by your receptionist or doctor during an appointment. Editing your profile does not change them.</p>
-    {loading ? <p role="status">Loading vitals...</p> : error ? <p role="alert">{error}</p> : latest ? <VitalsSummary vitals={latest.vitals} /> : <p>No vitals recorded yet. Your readings will appear here after your clinic records them.</p>}
+    {loading && <p role="status">Loading vitals...</p>}
+    {error && <p role="alert">{error}</p>}
+    {latest && <VitalsSummary vitals={latest.vitals} />}
+    {!loading && !error && !latest && <p>No vitals recorded yet. Your readings will appear here after your clinic records them.</p>}
   </section>;
 }
