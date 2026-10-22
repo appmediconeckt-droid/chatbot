@@ -1,5 +1,4 @@
 import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
-import EmergencyReason from '../../common/EmergencyReason.jsx';
 import React, { useEffect, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
@@ -632,8 +631,7 @@ export default function AppointmentList() {
                         <PatientAvatar name={appointment.patientName} avatarUrl={appointment.patientAvatarUrl} />
                         <div className="appointment-patient-copy">
                           <span>{appointment.patientName}</span>
-                          {appointment.isEmergency && <span className="doctor-emergency-badge" title={appointment.emergencyReason}><i className="fa-solid fa-triangle-exclamation" aria-hidden="true" /><PortalText text={"Emergency"} /></span>}
-                          <EmergencyReason appointment={appointment} />
+                          {appointment.isEmergency && <span className="doctor-emergency-badge"><i className="fa-solid fa-triangle-exclamation" aria-hidden="true" /><PortalText text={"Emergency"} /></span>}
                         </div>
                       </div>
                     </td>
@@ -822,7 +820,7 @@ export default function AppointmentList() {
 
             <div className="appointment-modal-actions">
               <button type="button" className="modal-cancel-btn" onClick={() => setEditAppointment(null)}><PortalText text={"Cancel"} /></button>
-              <button type="submit" className="modal-save-btn"><PortalText text={"Update Appointment"} /></button>
+              <button type="submit" className="modal-save-btn"><PortalText text={"Save Changes"} /></button>
             </div>
           </form>
         </div>
@@ -859,10 +857,6 @@ export default function AppointmentList() {
               <div className="wide-field"><span><PortalText text={"Location"} /></span><strong>{viewAppointment.location}</strong></div>
             </div>
 
-            <div className="appointment-modal-actions">
-              <button type="button" className="modal-cancel-btn" onClick={() => setViewAppointment(null)}><PortalText text={"Close"} /></button>
-              <button type="button" className="modal-save-btn" onClick={() => openEditAppointment(viewAppointment)}><PortalText text={"Update"} /></button>
-            </div>
           </div>
         </div>
       )}

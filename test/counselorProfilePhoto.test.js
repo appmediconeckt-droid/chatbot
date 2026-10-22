@@ -41,3 +41,26 @@ test("stored JSON and relative image paths resolve to the backend, without makin
   assert.equal(getAnonymousUserDisplay(patient).avatarUrl, "https://api.example.com/uploads/avatar.png");
   assert.equal(getAnonymousUserDisplay(sanitizeUserForCounselor({})).avatarUrl, "");
 });
+
+const patientBundle = await build({
+  entryPoints: [fileURLToPath(new URL("../src/Component/counselor-dashboard/Dashboard/appointmentPatient.js", import.meta.url))],
+  bundle: true, write: false, format: "esm", platform: "node",
+  plugins: [{ name: "test-api-origin", setup(builder) {
+    builder.onResolve({ filter: /axiosConfig$/ }, () => ({ path: "api-origin", namespace: "test" }));
+    builder.onLoad({ filter: /.*/, namespace: "test" }, () => ({ contents: 'export const API_BASE_URL = "https://api.example.com";', loader: "js" }));
+  } }],
+});
+const { getAppointmentPatientId, getAppointmentPatientDisplay } = await import(
+  `data:text/javascript;base64,${Buffer.from(patientBundle.outputFiles[0].text).toString("base64")}`
+);
+
+test("appointment profile lookup uses the patient ID rather than the appointment ID", () => {
+  assert.equal(getAppointmentPatientId({ _id: "appointment-1", patient: "patient-1" }), "patient-1");
+  assert.equal(getAppointmentPatientId({ _id: "appointment-1" }), null);
+});
+
+test("a populated patient photo is preserved even when user is only an ID", () => {
+  const appointment = { _id: "appointment-1", user: "patient-1", patient: { _id: "patient-1", anonymous: "Boss", profilePhoto: { url: "/uploads/patient.png" } } };
+  assert.equal(getAppointmentPatientDisplay(appointment).avatarUrl, "https://api.example.com/uploads/patient.png");
+  assert.equal(getAppointmentPatientDisplay(appointment).name, "Boss");
+});

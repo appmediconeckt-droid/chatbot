@@ -1,3 +1,5 @@
+import { subscribeSocketRefresh } from "../../../hooks/useSocketRefresh";
+import useSocketRefresh from "../../../hooks/useSocketRefresh";
 import "../../common/PortalPageHeader.css";
 import { clearSessionPreservingLanguages } from '../../../i18n/languagePreferences';
 import React, { lazy, Suspense, useState, useEffect, useRef } from "react";
@@ -57,6 +59,7 @@ import {
 } from "../../../utils/profileImage";
 
 const AccountSettings = lazy(() => import("../../Settings/AccountSettings"));
+const PrivacyPolicy = lazy(() => import("../../Settings/PrivacyPolicy"));
 const CallHistory = lazy(() => import("../Tab/Callls/CallHistory"));
 const ChatInterface = lazy(() => import("../Tab/chatbot/ChatInterface"));
 const ChatBox = lazy(() => import("../Tab/ChatBox/ChatBox"));
@@ -198,8 +201,6 @@ export default function UserDashboard() {
     onEndCall: null,
   });
   const [waitingCalls, setWaitingCalls] = useState([]);
-  const [pollingInterval, setPollingInterval] = useState(null);
-  const [isPolling, setIsPolling] = useState(true);
   const [showIncomingCallModal, setShowIncomingCallModal] = useState(false);
   const [incomingCallData, setIncomingCallData] = useState(null);
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -454,34 +455,10 @@ export default function UserDashboard() {
     }
   };
 
-  useEffect(() => {
-    if (isPolling && !isVideoModalOpen) {
-      fetchWaitingCalls();
-      const interval = setInterval(() => fetchWaitingCalls(), 5000);
-      setPollingInterval(interval);
-
-      return () => {
-        if (interval) {
-          clearInterval(interval);
-        }
-      };
-    } else if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
-    }
-  }, [isPolling, showCallModal, isVideoModalOpen]);
-
-  useEffect(() => {
-    if (isVideoModalOpen) {
-      setIsPolling(false);
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
-      }
-    } else {
-      setIsPolling(true);
-    }
-  }, [isVideoModalOpen]);
+  useSocketRefresh(fetchWaitingCalls, [
+    "incoming_call_request", "call_accepted", "call_rejected",
+    "call_cancelled", "call_ended", "call_expired", "call_missed",
+  ], !isVideoModalOpen);
 
   useEffect(() => {
     if (showCallModal && !isVideoModalOpen) {
@@ -522,7 +499,7 @@ export default function UserDashboard() {
         console.error("Error fetching user:", error);
       }
     };
-    fetchUserData();
+    const stopRefresh = subscribeSocketRefresh(fetchUserData, ["profile:updated"]);
 
     const handleProfileUpdated = (event) => {
       if (!event.detail?.role || event.detail.role === "user") {
@@ -531,7 +508,7 @@ export default function UserDashboard() {
     };
 
     window.addEventListener("profile-updated", handleProfileUpdated);
-    return () => window.removeEventListener("profile-updated", handleProfileUpdated);
+    return () => { stopRefresh(); window.removeEventListener("profile-updated", handleProfileUpdated); };
   }, []);
 
   // Start empty so the backend's onboarding question (or the user's first
@@ -1386,6 +1363,8 @@ export default function UserDashboard() {
               </div>
             </section>
 
+          <Suspense fallback={null}><PrivacyPolicy role="user" aiOnly /></Suspense>
+
           <h3 className="ud-privacy-label">{t("data_collection")}</h3>
             <div className="ud-privacy-accordions">
               {sections.map((section) => {
@@ -1668,6 +1647,7 @@ export default function UserDashboard() {
                   {selectedConversation && (
                     <div className="ud-conversation-pane">
                       <ChatBox
+                        manageIncomingCalls={false}
                         key={selectedConversation.chatId || selectedConversation.counselor?.id}
                         embedded
                         conversation={selectedConversation}

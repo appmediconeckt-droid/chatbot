@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 // import { useState, useEffect } from "react";
 // import axios from "axios";
 // import { API_BASE_URL } from "../../../../axiosConfig";
@@ -55,7 +56,7 @@
 
 
 // hooks/useAppointments.js
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
 import { getAuthToken } from "./counsellorAuth";
@@ -64,10 +65,7 @@ import {
   getAnonymousUserAvatarUrl,
 } from "../../../../utils/anonymousUser";
 
-const getAppointmentPatient = (appointment = {}) => ({
-  ...appointment,
-  ...(appointment.user || appointment.patient || appointment.client || {}),
-});
+import { getAppointmentPatient, getAppointmentPatientId } from "../appointmentPatient";
 
 const getAppointmentChatId = (appointment = {}) =>
   appointment.chatId ||
@@ -98,7 +96,7 @@ const findMatchingChat = (appointment, chats = []) => {
     if (directMatch) return directMatch;
   }
 
-  const patientId = getAnonymousParticipantId(getAppointmentPatient(appointment));
+  const patientId = getAppointmentPatientId(appointment);
   if (!patientId) return null;
 
   return chats.find((chat) => String(getChatPatientId(chat)) === String(patientId)) || null;
@@ -118,11 +116,11 @@ export const mergeAppointmentPatientAvatar = (
   profile = null,
 ) => {
   const chatPeer = chat?.otherParty || chat?.user || chat?.patient || {};
-  const existingPatient = appointment?.user || appointment?.patient || appointment?.client || {};
+  const existingPatient = getAppointmentPatient(appointment);
   const avatarUrl =
     getAnonymousUserAvatarUrl(profile || {}) ||
-    getAnonymousUserAvatarUrl(chatPeer) ||
     getAnonymousUserAvatarUrl(existingPatient) ||
+    getAnonymousUserAvatarUrl(chatPeer) ||
     getAnonymousUserAvatarUrl(appointment);
 
   if (!avatarUrl) return appointment;
@@ -133,14 +131,14 @@ export const mergeAppointmentPatientAvatar = (
     ...existingPatient,
     avatarUrl,
     anonymousAvatarUrl: avatarUrl,
-    profilePhoto: existingPatient.profilePhoto || chatPeer.profilePhoto || profile?.profilePhoto || avatarUrl,
+    profilePhoto: avatarUrl,
   };
 
   return {
     ...appointment,
     avatarUrl,
     anonymousAvatarUrl: avatarUrl,
-    profilePhoto: appointment.profilePhoto || avatarUrl,
+    profilePhoto: avatarUrl,
     user: appointment.user ? { ...appointment.user, ...patientPatch } : patientPatch,
     patient: appointment.patient ? { ...appointment.patient, ...patientPatch } : appointment.patient,
     client: appointment.client ? { ...appointment.client, ...patientPatch } : appointment.client,
@@ -194,9 +192,9 @@ export default function useAppointments(activeTab) {
       appointments.map(async (appointment) => {
         const matchingChat = findMatchingChat(appointment, chats);
         const fromChat = mergeAppointmentPatientAvatar(appointment, matchingChat);
-        if (getAnonymousUserAvatarUrl(fromChat)) return fromChat;
+        if (getAnonymousUserAvatarUrl(getAppointmentPatient(appointment))) return fromChat;
 
-        const patientId = getAnonymousParticipantId(getAppointmentPatient(fromChat));
+        const patientId = getAppointmentPatientId(fromChat);
         const profile = await getUserProfile(token, patientId);
         return mergeAppointmentPatientAvatar(fromChat, matchingChat, profile);
       }),
@@ -320,36 +318,28 @@ export default function useAppointments(activeTab) {
   const handleSessionDateChange = useCallback((date) => {
     setSessionSelectedDate(date);
     // ✅ Fetch with new date
-    fetchSessionAppointments(date);
-  }, [fetchSessionAppointments]);
+  }, []);
 
   // ✅ Clear appointment date filter
   const clearDateFilter = useCallback(() => {
     setSelectedDate("");
-    fetchAppointments("");
-  }, [fetchAppointments]);
+  }, []);
 
   // ✅ Clear session date filter (reset to today)
   const clearSessionDateFilter = useCallback(() => {
     const today = new Date().toISOString().split('T')[0];
     setSessionSelectedDate(today);
-    fetchSessionAppointments(today);
-  }, [fetchSessionAppointments]);
+  }, []);
 
   // ✅ Fetch appointments when tab changes
-  useEffect(() => {
-    fetchAppointments("");
-    fetchSessionAppointments(sessionSelectedDate);
-  }, [fetchAppointments, fetchSessionAppointments]);
 
-  useEffect(() => {
-    if (activeTab === 'appointments') {
-      fetchAppointments(selectedDate);
-    } else if (activeTab === 'sessions') {
-      // ✅ Always fetch with today's date for sessions
-      fetchSessionAppointments(sessionSelectedDate);
-    }
-  }, [activeTab, selectedDate, sessionSelectedDate, fetchAppointments, fetchSessionAppointments]);
+  useSocketRefresh(() => {
+    if (activeTab === "sessions") return fetchSessionAppointments(sessionSelectedDate);
+    return fetchAppointments(selectedDate);
+  }, ["appointments:updated", "appointmentBooked", "queueUpdated"],
+  activeTab === "appointments" || activeTab === "sessions", {
+    refreshKey: JSON.stringify([activeTab, selectedDate, sessionSelectedDate]),
+  });
 
   return {
     appointments,

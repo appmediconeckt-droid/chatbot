@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import { isProfessionalRole } from "../../../../authtication/authSession.js";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
@@ -308,9 +309,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
     }
   }, [currentUserId, currentUserType, lang]);
 
-  useEffect(() => {
-    void fetchCallHistory();
-  }, [fetchCallHistory]);
+  useSocketRefresh(fetchCallHistory, ["call_accepted", "call_ended", "call_cancelled", "call_rejected", "call_expired", "call_missed"], true, { refreshKey: JSON.stringify([currentUserId, currentUserType, lang]) });
 
   const startCallFromHistory = useCallback(
     async (callMode, callEntry = null) => {
@@ -447,7 +446,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
   return (
     <div
       className={`portal-call-history ${
-        isCounselorView ? "pch-theme-counselor" : "pch-theme-user"
+        isCounselorView ? "pch-theme-counselor" : "pch-theme-user pch-single-list"
       }`}
     >
       {showHeader && (
@@ -473,9 +472,10 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
           </div>
 
           <div className="pch-compact-list">
+            {!isCounselorView && callError && <div className="call-error-banner" role="alert">{callError}</div>}
             {isLoadingCalls && <p className="pch-empty">{t("loading_calls")}</p>}
             {!isLoadingCalls && filteredCalls.map((call, index) => (
-              <button type="button" key={`${call.id}-compact-${index}`} className={`pch-compact-call ${index === 0 ? "selected" : ""}`} onClick={() => openCallModal(call)}>
+              <button type="button" key={`${call.id}-compact-${index}`} className={`pch-compact-call ${isCounselorView && index === 0 ? "selected" : ""}`} onClick={() => openCallModal(call)}>
                 <span className="pch-avatar">
                   {isImageUrl(call.avatarUrl || call.profilePic) ? <img src={call.avatarUrl || call.profilePic} alt="" /> : <span>{call.avatar || call.profilePic || FALLBACK_AVATAR}</span>}
                   <i className={call.isOnline ? "online" : "offline"} aria-label={call.isOnline ? "Online" : "Offline"} />
@@ -484,14 +484,15 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                   <strong>{call.name}</strong>
                   <small className={call.missed ? "missed" : ""}>{getCallIcon(call.type)} {call.missed ? `${t("missed")} ${t("calls")}` : (call.type === "video" ? t("video_call") : t("voice_call"))}{call.duration ? ` · ${call.duration}` : ""}</small>
                 </span>
-                <time>{call.time || call.date}</time>
+                <time>{!isCounselorView && <span>{call.date}</span>}<span>{call.time || (isCounselorView ? call.date : "")}</span></time>
+                {!isCounselorView && <span className="pch-compact-action" aria-hidden="true">{getCallIcon(call.type)}</span>}
               </button>
             ))}
             {!isLoadingCalls && !filteredCalls.length && <p className="pch-empty">{t("no_calls")}</p>}
           </div>
         </aside>
 
-        <main className="pch-records" tabIndex={0} aria-label={t("call_history")}>
+        {isCounselorView && <main className="pch-records" tabIndex={0} aria-label={t("call_history")}>
           {callError && <div className="call-error-banner">{callError}</div>}
           {!isLoadingCalls && Object.keys(groupedCalls).map((date) => (
             <section className="pch-date-group" key={date}>
@@ -525,7 +526,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
           ))}
           {isLoadingCalls && <div className="pch-main-empty"><p>{t("loading_calls")}</p></div>}
           {!isLoadingCalls && !filteredCalls.length && <div className="pch-main-empty"><FaPhoneAlt /><p>{t("no_calls")}</p><small>{t("adjust_call_filters")}</small></div>}
-        </main>
+        </main>}
       </div>
 
       <VideoCallModal

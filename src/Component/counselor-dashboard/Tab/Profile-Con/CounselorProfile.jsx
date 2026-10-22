@@ -1,3 +1,5 @@
+import { currencyForCountry, feeCurrency, currencyDigits, validFee, formatFee } from '../../../../utils/consultationCurrency.js';
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import useProfileCompletion from "../../../../hooks/useProfileCompletion";
 import { getProfileCompletion } from "../../../../utils/profileCompletion";
 import ProfileCompletion from "../../../common/ProfileCompletion";
@@ -758,7 +760,7 @@ import ProfileCompletion from "../../../common/ProfileCompletion";
 //         } catch (err) {
 //             console.error('Error updating profile:', err);
 //             console.error('Error details:', err.response?.data);
-//             setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile');
+//             setError(err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to update profile');
 
 //             setTimeout(() => {
 //                 setError('');
@@ -1718,6 +1720,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
         fullName: '',
         specialization: [],
         experience: 0,
+        consultationFee: "",
         education: '',
         email: '',
         phoneNumber: '',
@@ -1760,6 +1763,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
     });
 
     const [isEditing, setIsEditing] = useState(initialEditing);
+    useSocketRefresh(() => fetchCounselorProfile(), ["profile:updated", "wallet:updated", "appointments:updated", "chats:updated"], !isEditing, { initial: false });
     const [editedData, setEditedData] = useState(counselor);
     const [newLanguage, setNewLanguage] = useState('');
     const [newSpecialization, setNewSpecialization] = useState('');
@@ -1889,6 +1893,8 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     specialization: Array.isArray(userData.specialization) ? userData.specialization :
                         (userData.specialization ? [userData.specialization] : []),
                     experience: userData.experience || 0,
+                    consultationFee: userData.consultationFee ?? "",
+                    consultationCurrency: userData.consultationCurrency,
                     education: userData.education || userData.qualification || '',
                     email: userData.email || '',
                     phoneNumber: userData.phoneNumber || userData.phone || '',
@@ -2535,6 +2541,11 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                 PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0];
             formData.append('phoneCountryCode', selectedPhoneCountry.dial);
             formData.append('qualification', editedData.qualification || editedData.education);
+            if (editedData.consultationFee !== '' && editedData.consultationFee != null) {
+                if (!validFee(editedData.consultationFee, currencyForCountry(editedData.address?.country))) throw new Error('Enter a valid checkup fee for your profile country.');
+                formData.append('consultationFee', editedData.consultationFee);
+                formData.append('consultationCurrency', currencyForCountry(editedData.address?.country));
+            }
             formData.append('experience', editedData.experience.toString());
             formData.append('location', editedData.location);
             formData.append('aboutMe', editedData.aboutMe);
@@ -2613,7 +2624,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
             }
         } catch (err) {
             console.error('Error updating profile:', err);
-            setError(err.response?.data?.message || err.response?.data?.error || 'Failed to update profile');
+            setError(err.response?.data?.message || err.response?.data?.error || err.message || 'Failed to update profile');
 
             setTimeout(() => {
                 setError('');
@@ -2863,6 +2874,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     <main className="counselor-profile-reference__right">
                         <section className="counselor-profile-details-card">
                             {[
+                                [<FaBriefcase />, 'Checkup Fee', counselor?.consultationFee != null ? formatFee(counselor.consultationFee, feeCurrency(counselor)) : t('not_specified')],
                                 [<FaCalendarAlt />, t('age'), counselorAge ?? t('not_specified')],
                                 [<FaUser />, t('gender'), counselor?.gender || t('not_specified')],
                                 [<FaEnvelope />, t('email'), counselor?.email || t('not_specified')],
@@ -3359,6 +3371,10 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                         )}
                     </div>
 
+                    <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
+                        <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>Checkup Fee ({currencyForCountry(editedData.address?.country) || "select country"})</h3>
+                        {isEditing ? <input className={`${COUNSELOR_PROFILE_CLASS}__input`} aria-label="Checkup Fee" type="number" min="0" max="9999999.99" step={currencyForCountry(editedData.address?.country) ? 10 ** -currencyDigits(currencyForCountry(editedData.address.country)) : "any"} value={editedData.consultationFee ?? ''} onChange={e => handleInputChange('consultationFee', e.target.value)} placeholder="Enter your fee per checkup" /> : <p>{counselor?.consultationFee != null && counselor.consultationFee !== '' ? formatFee(counselor.consultationFee, feeCurrency(counselor)) : 'Not set'}</p>}
+                    </div>
                     {/* Experience */}
                     <div className={`${COUNSELOR_PROFILE_CLASS}__card`}>
                         <h3 className={`${COUNSELOR_PROFILE_CLASS}__card-title`}>{t('experience')}</h3>

@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buildFollowUpPatients, countFollowUpPatients, followUpPatient, recordId } from '../src/Component/DoctorDashboard/Follow-Up/followUpPatients.js';
+import { buildFollowUpPatients, countFollowUpPatients, followUpPatient, followUpDemographics, recordId } from '../src/Component/DoctorDashboard/Follow-Up/followUpPatients.js';
+test('follow-up demographics retain actual gender from populated patients and appointment fallback', () => {
+  assert.deepEqual(followUpDemographics({ patient: { age: 32, gender: 'female' } }), { age: 32, gender: 'female' });
+  const [walkin] = buildFollowUpPatients([{ _id: 'w1', __appointmentSource: 'walkin', age: 21, gender: 'female' }]);
+  assert.deepEqual(followUpDemographics({ walkin_id: 'w1' }, walkin), { age: 21, gender: 'female' });
+  assert.deepEqual(followUpDemographics({ age: 0 }), { age: 0, gender: 'N/A' });
+  assert.deepEqual(followUpDemographics({ gender: 'other', patient: { gender: 'male' } }), { age: 'N/A', gender: 'other' });
+});
 test('dropdown reads fullName and phoneNumber from populated appointment patients', () => {
   const [patient] = buildFollowUpPatients([{ _id: 'apt1', patient: { _id: 'patient1', fullName: 'Patient One', phoneNumber: '12345' } }]);
   assert.equal(patient.name, 'Patient One'); assert.equal(patient.id, 'patient1'); assert.equal(patient.phone, '12345');

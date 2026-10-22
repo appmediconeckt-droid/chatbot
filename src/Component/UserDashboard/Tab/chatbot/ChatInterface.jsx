@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaSearch } from 'react-icons/fa';
@@ -376,12 +377,7 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
 
     // Load active chats from API
     useEffect(() => {
-        fetchChats(true);
 
-        // Set up polling for new messages (every 30 seconds)
-        const intervalId = setInterval(() => {
-            fetchChats(false);
-        }, 30000);
 
         // Listen for storage changes (for multiple tabs)
         const handleStorageChange = (e) => {
@@ -396,29 +392,12 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
         window.addEventListener('chat:refresh-list', handleManualRefresh);
 
         return () => {
-            clearInterval(intervalId);
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('chat:refresh-list', handleManualRefresh);
         };
     }, [fetchChats]);
 
-    useEffect(() => {
-        let mounted = true;
-        const refreshChatList = () => {
-            if (mounted) fetchChats(false);
-        };
-
-        socketService.connect().then((socket) => {
-            if (mounted) socket.on('chat-list-update', refreshChatList);
-        }).catch((error) => {
-            console.error('Chat list socket connection failed:', error.message);
-        });
-
-        return () => {
-            mounted = false;
-            socketService.off('chat-list-update', refreshChatList);
-        };
-    }, [fetchChats]);
+    useSocketRefresh(() => fetchChats(false), ["chat-list-update", "chats:updated", "chat-status-update", "messages-read"]);
 
     // Translate counselor list messages when language changes
     useEffect(() => {

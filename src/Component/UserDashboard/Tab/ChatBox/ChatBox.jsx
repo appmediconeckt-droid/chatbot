@@ -1,3 +1,4 @@
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import ParticipantPhoto from "../../../common/ParticipantPhoto";
 import { resolveProfileImage } from "../../../../utils/profileImage";
 // // ChatBox.jsx - Fully Responsive Chat Interface with Proper Scroll Behavior
@@ -4090,7 +4091,7 @@ const mergeCounselorProfiles = (storedCounselor, freshCounselor) => {
   return normalizeCounselor({ ...stored, ...freshValues });
 };
 
-const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantMentionClick }) => {
+const ChatBox = ({ manageIncomingCalls = true, embedded = false, conversation = null, onClose, onConsultantMentionClick }) => {
   const { t, lang } = useUserTranslation();
   const { translate } = useUserApiTranslation();
   const { id: counselorId } = useParams();
@@ -4727,6 +4728,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantM
 
   // ─── Incoming Calls Polling ────────────────────────────────────────────
   useEffect(() => {
+    if (!manageIncomingCalls) return;
     const fetchIncomingCalls = async () => {
       try {
         const token = localStorage.getItem("token") || localStorage.getItem("accessToken");
@@ -4816,6 +4818,7 @@ const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantM
     const interval = setInterval(fetchIncomingCalls, 5000);
     return () => clearInterval(interval);
   }, [
+    manageIncomingCalls,
     showIncomingModal,
     currentUser,
     isVideoModalOpen,
@@ -5556,8 +5559,8 @@ const ChatBox = ({ embedded = false, conversation = null, onClose, onConsultantM
   }, [chatId, currentChat?.chatId]);
 
   useEffect(() => {
-    const interval = setInterval(() => { if (currentChat) fetchMessagesFromAPI(); }, 30000);
-    return () => clearInterval(interval);
+    if (!currentChat) return;
+    return subscribeSocketRefresh(fetchMessagesFromAPI, [], { initial: false });
   }, [currentChat]);
 
   // ─── Render Call Item ──────────────────────────────────────────────────

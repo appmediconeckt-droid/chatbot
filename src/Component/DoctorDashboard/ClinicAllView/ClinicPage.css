@@ -595,32 +595,87 @@
 }
 .doctor-clinic-management {
   display: flex;
-  align-items: end;
+  align-items: flex-end;
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 16px;
   margin-bottom: 18px;
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  background: var(--doctor-surface, #fff);
 }
-.doctor-clinic-management label { display: grid; gap: 8px; max-width: 100%; }
+.doctor-clinic-management > label {
+  display: grid;
+  gap: 7px;
+  flex: 1 1 280px;
+  min-width: 0;
+  max-width: 560px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #475569;
+}
 .doctor-clinic-management select {
-  max-width: 100%;
-  padding: 10px;
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 32px 10px 12px;
   border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  background: white;
+  border-radius: 9px;
+  background: var(--doctor-surface, #fff);
+  color: #172033;
+  font: inherit;
+  font-size: 14px;
+  text-overflow: ellipsis;
 }
-.doctor-clinic-delete {
-  color: #b91c1c;
-  background: #fff;
-  border: 1px solid #fca5a5;
-  border-radius: 8px;
+.doctor-clinic-management-actions, .clinic-edit-form-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.doctor-clinic-profile-page .doctor-clinic-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
   padding: 10px 16px;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background-color 150ms, border-color 150ms;
 }
-.doctor-clinic-delete:disabled { opacity: 0.6; cursor: not-allowed; }
-
+.doctor-clinic-profile-page .doctor-clinic-edit { background: #1167b1; color: #fff; border-color: #1167b1; }
+.doctor-clinic-profile-page .doctor-clinic-edit:hover:not(:disabled) { background: #0d5493; border-color: #0d5493; }
+.doctor-clinic-profile-page .doctor-clinic-delete { color: #b91c1c; background: #fff; border-color: #fecaca; }
+.doctor-clinic-profile-page .doctor-clinic-delete:hover:not(:disabled) { background: #fef2f2; border-color: #f87171; }
+.doctor-clinic-profile-page .doctor-clinic-cancel { background: #fff; color: #475569; border-color: #cbd5e1; }
+.doctor-clinic-action:disabled { opacity: 0.5; cursor: not-allowed; }
+.doctor-clinic-action:focus-visible, .doctor-clinic-management select:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 3px;
+}
+@media (max-width: 560px) {
+  .doctor-clinic-management { padding: 12px; gap: 12px; }
+  .doctor-clinic-management > label { max-width: none; flex-basis: 100%; }
+  .doctor-clinic-management-actions { width: 100%; flex-wrap: wrap; }
+  .doctor-clinic-management-actions .doctor-clinic-action { flex: 1 1 130px; }
+  .clinic-edit-form-actions { flex-wrap: wrap; }
+  .clinic-edit-form-actions .doctor-clinic-action { flex: 1; }
+}
 
 .doctor-clinic-doctor-card > .doctor-clinic-doctor-avatar { position: relative; display: grid; place-items: center; height: 160px; padding: 0; color: #1167b1; background: #eef6ff; }
 .doctor-clinic-doctor-avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #eef6ff; }
 .doctor-clinic-doctor-card .doctor-clinic-doctor-name-note { color: #64748b; font-size: 12px; line-height: 1.5; }
 .doctor-clinic-doctor-profile-link { display: inline-block; margin-top: 12px; color: #1167b1; font-size: 13px; font-weight: 600; }
+
+.clinic-edit-form { margin: 16px 0; padding: 20px; }
+.clinic-edit-form fieldset { border: 0; display: grid; gap: 14px; padding: 0; }
+.clinic-edit-form label { display: grid; gap: 6px; }
+.clinic-edit-form input, .clinic-edit-form textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; box-sizing: border-box; }
+.clinic-edit-form button { padding: 10px 16px; border-radius: 8px; }

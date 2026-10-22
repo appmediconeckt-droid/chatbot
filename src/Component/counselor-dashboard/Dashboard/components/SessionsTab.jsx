@@ -14,7 +14,7 @@ import {
   FaQuoteLeft,
   FaBriefcaseMedical,
 } from "react-icons/fa";
-import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
+import { getAppointmentPatientDisplay as getAppointmentDisplay } from "../appointmentPatient";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
 import ParticipantPhoto from "../../../common/ParticipantPhoto";
 
@@ -42,11 +42,6 @@ export default function SessionsTab({
     }
   };
 
-  const getAppointmentDisplay = (appointment) =>
-    getAnonymousUserDisplay({
-      ...appointment,
-      ...(appointment?.user || appointment?.patient || appointment?.client || {}),
-    });
 
   // ✅ Date change handler
   const handleDateChange = (e) => {

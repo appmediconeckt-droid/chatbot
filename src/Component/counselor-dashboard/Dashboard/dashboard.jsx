@@ -314,7 +314,7 @@ import "../../common/PortalPageHeader.css";
 //         {activeTab === "messages" && (
 //           <div className="couns-tab-content">
 //             <div className="couns-tab-header">
-//               <Messagesou />
+//               <Messagesou pendingRequests={pendingRequests} setPendingRequests={setPendingRequests} fetchPendingRequests={fetchPendingRequests} />
 //             </div>
 //           </div>
 //         )}
@@ -422,7 +422,6 @@ const TabLoading = () => (
 export default function CounselorDashboard() {
   const { t } = useCounselorTranslation();
   const [activeTab, setActiveTab] = useState("messages"); // ✅ Default appointments
-  const [visitedTabs, setVisitedTabs] = useState(() => new Set(["messages"]));
   const [isMobile, setIsMobile] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -478,6 +477,8 @@ export default function CounselorDashboard() {
 
   const {
     pendingRequests,
+    setPendingRequests,
+    fetchPendingRequests,
     loadingRequests,
     showRequestModal,
     currentRequest,
@@ -558,15 +559,6 @@ export default function CounselorDashboard() {
       socketRef.current = null;
     };
   }, []);
-
-  useEffect(() => {
-    setVisitedTabs((current) => {
-      if (current.has(activeTab)) return current;
-      const next = new Set(current);
-      next.add(activeTab);
-      return next;
-    });
-  }, [activeTab]);
 
   useEffect(() => {
     const preloadTabs = () => Promise.allSettled([
@@ -807,7 +799,7 @@ export default function CounselorDashboard() {
 
       <div className={`couns-main-content ${activeTab === "call_history" ? "couns-main-content--calls" : ""} ${isMobile ? "mobile" : ""}`}>
         <Suspense fallback={<TabLoading />}>
-        {visitedTabs.has("dashboard") && (
+        {activeTab === "dashboard" && (
           <div hidden={activeTab !== "dashboard"} className="couns-tab-content">
             <div className="couns-tab-header">
               <Dashboard />
@@ -815,7 +807,7 @@ export default function CounselorDashboard() {
           </div>
         )}
 
-        {visitedTabs.has("appointments") && (
+        {activeTab === "appointments" && (
           <div hidden={activeTab !== "appointments"}><AppointmentsTab
             appointments={appointments}
             counselorName={counselorData?.name}
@@ -828,7 +820,7 @@ export default function CounselorDashboard() {
           /></div>
         )}
 
-       {visitedTabs.has("sessions") && (
+       {activeTab === "sessions" && (
   <div hidden={activeTab !== "sessions"}><SessionsTab
     sessionAppointments={sessionAppointments}
     sessionSelectedDate={sessionSelectedDate}
@@ -843,7 +835,7 @@ export default function CounselorDashboard() {
   /></div>
 )}
 
-        {visitedTabs.has("call_history") && (
+        {activeTab === "call_history" && (
           <div hidden={activeTab !== "call_history"} className="couns-tab-content couns-call-page">
             <div className="couns-call-page-header portal-page-header">
               <div>
@@ -868,45 +860,45 @@ export default function CounselorDashboard() {
           </div>
         )} */}
 
-        {visitedTabs.has("earnings") && (
+        {activeTab === "earnings" && (
           <div hidden={activeTab !== "earnings"} className="couns-tab-content">
             <CounselorEarnings />
           </div>
         )}
 
-        {visitedTabs.has("psychiatrists") && (
+        {activeTab === "psychiatrists" && (
           <div hidden={activeTab !== "psychiatrists"} className="couns-tab-content">
             <PsychiatristsDirectory />
           </div>
         )}
 
-        {visitedTabs.has("prescriptions") && canReviewPrescriptions && (
+        {activeTab === "prescriptions" && canReviewPrescriptions && (
           <div hidden={activeTab !== "prescriptions"} className="couns-tab-content">
             <PrescriptionReviews />
           </div>
         )}
 
-        {visitedTabs.has("notifications") && (
+        {activeTab === "notifications" && (
           <div hidden={activeTab !== "notifications"} className="couns-tab-content">
-            <NotificationsPage role="counsellor" />
+            <NotificationsPage role="counsellor" onOpenNotification={(item) => handleTabChange(item.type === "appointment" ? "appointments" : item.type === "call" || item.type === "message" || item.type === "chat" ? "messages" : "sessions")} />
           </div>
         )}
 
-        {visitedTabs.has("messages") && (
+        {activeTab === "messages" && (
           <div hidden={activeTab !== "messages"} className="couns-tab-content">
             <div className="couns-tab-header">
-              <Messagesou />
+              <Messagesou pendingRequests={pendingRequests} setPendingRequests={setPendingRequests} fetchPendingRequests={fetchPendingRequests} />
             </div>
           </div>
         )}
 
-        {visitedTabs.has("profile") && (
+        {activeTab === "profile" && (
           <div hidden={activeTab !== "profile"} className="couns-tab-content">
             <CounselorProfile />
           </div>
         )}
 
-        {visitedTabs.has("settings") && (
+        {activeTab === "settings" && (
           <div hidden={activeTab !== "settings"} className="couns-tab-content">
             <AccountSettings
               role="counsellor"

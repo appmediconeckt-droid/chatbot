@@ -1,6 +1,8 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import React, { useCallback, useEffect, useState } from "react";
 import { FaCheck, FaEye, FaFilePrescription, FaRedo, FaSpinner, FaTimes, FaUser } from "react-icons/fa";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
+import { CalendarDays, CircleCheck, Clock3, Image, Pill, ShieldCheck, Stethoscope } from "lucide-react";
 import { logoIcon } from "../../../../assets/brandAssets";
 import { getPrescriptionFestivalTheme, PRESCRIPTION_FESTIVAL_THEMES } from "../../../common/prescriptionFestivalThemes";
 import "./PrescriptionReviews.css";
@@ -67,18 +69,25 @@ export default function PrescriptionReviews() {
   const [photoErrors, setPhotoErrors] = useState({});
   const [previewItem, setPreviewItem] = useState(null);
   const [savingThemeId, setSavingThemeId] = useState(null);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const visibleItems = items.filter((item) => statusFilter === "all" || item.verificationStatus === statusFilter);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (silent = false) => {
     try {
-      setLoading(true); setError("");
+      if (!silent) setLoading(true);
+      setError("");
       const response = await axiosInstance.get(`${API_BASE_URL}/api/prescriptions/review`);
-      setItems(response.data?.prescriptions || []);
+      const records = response.data?.prescriptions || [];
+      setItems(records);
+      setPreviewItem((current) => current ? records.find((item) => String(item.id) === String(current.id)) || null : null);
+      setPhotoUrls((current) => { Object.values(current).forEach((url) => URL.revokeObjectURL(url)); return {}; });
+      setPhotoErrors({});
     } catch (requestError) {
       setError(requestError.response?.data?.error || "Unable to load prescriptions");
     } finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { load(); }, [load]);
+  useSocketRefresh(() => load(true), ["prescriptions:updated"]);
   useEffect(() => {
     let active = true;
     const pending = items.filter((item) =>
@@ -141,17 +150,21 @@ export default function PrescriptionReviews() {
   };
 
   return <section className="crx-page">
-    <header className="portal-page-header"><div><span>Clinical records</span><h1>Prescriptions</h1><p>Review patient photos before releasing final prescriptions.</p></div><button onClick={load} disabled={loading}><FaRedo className={loading ? "spinning" : ""}/> Refresh</button></header>
+    <header className="crx-page-header"><div className="crx-heading-copy"><h1>Prescriptions</h1><p>Review patient photos before releasing final prescriptions.</p></div><div className="crx-header-art" aria-hidden="true"><i className="crx-art-leaf"/><div className="crx-art-paper"><span>℞</span><i/><i/><i/></div><ShieldCheck className="crx-art-shield"/></div><button type="button" onClick={() => load()} disabled={loading}><FaRedo className={loading ? "spinning" : ""}/> Refresh</button></header>
     {error && <div className="crx-error">{error}</div>}
-    {loading ? <div className="crx-state"><FaSpinner className="spinning"/> Loading prescriptions...</div> : items.length === 0 ? <div className="crx-state"><FaFilePrescription/> No prescriptions issued yet.</div> : <div className="crx-grid">
-      {items.map((item) => <article className="crx-card" key={item.id}>
+    <section className="crx-requests" aria-label="Prescription requests">
+    <div className="crx-list-heading"><div><h2>{items.length} prescription {items.length === 1 ? "request" : "requests"}</h2><p>Review and verify patient information, photos, and details before approval.</p></div><div className="crx-filters" role="group" aria-label="Filter prescriptions">{[["all", "All"], ["pending", "Pending"], ["verified", "Verified"]].map(([value, label]) => <button type="button" key={value} aria-pressed={statusFilter === value} className={statusFilter === value ? "active" : ""} onClick={() => setStatusFilter(value)}>{label} ({value === "all" ? items.length : items.filter((item) => item.verificationStatus === value).length})</button>)}</div></div>
+    {loading ? <div className="crx-state"><FaSpinner className="spinning"/> Loading prescriptions...</div> : visibleItems.length === 0 ? <div className="crx-state"><FaFilePrescription/> {items.length === 0 ? "No prescriptions issued yet." : "No prescriptions in this category."}</div> : <div className="crx-grid">
+      {visibleItems.map((item) => <article className="crx-card" key={item.id}>
         <div className={`crx-photo ${photoErrors[item.id] ? "failed" : ""}`}>
+          {photoUrls[item.id] && <span className="crx-photo-badge" aria-hidden="true"><Image size={14}/></span>}
           {photoUrls[item.id] ? <img src={photoUrls[item.id]} alt={`Patient for ${item.problem}`}/> : photoErrors[item.id] ? <button type="button" onClick={() => retryPhoto(item.id)} title="Retry loading photo"><FaRedo/><span>{photoErrors[item.id]}<br/>Retry</span></button> : item.hasPatientPhoto || item.verificationStatus === "pending" ? <FaSpinner className="spinning"/> : <FaUser/>}
         </div>
-        <div className="crx-copy"><div className={`crx-status ${item.verificationStatus}`}>{String(item.verificationStatus || "photo_required").replace("_", " ")}</div><h2>{item.patient?.name || "Anonymous patient"}</h2><p><b>Problem:</b> {item.problem}</p><small>{new Date(item.issuedAt).toLocaleDateString("en-IN")} · {item.medicines?.length || 0} medicine(s)</small>{item.rejectionReason && <em>{item.rejectionReason}</em>}</div>
+        <div className="crx-copy"><div className={`crx-status ${item.verificationStatus}`}>{item.verificationStatus === "verified" ? <CircleCheck size={13}/> : item.verificationStatus === "pending" ? <Clock3 size={13}/> : null}{String(item.verificationStatus || "photo_required").replace("_", " ")}</div><h2>{item.patient?.name || "Anonymous patient"}</h2><p><Stethoscope size={14}/><span><b>Problem:</b> {item.problem}</span></p><small><CalendarDays size={14}/>{new Date(item.issuedAt).toLocaleDateString("en-IN")} <i className="crx-meta-divider" aria-hidden="true"/> <Pill size={14}/> {item.medicines?.length || 0} medicine(s)</small>{item.rejectionReason && <em>{item.rejectionReason}</em>}</div>
         <div className="crx-actions"><button className="view" onClick={() => setPreviewItem(item)}><FaEye/> View</button><button className="approve" onClick={() => review(item,"approve")} disabled={!item.hasPatientPhoto || workingId === item.id || item.verificationStatus === "verified"}><FaCheck/> Approve</button><button className="reject" onClick={() => review(item,"reject")} disabled={!item.hasPatientPhoto || workingId === item.id}><FaTimes/> Reject</button></div>
       </article>)}
     </div>}
+    </section>
     {previewItem && <PrescriptionPreview item={previewItem} patientPhoto={photoUrls[previewItem.id]} onClose={() => setPreviewItem(null)} onThemeChange={(festivalTheme) => updateFestivalTheme(previewItem, festivalTheme)} savingTheme={savingThemeId === previewItem.id} />}
   </section>;
 }

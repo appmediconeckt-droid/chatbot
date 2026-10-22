@@ -17,6 +17,19 @@ dist-ssr
 # Browser test profiles contain local caches, cookies and generated extensions.
 **/chrome-profile/
 
+# Generated browser checks, screenshots, archives and local runtime output
+test-artifacts/
+chatbot-frontend/test-artifacts/
+.chrome-shot-profile*/
+.edge-shot-profile/
+.runtime/
+dist.zip
+lint_check.txt
+lint_output.txt
+landing-current.png
+Thumbs.db
+*.tmp
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

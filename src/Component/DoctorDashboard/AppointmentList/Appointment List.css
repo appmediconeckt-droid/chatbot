@@ -1821,12 +1821,18 @@
   inset: 0;
   justify-content: center;
   overflow-y: auto;
-  padding: 72px 20px 28px;
+  padding: 20px;
   position: fixed;
   z-index: 1200;
 }
 
 .appointment-modal {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  min-height: 0;
   background: var(--doctor-surface, #ffffff);
   border: 1px solid #dfe4ef;
   border-radius: 12px;
@@ -1834,6 +1840,14 @@
   max-width: 780px;
   padding: 24px;
   width: 100%;
+}
+
+.appointment-modal > .appointment-form-grid,
+.appointment-modal > .appointment-detail-grid {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px;
+  align-content: start;
 }
 
 .appointment-modal-header {
@@ -1845,7 +1859,7 @@
 }
 
 .appointment-modal-header h2 {
-  color: var(--doctor-primary);
+  color: var(--doctor-primary, #004ac6);
   font-size: 24px;
   font-weight: 800;
   margin: 0 0 6px;
@@ -1930,6 +1944,10 @@
   gap: 12px;
   justify-content: flex-end;
   margin-top: 24px;
+  flex-shrink: 0;
+  padding-top: 16px;
+  border-top: 1px solid #e3e8f1;
+  background: var(--doctor-surface, #ffffff);
 }
 
 .modal-cancel-btn,
@@ -1947,11 +1965,23 @@
 }
 
 .modal-save-btn {
-  background: var(--doctor-primary);
+  background: var(--doctor-primary, #004ac6);
   color: #ffffff;
 }
 
+.appointment-modal-actions button {
+  flex-shrink: 0;
+  min-height: 42px;
+  cursor: pointer;
+}
+
+.appointment-modal-actions button:focus-visible {
+  outline: 3px solid #60a5fa;
+  outline-offset: 3px;
+}
+
 .appointment-view-modal {
+  grid-template-rows: auto minmax(0, 1fr);
   max-width: 680px;
 }
 

@@ -1,3 +1,4 @@
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import ParticipantPhoto from "../../../common/ParticipantPhoto";
 import { normalizeProfileImage, resolveProfileImage } from "../../../../utils/profileImage";
 import { isProfessionalRole } from "../../../../authtication/authSession.js";
@@ -2911,7 +2912,7 @@ import { isProfessionalRole } from "../../../../authtication/authSession.js";
 //       isMounted = false;
 //       if (intervalId) clearInterval(intervalId);
 //     };
-//   }, [showIncomingModal, COUNSELOR_ID, isVideoModalOpen, incomingCallData?.callId]);
+//   }, [manageIncomingCalls, showIncomingModal, COUNSELOR_ID, isVideoModalOpen, incomingCallData?.callId]);
 
 //   useEffect(() => {
 //     if (showIncomingModal && !isVideoModalOpen) {
@@ -3535,7 +3536,7 @@ import TranslatedMessage from "../../../common/TranslatedMessage";
 import { getCallHistoryTone } from "../../../common/callHistoryStyle";
 import { logoHorizontal } from "../../../../assets/brandAssets";
 
-const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack = null }) => {
+const SMSInput = ({ manageIncomingCalls = true, embeddedUser = null, embeddedChatId = null, onEmbeddedBack = null }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, lang } = useCounselorTranslation();
@@ -5139,6 +5140,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
 
   // ─── Incoming Calls Polling ────────────────────────────────────────────
   useEffect(() => {
+    if (!manageIncomingCalls) return;
     let isMounted = true;
     let intervalId = null;
     const fetchIncomingCalls = async () => {
@@ -5235,7 +5237,7 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       isMounted = false;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [showIncomingModal, COUNSELOR_ID, isVideoModalOpen, incomingCallData?.callId]);
+  }, [manageIncomingCalls, showIncomingModal, COUNSELOR_ID, isVideoModalOpen, incomingCallData?.callId]);
 
   useEffect(() => {
     if (showIncomingModal && !isVideoModalOpen) {
@@ -5407,10 +5409,10 @@ const SMSInput = ({ embeddedUser = null, embeddedChatId = null, onEmbeddedBack =
       }
     };
 
-    const intervalId = setInterval(syncMessagesSilently, 1500);
+    const stopRefresh = subscribeSocketRefresh(syncMessagesSilently, [], { initial: false });
     return () => {
       cancelled = true;
-      clearInterval(intervalId);
+      stopRefresh();
     };
   }, [selectedUser, chatId, COUNSELOR_ID]);
 

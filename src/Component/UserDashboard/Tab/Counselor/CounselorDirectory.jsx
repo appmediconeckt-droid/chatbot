@@ -1,3 +1,4 @@
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaSearch } from "react-icons/fa";
@@ -256,33 +257,11 @@ const CounselorTable = () => {
       }
     };
 
+    const stopRefresh = subscribeSocketRefresh(() => fetchCounselors(false), ["counselor-directory-updated"], { initial: false });
     void fetchCounselors(true);
-
-    // Socket events are primary. This reconciliation covers an event missed
-    // while the tab was mounting, reconnecting, or in the background.
-    const refreshTimer = window.setInterval(() => {
-      void fetchCounselors(false);
-    }, 15_000);
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "visible") void fetchCounselors(false);
-    };
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    let refreshSocket = null;
-    const refreshDirectory = () => void fetchCounselors(false);
-    socketService.connect().then((socket) => {
-      if (!isMounted) return;
-      refreshSocket = socket;
-      socket.on('connect', refreshDirectory);
-      socket.on('counselor-directory-updated', refreshDirectory);
-      refreshDirectory();
-    }).catch((error) => console.warn('Directory refresh socket unavailable:', error.message));
-
     return () => {
       isMounted = false;
-      window.clearInterval(refreshTimer);
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      refreshSocket?.off('connect', refreshDirectory);
-      refreshSocket?.off('counselor-directory-updated', refreshDirectory);
+      stopRefresh();
     };
   }, [t]);
 

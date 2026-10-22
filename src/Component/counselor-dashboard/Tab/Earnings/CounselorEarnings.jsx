@@ -1,3 +1,4 @@
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import React, { useEffect, useState } from "react";
 import { FaArrowRight, FaCalendarAlt, FaCheckCircle, FaComments, FaFilter, FaPhoneAlt, FaTimes, FaUndo, FaVideo, FaWallet } from "react-icons/fa";
 import axiosInstance from "../../../../axiosConfig";
@@ -56,13 +57,15 @@ const CounselorEarnings = () => {
 
   useEffect(() => {
     void loadEarnings();
-    const refreshTimer = window.setInterval(() => {
-      void loadEarnings({ silent: true });
-    }, 15_000);
+    const stopRefresh = subscribeSocketRefresh(
+      () => loadEarnings({ silent: true }),
+      ["wallet:updated", "call_ended", "chat-status-update"],
+      { initial: false },
+    );
     const refreshOnFocus = () => void loadEarnings({ silent: true });
     window.addEventListener("focus", refreshOnFocus);
     return () => {
-      window.clearInterval(refreshTimer);
+      stopRefresh();
       window.removeEventListener("focus", refreshOnFocus);
     };
   }, [dateFilter.from, dateFilter.to]);

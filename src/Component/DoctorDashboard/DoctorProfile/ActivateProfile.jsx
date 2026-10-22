@@ -1,3 +1,4 @@
+import { currencyForCountry, currencyDigits, validFee, formatFee } from '../../../utils/consultationCurrency.js';
 import { PortalText, PortalElement } from "../../common/PortalTranslation";
 import { getProfileCompletion } from "../../../utils/profileCompletion";
 import useProfileCompletion from "../../../hooks/useProfileCompletion";
@@ -57,6 +58,7 @@ export default function DoctorProfileFlow() {
     // PROFESSIONAL DETAILS
     qualification: "",
     experience: "",
+    consultationFee: "",
     languages: "",
     about: "",
     expertise: "",
@@ -123,6 +125,7 @@ export default function DoctorProfileFlow() {
       consultationMode: Array.isArray(source.consultationMode) ? source.consultationMode.join(', ') : source.consultationMode || '',
       photo: getImageUrl(source.profilePhoto?.url || (typeof source.profilePhoto === "string" ? source.profilePhoto : "") || value("profileImage", "profilePic", "profile_pic", "profile_image", "profile_photo")),
       qualification: value("qualification", "medical_degree", "degree"),
+      consultationFee: source.consultationFee ?? "",
       experience: source.experience ?? value("experience", "years_of_experience", "experience_years"),
       languages: Array.isArray(languages) ? languages.join(", ") : languages,
       about: value("aboutMe", "about_doctor", "about", "professional_summary", "bio"),
@@ -317,6 +320,9 @@ export default function DoctorProfileFlow() {
 
   const saveProfileToApi = async () => {
     if (!savedProfileData?._id) { setProfileError("Load your profile before saving. Please reload the page."); return; }
+    if (profile.consultationFee !== "" && profile.consultationFee != null && (!validFee(profile.consultationFee, currencyForCountry(profile.address?.country)))) {
+      setProfileError("Enter a valid checkup fee for your profile country."); return;
+    }
     const emailNeedsVerification = contactChanged("email") && !verification.email.verified;
     const mobileNeedsVerification = contactChanged("mobile") && !verification.mobile.verified;
     if (emailNeedsVerification || mobileNeedsVerification) {
@@ -370,6 +376,7 @@ export default function DoctorProfileFlow() {
     dateOfBirth: data.dob, gender: String(data.gender || '').toLowerCase(),
     address: { ...data.address, line1: data.currentAddress },
     qualification: data.qualification, experience: data.experience,
+    ...(data.consultationFee !== "" && data.consultationFee != null ? { consultationFee: data.consultationFee, consultationCurrency: currencyForCountry(data.address?.country) } : {}),
     languages: String(data.languages || '').split(',').map((item) => item.trim()).filter(Boolean),
     specialization: String(data.expertise || '').split(',').map((item) => item.trim()).filter(Boolean),
     consultationMode: String(data.consultationMode || '').split(',').map((item) => item.trim()).filter(Boolean),
@@ -415,6 +422,7 @@ export default function DoctorProfileFlow() {
         fields: [
           { label: "Qualification", key: "qualification" },
           { label: "Experience", key: "experience" },
+          { label: "Checkup Fee", key: "consultationFee" },
           { label: "Languages", key: "languages" },
           { label: "About", key: "about" },
           { label: "Expertise", key: "expertise" },
@@ -474,7 +482,7 @@ export default function DoctorProfileFlow() {
                   <div key={field.key} className={`profile-field ${['currentAddress', 'about', 'expertise'].includes(field.key) ? 'doctor-overview-field-wide' : ''}`}>
                     <span className="field-label"><PortalText text={field.label} /></span>
                     <span className="field-value">
-                      {field.key === 'expertise' && profile.expertise ? <span className="doctor-overview-specialties">{String(profile.expertise).split(',').map(item => item.trim()).filter(Boolean).map((item, index) => <span className="doctor-overview-specialty" key={`${item}-${index}`}>{item}</span>)}</span> : field.key === 'experience' && profile.experience !== '' && profile.experience != null ? <>{profile.experience} <PortalText text="Years" /></> : (field.key === "currentAddress" ? formatAddress({ ...profile.address, line1: profile.currentAddress }) : profile[field.key]) || <PortalText text={"Not set"} />}
+                      {field.key === 'expertise' && profile.expertise ? <span className="doctor-overview-specialties">{String(profile.expertise).split(',').map(item => item.trim()).filter(Boolean).map((item, index) => <span className="doctor-overview-specialty" key={`${item}-${index}`}>{item}</span>)}</span> : field.key === 'experience' && profile.experience !== '' && profile.experience != null ? <>{profile.experience} <PortalText text="Years" /></> : (field.key === "consultationFee" ? (profile.consultationFee !== "" && profile.consultationFee != null ? formatFee(profile.consultationFee, currencyForCountry(profile.address?.country)) : "Not set") : field.key === "currentAddress" ? formatAddress({ ...profile.address, line1: profile.currentAddress }) : profile[field.key]) || <PortalText text={"Not set"} />}
                     </span>
                   </div>
                 ))}
@@ -525,7 +533,9 @@ export default function DoctorProfileFlow() {
 
           <div className="doctor-edit-photo-row">
             <button type="button" className="doctor-edit-avatar" aria-label="Change profile photo" onClick={() => document.getElementById('photoInput').click()}>
-              {profile.photo ? <img src={profile.photo} alt="Profile" /> : <i className="bi bi-person" aria-hidden="true" />}
+              <span className="doctor-edit-avatar-image">
+                {profile.photo ? <img src={profile.photo} alt="Profile" /> : <i className="bi bi-person" aria-hidden="true" />}
+              </span>
               <span className="doctor-edit-avatar-camera"><i className="bi bi-camera-fill" aria-hidden="true" /></span>
             </button>
             <div><strong><PortalText text="Profile photo" /></strong><p><PortalText text="Add a clear photo so patients can recognise you." /></p>
@@ -666,6 +676,10 @@ export default function DoctorProfileFlow() {
                 onChange={(e) => setProfile({ ...profile, qualification: e.target.value })}
                 placeholder="MD, Internal Medicine"
               />
+            </div>
+            <div className="col-md-6 mb-3">
+              <label className="form-label" htmlFor="doctor-checkup-fee"><PortalText text={`Checkup Fee (${currencyForCountry(profile.address?.country) || "select country"})`} /></label>
+              <input id="doctor-checkup-fee" className="form-input form-control" type="number" min="0" max="9999999.99" step={currencyForCountry(profile.address?.country) ? 10 ** -currencyDigits(currencyForCountry(profile.address.country)) : "any"} value={profile.consultationFee ?? ""} onChange={e => setProfile({ ...profile, consultationFee: e.target.value })} placeholder="Enter your fee per checkup" />
             </div>
             <div className="col-md-6 mb-3">
               <label className="form-label"><PortalText text={"Experience (Years)"} /></label>

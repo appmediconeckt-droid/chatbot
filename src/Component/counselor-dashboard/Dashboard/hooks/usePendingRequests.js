@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
@@ -202,13 +203,11 @@ export default function usePendingRequests({ vibrate, onSessionExpired }) {
     };
   }, [modalTimer]);
 
-  useEffect(() => {
-    fetchPendingRequests();
-    const interval = setInterval(fetchPendingRequests, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  useSocketRefresh(fetchPendingRequests, ["notification:new", "chat-list-update", "chat-status-update", "chats:updated"]);
 
   return {
+    setPendingRequests,
+    fetchPendingRequests,
     pendingRequests,
     loadingRequests,
     showNotificationPopup,

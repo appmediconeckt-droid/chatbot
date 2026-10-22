@@ -1,3 +1,4 @@
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import React, { useState, useEffect } from "react";
 import "./Dashboardcou.css";
 import axiosInstance from "../../../../axiosConfig";
@@ -25,7 +26,7 @@ const Dashboard = () => {
                 setLoading(false);
             }
         };
-        void loadDashboardEarnings();
+        return subscribeSocketRefresh(loadDashboardEarnings, ["wallet:updated"]);
     }, []);
 
     // Dashboard statistics data

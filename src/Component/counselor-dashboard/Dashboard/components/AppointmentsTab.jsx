@@ -1,13 +1,12 @@
 import React from "react";
-import { FaBrain, FaCalendarAlt, FaCheckCircle, FaClock, FaHistory, FaSearch, FaTimes } from "react-icons/fa";
-import { getAnonymousUserDisplay } from "../../../../utils/anonymousUser";
+import "./AppointmentsTab.css";
+import { FaRegUser, FaCalendarAlt, FaCheck, FaCheckCircle, FaClock, FaHistory, FaSearch, FaTimes, FaRegComment, FaChevronRight, FaVideo, FaRegFileAlt } from "react-icons/fa";
+import { getAppointmentPatientDisplay as getAppointmentDisplay } from "../appointmentPatient";
 import { useCounselorTranslation } from "../../../../i18n/LanguageContext";
-import { getTimeGreetingKey } from "../../../../utils/timeGreeting";
 import ParticipantPhoto from "../../../common/ParticipantPhoto";
 
 export default function AppointmentsTab({
   appointments = [],
-  counselorName = "",
   selectedDate,
   setSelectedDate,
   clearDateFilter,
@@ -17,20 +16,20 @@ export default function AppointmentsTab({
   const { t, lang } = useCounselorTranslation();
   const [statusFilter, setStatusFilter] = React.useState("all");
   const [searchTerm, setSearchTerm] = React.useState("");
-  const displayCounselorName = React.useMemo(() => {
-    const normalizedName = String(counselorName || "").trim();
-    if (!normalizedName) return "Consultant";
+  const [detailAppointment, setDetailAppointment] = React.useState(null);
+  const detailDialogRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!detailAppointment) return;
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    detailDialogRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previousFocus?.focus();
+    };
+  }, [detailAppointment]);
 
-    return /^dr\.?\s/i.test(normalizedName)
-      ? normalizedName
-      : `Dr. ${normalizedName}`;
-  }, [counselorName]);
-
-  const getAppointmentDisplay = (appointment) =>
-    getAnonymousUserDisplay({
-      ...appointment,
-      ...(appointment?.user || appointment?.patient || appointment?.client || {}),
-    });
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
@@ -57,7 +56,7 @@ export default function AppointmentsTab({
           ? date < now
           : String(apt.status || "").toLowerCase() === statusFilter);
       const patientName = getAppointmentDisplay(apt).name.toLowerCase();
-      const matchesSearch = patientName.includes(searchTerm.trim().toLowerCase());
+      const matchesSearch = [patientName, apt.notes, apt.symptoms, apt.diagnosis].filter(Boolean).join(" ").toLowerCase().includes(searchTerm.trim().toLowerCase());
       return matchesDate && matchesStatus && matchesSearch;
     });
   }, [appointments, selectedDate, statusFilter, searchTerm]);
@@ -94,20 +93,19 @@ export default function AppointmentsTab({
   };
 
   return (
-    <div className="couns-tab-content-stitch" aria-busy={loading}>
-      <div className="stitch-apt-page-title portal-page-header">{t("appointments")}</div>
+    <div className="couns-tab-content-stitch counselor-appointments-reference" aria-busy={loading}>
       <div className="stitch-apt-layout stitch-apt-layout-cards-only">
         <div className="stitch-apt-left">
           <section className="stitch-apt-summary">
             <div className="stitch-apt-summary-copy">
-              <span>{t(getTimeGreetingKey())}</span>
-              <h2>{displayCounselorName}</h2>
-              <p>{counts.all} {t("appointments")}</p>
+              <h1>{t("appointments")}</h1>
+              <p>{t("Manage client sessions, review requests, and connect people with the right counselor.")}</p>
             </div>
+            <div className="apt-banner-art" aria-hidden="true"><img src="/images/appointments-wellness.png" alt="" /><span>Better<br />Conversations<br />Brighter Tomorrows</span></div>
             <div className="stitch-apt-metrics">
-              <div><strong>{counts.pending}</strong><span>{t("pending")}</span></div>
-              <div><strong>{counts.confirmed}</strong><span>{t("confirmed")}</span></div>
-              <div><strong>{counts.today}</strong><span>{t("today")}</span></div>
+              <div><i className="apt-metric-icon pending"><FaClock /></i><div><strong>{counts.pending}</strong><span>{t("pending")}</span><small>{t("Awaiting your response")}</small></div></div>
+              <div><i className="apt-metric-icon confirmed"><FaCheckCircle /></i><div><strong>{counts.confirmed}</strong><span>{t("confirmed")}</span><small>{t("Upcoming sessions")}</small></div></div>
+              <div><i className="apt-metric-icon today"><FaCalendarAlt /></i><div><strong>{counts.today}</strong><span>{t("today")}</span><small>{t("Sessions for today")}</small></div></div>
             </div>
           </section>
 
@@ -118,7 +116,7 @@ export default function AppointmentsTab({
                 type="search"
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
-                placeholder={t("search_patients")}
+                placeholder={t("Search patients by name, problem, or keyword...")}
                 aria-label={t("search_patients")}
               />
             </label>
@@ -137,8 +135,8 @@ export default function AppointmentsTab({
             <div className="stitch-apt-filter-scroll">
               <div className="stitch-apt-filter-tabs">
                 {tabs.map(({ key, label, icon: TabIcon }) => (
-                  <button key={key} type="button" className={`stitch-apt-filter-tab ${statusFilter === key ? "active" : ""}`} onClick={() => setStatusFilter(key)}>
-                    <TabIcon />
+                  <button key={key} data-status={key} type="button" className={`stitch-apt-filter-tab ${statusFilter === key ? "active" : ""}`} onClick={() => setStatusFilter(key)}>
+                    {key !== "all" && React.createElement(TabIcon)}
                     <span>{label}</span>
                     <b>{counts[key]}</b>
                   </button>
@@ -164,55 +162,24 @@ export default function AppointmentsTab({
                     className="stitch-apt-card"
                     style={{ position: "relative" }}
                   >
-                    <div>
-                      <div className="stitch-apt-card-top">
-                        <div className="stitch-apt-avatar">
-                          {anonymousUser.avatarUrl ? (
-                            <ParticipantPhoto
-                              src={anonymousUser.avatarUrl}
-                              name={anonymousUser.name}
-                              className="stitch-apt-avatar-img"
-                              fallback={<span>{anonymousUser.avatar}</span>}
-                            />
-                          ) : (
-                            <span>{anonymousUser.avatar}</span>
-                          )}
-                        </div>
-                        <div className="stitch-apt-info">
-                          <h3>{anonymousUser.name}</h3>
-                          <div className="stitch-apt-tag">
-                            <FaBrain />
-                            {t("initial_consultation").toUpperCase()}
-                          </div>
-                        </div>
+                    <div className="apt-patient-column">
+                      <div className="stitch-apt-avatar">
+                        <ParticipantPhoto src={anonymousUser.avatarUrl || ""} name={anonymousUser.name} className="stitch-apt-avatar-img" fallback={<FaRegUser />} />
                       </div>
-
-                      <div className={`status-badge-stitch ${apt.status || "pending"}`}>
-                        {t(String(apt.status || "pending").toLowerCase()).toUpperCase()}
-                      </div>
-
-                      {apt.notes && apt.notes.trim() !== "" && (
-                        <div className="stitch-apt-notes">
-                          "{apt.notes}"
+                      <div className="apt-patient-copy">
+                        <h3>{anonymousUser.name}</h3>
+                        <div className="apt-patient-tags">
+                          <span className="stitch-apt-tag"><FaRegUser />{t(apt.follow_up_synced ? "Follow-up Session" : "initial_consultation")}</span>
+                          <span className={`status-badge-stitch ${apt.status || "pending"}`}>{t(String(apt.status || "pending").toLowerCase())}</span>
                         </div>
-                      )}
-
-                      <div className="stitch-apt-time">
-                        <span className="stitch-apt-time-label">{t("appointment_date")}</span>
-                        <span className="stitch-apt-time-value">
-                          {new Date(apt.date).toLocaleDateString(lang || undefined, {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                          {" • "}
-                          {new Date(apt.date).toLocaleTimeString(lang || undefined, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
+                        {apt.notes?.trim() && <p className="stitch-apt-notes">&ldquo;{apt.notes}&rdquo;</p>}
                       </div>
+                    </div>
+                    <div className="apt-session-column">
+                      <span><FaCalendarAlt />{new Date(apt.date).toLocaleDateString(lang || undefined, { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
+                      <span><FaClock />{new Date(apt.date).toLocaleTimeString(lang || undefined, { hour: "2-digit", minute: "2-digit" })}{apt.duration ? ` (${apt.duration} ${t("mins")})` : ""}</span>
+                      <span><FaVideo />{t(apt.sessionType || "Video Session")}</span>
+                      {(apt.symptoms || apt.diagnosis) && <span><FaRegFileAlt />{apt.symptoms || apt.diagnosis}</span>}
                     </div>
 
                     {apt.status === "pending" && (
@@ -224,7 +191,7 @@ export default function AppointmentsTab({
                           }
                           type="button"
                         >
-                          {t("accept")}
+                          <FaCheck />{t("accept")}
                         </button>
                         <button
                           className="stitch-btn-reject"
@@ -233,10 +200,11 @@ export default function AppointmentsTab({
                           }
                           type="button"
                         >
-                          {t("reject")}
+                          <FaTimes />{t("reject")}
                         </button>
                       </div>
                     )}
+                    <div className="apt-details-column"><button type="button" className="apt-view-details" onClick={() => setDetailAppointment(apt)}><FaRegComment />{t("View Details")}<FaChevronRight /></button></div>
                   </div>
                 );
               })
@@ -244,6 +212,35 @@ export default function AppointmentsTab({
           </div>
         </div>
       </div>
+      {detailAppointment && (
+        <div className="apt-detail-backdrop" onClick={() => setDetailAppointment(null)}>
+          <section className="apt-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="apt-detail-title" tabIndex={-1} ref={detailDialogRef} onClick={(event) => event.stopPropagation()} onKeyDown={(event) => {
+            if (event.key === "Escape") setDetailAppointment(null);
+            if (event.key === "Tab") {
+              event.preventDefault();
+              detailDialogRef.current?.querySelector("button")?.focus();
+            }
+          }}>
+            <header className="apt-detail-header">
+              <div><span className="apt-detail-eyebrow">{t("appointments")}</span><h2 id="apt-detail-title">{t("Appointment Details")}</h2></div>
+              <button type="button" className="apt-detail-close" aria-label={t("Close appointment details")} onClick={() => setDetailAppointment(null)}><span aria-hidden="true">&times;</span></button>
+            </header>
+            <div className="apt-detail-patient">
+              <div className="apt-detail-avatar"><ParticipantPhoto src={getAppointmentDisplay(detailAppointment).avatarUrl || ""} name={getAppointmentDisplay(detailAppointment).name} fallback={<FaRegUser />} /></div>
+              <div><h3>{getAppointmentDisplay(detailAppointment).name}</h3><span>{t(detailAppointment.follow_up_synced ? "Follow-up Session" : "initial_consultation")}</span></div>
+              <span className={`status-badge-stitch ${detailAppointment.status || "pending"}`}>{t(String(detailAppointment.status || "pending").toLowerCase())}</span>
+            </div>
+            <div className="apt-detail-schedule">
+              <div><FaCalendarAlt /><div><span>{t("Date")}</span><strong>{new Date(detailAppointment.date).toLocaleDateString(lang || undefined, { weekday: "short", month: "long", day: "numeric", year: "numeric" })}</strong></div></div>
+              <div><FaClock /><div><span>{t("Time")}</span><strong>{new Date(detailAppointment.date).toLocaleTimeString(lang || undefined, { hour: "2-digit", minute: "2-digit" })}</strong></div></div>
+              <div><FaVideo /><div><span>{t("Session type")}</span><strong>{t(detailAppointment.sessionType || "Video Session")}</strong></div></div>
+            </div>
+            {detailAppointment.symptoms && <div className="apt-detail-section"><h4>{t("Symptoms")}</h4><p>{detailAppointment.symptoms}</p></div>}
+            {detailAppointment.diagnosis && <div className="apt-detail-section"><h4>{t("Diagnosis")}</h4><p>{detailAppointment.diagnosis}</p></div>}
+            {detailAppointment.notes && <div className="apt-detail-section"><h4><FaRegFileAlt />{t("Notes")}</h4><p>{detailAppointment.notes}</p></div>}
+          </section>
+        </div>
+      )}
     </div>
   );
 }

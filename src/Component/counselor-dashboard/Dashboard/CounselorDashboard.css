@@ -4981,17 +4981,17 @@ button:focus {
 .couns-tab-content-stitch { padding: 0 24px 36px; background: #f8f9ff; }
 .stitch-apt-page-title { height: 99px; margin: 0 -24px 24px; padding: 30px 22px; border-bottom: 1px solid #d4dae6; color: #20242d; background: #fff; font-size: 30px; font-weight: 750; line-height: 1.2; }
 .stitch-apt-left { display: flex; flex-direction: column; gap: 28px; }
-.stitch-apt-summary { position: relative; min-height: 330px; overflow: hidden; padding: 42px 40px 39px; border-radius: 24px; color: #fff; background: linear-gradient(112deg, #0874f1 0%, #0757ba 68%, #064594 100%); box-shadow: 0 13px 24px rgba(14,75,157,.13); }
+.stitch-apt-summary { position: relative; overflow: hidden; margin-top: 24px; padding: 28px 24px 18px; border-radius: 18px; color: #5d719e; background: linear-gradient(112deg, #cde5ff 0%, #e5eeff 68%, #d9eaff 100%); box-shadow: 0 8px 20px rgba(14,75,157,.07); }
 .stitch-apt-summary::after { content: ""; position: absolute; top: -38px; right: -22px; width: 175px; height: 175px; border-radius: 50%; background: rgba(255,255,255,.1); }
 .stitch-apt-summary-copy { position: relative; z-index: 1; }
 .stitch-apt-summary-copy > span { font-size: 25px; font-weight: 400; }
-.stitch-apt-summary-copy h2 { margin: 9px 0 5px; color: #fff; font-size: 31px; font-weight: 750; }
-.stitch-apt-summary-copy p { margin: 0; font-size: 16px; }
+.stitch-apt-summary-copy h1 { margin: 0 0 8px; color: #101442; font-size: 31px; font-weight: 750; line-height: 1.2; }
+.stitch-apt-summary-copy p { margin: 0; font-size: 14px; line-height: 1.6; }
 .stitch-apt-refresh { position: absolute; top: 40px; right: 40px; z-index: 2; width: 50px; height: 50px; border: 1px solid rgba(255,255,255,.35); border-radius: 50%; color: #fff; background: rgba(255,255,255,.1); display: grid; place-items: center; cursor: pointer; }
-.stitch-apt-metrics { position: absolute; right: 40px; bottom: 40px; left: 40px; z-index: 2; min-height: 110px; padding: 24px 0; border: 1px solid rgba(255,255,255,.25); border-radius: 12px; background: rgba(255,255,255,.035); display: grid; grid-template-columns: repeat(3,1fr); }
+.stitch-apt-metrics { position: relative; z-index: 2; min-height: 76px; margin-top: 22px; padding: 14px 0; border: 1px solid rgba(255,255,255,.7); border-radius: 12px; background: rgba(255,255,255,.88); display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); }
 .stitch-apt-metrics > div { display: grid; place-items: center; align-content: center; }
-.stitch-apt-metrics > div + div { border-left: 1px solid rgba(255,255,255,.22); }
-.stitch-apt-metrics strong { color: #fff; font-size: 40px; line-height: 1; }
+.stitch-apt-metrics > div + div { border-left: 1px solid #e5edfa; }
+.stitch-apt-metrics strong { color: #101442; font-size: 26px; line-height: 1; }
 .stitch-apt-metrics span { margin-top: 8px; font-size: 12px; letter-spacing: .03em; text-transform: uppercase; }
 .stitch-apt-toolbar { min-height: 82px; padding: 16px; border: 1px solid #e3e7ef; border-radius: 14px; background: #fff; display: flex; align-items: center; gap: 12px; box-shadow: 0 4px 12px rgba(31,48,80,.035); }
 .stitch-apt-search { position: relative; flex: 1 1 385px; max-width: 385px; height: 40px; display: flex; align-items: center; }
@@ -5705,14 +5705,13 @@ button:focus {
 @media (max-width:800px) {
   .couns-tab-content-stitch { padding: 0 14px 28px; }
   .stitch-apt-page-title { height: auto; margin: 0 -14px 14px; padding: 18px 16px; font-size: 24px; }
-  .stitch-apt-summary { min-height: 310px; padding: 30px 22px; }
-  .stitch-apt-metrics { right: 22px; bottom: 25px; left: 22px; }
+  .stitch-apt-summary { padding: 24px 18px 18px; margin-top: 16px; }
   .stitch-apt-refresh { top: 24px; right: 22px; }
   .stitch-apt-grid { grid-template-columns: 1fr; gap: 16px; }
 }
 @media (max-width:540px) {
   .stitch-apt-summary-copy > span { font-size: 18px; }
-  .stitch-apt-summary-copy h2 { font-size: 24px; }
+  .stitch-apt-summary-copy h1 { font-size: 24px; }
   .stitch-apt-metrics strong { font-size: 30px; }
   .stitch-apt-toolbar { align-items: stretch; flex-direction: column; }
   .stitch-apt-search { flex-basis: 40px; max-width: none; }

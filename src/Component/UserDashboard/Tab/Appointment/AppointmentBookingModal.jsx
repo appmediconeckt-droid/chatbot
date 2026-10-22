@@ -1,3 +1,5 @@
+import { feeCurrency, formatFee } from '../../../../utils/consultationCurrency.js';
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import { PortalTemplate, PortalElement, PortalText } from "../../../common/PortalTranslation";
 import { getClinicSchedule } from "./clinicSchedule.js";
 import { canSendEmergency, emergencyBookingPayload } from "./emergencyBooking.js";
@@ -50,6 +52,15 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
   const doctorId = incoming?.id || incoming?._id || doctorData?.id || doctorData?._id;
 
+  const [refreshRevision, setRefreshRevision] = useState(0);
+  useEffect(() => {
+    if (!doctorId) return;
+    return subscribeSocketRefresh(() => setRefreshRevision((value) => value + 1), ["availability:updated"], {
+      initial: false,
+      filterEvent: (_event, payload) => String(payload?.doctorId || "") === String(doctorId),
+    });
+  }, [doctorId]);
+
   const doctor = {
     id: doctorId,
     name: incoming?.name || incoming?.fullName || 'Dr. Sarah Jenkins',
@@ -62,6 +73,9 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     consultationFee: incoming?.consultationFee ?? incoming?.fee ?? incoming?.consultation_fee ?? 150,
     profilePhoto: incoming?.profilePhoto?.url || (typeof incoming?.profilePhoto === 'string' ? incoming?.profilePhoto : null) || incoming?.avatar || null,
   };
+
+  const checkupCurrency = feeCurrency(incoming || {});
+  const displayFee = amount => formatFee(amount, checkupCurrency);
 
   const getDoctorInitials = (name = '') => {
     const cleaned = String(name).replace(/^Dr\.?\s+/i, '').trim();
@@ -126,7 +140,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       });
 
     return () => { cancelled = true; };
-  }, [doctorId]);
+  }, [doctorId, refreshRevision]);
 
   useEffect(() => {
     if (!doctorId) {
@@ -157,7 +171,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       });
 
     return () => { cancelled = true; };
-  }, [doctorId]);
+  }, [doctorId, refreshRevision]);
 
   const mapClinic = (c, i) => ({
     id: c._id || c.id || `clinic-${i + 1}`,
@@ -251,7 +265,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       });
 
     return () => { cancelled = true; };
-  }, [doctorId]);
+  }, [doctorId, refreshRevision]);
 
   useEffect(() => {
     setSelectedTime(null);
@@ -548,7 +562,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       key: 'mode',
       icon: selectedMode.icon,
       label: 'Consultation Mode',
-      value: isEmergency ? 'In-Clinic Visit' : `${selectedMode.name}${selectedMode.fee > 0 ? ` +$${selectedMode.fee}` : ''}`,
+      value: isEmergency ? 'In-Clinic Visit' : `${selectedMode.name}${selectedMode.fee > 0 ? ` +${displayFee(selectedMode.fee)}` : ''}`,
       active: false,
     },
     {
@@ -598,7 +612,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                   <div className="abm-pay-row"><span><i className="fa-regular fa-clock"></i><PortalText text={" Time"} /></span><strong>{isEmergency ? <PortalText text={"Clinic will confirm"} /> : selectedTime}</strong></div>
                 </div>
 
-                {!isEmergency && <div className="abm-pay-row abm-pay-total abm-success-total"><span><PortalText text={"Total Fee"} /></span><strong>${totalFee}</strong></div>}
+                {!isEmergency && <div className="abm-pay-row abm-pay-total abm-success-total"><span><PortalText text={"Total Fee"} /></span><strong>{displayFee(totalFee)}</strong></div>}
               </div>
 
               <button className="abm-confirm abm-success-btn" onClick={bookAnother}>
@@ -686,18 +700,18 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
                   <div className="abm-pay-card">
                     <h3 className="abm-pay-card-title"><i className="fa-solid fa-receipt"></i><PortalText text={" Fee Breakdown"} /></h3>
-                    <div className="abm-pay-row"><span><PortalText text={"Consultation Fee"} /></span><strong>${selectedClinic.fee}</strong></div>
+                    <div className="abm-pay-row"><span><PortalText text={"Consultation Fee"} /></span><strong>{displayFee(selectedClinic.fee)}</strong></div>
                     {selectedMode.fee > 0 && (
-                      <div className="abm-pay-row"><span>{selectedMode.name}</span><strong>+${selectedMode.fee}</strong></div>
+                      <div className="abm-pay-row"><span>{selectedMode.name}</span><strong>+{displayFee(selectedMode.fee)}</strong></div>
                     )}
-                    <div className="abm-pay-row abm-pay-total"><span><PortalText text={"Total"} /></span><strong>${totalFee}</strong></div>
+                    <div className="abm-pay-row abm-pay-total"><span><PortalText text={"Total"} /></span><strong>{displayFee(totalFee)}</strong></div>
                   </div>
 
                   <button className="abm-btn-confirm2 abm-pay-confirm-full" onClick={confirmBooking} disabled={booking} type="button">
                     {booking ? (
                       <><i className="fa-solid fa-spinner fa-spin"></i><PortalText text={" Booking…"} /></>
                     ) : (
-                      <><i className="fa-solid fa-lock"></i><PortalText text={" Confirm & Book · $"} />{totalFee}</>
+                      <><i className="fa-solid fa-lock"></i><PortalText text={" Confirm & Book · "} />{displayFee(totalFee)}</>
                     )}
                   </button>
                   {bookError && <p className="abm-pay-error">{bookError}</p>}
@@ -760,7 +774,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                     <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Location:"} /></span> {selectedClinic.address || <PortalText text={"Not specified"} />}</div>
                     <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Available Days:"} /></span> {selectedClinic.days}</div>
                     <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Timings:"} /></span> {selectedClinic.timings}</div>
-                    <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Consultation Fee:"} /></span> ${selectedClinic.fee}</div>
+                    <div className="abm-cd-row"><span className="abm-cd-key"><PortalText text={"Consultation Fee:"} /></span> {displayFee(selectedClinic.fee)}</div>
                   </div>
                 </div>
               </div>
@@ -799,7 +813,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                             <div className="abm-opt-tags">
                               <span className="abm-opt-tag blue"><i className="fa-regular fa-calendar"></i> {c.days}</span>
                               <span className="abm-opt-tag gray"><i className="fa-regular fa-clock"></i> {c.timings}</span>
-                              <span className="abm-opt-tag green"><i className="fa-solid fa-money-bill"></i> ${c.fee}</span>
+                              <span className="abm-opt-tag green"><i className="fa-solid fa-money-bill"></i> {displayFee(c.fee)}</span>
                             </div>
                           </div>
                           {selectedClinicId === c.id && <span className="abm-opt-check"><i className="fa-solid fa-check"></i></span>}
@@ -833,7 +847,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                           <div className="abm-opt-main">
                             <div className="abm-opt-name">{m.name}</div>
                             <div className="abm-opt-addr">{m.desc}</div>
-                            <span className="abm-opt-fee"><PortalText text={"Additional Fee: $"} />{m.fee}</span>
+                            <span className="abm-opt-fee"><PortalText text={"Additional Fee: "} />{displayFee(m.fee)}</span>
                           </div>
                           {selectedModeId === m.id && <span className="abm-opt-check"><i className="fa-solid fa-check"></i></span>}
                         </div>
@@ -962,7 +976,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
               {!isEmergency && <div className="abm-total">
                 <span className="abm-total-label"><PortalText text={"Total Fee"} /></span>
-                <span className="abm-total-amount">${totalFee}.00</span>
+                <span className="abm-total-amount">{displayFee(totalFee)}</span>
               </div>}
 
               {!hasClinics && (

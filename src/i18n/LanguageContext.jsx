@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import enUS from './locales/en-US.json';
 import landingHiIN from './locales/landing-hi-IN.json';
 import { translations as localeTranslations } from './locales';
@@ -658,8 +658,12 @@ function makeT(lang, translations) {
 
 export function useUserTranslation() {
   const ctx = useContext(LanguageContext);
+  const t = useMemo(
+    () => ctx ? makeT(ctx.userLang, ctx.translations) : null,
+    [ctx?.userLang, ctx?.translations],
+  );
   if (!ctx) throw new Error('useUserTranslation must be used within LanguageProvider');
-  return { t: makeT(ctx.userLang, ctx.translations), lang: ctx.userLang, setLang: ctx.setUserLang };
+  return { t, lang: ctx.userLang, setLang: ctx.setUserLang };
 }
 
 // For public pages (landing, signup, login) where no role is known yet.
@@ -671,8 +675,13 @@ export function useSiteTranslation() {
 
 export function useCounselorTranslation() {
   const ctx = useContext(LanguageContext);
+  // Effects consuming t must not restart after unrelated component state updates.
+  const t = useMemo(
+    () => ctx ? makeT(ctx.counselorLang, ctx.translations) : null,
+    [ctx?.counselorLang, ctx?.translations],
+  );
   if (!ctx) throw new Error('useCounselorTranslation must be used within LanguageProvider');
-  return { t: makeT(ctx.counselorLang, ctx.translations), lang: ctx.counselorLang, setLang: ctx.setCounselorLang };
+  return { t, lang: ctx.counselorLang, setLang: ctx.setCounselorLang };
 }
 
 export function useUserApiTranslation() {

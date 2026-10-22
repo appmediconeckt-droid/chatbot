@@ -1,8 +1,8 @@
+import useSocketRefresh from "../../../hooks/useSocketRefresh";
 import { isProfessionalRole } from "../../../authtication/authSession.js";
 import React, { useEffect, useRef, useState } from "react";
 import { FaBell, FaCalendarAlt, FaCheckDouble, FaCommentAlt, FaWallet } from "react-icons/fa";
 import axiosInstance from "../../../axiosConfig";
-import socketService from "../../../services/socketService";
 import {
   useCounselorApiTranslation,
   useCounselorTranslation,
@@ -62,28 +62,7 @@ const NotificationCenter = ({ className = "", role = "user" }) => {
     }
   };
 
-  useEffect(() => {
-    void loadNotifications();
-    let removeSocketListener;
-    const handleNewNotification = async (notification) => {
-      if (!notification || !["appointment", "payment", "message"].includes(notification.type)) return;
-      const localizedNotification = lang === "en-US" ? notification : {
-        ...notification,
-        title: notification.title ? await translate(notification.title) : notification.title,
-        message: notification.message ? await translate(notification.message) : notification.message,
-      };
-      setNotifications((current) => [
-        localizedNotification,
-        ...current.filter((item) => item._id !== localizedNotification._id),
-      ].slice(0, 30));
-      setUnreadCount((count) => count + 1);
-    };
-    socketService.on("notification:new", handleNewNotification)
-      .then((cleanup) => { removeSocketListener = cleanup; })
-      .catch((error) => console.error("Notification socket failed:", error));
-
-    return () => removeSocketListener?.();
-  }, [lang]);
+  useSocketRefresh(loadNotifications, ["notification:new", "notifications:updated"], true, { refreshKey: lang });
 
   useEffect(() => {
     const refresh = () => void loadNotifications();

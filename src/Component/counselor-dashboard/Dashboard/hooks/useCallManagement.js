@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { API_BASE_URL } from "../../../../axiosConfig";
@@ -14,8 +15,6 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
   const [selectedCall, setSelectedCall] = useState(null);
   const [incomingCallData, setIncomingCallData] = useState(null);
   const [waitingCalls, setWaitingCalls] = useState([]);
-  const [pollingInterval, setPollingInterval] = useState(null);
-  const [isPolling, setIsPolling] = useState(true);
 
   const handleInitiateVideoCall = async (apt, requestedCallType = "video") => {
     const normalizedCallType =
@@ -451,31 +450,10 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
     };
   }, [isVideoModalOpen, vibrate]);
 
-  useEffect(() => {
-    if (isPolling && !isVideoModalOpen) {
-      fetchWaitingCalls();
-      // Socket events open the popup immediately. This short poll remains as
-      // a fallback for reconnects or temporarily backgrounded browser tabs.
-      const interval = setInterval(fetchWaitingCalls, 2000);
-      setPollingInterval(interval);
-      return () => clearInterval(interval);
-    } else if (pollingInterval) {
-      clearInterval(pollingInterval);
-      setPollingInterval(null);
-    }
-  }, [isPolling, showIncomingCallModal, isVideoModalOpen]);
-
-  useEffect(() => {
-    if (isVideoModalOpen) {
-      setIsPolling(false);
-      if (pollingInterval) {
-        clearInterval(pollingInterval);
-        setPollingInterval(null);
-      }
-    } else {
-      setIsPolling(true);
-    }
-  }, [isVideoModalOpen]);
+  useSocketRefresh(fetchWaitingCalls, [
+    "incoming_call_request", "call_accepted", "call_rejected",
+    "call_cancelled", "call_ended", "call_expired", "call_missed",
+  ], !isVideoModalOpen);
 
   useEffect(() => {
     if (showIncomingCallModal && !isVideoModalOpen) {
@@ -523,13 +501,11 @@ export default function useCallManagement({ vibrate, startRinging, stopRinging }
   const handleCloseVideoModal = () => {
     setIsVideoModalOpen(false);
     setSelectedCall(null);
-    setIsPolling(true);
   };
 
   const handleCloseIncomingModal = () => {
     setShowIncomingCallModal(false);
     setIncomingCallData(null);
-    setIsPolling(true);
   };
 
   return {

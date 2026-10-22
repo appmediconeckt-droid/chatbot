@@ -811,3 +811,29 @@
     color: #4a9eff;
   }
 }
+
+/* AI privacy controls share the existing accordion layout. */
+.privacy-ai-sharing { padding-top: 8px; }
+.privacy-ai-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; margin: 22px 0; }
+.privacy-ai-actions a, .privacy-ai-actions button {
+  display: inline-block; max-width: 100%; min-height: 44px; box-sizing: border-box;
+  padding: 8px 0; border: 0; background: transparent; color: #2563eb;
+  font: inherit; line-height: 1.5; text-align: left; text-decoration: none;
+  overflow-wrap: anywhere; cursor: pointer;
+}
+.privacy-ai-actions a:hover, .privacy-ai-actions button:hover { text-decoration: underline; }
+.privacy-ai-actions a:focus-visible, .privacy-ai-actions button:focus-visible { outline: 2px solid #2563eb; outline-offset: 4px; border-radius: 3px; }
+.privacy-ai-sharing .privacy-ai-note { font-size: 0.88em; line-height: 1.6; }
+#privacy-ai-processing { scroll-margin-top: 110px; }
+@media (prefers-color-scheme: dark) {
+  .privacy-policy:not(.privacy-policy--public) .privacy-ai-actions a,
+  .privacy-policy:not(.privacy-policy--public) .privacy-ai-actions button { color: #93c5fd; }
+}
+
+.privacy-ai-processing-copy h3 { margin: 18px 0 4px; font-size: 1em; line-height: 1.45; font-weight: 700; color: inherit; }
+.privacy-ai-processing-copy p { margin: 0 0 10px; overflow-wrap: anywhere; }
+.privacy-ai-processing-copy > p:first-child { margin-bottom: 8px; }
+.privacy-ai-processing-copy > p:first-child + h3 { margin-top: 0; }
+
+.privacy-policy.privacy-policy--ai-only { padding: 0; margin: 20px 0; background: transparent; width: 100%; min-width: 0; }
+.privacy-policy--ai-only .privacy-policy-content { margin-bottom: 0; }

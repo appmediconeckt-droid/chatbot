@@ -1,0 +1,139 @@
+.user-appointments-reference { --user-apt-dark: #006b2c; --user-apt-light: #01ce54; background: linear-gradient(115deg,#f4faff,#fafcff); color: #11163e; }
+.user-appointments-reference > main { container: user-appointments / inline-size; padding: 16px 24px 32px; }
+.user-appointments-reference .user-appointments-hero { position: relative; isolation: isolate; display: flex; align-items: center; justify-content: space-between; gap: 20px; min-height: 76px; margin: 0 0 14px; padding: 13px 22px; overflow: hidden; border: 1px solid #fff; border-radius: 12px; background: linear-gradient(115deg,#fff,#f5fbff 65%,#e9f7ff); box-shadow: 0 5px 16px #4f80c210; }
+.user-appointments-reference .user-appointments-hero::before { content: ''; position: absolute; z-index: -1; top: -85px; right: -10px; width: 305px; height: 265px; border: 35px solid #e0f3ff; border-radius: 50%; background: linear-gradient(145deg,#d6efff90,#e2f8fb90); transform: rotate(-24deg); }
+.user-appointments-reference .user-appointments-hero::after { content: ''; position: absolute; z-index: -1; right: 37%; bottom: 18px; width: 24px; height: 24px; border-radius: 50%; background: #d8f4ef; box-shadow: -32px 11px 0 -6px #e3f6fb,105px 20px 0 3px #e9f7ff; }
+.user-appointments-reference .user-appointments-hero h1 { margin: 0 0 3px; color: #0d1032; font-size: 27px; font-weight: 800; letter-spacing: -.6px; line-height: 1.2; }
+.user-appointments-reference .user-appointments-hero p { margin: 0; color: #7584a6; font-size: 13px; line-height: 1.5; }
+.uap-hero-decoration { display: grid; place-items: center; flex: 0 0 56px; width: 56px; height: 56px; margin-right: 4px; border: 1px solid #fff; border-radius: 18px; background: linear-gradient(145deg,#fff,#e4f2ff); color: #438bff; font-size: 26px; box-shadow: 0 6px 15px #73b5ff25; }
+.user-appointments-reference .user-appointments-filterbar { align-items: center; gap: 18px; margin-bottom: 17px; flex-wrap: wrap; }
+.user-appointments-reference .user-appointments-status-pills { display: flex; flex-wrap: nowrap; gap: 7px; overflow-x: auto; padding: 0 1px 4px; scrollbar-width: thin; }
+.user-appointments-reference .user-appointments-status-pills button { display: inline-flex; flex-shrink: 0; align-items: center; justify-content: center; gap: 8px; min-width: 84px; min-height: 32px; padding: 7px 15px; border: 1px solid #e5ecf6; border-radius: 20px; color: #2d406e; background: #fff; box-shadow: 0 3px 8px #243b6c08; font-size: 11px; font-weight: 600; }
+.user-appointments-reference .user-appointments-status-pills button svg { color: #01b85e; font-size: 13px; }
+.user-appointments-reference .user-appointments-status-pills button[data-status=Pending] svg { color: #ffa600; }
+.user-appointments-reference .user-appointments-status-pills button[data-status=Completed] svg { color: #2780ff; }
+.user-appointments-reference .user-appointments-status-pills button[data-status=Cancelled] svg { color: #ff2346; }
+.user-appointments-reference .user-appointments-status-pills button.active { border-color: #01c851; color: #fff; background: linear-gradient(90deg,#006b2c,#01ce54); box-shadow: 0 5px 12px #009b4726; }
+.user-appointments-reference .user-appointments-status-pills button.active svg { color: #fff; }
+.user-appointments-reference .user-appointments-tabs { display: flex; flex-shrink: 0; gap: 0; margin: 0 0 4px auto; padding: 0; border: 1px solid #f0f4fa; border-radius: 24px; background: #fff; box-shadow: 0 4px 12px #314e7c14; }
+.user-appointments-reference .user-appointments-tab { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-width: 88px; min-height: 33px; padding: 8px 17px; border: 0; border-radius: 22px; color: #304573; background: transparent; font-size: 11px; font-weight: 650; }
+.user-appointments-reference .user-appointments-tab + .user-appointments-tab { position: relative; }
+.user-appointments-reference .user-appointments-tab + .user-appointments-tab::before { content: ''; position: absolute; top: 9px; bottom: 9px; left: 0; border-left: 1px solid #eef2f8; }
+.user-appointments-reference .user-appointments-tab.active { color: #fff; background: linear-gradient(90deg,#006b2c,#01ce54); box-shadow: 0 4px 10px #009b4725; }
+.user-appointments-reference .user-provider-list-heading { display: flex; align-items: center; gap: 11px; margin: 0 0 14px; }
+.user-provider-list-heading > svg { flex: 0 0 37px; width: 37px; height: 37px; color: #267aff; }
+.user-appointments-reference .user-provider-list-heading h2 { margin: 0 0 2px; color: #11143a; font-size: 18px; line-height: 1.3; font-weight: 800; }
+.user-appointments-reference .user-provider-list-heading p { margin: 0; color: #7786a7; font-size: 12px; line-height: 1.5; }
+.user-appointments-reference .user-appointment-providers { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 13px; }
+.user-appointments-reference .appointment-provider-reference { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 0; min-width: 0; min-height: 215px; padding: 15px; overflow: visible; border: 1px solid #e3edf9; border-radius: 13px; color: #11153e; background: linear-gradient(135deg,#fff,#fcfdff); box-shadow: 0 5px 14px #2f5b9710; cursor: default; text-align: left; }
+.user-appointments-reference .appointment-provider-reference.is-featured { border-color: #7be3a5; background: linear-gradient(135deg,#f9fffb,#fff 70%,#effbf5); }
+.user-appointments-reference .user-provider-card-person { display: flex; align-items: center; gap: 14px; min-height: 68px; padding-right: 25px; margin-bottom: 12px; }
+.user-appointments-reference .user-provider-avatar { position: relative; flex: 0 0 68px; width: 68px; height: 68px; overflow: hidden; border: 3px solid #fff; border-radius: 50%; outline: 2px solid #e3eaff; background: #edf6ff; color: #3e699d; font-size: 20px; box-shadow: 0 2px 5px #637bbd1a; }
+.user-appointments-reference .is-featured .user-provider-avatar { outline-color: #d0f7df; }
+.user-appointments-reference .appointment-provider-reference:nth-child(3n) .user-provider-avatar { outline-color: #fff0d5; }
+.user-appointments-reference .appointment-provider-reference:nth-child(4n) .user-provider-avatar { outline-color: #ffe6eb; }
+.user-appointments-reference .user-provider-avatar > img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-height: 100%; min-height: 100%; border-radius: 50%; object-fit: cover; }
+.uap-provider-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 0; }
+.uap-provider-copy h3 { margin: 0; color: #10153e; font-size: 15px; font-weight: 800; line-height: 1.3; overflow-wrap: anywhere; }
+.uap-role { display: inline-block; padding: 3px 12px; border-radius: 14px; background: #e5f8ed; color: #008341; font-size: 10px; font-weight: 700; line-height: 1.2; }
+.uap-provider-copy p { margin: 0; color: #7182a6; font-size: 11px; line-height: 1.4; overflow-wrap: anywhere; }
+.uap-card-menu { position: absolute; top: 12px; right: 12px; z-index: 3; }
+.uap-card-menu summary { display: grid; place-items: center; width: 27px; height: 27px; padding: 0; border-radius: 50%; color: #087d3d; background: #f0faf5; list-style: none; cursor: pointer; font-size: 12px; }
+.uap-card-menu summary::-webkit-details-marker { display: none; }
+.uap-card-menu > div { position: absolute; top: 33px; right: 0; display: flex; flex-direction: column; width: max-content; max-width: 220px; padding: 5px; border: 1px solid #dfebe5; border-radius: 9px; background: #fff; box-shadow: 0 8px 22px #193d2825; }
+.uap-card-menu button { padding: 9px 11px; border: 0; border-radius: 5px; color: #23553d; background: #fff; font-size: 11px; cursor: pointer; text-align: left; }
+.uap-card-menu button:hover { background: #effaf4; }
+.user-appointments-reference .user-provider-card-counts { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 8px; margin: 0 0 9px; }
+.user-appointments-reference .user-provider-card-counts > span { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 27px; padding: 5px 8px; border-radius: 16px; color: #008840; background: #edf9f2; font-size: 10px; line-height: 1.3; white-space: nowrap; }
+.user-appointments-reference .user-provider-card-counts svg { flex-shrink: 0; font-size: 13px; }
+.user-appointments-reference .user-provider-card-counts > span:nth-child(2) svg { color: #00b65a; }
+.user-appointments-reference .user-provider-card-latest { display: flex; align-items: center; gap: 14px; min-height: 43px; margin: 0 0 8px; padding: 6px 4px 0; border-top: 1px solid #edf2fa; color: #7183a6; }
+.user-appointments-reference .user-provider-card-latest > svg { flex: 0 0 20px; color: #3285ff; font-size: 19px; }
+.user-provider-card-latest > div { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.user-appointments-reference .user-provider-card-latest span { font-size: 9px; }
+.user-appointments-reference .user-provider-card-latest strong { color: #28365d; font-size: 10px; font-weight: 650; line-height: 1.4; }
+.user-appointments-reference .user-provider-card-open { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 31px; margin-top: auto; padding: 7px 15px; border: 0; border-radius: 8px; color: #007b35; background: linear-gradient(90deg,#e7f8ee,#effaf4); font-size: 12px; font-weight: 750; cursor: pointer; }
+.user-appointments-reference .user-provider-card-open:hover { color: #fff; background: linear-gradient(90deg,#006b2c,#01ce54); }
+.user-appointments-reference button:focus-visible,.uap-card-menu summary:focus-visible { outline: 3px solid #8edfa8; outline-offset: 3px; }
+@container user-appointments (max-width: 850px) {
+  .user-appointments-reference .user-appointment-providers { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .user-appointments-reference .user-appointments-tabs { margin-left: 0; }
+}
+@container user-appointments (max-width: 560px) {
+  .user-appointments-reference .user-appointment-providers { grid-template-columns: minmax(0,1fr); }
+}
+@media (max-width: 640px) {
+  .user-appointments-reference > main { padding: 12px 14px 24px; }
+  .user-appointments-reference .user-appointments-hero { min-height: 80px; padding: 15px; margin-bottom: 14px; }
+  .user-appointments-reference .user-appointments-hero h1 { font-size: 23px; }
+  .user-appointments-reference .user-appointments-hero p { font-size: 11px; }
+  .uap-hero-decoration { flex-basis: 43px; width: 43px; height: 43px; font-size: 22px; border-radius: 13px; }
+  .user-appointments-reference .user-appointments-status-pills { width: 100%; max-width: 100%; }
+  .user-appointments-reference .user-appointments-filterbar { gap: 8px; }
+  .user-appointments-reference .user-appointments-status-pills button { min-width: auto; padding: 8px 12px; font-size: 10px; }
+  .user-appointments-reference .user-appointments-tab { min-width: 83px; }
+  .user-appointments-reference .user-provider-list-heading h2 { font-size: 17px; }
+  .user-appointments-reference .user-provider-list-heading p { font-size: 11px; }
+}
+
+/* The selected provider's appointment history uses the same card language. */
+.user-appointments-reference .user-provider-history-header { align-items: center; margin: 3px 0 16px; padding: 10px 14px; border: 1px solid #e5edf7; border-radius: 13px; background: #ffffffd9; box-shadow: 0 4px 14px #34597f05; }
+.user-appointments-reference .user-provider-back-button { min-height: 36px; padding: 9px 12px; gap: 8px; border-color: #c8e7d4; border-radius: 8px; font-size: 11px; }
+.user-appointments-reference .user-provider-history-person { gap: 12px; }
+.user-appointments-reference .user-provider-history-person > span { background: #eaf8f0; color: #006b2c; }
+.user-appointments-reference .user-provider-history-person h2 { margin: 0 0 3px; color: #14193e; font-size: 17px; }
+.user-appointments-reference .user-provider-history-person p { margin: 3px 0 0; color: #7787a6; font-size: 11px; }
+.user-appointments-reference .user-appointment-date-group { gap: 10px; }
+.user-appointments-reference .user-appointment-date-heading { gap: 14px; justify-content: flex-start; padding: 0 2px; color: #28395e; font-size: 13px; }
+.user-appointments-reference .user-appointment-date-heading strong { padding: 3px 8px; border-radius: 18px; color: #648576; background: #eaf7ef; font-size: 10px; font-weight: 600; }
+.user-appointments-reference .user-appointment-date-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
+.user-appointments-reference .uap-history-card { min-height: 0; height: auto; padding: 12px; gap: 8px; border: 1px solid #e0ebf6; border-radius: 14px; background: linear-gradient(135deg,#fff,#fcfffd); box-shadow: 0 5px 16px #345c8c09; }
+.user-appointments-reference .uap-history-card:hover { transform: none; border-color: #b6dfc7; }
+.user-appointments-reference .uap-history-card .user-appointment-profile { grid-template-columns: 42px minmax(0,1fr) auto; gap: 7px 9px; align-items: center; }
+.user-appointments-reference .uap-history-avatar { position: relative; grid-column: 1; grid-row: 1; border: 3px solid #fff; outline: 2px solid #e1f1e8; color: #487966; background: #eaf8f0; font-size: 17px; font-weight: 750; }
+.user-appointments-reference .uap-history-avatar img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; min-height: 100%; max-height: 100%; object-fit: cover; }
+.user-appointments-reference .uap-history-card .user-appointment-person h2 { display: block; margin: 0 0 4px; color: #141a3d; font-size: 13px; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+.user-appointments-reference .uap-history-card .user-appointment-person p { margin: 3px 0 0; color: #7a8ca9; font-size: 11px; line-height: 1.4; white-space: normal; }
+.user-appointments-reference .uap-history-card .professional-role-badge { margin: 0; padding: 3px 10px; border-radius: 16px; font-size: 10px; }
+.user-appointments-reference .uap-history-card .user-appointment-meta { padding-top: 0; gap: 12px; color: #7890a5; font-size: 10px; }
+.user-appointments-reference .uap-history-card .user-appointment-meta svg { font-size: 11px; }
+.user-appointments-reference .uap-history-card .user-appointment-meta .rating { color: #b78b2b; }
+.user-appointments-reference .uap-history-card .user-appointment-status { align-self: start; margin-top: 2px; padding: 4px 7px; font-size: 10px; }
+.user-appointments-reference .uap-history-card .user-appointment-status.completed { color: #008441; background: #e4f7eb; }
+.user-appointments-reference .uap-history-card .user-appointment-status.cancelled,
+.user-appointments-reference .uap-history-card .user-appointment-status.rejected { color: #bd4053; background: #fff0f3; }
+.user-appointments-reference .uap-history-card .user-appointment-schedule { display: grid; grid-template-columns: minmax(0,1.3fr) minmax(0,1fr); align-items: center; gap: 8px; min-height: 42px; padding: 8px 10px; border: 1px solid #eaf0f6; border-radius: 10px; background: #f7fafc; }
+.user-appointments-reference .uap-history-card .user-appointment-schedule-item { display: flex; align-items: center; gap: 10px; color: #537362; font-size: 12px; }
+.user-appointments-reference .uap-history-card .user-appointment-schedule-item > svg { color: #1c9c62; font-size: 15px; width: 15px; height: 15px; }
+.user-appointments-reference .uap-history-card .user-appointment-schedule-item > span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.user-appointments-reference .uap-history-card .user-appointment-schedule-item small { display: none; }
+.user-appointments-reference .uap-history-card .user-appointment-schedule-item strong { color: #354766; font-size: 11px; font-weight: 650; overflow-wrap: anywhere; }
+.user-appointments-reference .uap-history-card .user-appointment-token { grid-column: 1/-1; justify-self: start; margin: 0; padding: 3px 8px; color: #00743b; background: #e2f5e9; font-size: 10px; }
+.uap-history-mode { display: flex; align-items: center; gap: 8px; color: #577e6b; font-size: 11px; line-height: 1.5; }
+.uap-history-mode svg { color: #168c54; flex-shrink: 0; }
+.uap-history-notes { padding: 0 1px; }
+.uap-history-notes small { color: #7f8fa9; font-size: 10px; font-weight: 600; }
+.uap-history-notes p { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 5px 0 0; overflow: hidden; overflow-wrap: anywhere; color: #6d7e9b; font-size: 12px; line-height: 1.6; }
+.user-appointments-reference .uap-history-card .user-appointment-live-timing { display: flex; flex-wrap: wrap; gap: 3px 12px; margin: 0; padding: 7px 9px; border: 1px solid #e2f0e7; border-radius: 9px; background: #f1faf5; color: #537a64; font-size: 11px; line-height: 1.6; }
+.user-appointments-reference .uap-history-card .user-appointment-actions { gap: 6px; padding-top: 8px; border-top: 1px solid #edf2f7; }
+.user-appointments-reference .uap-history-card .user-appointment-action { min-height: 30px; border-radius: 7px; font-size: 11px; font-weight: 650; }
+.user-appointments-reference .uap-history-card .uap-details-action { flex: 1 1 108px; padding: 6px 10px; border-color: transparent !important; color: #fff !important; background: linear-gradient(90deg,#006b2c,#01ce54) !important; box-shadow: 0 3px 9px #00843c14; }
+.user-appointments-reference .uap-history-card .uap-details-action:hover { filter: brightness(.96); }
+.user-appointments-reference .uap-history-card .user-appointment-action.secondary:not(.uap-details-action) { padding: 6px 9px; border-color: #c4e5d1 !important; }
+.user-appointments-reference .uap-history-card .user-appointment-action.icon { flex: 0 0 30px; width: 30px; min-width: 30px; }
+@container user-appointments (min-width: 651px) and (max-width: 1000px) {
+  .user-appointments-reference .user-appointment-date-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+}
+@container user-appointments (max-width: 650px) {
+  .user-appointments-reference .user-appointment-date-grid { grid-template-columns: minmax(0,1fr); }
+}
+@container user-appointments (max-width: 440px) {
+  .user-appointments-reference .user-provider-history-header { padding: 10px 12px; gap: 12px; align-items: flex-start; }
+  .user-appointments-reference .uap-history-card { padding: 12px; }
+  .user-appointments-reference .uap-history-card .user-appointment-profile { grid-template-columns: 42px minmax(0,1fr); }
+  .user-appointments-reference .uap-history-card .user-appointment-status { grid-column: 2; grid-row: 2; justify-self: start; margin: 0; }
+  .user-appointments-reference .uap-history-card .user-appointment-meta { grid-row: 3; }
+  .user-appointments-reference .uap-history-card .user-appointment-schedule { padding: 8px 10px; gap: 8px; }
+  .user-appointments-reference .uap-history-card .user-appointment-schedule-item { gap: 7px; }
+  .user-appointments-reference .uap-history-card .user-appointment-schedule-item strong { font-size: 11px; }
+}

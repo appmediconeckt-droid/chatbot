@@ -1,3 +1,4 @@
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import { PortalTemplate, PortalText, PortalElement } from "../../../common/PortalTranslation";
 import React, {
   useCallback,
@@ -240,7 +241,7 @@ const TokenStatusPage = () => {
       if (!silent) setAppointments([]);
     } finally {
       inFlightRef.current = false;
-      if (!silent && isMountedRef.current) setIsLoading(false);
+      if (isMountedRef.current) setIsLoading(false);
     }
   }, []); // stable: never changes
 
@@ -250,50 +251,12 @@ const TokenStatusPage = () => {
    */
   useEffect(() => {
     isMountedRef.current = true;
-
-    let cancelled = false;
-    let socket = null;
-    let debounceId = null;
-
-    // 1. Initial load
-    void fetchTokenStatus();
-
-    // 2. Polling (only while tab is visible)
-    const intervalId = window.setInterval(() => {
-      if (document.visibilityState === "visible") {
-        void fetchTokenStatus({ silent: true });
-      }
-    }, POLL_INTERVAL_MS);
-
-    // 3. Socket (debounced: burst of events = 1 API call)
-    const onQueueUpdated = () => {
-      window.clearTimeout(debounceId);
-      debounceId = window.setTimeout(() => {
-        void fetchTokenStatus({ silent: true });
-      }, SOCKET_DEBOUNCE_MS);
-    };
-
-    socketService
-      .connect()
-      .then((s) => {
-        if (cancelled) return;
-        socket = s;
-        socket.on("queueUpdated", onQueueUpdated);
-      })
-      .catch((err) => {
-        console.warn(
-          "[TokenStatusPage] Socket connection unavailable:",
-          err?.message || err,
-        );
-      });
-
-    return () => {
-      cancelled = true;
-      isMountedRef.current = false;
-      window.clearInterval(intervalId);
-      window.clearTimeout(debounceId);
-      socket?.off("queueUpdated", onQueueUpdated);
-    };
+    let first = true;
+    const stopRefresh = subscribeSocketRefresh(
+      () => { const silent = !first; first = false; return fetchTokenStatus({ silent }); },
+      ["queueUpdated", "appointments:updated"],
+    );
+    return () => { isMountedRef.current = false; stopRefresh(); };
   }, [fetchTokenStatus]);
 
   const selectedItem = useMemo(

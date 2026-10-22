@@ -26,15 +26,55 @@ import { useCounselorTranslation, useUserTranslation } from "../../i18n/Language
 const SUPPORT_EMAIL = "support@humaeli.com";
 const SUPPORT_PHONE = "9152987821";
 
-const PrivacyPolicy = ({ variant = "dashboard", role = "user" }) => {
+const PrivacyPolicy = ({ variant = "dashboard", role = "user", aiOnly = false }) => {
   const isPublic = variant === "public";
   const isCounselor = role === "counselor" || isProfessionalRole(role);
   const userTranslation = useUserTranslation();
   const counselorTranslation = useCounselorTranslation();
   const { t } = isCounselor ? counselorTranslation : userTranslation;
-  const [openSection, setOpenSection] = useState(isPublic ? null : 0);
+  const [openSection, setOpenSection] = useState(null);
+
+  const [consentNotice, setConsentNotice] = useState("");
 
   const sections = [
+    {
+      icon: <FaShieldAlt />,
+      title: "AI Privacy & Data Sharing",
+      content: (
+        <div className="privacy-ai-sharing">
+          <p><strong>AI Provider:</strong> OpenAI</p>
+          <p><strong>Current Consent:</strong> Status unavailable</p>
+          <p className="privacy-ai-note">Contact support to check or change your AI data sharing consent.</p>
+          <div className="privacy-ai-actions">
+            <button type="button" onClick={() => setConsentNotice("Consent status cannot currently be retrieved in this app. Please contact support@humaeli.com to confirm your status.")}>Refresh consent status</button>
+            <a href="#privacy-ai-processing" onClick={() => setOpenSection(1)}>View Privacy Policy</a>
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=Withdraw%20AI%20Consent&body=I%20would%20like%20to%20withdraw%20my%20consent%20for%20AI%20data%20sharing.%20Please%20confirm%20when%20this%20request%20has%20been%20processed.`}>Withdraw AI Consent</a>
+            <a href={`mailto:${SUPPORT_EMAIL}?subject=Chat%20or%20Account%20Data%20Deletion%20Request&body=I%20would%20like%20to%20request%20deletion%20of%20my%20chat%20or%20account%20data.%20Please%20help%20me%20verify%20my%20account%20and%20confirm%20the%20scope%20of%20deletion.`}>Request chat / account data deletion</a>
+          </div>
+          <p className="privacy-ai-note">Consent withdrawal and deletion links open an email request to Humaeli support. Changes take effect after your request is processed.</p>
+          {consentNotice && <p role="status" className="privacy-ai-note">{consentNotice}</p>}
+        </div>
+      ),
+    },
+    {
+      id: "privacy-ai-processing",
+      icon: <FaComments />,
+      title: "AI Assistant and OpenAI Data Processing",
+      content: (
+        <div className="privacy-ai-processing-copy">
+          <h3>Information Shared with OpenAI</h3>
+          <p>Your AI messages, up to 20 prior conversation messages, language, mood and safety context, anonymous handle, age, gender, city/location, surroundings and company may be sent through Humaeli?s backend to OpenAI. Counselor directory details may be included to suggest support. Messages may contain personal or mental-wellness information you choose to share.</p>
+          <h3>Voice and photo features</h3>
+          <p>AI voice calls send microphone audio directly to OpenAI after Humaeli creates the connection. OpenAI transcribes the audio and generates spoken replies. Voice sessions also include your account role and the profile and counselor context described above. Device speech recognition may process dictated text using Apple or Google services. AI photo avatars send your selected photo or avatar, appearance analysis (when enabled) and customization choices to OpenAI. Text selected for AI speech is sent to OpenAI.</p>
+          <h3>Third-Party Provider</h3>
+          <p>Provider: OpenAI. Purpose: AI response generation and processing of the text, audio and images you submit for AI features.</p>
+          <h3>Data Privacy</h3>
+          <p>Humaeli stores AI chat history in its backend database until you delete it; no automatic expiry is configured. Use AI Chat?s Fresh Chat control to clear saved AI history, or contact <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a> for deletion requests. Consent records contain timestamps and policy versions, not chat text. OpenAI API data is not used for training by default unless the API customer opts in. OpenAI may retain abuse-monitoring data for up to 30 days, with legal/safety exceptions and endpoint-specific handling. Uploaded images may be retained for safety review when flagged. This is not zero retention.</p>
+          <h3>Your choice</h3>
+          <p>Declining does not prevent use of unrelated Humaeli features. Withdraw consent in Privacy ? AI Privacy &amp; Data Sharing to stop future AI processing and end active AI calls. Withdrawal does not automatically erase data already processed. Read the Privacy Policy for collection, sharing, retention and deletion details.</p>
+        </div>
+      ),
+    },
     {
       icon: <FaServer />,
       title: t("privacy.sections.informationCollect"),
@@ -267,8 +307,8 @@ const PrivacyPolicy = ({ variant = "dashboard", role = "user" }) => {
   ];
 
   return (
-    <section className={`privacy-policy privacy-policy--${variant}`}>
-      {isPublic ? (
+    <section className={`privacy-policy privacy-policy--${variant}${aiOnly ? " privacy-policy--ai-only" : ""}`}>
+      {!aiOnly && (isPublic ? (
         <>
           <header className="privacy-policy-public-hero">
             <div className="privacy-policy-public-hero-icon">
@@ -348,12 +388,13 @@ const PrivacyPolicy = ({ variant = "dashboard", role = "user" }) => {
             </article>
           </div>
         </>
-      )}
+      ))}
 
       <div className="privacy-policy-content">
-        {sections.map((section, index) => (
+        {(aiOnly ? sections.slice(0, 2) : sections).map((section, index) => (
           <details
             key={section.title}
+            id={section.id}
             className="privacy-policy-expandable"
             open={openSection === index}
           >
@@ -376,7 +417,7 @@ const PrivacyPolicy = ({ variant = "dashboard", role = "user" }) => {
         ))}
       </div>
 
-      {!isPublic && (
+      {!isPublic && !aiOnly && (
         <section className="privacy-policy-support">
           <div className="privacy-policy-support-content">
             <h2>{t("privacy.needAssistance")}</h2>
@@ -405,7 +446,7 @@ const PrivacyPolicy = ({ variant = "dashboard", role = "user" }) => {
         </section>
       )}
 
-      {isPublic && (
+      {isPublic && !aiOnly && (
         <section className="privacy-policy-public-support">
           <h2>Need Privacy Assistance?</h2>
           <p>

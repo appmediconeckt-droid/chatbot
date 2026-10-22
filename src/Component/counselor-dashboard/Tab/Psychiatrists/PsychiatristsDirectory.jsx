@@ -1,3 +1,4 @@
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import React, { useEffect, useMemo, useState } from "react";
 import { FaMapMarkerAlt, FaSearch, FaStar, FaUserMd } from "react-icons/fa";
 import api from "../../../../axiosConfig";
@@ -56,8 +57,8 @@ export default function PsychiatristsDirectory() {
       }
     };
 
-    void loadCounselors();
-    return () => { mounted = false; };
+    const stopRefresh = subscribeSocketRefresh(loadCounselors, ["counselor-directory-updated"]);
+    return () => { mounted = false; stopRefresh(); };
   }, []);
 
   const visibleCounselors = useMemo(() => {

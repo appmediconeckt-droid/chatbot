@@ -93,7 +93,7 @@ const RatingModal = ({
             <span className={styles.successIcon}>🎉</span>
             <h2 className={styles.title}>Thank you!</h2>
             <p className={styles.subtitle}>Your rating has been submitted.</p>
-            {professionalType === "doctor" && <button type="button" className={styles.submitBtn} onClick={onClose}>Done</button>}
+            {["doctor", "clinic"].includes(professionalType) && <button type="button" className={styles.submitBtn} onClick={onClose}>Done</button>}
           </div>
         ) : (
           <>

@@ -1,10 +1,11 @@
+import useSocketRefresh from "../../../hooks/useSocketRefresh";
 import { isProfessionalRole } from "../../../authtication/authSession.js";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { FaBell, FaCalendarAlt, FaCheck, FaCommentAlt, FaTrash } from "react-icons/fa";
 import axiosInstance from "../../../axiosConfig";
-import socketService from "../../../services/socketService";
 import { useCounselorTranslation, useUserTranslation, useCounselorApiTranslation, useUserApiTranslation } from "../../../i18n/LanguageContext";
 import "./Notifications.css";
+import CounselorNotificationsView from "./CounselorNotificationsView";
 
 const icons = {
   appointment: <FaCalendarAlt />,
@@ -33,7 +34,7 @@ const localizeKnownNotification = (item, t) => {
   };
 };
 
-const NotificationsPage = ({ role = "user" }) => {
+const NotificationsPage = ({ role = "user", onOpenNotification }) => {
   const isCounselor = role === "counselor" || isProfessionalRole(role);
   const userTranslation = useUserTranslation();
   const counselorTranslation = useCounselorTranslation();
@@ -59,7 +60,7 @@ const NotificationsPage = ({ role = "user" }) => {
       const response = await axiosInstance.get("/api/notifications", {
         params: { page: 1, limit: 100, ...(type ? { type } : {}), ...(unreadOnly ? { unread: true } : {}) },
       });
-      const items = response.data?.notifications || [];
+      const items = (response.data?.notifications || []).map((item) => ({ ...item, displayKind: /reminder/i.test(item.title || "") ? "reminder" : /new chat request/i.test(item.title || "") ? "request" : item.type }));
       const localizedItems = lang === "en-US" ? items : await Promise.all(items.map(async (item) => {
         const knownTranslation = localizeKnownNotification(item, t);
         if (knownTranslation) return { ...item, ...knownTranslation };
@@ -78,23 +79,15 @@ const NotificationsPage = ({ role = "user" }) => {
     }
   };
 
-  useEffect(() => {
-    void load();
-  }, [type, unreadOnly, lang]);
-
-  useEffect(() => {
-    let cleanup;
-    socketService.on("notification:new", () => void load())
-      .then((remove) => { cleanup = remove; })
-      .catch((error) => console.error("Notification page socket failed:", error));
-    return () => cleanup?.();
-  }, [type, unreadOnly]);
+  useSocketRefresh(load, ["notification:new", "notifications:updated"], true, {
+    refreshKey: JSON.stringify([type, unreadOnly, lang]),
+  });
 
   const changed = () => window.dispatchEvent(new Event("notifications:changed"));
 
   const markRead = async (id) => {
     await axiosInstance.patch(`/api/notifications/${id}/read`);
-    setNotifications((items) => items.map((item) => item._id === id ? { ...item, isRead: true } : item));
+    setNotifications((items) => unreadOnly ? items.filter((item) => item._id !== id) : items.map((item) => item._id === id ? { ...item, isRead: true } : item));
     setUnreadCount((count) => Math.max(0, count - 1));
     changed();
   };
@@ -130,6 +123,10 @@ const NotificationsPage = ({ role = "user" }) => {
   };
 
   const activeFilter = unreadOnly ? "unread" : (type || "all");
+
+  if (["counselor", "counsellor", "counsellour"].includes(role)) {
+    return <CounselorNotificationsView t={t} lang={lang} notifications={notifications} loading={loading} unreadCount={unreadCount} activeFilter={activeFilter} onFilter={selectFilter} onMarkRead={markRead} onMarkAll={markAll} onRemove={remove} onOpen={onOpenNotification} />;
+  }
 
   return (
     <div className={`notifications-page ${isCounselor ? "notifications-page--counselor" : ""}`}>

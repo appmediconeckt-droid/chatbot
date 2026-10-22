@@ -1877,3 +1877,36 @@
     grid-template-rows: minmax(140px, 36%) minmax(0, 1fr);
   }
 }
+
+/* User Call History has one full-width history list. */
+.portal-call-history.pch-single-list > .pch-layout { display: flex; flex-direction: column; grid-template-columns: none; grid-template-rows: none; min-height: 0; width: 100%; }
+.portal-call-history.pch-single-list .pch-sidebar { flex: 1; width: 100%; min-width: 0; border: 0; background: #f7fbf9; }
+.pch-single-list .pch-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 22px; border-bottom: 1px solid #e5ece8; }
+.pch-single-list .pch-search { flex: 1 1 280px; max-width: 460px; margin: 0; }
+.pch-single-list .pch-filter-row { margin: 0; flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 8px; }
+.pch-single-list .pch-filter-row button { padding: 8px 16px; border-radius: 20px; }
+.portal-call-history.pch-single-list .pch-compact-list { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 16px 22px 24px; border: 0; max-height: none; }
+.pch-single-list .pch-compact-call { flex: 0 0 auto; min-height: 78px; gap: 14px; padding: 13px 16px; border: 1px solid #e1ece5; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px #1e633408; }
+.pch-single-list .pch-compact-call:hover { border-color: #a4dcb9; background: #fbfffc; }
+.pch-single-list .pch-compact-call:focus-visible { outline: 3px solid #86dca4; outline-offset: 2px; }
+.pch-single-list .pch-compact-call .pch-avatar { flex: 0 0 48px; width: 48px; height: 48px; }
+.pch-single-list .pch-compact-info strong { font-size: 14px; }
+.pch-single-list .pch-compact-info small { flex-wrap: wrap; font-size: 11px; white-space: normal; line-height: 1.5; }
+.pch-single-list .pch-compact-call time { display: flex; flex-direction: column; align-items: flex-end; justify-content: center; align-self: center; gap: 5px; margin: 0; color: #748391; font-size: 11px; }
+.pch-single-list .pch-compact-call time > span:last-child { color: #485e52; font-size: 12px; }
+.pch-compact-action { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; margin-left: 8px; border-radius: 50%; color: #008b3b; background: #eaf8ef; }
+.pch-compact-action svg { width: 16px; height: 16px; }
+.pch-single-list .pch-empty { margin: 0; padding: 40px 16px; }
+@media (max-width: 680px) {
+  .pch-single-list .pch-controls { padding: 12px 14px; gap: 10px; }
+  .pch-single-list .pch-search { max-width: none; flex-basis: 100%; }
+  .pch-single-list .pch-filter-row { width: 100%; gap: 6px; }
+  .pch-single-list .pch-filter-row button { flex: 1; padding: 8px 9px; font-size: 10px; }
+  .portal-call-history.pch-single-list .pch-compact-list { padding: 12px 14px 20px; }
+  .pch-single-list .pch-compact-call { padding: 12px; gap: 10px; }
+  .pch-single-list .pch-compact-call .pch-avatar { flex-basis: 42px; width: 42px; height: 42px; }
+  .pch-single-list .pch-compact-info strong { font-size: 13px; }
+  .pch-single-list .pch-compact-call time { font-size: 9px; gap: 4px; }
+  .pch-single-list .pch-compact-call time > span:last-child { font-size: 10px; }
+  .pch-single-list .pch-compact-action { display: none; }
+}

@@ -2838,7 +2838,8 @@
   }
 
   .ud-chat-workspace.has-conversation .ud-conversation-pane > * {
-    height: calc(100vh - 80px);
+    height: 100%;
+    min-height: 0;
   }
 
   /* A direct /chat route does not have the dashboard's top toolbar, so it
@@ -2848,7 +2849,7 @@
   }
 
   .ud-chat-workspace.direct-conversation .ud-conversation-pane > * {
-    height: 100vh;
+    height: 100%;
   }
 }
 

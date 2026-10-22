@@ -1,3 +1,5 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
+import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import { PortalText, PortalElement } from "../../../common/PortalTranslation";
 // import React, { useState, useEffect, useCallback } from "react";
 // import { useNavigate } from "react-router-dom";
@@ -1163,6 +1165,7 @@ import { PortalText, PortalElement } from "../../../common/PortalTranslation";
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
+  FaThLarge, FaCircle, FaStar, FaCoins, FaSlidersH, FaRegUser, FaMagic, FaUserFriends,
   FaCheckCircle,
   FaCalendarAlt,
   FaClock,
@@ -1174,6 +1177,8 @@ import {
   FaUser,
 } from "react-icons/fa";
 import "./BookAppointment.css";
+import "../Counselor/ConsultantsReference.css";
+import ConsultantReferenceCard from "../Counselor/ConsultantReferenceCard";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import socketService from "../../../../services/socketService";
 import axios from "axios";
@@ -1244,6 +1249,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [searchLocation, setSearchLocation] = useState("");
   const [directoryFilter, setDirectoryFilter] = useState("all");
+  const [directorySort, setDirectorySort] = useState("relevant");
+  const [showDirectoryFilters, setShowDirectoryFilters] = useState(false);
   const [showAllCounselors, setShowAllCounselors] = useState(false);
   const [directoryColumnCount, setDirectoryColumnCount] = useState(() => {
     if (window.innerWidth <= 800) return 1;
@@ -1391,6 +1398,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
     fetchPaymentDetails();
   }, [token]);
 
+  useSocketRefresh(async () => {
+    const response = await axiosInstance.get("/api/wallet/data");
+    setWalletBalance(Number(response.data?.balance || 0));
+  }, ["wallet:updated"], Boolean(token), { initial: false });
+
   // Check chat status function
   const checkChatStatus = async () => {
     try {
@@ -1455,12 +1467,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
     }
   };
 
-  // Fetch chat status when component mounts
-  useEffect(() => {
-    if (token) {
-      checkChatStatus();
-    }
-  }, [token]);
+  useSocketRefresh(checkChatStatus, ["chats:updated", "chat-status-update"], Boolean(token));
 
   const handleCounselorClick = (counselor) => {
     if (!counselor.online && !counselor.available) {
@@ -1746,7 +1753,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               accountType: c.accountType || "",
               specialization,
               experience: `${c.experience || 0} years`,
-              rating: c.rating || 4.5,
+              rating: Number(c.rating) || 0,
+              ratingCount: Number(c.ratingCount) || 0,
               online: isOnline,
               isOnline,
               isLoggedIn: isOnline,
@@ -1789,15 +1797,9 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       }
     };
 
-    fetchCounselors();
-    const presenceRefreshInterval = window.setInterval(fetchCounselors, 20_000);
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") fetchCounselors();
-    };
-    document.addEventListener("visibilitychange", refreshWhenVisible);
+    const stopRefresh = subscribeSocketRefresh(fetchCounselors, ["counselor-directory-updated"]);
     return () => {
-      window.clearInterval(presenceRefreshInterval);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      stopRefresh();
     };
   }, []);
 
@@ -2273,6 +2275,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
     if (directoryFilter === "therapist") return specialization.includes("therap");
     if (directoryFilter === "nearby") return Boolean(counselor.location);
     return true;
+  }).sort((a, b) => {
+    if (directorySort === "rating") return Number(b.rating) - Number(a.rating);
+    if (directorySort === "experience") return parseFloat(b.experience) - parseFloat(a.experience);
+    if (directorySort === "name") return a.name.localeCompare(b.name);
+    return Number(b.online) - Number(a.online);
   });
 
   const recommendedCounselor =
@@ -2293,7 +2300,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const isTokenTabActive = directoryFilter === "token";
 
   return (
-    <div className="counselor-request-unique">
+    <div className={`counselor-request-unique consultants-reference ${showDirectoryFilters || directoryFilter === "nearby" ? "cr-show-filters" : ""}`}>
       {/* Notification Panel - Right Side Top */}
       <div className="notification-panel-unique">
         {notifications.map((notification) => (
@@ -2344,9 +2351,12 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       <div className="main-content-unique">
         {/* Counselors Grid */}
         <div className="counselors-section-unique">
-          <div className="directory-hero-unique portal-page-header">
-            <h1 className="page-title-unique">{t('online_counselors')}</h1>
-            <p className="page-subtitle-unique">{t("book_counselor_subtitle")}</p>
+          <div className="directory-hero-unique">
+            <span className="cr-eyebrow">{t("FIND THE RIGHT SUPPORT")}</span>
+            <div className="cr-banner-photo" aria-hidden="true" />
+            <span className="cr-banner-note" aria-hidden="true">Better<br />Mental Health<br />Brighter<br />Tomorrows</span>
+            <h1 className="page-title-unique">{t("Online Consultants")}</h1>
+            <p className="page-subtitle-unique">{t("Send a request and book a consultant for a healthier, happier you.")}</p>
           </div>
 
           {/* Search Bar Section */}
@@ -2359,7 +2369,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   <input
                     type="text"
                     className="search-input-unique"
-                    placeholder={t('search_counselors')}
+                    placeholder={t("Search consultants by name, specialization, or keyword...")}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -2373,6 +2383,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   )}
                 </div>
 
+                <button type="button" className="cr-filter-toggle" aria-label={t("Filter consultants")} aria-expanded={showDirectoryFilters} onClick={() => setShowDirectoryFilters((value) => !value)}><FaSlidersH /></button>
                 {/* Search by Location */}
                 <div className="location-input-wrapper-unique">
                   <FaMapMarkerAlt className="location-icon-unique" aria-hidden="true" />
@@ -2442,20 +2453,20 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
           <div className="directory-filter-pills-unique" role="tablist" aria-label={t('search_counselors')}>
             {[
-              ["all", t("all")],
-              ["online", t("online")],
-              ["nearby", t("nearby")],
-              ["top-rated", t("top_rated")],
-              ["therapist", t("therapist")],
-              ["token", tr("token_status", "Token")],
-            ].map(([value, label]) => (
+              ["all", t("all"), FaThLarge],
+              ["online", t("online"), FaCircle],
+              ["nearby", t("nearby"), FaMapMarkerAlt],
+              ["top-rated", t("top_rated"), FaStar],
+              ["therapist", t("therapist"), FaRegUser],
+              ["token", tr("token_status", "Token"), FaCoins],
+            ].map(([value, label, icon]) => (
               <button
                 key={value}
                 type="button"
-                className={directoryFilter === value ? "active" : ""}
+                role="tab" aria-selected={directoryFilter === value} data-filter={value} className={directoryFilter === value ? "active" : ""}
                 onClick={() => setDirectoryFilter(value)}
               >
-                {label}
+                {React.createElement(icon)}{label}
               </button>
             ))}
           </div>
@@ -2466,53 +2477,14 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             <>
               {recommendedCounselor && (
                 <section className="recommended-section-unique">
-                  <h2>{t("recommended_for_you")}</h2>
-                  <div className="recommended-card-unique">
-                    <div className="recommended-profile-unique">
-                      <div className="recommended-avatar-unique">
-                        {recommendedCounselor.avatarType === "image" ? (
-                          <img src={recommendedCounselor.avatar} alt={recommendedCounselor.name} />
-                        ) : (
-                          <span>{recommendedCounselor.avatar}</span>
-                        )}
-                      </div>
-                      <div>
-                        <h3>{recommendedCounselor.name}</h3>
-                        <p>{recommendedCounselor.specialization}</p>
-                        <div className="recommended-stats-unique">
-                          <span>▣ {recommendedCounselor.experience} {t('experience')}</span>
-                          <span className="rating">★ {recommendedCounselor.rating || "4.9"}</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="recommended-actions-unique">
-                      <span className={`recommended-availability-unique ${recommendedCounselor.online ? "available" : ""}`}>
-                        ● {recommendedCounselor.online ? t('online') : t('offline')}
-                      </span>
-                      <div>
-                        <button onClick={() => handleBookAppointment(recommendedCounselor)}>{t("book_appointment")}</button>
-                        {!recommendedChatState?.hidden && (
-                          <button
-                            className="outline"
-                            disabled={!recommendedCounselor.online}
-                            onClick={() => handleChatNow(recommendedCounselor)}
-                          >
-                            {t('chat_now')}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <div className="cr-section-heading"><FaMagic /><div><h2>{t("recommended_for_you")}</h2><p>{t("Explore a highly rated consultant available to support you")}</p></div></div>
+                  <ConsultantReferenceCard consultant={recommendedCounselor} featured t={t} chatState={recommendedChatState} onChat={handleChatNow} onBook={handleBookAppointment} />
                 </section>
               )}
-
               <div className="available-heading-unique">
-                <h2>{t("available_counselors")}</h2>
-                {directoryCounselors.length > collapsedCounselorLimit && (
-                  <button type="button" onClick={() => setShowAllCounselors((current) => !current)}>
-                    {showAllCounselors ? t('show_less') : t("see_all")}
-                  </button>
-                )}
+                <div className="cr-section-heading"><FaUserFriends /><div><h2>{t("Available Consultants")}</h2><p>{t("Explore our experienced mental wellness professionals")}</p></div></div>
+                <label className="cr-sort">{t("sort_by")}: <select value={directorySort} onChange={(event) => setDirectorySort(event.target.value)}><option value="relevant">{t("Most Relevant")}</option><option value="rating">{t("top_rated")}</option><option value="experience">{t("experience")}</option><option value="name">{t("name")}</option></select></label>
+                {directoryCounselors.length > collapsedCounselorLimit && <button type="button" onClick={() => setShowAllCounselors((value) => !value)}>{showAllCounselors ? t("show_less") : t("see_all")}</button>}
               </div>
 
               {/* No Results Message */}
@@ -2530,170 +2502,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 </div>
               )}
 
-              {/* Desktop View - Cards Grid */}
-              <div className="counselors-grid-unique desktop-view">
-                {visibleDirectoryCounselors.map((counselor) => {
-                  const buttonState = getChatButtonState(counselor);
-
-                  return (
-                    <div
-                      key={counselor.id}
-                      className={`counselor-card-unique ${!counselor.available ? "unavailable" : ""}`}
-                    >
-                      <div className="counselor-card-header-unique">
-                        <div className="counselor-avatar-unique">
-                          {counselor.avatarType === "image" ? (
-                            <img
-                              src={counselor.avatar}
-                              alt={counselor.name}
-                              className="counselor-avatar-image-unique"
-                              onError={(e) => {
-                                e.target.style.display = "none";
-                                e.target.parentElement.innerHTML = `<span>${getInitials(counselor.name)}</span>`;
-                              }}
-                            />
-                          ) : (
-                            <span>{counselor.avatar}</span>
-                          )}
-                        </div>
-                        <div className="counselor-status-unique">
-                          <span
-                            className={`status-dot-unique ${counselor.online ? "online" : "offline"}`}
-                          ></span>
-                          <span className="status-text-unique">
-                            {counselor.online
-                              ? tr("online", "Online")
-                              : tr("offline", "Offline")}
-                          </span>
-                        </div>
-                      </div>
-
-                      <h3 className="counselor-name-unique">{counselor.name}</h3>
-                      <span className={`professional-role-badge ${counselor.role === "doctor" ? "professional-role-badge--doctor" : ""}`}>
-                        {counselor.role === "doctor" ? tr("professional_role_doctor", "Doctor") : tr("professional_role_consultant", "Consultant")}
-                      </span>
-                      {counselor.location && (
-                        <div className="counselor-location-unique">
-                          📍 {counselor.location}
-                        </div>
-                      )}
-                      <div className="counselor-specialization-unique">
-                        {counselor.specialization}
-                      </div>
-
-                      <div className="counselor-experience-unique">
-                        💼 {counselor.experience} {t('experience')}
-                      </div>
-
-                      <div className="counselor-rating-unique">
-                        <div className="stars-unique">
-                          {"★".repeat(Math.floor(counselor.rating))}
-                          {"☆".repeat(5 - Math.floor(counselor.rating))}
-                        </div>
-                        <span className="rating-number-unique">
-                          {counselor.rating}
-                        </span>
-                      </div>
-
-                      <div className="card-actions-unique">
-                        {!buttonState.hidden && (
-                          <button
-                            onClick={() => handleChatNow(counselor)}
-                            disabled={buttonState.disabled}
-                            className={`chat-now-btn-unique ${buttonState.className}`}
-                            title={buttonState.title}
-                          >
-                            {buttonState.text}
-                          </button>
-                        )}
-                        <button
-                          onClick={() => handleBookAppointment(counselor)}
-                          className="book-apt-btn-unique"
-                        >
-                          📅 {t('book_appointment')}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Mobile View - Table/List Style */}
-              <div className="counselors-table-unique mobile-view">
-                {visibleDirectoryCounselors.map((counselor) => {
-                  const buttonState = getChatButtonState(counselor);
-
-                  return (
-                    <div
-                      key={counselor.id}
-                      className="counselor-row-unique"
-                    >
-                      <div className="row-avatar-unique">
-                        {counselor.avatarType === "image" ? (
-                          <img
-                            src={counselor.avatar}
-                            alt={counselor.name}
-                            onError={(e) => {
-                              e.target.style.display = "none";
-                              e.target.parentElement.innerHTML = `<span>${getInitials(counselor.name)}</span>`;
-                            }}
-                          />
-                        ) : (
-                          <span>{counselor.avatar}</span>
-                        )}
-                      </div>
-
-                      <div className="row-info-unique">
-                        <div className="row-name-unique">{counselor.name}</div>
-                        <span className={`professional-role-badge ${counselor.role === "doctor" ? "professional-role-badge--doctor" : ""}`}>
-                          {counselor.role === "doctor" ? tr("professional_role_doctor", "Doctor") : tr("professional_role_consultant", "Consultant")}
-                        </span>
-                        <div className="row-specialization-unique">
-                          {counselor.specialization}
-                        </div>
-                        {counselor.location && (
-                          <div className="row-location-unique">
-                            📍 {counselor.location}
-                          </div>
-                        )}
-                        {counselor.experience && (
-                          <div className="row-experience-unique">
-                            💼 {counselor.experience}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="row-action-unique">
-                        <span
-                          className={`dot ${counselor.online ? "online" : "offline"}`}
-                        ></span>
-                        <div className="row-buttons-unique">
-                          {!buttonState.hidden && (
-                            <button
-                              disabled={buttonState.disabled}
-                              className={`row-btn-unique ${buttonState.className}`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleChatNow(counselor);
-                              }}
-                            >
-                              {buttonState.text}
-                            </button>
-                          )}
-                          <button
-                            className="row-book-btn-unique"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleBookAppointment(counselor);
-                            }}
-                          >
-                            {t('book_appointment')}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+              <div className="cr-grid">
+                {visibleDirectoryCounselors.map((counselor) => <ConsultantReferenceCard key={counselor.id} consultant={counselor} t={t} chatState={getChatButtonState(counselor)} onChat={handleChatNow} onBook={handleBookAppointment} />)}
               </div>
             </>
           )}

@@ -623,6 +623,7 @@
 
 .chatInputWrapper {
  flex: 1;
+  min-width: 0;
   position: relative;
   display: flex;
   align-items: center;
@@ -656,10 +657,6 @@
   border: none;
 }
 
-
-.chatInputWrapper input:not(:first-child) {
-  display: none;
-}
 
 .chatTextInput::placeholder { color: #94a3b8; }
 
@@ -1978,9 +1975,8 @@
 
 }
 
-/* Authoritative embedded mobile chat structure:
+/* Embedded chat structure:
    fixed header/footer with one independently scrolling message viewport. */
-@media (max-width: 900px) {
   .chatContainerFull.chatEmbedded,
   .chatEmbedded .chatBoxMain {
     width: 100%;
@@ -2024,4 +2020,3 @@
     padding-bottom: max(6px, env(safe-area-inset-bottom, 0px));
     background: #fff;
   }
-}

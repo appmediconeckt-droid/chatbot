@@ -1,4 +1,4 @@
-import { buildFollowUpPatients, followUpPatient, recordId } from "./followUpPatients.js";
+import { buildFollowUpPatients, followUpPatient, followUpDemographics, recordId } from "./followUpPatients.js";
 import { PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useMemo, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
@@ -116,11 +116,14 @@ function FollowUp() {
 
   const buildAppointmentPatients = buildFollowUpPatients;
 
-  const normalizeFollowUp = (followUp, index) => {
+  const normalizeFollowUp = (followUp, index, patients) => {
     const patient = getPatient(followUp);
     const doctor = getDoctor(followUp);
     const patientId = getPatientId(followUp);
-    const matchedPatient = appointmentPatients.find((item) => String(item.id) === String(patientId));
+    const matchedPatient = patients.find((item) =>
+      (patientId && String(item.patientId) === String(patientId)) ||
+      (recordId(followUp.walkin_id) && String(item.walkinId) === String(recordId(followUp.walkin_id)))
+    );
 
     return {
       id: followUp.id || followUp.followup_id || followUp.follow_up_id || followUp._id || index,
@@ -134,7 +137,7 @@ function FollowUp() {
         patient.fullName || patient.full_name ||
         matchedPatient?.name ||
         "N/A",
-      age: followUp.age || patient.age || matchedPatient?.age || "N/A",
+      ...followUpDemographics(followUp, matchedPatient),
       phone:
         followUp.phone_number ||
         followUp.phone ||
@@ -174,12 +177,14 @@ function FollowUp() {
       return !appointmentDoctorId || String(appointmentDoctorId) === String(doctorId);
     });
 
-    setAppointmentPatients(buildAppointmentPatients([...appointments,
+    const patients = buildAppointmentPatients([...appointments,
       ...unwrapApiArray(walkins.data).map((row) => ({ ...row, __appointmentSource: 'walkin' })),
-    ]));
+    ]);
+    setAppointmentPatients(patients);
+    return patients;
   };
 
-  const loadFollowUps = async (doctorId, signal) => {
+  const loadFollowUps = async (doctorId, signal, patients) => {
     const response = await axios.get(FOLLOWUP_BASE_URL, {
       headers: getAuthHeaders(),
       params: { doctor_id: doctorId },
@@ -187,7 +192,7 @@ function FollowUp() {
     });
 
     const rows = unwrapApiArray(response.data)
-      .map(normalizeFollowUp)
+      .map((row, index) => normalizeFollowUp(row, index, patients))
       .filter((followUp) => !followUp.doctorId || String(followUp.doctorId) === String(doctorId));
 
     setFollowUps(rows);
@@ -204,8 +209,8 @@ function FollowUp() {
     try {
       setStatus("loading");
       setApiError("");
-      await loadAppointmentPatients(doctorId, signal);
-      await loadFollowUps(doctorId, signal);
+      const patients = await loadAppointmentPatients(doctorId, signal);
+      await loadFollowUps(doctorId, signal, patients);
       setStatus("succeeded");
     } catch (error) {
       if (axios.isCancel(error)) return;
@@ -630,7 +635,7 @@ function FollowUp() {
                         <strong>{patient.name}</strong>
                       </div>
                     </td>
-                    <td>{patient.age || "N/A"}, {patient.gender || "M"}</td>
+                    <td>{patient.age ?? "N/A"}, {patient.gender || "N/A"}</td>
                     <td>
                       <span className="fup-date-inline">
                         <CalendarDays size={14} /> {formatFollowUpDateTime(patient)}
@@ -850,16 +855,12 @@ function FollowUp() {
             </div>
             <div className="fup-modal-body fup-detail-grid">
               <div><span><PortalText text={"Patient"} /></span><strong>{viewFollowUp.name}</strong></div>
-              <div><span><PortalText text={"Age / Gender"} /></span><strong>{viewFollowUp.age || "N/A"} / {viewFollowUp.gender || "N/A"}</strong></div>
+              <div><span><PortalText text={"Age / Gender"} /></span><strong>{viewFollowUp.age ?? "N/A"} / {viewFollowUp.gender || "N/A"}</strong></div>
               <div><span><PortalText text={"Next Follow-up"} /></span><strong>{formatFollowUpDateTime(viewFollowUp)}</strong></div>
               <div><span><PortalText text={"Doctor"} /></span><strong>{viewFollowUp.doctor}</strong></div>
               <div><span><PortalText text={"Priority"} /></span><strong>{getPriorityLabel(viewFollowUp.followUpType)}</strong></div>
               <div><span><PortalText text={"Status"} /></span><strong>{viewFollowUp.followUpStatus}</strong></div>
               <div className="wide-field"><span><PortalText text={"Notes"} /></span><strong>{viewFollowUp.notes || "N/A"}</strong></div>
-            </div>
-            <div className="fup-modal-footer">
-              <button className="fup-btn-secondary" type="button" onClick={() => setViewFollowUp(null)}><PortalText text={"Close"} /></button>
-              <button className="fup-btn-primary" type="button" onClick={() => openEditFollowUp(viewFollowUp)}><PortalText text={"Update"} /></button>
             </div>
           </div>
         </div>

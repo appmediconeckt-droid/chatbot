@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import ParticipantPhoto from "../../../common/ParticipantPhoto";
 // import React, { useState, useEffect, useCallback } from "react";
 // import { useNavigate } from "react-router-dom";
@@ -25,7 +26,7 @@ import ParticipantPhoto from "../../../common/ParticipantPhoto";
 //  * SMSList Component - Fetches and displays users/patients list from API
 //  * Displays anonymous name and gender-based avatar icons (no photos)
 //  */
-// const SMSList = () => {
+// const SMSList = ({ pendingRequests, setPendingRequests, fetchPendingRequests }) => {
 //   const { t, lang } = useCounselorTranslation();
 //   const [searchTerm, setSearchTerm] = useState("");
 //   const [users, setUsers] = useState([]);
@@ -34,8 +35,7 @@ import ParticipantPhoto from "../../../common/ParticipantPhoto";
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
 //   const [isTranslating, setIsTranslating] = useState(false);
-//   const [pendingRequests, setPendingRequests] = useState([]);
-//   const [showPendingModal, setShowPendingModal] = useState(false);
+// //   const [showPendingModal, setShowPendingModal] = useState(false);
 //   const [loadingRequests, setLoadingRequests] = useState(false);
 //   const [contextMenu, setContextMenu] = useState(null);
 //   const navigate = useNavigate();
@@ -128,27 +128,6 @@ import ParticipantPhoto from "../../../common/ParticipantPhoto";
 //   };
 
 //   // Fetch pending requests
-//   const fetchPendingRequests = useCallback(async () => {
-//     const token =
-//       localStorage.getItem("token") || localStorage.getItem("accessToken");
-//     if (!token) return;
-
-//     try {
-//       const response = await fetch(`${API_BASE_URL}/api/chat/pending-requests`, {
-//         headers: {
-//           Authorization: `Bearer ${token}`,
-//         },
-//       });
-
-//       if (response.ok) {
-//         const data = await response.json();
-//         setPendingRequests(data.requests || []);
-//       }
-//     } catch (err) {
-//       console.error("Error fetching pending requests:", err);
-//     }
-//   }, []);
-
 //   // Fetch chats from API
 //   const fetchChats = useCallback(async () => {
 //     const token =
@@ -733,7 +712,7 @@ const LAST_OPEN_COUNSELOR_CHAT_KEY = "humaeli:last-open-chat:counselor";
  * SMSList Component - Fetches and displays users/patients list from API
  * Displays anonymous name and gender-based avatar icons (no photos)
  */
-const SMSList = () => {
+const SMSList = ({ pendingRequests, setPendingRequests, fetchPendingRequests }) => {
   const { t, lang } = useCounselorTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [users, setUsers] = useState([]);
@@ -744,7 +723,6 @@ const SMSList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isTranslating, setIsTranslating] = useState(false);
-  const [pendingRequests, setPendingRequests] = useState([]);
   const [showPendingModal, setShowPendingModal] = useState(false);
   const [loadingRequests, setLoadingRequests] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
@@ -874,27 +852,6 @@ const SMSList = () => {
   };
 
   // Fetch pending requests
-  const fetchPendingRequests = useCallback(async () => {
-    const token =
-      localStorage.getItem("token") || localStorage.getItem("accessToken");
-    if (!token) return;
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/chat/pending-requests`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setPendingRequests(data.requests || []);
-      }
-    } catch (err) {
-      console.error("Error fetching pending requests:", err);
-    }
-  }, []);
-
   // Fetch chats from API
   const fetchChats = useCallback(async ({ showLoader = true } = {}) => {
     const token =
@@ -1051,6 +1008,7 @@ const SMSList = () => {
         return bTime - aTime;
       });
 
+      setError(null);
       setOriginalUsers(enrichedUsers);
       setUsers(enrichedUsers);
       setLoading(false);
@@ -1061,21 +1019,12 @@ const SMSList = () => {
     }
   }, [handleSessionExpired]);
 
-  useEffect(() => {
-    fetchChats();
-    fetchPendingRequests();
-
-    // Set up polling for pending requests (every 5 seconds)
-    const pollInterval = setInterval(() => {
-      fetchPendingRequests();
-    }, 5000);
-
-    return () => clearInterval(pollInterval);
-  }, []);
+  // One refresh owner coalesces duplicate room events and serializes requests.
+  // The latest callback is used without restarting the subscription on renders.
+  useSocketRefresh(() => fetchChats({ showLoader: false }), ["chat-list-update", "chats:updated", "messages-read"]);
 
   useEffect(() => {
     let mounted = true;
-    const refreshChatListSilently = () => fetchChats({ showLoader: false });
 
     const onPresenceUpdate = (payload = {}) => {
       if (!mounted) return;
@@ -1115,7 +1064,6 @@ const SMSList = () => {
     socketService.connect().then((socket) => {
       if (!mounted) return;
       socket.on("presence-update", onPresenceUpdate);
-      socket.on("chat-list-update", refreshChatListSilently);
       socket.on("connect_error", onConnectError);
     }).catch((err) => {
       console.error("[Messagesou] Socket connect failed:", err.message);
@@ -1124,10 +1072,9 @@ const SMSList = () => {
     return () => {
       mounted = false;
       socketService.off("presence-update", onPresenceUpdate);
-      socketService.off("chat-list-update", refreshChatListSilently);
       socketService.off("connect_error", onConnectError);
     };
-  }, [fetchChats]);
+  }, []);
 
   // Translate user messages when language changes
   useEffect(() => {
@@ -1610,6 +1557,7 @@ const SMSList = () => {
       {selectedConversation && (
         <div className="counselor-chat-open-pane">
           <SMSInput
+            manageIncomingCalls={false}
             embeddedUser={selectedConversation}
             embeddedChatId={selectedConversation.chatId}
             onEmbeddedBack={() => {

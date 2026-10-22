@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import { isProfessionalRole } from "../../../../authtication/authSession.js";
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
@@ -74,8 +75,6 @@ export default function useCounsellorData() {
   }, []);
 
   useEffect(() => {
-    fetchCounsellor();
-
     const handleProfileUpdated = (event) => {
       if (!event.detail?.role || isProfessionalRole(event.detail.role)) {
         fetchCounsellor();
@@ -85,6 +84,8 @@ export default function useCounsellorData() {
     window.addEventListener("profile-updated", handleProfileUpdated);
     return () => window.removeEventListener("profile-updated", handleProfileUpdated);
   }, [fetchCounsellor]);
+
+  useSocketRefresh(fetchCounsellor, ["profile:updated"]);
 
   return { counselorData, loading };
 }

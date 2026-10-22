@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../hooks/useSocketRefresh";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./PatientProfile.css";
@@ -243,6 +244,8 @@ const PatientProfile = () => {
   useEffect(() => {
     fetchPatientProfile();
   }, []);
+
+  useSocketRefresh(() => fetchPatientProfile({ showSkeleton: false }), ["profile:updated"], !isEditing, { initial: false });
 
   const getProfilePhotoUrl = (userData) => {
     // profilePhoto is the authoritative, latest saved image. The sidebar

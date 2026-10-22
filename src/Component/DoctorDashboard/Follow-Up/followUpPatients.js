@@ -20,6 +20,13 @@ export function countFollowUpPatients(followUps) {
 }
 export const followUpPatient = record => [record.patient, record.patient_details, record.patient_id]
   .find(value => value && typeof value === 'object') || {};
+export function followUpDemographics(record, matchedPatient) {
+  const patient = followUpPatient(record);
+  return {
+    age: record.age ?? patient.age ?? matchedPatient?.age ?? 'N/A',
+    gender: record.gender || patient.gender || matchedPatient?.gender || 'N/A',
+  };
+}
 export function buildFollowUpPatients(appointments) {
   const patients = new Map();
   for (const appointment of appointments) {
@@ -33,6 +40,7 @@ export function buildFollowUpPatients(appointments) {
       appointmentId: walkinId ? '' : recordId(appointment.id || appointment._id),
       name: appointment.patient_name || patient.fullName || patient.name || patient.full_name || 'Unnamed Patient',
       age: appointment.age ?? patient.age ?? 'N/A',
+      gender: appointment.gender || patient.gender || 'N/A',
       phone: appointment.phone_number || appointment.phone || patient.phoneNumber || patient.phone_number || patient.phone || 'N/A',
       lastVisit: visit, issue: appointment.symptoms || appointment.diagnosis || appointment.reason || 'General consultation' };
     const existing = patients.get(String(id));

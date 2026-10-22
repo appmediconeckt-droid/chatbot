@@ -1,11 +1,15 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import { PortalTemplate, PortalText, PortalElement } from "../../../common/PortalTranslation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { FaArrowLeft, FaCalendarAlt, FaCamera, FaDownload, FaEye, FaFileMedical, FaNotesMedical, FaPrint, FaRedo, FaSpinner, FaTimes, FaUserMd } from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight, FaCalendarAlt, FaCamera, FaDownload, FaEye, FaFileMedical, FaNotesMedical, FaPrint, FaRedo, FaSpinner, FaTimes, FaUserMd } from "react-icons/fa";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import { logoIcon as logoHorizontal } from "../../../../assets/brandAssets";
 import { getPrescriptionFestivalTheme } from "../../../common/prescriptionFestivalThemes";
 import { useUserTranslation } from "../../../../i18n/LanguageContext";
 import "./Prescriptions.css";
+import "./PrescriptionsReference.css";
+import ParticipantPhoto from "../../../common/ParticipantPhoto";
+import { resolveProfileImage } from "../../../../utils/profileImage";
 import PrescriptionDocument from "../../../common/PrescriptionDocument";
 import { downloadConsultationPrescription } from "../../../common/downloadPrescription";
 import { getPrescriptionProviderLabel } from "../../../common/prescriptionProviderLabel";
@@ -78,7 +82,7 @@ export default function Prescriptions() {
     }
   }, []);
 
-  useEffect(() => { loadPrescriptions(); }, [loadPrescriptions]);
+  useSocketRefresh(() => loadPrescriptions(true), ["prescriptions:updated", "appointments:updated", "queueUpdated"]);
 
   const groupedPrescriptions = useMemo(() => {
     const groupsByDoctor = new Map();
@@ -446,13 +450,12 @@ export default function Prescriptions() {
   const activeDetailRecord = activeDoctorGroup?.records.find((record) => String(record.id) === String(detailRecordId));
 
   return (
-    <section className="rx-page">
-      <header className="rx-page-header portal-page-header">
+    <section className="rx-page rx-reference">
+      <header className="rx-page-header">
         <div className="rx-page-heading">
-          <span className="rx-page-icon"><FaFileMedical /></span>
-          <div><p>{t('health_records') || <PortalText text={"Health records"} />}</p><h1>{t('my_prescriptions') || <PortalText text={"My Prescriptions"} />}</h1><span>{t('prescriptions_subtitle') || <PortalText text={"View and download prescriptions issued by your psychiatrist."} />}</span></div>
+          <div><h1>{t('my_prescriptions') || <PortalText text={"My Prescriptions"} />}</h1><span>{t('prescriptions_subtitle') || <PortalText text={"View and download prescriptions issued by your psychiatrist."} />}</span></div>
         </div>
-        <button type="button" className="rx-refresh-btn" onClick={loadPrescriptions} disabled={loading}><FaRedo className={loading ? "spinning" : ""} /> {t('refresh') || <PortalText text={"Refresh"} />}</button>
+        <button type="button" className="rx-refresh-btn" onClick={() => loadPrescriptions()} disabled={loading}><FaRedo className={loading ? "spinning" : ""} /> {t('refresh') || <PortalText text={"Refresh"} />}</button>
       </header>
 
       {actionError && <div className="rx-action-error">{actionError}<button type="button" onClick={() => setActionError("")}><FaTimes /></button></div>}
@@ -468,25 +471,21 @@ export default function Prescriptions() {
           {groupedPrescriptions.map((group) => (
             <button
               type="button"
-              className="rx-doctor-card rx-doctor-select-card"
+              className={`rx-doctor-card rx-doctor-select-card rx-provider-row ${getPrescriptionProviderLabel(group.doctor, group.records[0]) === "Consultant" ? "is-consultant" : ""}`}
               key={group.key}
               onClick={() => {
                 setActiveDoctorKey(group.key);
                 setDetailRecordId("");
               }}
             >
-              <div className="rx-doctor-header">
-                <div className="rx-doctor-avatar"><FaUserMd /></div>
-                <div>
-                  <span>{getPrescriptionProviderLabel(group.doctor, group.records[0])}</span>
-                  <h2>{group.doctor?.name || <PortalText text={"Doctor"} />}</h2>
-                  <p>{group.records.length}<PortalText text={" record"} />{group.records.length === 1 ? "" : "s"}</p>
-                </div>
+              <span className="rx-provider-icon"><ParticipantPhoto src={resolveProfileImage(group.doctor, API_BASE_URL)} name={group.doctor?.name || group.doctor?.fullName || "Provider"} className="rx-provider-photo" fallback={<FaUserMd aria-hidden="true" />} /></span>
+              <div className="rx-provider-identity">
+                <span className="rx-provider-role">{getPrescriptionProviderLabel(group.doctor, group.records[0])}</span>
+                <h2>{group.doctor?.name || group.doctor?.fullName || <PortalText text={"Doctor"} />}</h2>
+                <span className="rx-provider-count"><i aria-hidden="true"><FaFileMedical /></i><span><strong>{group.records.length}</strong> <PortalText text={group.records.length === 1 ? "record" : "records"} /></span></span>
               </div>
-              <div className="rx-doctor-card-footer">
-                <span><PortalText text={"Latest: "} />{formatDate(group.records[0]?.issuedAt)}</span>
-                <strong><PortalText text={"View records"} /></strong>
-              </div>
+              <div className="rx-provider-latest"><span className="rx-provider-date-icon" aria-hidden="true"><FaCalendarAlt /></span><span><small><PortalText text="Latest prescription" /></small><time dateTime={group.records[0]?.issuedAt}>{formatDate(group.records[0]?.issuedAt) || "—"}</time></span></div>
+              <span className="rx-provider-action"><span><PortalText text="View records" /></span><FaArrowRight aria-hidden="true" /></span>
             </button>
           ))}
         </div>
@@ -495,7 +494,7 @@ export default function Prescriptions() {
           <div className="rx-doctor-header rx-record-browser-header">
             <button type="button" className="rx-back-btn" onClick={() => setDetailRecordId("")}>
               <FaArrowLeft /><PortalText text={" Records"} /></button>
-            <div className="rx-doctor-avatar"><FaUserMd /></div>
+            <div className="rx-doctor-avatar"><ParticipantPhoto src={resolveProfileImage(activeDoctorGroup.doctor, API_BASE_URL)} name={activeDoctorGroup.doctor?.name || "Provider"} className="rx-provider-photo" fallback={<FaUserMd aria-hidden="true" />} /></div>
             <div>
               <span>{getPrescriptionProviderLabel(activeDetailRecord.psychiatrist || activeDetailRecord.doctor || activeDoctorGroup.doctor, activeDetailRecord)}</span>
               <h2>{activeDoctorGroup.doctor?.name || <PortalText text={"Doctor"} />}</h2>
@@ -514,7 +513,7 @@ export default function Prescriptions() {
               setDetailRecordId("");
             }}>
               <FaArrowLeft /><PortalText text={" All providers"} /></button>
-            <div className="rx-doctor-avatar"><FaUserMd /></div>
+            <div className="rx-doctor-avatar"><ParticipantPhoto src={resolveProfileImage(activeDoctorGroup.doctor, API_BASE_URL)} name={activeDoctorGroup.doctor?.name || "Provider"} className="rx-provider-photo" fallback={<FaUserMd aria-hidden="true" />} /></div>
             <div>
               <span>{getPrescriptionProviderLabel(activeDoctorGroup.doctor, activeDoctorGroup.records[0])}</span>
               <h2>{activeDoctorGroup.doctor?.name || <PortalText text={"Doctor"} />}</h2>

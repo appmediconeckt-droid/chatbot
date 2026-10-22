@@ -1,3 +1,4 @@
+import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import React, { useState, useEffect, useRef } from 'react';
 import axiosInstance from '../../../../axiosConfig';
 import { useUserTranslation } from '../../../../i18n/LanguageContext';
@@ -53,7 +54,6 @@ const WalletDashboard = ({ userData }) => {
     const transactionsPerPage = 5;
 
     useEffect(() => {
-        fetchWalletData();
         loadRazorpayScript().catch((error) => {
             console.error('Razorpay script load failed:', error);
         });
@@ -133,6 +133,8 @@ const WalletDashboard = ({ userData }) => {
         await fetchWalletData({ from: fromDate, to: toDate });
         setStatementLoading(false);
     };
+
+    useSocketRefresh(() => fetchWalletData(), ["wallet:updated"]);
 
     const handleThisMonth = async () => {
         const now = new Date();
@@ -592,6 +594,7 @@ const WalletDashboard = ({ userData }) => {
             <main className="wallet-layout">
                 <div className="wallet-main">
                     <section className="wallet-balance-card">
+                        <img className="wallet-premium-illustration" src="/images/premium-wallet.svg" alt="" aria-hidden="true" />
                         <div className="wallet-balance-card__top">
                             <span className="wallet-premium-pill">
                                 <span className="material-symbols-outlined">account_balance_wallet</span>
@@ -599,7 +602,7 @@ const WalletDashboard = ({ userData }) => {
                             </span>
                             {/* <span className="material-symbols-outlined wallet-card-mark">data_usage</span> */}
                         </div>
-                        <div>
+                        <div className="wallet-balance-details">
                             <p className="wallet-muted-light">{t("available_balance")}</p>
                             <h2>₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</h2>
                             <p className="wallet-card-number">**** &nbsp;**** &nbsp;4242</p>
@@ -637,31 +640,6 @@ const WalletDashboard = ({ userData }) => {
                             <strong>₹{Number(spendingSummary.total || 0).toLocaleString('en-IN')}</strong>
                         </div>
                     </section> */}
-                </div>
-
-                <aside className="wallet-side">
-                    <section className="wallet-panel wallet-add-money">
-                        <h3>{t('add_money')}</h3>
-                        <form onSubmit={handlePayment}>
-                            <label className="wallet-amount-box" htmlFor="amount-input">
-                                <span>{t("enter_amount")}</span>
-                                <div><b>₹</b><input id="amount-input" type="number" min="100" placeholder="1,000" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div>
-                            </label>
-                            <div className="wallet-quick-amounts">
-                                {quickAmounts.map((value) => (
-                                    <button type="button" key={value} className={Number(amount) === value ? 'is-active' : ''} onClick={() => setAmount(String(value))}>
-                                        ₹{value}
-                                    </button>
-                                ))}
-                                <button type="button" onClick={() => { setAmount(''); document.getElementById('amount-input')?.focus(); }}>{t("custom_amount")}</button>
-                            </div>
-                            <button className="wallet-pay-button" type="submit" disabled={loading}>
-                                {loading ? t('sending') : `${t('proceed_to_pay')}${amount ? ` ₹${Number(amount).toLocaleString('en-IN')}` : ''}`}
-                            </button>
-                            <p className="wallet-secure"><span className="material-symbols-outlined">lock</span> {t("secure_encryption")}</p>
-                        </form>
-                    </section>
-
                     <section className="wallet-panel wallet-refund-panel">
                         <div className="wallet-refund-heading">
                             <div>
@@ -695,6 +673,32 @@ const WalletDashboard = ({ userData }) => {
                             {refundRequests.slice(0, 3).map((request) => <div key={request._id}><span>₹{Number(request.amount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span><span className={`wallet-refund-status wallet-refund-status--${request.status}`}>{request.status}</span></div>)}
                         </div>}
                     </section>
+                </div>
+
+                <aside className="wallet-side">
+                    <section className="wallet-panel wallet-add-money">
+                        <h3>{t('add_money')}</h3>
+                        <form onSubmit={handlePayment}>
+                            <label className="wallet-amount-box" htmlFor="amount-input">
+                                <span>{t("enter_amount")}</span>
+                                <div><b>₹</b><input id="amount-input" type="number" min="100" placeholder="1,000" value={amount} onChange={(e) => setAmount(e.target.value)} required /></div>
+                            </label>
+                            <div className="wallet-quick-amounts">
+                                {quickAmounts.map((value) => (
+                                    <button type="button" key={value} className={Number(amount) === value ? 'is-active' : ''} onClick={() => setAmount(String(value))}>
+                                        ₹{value}
+                                    </button>
+                                ))}
+                                <button type="button" onClick={() => { setAmount(''); document.getElementById('amount-input')?.focus(); }}>{t("custom_amount")}</button>
+                            </div>
+                            <button className="wallet-pay-button" type="submit" disabled={loading}>
+                                {loading ? t('sending') : `${t('proceed_to_pay')}${amount ? ` ₹${Number(amount).toLocaleString('en-IN')}` : ''}`}
+                            </button>
+                            <p className="wallet-secure"><span className="material-symbols-outlined">lock</span> {t("secure_encryption")}</p>
+                        </form>
+                    </section>
+
+
 
                     {/* <section className="wallet-support">
                         <div><strong>{t("need_payment_help")}</strong><p>{t("support_available_24_7")}</p></div>

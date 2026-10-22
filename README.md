@@ -1,34 +1,21 @@
-# React + Vite
+# Humaeli frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React application built with Vite.
 
-Currently, two official plugins are available:
+## Run
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Run `npm ci` in this directory.
+2. Configure `VITE_API_BASE_URL` with your backend URL.
+3. Run `npm run dev` and open the URL printed by Vite.
 
-## React Compiler
+For local development, `.env.development.local` can point to the local backend, for example `http://localhost:5006`. Use the backend's configured `PORT`. Development overrides take priority over `.env` and `.env.local`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Production builds use the production environment configuration. Do not commit environment secrets.
 
-## Expanding the ESLint configuration
+## Maintained commands
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- `npm run build`: create the production output in `dist/`.
+- `npm run preview`: preview the production build.
+- `npm run lint`: check source code.
 
-## Environment Variables
-
-Create a `.env` file in the project root and set:
-
-```
-VITE_API_BASE_URL=https://your-backend-domain.com
-```
-
-Optional (for WebRTC TURN support):
-
-```
-VITE_TURN_URL=turn:your-turn-host:3478
-VITE_TURN_USERNAME=your-turn-username
-VITE_TURN_CREDENTIAL=your-turn-password
-```
-
-The frontend now reads backend API URL from `VITE_API_BASE_URL` only.
+Application code is in `src/`, public assets in `public/`, and regression tests in `test/`. The imported `setupAxios.js` configures authentication and token refresh.
