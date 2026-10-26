@@ -5,7 +5,7 @@ import "./StrongPasswordChecklist.css";
 export default function StrongPasswordChecklist({ password = "" }) {
   const checks = getPasswordChecks(password);
   const requirements = [
-    ["length", "8+ characters"],
+    ["length", "6–20 characters"],
     ["uppercase", "Uppercase letter"],
     ["lowercase", "Lowercase letter"],
     ["number", "Number"],

@@ -1,3 +1,5 @@
+import { useProviderPaymentOptions, payForAppointment, isOnlinePayment } from '../../../../utils/providerPayments.js';
+import ProviderPaymentChoices from '../../../common/ProviderPaymentChoices.jsx';
 import { feeCurrency, formatFee } from '../../../../utils/consultationCurrency.js';
 import { subscribeSocketRefresh } from "../../../../hooks/useSocketRefresh";
 import { PortalTemplate, PortalElement, PortalText } from "../../../common/PortalTranslation";
@@ -44,13 +46,14 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   const [patientBookedSlots, setPatientBookedSlots] = useState([]);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [step, setStep] = useState('select'); // 'select' | 'payment' | 'success'
-  const [paymentMethod, setPaymentMethod] = useState('Cash');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
   const [token, setToken] = useState(null);
   const [requestId, setRequestId] = useState('');
   const [apiClinics, setApiClinics] = useState([]);
   const [clinicsLoading, setClinicsLoading] = useState(false);
 
   const doctorId = incoming?.id || incoming?._id || doctorData?.id || doctorData?._id;
+  const paymentOptions = useProviderPaymentOptions(doctorId);
 
   const [refreshRevision, setRefreshRevision] = useState(0);
   useEffect(() => {
@@ -66,8 +69,8 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     name: incoming?.name || incoming?.fullName || 'Dr. Sarah Jenkins',
     specialty: incoming?.specialization || incoming?.specialty || 'Cardiologist',
     experience: incoming?.experience ? (String(incoming.experience).includes('Year') || String(incoming.experience).includes('year') ? incoming.experience : `${incoming.experience} Years Exp`) : '15 Years Exp',
-    rating: incoming?.rating || 4.9,
-    reviews: incoming?.reviews || '120+ reviews',
+    rating: Number(incoming?.rating) || 0,
+    reviews: `${Number(incoming?.ratingCount) || 0} ratings`,
     languages: Array.isArray(incoming?.languages) ? incoming.languages.join(', ') : (incoming?.languages || 'English, Hindi'),
     nextAvailable: incoming?.nextAvailable || 'Today',
     consultationFee: incoming?.consultationFee ?? incoming?.fee ?? incoming?.consultation_fee ?? 150,
@@ -394,12 +397,10 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     if (!slot.disabled && !slot.isPast) setSelectedTime(slot.time);
   };
 
-  const paymentMethods = [
-    { id: 'Card', label: 'Credit/Debit Card', icon: 'fa-credit-card' },
-    { id: 'UPI', label: 'UPI Payment', icon: 'fa-mobile-screen-button' },
-    { id: 'Cash', label: 'Cash at Clinic', icon: 'fa-money-bill-wave' },
-    { id: 'Insurance', label: 'Insurance', icon: 'fa-shield-heart' },
-  ];
+  const paymentMethods = paymentOptions.methods;
+  useEffect(() => {
+    if (!requestId && !paymentMethods.some(method => method.id === paymentMethod)) setPaymentMethod(paymentMethods[0]?.id || '');
+  }, [paymentMethod, paymentMethods, requestId]);
 
   const dateStr = selectedDate ? `${selectedDate.day}, ${selectedDate.label}` : '';
   const patientName = patient.name.replace(' (You)', '') || 'Not Provided';
@@ -448,6 +449,14 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
 
   const confirmBooking = async () => {
     if (booking) return;
+    if (!isEmergency && !paymentMethods.some(method => method.id === paymentMethod)) { setBookError('Select an available payment method.'); return; }
+    if (requestId && isOnlinePayment(paymentMethod)) {
+      setBooking(true); setBookError('');
+      try { await payForAppointment(requestId, paymentMethod); setStep('success'); }
+      catch (error) { setBookError(error.response?.data?.message || error.message); }
+      finally { setBooking(false); }
+      return;
+    }
     if (isEmergency) {
       if (!selectedClinic?.id && !selectedClinicId) {
         setBookError('Please select a clinic for your emergency request.');
@@ -517,7 +526,9 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
         data.queue_token ??
         data.token;
       setToken(respToken ?? selectedSlotToken ?? null);
-      setRequestId(String(data._id || data.id || ''));
+      const appointmentId = String(data._id || data.id || '');
+      setRequestId(appointmentId);
+      if (isOnlinePayment(paymentMethod)) await payForAppointment(appointmentId, paymentMethod);
       setStep('success');
     } catch (err) {
       setBookError(err.response?.data?.message || err.message || 'Failed to book appointment. Please try again.');
@@ -660,26 +671,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                     </div>
                   </div>
 
-                  {/* Payment methods */}
-                  <div className="abm-pay-card">
-                    <h3 className="abm-pay-card-title"><i className="fa-solid fa-wallet"></i><PortalText text={" Choose Payment Method"} /></h3>
-                    <div className="abm-pay-methods">
-                      {paymentMethods.map((pm) => (
-                        <button
-                          key={pm.id}
-                          className={`abm-pay-method ${paymentMethod === pm.id ? 'selected' : ''}`}
-                          onClick={() => setPaymentMethod(pm.id)}
-                          type="button"
-                        >
-                          <span className="abm-pay-method-ic"><i className={`fa-solid ${pm.icon}`}></i></span>
-                          <span className="abm-pay-method-label">{pm.label}</span>
-                          <span className="abm-pay-method-radio">
-                            {paymentMethod === pm.id && <i className="fa-solid fa-check"></i>}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <ProviderPaymentChoices options={paymentOptions} value={paymentMethod} onChange={setPaymentMethod} disabled={booking || Boolean(requestId)} />
 
                   <div className="abm-pay-info">
                     <i className="fa-solid fa-circle-info"></i>
@@ -707,15 +699,15 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                     <div className="abm-pay-row abm-pay-total"><span><PortalText text={"Total"} /></span><strong>{displayFee(totalFee)}</strong></div>
                   </div>
 
-                  <button className="abm-btn-confirm2 abm-pay-confirm-full" onClick={confirmBooking} disabled={booking} type="button">
+                  <button className="abm-btn-confirm2 abm-pay-confirm-full" onClick={confirmBooking} disabled={booking || !paymentMethod || paymentOptions.loading || Boolean(paymentOptions.error)} type="button">
                     {booking ? (
                       <><i className="fa-solid fa-spinner fa-spin"></i><PortalText text={" Booking…"} /></>
                     ) : (
-                      <><i className="fa-solid fa-lock"></i><PortalText text={" Confirm & Book · "} />{displayFee(totalFee)}</>
+                      <><i className="fa-solid fa-lock"></i><PortalText text={requestId ? ' Retry Payment · ' : isOnlinePayment(paymentMethod) ? ' Pay & Book · ' : ' Confirm & Book · '} />{displayFee(totalFee)}</>
                     )}
                   </button>
                   {bookError && <p className="abm-pay-error">{bookError}</p>}
-                  <button className="abm-btn-back2 abm-pay-back-full" onClick={() => setStep('select')} disabled={booking} type="button">
+                  <button className="abm-btn-back2 abm-pay-back-full" onClick={() => setStep('select')} disabled={booking || Boolean(requestId)} type="button">
                     <i className="fa-solid fa-arrow-left"></i><PortalText text={" Back"} /></button>
                 </aside>
               </div>

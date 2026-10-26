@@ -1,3 +1,4 @@
+import ProviderRating from './ProviderRating.jsx';
 import { FaCalendarAlt, FaCheckCircle, FaEllipsisH, FaArrowRight } from "react-icons/fa";
 import ProfileAvatar from "../../../common/ProfileAvatar.jsx";
 
@@ -16,6 +17,7 @@ export default function AppointmentProviderCard({ group, role, schedule, t, onOp
       <ProfileAvatar photo={provider.profilePhoto || provider.profileImage} name={name} size={68} className="user-provider-avatar" />
       <div className="uap-provider-copy"><h3>{name}</h3><span className="uap-role">{role.label}</span><p>{specialization || provider.qualification || role.label}</p></div>
     </div>
+    <ProviderRating provider={provider} />
     <div className="user-provider-card-counts">
       <span><FaCalendarAlt />{group.appointments.length} {t(group.appointments.length === 1 ? "appointment" : "appointments")}</span>
       <span><FaCheckCircle />{completed} {t("completed")}</span>

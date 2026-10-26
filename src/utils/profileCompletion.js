@@ -1,3 +1,6 @@
+import { Metadata } from 'libphonenumber-js/core';
+import phoneMetadata from 'libphonenumber-js/metadata.mobile.json';
+
 // Completion includes fields supported by the profile API.
 const isProfessionalRole = (role) => ['doctor', 'consultant', 'counselor', 'counsellor', 'counsellour'].includes(String(role || '').trim().toLowerCase());
 
@@ -135,18 +138,43 @@ const LOCAL_PHONE_NUMBER_LENGTHS_BY_COUNTRY_CODE = {
   "441624": [10],
 };
 
-const getLocalPhoneLengths = (countryCode = DEFAULT_PHONE_COUNTRY_CODE) => {
+const phoneLengthsCache = new Map();
+export const getLocalPhoneLengths = (countryCode = DEFAULT_PHONE_COUNTRY_CODE) => {
   const countryDigits =
     String(countryCode || DEFAULT_PHONE_COUNTRY_CODE).replace(/\D/g, "") ||
     DEFAULT_PHONE_COUNTRY_CODE;
+  if (phoneLengthsCache.has(countryDigits)) return phoneLengthsCache.get(countryDigits);
+  const callingCode = Object.keys(phoneMetadata.country_calling_codes)
+    .sort((a, b) => b.length - a.length)
+    .find((code) => countryDigits.startsWith(code));
+  if (callingCode) {
+    const metadata = new Metadata(phoneMetadata);
+    metadata.selectNumberingPlan(callingCode);
+    const lengths = (metadata.numberingPlan.type('MOBILE')?.possibleLengths() || metadata.numberingPlan.possibleLengths())
+      .map((length) => length - (countryDigits.length - callingCode.length))
+      .filter((length) => length > 0);
+    if (lengths.length) {
+      phoneLengthsCache.set(countryDigits, lengths);
+      return lengths;
+    }
+  }
   return (
     LOCAL_PHONE_NUMBER_LENGTHS_BY_COUNTRY_CODE[countryDigits] ||
     [Math.max(4, 15 - countryDigits.length)]
   );
 };
 
-const getLocalPhoneMaxLength = (countryCode = DEFAULT_PHONE_COUNTRY_CODE) =>
+export const getLocalPhoneMaxLength = (countryCode = DEFAULT_PHONE_COUNTRY_CODE) =>
   Math.max(...getLocalPhoneLengths(countryCode));
+
+export const limitPhoneDigits = (value, countryCode) =>
+  String(value || '').replace(/\D/g, '').slice(0, getLocalPhoneMaxLength(countryCode));
+
+export const detectPhoneCountryCode = (digits, fallback = '+91') => {
+  const preferred = String(fallback || '+91').replace(/\D/g, '');
+  const codes = [preferred, ...Object.keys(LOCAL_PHONE_NUMBER_LENGTHS_BY_COUNTRY_CODE).sort((a, b) => b.length - a.length)];
+  return codes.find((code) => digits.startsWith(code) && getLocalPhoneLengths(code).includes(digits.length - code.length)) || preferred;
+};
 
 export const normalizePhoneNumber = (value = "", fallbackCountryCode = DEFAULT_PHONE_COUNTRY_CODE, strict = false) => {
   const raw = String(value || "").trim();

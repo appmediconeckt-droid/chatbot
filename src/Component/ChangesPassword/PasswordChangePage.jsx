@@ -342,12 +342,12 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           <label className="password-field password-new-field">
             <span>{t("new_password")}</span>
             <div className="password-input-wrap">
-              <input
+              <input minLength={6} maxLength={20}
                 type={visiblePassword.password ? "text" : "password"}
                 name="password"
                 value={form.password}
                 onChange={handleChange}
-                placeholder={t("minimum_8_characters")}
+                placeholder="6?20 characters"
                 autoComplete="new-password"
               />
               <button type="button" className="password-visibility-button" onClick={() => togglePasswordVisibility("password")} aria-label={visiblePassword.password ? "Hide password" : "Show password"}>
@@ -363,7 +363,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
               <strong>{t("strong_password")}</strong>
             </div>
             <ul>
-              <li className={setPasswordChecks.length ? "passed" : ""}>8+ chars</li>
+              <li className={setPasswordChecks.length ? "passed" : ""}>6?20 chars</li>
               <li className={setPasswordChecks.uppercase ? "passed" : ""}>Uppercase</li>
               <li className={setPasswordChecks.lowercase ? "passed" : ""}>Lowercase</li>
               <li className={setPasswordChecks.number ? "passed" : ""}>Number</li>
@@ -373,7 +373,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           <label className="password-field password-confirm-field">
             <span>{t("confirm_password")}</span>
             <div className="password-input-wrap">
-              <input
+              <input minLength={6} maxLength={20}
                 type={visiblePassword.confirmPassword ? "text" : "password"}
                 name="confirmPassword"
                 value={form.confirmPassword}
@@ -411,7 +411,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           <label className="password-field">
             <span>{t("new_password")}</span>
             <div className="password-input-wrap">
-              <input type={visiblePassword.newPassword ? "text" : "password"} name="newPassword" value={form.newPassword} onChange={handleChange} placeholder={t("minimum_8_characters")} autoComplete="new-password" />
+              <input minLength={6} maxLength={20} type={visiblePassword.newPassword ? "text" : "password"} name="newPassword" value={form.newPassword} onChange={handleChange} placeholder="6?20 characters" autoComplete="new-password" />
               <button type="button" className="password-visibility-button" onClick={() => togglePasswordVisibility("newPassword")} aria-label={visiblePassword.newPassword ? "Hide new password" : "Show new password"}>
                 {visiblePassword.newPassword ? <FaEyeSlash /> : <FaEye />}
               </button>
@@ -425,7 +425,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
               <strong>{t("strong_password")}</strong>
             </div>
             <ul>
-              <li className={newPasswordChecks.length ? "passed" : ""}>8+ chars</li>
+              <li className={newPasswordChecks.length ? "passed" : ""}>6?20 chars</li>
               <li className={newPasswordChecks.uppercase ? "passed" : ""}>Uppercase</li>
               <li className={newPasswordChecks.lowercase ? "passed" : ""}>Lowercase</li>
               <li className={newPasswordChecks.number ? "passed" : ""}>Number</li>
@@ -435,7 +435,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
           <label className="password-field">
             <span>{t("confirm_password")}</span>
             <div className="password-input-wrap">
-              <input type={visiblePassword.confirmNewPassword ? "text" : "password"} name="confirmNewPassword" value={form.confirmNewPassword} onChange={handleChange} placeholder={t("confirm_password")} autoComplete="new-password" />
+              <input minLength={6} maxLength={20} type={visiblePassword.confirmNewPassword ? "text" : "password"} name="confirmNewPassword" value={form.confirmNewPassword} onChange={handleChange} placeholder={t("confirm_password")} autoComplete="new-password" />
               <button type="button" className="password-visibility-button" onClick={() => togglePasswordVisibility("confirmNewPassword")} aria-label={visiblePassword.confirmNewPassword ? "Hide confirmed password" : "Show confirmed password"}>
                 {visiblePassword.confirmNewPassword ? <FaEyeSlash /> : <FaEye />}
               </button>

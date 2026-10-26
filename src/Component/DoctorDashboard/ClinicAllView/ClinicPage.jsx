@@ -1,6 +1,6 @@
 import { normalizeClinicDoctor } from './clinicDoctorDetails.js';
 import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import {
@@ -19,9 +19,12 @@ import {
   Star,
   Stethoscope,
   UsersRound,
+  X,
 } from "lucide-react";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./ClinicPage.css";
+import ClinicFeeFields from '../ClinicFeeFields.jsx';
+import { feeCurrency, validFee } from '../../../utils/consultationCurrency.js';
 
 const CLINICS_BASE_URL = `${API_BASE_URL}/clinics`;
 const DEFAULT_CLINIC_IMAGE = "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=1600&q=80";
@@ -252,6 +255,18 @@ export default function ClinicPage() {
   const [editPhoto, setEditPhoto] = useState(null);
   const [saving, setSaving] = useState(false);
   const [editMessage, setEditMessage] = useState("");
+  const editDialogRef = useRef(null);
+  const editButtonRef = useRef(null);
+  const closeEditor = () => { if (!saving) { setEditing(false); setEditMessage(''); } };
+  useEffect(() => {
+    if (!editing) return;
+    const dialog = editDialogRef.current;
+    const editButton = editButtonRef.current;
+    const previousOverflow = document.body.style.overflow;
+    dialog.showModal();
+    document.body.style.overflow = 'hidden';
+    return () => { dialog.close(); document.body.style.overflow = previousOverflow; editButton?.focus(); };
+  }, [editing]);
   const [clinics, setClinics] = useState([]);
   const [activeClinicIndex, setActiveClinicIndex] = useState(0);
   const [status, setStatus] = useState("idle");
@@ -437,6 +452,8 @@ export default function ClinicPage() {
     setSaving(true); setEditMessage("");
     try {
       const body = new FormData();
+      if (editForm.fee !== '' && !validFee(editForm.fee, feeCurrency(user))) throw new Error('Enter a valid clinic fee in your profile currency.');
+      body.append('fee', editForm.fee);
       for (const field of ['clinic_name', 'phone_number', 'location']) {
         if (!editForm[field]?.trim()) throw new Error("Please fill all required fields.");
         body.append(field, editForm[field].trim());
@@ -468,26 +485,29 @@ export default function ClinicPage() {
             {clinics.map((item, index) => <option key={item.id} value={index}>{item.name} — {item.address}</option>)}
           </select>
         </label>
-        <div className="doctor-clinic-management-actions" role="group" aria-label="Clinic actions">
-        <button type="button" className="doctor-clinic-action doctor-clinic-edit" disabled={saving || isDeleting || editing} onClick={() => {
-          setEditForm({ clinic_name: clinic.name, phone_number: clinic.phone, location: clinic.raw?.location || clinic.address });
-          setEditPhoto(null); setEditMessage(""); setEditing(true);
-        }}><Pencil size={16} aria-hidden="true" /><PortalText text="Edit Clinic" /></button>
-        <button type="button" className="doctor-clinic-action doctor-clinic-delete" disabled={isDeleting || editing || saving} onClick={handleDeleteClinic}>
-          <Trash2 size={16} aria-hidden="true" />
-          {isDeleting ? <PortalText text={"Deleting..."} /> : <PortalText text={"Delete Clinic"} />}
-        </button>
-        </div>
       </div>
       {deleteError && <p className="doctor-clinic-profile-error" role="alert">{deleteError}</p>}
 
-      {editMessage && <p role="status">{editMessage}</p>}
-      {editing && <form className="doctor-clinic-panel clinic-edit-form" onSubmit={saveClinic}>
-        <h2><PortalText text="Edit Clinic" /></h2>
+      {editMessage && !editing && <p role="status">{editMessage}</p>}
+      {editing && <dialog ref={editDialogRef} className="clinic-edit-modal" aria-labelledby="clinic-edit-title" aria-describedby="clinic-edit-description" onCancel={event => { event.preventDefault(); closeEditor(); }} onClick={event => {
+        if (event.target !== event.currentTarget) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) closeEditor();
+      }}>
+      <form className="clinic-edit-form" onSubmit={saveClinic} aria-busy={saving}>
+        <header className="clinic-edit-modal-header">
+          <div><h2 id="clinic-edit-title"><PortalText text="Edit Clinic" /></h2><p id="clinic-edit-description">Update your clinic details and consultation fee.</p></div>
+          <button type="button" className="clinic-edit-close" aria-label="Close edit clinic" disabled={saving} onClick={closeEditor}><X size={20} aria-hidden="true" /></button>
+        </header>
+        <div className="clinic-edit-modal-body">
+        {editMessage && <p className="clinic-edit-error" role="alert">{editMessage}</p>}
         <fieldset disabled={saving}>
-          <label>Clinic Name<input required maxLength={2000} value={editForm.clinic_name} onChange={e => setEditForm({ ...editForm, clinic_name: e.target.value })} /></label>
+          <div className="clinic-edit-details-grid">
+          <label>Clinic Name<input autoFocus required maxLength={2000} value={editForm.clinic_name} onChange={e => setEditForm({ ...editForm, clinic_name: e.target.value })} /></label>
           <label>Phone Number<input required type="tel" maxLength={2000} value={editForm.phone_number} onChange={e => setEditForm({ ...editForm, phone_number: e.target.value })} /></label>
-          <label>Address<textarea required maxLength={2000} value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} /></label>
+          </div>
+          <label>Address<textarea required rows={3} maxLength={2000} value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} /></label>
+          <section className="clinic-edit-fee-section" aria-label="Consultation fee"><ClinicFeeFields value={editForm.fee} onChange={fee => setEditForm({ ...editForm, fee })} doctor={user} /></section>
           <label>Clinic Photo (optional)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => {
             const file = e.target.files?.[0];
             if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
@@ -495,12 +515,13 @@ export default function ClinicPage() {
             }
             setEditPhoto(file || null); setEditMessage("");
           }} /></label>
-          <div className="clinic-edit-form-actions">
-          <button className="doctor-clinic-action doctor-clinic-edit" type="submit">{saving ? "Saving..." : "Save Changes"}</button>
-          <button className="doctor-clinic-action doctor-clinic-cancel" type="button" onClick={() => { setEditing(false); setEditMessage(""); }}>Cancel</button>
-          </div>
         </fieldset>
-      </form>}
+        </div>
+        <footer className="clinic-edit-form-actions">
+          <button className="doctor-clinic-action doctor-clinic-cancel" disabled={saving} type="button" onClick={closeEditor}>Cancel</button>
+          <button className="doctor-clinic-action doctor-clinic-edit" disabled={saving} type="submit">{saving ? "Saving..." : "Save Changes"}</button>
+        </footer>
+      </form></dialog>}
       <section className="doctor-clinic-hero">
         <img
           src={getClinicPhotoUrl(clinic)}
@@ -509,6 +530,15 @@ export default function ClinicPage() {
           onError={handleClinicImageError}
         />
         <div className="doctor-clinic-hero-overlay" />
+        <div className="doctor-clinic-image-actions" role="group" aria-label="Clinic actions">
+          <button ref={editButtonRef} type="button" className="doctor-clinic-image-action" aria-label="Edit Clinic" title="Edit Clinic" disabled={saving || isDeleting || editing} onClick={() => {
+            setEditForm({ clinic_name: clinic.name, phone_number: clinic.phone, location: clinic.raw?.location || clinic.address, fee: clinic.raw?.fee ?? '' });
+            setEditPhoto(null); setEditMessage(''); setEditing(true);
+          }}><Pencil size={18} aria-hidden="true" /></button>
+          <button type="button" className="doctor-clinic-image-action doctor-clinic-image-delete" aria-label={isDeleting ? 'Deleting clinic' : 'Delete Clinic'} title={isDeleting ? 'Deleting...' : 'Delete Clinic'} aria-busy={isDeleting} disabled={isDeleting || editing || saving} onClick={handleDeleteClinic}>
+            <Trash2 size={18} aria-hidden="true" />
+          </button>
+        </div>
 
         <div className="doctor-clinic-hero-content">
           <div className="doctor-clinic-status-row">

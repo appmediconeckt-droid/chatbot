@@ -1,3 +1,4 @@
+import { getLocalPhoneLengths, getLocalPhoneMaxLength, limitPhoneDigits } from '../utils/profileCompletion.js';
 import { isProfessionalRole } from "./authSession.js";
 import React, { useState, useEffect } from "react";
 import {
@@ -74,6 +75,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
   const isLogin = false;
   const [slideAnim, setSlideAnim] = useState("");
   const [phoneCountry, setPhoneCountry] = useState("IN");
+  const selectedPhoneDial = (PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0]).dial;
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -221,7 +223,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
     } else {
       setFormData({
         ...formData,
-        [name]: value,
+        [name]: name === "phoneNumber" ? limitPhoneDigits(value, selectedPhoneDial) : value,
         ...(name === "dateOfBirth"
           ? { age: calculateAgeFromDateOfBirth(value) ?? "" }
           : {}),
@@ -259,7 +261,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
 
     if (!formData.phoneNumber)
       newErrors.phoneNumber = "Phone number is required";
-    else if (!/^\d{6,14}$/.test(formData.phoneNumber))
+    else if (!getLocalPhoneLengths(selectedPhoneDial).includes(formData.phoneNumber.length))
       newErrors.phoneNumber = "Enter a valid phone number";
 
     const calculatedAge = calculateAgeFromDateOfBirth(formData.dateOfBirth);
@@ -362,7 +364,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
   };
 
   const handleSendPhoneOtp = async () => {
-    if (!formData.phoneNumber || !/^\d{6,14}$/.test(formData.phoneNumber)) {
+    if (!formData.phoneNumber || !getLocalPhoneLengths(selectedPhoneDial).includes(formData.phoneNumber.length)) {
       setPhoneOtpError("Please enter a valid phone number");
       return;
     }
@@ -1088,6 +1090,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
                         value={phoneCountry}
                         onChange={(e) => {
                           setPhoneCountry(e.target.value);
+                          setFormData((previous) => ({ ...previous, phoneNumber: limitPhoneDigits(previous.phoneNumber, (PHONE_COUNTRIES.find(({ code }) => code === e.target.value) || PHONE_COUNTRIES[0]).dial) }));
                           setPhoneVerified(false);
                         }}
                         className="cs-phone-country-select"
@@ -1107,7 +1110,8 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
                         onChange={handleChange}
                         className="cs-input cs-phone-number-input"
                         placeholder="Phone number"
-                        maxLength="14"
+                        inputMode="numeric"
+                        maxLength={getLocalPhoneMaxLength(selectedPhoneDial)}
                         disabled={isLoading}
                       />
                     </div>
@@ -1338,7 +1342,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
                     Password <span className="cs-required">*</span>
                   </label>
                   <div className="cs-password-wrapper">
-                    <input
+                    <input minLength={6} maxLength={20}
                       type={showPassword ? "text" : "password"}
                       name="password"
                       value={formData.password}
@@ -1368,7 +1372,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
                     Confirm Password <span className="cs-required">*</span>
                   </label>
                   <div className="cs-password-wrapper">
-                    <input
+                    <input minLength={6} maxLength={20}
                       type={showConfirmPassword ? "text" : "password"}
                       name="confirmPassword"
                       value={formData.confirmPassword}

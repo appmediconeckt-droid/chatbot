@@ -1913,3 +1913,38 @@
 }
 .docstaff-screen-person .docstaff-clinic-name { color: #1d4ed8; }
 .docstaff-screen-page button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.docstaff-phone-field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+ .docstaff-phone-control {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  height: 36px;
+  border: 1px solid #cbd2e2;
+  border-radius: 6px;
+  background: var(--doctor-surface, #ffffff);
+  overflow: hidden;
+}
+.docstaff-phone-control:focus-within { border-color: #2563eb; box-shadow: 0 0 0 2px rgb(37 99 235 / 12%); }
+.docstaff-screen-details-grid .docstaff-phone-control select {
+  flex: 0 0 112px;
+  width: 112px;
+  min-width: 0;
+  height: 100%;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid #cbd2e2;
+  border-radius: 0;
+  background: transparent;
+}
+.docstaff-screen-details-grid .docstaff-phone-control input {
+  flex: 1;
+  width: 0;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.docstaff-phone-field small { color: #64748b; font-size: 12px; }

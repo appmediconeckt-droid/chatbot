@@ -1212,6 +1212,8 @@ export default function UserDashboard() {
       import("../Tab/Callls/CallHistory"),
       import("../Tab/Appointment/BookAppointment"),
       import("../Tab/Appointment/MyAppointments"),
+      import("../Tab/Appointment/appointmentListLoader.js").then(({ loadAppointmentList }) =>
+        loadAppointmentList(localStorage.getItem("token") || localStorage.getItem("accessToken"))),
       import("../Tab/Prescriptions/Prescriptions"),
       import("../../PatientProfile/PatientProfile"),
       import("../Tab/Wallet/WalletDashboard"),

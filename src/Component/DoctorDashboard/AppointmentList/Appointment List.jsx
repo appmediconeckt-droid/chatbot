@@ -1,5 +1,6 @@
 import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useState } from "react";
+import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
@@ -34,6 +35,14 @@ function PatientAvatar({ name, avatarUrl, size = "sm" }) {
       )}
     </span>
   );
+}
+
+function AppointmentReview({ value }) {
+  if (!value?.stars) return <span className="appointment-review-empty"><PortalText text="Not rated" /></span>;
+  return <div className="appointment-review">
+    <strong><i className="fa-solid fa-star" aria-hidden="true" /> {value.stars} / 5</strong>
+    <p>{value.review || <PortalText text="No written review" />}</p>
+  </div>;
 }
 
 export default function AppointmentList() {
@@ -95,9 +104,28 @@ export default function AppointmentList() {
 
   const getEnabledPaymentMethods = (settings = paymentSettings) => [
     settings.cash && { value: "cash", label: "Cash" },
-    settings.upiBank && { value: "upi", label: "UPI / Bank Transfer" },
-    settings.onlinePayment && { value: "online", label: "Online Payment" },
+    settings.upiBank && { value: "upi", label: "UPI" },
+    (settings.creditCard ?? settings.onlinePayment) && { value: "credit_card", label: "Credit Card" },
+    (settings.debitCard ?? settings.onlinePayment) && { value: "debit_card", label: "Debit Card" },
   ].filter(Boolean);
+
+  useEffect(() => {
+    let active = true;
+    const refreshPaymentSettings = async () => {
+      try {
+        const { data } = await axios.get('/api/payments/preferences');
+        const methods = data.methods || [];
+        const next = { cash: methods.includes('cash'), creditCard: methods.includes('credit_card'), debitCard: methods.includes('debit_card'), onlinePayment: methods.includes('credit_card') || methods.includes('debit_card'), upiBank: methods.includes('upi') };
+        if (active) {
+          setPaymentSettings(next);
+          localStorage.setItem(`doctorPaymentSettings:${getDoctorId() || 'doctor'}`, JSON.stringify(next));
+        }
+      } catch { /* Keep the last available preferences until the next refresh. */ }
+    };
+    refreshPaymentSettings();
+    window.addEventListener('provider-payment-settings-updated', refreshPaymentSettings);
+    return () => { active = false; window.removeEventListener('provider-payment-settings-updated', refreshPaymentSettings); };
+  }, []);
 
   const openNewAppointmentModal = () => {
     const settings = loadPaymentSettings();
@@ -198,6 +226,8 @@ export default function AppointmentList() {
       id: `${source}:${apiId}`,
       apiId,
       apiSource: source,
+      vitalsAppointment: appointment,
+      vitals: appointment.vitals,
       appointmentType: getAppointmentListType(appointment),
       consultationDurationMs: getConsultationDurationMs(appointment),
       doctorId: appointment.doctor_id || appointment.doctorId || appointment.counselor?._id || appointment.counselor?.id || doctor.id || doctor._id,
@@ -243,6 +273,8 @@ export default function AppointmentList() {
       paymentAmount: appointment.payment_amount || appointment.amount_paid || appointment.consultation_fee || appointment.paymentAmount || "",
       paymentReference: appointment.payment_reference || appointment.transaction_id || appointment.upi_reference || appointment.paymentReference || "",
       paymentStatus: String(appointment.payment_status || appointment.paymentStatus || "pending").toLowerCase(),
+      doctorRating: appointment.doctorRating,
+      clinicRating: appointment.clinicRating,
     };
   };
 
@@ -595,17 +627,20 @@ export default function AppointmentList() {
               <th><PortalText text={"Test"} /></th>
               <th><PortalText text={"Location"} /></th>
               <th><PortalText text={"Status"} /></th>
+              <th><PortalText text="Vitals" /></th>
+              <th><PortalText text="Doctor Review" /></th>
+              <th><PortalText text="Clinic Review" /></th>
               <th className="more-cell"><i className="fa-solid fa-ellipsis-vertical"></i></th>
             </tr>
           </thead>
           <tbody>
             {status === "loading" ? (
               <tr>
-                <td colSpan="10" className="appointment-empty"><PortalText text={"Loading appointments..."} /></td>
+                <td colSpan="13" className="appointment-empty"><PortalText text={"Loading appointments..."} /></td>
               </tr>
             ) : filteredAppointments.length === 0 ? (
               <tr>
-                <td colSpan="10" className="appointment-empty"><PortalText text={"No appointments found"} /></td>
+                <td colSpan="13" className="appointment-empty"><PortalText text={"No appointments found"} /></td>
               </tr>
             ) : (
               paginatedAppointments.map((appointment, index) => {
@@ -645,6 +680,14 @@ export default function AppointmentList() {
                         {statusMeta.label}
                       </span>
                     </td>
+                    <td className="appointment-vitals-cell">
+                      <DoctorVitalsButton appointment={appointment} onSaved={(vitals) => {
+                        setAppointments((current) => current.map((row) => row.id === appointment.id ? { ...row, vitals, vitalsAppointment: { ...row.vitalsAppointment, vitals } } : row));
+                        setViewAppointment((current) => current?.id === appointment.id ? { ...current, vitals } : current);
+                      }} />
+                    </td>
+                    <td className="appointment-review-cell"><AppointmentReview value={appointment.doctorRating} /></td>
+                    <td className="appointment-review-cell"><AppointmentReview value={appointment.clinicRating} /></td>
                     <td className="more-cell">
                       {activeActionsId === appointment.id ? (
                         <div className="row-actions">
@@ -843,6 +886,9 @@ export default function AppointmentList() {
             </div>
 
             <div className="appointment-detail-grid">
+              <div className="wide-field"><span><PortalText text="Appointment ID" /></span><strong>{viewAppointment.apiId || viewAppointment.id}</strong></div>
+              <section className="appointment-detail-review"><h3><PortalText text="Doctor Review" /></h3><AppointmentReview value={viewAppointment.doctorRating} /></section>
+              <section className="appointment-detail-review"><h3><PortalText text="Clinic Review" /></h3><AppointmentReview value={viewAppointment.clinicRating} /></section>
               <div><span><PortalText text={"Time"} /></span><strong>{getTimeRange(viewAppointment)}</strong></div>
               <div><span><PortalText text={"Token"} /></span><strong>{viewAppointment.tokenNumber}</strong></div>
               <div><span><PortalText text={"Patient"} /></span><strong>{viewAppointment.patientName}</strong></div>

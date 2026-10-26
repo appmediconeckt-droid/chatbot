@@ -1,3 +1,4 @@
+import { professionalAverage, isHighlyRatedProfessional, professionalRoleLabel } from './landingProfessionals.js';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -77,10 +78,7 @@ const getDoctorPatientConversationCount = (doctor) => getNumericMetric(
   doctor?.totalSessions,
 );
 
-const getDoctorRating = (doctor) => getNumericMetric(
-  doctor?.rating,
-  doctor?.averageRating,
-);
+const getDoctorRating = professionalAverage;
 
 const getBrowserVoices = async () => {
   if (!window.speechSynthesis) return [];
@@ -987,7 +985,7 @@ const DoctorsSection = () => {
     .join('')
     .toUpperCase();
 
-  const rankedDoctors = [...doctors]
+  const rankedDoctors = doctors.filter(isHighlyRatedProfessional)
     .sort((a, b) => (
       getDoctorRating(b) - getDoctorRating(a) ||
       getNumericMetric(b.ratingCount, b.totalRatings) - getNumericMetric(a.ratingCount, a.totalRatings) ||
@@ -1100,12 +1098,14 @@ const DoctorsSection = () => {
                     </div>
                     <div>
                       <h3 className="doctor-name">{name}</h3>
+                      <span className={`landing-professional-role ${professionalRoleLabel(doctor).toLowerCase()}`}>{t(professionalRoleLabel(doctor))}</span>
                       <p className="doctor-specialization">{specializations[0] || doctor.qualification || t('landing_doctor_default_role')}</p>
                       <div className="doctor-rating">
                         <span className="doctor-stars" aria-label={`${rating.toFixed(1)} rating`}>
-                          {[0, 1, 2, 3, 4].map((star) => <i className="fas fa-star" key={star}></i>)}
+                          {[0, 1, 2, 3, 4].map((star) => <i className={rating >= star + 1 ? "fas fa-star" : rating > star ? "fas fa-star-half-alt" : "far fa-star"} key={star} aria-hidden="true"></i>)}
                         </span>
-                        <span>{rating.toFixed(1)}</span>
+                        <span>{rating.toFixed(1)} / 5</span>
+                        {Number(doctor.ratingCount ?? doctor.totalRatings) > 0 && <span className="landing-rating-count">({Number(doctor.ratingCount ?? doctor.totalRatings)})</span>}
                       </div>
                     </div>
                   </div>
@@ -1135,7 +1135,7 @@ const DoctorsSection = () => {
                 </div>
               );
             })}
-            {!isLoadingDoctors && !doctorLoadError && doctors.length === 0 && (
+            {!isLoadingDoctors && !doctorLoadError && rankedDoctors.length === 0 && (
               <p className="landing-doctors-state">{t('landing_doctors_empty')}</p>
             )}
           </div>

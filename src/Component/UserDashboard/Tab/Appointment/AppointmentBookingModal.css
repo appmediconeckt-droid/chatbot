@@ -880,8 +880,8 @@
 
 .abm-pay-rows2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 24px;
 }
 
 .abm-pay-row {
@@ -890,6 +890,8 @@
   justify-content: space-between;
   padding: 8px 0;
   font-size: 0.88rem;
+  min-width: 0;
+  gap: 16px;
 }
 
 .abm-pay-row span {
@@ -902,6 +904,18 @@
 .abm-pay-row strong {
   color: #0f172a;
   font-weight: 600;
+  min-width: 0;
+  text-align: right;
+  overflow-wrap: anywhere;
+  line-height: 1.5;
+}
+
+.abm-pay-row > span {
+  flex-shrink: 0;
+}
+
+.abm-pay-rows2 .abm-pay-row {
+  align-items: flex-start;
 }
 
 .abm-pay-row.abm-pay-total {

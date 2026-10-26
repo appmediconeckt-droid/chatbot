@@ -22,6 +22,7 @@
     "html2pdf.js": "^0.14.0",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
+    "libphonenumber-js": "^1.13.15",
     "lucide-react": "^1.46.0",
     "react": "18.2.0",
     "react-bootstrap": "^2.10.10",

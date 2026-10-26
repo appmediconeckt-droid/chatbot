@@ -1,3 +1,4 @@
+import { getLocalPhoneLengths, getLocalPhoneMaxLength, limitPhoneDigits } from '../utils/profileCompletion.js';
 import React, { useState, useEffect } from "react";
 import {
   FaEnvelope,
@@ -59,6 +60,7 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
   const isLogin = !initialSignup;
   const isAnimating = false;
   const [phoneCountry, setPhoneCountry] = useState("IN");
+  const selectedPhoneDial = (PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0]).dial;
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -175,7 +177,7 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
-      [name]: value,
+      [name]: name === "phoneNumber" ? limitPhoneDigits(value, selectedPhoneDial) : value,
       ...(name === "dateOfBirth"
         ? { age: calculateAgeFromDateOfBirth(value) ?? "" }
         : {}),
@@ -230,7 +232,7 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
 
     if (!formData.phoneNumber) {
       newErrors.phoneNumber = "Phone number is required";
-    } else if (!/^\d{6,14}$/.test(formData.phoneNumber)) {
+    } else if (!getLocalPhoneLengths(selectedPhoneDial).includes(formData.phoneNumber.length)) {
       newErrors.phoneNumber = "Enter a valid phone number";
     }
 
@@ -1178,6 +1180,7 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
                         value={phoneCountry}
                         onChange={(e) => {
                           setPhoneCountry(e.target.value);
+                          setFormData((previous) => ({ ...previous, phoneNumber: limitPhoneDigits(previous.phoneNumber, (PHONE_COUNTRIES.find(({ code }) => code === e.target.value) || PHONE_COUNTRIES[0]).dial) }));
                           setPhoneVerified(false);
                         }}
                         className="us-phone-country-select"
@@ -1197,7 +1200,8 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
                         onChange={handleChange}
                         className="us-input us-phone-number-input"
                         placeholder="Phone number"
-                        maxLength="14"
+                        inputMode="numeric"
+                        maxLength={getLocalPhoneMaxLength(selectedPhoneDial)}
                         disabled={isLoading}
                       />
                     </div>
@@ -1258,7 +1262,7 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
                     Password <span className="us-required">*</span>
                   </label>
                   <div className="us-password-wrapper">
-                    <input
+                    <input minLength={6} maxLength={20}
                       type={showPassword ? "text" : "password"}
                       name="password"
                       value={formData.password}
@@ -1288,7 +1292,7 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
                     Confirm Password <span className="us-required">*</span>
                   </label>
                   <div className="us-password-wrapper">
-                    <input
+                    <input minLength={6} maxLength={20}
                       type={showConfirmPassword ? "text" : "password"}
                       name="confirmPassword"
                       value={formData.confirmPassword}

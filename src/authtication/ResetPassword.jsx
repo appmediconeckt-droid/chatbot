@@ -138,7 +138,7 @@ const ResetPassword = () => {
                 New Password <span className="rp-required">*</span>
               </label>
               <div className="rp-password-wrapper">
-                <input
+                <input minLength={6} maxLength={20}
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
                   onChange={(e) => {
@@ -168,7 +168,7 @@ const ResetPassword = () => {
                 Confirm Password <span className="rp-required">*</span>
               </label>
               <div className="rp-password-wrapper">
-                <input
+                <input minLength={6} maxLength={20}
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => {

@@ -1191,6 +1191,9 @@ import {
 import AppointmentBookingModal from "./AppointmentBookingModal";
 import TokenStatusPage from "../Counselor/TokenStatusPage";
 import { getProfessionalId, mergeUniqueProfessionals } from '../Counselor/professionalDirectoryMerge.js';
+import { getCurrentPosition } from '../../../../authtication/locationHelper.js';
+import { useProviderPaymentOptions, payForAppointment, isOnlinePayment } from '../../../../utils/providerPayments.js';
+import ProviderPaymentChoices from '../../../common/ProviderPaymentChoices.jsx';
 
 const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const navigate = useNavigate();
@@ -1213,6 +1216,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
   // State for counselors list
   const [counselors, setCounselors] = useState([]);
+  const [directoryLoading, setDirectoryLoading] = useState(true);
   const [filteredCounselors, setFilteredCounselors] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [activeChats, setActiveChats] = useState([]);
@@ -1225,6 +1229,12 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const [selectedCounselorForRequest, setSelectedCounselorForRequest] =
     useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [consultantPaymentMethod, setConsultantPaymentMethod] = useState('');
+  const [consultantBookingId, setConsultantBookingId] = useState('');
+  const consultantPaymentOptions = useProviderPaymentOptions(showBookingModal ? selectedCounselorForRequest?.id : null);
+  useEffect(() => {
+    if (!consultantBookingId && !consultantPaymentOptions.methods.some(method => method.id === consultantPaymentMethod)) setConsultantPaymentMethod(consultantPaymentOptions.methods[0]?.id || '');
+  }, [consultantPaymentOptions.methods, consultantPaymentMethod, consultantBookingId]);
   const [bookingDate, setBookingDate] = useState("");
   const [bookingNotes, setBookingNotes] = useState("");
   const [blockedPopup, setBlockedPopup] = useState({ show: false, reason: "" });
@@ -1249,6 +1259,35 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const [searchTerm, setSearchTerm] = useState(initialSearch);
   const [searchLocation, setSearchLocation] = useState("");
   const [directoryFilter, setDirectoryFilter] = useState("all");
+  const [nearbyResults, setNearbyResults] = useState([]);
+  const [nearbyLoading, setNearbyLoading] = useState(false);
+  const [nearbyError, setNearbyError] = useState('');
+
+  useEffect(() => {
+    if (directoryFilter !== 'nearby') return;
+    let cancelled = false;
+    setNearbyResults([]);
+    setNearbyLoading(true);
+    setNearbyError('');
+    const loadNearby = async () => {
+      try {
+        const position = await getCurrentPosition();
+        if (cancelled) return;
+        const { data } = await axiosInstance.post('/api/auth/nearby-professionals', {
+          latitude: position.latitude, longitude: position.longitude,
+        });
+        if (!cancelled) setNearbyResults(data.professionals || []);
+      } catch (error) {
+        if (!cancelled) setNearbyError(error.response || error.request
+          ? 'Nearby doctors and consultants are currently unavailable. Please check again later.'
+          : 'Allow location access in your browser to see doctors and consultants near you.');
+      } finally {
+        if (!cancelled) setNearbyLoading(false);
+      }
+    };
+    loadNearby();
+    return () => { cancelled = true; };
+  }, [directoryFilter]);
   const [directorySort, setDirectorySort] = useState("relevant");
   const [showDirectoryFilters, setShowDirectoryFilters] = useState(false);
   const [showAllCounselors, setShowAllCounselors] = useState(false);
@@ -1261,9 +1300,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const [showLocationDropdown, setShowLocationDropdown] = useState(false);
 
   useEffect(() => {
-    if (initialSearch) {
-      setSearchTerm(initialSearch);
-    }
+    setSearchTerm(initialSearch || "");
+    setSearchLocation("");
+    setDirectoryFilter("all");
+    setDirectorySort("relevant");
+    setShowLocationDropdown(false);
   }, [initialSearch]);
 
   useEffect(() => {
@@ -1485,6 +1526,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       setShowDoctorBookingModal(true);
     } else {
       // Consultant / counsellor – use the existing simple booking form
+      setConsultantBookingId('');
+      setConsultantPaymentMethod('');
       setSelectedCounselorForRequest(counselor);
       setShowBookingModal(true);
     }
@@ -1781,6 +1824,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
               education: c.education,
               certifications: c.certifications || [],
               consultationMode: c.consultationMode || [],
+              acceptedPaymentMethods: c.acceptedPaymentMethods,
+              consultationFee: c.consultationFee,
+              consultationCurrency: c.consultationCurrency,
+              address: c.address,
               totalSessions: c.totalSessions || 0,
               activeClients: c.activeClients || 0,
             };
@@ -1794,6 +1841,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
         setUniqueLocations(locations);
       } catch (error) {
         console.error("Error fetching counselors:", error);
+      } finally {
+        setDirectoryLoading(false);
       }
     };
 
@@ -2168,6 +2217,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
   const handleConfirmBooking = async (e) => {
     e.preventDefault();
+    if (isLoading) return;
+    if (!consultantPaymentOptions.methods.some(method => method.id === consultantPaymentMethod)) {
+      alert('Select an available payment method.'); return;
+    }
     if (!bookingDate) {
       alert(t('please_select_date_time'));
       return;
@@ -2180,12 +2233,13 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       const appointmentDate = new Date(bookingDate);
       const isoDate = appointmentDate.toISOString();
 
-      const res = await axios.post(
+      const res = consultantBookingId ? { data: { _id: consultantBookingId } } : await axios.post(
         `${API_BASE_URL}/api/appointments`,
         {
           counselorId: selectedCounselorForRequest.id,
           date: isoDate,
           notes: bookingNotes,
+          payment_method: consultantPaymentMethod,
         },
         {
           headers: {
@@ -2195,14 +2249,17 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
         },
       );
 
-      console.log("✅ Appointment Booked:", res.data);
+      const booked = res.data?.data || res.data;
+      const bookedId = String(booked._id || booked.id || '');
+      setConsultantBookingId(bookedId);
+      if (isOnlinePayment(consultantPaymentMethod)) await payForAppointment(bookedId, consultantPaymentMethod);
       alert(t('appointment_booked_success'));
       setShowBookingModal(false);
       setBookingDate("");
       setBookingNotes("");
     } catch (error) {
       console.error("❌ Error booking appointment:", error);
-      alert(error?.response?.data?.message || t('appointment_booking_failed'));
+        alert(error?.response?.data?.message || error.message || t('appointment_booking_failed'));
     } finally {
       setIsLoading(false);
     }
@@ -2260,22 +2317,15 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   };
 
-  // Clear all filters
-  const clearFilters = () => {
-    setSearchTerm("");
-    setSearchLocation("");
-    setDirectoryFilter("all");
-    setShowLocationDropdown(false);
-  };
-
   const directoryCounselors = filteredCounselors.filter((counselor) => {
     const specialization = String(counselor.specialization || "").toLowerCase();
     if (directoryFilter === "online") return counselor.online;
     if (directoryFilter === "top-rated") return Number(counselor.rating || 0) >= 4;
     if (directoryFilter === "therapist") return specialization.includes("therap");
-    if (directoryFilter === "nearby") return Boolean(counselor.location);
+    if (directoryFilter === "nearby") return !nearbyLoading && !nearbyError && nearbyResults.some((item) => item.id === String(counselor.id));
     return true;
   }).sort((a, b) => {
+    if (directoryFilter === 'nearby') return nearbyResults.find((item) => item.id === String(a.id)).distanceKm - nearbyResults.find((item) => item.id === String(b.id)).distanceKm;
     if (directorySort === "rating") return Number(b.rating) - Number(a.rating);
     if (directorySort === "experience") return parseFloat(b.experience) - parseFloat(a.experience);
     if (directorySort === "name") return a.name.localeCompare(b.name);
@@ -2436,15 +2486,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 {(searchTerm || searchLocation) && (
                   <div className="filter-stats-unique">
                     <span className="filter-count-unique">
-                      {t("found")} {filteredCounselors.length}{" "}
-                      {t(filteredCounselors.length === 1 ? "counselor_label" : "counselors_found")}
+                      {t("found")} {directoryCounselors.length}{" "}
+                      {t(directoryCounselors.length === 1 ? "counselor_label" : "counselors_found")}
                     </span>
-                    <button
-                      className="clear-filters-btn-unique"
-                      onClick={clearFilters}
-                    >
-                      {t("clear_filters")}
-                    </button>
+
                   </div>
                 )}
               </div>
@@ -2475,6 +2520,9 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             <TokenStatusPage />
           ) : (
             <>
+              {directoryFilter === 'nearby' && (nearbyLoading || nearbyError || directoryCounselors.length > 0) && <div className="no-results-unique" role="status">
+                {nearbyLoading ? 'Finding doctors and consultants near your current location...' : nearbyError || 'Showing doctors and consultants within 25 km, nearest first.'}
+              </div>}
               {recommendedCounselor && (
                 <section className="recommended-section-unique">
                   <div className="cr-section-heading"><FaMagic /><div><h2>{t("recommended_for_you")}</h2><p>{t("Explore a highly rated consultant available to support you")}</p></div></div>
@@ -2487,18 +2535,14 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 {directoryCounselors.length > collapsedCounselorLimit && <button type="button" onClick={() => setShowAllCounselors((value) => !value)}>{showAllCounselors ? t("show_less") : t("see_all")}</button>}
               </div>
 
+              {directoryLoading && <p role="status" className="no-results-unique">{t("Loading consultants...")}</p>}
               {/* No Results Message */}
-              {directoryCounselors.length === 0 && (
+              {!directoryLoading && (directoryFilter !== 'nearby' || (!nearbyLoading && !nearbyError)) && directoryCounselors.length === 0 && (
                 <div className="no-results-unique">
                   <div className="no-results-icon-unique">🔍</div>
-                  <h3>{t("no_counselors_found")}</h3>
-                  <p>{t("adjust_search_filters")}</p>
-                  <button
-                    className="reset-search-btn-unique"
-                    onClick={clearFilters}
-                  >
-                    {t('clear_filters')}
-                  </button>
+                  <h3>{directoryFilter === 'nearby' ? 'No nearby doctors or consultants found' : t("no_counselors_found")}</h3>
+                  <p>{directoryFilter === 'nearby' ? 'There are no matching doctors or consultants within 25 km right now.' : t("adjust_search_filters")}</p>
+
                 </div>
               )}
 
@@ -2682,6 +2726,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                       <FaCalendarAlt aria-hidden="true" /><PortalText text={"Date"} /></span>
                     <input
                       type="date"
+                      disabled={Boolean(consultantBookingId) || isLoading}
                       value={bookingDate.split("T")[0] || ""}
                       onChange={(e) =>
                         setBookingDate(
@@ -2696,6 +2741,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                       <FaClock aria-hidden="true" /><PortalText text={"Time"} /></span>
                     <input
                       type="time"
+                      disabled={Boolean(consultantBookingId) || isLoading}
                       value={bookingDate.split("T")[1] || ""}
                       onChange={(e) =>
                         setBookingDate(
@@ -2717,6 +2763,8 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   ></textarea>
                   <small>{t("sent_for_counselor_confirmation")}</small>
                 </div>
+                <p>Consultation fee: {consultantPaymentOptions.currency || 'INR'} {consultantPaymentOptions.consultationFee ?? 0}</p>
+                <ProviderPaymentChoices options={consultantPaymentOptions} value={consultantPaymentMethod} onChange={setConsultantPaymentMethod} disabled={isLoading || Boolean(consultantBookingId)} />
               </div>
 
               <div className="booking-modal-footer-unique">
@@ -2728,9 +2776,9 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 <button
                   type="submit"
                   className="booking-confirm-btn-unique"
-                  disabled={isLoading}
+                  disabled={isLoading || consultantPaymentOptions.loading || !consultantPaymentMethod || Boolean(consultantPaymentOptions.error)}
                 >
-                  {isLoading ? <PortalText text={"Booking..."} /> : <PortalText text={"Confirm"} />}
+                  {isLoading ? <PortalText text={"Processing..."} /> : <PortalText text={consultantBookingId ? 'Retry Payment' : isOnlinePayment(consultantPaymentMethod) ? 'Pay & Book' : 'Confirm'} />}
                 </button>
               </div>
             </form>

@@ -1,7 +1,8 @@
 import { currencyForCountry, feeCurrency, currencyDigits, validFee, formatFee } from '../../../../utils/consultationCurrency.js';
 import useSocketRefresh from "../../../../hooks/useSocketRefresh";
+import { formatPhoneWithCountryCode } from '../../../../utils/phoneDisplay.js';
 import useProfileCompletion from "../../../../hooks/useProfileCompletion";
-import { getProfileCompletion } from "../../../../utils/profileCompletion";
+import { getProfileCompletion, getLocalPhoneLengths, getLocalPhoneMaxLength, limitPhoneDigits } from "../../../../utils/profileCompletion";
 import ProfileCompletion from "../../../common/ProfileCompletion";
 // import React, { useState, useEffect } from 'react';
 // import axios from 'axios';
@@ -1898,6 +1899,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                     education: userData.education || userData.qualification || '',
                     email: userData.email || '',
                     phoneNumber: userData.phoneNumber || userData.phone || '',
+                    phoneCountryCode: userData.phoneCountryCode || '+91',
                     location: userData.location || '',
                     languages: Array.isArray(userData.languages) ? userData.languages : [],
                     profilePhoto: null,
@@ -1940,7 +1942,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
 
                 setCounselor(formattedData);
                 setEditedData(formattedData);
-                const phoneParts = splitPhoneNumber(formattedData.phoneNumber);
+                const phoneParts = splitPhoneNumber(formatPhoneWithCountryCode(formattedData.phoneNumber, formattedData.phoneCountryCode));
                 setPhoneCountry(phoneParts.countryCode);
                 setPhoneLocalNumber(phoneParts.localNumber);
             } else {
@@ -2527,6 +2529,11 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
     }, [isEditing]);
 
     const handleSave = async () => {
+        const phoneDial = (PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0]).dial;
+        if (!getLocalPhoneLengths(phoneDial).includes(String(phoneLocalNumber || '').replace(/\D/g, '').length)) {
+            setError('Enter a valid phone number for the selected country.');
+            return;
+        }
         try {
             setLoading(true);
             setError('');
@@ -2636,7 +2643,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
 
     const handleCancel = () => {
         setEditedData(counselor);
-        const phoneParts = splitPhoneNumber(counselor.phoneNumber);
+        const phoneParts = splitPhoneNumber(formatPhoneWithCountryCode(counselor.phoneNumber, counselor.phoneCountryCode));
         setPhoneCountry(phoneParts.countryCode);
         setPhoneLocalNumber(phoneParts.localNumber);
         setNewLanguage('');
@@ -2878,7 +2885,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                                 [<FaCalendarAlt />, t('age'), counselorAge ?? t('not_specified')],
                                 [<FaUser />, t('gender'), counselor?.gender || t('not_specified')],
                                 [<FaEnvelope />, t('email'), counselor?.email || t('not_specified')],
-                                [<FaPhoneAlt />, t('phone'), counselor?.phoneNumber || counselor?.phone || t('not_specified')],
+                                [<FaPhoneAlt />, t('phone'), formatPhoneWithCountryCode(counselor?.phoneNumber || counselor?.phone, counselor?.phoneCountryCode) || t('not_specified')],
                                 [<FaMapMarkerAlt />, t('location'), locationText || t('not_specified')],
                                 [<FaHome />, t('address'), addressText || t('not_specified')],
                             ].map(([icon, label, value]) => (
@@ -3194,7 +3201,11 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                                         <div className={`${COUNSELOR_PROFILE_CLASS}__phone-country-field`}>
                                             <select
                                                 value={phoneCountry}
-                                                onChange={(e) => setPhoneCountry(e.target.value)}
+                                                onChange={(e) => {
+                                                    const dial = (PHONE_COUNTRIES.find(({ code }) => code === e.target.value) || PHONE_COUNTRIES[0]).dial;
+                                                    setPhoneCountry(e.target.value);
+                                                    setPhoneLocalNumber((previous) => limitPhoneDigits(previous, dial));
+                                                }}
                                                 className={`${COUNSELOR_PROFILE_CLASS}__input ${COUNSELOR_PROFILE_CLASS}__phone-country-select`}
                                                 aria-label="Phone country code"
                                             >
@@ -3206,15 +3217,16 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                                             </select>
                                             <input
                                                 type="tel"
-                                                inputMode="tel"
+                                                inputMode="numeric"
+                                                maxLength={getLocalPhoneMaxLength((PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0]).dial)}
                                                 value={phoneLocalNumber}
-                                                onChange={(e) => setPhoneLocalNumber(e.target.value.replace(/[^\d\s()-]/g, ''))}
+                                                onChange={(e) => setPhoneLocalNumber(limitPhoneDigits(e.target.value, (PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0]).dial))}
                                                 className={`${COUNSELOR_PROFILE_CLASS}__input`}
                                                 placeholder="Phone number"
                                             />
                                         </div>
                                     ) : (
-                                        <p>{counselor?.phoneNumber || 'Not specified'}</p>
+                                        <p>{formatPhoneWithCountryCode(counselor?.phoneNumber, counselor?.phoneCountryCode) || 'Not specified'}</p>
                                     )}
                                 </div>
                             </div>

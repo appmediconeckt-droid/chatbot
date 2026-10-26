@@ -137,3 +137,8 @@
   .user-appointments-reference .uap-history-card .user-appointment-schedule-item { gap: 7px; }
   .user-appointments-reference .uap-history-card .user-appointment-schedule-item strong { font-size: 11px; }
 }
+
+.user-appointments-reference .rating { display: inline-flex; align-items: center; gap: 5px; color: #475569; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.user-appointments-reference .rating svg { color: #e9a318; flex-shrink: 0; }
+.user-appointments-reference .rating small { color: #64748b; font-weight: 400; }
+.appointment-provider-reference > .rating { margin: 12px 0 0; }

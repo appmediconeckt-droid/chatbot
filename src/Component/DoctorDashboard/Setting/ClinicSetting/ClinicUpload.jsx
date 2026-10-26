@@ -5,9 +5,12 @@ import axios from "../../../../axiosConfig.js";
 import { API_BASE_URL, getAuthToken } from "../../doctorApi.js";
 import "./ClinicSettings.css";
 import "../../ClinicQrPages.css";
+import ClinicFeeFields from '../../ClinicFeeFields.jsx';
+import { feeCurrency, validFee } from '../../../../utils/consultationCurrency.js';
 
 export default function ClinicSettings() {
   const [clinicName, setClinicName] = useState("");
+  const [fee, setFee] = useState('');
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [location, setLocation] = useState({ lat: null, lng: null });
@@ -85,7 +88,11 @@ export default function ClinicSettings() {
       return;
     }
 
+    if (fee !== '' && !validFee(fee, feeCurrency(user || {}))) {
+      setMessage('Enter a valid clinic fee in your profile currency.'); setStatus('failed'); return;
+    }
     const formData = new FormData();
+    formData.append('fee', fee);
     formData.append('doctor_id', doctorId);
     formData.append('clinic_name', clinicName);
     formData.append('phone_number', phone);
@@ -115,6 +122,7 @@ export default function ClinicSettings() {
   };
 
   const handleCancel = () => {
+    setFee('');
     setClinicName("");
     setPhone("");
     setAddress("");
@@ -135,6 +143,7 @@ export default function ClinicSettings() {
         </div>
 
         <div className="clinic-form">
+          <ClinicFeeFields value={fee} onChange={setFee} doctor={user} />
           {/* Clinic Name */}
           <div className="form-group">
             <label className="form-label">

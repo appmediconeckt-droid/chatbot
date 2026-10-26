@@ -2170,6 +2170,7 @@ import axios from "../../../axiosConfig.js";
 import { useNavigate } from "react-router-dom";
 import { resolveProfileImage } from "../../../utils/profileImage.js";
 import { VitalsSummary } from '../../Receptionist/PatientVitals.jsx';
+import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
 import { appointmentVitals } from '../PatientAppointmentDetails/patientRecordDetails.js';
 import EmergencyReason from '../../common/EmergencyReason.jsx';
 
@@ -4683,6 +4684,11 @@ const DoctorDashboard = () => {
           <div className="dd-patient-vitals-section mb-4">
             <EmergencyReason appointment={selectedAppointment} />
             <h6 className="dd-patient-summary-title mb-3"><PortalText text={"Patient Vitals"} /></h6>
+            {selectedAppointment && <DoctorVitalsButton key={selectedAppointment.id} appointment={selectedAppointment} onSaved={(vitals) => {
+              setSelectedAppointment((current) => current ? { ...current, vitals } : current);
+              setAppointments((current) => current.map((row) => row.id === selectedAppointment.id ? { ...row, vitals } : row));
+              setActiveSession((current) => current?.appt?.id === selectedAppointment.id ? { ...current, appt: { ...current.appt, vitals } } : current);
+            }} />}
             {selectedAppointment?.vitals && <VitalsSummary vitals={selectedAppointment.vitals} />}
             {!selectedAppointment?.vitals && <div className="dd-vitals-display">
               <div className="dd-vital-item">

@@ -1,0 +1,77 @@
+.doctor-reviews { --dr-blue: var(--doctor-primary, #0868d7); --dr-line: #e5ebf2; color: var(--doctor-text, #172b46); width: 100%; min-width: 0; }
+.doctor-reviews * { box-sizing: border-box; }
+.doctor-reviews button, .doctor-reviews select { font: inherit; }
+.doctor-reviews button:focus-visible, .doctor-reviews select:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+.dr-header { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 26px; }
+.dr-eyebrow { color: var(--dr-blue); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; }
+.dr-header h2 { margin: 7px 0 8px; font-size: clamp(23px, 2.5vw, 30px); font-weight: 700; letter-spacing: -.7px; }
+.dr-header p { margin: 0; color: #718096; font-size: 13px; line-height: 1.6; }
+.dr-refresh { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--dr-line); background: white; color: #475569; border-radius: 9px; padding: 10px 14px; font-size: 12px !important; white-space: nowrap; }
+.dr-tabs { display: flex; gap: 5px; padding: 5px; background: #f1f5f9; border: 1px solid var(--dr-line); border-radius: 12px; margin-bottom: 24px; }
+.dr-tabs button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 9px; background: transparent; border: 0; border-radius: 8px; padding: 12px 10px; font-size: 13px; font-weight: 600; color: #64748b; }
+.dr-tabs button.active { background: white; color: var(--dr-blue); box-shadow: 0 2px 6px #163b6910; }
+.dr-tabs button > span:last-child { font-size: 11px; padding: 2px 7px; border-radius: 20px; background: #e7edf5; color: #64748b; }
+.dr-tabs button.active > span:last-child { background: #eaf3ff; color: var(--dr-blue); }
+.dr-overview { display: grid; grid-template-columns: minmax(180px, .8fr) minmax(0, 1.3fr); border: 1px solid var(--dr-line); border-radius: 16px; background: white; overflow: hidden; }
+.dr-score { padding: 28px; background: linear-gradient(145deg, #f4f9ff, #fff); display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid var(--dr-line); }
+.dr-score-label { font-size: 12px; color: #64748b; font-weight: 600; }
+.dr-score > div { display: flex; align-items: baseline; gap: 8px; margin: 8px 0; }
+.dr-score > div > strong { font-size: 52px; font-weight: 750; letter-spacing: -2px; line-height: 1.1; }
+.dr-score > div > span { color: #94a3b8; font-size: 17px; }
+.dr-score p { display: flex; gap: 6px; align-items: center; margin: 13px 0 0; color: #64748b; font-size: 12px; }
+.dr-stars { display: inline-flex; gap: 3px; color: #e9a318; flex-shrink: 0; }
+.dr-distribution { padding: 26px 30px; }
+.dr-distribution h3 { font-size: 13px; font-weight: 600; margin: 0 0 16px; }
+.dr-bar-row { display: flex; gap: 12px; align-items: center; margin: 10px 0; }
+.dr-bar-row > span { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #64748b; width: 26px; }
+.dr-bar { flex: 1; height: 7px; background: #f1f5f9; border-radius: 12px; overflow: hidden; }
+.dr-bar i { display: block; height: 100%; border-radius: inherit; background: #efb33b; }
+.dr-bar-row small { min-width: 22px; text-align: right; color: #64748b; font-size: 12px; }
+.dr-list-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 28px 0 14px; }
+.dr-list-heading h3 { display: flex; align-items: center; gap: 9px; font-size: 16px; font-weight: 650; margin: 0; }
+.dr-list-heading > span { color: #94a3b8; font-size: 11px; }
+.dr-review-list { display: grid; gap: 14px; }
+.dr-review { border: 1px solid var(--dr-line); background: white; border-radius: 13px; padding: 22px; }
+.dr-review-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.dr-reviewer { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.dr-avatar { width: 40px; height: 40px; border-radius: 50%; background: #ecf4ff; color: var(--dr-blue); font-size: 16px; font-weight: 650; display: grid; place-items: center; flex-shrink: 0; }
+.dr-reviewer strong { display: block; font-size: 13px; overflow-wrap: anywhere; }
+.dr-reviewer div > span { display: block; font-size: 11px; color: #7b8b9f; margin-top: 3px; }
+.dr-review time { color: #94a3b8; font-size: 11px; white-space: nowrap; padding-top: 4px; }
+.dr-review-score { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 18px; }
+.dr-review-score > strong { font-size: 12px; }.dr-review-score > strong > span { color: #94a3b8; font-weight: 400; }
+.dr-comment, .dr-no-comment { font-size: 13px; line-height: 1.8; margin: 12px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.dr-no-comment { color: #94a3b8; font-style: italic; }
+.dr-clinic-tag { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; color: #64748b; background: #f5f7fa; border-radius: 6px; font-size: 11px; max-width: 100%; overflow-wrap: anywhere; }
+.dr-clinic-filter { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin: -5px 0 18px; }
+.dr-clinic-filter label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b; }
+.dr-clinic-filter select { max-width: 65%; min-width: 150px; padding: 9px 12px; background: white; color: #334155; border: 1px solid var(--dr-line); border-radius: 8px; font-size: 12px; }
+.dr-empty { text-align: center; padding: 42px 20px; border: 1px dashed #dce5f0; border-radius: 14px; background: #fbfcfe; }
+.dr-empty-icon { display: inline-flex; padding: 15px; background: #edf4fd; color: #7194bf; border-radius: 50%; margin-bottom: 14px; }
+.dr-empty h3 { font-size: 16px; margin: 0 0 8px; }.dr-empty p { font-size: 13px; color: #94a3b8; margin: 0; }
+.dr-error { padding: 14px; border: 1px solid #fecaca; color: #b91c1c; background: #fff5f5; border-radius: 10px; margin-bottom: 18px; font-size: 13px; }
+.dr-error button { margin-left: 8px; border: 0; background: transparent; color: inherit; text-decoration: underline; }
+.dr-pagination { display: flex; align-items: center; justify-content: center; gap: 18px; margin-top: 22px; font-size: 12px; }
+.dr-pagination button { border: 1px solid var(--dr-line); background: white; padding: 8px 12px; border-radius: 8px; color: #475569; }
+.doctor-reviews button { cursor: pointer; }.doctor-reviews button:disabled { opacity: .5; cursor: default; }
+@media (max-width: 650px) { .dr-header { align-items: flex-start; }.dr-refresh { padding: 9px; }.dr-refresh svg { display: none; }.dr-overview { grid-template-columns: 1fr; }.dr-score { border-right: 0; border-bottom: 1px solid var(--dr-line); padding: 22px; }.dr-distribution { padding: 20px; }.dr-review { padding: 16px; }.dr-review-header { flex-wrap: wrap; }.dr-review time { margin-left: 51px; padding: 0; }.dr-tabs button { font-size: 12px; gap: 6px; }.dr-tabs svg { display: none; }.dr-list-heading > span { display: none; } }
+
+/* Review tables share spacing across doctor and clinic tabs. */
+.doctor-reviews { padding: 24px; }
+.dr-table-scroll { width: 100%; overflow-x: auto; border: 1px solid var(--dr-line); border-radius: 12px; background: white; }
+.dr-table-scroll:focus-visible { outline: 3px solid #93c5fd; outline-offset: 3px; }
+.dr-table { width: 100%; min-width: 720px; border-collapse: collapse; text-align: left; }
+.dr-table th { padding: 16px 20px; background: #f6f8fb; color: #64748b; font-size: 12px; font-weight: 650; border-bottom: 1px solid var(--dr-line); white-space: nowrap; }
+.dr-table td { padding: 20px; vertical-align: top; border-bottom: 1px solid var(--dr-line); font-size: 13px; }
+.dr-table tbody tr:last-child td { border-bottom: 0; }
+.dr-table tbody tr:hover { background: #fbfdff; }
+.dr-table .dr-reviewer { min-width: 175px; }
+.dr-table .dr-avatar { width: 36px; height: 36px; font-size: 14px; }
+.dr-table-rating { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; min-width: 105px; }
+.dr-table-rating strong { font-size: 12px; }.dr-table-rating strong span { color: #94a3b8; font-weight: 400; }
+.dr-table-rating .dr-stars svg { width: 15px; height: 15px; }
+.dr-table-comment { width: 100%; min-width: 220px; }
+.dr-table .dr-comment, .dr-table .dr-no-comment { margin: 0; line-height: 1.75; }
+.dr-table-clinic { min-width: 150px; max-width: 220px; overflow-wrap: anywhere; }
+.dr-table-date { color: #7b8b9f; white-space: nowrap; font-size: 12px !important; }
+@media (max-width: 650px) { .doctor-reviews { padding: 12px; }.dr-table th, .dr-table td { padding: 14px 16px; } }

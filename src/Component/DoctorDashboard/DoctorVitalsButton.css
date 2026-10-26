@@ -1,0 +1,9 @@
+.doctor-vitals-dialog { width: min(760px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow-y: auto; border: 0; border-radius: 16px; padding: 24px; color: #17233d; }
+.doctor-vitals-dialog::backdrop { background: rgb(15 23 42 / 55%); }
+.doctor-vitals-dialog-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
+.doctor-vitals-dialog-heading h2 { font-size: 20px; margin: 0 0 8px; }
+.doctor-vitals-dialog .rec-button { border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 16px; background: white; color: #17233d; cursor: pointer; }
+.doctor-vitals-dialog .rec-button.primary { background: #004ac6; border-color: #004ac6; color: white; }
+.doctor-vitals-dialog .rec-button:disabled { opacity: .6; cursor: wait; }
+.doctor-vitals-dialog .rec-alert { color: #b91c1c; }
+.appointment-vitals-cell .doctor-vitals-button { white-space: nowrap; }

@@ -25,7 +25,10 @@ const loadRazorpayScript = () =>
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.async = true;
         script.onload = () => resolve(true);
-        script.onerror = () => reject(new Error('Unable to load Razorpay checkout'));
+        script.onerror = () => {
+            script.remove();
+            reject(new Error('Unable to load Razorpay checkout. Check your connection and retry.'));
+        };
         document.body.appendChild(script);
     });
 
@@ -38,6 +41,7 @@ const WalletDashboard = ({ userData }) => {
     const [refundLoading, setRefundLoading] = useState(false);
     const [balance, setBalance] = useState(0);
     const [paymentNotice, setPaymentNotice] = useState('');
+    const [paymentConfig, setPaymentConfig] = useState(null);
     const [transactions, setTransactions] = useState([]);
     const [spendingSummary, setSpendingSummary] = useState({ total: 0, breakdown: [] });
     const [loading, setLoading] = useState(false);
@@ -54,6 +58,7 @@ const WalletDashboard = ({ userData }) => {
     const transactionsPerPage = 5;
 
     useEffect(() => {
+        axiosInstance.get('/api/wallet/payment-config').then(({ data }) => setPaymentConfig(data)).catch(() => {});
         loadRazorpayScript().catch((error) => {
             console.error('Razorpay script load failed:', error);
         });
@@ -339,6 +344,7 @@ const WalletDashboard = ({ userData }) => {
 
     const handlePayment = async (e) => {
         e.preventDefault();
+        if (loading) return;
         const numericAmount = Number(amount);
         if (!Number.isFinite(numericAmount) || numericAmount < 100) {
             alert('Minimum wallet top-up amount is ₹100.');
@@ -346,6 +352,7 @@ const WalletDashboard = ({ userData }) => {
         }
 
         setLoading(true);
+        setPaymentNotice('');
         try {
             await loadRazorpayScript();
             if (!window.Razorpay) {
@@ -384,13 +391,16 @@ const WalletDashboard = ({ userData }) => {
                         });
 
                         if (verifyRes.data.success) {
+                            setPaymentNotice('Payment verified. Wallet balance updated.');
                             alert(t('funds_added'));
                             setAmount('');
                             await fetchWalletData();
+                        } else {
+                            setPaymentNotice(verifyRes.data.message || 'Payment confirmation is pending. Refresh the wallet to check again.');
                         }
                     } catch (err) {
                         console.error('Verification failed:', err);
-                        alert(t('payment_failed_verification'));
+                        setPaymentNotice(err.response?.data?.message || 'Payment verification could not finish. Refresh the wallet to recover your payment.');
                     } finally {
                         setLoading(false);
                     }
@@ -415,17 +425,15 @@ const WalletDashboard = ({ userData }) => {
             rzp1.on('payment.failed', function (response) {
                 clearProcessingTimer();
                 console.error('Razorpay payment failed:', response?.error || response);
-                alert(t('payment_error_description'));
-                setLoading(false);
+                setPaymentNotice(response?.error?.description || t('payment_error_description'));
             });
             rzp1.open();
             processingTimer = window.setTimeout(() => {
-                setLoading(false);
-                alert('Payment is taking longer than expected. Please click Cancel in Razorpay and try again with Card test mode.');
+                setPaymentNotice('Checkout is still open. Complete or close it before starting another payment.');
             }, 120000);
         } catch (error) {
             console.error('Payment initialization failed:', error);
-            alert(t('payment_error_description'));
+            setPaymentNotice(error.response?.data?.message || error.message || t('payment_error_description'));
             setLoading(false);
         }
     };
@@ -678,6 +686,8 @@ const WalletDashboard = ({ userData }) => {
                 <aside className="wallet-side">
                     <section className="wallet-panel wallet-add-money">
                         <h3>{t('add_money')}</h3>
+                        {paymentConfig?.mode === 'test' && paymentConfig.configured && <p role="status">Razorpay Test Mode: use test payment details. No real money is charged.</p>}
+                        {paymentConfig && !paymentConfig.configured && <p role="alert">Payment setup is incomplete. Configure Razorpay keys in the backend .env file.</p>}
                         <form onSubmit={handlePayment}>
                             <label className="wallet-amount-box" htmlFor="amount-input">
                                 <span>{t("enter_amount")}</span>
@@ -691,7 +701,7 @@ const WalletDashboard = ({ userData }) => {
                                 ))}
                                 <button type="button" onClick={() => { setAmount(''); document.getElementById('amount-input')?.focus(); }}>{t("custom_amount")}</button>
                             </div>
-                            <button className="wallet-pay-button" type="submit" disabled={loading}>
+                            <button className="wallet-pay-button" type="submit" disabled={loading || paymentConfig?.configured === false}>
                                 {loading ? t('sending') : `${t('proceed_to_pay')}${amount ? ` ₹${Number(amount).toLocaleString('en-IN')}` : ''}`}
                             </button>
                             <p className="wallet-secure"><span className="material-symbols-outlined">lock</span> {t("secure_encryption")}</p>

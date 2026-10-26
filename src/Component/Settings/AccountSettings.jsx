@@ -7,6 +7,7 @@ import PasswordChangePage from "../ChangesPassword/PasswordChangePage";
 import PrivacyPolicy from "./PrivacyPolicy";
 import HelpSupport from "./HelpSupport";
 import CounselorProfile from "../counselor-dashboard/Tab/Profile-Con/CounselorProfile";
+import PaymentSettings from '../DoctorDashboard/Setting/PaymentSetting/PaymentSettings.jsx';
 import "./AccountSettings.css";
 import { useUserTranslation, useCounselorTranslation } from "../../i18n/LanguageContext";
 import { LanguageSelector } from "../common/LanguageSelector";
@@ -309,6 +310,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
 
         <div className="counselor-settings-body">
           <aside>
+            <button type="button" className={counselorSettingsSection === 'payment' ? 'active' : ''} onClick={() => setCounselorSettingsSection('payment')}><FaMoneyBillWave /> Payment</button>
             <button
               type="button"
               className={counselorSettingsSection === "account" ? "active" : ""}
@@ -394,6 +396,8 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
                   </div>
                 )}
               </>
+            ) : counselorSettingsSection === 'payment' ? (
+              <PaymentSettings theme="consultant" onBack={() => setCounselorSettingsSection('account')} />
             ) : counselorSettingsSection === 'privacy' ? (
               <PrivacyPolicy role={role} />
             ) : counselorSettingsSection === 'support' ? (

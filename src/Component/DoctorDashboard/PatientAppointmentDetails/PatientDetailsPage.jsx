@@ -13,6 +13,7 @@ import "./PatientDetailsPage.css";
 import PatientPagination from "./PatientPagination.jsx";
 import { patientCardDetails, appointmentDoctorName, appointmentVitals, isPatientDirectoryRecord } from "./patientRecordDetails.js";
 import { VitalsSummary } from '../../Receptionist/PatientVitals.jsx';
+import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
 import { generatePrescriptionPDF } from "./pdfGenerator";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 
@@ -733,6 +734,12 @@ export default function PatientDetailsPage() {
 
                 <div className="pd-detail-column">
                   <h5 className="pd-detail-column-title"><PortalText text={"Vital Signs"} /></h5>
+                  <DoctorVitalsButton key={`${selectedRecord.prescriptionRecord?.appointment_type}:${selectedRecord.id}`} appointment={selectedRecord} onSaved={(vitals) => {
+                    const update = (record) => record.id === selectedRecord.id && record.prescriptionRecord?.appointment_type === selectedRecord.prescriptionRecord?.appointment_type
+                      ? { ...record, vitals, prescriptionRecord: { ...record.prescriptionRecord, vitals } } : record;
+                    setSelectedRecord((current) => current ? update(current) : current);
+                    setPatients((current) => current.map((patient) => ({ ...patient, records: patient.records.map(update) })));
+                  }} />
                   {selectedRecord.vitals && <VitalsSummary vitals={selectedRecord.vitals} />}
                   {!selectedRecord.vitals && <div className="pd-vitals-grid">
                     <div className="pd-vital-card">

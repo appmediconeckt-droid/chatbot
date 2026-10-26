@@ -55,7 +55,7 @@ export default function PatientVitals({ patient, editable, onSaved }) {
     setBusy(true); setError(''); setSuccess('');
     try {
       const { data } = await axios.patch(`/api/staff/appointments/${patient.id}/vitals`, { source: patient.source, vitals: draft });
-      setSaved(data.vitals); setDraft(null); setSuccess('Vitals saved. Available to the doctor for this appointment.');
+      setSaved(data.vitals); setDraft(null); setSuccess('Vitals saved for this appointment.');
       onSaved?.(data.vitals);
     } catch (err) { setError(err.response?.data?.message || 'Vitals could not be saved. Please try again.'); }
     finally { setBusy(false); }

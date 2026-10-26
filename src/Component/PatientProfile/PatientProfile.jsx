@@ -1,4 +1,6 @@
 import useSocketRefresh from "../../hooks/useSocketRefresh";
+import { formatPhoneWithCountryCode } from '../../utils/phoneDisplay.js';
+import { getLocalPhoneLengths, getLocalPhoneMaxLength, limitPhoneDigits } from '../../utils/profileCompletion.js';
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./PatientProfile.css";
@@ -314,6 +316,7 @@ const PatientProfile = () => {
               : "",
             email: userData.email || "",
             phone: userData.phoneNumber || "",
+            phoneCountryCode: userData.phoneCountryCode || '+91',
             profilePhoto: profilePhotoUrl,
             address: userData.address || {
               line1: "",
@@ -505,7 +508,7 @@ const PatientProfile = () => {
 
   const initializeEditForm = (data) => {
     const dateOfBirth = data.personalInfo.dateOfBirth || "";
-    const phoneParts = splitPhoneNumber(data.personalInfo.phone);
+    const phoneParts = splitPhoneNumber(formatPhoneWithCountryCode(data.personalInfo.phone, data.personalInfo.phoneCountryCode));
     setEditFormData({
       name: data.personalInfo.name || "",
       anonymous: data.personalInfo.anonymous || "",
@@ -596,6 +599,11 @@ const PatientProfile = () => {
   };
 
   const handleSaveProfile = async () => {
+    const phoneDial = (PHONE_COUNTRIES.find(({ code }) => code === editFormData.phoneCountry) || PHONE_COUNTRIES[0]).dial;
+    if (!getLocalPhoneLengths(phoneDial).includes(String(editFormData.phone || '').replace(/\D/g, '').length)) {
+      showNotificationMessage('Enter a valid phone number for the selected country.', 'error');
+      return;
+    }
     try {
       setIsSaving(true);
       const formData = new FormData();
@@ -605,6 +613,7 @@ const PatientProfile = () => {
       formData.append("anonymous", editFormData.anonymous || "");
       formData.append("email", editFormData.email);
       formData.append("phoneNumber", getCompletePhoneNumber());
+      formData.append("phoneCountryCode", (PHONE_COUNTRIES.find(({ code }) => code === editFormData.phoneCountry) || PHONE_COUNTRIES[0]).dial);
       formData.append("age", String(calculatedAge));
       formData.append("gender", editFormData.gender);
       formData.append("bloodGroup", editFormData.bloodGroup || "");
@@ -691,6 +700,11 @@ const PatientProfile = () => {
 
   const handleEditFormChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'phoneCountry') {
+      const dial = (PHONE_COUNTRIES.find(({ code }) => code === value) || PHONE_COUNTRIES[0]).dial;
+      setEditFormData((previous) => ({ ...previous, phoneCountry: value, phone: limitPhoneDigits(previous.phone, dial) }));
+      return;
+    }
     if (name === "dateOfBirth") {
       setEditFormData((prev) => ({
         ...prev,
@@ -764,7 +778,7 @@ const PatientProfile = () => {
           <p className="profile-contact-line">
             {patientData.personalInfo.email}
             <span aria-hidden="true">|</span>
-            {patientData.personalInfo.phone || t('profile.notSpecified')}
+            {formatPhoneWithCountryCode(patientData.personalInfo.phone, patientData.personalInfo.phoneCountryCode) || t('profile.notSpecified')}
           </p>
           <p className="patient-id">
             ID: #{patientData.personalInfo.id?.slice(-8).toUpperCase()}
@@ -829,7 +843,7 @@ const PatientProfile = () => {
             </div>
             <div className="info-item">
               <label>{t('profile.phone')}</label>
-              <span>{patientData.personalInfo.phone}</span>
+              <span>{formatPhoneWithCountryCode(patientData.personalInfo.phone, patientData.personalInfo.phoneCountryCode)}</span>
             </div>
           </div>
         </div>
@@ -1131,12 +1145,13 @@ const PatientProfile = () => {
                         className="phone-local-input"
                         type="tel"
                         name="phone"
-                        inputMode="tel"
+                        inputMode="numeric"
+                        maxLength={getLocalPhoneMaxLength((PHONE_COUNTRIES.find(({ code }) => code === editFormData.phoneCountry) || PHONE_COUNTRIES[0]).dial)}
                         value={editFormData.phone}
                         onChange={(event) =>
                           setEditFormData((previous) => ({
                             ...previous,
-                            phone: event.target.value.replace(/[^\d\s()-]/g, ""),
+                            phone: limitPhoneDigits(event.target.value, (PHONE_COUNTRIES.find(({ code }) => code === previous.phoneCountry) || PHONE_COUNTRIES[0]).dial),
                           }))
                         }
                         placeholder="Phone number"

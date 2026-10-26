@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./DoctorUserManagement.css";
+import { staffPhoneCountries } from '../../../utils/staffPhoneCountries.js';
+const staffPhoneCountry = iso => staffPhoneCountries.find(country => country.iso === iso) || staffPhoneCountries.find(country => country.iso === 'IN');
 
 const docStaffScreenRows = [
   {
@@ -392,6 +394,7 @@ const DoctorUserManagement = () => {
     lastName: "",
     email: "",
     phone: "",
+    phoneCountry: "IN",
     dateOfBirth: "",
     gender: "",
     department: "Nursing",
@@ -724,6 +727,7 @@ const DoctorUserManagement = () => {
       lastName: "",
       email: "",
       phone: "",
+    phoneCountry: "IN",
       dateOfBirth: "",
       gender: "",
       department: "Nursing",
@@ -782,6 +786,11 @@ const DoctorUserManagement = () => {
         return;
       }
 
+      const country = staffPhoneCountry(newStaffForm.phoneCountry);
+      if (!country.lengths.includes(newStaffForm.phone.length)) {
+        alert(`Enter ${country.lengths.join(' or ')} digits after ${country.dial} for ${country.name}.`);
+        return;
+      }
       setAddStaffStep(3);
       return;
     }
@@ -825,7 +834,9 @@ const DoctorUserManagement = () => {
           clinic_id: newStaffForm.clinicId,
           name: fullName,
           email: newStaffForm.email,
-          contact_number: newStaffForm.phone.trim(),
+          contact_number: `${staffPhoneCountry(newStaffForm.phoneCountry).dial}${newStaffForm.phone}`,
+          phoneCountryCode: staffPhoneCountry(newStaffForm.phoneCountry).dial,
+          phoneCountry: newStaffForm.phoneCountry,
           role: staffApiRole(selectedNewRole),
           department: newStaff.department,
           shift: newStaffForm.shift,
@@ -878,7 +889,8 @@ const DoctorUserManagement = () => {
   const handleNewStaffFormChange = (field, value) => {
     setNewStaffForm((currentForm) => ({
       ...currentForm,
-      [field]: value,
+      [field]: field === 'phone' ? value.replace(/\D/g, '').slice(0, Math.max(...staffPhoneCountry(currentForm.phoneCountry).lengths)) : value,
+      ...(field === 'phoneCountry' ? { phone: '' } : {}),
       ...(field === "shift" ? { shiftStartTime: defaultShiftTimes[value]?.[0] || "", shiftEndTime: defaultShiftTimes[value]?.[1] || "" } : {}),
     }));
   };
@@ -903,7 +915,7 @@ const DoctorUserManagement = () => {
   const selectedStaffRole = docStaffRoleCards.find((item) => item.id === selectedNewRole) || docStaffRoleCards[0];
   const reviewFullName = `${newStaffForm.firstName || "Jonathan"} ${newStaffForm.lastName || "Doe"}`.trim();
   const reviewEmail = newStaffForm.email || `${selectedStaffRole.id}.new@example.com`;
-  const reviewPhone = newStaffForm.phone || "+1 (555) 123-4567";
+  const reviewPhone = `${staffPhoneCountry(newStaffForm.phoneCountry).dial} ${newStaffForm.phone}`;
   const reviewDepartment = newStaffForm.department || (selectedStaffRole.title === "Nurse" ? "Nursing" : selectedStaffRole.department);
   const reviewHireDate = newStaffForm.hireDate || "October 15, 2023";
   const reviewShift = `${newStaffForm.shift} (${newStaffForm.shiftStartTime} - ${newStaffForm.shiftEndTime})`;
@@ -1361,13 +1373,21 @@ const DoctorUserManagement = () => {
                         onChange={(event) => handleNewStaffFormChange("email", event.target.value)}
                       />
                     </label>
-                    <label><PortalText text={"Phone Number"} /><input
-                        type="tel"
-                        placeholder="(555) 123-4567"
+                    <div className="docstaff-phone-field">
+                      <label htmlFor="staff-phone-number"><PortalText text={"Phone Number"} /></label>
+                      <div className="docstaff-phone-control">
+                      <select id="staff-phone-country" aria-label="Phone country code" title={staffPhoneCountry(newStaffForm.phoneCountry).name} value={newStaffForm.phoneCountry} onChange={event => handleNewStaffFormChange('phoneCountry', event.target.value)}>
+                        {staffPhoneCountries.map(country => <option key={country.iso} value={country.iso}>{country.iso} ({country.dial})</option>)}
+                      </select>
+                      <input id="staff-phone-number" type="tel" inputMode="numeric" autoComplete="tel-national" required
+                        aria-describedby="staff-phone-help"
+                        placeholder={`${staffPhoneCountry(newStaffForm.phoneCountry).lengths.join(' or ')} digits`}
+                        maxLength={Math.max(...staffPhoneCountry(newStaffForm.phoneCountry).lengths)}
                         value={newStaffForm.phone}
-                        onChange={(event) => handleNewStaffFormChange("phone", event.target.value)}
-                      />
-                    </label>
+                        onChange={event => handleNewStaffFormChange('phone', event.target.value)} />
+                      </div>
+                      <small id="staff-phone-help">Enter {staffPhoneCountry(newStaffForm.phoneCountry).lengths.join(' or ')} digits after {staffPhoneCountry(newStaffForm.phoneCountry).dial}.</small>
+                    </div>
                   </div>
                 </section>
 
