@@ -12,7 +12,7 @@ export const doctorMenuItems = [
 
 export const doctorRoutePaths = [
   ...doctorMenuItems.map(({ path }) => path),
-  "/doctorprofile", "/setting", "/doctor-notifications", "/patient-sms", "/walkinappointment",
+  "/doctorprofile", "/setting", "/doctor-notifications", "/patient-sms", "/walkinappointment", "/doctor-consultation",
 ];
 
 export const isDoctorRoute = (pathname) =>

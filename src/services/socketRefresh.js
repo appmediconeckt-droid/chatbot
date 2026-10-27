@@ -1,6 +1,6 @@
 // Reconcile on mount, reconnect and relevant events, rather than polling a
 // healthy socket. Keep a slow recovery path when the connection is unavailable.
-export function subscribeRefresh(socketService, refresh, events = [], { initial = true, filterEvent = () => true } = {}) {
+export function subscribeRefresh(socketService, refresh, events = [], { initial = true, filterEvent = () => true, allowHidden = false, pollWhileConnected = false, fallbackIntervalMs = 15_000 } = {}) {
   let disposed = false;
   let pending = false;
   let rerun = false;
@@ -11,7 +11,7 @@ export function subscribeRefresh(socketService, refresh, events = [], { initial 
   }]);
   const initiallyConnected = socketService.isConnected();
   const run = async () => {
-    if (disposed || document.visibilityState === "hidden") return;
+    if (disposed || (!allowHidden && document.visibilityState === "hidden")) return;
     if (pending) { rerun = true; return; }
     pending = true;
     try { await refresh(); }
@@ -43,9 +43,9 @@ export function subscribeRefresh(socketService, refresh, events = [], { initial 
   });
   void connect();
   const fallback = setInterval(() => {
-    if (!socket) void connect();
-    if (!socketService.isConnected()) void run();
-  }, 15_000);
+    if (!socket || !socketService.isConnected()) void connect();
+    if (pollWhileConnected || !socketService.isConnected()) void run();
+  }, fallbackIntervalMs);
   document.addEventListener("visibilitychange", onVisible);
   return () => {
     disposed = true;

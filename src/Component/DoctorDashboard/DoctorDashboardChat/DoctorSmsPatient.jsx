@@ -1253,7 +1253,7 @@ import PatientProfileImage from "../../common/PatientProfileImage";
 
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import axios from "../../../axiosConfig.js";
 import {
   FaMicrophone,
@@ -1283,6 +1283,11 @@ import useCallSocket from "../useDoctorCallSocket";
 import useWebRTCCall from "../useDoctorCallMedia";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./DoctorSmsPatient.css";
+import { appointmentCallPatient } from '../doctorConsultationNavigation.js';
+import { initiateDoctorCall } from '../doctorCallRequest.js';
+import { socketService } from '../../../services/socketService.js';
+import VideoCallModal from '../../UserDashboard/Tab/CallModal/VideoCallModal.jsx';
+import { getDoctorUser } from '../doctorApi.js';
 
 const getInitials = (name) =>
   String(name || "NA")
@@ -1347,6 +1352,7 @@ const getAppointmentPatient = (appointment) => {
     id,
     user_id: getFirstValue(patient.user_id, patient.userId, appointment.patient_user_id, appointment.patientUserId, id),
     full_name: getFirstValue(
+      patient.fullName,
       patient.full_name,
       patient.fullname,
       patient.name,
@@ -1621,12 +1627,16 @@ const normalizeChatMessage = (msg, index, currentUserId) => {
   };
 };
 
-function PatientList() {
+function PatientList({ consultationOnly = false }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const appointmentCallTarget = location.state?.callTargetId || "";
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [patients, setPatients] = useState([]);
+  const [patients, setPatients] = useState(() => {
+    const patient = location.state?.appointment && appointmentCallPatient(getAppointmentPatient(location.state.appointment));
+    return patient ? [patient] : [];
+  });
   const [selectedPatientId, setSelectedPatientId] = useState(appointmentCallTarget);
   const [message, setMessage] = useState("");
   const [messagesByPatient, setMessagesByPatient] = useState({});
@@ -1648,6 +1658,7 @@ function PatientList() {
   const remoteAudioRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const appointmentCallStartedRef = useRef(false);
+  const callRequestRef = useRef(null);
   const activeCallRef = useRef(null);
   const connectedAtRef = useRef(null);
   const offerStartedCallIdRef = useRef(null);
@@ -1655,7 +1666,7 @@ function PatientList() {
   const audioContextRef = useRef(null);
   const remoteAudioSourceRef = useRef(null);
   const latestRemoteStreamRef = useRef(null);
-  const rtc = useWebRTCCall({ callId: activeCall?.id, peerUserId: selectedPatientId, callType: activeCall?.type || "voice" });
+  const rtc = useWebRTCCall({ callId: consultationOnly ? null : activeCall?.id, peerUserId: selectedPatientId, callType: activeCall?.type || "voice" });
   useEffect(() => { if (rtc.error) setError(rtc.error); }, [rtc.error]);
   const rtcRef = useRef(rtc);
   rtcRef.current = rtc;
@@ -1856,6 +1867,7 @@ function PatientList() {
   // FIXED: Prepare media for connected call
   useEffect(() => {
     if (
+      consultationOnly ||
       activeCall?.status !== "connected" ||
       !activeCall?.id ||
       !activeCall?.type
@@ -1891,6 +1903,7 @@ function PatientList() {
   // FIXED: Create offer for outgoing calls
   useEffect(() => {
     if (
+      consultationOnly ||
       activeCall?.status !== "connected" ||
       activeCall?.direction === "incoming" ||
       !activeCall?.id ||
@@ -2019,12 +2032,26 @@ function PatientList() {
   useEffect(() => {
     let active = true;
     const loadPatients = async () => {
+      if (consultationOnly) {
+        const appointment = location.state?.appointment;
+        const patient = appointment && appointmentCallPatient(getAppointmentPatient(appointment));
+        if (!patient || !appointmentCallTarget) {
+          setError('Open this consultation from the appointment queue.');
+          setStatus('failed');
+          return;
+        }
+        setPatients([patient]);
+        setSelectedPatientId(appointmentCallTarget);
+        setDoctorAppointments([{ ...appointment, _id: appointment.apiId || appointment._id || appointment.id, id: appointment.apiId || appointment._id || appointment.id }]);
+        setStatus('succeeded');
+        return;
+      }
       try {
         if (active) setStatus((current) => current === "succeeded" ? current : "loading");
         setError("");
         const doctorId = getCurrentUserId();
         const [chatList, appointmentResponse] = await Promise.all([
-          getChatList(),
+          getChatList().catch(() => []),
           axios.get(`${API_BASE_URL}/appointments`, {
             headers: getAuthHeaders(),
             params: { doctor_id: doctorId },
@@ -2061,7 +2088,7 @@ function PatientList() {
         const appointments = appointmentResponse ? unwrapApiArray(appointmentResponse.data) : [];
         setDoctorAppointments(appointments);
         const appointmentPatients = Array.from(new Map(
-          appointments
+          [...appointments, ...(location.state?.appointment ? [location.state.appointment] : [])]
             .map(getAppointmentPatient)
             .filter(Boolean)
             .filter((patient) => String(getUserId(patient)) !== String(currentUserId))
@@ -2069,6 +2096,13 @@ function PatientList() {
         ).values());
         const listedIds = new Set(resolvedPatients.map((patient) => String(patient.id)));
         const missingAppointmentPatients = appointmentPatients.filter((patient) => !listedIds.has(String(getUserId(patient))));
+        // A video appointment can be the first interaction with this patient.
+        // Include them before trying to load optional chat history.
+        missingAppointmentPatients.forEach(patient => {
+          const callPatient = appointmentCallPatient(patient);
+          if (callPatient) resolvedPatients.push(callPatient);
+        });
+        if (active) setPatients(Array.from(new Map(resolvedPatients.map(patient => [String(patient.id), patient])).values()));
         const conversationResults = await Promise.allSettled(
           missingAppointmentPatients.map(async (patient) => ({
             patient,
@@ -2119,12 +2153,12 @@ function PatientList() {
       active = false;
       window.clearInterval(refreshTimer);
     };
-  }, []);
+  }, [consultationOnly, location.key]);
 
   useEffect(() => {
     let active = true;
     const loadConversation = async () => {
-      if (!selectedPatientId) return;
+      if (consultationOnly || !selectedPatientId) return;
 
       try {
         const conversation = await getConversation(selectedPatientId);
@@ -2231,7 +2265,7 @@ function PatientList() {
       return undefined;
     }
 
-    const missedTimer = activeCall.status === "ringing"
+    const missedTimer = !consultationOnly && activeCall.status === "ringing"
       ? window.setTimeout(() => {
         setActiveCall((call) => call ? { ...call, status: "missed" } : call);
       }, 30000)
@@ -2425,6 +2459,7 @@ function PatientList() {
   };
 
   const startCall = async (type, receiverOverride = null) => {
+    if (callRequestRef.current || activeCallRef.current) return;
     if (!receiverOverride && !selectedPatient?.id) {
       setError("Please select a patient before starting a call");
       return;
@@ -2432,39 +2467,52 @@ function PatientList() {
     const receiverId = receiverOverride || selectedPatient.receiverId || selectedPatient.id;
     setError("");
     setCallSeconds(0);
+    const requestState = { cancelled: false };
+    callRequestRef.current = requestState;
+    setActiveCall({ id: null, type, status: 'initiating', direction: 'outgoing', isMuted: false, isVideoOff: false });
 
     try {
-      await unlockCallAudio().catch(() => {});
+      // Audio autoplay permission is independent of sending the call request.
       connectedAtRef.current = null;
       offerStartedCallIdRef.current = null;
       window.clearTimeout(offerRetryTimerRef.current);
-      const response = await startChatCall({ receiverId, callType: type });
-      const callData = unwrapApiObject(response);
-      setActiveCall({
-        id: getFirstValue(callData.id, callData.call_id, callData.callId, response?.call_id, response?.id),
+      const callData = await initiateDoctorCall({ connect: () => socketService.connect(), request: startChatCall, receiverId, callType: type, unlockAudio: unlockCallAudio });
+      if (requestState.cancelled) {
+        await endChatCall({ callId: callData.id, status: 'cancelled' });
+        return;
+      }
+      setActiveCall(current => current?.status === 'connected' && String(current.id) === String(callData.id) ? current : ({
+        id: callData.id,
         type,
+        receiverOffline: Boolean(callData.receiverOffline),
         status: "ringing",
         direction: "outgoing",
         isMuted: false,
         isVideoOff: false,
-      });
+      }));
     } catch (err) {
       stopLocalMedia();
-      setError(err.response?.data?.message || err.message || "Failed to start call");
+      if (!requestState.cancelled) {
+        setActiveCall(null);
+        setError(err.response?.data?.error || err.response?.data?.message || err.message || "Failed to start call");
+      }
+    } finally {
+      if (callRequestRef.current === requestState) callRequestRef.current = null;
     }
   };
 
   useEffect(() => {
     const type = location.state?.autoStartCallType;
     const targetId = location.state?.callTargetId;
-    const targetIsLoaded = sourcePatients.some((patient) => String(patient.id) === String(targetId) || String(patient.receiverId) === String(targetId));
-    if (!type || !targetId || !targetIsLoaded || appointmentCallStartedRef.current || activeCall) return;
-    appointmentCallStartedRef.current = true;
+    const targetIsLoaded = consultationOnly || sourcePatients.some((patient) => String(patient.id) === String(targetId) || String(patient.receiverId) === String(targetId));
+    if (!type || !targetId || !targetIsLoaded || appointmentCallStartedRef.current === location.key || activeCall) return;
+    appointmentCallStartedRef.current = location.key;
     setSelectedPatientId(targetId);
     startCall(type, targetId);
-  }, [sourcePatients, selectedPatientId, activeCall, location.state]);
+  }, [sourcePatients, selectedPatientId, activeCall, location.state, location.key]);
 
   const endCall = async (statusValue = "cancelled") => {
+    if (callRequestRef.current) callRequestRef.current.cancelled = true;
     const endedCall = activeCall;
     const callId = activeCall?.id;
     setActiveCall(null);
@@ -2517,7 +2565,7 @@ function PatientList() {
   const acceptIncomingCall = async () => {
     if (!activeCall?.id) return;
     try {
-      await unlockCallAudio().catch(() => {});
+      void unlockCallAudio().catch(() => {});
       const stream = await prepareLocalMedia(activeCall.type);
       const audioTracks = stream?.getAudioTracks?.() || [];
       if (!audioTracks.length) throw new Error("Microphone permission was not granted");
@@ -2553,6 +2601,7 @@ function PatientList() {
 
   const getCallStatusText = () => {
     if (!activeCall) return "";
+    if (activeCall.status === 'initiating') return 'Connecting call...';
     if (activeCall.status === "missed") return "No answer";
     if (activeCall.status === "connected") return "Connected";
     return `Ringing... ${Math.min(callSeconds, 30)}s`;
@@ -2602,6 +2651,16 @@ function PatientList() {
 
   return (
     <div className="patient-list-container sms-communications-screen">
+      {consultationOnly ? <section className="doctor-direct-consultation">
+        <i className={`fa-solid ${location.state?.autoStartCallType === 'voice' ? 'fa-phone' : 'fa-video'}`} aria-hidden="true" />
+        <h1>{location.state?.autoStartCallType === 'voice' ? 'Voice consultation' : 'Video consultation'}</h1>
+        <h2>{selectedPatient?.name || 'Patient'}</h2>
+        {error && <p role="alert">{error}</p>}
+        {activeCall?.status === 'initiating' && <><p role="status">Connecting call...</p><button type="button" onClick={() => endCall('cancelled')}>Cancel call</button></>}
+        {!activeCall && !error && <p role="status">{appointmentCallStartedRef.current ? 'Call ended' : 'Connecting call...'}</p>}
+        {!activeCall && appointmentCallTarget && <button type="button" onClick={() => startCall(location.state?.autoStartCallType || 'video', appointmentCallTarget)}>Call again</button>}
+        {!activeCall && <button type="button" onClick={() => navigate('/doctordashboard')}>Back to appointments</button>}
+      </section> : <>
       <header className="sms-page-header">
         <h1><PortalText text={"Patient Communications"} /></h1>
         <p><PortalText text={"Manage patient conversations and urgent communications."} /></p>
@@ -2755,7 +2814,24 @@ function PatientList() {
         </section>
       </div>
 
-      {activeCall && (
+      </>}
+      {consultationOnly && activeCall?.id && <VideoCallModal
+        isOpen
+        callMode={activeCall.type}
+        callData={{
+          id: activeCall.id, callId: activeCall.id, name: selectedPatient?.name,
+          profilePic: selectedPatient?.profilePhoto, isIncoming: false,
+          callType: activeCall.type, type: activeCall.type,
+          receiverOffline: activeCall.receiverOffline,
+          status: activeCall.status === 'connected' ? 'active' : 'pending',
+          currentUserId: getCurrentUserId(), currentUserType: 'doctor',
+          receiver: { id: selectedPatientId, fullName: selectedPatient?.name, type: 'user', profilePhoto: selectedPatient?.profilePhoto },
+        }}
+        currentUser={{ ...getDoctorUser(), id: getCurrentUserId(), role: 'doctor' }}
+        onEndCall={() => endCall(activeCallRef.current?.status === 'connected' ? 'ended' : 'cancelled')}
+        onClose={() => { if (activeCallRef.current) void endCall(activeCallRef.current.status === 'connected' ? 'ended' : 'cancelled'); }}
+      />}
+      {activeCall && !consultationOnly && (
         <div className="sms-call-overlay" role="dialog" aria-modal="true">
           <div className={`sms-call-card ${activeCall.type} ${activeCall.status}`}>
             <div className="sms-call-top">
@@ -2764,8 +2840,9 @@ function PatientList() {
             </div>
             <div className="sms-call-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</div>
             <h2>{selectedPatient?.name || <PortalText text={"Patient"} />}</h2>
+            {error && <p role="alert">{error}</p>}
             <p>
-              {activeCall.status === "missed"
+              {activeCall.status === 'initiating' ? 'Connecting call...' : activeCall.status === "missed"
                 ? <PortalText text={"Patient did not answer. Call marked as missed."} />
                 : activeCall.status === "ringing"
                   ? <PortalText text={"Calling patient..."} />

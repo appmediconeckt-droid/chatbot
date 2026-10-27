@@ -2173,6 +2173,7 @@ import { VitalsSummary } from '../../Receptionist/PatientVitals.jsx';
 import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
 import { appointmentVitals } from '../PatientAppointmentDetails/patientRecordDetails.js';
 import EmergencyReason from '../../common/EmergencyReason.jsx';
+import { getRemoteConsultationMode, appointmentCallNavigation } from '../doctorConsultationNavigation.js';
 
 const DEFAULT_BREAK_MIN = 30;
 const BREAK_OPTIONS_MIN = [5, 10, 15, 30, 45, 60];
@@ -2595,12 +2596,6 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
   };
 };
 
-const getRemoteConsultationMode = (appointment) => {
-  const mode = String(appointment?.consultationMode || "").toLowerCase();
-  if (mode.includes("video")) return "video";
-  if (mode.includes("voice") || mode.includes("phone")) return "voice";
-  return "";
-};
 
 const isAppointmentCallWindowOpen = (appointment) => {
   const dateKey = formatLocalDateKey(appointment?.appointmentDate);
@@ -3747,8 +3742,20 @@ const DoctorDashboard = () => {
     return () => clearInterval(tickRef.current);
   }, []);
 
-  // Open consent modal
+  const openRemoteConsultation = (appointment) => {
+    const destination = appointmentCallNavigation(appointment);
+    if (!destination) { setError('Patient details are missing for this call. Refresh the appointment queue.'); return; }
+    if (activeSession?.status === 'break' || (activeAppt && activeAppt.id !== appointment.id)) {
+      setError('Finish the current consultation or break before starting another appointment.'); return;
+    }
+    if (!isAppointmentCallWindowOpen(appointment)) { setError('Call is available at the appointment time.'); return; }
+    setShowConsentModal(false);
+    navigate(destination.pathname, { state: destination.state });
+  };
+
+  // Open consent modal only for an in-clinic checkup.
   const handleConsentClick = (appt) => {
+    if (getRemoteConsultationMode(appt)) { openRemoteConsultation(appt); return; }
     setSelectedAppointment(appt);
     setShowConsentModal(true);
   };
@@ -3776,6 +3783,7 @@ const DoctorDashboard = () => {
 
   const handleStartFromConsent = async (appointment = selectedAppointment) => {
     if (!appointment || queueActionBusy) return;
+    if (getRemoteConsultationMode(appointment)) { openRemoteConsultation(appointment); return; }
     if (!["pending", "confirmed", "skipped"].includes(appointment.status)) {
       setError("This appointment is not ready to start.");
       return;
@@ -3971,6 +3979,7 @@ const DoctorDashboard = () => {
 
   // Open complete modal
   const handleChecked = () => {
+    if (getRemoteConsultationMode(activeAppt)) { openRemoteConsultation(activeAppt); return; }
     const defaultMedicines = [createEmptyMedicine()];
     const defaultFollowUpDateStr = getFollowUpDateFromMedicines(defaultMedicines, activeAppt);
     
@@ -4376,7 +4385,7 @@ const DoctorDashboard = () => {
                     {activeSession?.status === "paused" ? <PortalText text={"Resume"} /> : <PortalText text={"Pause"} />}
                   </button>
                   <button type="button" onClick={handleChecked} disabled={activeSession?.status === "break"}>
-                    <i className="bi bi-clipboard-check"></i><PortalText text={"Checked"} /></button>
+                    <i className={`bi ${getRemoteConsultationMode(activeAppt) === 'video' ? 'bi-camera-video' : getRemoteConsultationMode(activeAppt) === 'voice' ? 'bi-telephone' : 'bi-clipboard-check'}`}></i><PortalText text={getRemoteConsultationMode(activeAppt) === 'video' ? 'Join Video Call' : getRemoteConsultationMode(activeAppt) === 'voice' ? 'Join Voice Call' : 'Checked'} /></button>
                   <button type="button" className="dd-complete-row-action" onClick={handleCompleteNow} disabled={activeSession?.status === "break"}>
                     <i className="bi bi-check-circle"></i><PortalText text={"Complete"} /></button>
                 </div>
@@ -4466,7 +4475,7 @@ const DoctorDashboard = () => {
                             className="dd-call-action"
                             disabled={!isAppointmentCallWindowOpen(appt) || !appt.patientId}
                             title={isAppointmentCallWindowOpen(appt) ? `Start ${getRemoteConsultationMode(appt)} call` : "Call is available at the appointment time"}
-                            onClick={() => navigate('/patient-sms', { state: { callTargetId: appt.patientId, autoStartCallType: getRemoteConsultationMode(appt), appointment: appt } })}
+                            onClick={() => openRemoteConsultation(appt)}
                           >
                             <i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video-fill" : "bi-telephone-fill"}`}></i>
                             {getRemoteConsultationMode(appt) === "video" ? <PortalText text={"Video Call"} /> : <PortalText text={"Voice Call"} />}
@@ -4547,7 +4556,7 @@ const DoctorDashboard = () => {
                   }
                   const remoteMode = getRemoteConsultationMode(nextPatient);
                   if (remoteMode) {
-                    navigate('/patient-sms', { state: { callTargetId: nextPatient.patientId, autoStartCallType: remoteMode, appointment: nextPatient } });
+                    openRemoteConsultation(nextPatient);
                     return;
                   }
                   handleConsentClick(nextPatient);

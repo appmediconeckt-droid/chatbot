@@ -3,6 +3,25 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { subscribeRefresh } from '../src/services/socketRefresh.js';
 
+test('incoming calls recover in a background tab even when a connected socket misses an event', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const previousDocument = globalThis.document;
+  globalThis.document = { visibilityState: 'hidden', addEventListener() {}, removeEventListener() {} };
+  const socket = new EventEmitter();
+  let calls = 0;
+  const stop = subscribeRefresh({ connect: async () => socket, isConnected: () => true }, async () => { calls++; }, ['incoming_call_request'], { allowHidden: true, pollWhileConnected: true, fallbackIntervalMs: 3000 });
+  t.after(() => { stop(); globalThis.document = previousDocument; });
+  await Promise.resolve();
+  assert.equal(calls, 1);
+  socket.emit('incoming_call_request');
+  t.mock.timers.tick(100); await Promise.resolve();
+  assert.equal(calls, 2);
+  t.mock.timers.tick(3000); await Promise.resolve();
+  assert.equal(calls, 3);
+  stop(); t.mock.timers.tick(6000);
+  assert.equal(calls, 3);
+});
+
 test('refreshes on events without polling a healthy socket, and cleans up', async (t) => {
   t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
   const previousDocument = globalThis.document;

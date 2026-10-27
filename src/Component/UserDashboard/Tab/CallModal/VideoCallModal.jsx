@@ -1689,7 +1689,7 @@ const VideoCallModal = ({
                 </div>
                 <h1 className="stream-callee-name">{maskedCalleeName}</h1>
                 <p className="stream-connecting-note">
-                  {uiStatus === "ringing" ? "Ringing" : "Connecting call"}
+                  {isPendingCall && callData?.receiverOffline ? 'Waiting for patient to join' : uiStatus === "ringing" ? "Ringing" : "Connecting call"}
                   <span className="stream-ellipsis" aria-hidden="true">
                     <span>.</span>
                     <span>.</span>

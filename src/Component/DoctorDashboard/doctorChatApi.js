@@ -1,7 +1,10 @@
 import api from "../../axiosConfig";
 import { API_BASE_URL, getDoctorUser } from "./doctorApi";
 
-export const getCurrentUserId = () => getDoctorUser()?._id || localStorage.getItem("userId");
+export const getCurrentUserId = () => {
+  const user = getDoctorUser();
+  return user?._id || user?.id || user?.doctor_id || user?.doctorId || localStorage.getItem("userId");
+};
 export const unwrapApiObject = (value) => value?.data?.data || value?.data || value?.call || value || {};
 export const unwrapApiArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -56,8 +59,17 @@ export async function sendAttachment({ receiverId, message, file }) {
   return (await api.post(`/api/chat/chat/${encodeURIComponent(chat.id || chat._id)}/message`, form)).data;
 }
 
-export async function startCall({ receiverId, callType }) {
-  const { data } = await api.post("/api/video/calls/initiate", { receiverId, receiverType: "user", callType });
+export async function startCall({ receiverId, callType, socketId }) {
+  let data;
+  try {
+    ({ data } = await api.post("/api/video/calls/initiate", { receiverId, receiverType: "user", callType, socketId }, { timeout: 20000 }));
+  } catch (error) {
+    // Recover an existing pending request instead of leaving a patient ringing
+    // while the doctor sees an error after retrying a lost response.
+    if (error.response?.data?.callId && error.response.data.status === 'pending') data = { ...error.response.data, success: true };
+    else if (['ECONNABORTED', 'ETIMEDOUT'].includes(error.code)) throw new Error('The call server did not respond in time. Please retry.');
+    else throw error;
+  }
   const call = data.call || data;
   return { ...data, data: { ...call, id: call.callId || data.callId || call.id } };
 }

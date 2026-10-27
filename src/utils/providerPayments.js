@@ -63,7 +63,10 @@ export async function payForAppointment(appointmentId, method) {
     const result = await showDemoCardCheckout(method);
     if (result?.demo && result.success) {
       const { data } = await api.post(`/api/payments/appointments/${appointmentId}/internal`, { mode: 'demo', method });
-      saveDemoPayment(appointmentId, method);
+      if (!data?.success || !data.paid || !data.demo) throw new Error('Demo payment was not saved. Please retry payment.');
+      // The server receipt is authoritative; unavailable browser storage must
+      // not turn an already recorded payment into a checkout error.
+      try { saveDemoPayment(appointmentId, method); } catch { /* Optional local receipt. */ }
       return { ...data, demoCompleted: true };
     }
     return { ...result, demoCompleted: true };

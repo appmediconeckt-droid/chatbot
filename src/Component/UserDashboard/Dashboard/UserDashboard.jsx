@@ -458,7 +458,7 @@ export default function UserDashboard() {
   useSocketRefresh(fetchWaitingCalls, [
     "incoming_call_request", "call_accepted", "call_rejected",
     "call_cancelled", "call_ended", "call_expired", "call_missed",
-  ], !isVideoModalOpen);
+  ], !isVideoModalOpen, { allowHidden: true, pollWhileConnected: true, fallbackIntervalMs: 3000 });
 
   useEffect(() => {
     if (showCallModal && !isVideoModalOpen) {

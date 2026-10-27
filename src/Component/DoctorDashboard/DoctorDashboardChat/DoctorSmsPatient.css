@@ -1227,3 +1227,4 @@
     width: 96px;
   }
 }
+.doctor-direct-consultation{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center;background:#0b1424;color:#fff;border-radius:16px;padding:28px}.doctor-direct-consultation>i{font-size:52px;color:#75a4ff}.doctor-direct-consultation h1{font-size:28px}.doctor-direct-consultation h2{font-size:21px}.doctor-direct-consultation button{padding:12px 22px;border:1px solid #6e93c6;border-radius:10px;background:#235bcc;color:#fff}.doctor-direct-consultation p[role=alert]{color:#ffb7b7;max-width:600px}

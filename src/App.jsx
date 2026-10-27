@@ -246,6 +246,7 @@ function App() {
             <Route path="/clinicpage" element={<ClinicPage />} />
             <Route path="/walkinappointment" element={<WalkInAppointment />} />
             <Route path="/patient-sms" element={<PatientList />} />
+            <Route path="/doctor-consultation" element={<PatientList consultationOnly />} />
             <Route path="/patient-chat/:patientId" element={<DoctorChat />} />
             <Route path="/followup" element={<FollowUp />} />
             <Route path="/patient-details" element={<PatientDetailsPage />} />
