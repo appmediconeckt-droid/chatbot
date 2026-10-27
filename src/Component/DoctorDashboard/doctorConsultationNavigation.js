@@ -1,7 +1,8 @@
 export function getRemoteConsultationMode(appointment) {
-  const mode = String(appointment?.consultationMode || appointment?.consultation_mode || appointment?.mode || '').toLowerCase();
+  const value = appointment?.consultationMode || appointment?.consultation_mode || appointment?.mode || '';
+  const mode = String(typeof value === 'object' ? value.value || value.mode || value.type || value.label || value.name || '' : value).trim().toLowerCase();
   if (mode.includes('video')) return 'video';
-  if (mode.includes('voice') || mode.includes('phone') || mode.includes('audio')) return 'voice';
+  if (mode.includes('voice') || mode.includes('phone') || mode.includes('audio') || mode === 'call') return 'voice';
   return '';
 }
 

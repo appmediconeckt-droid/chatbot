@@ -1,0 +1,8 @@
+.dd-complete-modal .modal-dialog{max-width:min(900px,calc(100vw - 32px))}
+.dd-complete-modal .modal-content{min-width:0;max-height:calc(100dvh - 32px);overflow:hidden}
+.dd-complete-modal .modal-body{min-width:0;overflow-x:hidden;overscroll-behavior:contain}
+.dd-complete-modal .row>*,.dd-complete-modal .dd-medicine-card,.dd-complete-modal .dd-medicines-section{min-width:0;max-width:100%}
+.dd-complete-modal .form-control,.dd-complete-modal .form-select{min-width:0;width:100%;box-sizing:border-box}
+.dd-complete-modal .dd-section-heading-row{flex-wrap:wrap;gap:10px}
+.dd-complete-modal .dd-medicine-preview{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:576px){.dd-complete-modal .modal-dialog{max-width:calc(100vw - 16px);margin-left:auto;margin-right:auto}.dd-complete-modal .modal-content{max-height:calc(100dvh - 16px)}.dd-complete-modal .modal-header,.dd-complete-modal .modal-body,.dd-complete-modal .modal-footer{padding:16px}.dd-complete-modal .modal-title{font-size:20px}}

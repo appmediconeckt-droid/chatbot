@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import api from '../axiosConfig.js';
 import { paymentCheckoutDisplay } from './paymentCheckoutConfig.js';
 import { subscribeSocketRefresh } from '../hooks/useSocketRefresh.js';
-import { demoCardPaymentsEnabled, isDemoPaymentMethod, withDemoCardOptions, saveDemoPayment } from './demoCardPayment.js';
 
 const labels = { wallet: ['Wallet', 'fa-wallet'], credit_card: ['Credit Card', 'fa-credit-card'], debit_card: ['Debit Card', 'fa-credit-card'], upi: ['UPI', 'fa-mobile-screen-button'], cash: ['Cash', 'fa-money-bill-wave'], insurance: ['Insurance', 'fa-shield-heart'] };
 export const isOnlinePayment = (method) => ['credit_card', 'debit_card', 'upi', 'wallet'].includes(method);
@@ -17,7 +16,7 @@ export function useProviderPaymentOptions(providerId) {
       const current = ++request;
       try {
         const response = await api.get(`/api/payments/providers/${providerId}/methods`, { timeout: 15000 });
-        const data = withDemoCardOptions(response.data);
+        const data = response.data;
         const choices = methods => methods.filter(method => labels[method]).map(method => ({ method, id: method, label: labels[method][0], icon: labels[method][1], unavailableReason: data.unavailableMethods?.[method] || '' }));
         if (active && current === request) setState({ ...data, loading: false, error: '', methods: choices(data.methods || []), displayMethods: choices(data.configuredMethods || data.methods || []) });
       } catch {
@@ -57,19 +56,6 @@ export async function payForAppointment(appointmentId, method) {
   if (method === 'wallet') {
     const { data } = await api.post(`/api/payments/appointments/${appointmentId}/internal`, { method: 'wallet' });
     return data;
-  }
-  if (demoCardPaymentsEnabled() && isDemoPaymentMethod(method)) {
-    const { showDemoCardCheckout } = await import('../Component/common/DemoCardCheckout.jsx');
-    const result = await showDemoCardCheckout(method);
-    if (result?.demo && result.success) {
-      const { data } = await api.post(`/api/payments/appointments/${appointmentId}/internal`, { mode: 'demo', method });
-      if (!data?.success || !data.paid || !data.demo) throw new Error('Demo payment was not saved. Please retry payment.');
-      // The server receipt is authoritative; unavailable browser storage must
-      // not turn an already recorded payment into a checkout error.
-      try { saveDemoPayment(appointmentId, method); } catch { /* Optional local receipt. */ }
-      return { ...data, demoCompleted: true };
-    }
-    return { ...result, demoCompleted: true };
   }
   await loadPaymentCheckout();
   const { data: order } = await api.post(`/api/payments/appointments/${appointmentId}/order`, { method });

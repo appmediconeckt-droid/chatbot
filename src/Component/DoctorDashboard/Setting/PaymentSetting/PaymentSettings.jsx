@@ -4,10 +4,8 @@ import { ChevronLeft, CreditCard, QrCode, ShieldCheck, Banknote, Landmark } from
 import './PaymentSettings.css';
 import { CardBrands } from '../../../common/PaymentMethodVisuals.jsx';
 import { normalizePaymentMethods, togglePaymentMethod, paymentSettingsError } from './paymentSettingsState.js';
-import { demoCardPaymentsEnabled } from '../../../../utils/demoCardPayment.js';
 
 const EMPTY_BANK = { accountHolder: '', bankName: '', accountNumber: '', ifscCode: '' };
-const DUMMY_UPI_ID = 'demo@humaeli.invalid';
 const METHOD_OPTIONS = [
   ['card', 'Credit / Debit Card', 'Accept credit and debit card payments.', CreditCard],
   ['upi', 'UPI', 'Accept payments through UPI.', QrCode],
@@ -20,7 +18,6 @@ function PaymentSwitch({ checked, onChange, label, controls }) {
 
 
 export default function PaymentSettings({ onBack, theme = 'doctor' }) {
-  const testing = demoCardPaymentsEnabled();
   const [methods, setMethods] = useState([]);
   const [bank, setBank] = useState(EMPTY_BANK);
   const [confirmAccount, setConfirmAccount] = useState('');
@@ -53,14 +50,14 @@ export default function PaymentSettings({ onBack, theme = 'doctor' }) {
       setAvailabilityNotice([...new Set(Object.values(data.unavailableMethods || {}))].join(' '));
       setBank({ ...EMPTY_BANK, ...data.bankAccount });
       setConfirmAccount(data.bankAccount?.accountNumber || '');
-      setUpiId(data.upiId || (testing ? DUMMY_UPI_ID : ''));
+      setUpiId(data.upiId || '');
       setUpiApp(data.upiApp || (data.upiId ? 'other' : '')); setLoaded(true);
     }).catch((err) => {
       if (!active) return;
       setError(err.message === 'Invalid payment settings response' ? 'Payment settings could not be read. Please try again or contact support.' : paymentSettingsError(err));
     });
     return () => { active = false; controller.abort(); };
-  }, [loadAttempt, testing]);
+  }, [loadAttempt]);
   const change = () => { setSaved(false); setError(''); };
   const updateBank = (key, value) => { setBank(previous => ({ ...previous, [key]: value })); change(); };
   const save = async (event) => {
@@ -96,11 +93,11 @@ export default function PaymentSettings({ onBack, theme = 'doctor' }) {
     {loaded && availabilityNotice && <p role="status" className="pps-notice">{availabilityNotice} Your selected methods can still be saved.</p>}
     <fieldset disabled={!loaded || saving} className="pps-body">
       <div className="pps-section-heading"><h3>Accepted payment methods</h3><p>Select the methods you accept, then save your settings.</p></div>
-      <section className="pps-method-card pps-payment-option is-enabled" aria-labelledby="pps-wallet-title">
+      <section className="pps-method-card pps-payment-option pps-wallet-option is-enabled" aria-labelledby="pps-wallet-title">
         <div className="pps-method-heading">
           <span className="pps-method-icon"><i className="fa-solid fa-wallet" aria-hidden="true" /></span>
           <div className="pps-method-copy"><h3 id="pps-wallet-title">Patient Wallet</h3><p>Always enabled for INR appointments. Patients can pay from their wallet even when card, UPI and cash are disabled. Payments appear in your Earnings wallet.</p></div>
-          <span className="pps-notice">Always enabled</span>
+          <span className="pps-wallet-status">Always enabled</span>
         </div>
       </section>
       {METHOD_OPTIONS.map(option => {
@@ -125,11 +122,11 @@ export default function PaymentSettings({ onBack, theme = 'doctor' }) {
             <label>IFSC code<input required={bankStarted} pattern="[A-Z]{4}0[A-Z0-9]{6}" maxLength={11} value={bank.ifscCode} onChange={event => updateBank('ifscCode', event.target.value.toUpperCase())} placeholder="ABCD0123456" /></label>
           </div>
         </details>
+
       <section className="pps-method-card" aria-labelledby="pps-upi-title">
         <div className="pps-details-heading"><QrCode size={24} aria-hidden="true" /><div><h3 id="pps-upi-title">Receiving UPI details</h3><p>Add your UPI ID to complete UPI payment setup.</p></div></div>
         <div className="pps-form-grid pps-bank-fields">
           <label>UPI ID<input value={upiId} maxLength={320} placeholder="yourname@upi" onChange={event => { setUpiId(event.target.value); change(); }} /></label>
-          {testing && <div><button type="button" className="pps-retry" onClick={() => { setUpiId(DUMMY_UPI_ID); change(); }}>Use dummy UPI ID</button><small>Testing only: {DUMMY_UPI_ID}. This is not a receiving account for real payments.</small></div>}
         </div>
       </section>
     </fieldset>

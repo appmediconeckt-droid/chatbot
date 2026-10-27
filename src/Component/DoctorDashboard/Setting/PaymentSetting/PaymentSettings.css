@@ -131,3 +131,5 @@
 .provider-payment-settings .pps-payment-option .payment-card-brands { padding-left: 56px; }
 .provider-payment-settings .pps-method-card > summary { cursor: pointer; color: var(--pps-text); font-size: 17px; font-weight: 650; }
 .provider-payment-settings details[open] > summary { margin-bottom: 20px; }
+
+.provider-payment-settings .pps-wallet-option .pps-method-heading{grid-template-columns:44px minmax(0,1fr) auto}.provider-payment-settings .pps-wallet-option .pps-method-copy{min-width:0;overflow-wrap:anywhere}.provider-payment-settings .pps-wallet-status{display:inline-flex;justify-content:center;max-width:110px;padding:7px 10px;border-radius:8px;background:var(--pps-soft);font-size:12px;font-weight:600;text-align:center;line-height:1.4;white-space:normal;overflow-wrap:anywhere}@media(max-width:600px){.provider-payment-settings .pps-wallet-option .pps-method-heading{grid-template-columns:44px minmax(0,1fr)}.provider-payment-settings .pps-wallet-status{grid-column:2;justify-self:start;max-width:none}}

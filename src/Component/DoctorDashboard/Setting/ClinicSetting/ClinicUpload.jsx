@@ -11,6 +11,7 @@ import { feeCurrency, validFee } from '../../../../utils/consultationCurrency.js
 export default function ClinicSettings() {
   const [clinicName, setClinicName] = useState("");
   const [fee, setFee] = useState('');
+  const [videoFee, setVideoFee] = useState('0');
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [location, setLocation] = useState({ lat: null, lng: null });
@@ -91,8 +92,10 @@ export default function ClinicSettings() {
     if (fee === '' || fee == null || !validFee(fee, feeCurrency(user || {}) || 'INR')) {
       setMessage('Enter a valid clinic fee in your profile currency.'); setStatus('failed'); return;
     }
+    if (!validFee(videoFee, feeCurrency(user || {}) || 'INR')) { setMessage('Enter a valid video additional fee.'); setStatus('failed'); return; }
     const formData = new FormData();
     formData.append('fee', fee);
+    formData.append('videoConsultationAdditionalFee', videoFee);
     formData.append('doctor_id', doctorId);
     formData.append('clinic_name', clinicName);
     formData.append('phone_number', phone);
@@ -111,7 +114,7 @@ export default function ClinicSettings() {
       });
 
       const savedFee = response.data?.clinic?.fee;
-      const feeSaved = savedFee != null && Number(savedFee) === Number(fee);
+      const feeSaved = savedFee != null && Number(savedFee) === Number(fee) && Number(response.data?.clinic?.videoConsultationAdditionalFee ?? 0) === Number(videoFee);
       setStatus(feeSaved ? 'succeeded' : 'partial');
       setMessage(feeSaved
         ? 'Clinic created successfully. Its walk-in QR is ready.'
@@ -127,6 +130,7 @@ export default function ClinicSettings() {
 
   const handleCancel = () => {
     setFee('');
+    setVideoFee('0');
     setClinicName("");
     setPhone("");
     setAddress("");
@@ -147,7 +151,7 @@ export default function ClinicSettings() {
         </div>
 
         <div className="clinic-form">
-          <ClinicFeeFields value={fee} onChange={setFee} doctor={user} />
+          <ClinicFeeFields value={fee} onChange={setFee} videoFee={videoFee} onVideoFeeChange={setVideoFee} doctor={user} />
           {/* Clinic Name */}
           <div className="form-group">
             <label className="form-label">

@@ -184,6 +184,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     ...(availabilityLoading ? { days: 'Loading availability...', timings: 'Loading availability...' }
       : getClinicSchedule(availabilityRanges, c._id || c.id, unavailableDates, undefined, selectedDate?.iso)),
     fee: c.fee ?? c.consultation_fee ?? c.consultationFee ?? doctor.consultationFee ?? 100,
+    videoConsultationAdditionalFee: c.videoConsultationAdditionalFee ?? 0,
   });
 
   const clinics = apiClinics.length
@@ -200,13 +201,12 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
   }, [apiClinics, selectedClinicId]);
 
   // Consultation modes (selectable)
+  const selectedClinic = clinics.find((c) => c.id === selectedClinicId) || clinics[0];
   const modes = [
-    { id: 'in-clinic', name: 'In-Clinic Visit', desc: 'Visit the clinic in person for consultation', icon: 'fa-hospital', fee: 0 },
-    { id: 'video', name: 'Video Consultation', desc: 'Connect with doctor via video call', icon: 'fa-video', fee: 10 },
-    { id: 'voice', name: 'Voice Consultation', desc: 'Talk with your doctor over a voice call', icon: 'fa-phone', fee: 5 },
+    { id: 'in-clinic', name: 'General Checkup', desc: 'Visit the clinic in person for consultation', icon: 'fa-hospital', fee: 0 },
+    { id: 'video', name: 'Video Consultation', desc: 'Connect with doctor via video call', icon: 'fa-video', fee: Number(selectedClinic?.videoConsultationAdditionalFee || 0) },
   ];
 
-  const selectedClinic = clinics.find((c) => c.id === selectedClinicId) || clinics[0];
   const selectedMode = modes.find((m) => m.id === selectedModeId) || modes[0];
   const totalFee = (Number(selectedClinic?.fee) || 0) + (Number(selectedMode?.fee) || 0);
 
@@ -601,7 +601,6 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
               <div className="abm-success-hero">
                 <div className="abm-success-icon"><i className="fa-solid fa-check"></i></div>
                 <h2 className="abm-success-title">{isEmergency ? <PortalText text={"Emergency Appointment Requested"} /> : <PortalText text={"Appointment Booked Successfully!"} />}</h2>
-                {!isEmergency && paymentOptions.demoCardPayments && ['credit_card', 'debit_card', 'upi'].includes(paymentMethod) && <p className="provider-demo-payment-notice" role="status">Demo payment completed. No money was charged. You do not need to pay again for this demo booking.</p>}
                 <p className="abm-success-sub">{isEmergency ? <PortalText text={"Your emergency request has been sent to the clinic for the doctor and care team to review. The clinic will confirm consultation timing."} /> : <PortalText text={"A confirmation notification with all the details has been generated for you."} />}</p>
               </div>
 
@@ -840,7 +839,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
                           <div className="abm-opt-main">
                             <div className="abm-opt-name">{m.name}</div>
                             <div className="abm-opt-addr">{m.desc}</div>
-                            <span className="abm-opt-fee"><PortalText text={"Additional Fee: "} />{displayFee(m.fee)}</span>
+                            {m.id === 'video' && <span className="abm-opt-fee"><PortalText text={"Additional Fee: "} />{displayFee(m.fee)}</span>}
                           </div>
                           {selectedModeId === m.id && <span className="abm-opt-check"><i className="fa-solid fa-check"></i></span>}
                         </div>

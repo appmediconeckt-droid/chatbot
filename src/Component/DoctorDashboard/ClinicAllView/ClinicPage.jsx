@@ -454,13 +454,15 @@ export default function ClinicPage() {
       const body = new FormData();
       if (editForm.fee === '' || editForm.fee == null || !validFee(editForm.fee, feeCurrency(user) || 'INR')) throw new Error('Enter a valid clinic fee.');
       body.append('fee', editForm.fee);
+      if (!validFee(editForm.videoConsultationAdditionalFee ?? 0, feeCurrency(user) || 'INR')) throw new Error('Enter a valid video additional fee.');
+      body.append('videoConsultationAdditionalFee', editForm.videoConsultationAdditionalFee ?? 0);
       for (const field of ['clinic_name', 'phone_number', 'location']) {
         if (!editForm[field]?.trim()) throw new Error("Please fill all required fields.");
         body.append(field, editForm[field].trim());
       }
       if (editPhoto) body.append('clinic_photo', editPhoto);
       const { data } = await axios.patch(`${CLINICS_BASE_URL}/${clinic.id}`, body, { headers: getAuthHeaders() });
-      if (!data.success || data.clinic?.fee == null || Number(data.clinic.fee) !== Number(editForm.fee)) throw new Error('Clinic fee was not saved. Refresh this page and retry. If the issue continues, contact support.');
+      if (!data.success || data.clinic?.fee == null || Number(data.clinic.fee) !== Number(editForm.fee) || Number(data.clinic?.videoConsultationAdditionalFee ?? 0) !== Number(editForm.videoConsultationAdditionalFee ?? 0)) throw new Error('Clinic fee was not saved. Refresh this page and retry. If the issue continues, contact support.');
       setClinics(rows => rows.map(row => row.id === clinic.id ? normalizeClinic({ ...row.raw, ...data.clinic }) : row));
       setEditing(false); setEditMessage("Clinic updated successfully.");
     } catch (error) {
@@ -508,7 +510,7 @@ export default function ClinicPage() {
           <label>Phone Number<input required type="tel" maxLength={2000} value={editForm.phone_number} onChange={e => setEditForm({ ...editForm, phone_number: e.target.value })} /></label>
           </div>
           <label>Address<textarea required rows={3} maxLength={2000} value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} /></label>
-          <section className="clinic-edit-fee-section" aria-label="Consultation fee"><ClinicFeeFields value={editForm.fee} onChange={fee => setEditForm({ ...editForm, fee })} doctor={user} /></section>
+          <section className="clinic-edit-fee-section" aria-label="Consultation fee"><ClinicFeeFields value={editForm.fee} onChange={fee => setEditForm({ ...editForm, fee })} videoFee={editForm.videoConsultationAdditionalFee ?? 0} onVideoFeeChange={videoConsultationAdditionalFee => setEditForm({ ...editForm, videoConsultationAdditionalFee })} doctor={user} /></section>
           <label>Clinic Photo (optional)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => {
             const file = e.target.files?.[0];
             if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
@@ -533,7 +535,7 @@ export default function ClinicPage() {
         <div className="doctor-clinic-hero-overlay" />
         <div className="doctor-clinic-image-actions" role="group" aria-label="Clinic actions">
           <button ref={editButtonRef} type="button" className="doctor-clinic-image-action" aria-label="Edit Clinic" title="Edit Clinic" disabled={saving || isDeleting || editing} onClick={() => {
-            setEditForm({ clinic_name: clinic.name, phone_number: clinic.phone, location: clinic.raw?.location || clinic.address, fee: clinic.raw?.fee ?? user.consultationFee ?? '' });
+            setEditForm({ clinic_name: clinic.name, phone_number: clinic.phone, location: clinic.raw?.location || clinic.address, fee: clinic.raw?.fee ?? user.consultationFee ?? '', videoConsultationAdditionalFee: clinic.raw?.videoConsultationAdditionalFee ?? 0 });
             setEditPhoto(null); setEditMessage(''); setEditing(true);
           }}><Pencil size={18} aria-hidden="true" /></button>
           <button type="button" className="doctor-clinic-image-action doctor-clinic-image-delete" aria-label={isDeleting ? 'Deleting clinic' : 'Delete Clinic'} title={isDeleting ? 'Deleting...' : 'Delete Clinic'} aria-busy={isDeleting} disabled={isDeleting || editing || saving} onClick={handleDeleteClinic}>

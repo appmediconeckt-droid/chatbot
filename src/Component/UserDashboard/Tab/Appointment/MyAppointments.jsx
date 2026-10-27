@@ -1,9 +1,10 @@
 import ProviderRating from './ProviderRating.jsx';
 import { payForAppointment, isOnlinePayment } from '../../../../utils/providerPayments.js';
-import { readDemoPayment, demoCardPaymentsEnabled, isDemoPaymentMethod, appointmentPaymentId } from '../../../../utils/demoCardPayment.js';
+const appointmentPaymentId = value => String(value?._id || value?.id || value?.appointmentId || value || '');
 import { readAppointmentList } from './appointmentListCache.js';
 import { loadAppointmentList } from './appointmentListLoader.js';
 import useSocketRefresh from "../../../../hooks/useSocketRefresh";
+import socketService from "../../../../services/socketService";
 import { PortalElement, PortalText } from "../../../common/PortalTranslation";
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
@@ -46,9 +47,8 @@ const MyAppointments = () => {
   const [appointments, setAppointments] = useState(() => readAppointmentList(sessionCacheKey) || []);
   useEffect(() => {
     const refreshPayment = () => { setAppointments(rows => [...rows]); setPaymentNotice(null); };
-    window.addEventListener('demo-payment-completed', refreshPayment);
     window.addEventListener('storage', refreshPayment);
-    return () => { window.removeEventListener('demo-payment-completed', refreshPayment); window.removeEventListener('storage', refreshPayment); };
+    return () => { window.removeEventListener('storage', refreshPayment); };
   }, []);
   const [selectedProviderKey, setSelectedProviderKey] = useState(null);
   const [counselors, setCounselors] = useState([]);
@@ -174,7 +174,7 @@ const MyAppointments = () => {
     )
       .trim()
       .toLowerCase();
-    const isDoctor = rawRole === "doctor" || apt?.counselor?.accountType === "doctor";
+    const isDoctor = rawRole === "doctor" || apt?.counselor?.accountType === "doctor" || Boolean(apt?.doctor || apt?.doctor_id || apt?.doctorId);
     return {
       isDoctor,
       label: isDoctor
@@ -405,7 +405,7 @@ const MyAppointments = () => {
   };
 
   const getCounselorId = (apt) =>
-    apt?.counselor?._id || apt?.counselor?.id || apt?.counselorId;
+    apt?.counselor?._id || apt?.counselor?.id || apt?.counselorId || apt?.doctor?._id || apt?.doctor?.id || apt?.doctor_id || apt?.doctorId;
 
   const handleChat = async (apt) => {
     const counselorId = getCounselorId(apt);
@@ -438,24 +438,31 @@ const MyAppointments = () => {
   };
 
   const handleCall = async (apt, mode) => {
+    if (getProfessionalRole(apt).isDoctor) {
+      return;
+    }
     const counselorId = getCounselorId(apt);
     const userId = localStorage.getItem("userId");
     if (!counselorId || !userId) return alert("Call information is unavailable. Please login again.");
 
     try {
       setActionLoading(`${mode}-${apt._id}`);
+      const callSocket = await socketService.connect();
+      if (!callSocket?.id) throw new Error("Call connection is not ready. Please retry.");
       const response = await axios.post(
         `${API_BASE_URL}/api/video/calls/initiate`,
         {
           initiatorId: userId,
           initiatorType: "user",
           receiverId: counselorId,
-          receiverType: "counsellor",
+          socketId: callSocket.id,
+          receiverType: getProfessionalRole(apt).isDoctor ? "doctor" : "counsellor",
           callType: mode === "voice" ? "audio" : "video",
         },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if (!response.data?.success) throw new Error(response.data?.message || "Call request failed");
+      if (response.data.notificationOnly) throw new Error(response.data.message || "The recipient is unavailable. Please retry shortly.");
       const callData = response.data.callData || {};
       setSelectedCall({
         id: callData.id || response.data.callId,
@@ -474,7 +481,7 @@ const MyAppointments = () => {
       });
       setIsCallModalOpen(true);
     } catch (error) {
-      alert(error?.response?.data?.message || `Unable to start ${mode} call. Please try again.`);
+      alert(error?.response?.data?.message || error.message || `Unable to start ${mode} call. Please try again.`);
     } finally {
       setActionLoading(null);
     }
@@ -608,9 +615,8 @@ const MyAppointments = () => {
             </div>
           </div>
 
-          {/* Doctor appointment call buttons are temporarily hidden. */}
-          {!getProfessionalRole(selectedApt).isDoctor && (
           <div className="appointment-detail-actions">
+            {!getProfessionalRole(selectedApt).isDoctor && (
             <button
               type="button"
               className="appointment-detail-action join"
@@ -620,6 +626,7 @@ const MyAppointments = () => {
               <FaVideo />
               {actionLoading === `video-${selectedApt._id}` ? tr('loading', 'Loading...') : tr('start_video_call', 'Start Video Call')}
             </button>
+            )}
             {canCancelAppointment(selectedApt) && <button type="button" disabled={Boolean(actionLoading)} onClick={() => cancelAppointment(selectedApt)}>
               <PortalText text={actionLoading === `cancel-${selectedApt._id}` ? 'Cancelling...' : 'Cancel Appointment'} />
             </button>}
@@ -634,7 +641,7 @@ const MyAppointments = () => {
                 {actionLoading === `chat-${selectedApt._id}` ? t('loading') : t('chat')}
               </button>
             )}
-            <button
+            {!getProfessionalRole(selectedApt).isDoctor && <button
               type="button"
               className="appointment-detail-action primary"
               onClick={() => handleCall(selectedApt, "voice")}
@@ -642,9 +649,8 @@ const MyAppointments = () => {
             >
               <FaPhoneAlt />
               {actionLoading === `voice-${selectedApt._id}` ? t('loading') : t('voice_call')}
-            </button>
+            </button>}
           </div>
-          )}
         </div>
       </PortalElement>,
       document.body,
@@ -745,9 +751,7 @@ const MyAppointments = () => {
                   <div className="user-appointment-date-grid">
                     {group.items.map((apt) => {
                 const paymentId = appointmentPaymentId(apt);
-                const demoReceipt = readDemoPayment(apt);
                 const paymentComplete = apt.payment_status === 'paid';
-                const demoCard = demoCardPaymentsEnabled() && isDemoPaymentMethod(apt.payment_method);
                 const appointmentSchedule = formatAppointmentDateTime(apt.date);
                 if (isUnscheduledEmergency(apt)) appointmentSchedule.time = 'Clinic will confirm';
                 const appointmentToken = getAppointmentToken(apt);
@@ -817,13 +821,12 @@ const MyAppointments = () => {
                         setActionLoading(`pay-${paymentId}`); setPaymentNotice(null);
                         try {
                           const payment = await payForAppointment(paymentId, apt.payment_method);
-                          setPaymentNotice({ id: paymentId, message: payment.demo ? 'Demo payment completed successfully. No money was charged.' : 'Payment verified successfully.' });
+                          setPaymentNotice({ id: paymentId, message: payment.mode === 'test' ? 'Razorpay test payment verified. No real money was charged.' : 'Payment verified successfully.' });
                           await fetchAppointments();
-                        } catch (error) { if (error.code !== 'PAYMENT_CANCELLED') setPaymentNotice({ id: paymentId, message: readDemoPayment(apt) ? 'Demo payment completed successfully.' : error.response?.data?.message || error.message || 'Payment could not be completed.' }); }
+                        } catch (error) { if (error.code !== 'PAYMENT_CANCELLED') setPaymentNotice({ id: paymentId, message: error.response?.data?.message || error.message || 'Payment could not be completed.' }); }
                         finally { setActionLoading(null); }
-                      }}><i className="fa-solid fa-credit-card" aria-hidden="true" /><PortalText text={actionLoading === `pay-${paymentId}` ? 'Processing payment...' : demoCard ? 'Complete demo payment' : 'Pay Now'} /></button>}
+                      }}><i className="fa-solid fa-credit-card" aria-hidden="true" /><PortalText text={actionLoading === `pay-${paymentId}` ? 'Processing payment...' : 'Pay Now'} /></button>}
                       {apt.payment_status === 'paid' && <span><PortalText text="Payment received" /></span>}
-                      {apt.payment_status !== 'paid' && demoReceipt && <span className="user-appointment-demo-paid"><i className="fa-solid fa-circle-check" aria-hidden="true" /><PortalText text="Demo payment completed" /></span>}
                       {paymentNotice?.id === paymentId && <p role="status">{paymentNotice.message}</p>}
                       {getProfessionalRole(apt).isDoctor && ['pending', 'confirmed', 'accepted', 'booked', 'in-progress'].includes(apt.status)
                         && !['completed', 'canceled', 'cancelled', 'no_show', 'skipped'].includes(apt.queue_status) && (
@@ -859,12 +862,10 @@ const MyAppointments = () => {
                         <FaEye aria-hidden="true" />
                         {t('view_details')}
                       </button>
-                      {/* Doctor appointment call shortcuts are temporarily hidden. */}
                       {canCancelAppointment(apt) && <button type="button" className="user-appointment-action secondary" disabled={Boolean(actionLoading)} onClick={() => cancelAppointment(apt)}>
                         <PortalText text={actionLoading === `cancel-${apt._id}` ? 'Cancelling...' : 'Cancel Appointment'} />
                       </button>}
                       {!getProfessionalRole(apt).isDoctor && (
-                        <>
                       <PortalElement as="button"
                         className="user-appointment-action icon"
                         onClick={() => handleCall(apt, "video")}
@@ -874,6 +875,8 @@ const MyAppointments = () => {
                       >
                         <FaVideo aria-hidden="true" />
                       </PortalElement>
+                      )}
+                      {!getProfessionalRole(apt).isDoctor && (
                       <PortalElement as="button"
                         className="user-appointment-action icon"
                         onClick={() => handleCall(apt, "voice")}
@@ -883,7 +886,6 @@ const MyAppointments = () => {
                       >
                         <FaPhoneAlt aria-hidden="true" />
                       </PortalElement>
-                        </>
                       )}
                       {!getProfessionalRole(apt).isDoctor && (
                         <PortalElement as="button"

@@ -5035,6 +5035,7 @@ const ChatBox = ({ manageIncomingCalls = true, embedded = false, conversation = 
   };
 
   const initiateStreamCall = async (requestedCallType = "video") => {
+    if (String(currentCounselor?.role || currentCounselor?.accountType || "").toLowerCase() === "doctor") return;
     const normalizedMode = requestedCallType === "audio" || requestedCallType === "voice" ? "voice" : "video";
     if (!currentCounselor) {
       setCallError("Consultant information not available");
@@ -6283,6 +6284,7 @@ const ChatBox = ({ manageIncomingCalls = true, embedded = false, conversation = 
             </div>
           </div>
           <div className="chatBoxHeaderRight">
+            {String(currentCounselor?.role || currentCounselor?.accountType || "").toLowerCase() !== "doctor" && <>
             <button className={`chatActionBtn chatVideoBtn ${isInitiatingCall ? "disabled" : ""}`} onClick={handleVideoCall} disabled={isInitiatingCall} aria-label="Video call">
               <span className="chatBtnIcon" aria-hidden="true">{initiatingCallType === "video" ? <FaSpinner className="spinning" /> : <FaVideo />}</span>
               <span className="chatBtnTooltip">{t('video_call_tooltip')}</span>
@@ -6291,6 +6293,7 @@ const ChatBox = ({ manageIncomingCalls = true, embedded = false, conversation = 
               <span className="chatBtnIcon" aria-hidden="true">{initiatingCallType === "voice" ? <FaSpinner className="spinning" /> : <FaPhoneAlt />}</span>
               <span className="chatBtnTooltip">{t('voice_call_tooltip')}</span>
             </button>
+            </>}
             <div className="chatMoreOptions" ref={optionsRef}>
               <button className="chatActionBtn" onClick={() => setShowOptions(!showOptions)} aria-label="More options" aria-expanded={showOptions}>
                 <FaHistory className="chatHistoryIcon" aria-hidden="true" />

@@ -21,6 +21,7 @@ const normalizeRole = (role) => {
     .trim()
     .toLowerCase();
 
+  if (normalized === "doctor") return "doctor";
   if (isProfessionalRole(normalized)) {
     return "counsellor";
   }
@@ -316,6 +317,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
       const resolvedCallMode = normalizeCallType(callMode);
       const receiverId = String(callEntry?.counterPartyId || "").trim();
       const receiverType = normalizeRole(callEntry?.counterPartyType || "");
+      if (receiverType === "doctor") return;
 
       if (!receiverId) {
         setCallError("Select a previous call entry to start a new call.");
@@ -514,11 +516,11 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                     </div>
                     {call.missed ? (
                       <span className="pch-missed-label">↙&nbsp; {t("missed")} {t("calls")}</span>
-                    ) : (
+                    ) : call.counterPartyType !== "doctor" ? (
                       <button type="button" className="pch-call-action" onClick={() => openCallModal(call)} aria-label={`Call ${call.name}`}>
                         {call.type === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />}
                       </button>
-                    )}
+                    ) : null}
                   </article>
                 ))}
               </div>
@@ -654,9 +656,9 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                 <div
                   key={call.id}
                   className={`call-item ${call.missed ? "missed-call" : ""}`}
-                  onClick={() => openCallModal(call)}
-                  role="button"
-                  tabIndex={0}
+                  onClick={call.counterPartyType === "doctor" ? undefined : () => openCallModal(call)}
+                  role={call.counterPartyType === "doctor" ? undefined : "button"}
+                  tabIndex={call.counterPartyType === "doctor" ? undefined : 0}
                   onKeyPress={(e) => e.key === "Enter" && openCallModal(call)}
                 >
                   {/* Profile Picture - Anonymous Avatar Only */}
@@ -704,7 +706,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                   </div>
 
                   {/* Call Action Button */}
-                  <button
+                  {call.counterPartyType !== "doctor" && <button
                     className="call-action-btn"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -717,7 +719,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                     ) : (
                       <FaPhoneAlt className="call-action-icon" aria-hidden="true" />
                     )}
-                  </button>
+                  </button>}
                 </div>
               ))}
             </div>

@@ -2253,7 +2253,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       const bookedId = String(booked._id || booked.id || '');
       setConsultantBookingId(bookedId);
       const paymentResult = isOnlinePayment(consultantPaymentMethod) ? await payForAppointment(bookedId, consultantPaymentMethod) : null;
-      alert(paymentResult?.demo ? 'Appointment booked. Demo payment completed; no money was charged.' : t('appointment_booked_success'));
+      alert(paymentResult?.mode === 'test' ? 'Appointment booked. Razorpay test payment verified; no real money was charged.' : t('appointment_booked_success'));
       setShowBookingModal(false);
       setBookingDate("");
       setBookingNotes("");

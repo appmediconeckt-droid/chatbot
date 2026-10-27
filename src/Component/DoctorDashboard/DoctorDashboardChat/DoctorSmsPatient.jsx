@@ -1288,6 +1288,8 @@ import { initiateDoctorCall } from '../doctorCallRequest.js';
 import { socketService } from '../../../services/socketService.js';
 import VideoCallModal from '../../UserDashboard/Tab/CallModal/VideoCallModal.jsx';
 import { getDoctorUser } from '../doctorApi.js';
+import ConsultationCompletionModal from '../ConsultationCompletionModal.jsx';
+import { createConsultationForm, remoteConsultationPayload } from '../consultationPrescription.js';
 
 const getInitials = (name) =>
   String(name || "NA")
@@ -1649,7 +1651,8 @@ function PatientList({ consultationOnly = false }) {
   const [postCallAppointment, setPostCallAppointment] = useState(null);
   const [showPostCallForm, setShowPostCallForm] = useState(false);
   const [savingConsultation, setSavingConsultation] = useState(false);
-  const [remoteConsultationForm, setRemoteConsultationForm] = useState({ diagnosis: "", medicine: "", advice: "", recommendedTests: [] });
+  const [remoteConsultationForm, setRemoteConsultationForm] = useState(createConsultationForm);
+  const [remoteSaveError, setRemoteSaveError] = useState('');
   const [callSeconds, setCallSeconds] = useState(0);
   const messageAreaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -1767,7 +1770,8 @@ function PatientList({ consultationOnly = false }) {
       });
     if (!appointment) return;
     setPostCallAppointment(appointment);
-    setRemoteConsultationForm({ diagnosis: "", medicine: "", advice: "", recommendedTests: [] });
+    setRemoteConsultationForm(createConsultationForm());
+    setRemoteSaveError('');
     setShowPostCallForm(true);
   };
 
@@ -1951,24 +1955,8 @@ function PatientList({ consultationOnly = false }) {
   }, [rtc.localStream, activeCall?.status, activeCall?.direction, activeCall?.id, activeCall?.type]);
 
   useCallSocket({
-    onRinging: (call) => {
-      const currentUserId = getCurrentUserId();
-      const callerId = getFirstValue(call?.caller_id, call?.callerId, call?.sender_id, call?.user_id);
-      const receiverId = getFirstValue(call?.receiver_id, call?.receiverId, call?.callee_id, call?.calleeId);
-      if (receiverId && String(receiverId) !== String(currentUserId)) return;
-      if (!receiverId && callerId && String(callerId) === String(currentUserId)) return;
-      if (callerId) setSelectedPatientId(callerId);
-      setCallSeconds(0);
-      setActiveCall({ 
-        ...call, 
-        id: getFirstValue(call?.id, call?._id, call?.call_id, call?.callId), 
-        type: normalizeCallType(getFirstValue(call?.call_type, call?.callType, call?.type)), 
-        status: "ringing", 
-        direction: "incoming", 
-        isMuted: false, 
-        isVideoOff: false 
-      });
-    },
+    // DoctorLayout owns incoming calls on every page through the shared
+    // Stream call screen. This page only manages calls it initiated.
     onAccepted: (call) => {
       const current = activeCallRef.current;
       if (!current) return;
@@ -1990,21 +1978,24 @@ function PatientList({ consultationOnly = false }) {
         isVideoOff: false,
       } : latest);
     },
-    onRejected: () => { 
+    onRejected: (call) => {
+      if (!activeCallRef.current || String(call.callId || call.id) !== String(activeCallRef.current.id)) return;
       connectedAtRef.current = null; 
       offerStartedCallIdRef.current = null; 
       setCallSeconds(0); 
       stopLocalMedia(); 
       setActiveCall(null); 
     },
-    onCancelled: () => { 
+    onCancelled: (call) => {
+      if (!activeCallRef.current || String(call.callId || call.id) !== String(activeCallRef.current.id)) return;
       connectedAtRef.current = null; 
       offerStartedCallIdRef.current = null; 
       setCallSeconds(0); 
       stopLocalMedia(); 
       setActiveCall(null); 
     },
-    onEnded: () => { 
+    onEnded: (call) => {
+      if (!activeCallRef.current || String(call.callId || call.id) !== String(activeCallRef.current.id)) return;
       openPostCallConsultation(); 
       connectedAtRef.current = null; 
       offerStartedCallIdRef.current = null; 
@@ -2012,7 +2003,8 @@ function PatientList({ consultationOnly = false }) {
       stopLocalMedia(); 
       setActiveCall(null); 
     },
-    onMissed: () => { 
+    onMissed: (call) => {
+      if (!activeCallRef.current || String(call.callId || call.id) !== String(activeCallRef.current.id)) return;
       connectedAtRef.current = null; 
       offerStartedCallIdRef.current = null; 
       setCallSeconds(0); 
@@ -2529,34 +2521,18 @@ function PatientList({ consultationOnly = false }) {
     }
   };
 
-  const addRemoteTest = () => setRemoteConsultationForm((form) => ({ ...form, recommendedTests: [...form.recommendedTests, { testName: "", completeBy: "", reason: "", instructions: "" }] }));
-  const updateRemoteTest = (index, field, value) => setRemoteConsultationForm((form) => ({ ...form, recommendedTests: form.recommendedTests.map((test, idx) => idx === index ? { ...test, [field]: value } : test) }));
-  const removeRemoteTest = (index) => setRemoteConsultationForm((form) => ({ ...form, recommendedTests: form.recommendedTests.filter((_, idx) => idx !== index) }));
-
-  const saveRemoteConsultation = async () => {
-    if (!postCallAppointment || !remoteConsultationForm.diagnosis.trim() || !remoteConsultationForm.medicine.trim() || !remoteConsultationForm.advice.trim()) return;
-    const tests = remoteConsultationForm.recommendedTests.filter((test) => test.testName.trim());
-    const primaryTest = tests[0] || {};
-    const appointmentId = postCallAppointment.id || postCallAppointment._id;
+  const saveRemoteConsultation = async (form) => {
+    if (!postCallAppointment || savingConsultation) return;
+    const appointmentId = postCallAppointment.apiId || postCallAppointment._id || postCallAppointment.id;
     setSavingConsultation(true);
+    setRemoteSaveError('');
     try {
-      await axios.patch(`${API_BASE_URL}/appointments/${appointmentId}`, {
-        appointment_status: "completed",
-        diagnosis: remoteConsultationForm.diagnosis.trim(),
-        medicine: remoteConsultationForm.medicine.trim(),
-        advice: remoteConsultationForm.advice.trim(),
-        testName: primaryTest.testName || null,
-        completeBy: primaryTest.completeBy || null,
-        reason: primaryTest.reason || "",
-        instructions: primaryTest.instructions || "",
-        recommended_tests: tests,
-        recommendedTests: tests,
-      }, { headers: getAuthHeaders() });
+      await axios.patch(`${API_BASE_URL}/appointments/${appointmentId}`, remoteConsultationPayload(form), { headers: getAuthHeaders() });
       setDoctorAppointments((items) => items.map((item) => String(item.id || item._id) === String(appointmentId) ? { ...item, appointment_status: "completed" } : item));
       setShowPostCallForm(false);
       setPostCallAppointment(null);
     } catch (err) {
-      setError(err.response?.data?.message || err.message || "Failed to complete consultation");
+      setRemoteSaveError(err.response?.data?.message || err.message || "Failed to complete consultation");
     } finally {
       setSavingConsultation(false);
     }
@@ -2940,29 +2916,19 @@ function PatientList({ consultationOnly = false }) {
         </div>
       )}
 
-      {showPostCallForm && postCallAppointment && (
-        <div className="sms-consult-overlay" role="dialog" aria-modal="true">
-          <div className="sms-consult-modal">
-            <div className="sms-consult-head"><div><span><PortalText text={"Remote Consultation"} /></span><h2><PortalText text={"Check & Complete Appointment"} /></h2><p><PortalText text={"Add the prescription and recommended tests for "} />{selectedPatient?.name || <PortalText text={"this patient"} />}.</p></div><button type="button" onClick={() => setShowPostCallForm(false)}><i className="fa-solid fa-xmark"></i></button></div>
-            <div className="sms-consult-body">
-              <label><PortalText text={"Diagnosis "} /><b>*</b><PortalElement as="textarea" rows="2" value={remoteConsultationForm.diagnosis} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, diagnosis: event.target.value }))} placeholder="Clinical diagnosis and findings" /></label>
-              <label><PortalText text={"Medicine / Prescription "} /><b>*</b><PortalElement as="textarea" rows="4" value={remoteConsultationForm.medicine} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, medicine: event.target.value }))} placeholder="Medicine name, dosage, timing and duration" /></label>
-              <label><PortalText text={"Doctor's Advice "} /><b>*</b><PortalElement as="textarea" rows="2" value={remoteConsultationForm.advice} onChange={(event) => setRemoteConsultationForm((form) => ({ ...form, advice: event.target.value }))} placeholder="Diet, care and follow-up advice" /></label>
-              <div className="sms-consult-tests-head"><strong><PortalText text={"Recommended Tests / Investigations"} /></strong><button type="button" onClick={addRemoteTest}><i className="fa-solid fa-plus"></i><PortalText text={" Add Test"} /></button></div>
-              {remoteConsultationForm.recommendedTests.map((test, index) => (
-                <div className="sms-consult-test" key={`remote-test-${index}`}>
-                  <PortalElement as="input" value={test.testName} onChange={(event) => updateRemoteTest(index, "testName", event.target.value)} placeholder="Test name (e.g. CBC)" />
-                  <input type="date" value={test.completeBy} onChange={(event) => updateRemoteTest(index, "completeBy", event.target.value)} />
-                  <PortalElement as="input" value={test.reason} onChange={(event) => updateRemoteTest(index, "reason", event.target.value)} placeholder="Reason" />
-                  <PortalElement as="input" value={test.instructions} onChange={(event) => updateRemoteTest(index, "instructions", event.target.value)} placeholder="Instructions (e.g. fasting)" />
-                  <PortalElement as="button" type="button" onClick={() => removeRemoteTest(index)} aria-label="Remove test"><i className="fa-solid fa-trash"></i></PortalElement>
-                </div>
-              ))}
-            </div>
-            <div className="sms-consult-actions"><button type="button" className="secondary" onClick={() => setShowPostCallForm(false)}><PortalText text={"Save Later"} /></button><button type="button" className="primary" disabled={savingConsultation || !remoteConsultationForm.diagnosis.trim() || !remoteConsultationForm.medicine.trim() || !remoteConsultationForm.advice.trim()} onClick={saveRemoteConsultation}>{savingConsultation ? <PortalText text={"Saving..."} /> : <PortalText text={"Save & Complete"} />}</button></div>
-          </div>
-        </div>
-      )}
+      {postCallAppointment && <ConsultationCompletionModal
+        show={showPostCallForm}
+        onHide={() => { if (!savingConsultation) setShowPostCallForm(false); }}
+        form={remoteConsultationForm}
+        setForm={setRemoteConsultationForm}
+        onSave={saveRemoteConsultation}
+        patientName={selectedPatient?.name || 'Patient'}
+        appointment={postCallAppointment}
+        title="Check & Complete Appointment"
+        saveLabel="Save & Complete"
+        saving={savingConsultation}
+        saveError={remoteSaveError}
+      />}
     </div>
   );
 }

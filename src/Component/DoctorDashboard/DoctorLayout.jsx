@@ -16,6 +16,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import "./DoctorLayout.css";
 import "./doctorCards.css";
+import DoctorIncomingCalls from "./DoctorIncomingCalls";
 
 export default function DoctorLayout() {
   const { lang, setLang, t } = useDoctorTranslation();
@@ -134,6 +135,7 @@ export default function DoctorLayout() {
           </div>
         </div>
       </dialog>
+      <DoctorIncomingCalls doctorId={doctorId} user={user} />
       <div className="doctor-layout-body">
         <header className="doctor-topbar">
           <PortalElement as="button" className="doctor-menu-toggle" aria-label="Toggle doctor navigation" aria-controls="doctor-sidebar" aria-expanded={open} onClick={() => setOpen(!open)}><i className="fa-solid fa-bars" aria-hidden="true" /></PortalElement>

@@ -27,3 +27,11 @@ test('a first-time appointment patient is callable without any existing chat or 
   assert.equal(patient.lastMessage, '');
   assert.equal(appointmentCallPatient({}), null);
 });
+
+test('voice appointment aliases always open the audio consultation screen', () => {
+  for (const mode of ['Voice Call', 'audio', 'Audio Call', 'phone', 'Phone Call', 'call', { value: 'voice' }, { label: 'Voice Call' }]) {
+    const route = appointmentCallNavigation({ consultation_mode: mode, patient_id: 'patient' });
+    assert.equal(route.pathname, '/doctor-consultation');
+    assert.equal(route.state.autoStartCallType, 'voice');
+  }
+});
