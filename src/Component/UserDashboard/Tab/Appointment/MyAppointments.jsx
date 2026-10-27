@@ -1,5 +1,6 @@
 import ProviderRating from './ProviderRating.jsx';
 import { payForAppointment, isOnlinePayment } from '../../../../utils/providerPayments.js';
+import { readDemoPayment, demoCardPaymentsEnabled, isDemoPaymentMethod, appointmentPaymentId } from '../../../../utils/demoCardPayment.js';
 import { readAppointmentList } from './appointmentListCache.js';
 import { loadAppointmentList } from './appointmentListLoader.js';
 import useSocketRefresh from "../../../../hooks/useSocketRefresh";
@@ -43,6 +44,12 @@ const MyAppointments = () => {
   const navigate = useNavigate();
   const sessionCacheKey = localStorage.getItem("token") || localStorage.getItem("accessToken");
   const [appointments, setAppointments] = useState(() => readAppointmentList(sessionCacheKey) || []);
+  useEffect(() => {
+    const refreshPayment = () => { setAppointments(rows => [...rows]); setPaymentNotice(null); };
+    window.addEventListener('demo-payment-completed', refreshPayment);
+    window.addEventListener('storage', refreshPayment);
+    return () => { window.removeEventListener('demo-payment-completed', refreshPayment); window.removeEventListener('storage', refreshPayment); };
+  }, []);
   const [selectedProviderKey, setSelectedProviderKey] = useState(null);
   const [counselors, setCounselors] = useState([]);
   const [loading, setLoading] = useState(() => !readAppointmentList(sessionCacheKey));
@@ -737,6 +744,10 @@ const MyAppointments = () => {
                   </div>
                   <div className="user-appointment-date-grid">
                     {group.items.map((apt) => {
+                const paymentId = appointmentPaymentId(apt);
+                const demoReceipt = readDemoPayment(apt);
+                const paymentComplete = apt.payment_status === 'paid';
+                const demoCard = demoCardPaymentsEnabled() && isDemoPaymentMethod(apt.payment_method);
                 const appointmentSchedule = formatAppointmentDateTime(apt.date);
                 if (isUnscheduledEmergency(apt)) appointmentSchedule.time = 'Clinic will confirm';
                 const appointmentToken = getAppointmentToken(apt);
@@ -802,17 +813,18 @@ const MyAppointments = () => {
                   </div>}
 
                     <div className="user-appointment-actions">
-                      {isOnlinePayment(apt.payment_method) && apt.payment_status !== 'paid' && ['pending', 'confirmed', 'accepted', 'booked'].includes(apt.status) && <button type="button" className="user-appointment-action" disabled={Boolean(actionLoading)} onClick={async () => {
-                        setActionLoading(`pay-${apt._id}`); setPaymentNotice(null);
+                      {isOnlinePayment(apt.payment_method) && !paymentComplete && ['pending', 'confirmed', 'accepted', 'booked'].includes(apt.status) && <button type="button" className="user-appointment-action user-appointment-pay" disabled={Boolean(actionLoading)} onClick={async () => {
+                        setActionLoading(`pay-${paymentId}`); setPaymentNotice(null);
                         try {
-                          await payForAppointment(apt._id, apt.payment_method);
-                          setPaymentNotice({ id: apt._id, message: 'Payment verified successfully.' });
+                          const payment = await payForAppointment(paymentId, apt.payment_method);
+                          setPaymentNotice({ id: paymentId, message: payment.demo ? 'Demo payment completed successfully. No money was charged.' : 'Payment verified successfully.' });
                           await fetchAppointments();
-                        } catch (error) { setPaymentNotice({ id: apt._id, message: error.response?.data?.message || error.message || 'Payment could not be completed.' }); }
+                        } catch (error) { if (error.code !== 'PAYMENT_CANCELLED') setPaymentNotice({ id: paymentId, message: readDemoPayment(apt) ? 'Demo payment completed successfully.' : error.response?.data?.message || error.message || 'Payment could not be completed.' }); }
                         finally { setActionLoading(null); }
-                      }}><PortalText text={actionLoading === `pay-${apt._id}` ? 'Processing payment...' : 'Pay Now'} /></button>}
+                      }}><i className="fa-solid fa-credit-card" aria-hidden="true" /><PortalText text={actionLoading === `pay-${paymentId}` ? 'Processing payment...' : demoCard ? 'Complete demo payment' : 'Pay Now'} /></button>}
                       {apt.payment_status === 'paid' && <span><PortalText text="Payment received" /></span>}
-                      {paymentNotice?.id === apt._id && <p role="status">{paymentNotice.message}</p>}
+                      {apt.payment_status !== 'paid' && demoReceipt && <span className="user-appointment-demo-paid"><i className="fa-solid fa-circle-check" aria-hidden="true" /><PortalText text="Demo payment completed" /></span>}
+                      {paymentNotice?.id === paymentId && <p role="status">{paymentNotice.message}</p>}
                       {getProfessionalRole(apt).isDoctor && ['pending', 'confirmed', 'accepted', 'booked', 'in-progress'].includes(apt.status)
                         && !['completed', 'canceled', 'cancelled', 'no_show', 'skipped'].includes(apt.queue_status) && (
                         <button type="button" className={`user-appointment-action user-appointment-emergency ${apt.priority === 'emergency' ? 'is-sent' : ''}`}

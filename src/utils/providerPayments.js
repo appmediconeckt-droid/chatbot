@@ -1,19 +1,37 @@
 import { useEffect, useState } from 'react';
 import api from '../axiosConfig.js';
 import { paymentCheckoutDisplay } from './paymentCheckoutConfig.js';
+import { subscribeSocketRefresh } from '../hooks/useSocketRefresh.js';
+import { demoCardPaymentsEnabled, isDemoPaymentMethod, withDemoCardOptions, saveDemoPayment } from './demoCardPayment.js';
 
-const labels = { credit_card: ['Credit Card', 'fa-credit-card'], debit_card: ['Debit Card', 'fa-credit-card'], upi: ['UPI', 'fa-mobile-screen-button'], cash: ['Cash', 'fa-money-bill-wave'], insurance: ['Insurance', 'fa-shield-heart'] };
-export const isOnlinePayment = (method) => ['credit_card', 'debit_card', 'upi'].includes(method);
+const labels = { wallet: ['Wallet', 'fa-wallet'], credit_card: ['Credit Card', 'fa-credit-card'], debit_card: ['Debit Card', 'fa-credit-card'], upi: ['UPI', 'fa-mobile-screen-button'], cash: ['Cash', 'fa-money-bill-wave'], insurance: ['Insurance', 'fa-shield-heart'] };
+export const isOnlinePayment = (method) => ['credit_card', 'debit_card', 'upi', 'wallet'].includes(method);
 export function useProviderPaymentOptions(providerId) {
   const [state, setState] = useState({ methods: [], loading: true, error: '', consultationFee: 0, currency: 'INR' });
   useEffect(() => {
     let active = true;
     setState({ methods: [], loading: Boolean(providerId), error: '', consultationFee: 0, currency: 'INR' });
     if (!providerId) return;
-    api.get(`/api/payments/providers/${providerId}/methods`).then(({ data }) => {
-      if (active) setState({ ...data, loading: false, error: '', methods: (data.methods || []).filter((method) => labels[method]).map((method) => ({ method, id: method, label: labels[method][0], icon: labels[method][1] })) });
-    }).catch(() => { if (active) setState({ methods: [], loading: false, error: 'Payment options could not be loaded. Please reopen this booking to try again.' }); });
-    return () => { active = false; };
+    let request = 0;
+    const refresh = async () => {
+      const current = ++request;
+      try {
+        const response = await api.get(`/api/payments/providers/${providerId}/methods`, { timeout: 15000 });
+        const data = withDemoCardOptions(response.data);
+        const choices = methods => methods.filter(method => labels[method]).map(method => ({ method, id: method, label: labels[method][0], icon: labels[method][1], unavailableReason: data.unavailableMethods?.[method] || '' }));
+        if (active && current === request) setState({ ...data, loading: false, error: '', methods: choices(data.methods || []), displayMethods: choices(data.configuredMethods || data.methods || []) });
+      } catch {
+        if (active && current === request) setState({ methods: [], loading: false, error: 'Payment options could not be loaded. Please reopen this booking to try again.' });
+      }
+    };
+    void refresh();
+    const unsubscribe = subscribeSocketRefresh(refresh, ['provider-payment-settings-updated'], {
+      initial: false,
+      filterEvent: (_event, payload) => String(payload?.providerId || '') === String(providerId),
+    });
+    window.addEventListener('focus', refresh);
+    window.addEventListener('provider-payment-settings-updated', refresh);
+    return () => { active = false; unsubscribe(); window.removeEventListener('focus', refresh); window.removeEventListener('provider-payment-settings-updated', refresh); };
   }, [providerId]);
   return state;
 }
@@ -36,6 +54,20 @@ export function loadPaymentCheckout() {
 }
 
 export async function payForAppointment(appointmentId, method) {
+  if (method === 'wallet') {
+    const { data } = await api.post(`/api/payments/appointments/${appointmentId}/internal`, { method: 'wallet' });
+    return data;
+  }
+  if (demoCardPaymentsEnabled() && isDemoPaymentMethod(method)) {
+    const { showDemoCardCheckout } = await import('../Component/common/DemoCardCheckout.jsx');
+    const result = await showDemoCardCheckout(method);
+    if (result?.demo && result.success) {
+      const { data } = await api.post(`/api/payments/appointments/${appointmentId}/internal`, { mode: 'demo', method });
+      saveDemoPayment(appointmentId, method);
+      return { ...data, demoCompleted: true };
+    }
+    return { ...result, demoCompleted: true };
+  }
   await loadPaymentCheckout();
   const { data: order } = await api.post(`/api/payments/appointments/${appointmentId}/order`, { method });
   if (order.paid) return order;
@@ -65,3 +97,4 @@ export async function payForAppointment(appointmentId, method) {
     checkout.open();
   });
 }
+

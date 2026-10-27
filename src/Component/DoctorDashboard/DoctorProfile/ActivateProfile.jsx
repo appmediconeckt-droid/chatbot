@@ -1,4 +1,3 @@
-import { feeCurrency, consultationCurrencies, currencyDigits, validFee, formatFee } from '../../../utils/consultationCurrency.js';
 import { PortalText, PortalElement } from "../../common/PortalTranslation";
 import { formatPhoneWithCountryCode } from '../../../utils/phoneDisplay.js';
 import { getProfileCompletion, getLocalPhoneMaxLength, limitPhoneDigits, normalizePhoneNumber } from "../../../utils/profileCompletion";
@@ -59,8 +58,6 @@ export default function DoctorProfileFlow() {
     // PROFESSIONAL DETAILS
     qualification: "",
     experience: "",
-    consultationFee: "",
-    consultationCurrency: "",
     languages: "",
     about: "",
     expertise: "",
@@ -128,8 +125,6 @@ export default function DoctorProfileFlow() {
       consultationMode: Array.isArray(source.consultationMode) ? source.consultationMode.join(', ') : source.consultationMode || '',
       photo: getImageUrl(source.profilePhoto?.url || (typeof source.profilePhoto === "string" ? source.profilePhoto : "") || value("profileImage", "profilePic", "profile_pic", "profile_image", "profile_photo")),
       qualification: value("qualification", "medical_degree", "degree"),
-      consultationFee: source.consultationFee ?? "",
-      consultationCurrency: feeCurrency(source) || "",
       experience: source.experience ?? value("experience", "years_of_experience", "experience_years"),
       languages: Array.isArray(languages) ? languages.join(", ") : languages,
       about: value("aboutMe", "about_doctor", "about", "professional_summary", "bio"),
@@ -328,9 +323,6 @@ export default function DoctorProfileFlow() {
     if (!normalizePhoneNumber(profile.mobile, profile.phoneCountryCode, true).isValid) {
       setProfileError('Enter a valid phone number for your country code.'); return;
     }
-    if (profile.consultationFee !== "" && profile.consultationFee != null && (!validFee(profile.consultationFee, profile.consultationCurrency))) {
-      setProfileError("Select a currency and enter a valid checkup fee."); return;
-    }
     if (profile.experience !== "" && profile.experience != null && (!Number.isInteger(Number(profile.experience)) || Number(profile.experience) < 0 || Number(profile.experience) > 100)) {
       setProfileError("Enter experience as a whole number between 0 and 100 years."); return;
     }
@@ -387,7 +379,6 @@ export default function DoctorProfileFlow() {
     dateOfBirth: data.dob, gender: String(data.gender || '').toLowerCase(),
     address: { ...data.address, line1: data.currentAddress },
     qualification: data.qualification, experience: data.experience,
-    ...(data.consultationFee !== "" && data.consultationFee != null ? { consultationFee: data.consultationFee, consultationCurrency: data.consultationCurrency } : {}),
     languages: String(data.languages || '').split(',').map((item) => item.trim()).filter(Boolean),
     specialization: String(data.expertise || '').split(',').map((item) => item.trim()).filter(Boolean),
     consultationMode: String(data.consultationMode || '').split(',').map((item) => item.trim()).filter(Boolean),
@@ -433,7 +424,6 @@ export default function DoctorProfileFlow() {
         fields: [
           { label: "Qualification", key: "qualification" },
           { label: "Experience", key: "experience" },
-          { label: "Checkup Fee", key: "consultationFee" },
           { label: "Languages", key: "languages" },
           { label: "About", key: "about" },
           { label: "Expertise", key: "expertise" },
@@ -493,7 +483,7 @@ export default function DoctorProfileFlow() {
                   <div key={field.key} className={`profile-field ${['currentAddress', 'about', 'expertise'].includes(field.key) ? 'doctor-overview-field-wide' : ''}`}>
                     <span className="field-label"><PortalText text={field.label} /></span>
                     <span className="field-value">
-                      {field.key === 'expertise' && profile.expertise ? <span className="doctor-overview-specialties">{String(profile.expertise).split(',').map(item => item.trim()).filter(Boolean).map((item, index) => <span className="doctor-overview-specialty" key={`${item}-${index}`}>{item}</span>)}</span> : field.key === 'experience' && profile.experience !== '' && profile.experience != null ? <>{profile.experience} <PortalText text="Years" /></> : (field.key === "consultationFee" ? (profile.consultationFee !== "" && profile.consultationFee != null ? formatFee(profile.consultationFee, profile.consultationCurrency) : "Not set") : field.key === "currentAddress" ? formatAddress({ ...profile.address, line1: profile.currentAddress }) : field.key === "mobile" ? formatPhoneWithCountryCode(profile.mobile, profile.phoneCountryCode) : profile[field.key]) || <PortalText text={"Not set"} />}
+                      {field.key === 'expertise' && profile.expertise ? <span className="doctor-overview-specialties">{String(profile.expertise).split(',').map(item => item.trim()).filter(Boolean).map((item, index) => <span className="doctor-overview-specialty" key={`${item}-${index}`}>{item}</span>)}</span> : field.key === 'experience' && profile.experience !== '' && profile.experience != null ? <>{profile.experience} <PortalText text="Years" /></> : (field.key === "currentAddress" ? formatAddress({ ...profile.address, line1: profile.currentAddress }) : field.key === "mobile" ? formatPhoneWithCountryCode(profile.mobile, profile.phoneCountryCode) : profile[field.key]) || <PortalText text={"Not set"} />}
                     </span>
                   </div>
                 ))}
@@ -708,18 +698,7 @@ export default function DoctorProfileFlow() {
                 placeholder="15"
               />
             </div>
-            <div className="col-md-6 mb-3">
-              <label className="form-label" htmlFor="doctor-checkup-currency"><PortalText text="Fee Currency" /></label>
-              <select id="doctor-checkup-currency" className="form-input form-control" value={profile.consultationCurrency || ""} onChange={e => setProfile({ ...profile, consultationCurrency: e.target.value })}>
-                <PortalElement as="option" value="">Select currency</PortalElement>
-                {consultationCurrencies.map(currency => <option key={currency} value={currency}>{currency}</option>)}
-              </select>
-            </div>
-            <div className="col-md-6 mb-3">
-              <label className="form-label" htmlFor="doctor-checkup-fee"><PortalText text={`Checkup Fee (${profile.consultationCurrency || "select currency"})`} /></label>
-              <input id="doctor-checkup-fee" className="form-input form-control" type="number" min="0" max="9999999.99" step={profile.consultationCurrency ? 10 ** -currencyDigits(profile.consultationCurrency) : "any"} value={profile.consultationFee ?? ""} onChange={e => setProfile({ ...profile, consultationFee: e.target.value })} placeholder="Enter your fee per checkup" />
-              <small>Common fee for clinics. To set a different fee, open Clinics / Hospitals, select the clinic and choose Edit Clinic.</small>
-            </div>
+
           </div>
 
           <div className="row mt-3">

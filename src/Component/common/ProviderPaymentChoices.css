@@ -1,0 +1,31 @@
+.abm-pay-method .provider-payment-unavailable {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: normal;
+}
+.abm-pay-method:disabled:has(.provider-payment-unavailable) {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+.provider-payment-choices { --payment-accent: var(--user-apt-dark, #006b2c); --payment-soft: #edfdf3; }
+.provider-payment-groups { display: grid; gap: 16px; }
+.provider-payment-group { padding: 16px; border: 1px solid #e2e5e9; border-radius: 18px; background: #fff; box-shadow: 0 1px 4px #17233d0d; }
+.provider-payment-group.is-selected { border-color: var(--payment-accent); box-shadow: 0 0 0 1px var(--payment-soft); }
+.provider-payment-choices .is-selected .abm-pay-method-ic { background: var(--payment-soft); color: var(--payment-accent); }
+.provider-payment-choices .is-selected .abm-pay-method-radio { background: var(--payment-accent); border-color: var(--payment-accent); }
+.provider-payment-choices button:focus-visible { outline: 3px solid var(--payment-accent); outline-offset: 3px; }
+.provider-payment-choices .provider-payment-group > .abm-pay-method { width: 100%; padding: 0; border: 0; background: transparent; box-shadow: none; text-align: left; }
+.provider-payment-group .payment-card-brands { padding-left: 50px; }
+.provider-payment-expanded { margin-top: 16px; padding-top: 16px; border-top: 1px solid #edf0f2; }
+.provider-payment-expanded h4 { margin: 0 0 6px; font-size: 16px; }
+.provider-payment-expanded p { color: #64748b; font-size: 13px; line-height: 1.6; margin: 8px 0; }
+.provider-card-types { display: flex; flex-wrap: wrap; gap: 10px; }
+.provider-card-types button { padding: 8px 12px; border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; color: #334155; font-size: 13px; }
+.provider-card-types button[aria-pressed="true"] { background: var(--payment-soft); border-color: var(--payment-accent); color: var(--payment-accent); }
+.provider-upi-supported { display: grid; gap: 0; border: 1px solid #e2e5e9; border-radius: 12px; overflow: hidden; margin-top: 12px; }
+.provider-upi-supported > span { display: flex; gap: 12px; align-items: center; padding: 12px; border-bottom: 1px solid #edf0f2; font-size: 14px; }
+.provider-upi-supported > span:last-child { border-bottom: 0; }
+.provider-demo-payment-notice { padding: 12px; border: 1px solid #fcd34d; border-radius: 8px; background: #fffbeb; color: #854d0e; font-size: 13px; line-height: 1.6; }

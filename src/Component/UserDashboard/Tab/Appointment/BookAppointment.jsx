@@ -2252,12 +2252,13 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       const booked = res.data?.data || res.data;
       const bookedId = String(booked._id || booked.id || '');
       setConsultantBookingId(bookedId);
-      if (isOnlinePayment(consultantPaymentMethod)) await payForAppointment(bookedId, consultantPaymentMethod);
-      alert(t('appointment_booked_success'));
+      const paymentResult = isOnlinePayment(consultantPaymentMethod) ? await payForAppointment(bookedId, consultantPaymentMethod) : null;
+      alert(paymentResult?.demo ? 'Appointment booked. Demo payment completed; no money was charged.' : t('appointment_booked_success'));
       setShowBookingModal(false);
       setBookingDate("");
       setBookingNotes("");
     } catch (error) {
+      if (error.code === 'PAYMENT_CANCELLED') return;
       console.error("❌ Error booking appointment:", error);
         alert(error?.response?.data?.message || error.message || t('appointment_booking_failed'));
     } finally {
@@ -2778,7 +2779,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   className="booking-confirm-btn-unique"
                   disabled={isLoading || consultantPaymentOptions.loading || !consultantPaymentMethod || Boolean(consultantPaymentOptions.error)}
                 >
-                  {isLoading ? <PortalText text={"Processing..."} /> : <PortalText text={consultantBookingId ? 'Retry Payment' : isOnlinePayment(consultantPaymentMethod) ? 'Pay & Book' : 'Confirm'} />}
+                  {isLoading ? <PortalText text={"Processing..."} /> : <PortalText text={consultantBookingId ? 'Retry Payment' : ['credit_card', 'debit_card'].includes(consultantPaymentMethod) ? 'Enter card details & pay' : isOnlinePayment(consultantPaymentMethod) ? 'Pay & Book' : 'Confirm'} />}
                 </button>
               </div>
             </form>

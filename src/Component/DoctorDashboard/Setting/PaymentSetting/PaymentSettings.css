@@ -115,3 +115,19 @@
 .provider-payment-settings .pps-retry { display: block; margin-top: 10px; padding: 7px 12px; border: 1px solid currentColor; border-radius: 7px; background: transparent; color: inherit; cursor: pointer; font-weight: 650; }
 
 @media (prefers-color-scheme: dark) { .provider-payment-settings.pps-theme--consultant { --pps-surface: #2d3748; --pps-soft: #362950; } }
+.provider-payment-settings .pps-section-heading h3, .provider-payment-settings .pps-details-heading h3 { margin: 0 0 6px; font-size: 19px; color: var(--pps-text); }
+.provider-payment-settings .pps-section-heading p, .provider-payment-settings .pps-details-heading p { margin: 0; color: var(--pps-muted); font-size: 14px; line-height: 1.6; }
+.provider-payment-settings .pps-details-heading { display: flex; align-items: flex-start; gap: 12px; }
+.provider-payment-settings .pps-details-heading > svg { flex-shrink: 0; color: var(--pps-primary); }
+.provider-payment-settings .pps-bank-fields { margin-top: 20px; }
+.provider-payment-settings .pps-form-grid select { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #d9dfe8; border-radius: 9px; background: var(--pps-surface); color: var(--pps-text); font: inherit; }
+.provider-payment-settings .pps-method-card.pps-payment-option { padding: 16px 18px; border-radius: 15px; }
+.provider-payment-settings .pps-payment-option .pps-method-heading { grid-template-columns: 44px minmax(0, 1fr) 48px; gap: 12px; }
+.provider-payment-settings .pps-payment-option .pps-method-icon { width: 44px; height: 44px; border-radius: 12px; }
+.provider-payment-settings .pps-payment-option .pps-method-icon svg { width: 23px; height: 23px; }
+.provider-payment-settings .pps-payment-option .pps-method-copy h3 { font-size: 17px; margin-bottom: 3px; }
+.provider-payment-settings .pps-payment-option .pps-method-copy p { font-size: 13px; }
+.provider-payment-settings { --payment-accent: var(--pps-primary); --payment-soft: var(--pps-soft); }
+.provider-payment-settings .pps-payment-option .payment-card-brands { padding-left: 56px; }
+.provider-payment-settings .pps-method-card > summary { cursor: pointer; color: var(--pps-text); font-size: 17px; font-weight: 650; }
+.provider-payment-settings details[open] > summary { margin-bottom: 20px; }

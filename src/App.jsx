@@ -35,6 +35,7 @@ const DoctorProfilePage = lazy(() => import('./Component/DoctorDashboard/ClinicQ
 const ClinicWalkinPage = lazy(() => import('./Component/DoctorDashboard/ClinicQrPages.jsx').then(m => ({ default: m.ClinicWalkinPage })));
 const PublicDoctorProfile = lazy(() => import("./Component/DoctorDashboard/Setting/SettingProfileQR/PublicDoctorProfile.jsx"));
 const DoctorLayout = lazy(() => import("./Component/DoctorDashboard/DoctorLayout"));
+const DoctorWallet = lazy(() => import("./Component/DoctorDashboard/Earnings/DoctorWallet.jsx"));
 const Leanding = lazy(() => import("./authtication/Leanding"));
 const LandingPrivacyPolicy = lazy(
   () => import("./authtication/LandingPrivacyPolicy"),
@@ -239,6 +240,7 @@ function App() {
             <Route path="/doctorprofile" element={<DoctorProfileFlow />} />
             <Route path="/qrcode" element={<QRcode />} />
             <Route path="/appointmentlist" element={<AppointmentList />} />
+            <Route path="/doctor-earnings" element={<DoctorWallet />} />
             <Route path="/setting" element={<SettingsPage />} />
             <Route path="/doctor-notifications" element={<DoctorNotificationPage />} />
             <Route path="/clinicpage" element={<ClinicPage />} />

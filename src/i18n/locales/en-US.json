@@ -740,7 +740,7 @@
   "landing_chat_mic_start": "Speak your message",
   "landing_chat_mic_stop": "Stop listening",
   "landing_chat_voice_unsupported": "Voice input is not supported in this browser. Please use Chrome or Edge.",
-  "landing_chat_expired_title": "Your 5-minute free chat has ended.",
+  "landing_chat_expired_title": "Your free chat has ended.",
   "landing_chat_expired_text": "Sign up to continue talking with the AI assistant.",
   "landing_chat_expired_cta": "Sign up to continue",
   "landing_chat_fallback_greeting": "Hello! How can I help you today?",

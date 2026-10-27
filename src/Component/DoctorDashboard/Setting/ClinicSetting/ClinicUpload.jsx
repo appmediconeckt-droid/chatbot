@@ -71,7 +71,7 @@ export default function ClinicSettings() {
   };
 
   const handleSave = async () => {
-    if (status === 'loading' || status === 'succeeded') return;
+    if (['loading', 'succeeded', 'partial'].includes(status)) return;
     const token = getAuthToken();
 
     if (!clinicName || !phone || !address || !doctorId) {
@@ -88,7 +88,7 @@ export default function ClinicSettings() {
       return;
     }
 
-    if (fee !== '' && !validFee(fee, feeCurrency(user || {}))) {
+    if (fee === '' || fee == null || !validFee(fee, feeCurrency(user || {}) || 'INR')) {
       setMessage('Enter a valid clinic fee in your profile currency.'); setStatus('failed'); return;
     }
     const formData = new FormData();
@@ -110,8 +110,12 @@ export default function ClinicSettings() {
         },
       });
 
-      setStatus('succeeded');
-      setMessage('Clinic created successfully. Its walk-in QR is ready.');
+      const savedFee = response.data?.clinic?.fee;
+      const feeSaved = savedFee != null && Number(savedFee) === Number(fee);
+      setStatus(feeSaved ? 'succeeded' : 'partial');
+      setMessage(feeSaved
+        ? 'Clinic created successfully. Its walk-in QR is ready.'
+        : 'Clinic was created, but its fee was not saved. Open Edit Clinic to retry saving the fee, or contact support.');
       setSavedQr({ ...response.data, name: clinicName });
     } catch (error) {
       setStatus('failed');
@@ -260,7 +264,7 @@ export default function ClinicSettings() {
 
           {/* Message */}
           {message && (
-            <div className={`alert-message alert-${status}`}>
+            <div className={`alert-message alert-${status === 'partial' ? 'failed' : status}`} role="status">
               {status === 'loading' && <span className="alert-icon">⏳</span>}
               {status === 'succeeded' && <span className="alert-icon">✅</span>}
               {status === 'failed' && <span className="alert-icon">❌</span>}
@@ -277,9 +281,9 @@ export default function ClinicSettings() {
           </section>}
           <div className="action-buttons">
             <button className="btn-cancel" disabled={status === 'loading'} onClick={handleCancel}>
-              {status === 'succeeded' ? <PortalText text={"Add another clinic"} /> : <PortalText text={"Cancel"} />}
+              {['succeeded', 'partial'].includes(status) ? <PortalText text={"Add another clinic"} /> : <PortalText text={"Cancel"} />}
             </button>
-            <button className="btn-save" disabled={status === 'loading' || status === 'succeeded'} onClick={handleSave}>
+            <button className="btn-save" disabled={['loading', 'succeeded', 'partial'].includes(status)} onClick={handleSave}>
               {status === 'loading' ? <PortalText text={"Saving..."} /> : <PortalText text={"Save Clinic"} />}
             </button>
           </div>

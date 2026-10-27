@@ -453,7 +453,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     if (requestId && isOnlinePayment(paymentMethod)) {
       setBooking(true); setBookError('');
       try { await payForAppointment(requestId, paymentMethod); setStep('success'); }
-      catch (error) { setBookError(error.response?.data?.message || error.message); }
+      catch (error) { if (error.code !== 'PAYMENT_CANCELLED') setBookError(error.response?.data?.message || error.message); }
       finally { setBooking(false); }
       return;
     }
@@ -531,7 +531,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       if (isOnlinePayment(paymentMethod)) await payForAppointment(appointmentId, paymentMethod);
       setStep('success');
     } catch (err) {
-      setBookError(err.response?.data?.message || err.message || 'Failed to book appointment. Please try again.');
+      if (err.code !== 'PAYMENT_CANCELLED') setBookError(err.response?.data?.message || err.message || 'Failed to book appointment. Please try again.');
     } finally {
       setBooking(false);
     }
@@ -601,6 +601,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
               <div className="abm-success-hero">
                 <div className="abm-success-icon"><i className="fa-solid fa-check"></i></div>
                 <h2 className="abm-success-title">{isEmergency ? <PortalText text={"Emergency Appointment Requested"} /> : <PortalText text={"Appointment Booked Successfully!"} />}</h2>
+                {!isEmergency && paymentOptions.demoCardPayments && ['credit_card', 'debit_card', 'upi'].includes(paymentMethod) && <p className="provider-demo-payment-notice" role="status">Demo payment completed. No money was charged. You do not need to pay again for this demo booking.</p>}
                 <p className="abm-success-sub">{isEmergency ? <PortalText text={"Your emergency request has been sent to the clinic for the doctor and care team to review. The clinic will confirm consultation timing."} /> : <PortalText text={"A confirmation notification with all the details has been generated for you."} />}</p>
               </div>
 

@@ -452,7 +452,7 @@ export default function ClinicPage() {
     setSaving(true); setEditMessage("");
     try {
       const body = new FormData();
-      if (editForm.fee !== '' && !validFee(editForm.fee, feeCurrency(user))) throw new Error('Enter a valid clinic fee in your profile currency.');
+      if (editForm.fee === '' || editForm.fee == null || !validFee(editForm.fee, feeCurrency(user) || 'INR')) throw new Error('Enter a valid clinic fee.');
       body.append('fee', editForm.fee);
       for (const field of ['clinic_name', 'phone_number', 'location']) {
         if (!editForm[field]?.trim()) throw new Error("Please fill all required fields.");
@@ -460,6 +460,7 @@ export default function ClinicPage() {
       }
       if (editPhoto) body.append('clinic_photo', editPhoto);
       const { data } = await axios.patch(`${CLINICS_BASE_URL}/${clinic.id}`, body, { headers: getAuthHeaders() });
+      if (!data.success || data.clinic?.fee == null || Number(data.clinic.fee) !== Number(editForm.fee)) throw new Error('Clinic fee was not saved. Refresh this page and retry. If the issue continues, contact support.');
       setClinics(rows => rows.map(row => row.id === clinic.id ? normalizeClinic({ ...row.raw, ...data.clinic }) : row));
       setEditing(false); setEditMessage("Clinic updated successfully.");
     } catch (error) {
@@ -532,7 +533,7 @@ export default function ClinicPage() {
         <div className="doctor-clinic-hero-overlay" />
         <div className="doctor-clinic-image-actions" role="group" aria-label="Clinic actions">
           <button ref={editButtonRef} type="button" className="doctor-clinic-image-action" aria-label="Edit Clinic" title="Edit Clinic" disabled={saving || isDeleting || editing} onClick={() => {
-            setEditForm({ clinic_name: clinic.name, phone_number: clinic.phone, location: clinic.raw?.location || clinic.address, fee: clinic.raw?.fee ?? '' });
+            setEditForm({ clinic_name: clinic.name, phone_number: clinic.phone, location: clinic.raw?.location || clinic.address, fee: clinic.raw?.fee ?? user.consultationFee ?? '' });
             setEditPhoto(null); setEditMessage(''); setEditing(true);
           }}><Pencil size={18} aria-hidden="true" /></button>
           <button type="button" className="doctor-clinic-image-action doctor-clinic-image-delete" aria-label={isDeleting ? 'Deleting clinic' : 'Delete Clinic'} title={isDeleting ? 'Deleting...' : 'Delete Clinic'} aria-busy={isDeleting} disabled={isDeleting || editing || saving} onClick={handleDeleteClinic}>

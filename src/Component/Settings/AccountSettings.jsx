@@ -1,3 +1,5 @@
+import { clearSessionPreservingLanguages } from '../../i18n/languagePreferences';
+import socketService from '../../services/socketService';
 import { isProfessionalRole } from "../../authtication/authSession.js";
 import React, { useEffect, useMemo, useState } from "react";
 import api, { API_BASE_URL } from "../../axiosConfig";
@@ -192,16 +194,10 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
       hasPassword: typeof hasPassword === "boolean" ? hasPassword : true,
     }));
 
-    // If password was just set/changed, redirect to role-based dashboard after 2 seconds
     if (requiresLogin) {
-      setTimeout(() => {
-        console.log('🔄 Redirecting to role-based dashboard...');
-        navigate(isCounselor ? '/counselor-dashboard' : '/user-dashboard');
-      }, 2000);
-      setNotice({
-        type: "success",
-        message: t('password_updated_redirecting'),
-      });
+      socketService.disconnect();
+      clearSessionPreservingLanguages();
+      navigate('/login', { replace: true });
     } else {
       setNotice({
         type: "success",
@@ -493,13 +489,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
             )}
           </section>
 
-          <section className="settings-location-card settings-app-lock-card">
-            <span className="settings-round-icon"><FaLock /></span>
-              <div><h3>{t("app_lock")}</h3><p>{t("app_lock_description")}</p></div>
-            <button type="button" onClick={() => setShowPasswordEditor(true)}>
-              <span>›</span>
-            </button>
-          </section>
+
         </main>
 
         <aside className="settings-screen__side">

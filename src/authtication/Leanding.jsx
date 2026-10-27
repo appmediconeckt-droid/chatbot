@@ -21,7 +21,7 @@ import { useSiteTranslation } from '../i18n/LanguageContext';
 import { LanguageSelector } from '../Component/common/LanguageSelector';
 import { translationService } from '../i18n/translationService';
 
-const GUEST_CHAT_LIMIT_MS = 5 * 60 * 1000;
+const GUEST_CHAT_LIMIT_MS = 10 * 60 * 1000;
 const browserVoiceCache = new Map();
 const TOP_LANDING_DOCTOR_LIMIT = 5;
 const DEFAULT_LANDING_STATS = {
@@ -171,7 +171,7 @@ const Leanding = () => {
   }, [lang]);
 
   // The UI cutoff is paired with API enforcement, so guests cannot extend
-  // the five-minute preview by changing client-side state.
+  // the ten-minute preview by changing client-side state.
   useEffect(() => {
     if (!chatOpen || !guestChatStartedAt || guestChatExpired) return undefined;
     const remaining = GUEST_CHAT_LIMIT_MS - (Date.now() - guestChatStartedAt);
@@ -192,7 +192,7 @@ const Leanding = () => {
       const requestLanguage = lang;
       setIsLoading(true);
       try {
-        const response = await sendMessageToAPI('hello');
+        const response = await sendMessageToAPI('', { kind: 'opening' });
         if (previousSiteLanguageRef.current !== requestLanguage) return;
         if (response?.success && response?.data) {
           if (response.data.sessionId) setAiSessionId(response.data.sessionId);
@@ -245,21 +245,22 @@ const Leanding = () => {
   }, []);
 
   // Send message to API
-  const sendMessageToAPI = async (message) => {
+  const sendMessageToAPI = async (message, options = {}) => {
     try {
       const response = await axios.post(
         `${API_BASE_URL}/api/ai-chat/send-message`,
         {
           message: message,
-          history: [], // Guest: server threads via sessionId, history is fallback
+          history: chatMessages.filter(item => typeof item.text === 'string').slice(-20).map(item => ({ role: item.sender === 'ai' ? 'assistant' : 'user', content: item.text })),
           sessionId: aiSessionId,
           language: lang,
+          ...options,
         },
         {
           headers: {
             'Content-Type': 'application/json',
           },
-          timeout: 10000 // 10 second timeout
+          timeout: 45000
         }
       );
 
@@ -274,7 +275,7 @@ const Leanding = () => {
   // Strips quickReplies off prior AI messages so old buttons can't fire twice.
   const sendChat = async (text) => {
     const trimmed = (text || '').trim();
-    if (!trimmed || guestChatExpired) return;
+    if (!trimmed || guestChatExpired || isLoading) return;
     const requestLanguage = lang;
     setIsLoading(true);
     let outgoingText = trimmed;

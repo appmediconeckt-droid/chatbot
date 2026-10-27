@@ -1906,3 +1906,6 @@
 .patient-emergency-actions button { padding: 10px 14px; border: 1px solid #ccd5df; border-radius: 8px; background: white; }
 .patient-emergency-actions button[type="submit"] { color: white; background: #b42318; border-color: #b42318; }
 .patient-emergency-actions button:disabled { opacity: .6; cursor: wait; }
+.user-appointments-page .user-appointment-pay { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 40px; padding: 10px 16px; border: 1px solid #006b2c; border-radius: 9px; color: #fff; background: #006b2c; font-size: 13px; font-weight: 650; line-height: 1.4; }
+.user-appointments-page .user-appointment-pay:hover:not(:disabled) { color: #fff; background: #005321; border-color: #005321; }
+.user-appointment-demo-paid { display: inline-flex; align-items: center; gap: 7px; padding: 9px 12px; border-radius: 8px; background: #edfdf3; color: #006b2c; font-size: 13px; font-weight: 600; }

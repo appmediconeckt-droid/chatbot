@@ -2,6 +2,7 @@ export const doctorMenuItems = [
   { path: "/doctordashboard", icon: "fa-gauge-high", text: "Dashboard" },
   { path: "/doctorcalendar", icon: "fa-calendar-days", text: "Calendar" },
   { path: "/appointmentlist", icon: "fa-list-check", text: "Appointment List" },
+  { path: "/doctor-earnings", icon: "fa-wallet", text: "Earnings" },
   { path: "/patient-details", icon: "fa-user", text: "Patient Details" },
   { path: "/followup", icon: "fa-history", text: "Follow Up" },
   { path: "/qrcode", icon: "fa-qrcode", text: "QR Code" },

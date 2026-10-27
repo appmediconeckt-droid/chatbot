@@ -1,0 +1,8 @@
+.demo-card-checkout { width: min(460px, calc(100vw - 24px)); max-height: calc(100dvh - 32px); box-sizing: border-box; padding: 24px; margin: auto; border: 1px solid #cbd5e1; border-radius: 18px; color: #172033; background: #fff; overflow-y: auto; box-shadow: 0 20px 70px #0f172a50; }
+.demo-card-checkout::backdrop { background: #0f172a99; }
+.demo-card-heading { display: flex; gap: 12px; align-items: flex-start; justify-content: space-between; }
+.demo-card-heading h2 { margin: 0; font-size: 20px; }.demo-card-heading button { padding: 0; width: 32px; height: 32px; flex-shrink: 0; background: #f1f5f9; border: 0; border-radius: 8px; font-size: 22px; }
+.demo-card-notice { padding: 12px; border: 1px solid #fcd34d; border-radius: 8px; color: #854d0e; background: #fffbeb; font-size: 13px; line-height: 1.5; }
+.demo-card-checkout label { display: grid; gap: 6px; margin: 14px 0; font-size: 13px; font-weight: 600; }
+.demo-card-checkout input { min-width: 0; width: 100%; box-sizing: border-box; padding: 11px; border: 1px solid #cbd5e1; border-radius: 8px; font: inherit; }
+.demo-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }.demo-card-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }.demo-card-actions button { flex: 1 1 160px; padding: 11px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #334155; cursor: pointer; }.demo-card-actions button[type="submit"] { background: #006b2c; color: #fff; border-color: #006b2c; }

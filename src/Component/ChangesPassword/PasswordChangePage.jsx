@@ -29,7 +29,6 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
-  const [redirectCountdown, setRedirectCountdown] = useState(0);
   const [visiblePassword, setVisiblePassword] = useState({
     password: false,
     confirmPassword: false,
@@ -49,17 +48,6 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
       setMode(hasPassword ? "change" : "set");
     }
   }, [hasPassword, initialMode]);
-
-  // Countdown effect for redirect
-  useEffect(() => {
-    if (redirectCountdown <= 0) return;
-
-    const timer = setTimeout(() => {
-      setRedirectCountdown(redirectCountdown - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [redirectCountdown]);
 
   const authHeaders = () => {
     const token =
@@ -195,11 +183,9 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
       );
 
       if (response.data?.success) {
-        setMessage(`✅ ${t('password_set_success')} ${t('redirecting_in')} 2 ${t('seconds')}`);
         setForm(initialForm);
         setOtpSent(false);
         setOtpVerified(false);
-        setRedirectCountdown(2);
         onPasswordUpdated?.({ hasPassword: true, requiresLogin: true });
       } else {
         throw new Error(response.data?.message || t('password_set_failed'));
@@ -246,9 +232,7 @@ const PasswordChangePage = ({ email, hasPassword, initialMode, onPasswordUpdated
 
       console.log('✅ Password change response:', response.data);
       if (response.data?.success) {
-        setMessage(`✅ ${t('password_changed_success')} ${t('redirecting_in')} 2 ${t('seconds')}`);
         setForm(initialForm);
-        setRedirectCountdown(2);
         onPasswordUpdated?.({ hasPassword: true, requiresLogin: true });
       } else {
         throw new Error(response.data?.message || t('password_change_failed'));
