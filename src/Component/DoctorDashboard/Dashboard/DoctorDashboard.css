@@ -2107,7 +2107,7 @@
 .dd-row-actions .dd-next-start-consultation:disabled { display: inline-flex; visibility: visible; opacity: 1; background: #edf2f7; color: #52677e; border: 1px solid #d3dde8; cursor: not-allowed; }
 .dd-next-consultation-action small { font-size: 11px; line-height: 1.4; color: #6c7c8e; text-align: right; }
 
-.dd-returned-patient-notice { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; margin-bottom: 18px; border: 1px solid #b8dfcd; border-radius: 12px; background: #edf9f2; color: #216448; }
+.dd-returned-patient-notice { grid-column: 1 / -1; min-width: 0; overflow-wrap: anywhere; display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; margin: 0; border: 1px solid #b8dfcd; border-radius: 12px; background: #edf9f2; color: #216448; }
 .dd-returned-patient-notice > i { font-size: 22px; }
 .dd-returned-patient-notice strong { font-size: 14px; }
 .dd-returned-patient-notice p { margin: 5px 0 0; font-size: 13px; line-height: 1.5; }
