@@ -8,6 +8,7 @@ async function check() {
       import { renderToStaticMarkup } from 'react-dom/server';
       import assert from 'node:assert/strict';
       import Choices from './src/Component/common/ProviderPaymentChoices.jsx';
+      import { normalizeProviderPaymentOptions } from './src/utils/providerPaymentOptions.js';
       const cash = { id: 'cash', label: 'Cash', icon: 'fa-money-bill-wave' };
       const upi = { id: 'upi', label: 'UPI', icon: 'fa-mobile-screen-button' };
       const render = options => renderToStaticMarkup(<Choices options={options} value="cash" onChange={() => {}} />);
@@ -30,6 +31,25 @@ async function check() {
       assert.match(cardMarkup, /secure checkout/);
       assert.match(cardMarkup, /Enter card details/);
       assert.doesNotMatch(cardMarkup, /name="(?:cardNumber|cvv)"/);
+      const wallet = { id: 'wallet', label: 'Wallet', icon: 'fa-wallet' };
+      const liveWallet = renderToStaticMarkup(<Choices options={{ mode: 'live', methods: [wallet], displayMethods: [wallet] }} value="wallet" onChange={() => {}} />);
+      assert.match(liveWallet, />Wallet</);
+      assert.match(liveWallet, /will be deducted from your wallet/);
+      assert.doesNotMatch(liveWallet, /disabled=""/);
+      const testWallet = renderToStaticMarkup(<Choices options={{ mode: 'test', methods: [], displayMethods: [{ ...wallet, unavailableReason: 'Wallet payments are not available for test bookings.' }] }} value="wallet" onChange={() => {}} />);
+      assert.match(testWallet, />Wallet/);
+      assert.match(testWallet, /not available for test bookings/);
+      assert.match(testWallet, /disabled=""/);
+      assert.doesNotMatch(testWallet, /will be deducted from your wallet/);
+      // Exercise the same raw API -> booking options -> payment choices path as
+      // both doctor and consultant booking forms, including older API responses.
+      for (const mode of ['live', 'test']) {
+        const bookingOptions = normalizeProviderPaymentOptions({ mode, currency: 'INR', methods: ['cash'], configuredMethods: ['cash'] });
+        const bookingMarkup = renderToStaticMarkup(<Choices options={bookingOptions} value="cash" onChange={() => {}} />);
+        assert.match(bookingMarkup, />Wallet/);
+        if (mode === 'test') assert.match(bookingMarkup, /not available for test bookings/);
+        else assert.doesNotMatch(bookingMarkup, /disabled=""/);
+      }
       console.log('PASS: saved methods stay visible, unavailable methods explain why and cannot be selected, and unselected methods stay hidden.');
     ` },
     bundle: true, write: false, platform: 'node', format: 'cjs', packages: 'external', loader: { '.css': 'empty' },

@@ -198,6 +198,13 @@ export const shouldShowStartConsultation = ({
   ) &&
   (slotStartReached || (pendingIndex >= 0 && pendingIndex < 2))));
 
+export const getPatientAvailability = appointment => {
+  if (appointment?.availability) return appointment.availability;
+  let timing = appointment?.consultation_timing || appointment?.consultationTiming || {};
+  if (typeof timing === 'string') { try { timing = JSON.parse(timing); } catch { timing = {}; } }
+  return timing?.availability || {};
+};
+
 export const canStartConsultation = ({
   appointment,
   hasActiveConsultation,
@@ -206,6 +213,7 @@ export const canStartConsultation = ({
   queueTurnReached = false,
 }) =>
   Boolean(appointment) &&
+  getPatientAvailability(appointment).status !== 'unavailable' &&
   ["pending", "confirmed", "skipped"].includes(
     String(pickFirst(appointment.status, appointment.appointment_status, "")).toLowerCase(),
   ) &&

@@ -10,6 +10,7 @@ import React, {
 import axios from "axios";
 import {
   CallingState,
+  DefaultParticipantViewUI,
   DefaultVideoPlaceholder,
   OwnCapability,
   ParticipantView,
@@ -21,6 +22,10 @@ import {
 } from "@stream-io/video-react-sdk";
 import "@stream-io/video-react-sdk/dist/css/styles.css";
 import "./VideoCallModal.css";
+
+// Shared by doctor, patient and counsellor calls. Keep participant indicators
+// while omitting the SDK's three-dot button and its actions dropdown.
+const ConsultationParticipantUI = () => <DefaultParticipantViewUI showMenuButton={false} />;
 import {
   FaDesktop,
   FaCompress,
@@ -462,6 +467,7 @@ const StreamVideoBody = ({
           {mainParticipant && (
             <ParticipantView
               className="stream-hidden-media-probe"
+              ParticipantViewUI={ConsultationParticipantUI}
               participant={mainParticipant}
               muteAudio={muteRemoteAudio}
             />
@@ -470,6 +476,7 @@ const StreamVideoBody = ({
           {localParticipant && (
             <ParticipantView
               className="stream-hidden-media-probe"
+              ParticipantViewUI={ConsultationParticipantUI}
               participant={localParticipant}
               muteAudio={true}
             />
@@ -487,6 +494,7 @@ const StreamVideoBody = ({
             <>
               <ParticipantView
                 className="stream-main-participant"
+                ParticipantViewUI={ConsultationParticipantUI}
                 VideoPlaceholder={CallVideoPlaceholder}
                 participant={{ ...mainParticipant, image: resolveParticipantImage(mainParticipant, remoteProfilePhoto) }}
                 trackType={isPresentingMain ? "screenShareTrack" : "videoTrack"}
@@ -506,6 +514,7 @@ const StreamVideoBody = ({
           <div className="stream-self-pip">
             <ParticipantView
               className="stream-self-participant"
+              ParticipantViewUI={ConsultationParticipantUI}
               VideoPlaceholder={CallVideoPlaceholder}
               participant={localParticipant}
               muteAudio={true}
@@ -572,6 +581,8 @@ const VideoCallModal = ({
   callData,
   currentUser,
   onEndCall,
+  onCallAccepted,
+  onHangup,
   callMode,
   status,
 }) => {
@@ -579,7 +590,7 @@ const VideoCallModal = ({
   const [call, setCall] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [callStatus, setCallStatus] = useState("active");
+  const [callStatus, setCallStatus] = useState(() => normalizeCallStatus(callData?.status) || 'active');
   const callRef = useRef(null);
   const clientRef = useRef(null);
   const closeRequestedRef = useRef(false);
@@ -587,6 +598,10 @@ const VideoCallModal = ({
   const modalContainerRef = useRef(null);
   const onCloseRef = useRef(onClose);
   const onEndCallRef = useRef(onEndCall);
+  const onHangupRef = useRef(onHangup);
+  onHangupRef.current = onHangup;
+  const onCallAcceptedRef = useRef(onCallAccepted);
+  onCallAcceptedRef.current = onCallAccepted;
   const localUserRef = useRef(null);
   const reconnectTimeoutRef = useRef(null);
   const reconnectAttemptRef = useRef(0);
@@ -933,12 +948,16 @@ const VideoCallModal = ({
     clientUnsubsRef.current = [];
   }, []);
 
-  const closeModalOnce = useCallback(() => {
+  const closeModalOnce = useCallback((details) => {
     if (closeRequestedRef.current) return;
     closeRequestedRef.current = true;
     clearReconnectTimer();
-    onCloseRef.current?.();
+    onCloseRef.current?.(details);
   }, [clearReconnectTimer]);
+
+  useEffect(() => {
+    if (isOpen && isTerminalCall) closeModalOnce({ status: callStatus });
+  }, [isOpen, isTerminalCall, callStatus, closeModalOnce]);
 
   // A stale accepted/status socket event can arrive just after hang-up. Never
   // leave an empty call shell mounted; close it before rendering an error page.
@@ -1005,6 +1024,7 @@ const VideoCallModal = ({
   }, [attemptRejoinCall, canJoinCall, isOpen]);
 
   const handleEndForEveryone = useCallback(async () => {
+    onHangupRef.current?.();
     const activeCall = callRef.current;
     const activeClient = clientRef.current;
     clearReconnectTimer();
@@ -1311,7 +1331,7 @@ const VideoCallModal = ({
 
       setTimeout(() => {
         if (!stopped) {
-          closeModalOnce();
+          closeModalOnce({ status: normalizedStatus });
         }
       }, 900);
     };
@@ -1346,6 +1366,7 @@ const VideoCallModal = ({
         }
 
         if (JOINABLE_STATUSES.has(nextStatus)) {
+          onCallAcceptedRef.current?.({ callId, status: nextStatus });
           setCallStatus(nextStatus);
           setError("");
         }

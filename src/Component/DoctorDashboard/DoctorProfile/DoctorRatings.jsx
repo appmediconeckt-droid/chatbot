@@ -5,6 +5,8 @@ import useSocketRefresh from '../../../hooks/useSocketRefresh';
 import { PortalText } from '../../common/PortalTranslation';
 import './DoctorRatings.css';
 
+const REVIEWS_PER_PAGE = 10;
+
 function Stars({ value }) {
   return <span className="dr-stars" aria-label={`${value} out of 5 stars`}>
     {[1, 2, 3, 4, 5].map(star => <Star key={star} size={17} fill={star <= Math.round(value) ? 'currentColor' : 'none'} aria-hidden="true" />)}
@@ -43,9 +45,12 @@ export default function DoctorRatings() {
   const reviews = isDoctor ? summary?.reviews || [] : selectedClinics.flatMap(clinic =>
     (clinic.reviews || []).map(review => ({ ...review, clinicId: clinic.clinicId, clinicName: clinic.name }))
   ).sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0));
-  const pageCount = Math.max(1, Math.ceil(reviews.length / 10));
+  const pageCount = Math.max(1, Math.ceil(reviews.length / REVIEWS_PER_PAGE));
   const currentPage = Math.min(page, pageCount);
-  const visibleReviews = reviews.slice((currentPage - 1) * 10, currentPage * 10);
+  const firstReview = (currentPage - 1) * REVIEWS_PER_PAGE;
+  const visibleReviews = reviews.slice(firstReview, firstReview + REVIEWS_PER_PAGE);
+  const firstPageButton = Math.max(1, Math.min(currentPage - 2, pageCount - 4));
+  const pageNumbers = Array.from({ length: Math.min(5, pageCount) }, (_, index) => firstPageButton + index);
 
   return <section className="doctor-reviews" aria-label="Reviews">
     <header className="dr-header">
@@ -100,7 +105,19 @@ export default function DoctorRatings() {
             </table>
           </div>}
 
-        {pageCount > 1 && <nav className="dr-pagination" aria-label="Review pages"><button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><PortalText text="Previous" /></button><span>{currentPage} / {pageCount}</span><button type="button" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}><PortalText text="Next" /></button></nav>}
+        {reviews.length > 0 && <nav className="dr-pagination" aria-label="Review pages">
+          <span className="dr-pagination-summary" role="status" aria-live="polite">
+            <PortalText text="Showing" /> {firstReview + 1}–{firstReview + visibleReviews.length} <PortalText text="of" /> {reviews.length} <PortalText text="reviews" />
+            <span className="dr-pagination-size">10 <PortalText text="per page" /></span>
+          </span>
+          <div className="dr-pagination-controls">
+            <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><PortalText text="Previous" /></button>
+            {firstPageButton > 1 && <><button type="button" aria-label="Page 1" onClick={() => setPage(1)}>1</button>{firstPageButton > 2 && <span aria-hidden="true">…</span>}</>}
+            {pageNumbers.map(number => <button key={number} type="button" aria-label={`Page ${number}`} aria-current={currentPage === number ? 'page' : undefined} onClick={() => setPage(number)}>{number}</button>)}
+            {pageNumbers.at(-1) < pageCount && <>{pageNumbers.at(-1) < pageCount - 1 && <span aria-hidden="true">…</span>}<button type="button" aria-label={`Page ${pageCount}`} onClick={() => setPage(pageCount)}>{pageCount}</button></>}
+            <button type="button" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}><PortalText text="Next" /></button>
+          </div>
+        </nav>}
       </div>}
   </section>;
 }

@@ -33,7 +33,7 @@ export default function ProviderPaymentChoices({ options, value, onChange, disab
         {group.id === 'upi' && selected && <div className="provider-payment-expanded"><h4>Choose your UPI app</h4><UpiAppChoices value={upiApp} disabled={disabled} onChange={app => { setUpiApp(app); onChange('upi'); }} />{upiApp && <p>{upiApps.find(([id]) => id === upiApp)?.[1]} selected. {options.mode === 'test' ? 'Use the UPI test options offered by Razorpay Checkout. Test availability depends on your account.' : 'Continue to secure UPI checkout and approve the payment in your app.'}</p>}</div>}
       </section>;
     })}</div>
-    {value === 'wallet' && <p>The appointment fee will be deducted from your wallet and recorded in your doctor's earnings wallet.</p>}
+    {value === 'wallet' && options.methods.some(method => method.id === 'wallet' && !method.unavailableReason) && <p>The appointment fee will be deducted from your wallet and recorded in your doctor's earnings wallet.</p>}
     {isOnlinePayment(value) && value !== 'wallet' && options.mode !== "test" && <p>{value === 'upi' ? 'Choose your UPI app, such as Google Pay, PhonePe, Paytm or another supported app, in secure Razorpay checkout.' : 'Enter your card number, expiry and CVV in secure Razorpay checkout when you continue.'}</p>}
   </div>;
 }

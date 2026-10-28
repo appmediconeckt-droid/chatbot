@@ -1,5 +1,21 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { getPatientAvailability } from '../src/Component/DoctorDashboard/appointmentFeed.js';
+
+test('receptionist availability prevents starting an absent patient, including a skipped appointment', () => {
+  for (const status of ['pending', 'confirmed', 'skipped']) {
+    assert.equal(canStartConsultation({ appointment: { status, availability: { status: 'unavailable' } }, hasActiveConsultation: false, isOnBreak: false, slotStartReached: true, queueTurnReached: true }), false);
+  }
+});
+
+test('returned patient availability survives raw JSON and dashboard normalization', () => {
+  const availability = { status: 'available', returnedAt: '2026-10-28T05:00:00Z' };
+  assert.deepEqual(getPatientAvailability({ consultation_timing: JSON.stringify({ availability }) }), availability);
+  assert.deepEqual(getPatientAvailability({ availability }), availability);
+  assert.deepEqual(getPatientAvailability({ consultation_timing: '{invalid' }), {});
+  assert.equal(canStartConsultation({ appointment: { status: 'pending', availability }, hasActiveConsultation: false, isOnBreak: false, slotStartReached: true }), true);
+  assert.equal(canStartConsultation({ appointment: { status: 'pending', availability }, hasActiveConsultation: true, isOnBreak: false, slotStartReached: true }), false);
+});
 import { loadDoctorAppointmentFeed, getAppointmentSource, getAppointmentApiId, mergeAppointmentLists, normalizeApiList, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../src/Component/DoctorDashboard/appointmentFeed.js";
 
 test("appointment booked time displays the original slot, not a delayed estimate", () => {

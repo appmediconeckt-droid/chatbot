@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import api from '../axiosConfig.js';
 import { paymentCheckoutDisplay } from './paymentCheckoutConfig.js';
 import { subscribeSocketRefresh } from '../hooks/useSocketRefresh.js';
+import { normalizeProviderPaymentOptions } from './providerPaymentOptions.js';
 
-const labels = { wallet: ['Wallet', 'fa-wallet'], credit_card: ['Credit Card', 'fa-credit-card'], debit_card: ['Debit Card', 'fa-credit-card'], upi: ['UPI', 'fa-mobile-screen-button'], cash: ['Cash', 'fa-money-bill-wave'], insurance: ['Insurance', 'fa-shield-heart'] };
 export const isOnlinePayment = (method) => ['credit_card', 'debit_card', 'upi', 'wallet'].includes(method);
 export function useProviderPaymentOptions(providerId) {
   const [state, setState] = useState({ methods: [], loading: true, error: '', consultationFee: 0, currency: 'INR' });
@@ -17,8 +17,7 @@ export function useProviderPaymentOptions(providerId) {
       try {
         const response = await api.get(`/api/payments/providers/${providerId}/methods`, { timeout: 15000 });
         const data = response.data;
-        const choices = methods => methods.filter(method => labels[method]).map(method => ({ method, id: method, label: labels[method][0], icon: labels[method][1], unavailableReason: data.unavailableMethods?.[method] || '' }));
-        if (active && current === request) setState({ ...data, loading: false, error: '', methods: choices(data.methods || []), displayMethods: choices(data.configuredMethods || data.methods || []) });
+        if (active && current === request) setState({ ...normalizeProviderPaymentOptions(data), loading: false, error: '' });
       } catch {
         if (active && current === request) setState({ methods: [], loading: false, error: 'Payment options could not be loaded. Please reopen this booking to try again.' });
       }

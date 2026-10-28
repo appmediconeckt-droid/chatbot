@@ -11,6 +11,13 @@ export default function StaffAppointments({clinicId} = {}) {
  const canReceptionistCancel = context?.profile?.role === 'receptionist';
  const [cancelBusy, setCancelBusy] = useState('');
  const [cancelError, setCancelError] = useState('');
+ const [availabilityNotice, setAvailabilityNotice] = useState('');
+ const availabilitySaved = (row, availability, message) => {
+  setAvailabilityNotice(message);
+  setData(current => current ? { ...current, appointments: current.appointments.map(item => patientKey(item) === patientKey(row) ? { ...item, availability } : item) } : current);
+  setRefresh(value => value + 1);
+  context?.refreshQueue?.();
+ };
  const [filters,setFilters]=useState({from:'',to:'',status:'all',search:'',clinic_id:''});
  const [page,setPage]=useState(1);
  const [data,setData]=useState(null);
@@ -65,9 +72,10 @@ export default function StaffAppointments({clinicId} = {}) {
   </div>
   {error&&<p className="rec-alert" role="alert">{error}</p>}
   {cancelError&&<p className="rec-alert" role="alert">{cancelError}</p>}
+  {availabilityNotice&&<p className="rec-settings-success" role="status"><PortalText text={availabilityNotice} /></p>}
   {loading&&!data?<p role="status"><PortalText text="Loading appointments..." /></p>:data&&<>
    <div className="rec-inline"><strong>{data.doctor.fullName}</strong><span className="rec-count"><PortalTemplate text="{0} appointments" values={[data.total]} /></span><span className="rec-count"><PortalTemplate text="{0} completed" values={[data.completed]} /></span></div>
-   {data.appointments.length?<AppointmentTable rows={data.appointments} clinics={data.clinics} onView={setSelected} onVitalsSaved={(row,vitals)=>setData(current=>current ? {...current,appointments:current.appointments.map(item=>patientKey(item)===patientKey(row)?{...item,vitals}:item)} : current)} onCancelAppointment={canReceptionistCancel ? cancelAppointment : undefined} cancelBusy={cancelBusy}/>:<div className="rec-empty"><h3><PortalText text="No matching appointments" /></h3><p><PortalText text="Select All dates or adjust your status and search filters." /></p></div>}
+   {data.appointments.length?<AppointmentTable rows={data.appointments} clinics={data.clinics} onView={setSelected} onVitalsSaved={(row,vitals)=>setData(current=>current ? {...current,appointments:current.appointments.map(item=>patientKey(item)===patientKey(row)?{...item,vitals}:item)} : current)} onAvailabilitySaved={availabilitySaved} onCancelAppointment={canReceptionistCancel ? cancelAppointment : undefined} cancelBusy={cancelBusy}/>:<div className="rec-empty"><h3><PortalText text="No matching appointments" /></h3><p><PortalText text="Select All dates or adjust your status and search filters." /></p></div>}
    <div className="rec-pagination"><span><PortalTemplate text="Showing {0}-{1} of {2}" values={[data.total?(page-1)*10+1:0,Math.min(page*10,data.total),data.total]}/></span><div><button className="rec-button compact" aria-label="Previous appointments page" disabled={page===1} onClick={()=>setPage(value=>value-1)}><ChevronLeft size={16}/><PortalText text="Previous" /></button><span><PortalTemplate text="Page {0} of {1}" values={[page,pages]}/></span><button className="rec-button compact" aria-label="Next appointments page" disabled={page>=pages} onClick={()=>setPage(value=>value+1)}><PortalText text="Next" /><ChevronRight size={16}/></button></div></div>
   </>}
   <PatientDialog patient={patient} clinics={data?.clinics||[]} doctorName={data?.doctor.fullName} close={()=>setSelected(null)} onCancelAppointment={canReceptionistCancel ? cancelAppointment : undefined} cancelBusy={cancelBusy}/>

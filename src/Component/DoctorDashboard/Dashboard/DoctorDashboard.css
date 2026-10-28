@@ -2100,3 +2100,14 @@
 }
 .dd-queue-row.dd-emergency-row { background: #fff1f2; border-left: 4px solid #b42318; }
 .dd-queue-row.dd-emergency-row .dd-emergency-label { display: inline-flex; align-items: center; gap: 6px; padding: 4px 9px; border-radius: 6px; color: #fff; background: #b42318; font-weight: 800; }
+.dd-patient-unavailable{color:#b45309;font-weight:700}.dd-patient-available{color:#0f766e;font-weight:600}
+
+.dd-row-actions .dd-next-consultation-action { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; max-width: 220px; }
+.dd-row-actions .dd-next-start-consultation { display: inline-flex; align-items: center; justify-content: center; visibility: visible; min-height: 36px; white-space: nowrap; }
+.dd-row-actions .dd-next-start-consultation:disabled { display: inline-flex; visibility: visible; opacity: 1; background: #edf2f7; color: #52677e; border: 1px solid #d3dde8; cursor: not-allowed; }
+.dd-next-consultation-action small { font-size: 11px; line-height: 1.4; color: #6c7c8e; text-align: right; }
+
+.dd-returned-patient-notice { display: flex; align-items: flex-start; gap: 12px; padding: 14px 18px; margin-bottom: 18px; border: 1px solid #b8dfcd; border-radius: 12px; background: #edf9f2; color: #216448; }
+.dd-returned-patient-notice > i { font-size: 22px; }
+.dd-returned-patient-notice strong { font-size: 14px; }
+.dd-returned-patient-notice p { margin: 5px 0 0; font-size: 13px; line-height: 1.5; }

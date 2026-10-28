@@ -246,3 +246,19 @@
 .rec-profile-dialog .rec-password-field > small { display: block; margin-top: 8px; color: #657b8c; }
 .rec-profile-dialog .rec-settings-save { border-top: 1px solid var(--rec-line); padding-top: 18px; }
 
+.rec-availability-actions{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px}.rec-availability-actions .rec-badge.skipped{background:#fff3d8;color:#8a5a07}@media(max-width:650px){.rec-availability-actions{justify-content:flex-start;width:100%}}
+.rec-table td { vertical-align: middle; }
+.rec-patient-intake-actions { display: flex; align-items: center; min-width: 88px; }
+.rec-vitals-cell .rec-button { min-height: 34px; min-width: 86px; }
+.rec-patient-availability { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; min-width: 190px; max-width: 210px; }
+.rec-patient-availability-buttons { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid #dce5eb; border-radius: 9px; background: #f7f9fb; }
+.rec-availability-option { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 30px; padding: 5px 8px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: #687b8b; font: inherit; font-size: 11px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.rec-availability-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+.rec-availability-option.available[aria-pressed="true"] { background: #e5f5ee; border-color: #b9dfcd; color: #16704e; }
+.rec-availability-option.unavailable[aria-pressed="true"] { background: #fff2dc; border-color: #efd2a0; color: #99600e; }
+.rec-availability-option:hover:not(:disabled) { background: #fff; color: #294d60; }
+.rec-availability-option:focus-visible { outline: 2px solid var(--rec-primary); outline-offset: 2px; }
+.rec-availability-option:disabled { cursor: default; }
+.rec-patient-availability-buttons[aria-busy="true"] { opacity: .65; }
+.rec-table .rec-patient-availability > small { margin: 0; font-size: 10px; line-height: 1.4; white-space: normal; }
+.rec-availability-inactive { color: #9aa8b5; }

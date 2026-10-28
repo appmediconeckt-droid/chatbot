@@ -53,10 +53,7 @@ export default function DoctorWallet() {
   return <section className="doctor-earnings-wallet" aria-label="Doctor earnings wallet">
     <header className="dew-heading"><span className="dew-icon"><i className="fa-solid fa-wallet" aria-hidden="true" /></span><div><h1>Earnings</h1><p>Your wallet balance and appointment payment transactions</p></div></header>
     {notice && <p role="status">{notice}</p>}
-    <div className="dew-actions"><button type="button" onClick={() => setAttempt(value => value + 1)}>Refresh</button><strong>{testing ? "Razorpay test payments" : "Live payments"}</strong></div>
-    {data && <aside className="dew-settlement-setup">
-      {testing && <p role="status">Test mode: no real money is collected or sent to a bank. Platform fee: 20%; doctor share: 80%. Old dummy payments are excluded.</p>}
-      {!data.settlement?.enabled && <p>Bank payouts need platform configuration: {testing ? 'RazorpayX test API access, test keys and test payout account number' : 'live RazorpayX payout activation'}.</p>}
+    {data && (!data.settlement?.bankSaved || data.settlement?.enabled || data.settlement?.bankReady) && <aside className="dew-settlement-setup">
       {!data.settlement?.bankSaved && <p>Save receiving bank details in Settings ? Payment before setting up payouts.</p>}
       {data.settlement?.enabled && data.settlement?.bankSaved && !data.settlement?.bankReady && (testing
         ? <button type="button" disabled={Boolean(settling)} onClick={setupTestBank}>Set up test bank</button>

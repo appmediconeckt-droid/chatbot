@@ -1290,6 +1290,8 @@ import VideoCallModal from '../../UserDashboard/Tab/CallModal/VideoCallModal.jsx
 import { getDoctorUser } from '../doctorApi.js';
 import ConsultationCompletionModal from '../ConsultationCompletionModal.jsx';
 import { createConsultationForm, remoteConsultationPayload } from '../consultationPrescription.js';
+import { getAppointmentSource, getAppointmentApiId } from '../appointmentFeed.js';
+import { MAX_UNANSWERED_APPOINTMENT_CALLS, unansweredAppointmentCalls, updateAppointmentCallProgress, readAppointmentCallProgress, saveAppointmentCallProgress } from '../doctorAppointmentCallProgress.js';
 
 const getInitials = (name) =>
   String(name || "NA")
@@ -1633,6 +1635,27 @@ function PatientList({ consultationOnly = false }) {
   const location = useLocation();
   const navigate = useNavigate();
   const appointmentCallTarget = location.state?.callTargetId || "";
+  const booking = location.state?.appointment;
+  const bookingId = getAppointmentApiId(booking || {});
+  const attemptKey = `doctor-appointment-calls:${getCurrentUserId()}:${getAppointmentSource(booking || {})}:${bookingId || ''}`;
+  const attemptProgressRef = useRef({ key: attemptKey, calls: readAppointmentCallProgress(attemptKey) });
+  if (attemptProgressRef.current.key !== attemptKey) attemptProgressRef.current = { key: attemptKey, calls: readAppointmentCallProgress(attemptKey) };
+  const [, refreshCallProgress] = useState(0);
+  const unansweredCount = unansweredAppointmentCalls(attemptProgressRef.current.calls);
+  const dashboardReturnRef = useRef(false);
+  const returnToDoctorDashboard = (state = null) => {
+    if (!consultationOnly || dashboardReturnRef.current) return;
+    dashboardReturnRef.current = true;
+    navigate('/doctordashboard', { replace: true, state });
+  };
+  const recordCallProgress = (callId, event) => {
+    if (!consultationOnly || !bookingId) return;
+    const calls = updateAppointmentCallProgress(attemptProgressRef.current.calls, callId, event);
+    attemptProgressRef.current.calls = calls;
+    saveAppointmentCallProgress(attemptKey, calls);
+    refreshCallProgress(value => value + 1);
+    if (event === 'unanswered') returnToDoctorDashboard();
+  };
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [patients, setPatients] = useState(() => {
@@ -1762,13 +1785,14 @@ function PatientList({ consultationOnly = false }) {
   const openPostCallConsultation = (call = activeCall) => {
     const appointmentId = getFirstValue(call?.appointment_id, call?.appointmentId, location.state?.appointment?.apiId, location.state?.appointment?.id);
     const appointment = doctorAppointments.find((item) => String(item.id || item._id) === String(appointmentId)) ||
-      doctorAppointments.find((item) => {
+      (consultationOnly && location.state?.appointment ? location.state.appointment : null) || doctorAppointments.find((item) => {
         const patientId = getFirstValue(item.patient_id, item.patientId, item.patient?.id, item.patient?._id);
         const mode = String(getFirstValue(item.consultation_mode, item.consultationMode, item.mode, "")).toLowerCase();
         const status = String(getFirstValue(item.appointment_status, item.status, "")).toLowerCase();
         return String(patientId) === String(selectedPatientId) && (mode.includes("video") || mode.includes("voice")) && !status.includes("complete");
       });
-    if (!appointment) return;
+    if (!appointment) { returnToDoctorDashboard(); return; }
+    if (consultationOnly) { returnToDoctorDashboard({ remoteCompletion: appointment }); return; }
     setPostCallAppointment(appointment);
     setRemoteConsultationForm(createConsultationForm());
     setRemoteSaveError('');
@@ -1965,6 +1989,8 @@ function PatientList({ consultationOnly = false }) {
       if (acceptedCallId && current.id && String(acceptedCallId) !== String(current.id)) return;
 
       const acceptedType = normalizeCallType(getFirstValue(call?.call_type, call?.callType, call?.type, current.type));
+      recordCallProgress(acceptedCallId || current.id, 'answered');
+      activeCallRef.current = { ...current, ...call, id: acceptedCallId || current.id, status: 'connected' };
       connectedAtRef.current = Date.now();
       setCallSeconds(0);
       setActiveCall((latest) => latest ? {
@@ -1980,6 +2006,8 @@ function PatientList({ consultationOnly = false }) {
     },
     onRejected: (call) => {
       if (!activeCallRef.current || String(call.callId || call.id) !== String(activeCallRef.current.id)) return;
+      recordCallProgress(activeCallRef.current.id, 'unanswered');
+      activeCallRef.current = null;
       connectedAtRef.current = null; 
       offerStartedCallIdRef.current = null; 
       setCallSeconds(0); 
@@ -1988,6 +2016,9 @@ function PatientList({ consultationOnly = false }) {
     },
     onCancelled: (call) => {
       if (!activeCallRef.current || String(call.callId || call.id) !== String(activeCallRef.current.id)) return;
+      if (activeCallRef.current.status !== 'connected') recordCallProgress(activeCallRef.current.id, 'unanswered');
+      else if (consultationOnly) openPostCallConsultation(activeCallRef.current);
+      activeCallRef.current = null;
       connectedAtRef.current = null; 
       offerStartedCallIdRef.current = null; 
       setCallSeconds(0); 
@@ -1996,7 +2027,9 @@ function PatientList({ consultationOnly = false }) {
     },
     onEnded: (call) => {
       if (!activeCallRef.current || String(call.callId || call.id) !== String(activeCallRef.current.id)) return;
-      openPostCallConsultation(); 
+      if (activeCallRef.current.status === 'connected') openPostCallConsultation(activeCallRef.current);
+      else recordCallProgress(activeCallRef.current.id, 'unanswered');
+      activeCallRef.current = null;
       connectedAtRef.current = null; 
       offerStartedCallIdRef.current = null; 
       setCallSeconds(0); 
@@ -2005,6 +2038,8 @@ function PatientList({ consultationOnly = false }) {
     },
     onMissed: (call) => {
       if (!activeCallRef.current || String(call.callId || call.id) !== String(activeCallRef.current.id)) return;
+      recordCallProgress(activeCallRef.current.id, 'unanswered');
+      activeCallRef.current = null;
       connectedAtRef.current = null; 
       offerStartedCallIdRef.current = null; 
       setCallSeconds(0); 
@@ -2257,10 +2292,20 @@ function PatientList({ consultationOnly = false }) {
       return undefined;
     }
 
-    const missedTimer = !consultationOnly && activeCall.status === "ringing"
+    const missedTimer = activeCall.status === "ringing"
       ? window.setTimeout(() => {
+        if (consultationOnly) {
+          const current = activeCallRef.current;
+          if (!current?.id || current.id !== activeCall.id || current.status !== 'ringing') return;
+          recordCallProgress(current.id, 'unanswered');
+          activeCallRef.current = null;
+          stopLocalMedia();
+          setActiveCall(null);
+          void endChatCall({ callId: current.id, status: 'cancelled' }).catch(() => {});
+          return;
+        }
         setActiveCall((call) => call ? { ...call, status: "missed" } : call);
-      }, 30000)
+      }, consultationOnly ? 65000 : 30000)
       : null;
 
     const closeMissedTimer = activeCall.status === "missed"
@@ -2452,6 +2497,7 @@ function PatientList({ consultationOnly = false }) {
 
   const startCall = async (type, receiverOverride = null) => {
     if (callRequestRef.current || activeCallRef.current) return;
+    if (consultationOnly && unansweredAppointmentCalls(attemptProgressRef.current.calls) >= MAX_UNANSWERED_APPOINTMENT_CALLS) return;
     if (!receiverOverride && !selectedPatient?.id) {
       setError("Please select a patient before starting a call");
       return;
@@ -2473,7 +2519,9 @@ function PatientList({ consultationOnly = false }) {
         await endChatCall({ callId: callData.id, status: 'cancelled' });
         return;
       }
-      setActiveCall(current => current?.status === 'connected' && String(current.id) === String(callData.id) ? current : ({
+      recordCallProgress(callData.id, 'started');
+      const current = activeCallRef.current;
+      const nextCall = current?.status === 'connected' && String(current.id) === String(callData.id) ? current : {
         id: callData.id,
         type,
         receiverOffline: Boolean(callData.receiverOffline),
@@ -2481,7 +2529,9 @@ function PatientList({ consultationOnly = false }) {
         direction: "outgoing",
         isMuted: false,
         isVideoOff: false,
-      }));
+      };
+      activeCallRef.current = nextCall;
+      setActiveCall(nextCall);
     } catch (err) {
       stopLocalMedia();
       if (!requestState.cancelled) {
@@ -2497,7 +2547,7 @@ function PatientList({ consultationOnly = false }) {
     const type = location.state?.autoStartCallType;
     const targetId = location.state?.callTargetId;
     const targetIsLoaded = consultationOnly || sourcePatients.some((patient) => String(patient.id) === String(targetId) || String(patient.receiverId) === String(targetId));
-    if (!type || !targetId || !targetIsLoaded || appointmentCallStartedRef.current === location.key || activeCall) return;
+    if (!type || !targetId || !targetIsLoaded || appointmentCallStartedRef.current === location.key || activeCall || unansweredCount >= MAX_UNANSWERED_APPOINTMENT_CALLS) return;
     appointmentCallStartedRef.current = location.key;
     setSelectedPatientId(targetId);
     startCall(type, targetId);
@@ -2505,17 +2555,20 @@ function PatientList({ consultationOnly = false }) {
 
   const endCall = async (statusValue = "cancelled") => {
     if (callRequestRef.current) callRequestRef.current.cancelled = true;
-    const endedCall = activeCall;
-    const callId = activeCall?.id;
+    const endedCall = activeCallRef.current || activeCall;
+    const callId = endedCall?.id;
+    if (consultationOnly && endedCall?.status !== 'connected' && callId) recordCallProgress(callId, 'unanswered');
+    activeCallRef.current = null;
     setActiveCall(null);
     connectedAtRef.current = null;
     offerStartedCallIdRef.current = null;
     stopLocalMedia();
-    if (!callId) return;
+    if (!callId) { returnToDoctorDashboard(); return; }
 
+    if (statusValue === "ended" || endedCall?.status === "connected") openPostCallConsultation(endedCall);
+    else if (consultationOnly) returnToDoctorDashboard();
     try {
       await endChatCall({ callId, status: statusValue });
-      if (statusValue === "ended" || endedCall?.status === "connected") openPostCallConsultation(endedCall);
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Failed to update call status");
     }
@@ -2527,10 +2580,13 @@ function PatientList({ consultationOnly = false }) {
     setSavingConsultation(true);
     setRemoteSaveError('');
     try {
-      await axios.patch(`${API_BASE_URL}/appointments/${appointmentId}`, remoteConsultationPayload(form), { headers: getAuthHeaders() });
+      const resource = getAppointmentSource(postCallAppointment) === 'walkin' ? 'walkin-appointments' : 'appointments';
+      await axios.patch(`${API_BASE_URL}/${resource}/${encodeURIComponent(appointmentId)}`, remoteConsultationPayload(form), { headers: getAuthHeaders() });
       setDoctorAppointments((items) => items.map((item) => String(item.id || item._id) === String(appointmentId) ? { ...item, appointment_status: "completed" } : item));
       setShowPostCallForm(false);
       setPostCallAppointment(null);
+      saveAppointmentCallProgress(attemptKey, []);
+      navigate('/doctordashboard', { replace: true });
     } catch (err) {
       setRemoteSaveError(err.response?.data?.message || err.message || "Failed to complete consultation");
     } finally {
@@ -2627,15 +2683,8 @@ function PatientList({ consultationOnly = false }) {
 
   return (
     <div className="patient-list-container sms-communications-screen">
-      {consultationOnly ? <section className="doctor-direct-consultation">
-        <i className={`fa-solid ${location.state?.autoStartCallType === 'voice' ? 'fa-phone' : 'fa-video'}`} aria-hidden="true" />
-        <h1>{location.state?.autoStartCallType === 'voice' ? 'Voice consultation' : 'Video consultation'}</h1>
-        <h2>{selectedPatient?.name || 'Patient'}</h2>
-        {error && <p role="alert">{error}</p>}
-        {activeCall?.status === 'initiating' && <><p role="status">Connecting call...</p><button type="button" onClick={() => endCall('cancelled')}>Cancel call</button></>}
-        {!activeCall && !error && <p role="status">{appointmentCallStartedRef.current ? 'Call ended' : 'Connecting call...'}</p>}
-        {!activeCall && appointmentCallTarget && <button type="button" onClick={() => startCall(location.state?.autoStartCallType || 'video', appointmentCallTarget)}>Call again</button>}
-        {!activeCall && <button type="button" onClick={() => navigate('/doctordashboard')}>Back to appointments</button>}
+      {consultationOnly ? <section className="doctor-call-connecting" aria-live="polite">
+        {error ? <><p role="alert">{error}</p><button type="button" onClick={() => navigate('/doctordashboard', { replace: true })}>Back to dashboard</button></> : null}
       </section> : <>
       <header className="sms-page-header">
         <h1><PortalText text={"Patient Communications"} /></h1>
@@ -2804,8 +2853,21 @@ function PatientList({ consultationOnly = false }) {
           receiver: { id: selectedPatientId, fullName: selectedPatient?.name, type: 'user', profilePhoto: selectedPatient?.profilePhoto },
         }}
         currentUser={{ ...getDoctorUser(), id: getCurrentUserId(), role: 'doctor' }}
-        onEndCall={() => endCall(activeCallRef.current?.status === 'connected' ? 'ended' : 'cancelled')}
-        onClose={() => { if (activeCallRef.current) void endCall(activeCallRef.current.status === 'connected' ? 'ended' : 'cancelled'); }}
+        onCallAccepted={({ callId }) => {
+          const current = activeCallRef.current;
+          if (!current || String(current.id) !== String(callId) || current.status === 'connected') return;
+          recordCallProgress(callId, 'answered');
+          activeCallRef.current = { ...current, status: 'connected' };
+          connectedAtRef.current = Date.now();
+          setActiveCall({ ...current, status: 'connected' });
+        }}
+        onHangup={() => { void endCall(activeCallRef.current?.status === 'connected' ? 'ended' : 'cancelled'); }}
+        onClose={(details) => {
+          const current = activeCallRef.current;
+          if (!current) { returnToDoctorDashboard(); return; }
+          if (current.status !== 'connected' && ['missed', 'expired', 'rejected', 'cancelled', 'canceled', 'ended', 'completed'].includes(details?.status)) recordCallProgress(current.id, 'unanswered');
+          void endCall(current.status === 'connected' ? 'ended' : 'cancelled');
+        }}
       />}
       {activeCall && !consultationOnly && (
         <div className="sms-call-overlay" role="dialog" aria-modal="true">

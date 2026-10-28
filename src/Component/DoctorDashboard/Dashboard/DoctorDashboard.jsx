@@ -2,6 +2,7 @@ import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTr
 import socketService from "../../../services/socketService";
 import { getDoctorDashboardSummary, getTodayCompletedAppointments } from './doctorDashboardSummary.js';
 import { getConsultationDurationMs } from '../AppointmentList/appointmentListSummary.js';
+import { getPatientAvailability } from '../appointmentFeed.js';
 import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctorAppointmentFeed, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, getCancelledAppointmentHistory, getAppointmentCancellationState, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../appointmentFeed.js";
 // // DoctorDashboard.jsx
 // import React, { useEffect, useRef, useState } from "react";
@@ -2167,13 +2168,15 @@ import { downloadConsultationPrescription } from "../../common/downloadPrescript
 
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { getCurrentUserId } from "../doctorChatApi";
+import { MAX_UNANSWERED_APPOINTMENT_CALLS, readAppointmentCallProgress, saveAppointmentCallProgress, unansweredAppointmentCalls } from "../doctorAppointmentCallProgress.js";
 import { resolveProfileImage } from "../../../utils/profileImage.js";
 import { VitalsSummary } from '../../Receptionist/PatientVitals.jsx';
 import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
 import { appointmentVitals } from '../PatientAppointmentDetails/patientRecordDetails.js';
 import CompleteModal from '../ConsultationCompletionModal.jsx';
-import { createEmptyMedicine, getFollowUpDateFromMedicines } from '../consultationPrescription.js';
+import { createConsultationForm, remoteConsultationPayload, createEmptyMedicine, getFollowUpDateFromMedicines } from '../consultationPrescription.js';
 import EmergencyReason from '../../common/EmergencyReason.jsx';
 import { getRemoteConsultationMode, appointmentCallNavigation } from '../doctorConsultationNavigation.js';
 
@@ -2530,6 +2533,7 @@ const formatAppointment = (appointment, forcedStatus, availabilityRanges = []) =
       bookedSchedule?.durationMinutes
     )) || 0,
     queueStatus: pickFirst(appointment?.queue_status, appointment?.queueStatus, ""),
+    availability: getPatientAvailability(appointment),
     checkedInAt: pickFirst(appointment?.patientArrivalTime, appointment?.checked_in_at, appointment?.checkedInAt),
     cancellationReason: pickFirst(appointment?.cancellationReason, appointment?.cancellation_reason),
     consultationStartedAt: pickFirst(
@@ -3039,6 +3043,29 @@ const SummaryModal = ({ show, onHide, appointmentData, doctorName, doctorProfile
 // Main DoctorDashboard Component
 const DoctorDashboard = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [remoteCompletion, setRemoteCompletion] = useState(location.state?.remoteCompletion || null);
+  const [remoteForm, setRemoteForm] = useState(createConsultationForm);
+  const [remoteSaving, setRemoteSaving] = useState(false);
+  const [remoteError, setRemoteError] = useState('');
+  useEffect(() => {
+    if (location.state?.remoteCompletion) navigate(location.pathname, { replace: true, state: null });
+  }, []);
+  const callProgressKey = appointment => `doctor-appointment-calls:${getCurrentUserId()}:${getAppointmentSource(appointment || {})}:${getAppointmentApiId(appointment || {}) || ''}`;
+  const missedCallCount = appointment => unansweredAppointmentCalls(readAppointmentCallProgress(callProgressKey(appointment)));
+  const needsCallNext = appointment => Boolean(getRemoteConsultationMode(appointment)) && missedCallCount(appointment) >= MAX_UNANSWERED_APPOINTMENT_CALLS;
+  const saveRemoteCompletion = async form => {
+    if (!remoteCompletion || remoteSaving) return;
+    setRemoteSaving(true); setRemoteError('');
+    try {
+      await axios.patch(getAppointmentApiUrl(remoteCompletion), remoteConsultationPayload(form), { headers: getAuthHeaders() });
+      saveAppointmentCallProgress(callProgressKey(remoteCompletion), []);
+      setRemoteCompletion(null);
+      await fetchAppointments();
+    } catch (err) { setRemoteError(err.response?.data?.message || err.message || 'Could not complete appointment.'); }
+    finally { setRemoteSaving(false); }
+  };
+
   const [appointments, setAppointments] = useState([]);
   const [completed, setCompleted] = useState([]);
   const [cancelledAppointments, setCancelledAppointments] = useState([]);
@@ -3125,6 +3152,9 @@ const DoctorDashboard = () => {
         const isEmergB = String(b?.priority || "").toLowerCase() === "emergency" || b?.isEmergency;
         if (isEmergA && !isEmergB) return -1;
         if (!isEmergA && isEmergB) return 1;
+        const availableA = getPatientAvailability(a), availableB = getPatientAvailability(b);
+        const returnDifference = Number(availableB.status === 'available' && Boolean(availableB.returnedAt)) - Number(availableA.status === 'available' && Boolean(availableA.returnedAt));
+        if (returnDifference) return returnDifference;
 
         const dateA = getBookedAppointmentDateTime(a)?.getTime() || 0;
         const dateB = getBookedAppointmentDateTime(b)?.getTime() || 0;
@@ -3141,6 +3171,7 @@ const DoctorDashboard = () => {
 
       const formattedTodayAppointments = todayAppointments.map((apt) => formatAppointment(apt, undefined, availabilityRanges));
       setAppointments(formattedTodayAppointments);
+      setSelectedAppointment(current => current ? formattedTodayAppointments.find(item => item.id === current.id) || current : current);
       const serverActiveAppointment = formattedTodayAppointments.find((apt) => apt.status === "in-progress");
       if (serverActiveAppointment) {
         setActiveSession((current) => {
@@ -3227,15 +3258,19 @@ const DoctorDashboard = () => {
       debounce = setTimeout(() => { if (!disposed) fetchAppointments(true); }, 500);
     };
     fetchAppointments();
+    const refreshTimer = window.setInterval(() => { if (!disposed && document.visibilityState !== 'hidden') fetchAppointments(true); }, 10000);
     socketService.connect().then((connection) => {
       if (disposed) return;
       socket = connection;
       socket.on('queueUpdated', refresh);
+      socket.on('appointments:updated', refresh);
       socket.on('connect', refresh);
     }).catch((error) => console.warn('Doctor queue updates unavailable:', error.message));
     return () => {
       disposed = true;
       clearTimeout(debounce);
+      window.clearInterval(refreshTimer);
+      socket?.off('appointments:updated', refresh);
       socket?.off('queueUpdated', refresh);
       socket?.off('connect', refresh);
     };
@@ -3272,6 +3307,7 @@ const DoctorDashboard = () => {
   }, []);
 
   const openRemoteConsultation = (appointment) => {
+    if (needsCallNext(appointment)) { setError("Patient did not answer two calls. Use Next to continue the queue."); return; }
     const destination = appointmentCallNavigation(appointment);
     if (!destination) { setError('Patient details are missing for this call. Refresh the appointment queue.'); return; }
     if (activeSession?.status === 'break' || (activeAppt && activeAppt.id !== appointment.id)) {
@@ -3291,18 +3327,20 @@ const DoctorDashboard = () => {
 
   // Start appointment from consent modal
   const [queueActionBusy, setQueueActionBusy] = useState(false);
-  const handleNextPatient = async () => {
-    if (!selectedAppointment || queueActionBusy || activeSession?.appt || activeSession?.status === "break") return;
+  const handleNextPatient = async (appointment) => {
+    const target = appointment?.id ? appointment : selectedAppointment;
+    if (!target || queueActionBusy || activeSession?.appt || activeSession?.status === "break") return;
     setQueueActionBusy(true);
     try {
-      const payload = getAppointmentSource(selectedAppointment) === "walkin"
+      const payload = getAppointmentSource(target) === "walkin"
         ? { appointment_status: "skipped" }
         : { queue_status: "skipped" };
-      await axios.patch(getAppointmentApiUrl(selectedAppointment), payload, { headers: getAuthHeaders() });
-      const next = appointments.find((appt) => appt.id !== selectedAppointment.id &&
+      await axios.patch(getAppointmentApiUrl(target), payload, { headers: getAuthHeaders() });
+      saveAppointmentCallProgress(callProgressKey(target), []);
+      const next = appointments.find((appt) => appt.id !== target.id &&
         ["pending", "confirmed"].includes(appt.status) && !isAppointmentSlotExpired(appt, Date.now()));
-      setAppointments((current) => current.map((appt) => appt.id === selectedAppointment.id
-        ? { ...appt, status: "skipped", queueStatus: "skipped" } : appt));
+      setAppointments((current) => current.map((appt) => appt.id === target.id
+        ? { ...appt, status: "skipped", queueStatus: "skipped", availability: { ...appt.availability, status: 'unavailable', returnedAt: null, updatedRole: 'doctor' } } : appt));
       setSelectedAppointment(next || null);
       if (!next) { setShowConsentModal(false); setActiveQueueTab("next"); }
     } catch (err) {
@@ -3777,6 +3815,7 @@ const DoctorDashboard = () => {
   const pendingAppointments = visibleAppointments.filter(
     (appt) => appt.status === "pending"
   );
+  const returnedAppointments = visibleAppointments.filter(appt => ['pending', 'confirmed'].includes(appt.status) && appt.availability?.status === 'available' && appt.availability?.returnedAt);
   const upcomingAppointments = visibleAppointments.filter((appt) => appt.status !== "skipped");
   const inProgressAppointments = [
     ...(activeAppt ? [activeAppt] : []),
@@ -3795,7 +3834,7 @@ const DoctorDashboard = () => {
       : activeQueueTab === "in-progress"
         ? inProgressAppointments
         : pendingAppointments;
-  const nextPatient = activeAppt || pendingAppointments[0] || upcomingAppointments[0] || null;
+  const nextPatient = activeAppt || upcomingAppointments.find(item => ['pending', 'confirmed'].includes(item.status) && item.availability?.status !== 'unavailable') || null;
   const { totalToday, completedToday, pendingToday, completionPercent, averageConsultMinutes } = getDoctorDashboardSummary([
     ...visibleAppointments, ...visibleCancelledAppointments, ...completed,
   ], now);
@@ -3803,14 +3842,16 @@ const DoctorDashboard = () => {
     pendingAppointments.findIndex((item) => item.id === appointment?.id);
   const isQueueTurnAvailable = (appointment) =>
     (completedToday > 0 || skippedAppointments.length > 0) && getPendingQueueIndex(appointment) === 0;
-  const canStartAppointment = (appointment) =>
-    canStartConsultation({
+  const canStartAppointment = (appointment) => {
+    const firstReturned = returnedAppointments.find(item => String(item.clinicId) === String(appointment?.clinicId));
+    return (appointment?.isEmergency || !firstReturned || firstReturned.id === appointment?.id) && canStartConsultation({
       appointment,
       hasActiveConsultation: Boolean(activeAppt),
       isOnBreak: activeSession?.status === "break",
       slotStartReached: isAppointmentStartTimeReached(appointment, now),
       queueTurnReached: isQueueTurnAvailable(appointment),
     });
+  };
   const dateParts = new Date(now).toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -3884,6 +3925,13 @@ const DoctorDashboard = () => {
               <span>{dateParts[2]}</span>
             </div>
           </div>
+
+          {returnedAppointments.length > 0 && <div className="dd-returned-patient-notice" role="status" aria-live="polite">
+            <i className="bi bi-person-check-fill" aria-hidden="true" />
+            <div><strong><PortalText text="Reception: patient has returned" /></strong>
+              <p>{returnedAppointments.map(patient => `${getTokenLabel(patient)} - ${patient.name}`).join(' / ')}<PortalText text={activeAppt ? ' - priority after the current consultation' : ' - ready for the next consultation'} /></p>
+            </div>
+          </div>}
 
           <section className="dd-primary-column">
             <div className="dd-stat-grid">
@@ -3975,6 +4023,7 @@ const DoctorDashboard = () => {
                               : <PortalTemplate text={"Scheduled time: {0}"} values={[appt.bookedSlotTime || "Not available"]} />}
                           </span>
                           {['pending', 'confirmed'].includes(appt.status) && <span>{appt.checkedInAt || appt.queueStatus === 'waiting' ? <PortalText text={"Checked in ? Waiting"} /> : <PortalText text={"Not checked in"} />}</span>}
+                          {appt.availability?.status && <span className={appt.availability.status === 'unavailable' ? 'dd-patient-unavailable' : 'dd-patient-available'}><PortalText text={appt.availability.status === 'unavailable' ? 'Patient unavailable' : appt.availability.returnedAt ? 'Reception: patient returned — priority next' : 'Reception: patient available'} /></span>}
                           {appt.cancellationReason === 'PATIENT_LATE' && <span><PortalText text={"Patient did not arrive before the adjusted appointment deadline."} /></span>}
                           {appt.delayMinutes > 0 && appt.estimatedTime && (
                             <span><i className="bi bi-hourglass-split"></i><PortalText text={"Estimated: "} />{appt.estimatedTime} (+{appt.delayMinutes}m)</span>
@@ -3993,12 +4042,17 @@ const DoctorDashboard = () => {
                         </div>
                       </div>
                       <div className="dd-row-actions">
-                        {appt.status === "skipped" ? (
-                          <button type="button" onClick={() => handleStartFromConsent(appt)} disabled={queueActionBusy || !canStartThisAppointment}>
-                            <i className="bi bi-play-circle me-1" aria-hidden="true" /><PortalText text={" Start Consultation"} /></button>
+                        {(appt.availability?.status === 'unavailable' || needsCallNext(appt)) && ['pending', 'confirmed'].includes(appt.status) && <button type="button" className="ghost" disabled={queueActionBusy || Boolean(activeAppt)} onClick={() => handleNextPatient(appt)}><PortalText text="Next" /></button>}
+                        {activeQueueTab === "next" || appt.status === "skipped" ? (
+                          <div className="dd-next-consultation-action">
+                            <button type="button" className="dd-next-start-consultation" onClick={() => handleStartFromConsent(appt)} disabled={queueActionBusy || !canStartThisAppointment}>
+                              <i className="bi bi-play-circle me-1" aria-hidden="true" /><PortalText text="Start Consultation" />
+                            </button>
+                            {!canStartThisAppointment && <small><PortalText text={appt.availability?.status === 'unavailable' ? 'Reception: mark patient available to start' : activeAppt ? 'Complete the current consultation first' : activeSession?.status === 'break' ? 'End the break to start' : 'Waiting for consultation availability'} /></small>}
+                          </div>
                         ) : appt.status === "cancelled" ? (
                           <Badge bg="secondary">{appt.isNoShow ? <PortalText text={"Cancelled · No-show"} /> : <PortalText text={"Cancelled"} />}</Badge>
-                        ) : getRemoteConsultationMode(appt) && appt.status !== "completed" && (
+                        ) : getRemoteConsultationMode(appt) && !needsCallNext(appt) && appt.status !== "completed" && (
                           <button
                             type="button"
                             className="dd-call-action"
@@ -4007,7 +4061,7 @@ const DoctorDashboard = () => {
                             onClick={() => openRemoteConsultation(appt)}
                           >
                             <i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video-fill" : "bi-telephone-fill"}`}></i>
-                            {getRemoteConsultationMode(appt) === "video" ? <PortalText text={"Video Call"} /> : <PortalText text={"Voice Call"} />}
+                            {missedCallCount(appt) === 1 ? <PortalText text="Call again (2 of 2)" /> : getRemoteConsultationMode(appt) === "video" ? <PortalText text="Video Call" /> : <PortalText text="Voice Call" />}
                           </button>
                         )}
                         {appt.status === "completed" ? (
@@ -4083,6 +4137,7 @@ const DoctorDashboard = () => {
                     handleCompleteNow();
                     return;
                   }
+                  if (needsCallNext(nextPatient)) { handleNextPatient(nextPatient); return; }
                   const remoteMode = getRemoteConsultationMode(nextPatient);
                   if (remoteMode) {
                     openRemoteConsultation(nextPatient);
@@ -4094,12 +4149,14 @@ const DoctorDashboard = () => {
                   !nextPatient ||
                   activeSession?.status === "break" ||
                   (!activeAppt && !getRemoteConsultationMode(nextPatient) && !canStartAppointment(nextPatient)) ||
-                  (!activeAppt && Boolean(getRemoteConsultationMode(nextPatient)) && (!isAppointmentCallWindowOpen(nextPatient) || !nextPatient?.patientId))
+                  (!activeAppt && Boolean(getRemoteConsultationMode(nextPatient)) && !needsCallNext(nextPatient) && (!isAppointmentCallWindowOpen(nextPatient) || !nextPatient?.patientId))
                 }
               >
                 <i className={`bi ${activeAppt ? "bi-check-circle" : getRemoteConsultationMode(nextPatient) === "video" ? "bi-camera-video-fill" : getRemoteConsultationMode(nextPatient) === "voice" ? "bi-telephone-fill" : "bi-clipboard2-pulse"}`}></i>
                 {activeAppt
                   ? <PortalText text={"Complete Current"} />
+                  : needsCallNext(nextPatient) ? <PortalText text="Next" />
+                  : missedCallCount(nextPatient) === 1 ? <PortalText text="Call again (2 of 2)" />
                   : getRemoteConsultationMode(nextPatient) === "video"
                   ? <PortalText text={"Video Call"} />
                   : getRemoteConsultationMode(nextPatient) === "voice"
@@ -4221,6 +4278,7 @@ const DoctorDashboard = () => {
 
           <div className="dd-patient-vitals-section mb-4">
             <EmergencyReason appointment={selectedAppointment} />
+            {selectedAppointment?.availability?.status && <p role="status" className={selectedAppointment.availability.status === 'unavailable' ? 'dd-patient-unavailable' : 'dd-patient-available'}><PortalText text={selectedAppointment.availability.status === 'unavailable' ? 'Reception: patient unavailable. Move this appointment to Next until the patient returns.' : selectedAppointment.availability.returnedAt ? 'Reception: patient returned — priority next' : 'Reception: patient available'} /></p>}
             <h6 className="dd-patient-summary-title mb-3"><PortalText text={"Patient Vitals"} /></h6>
             {selectedAppointment && <DoctorVitalsButton key={selectedAppointment.id} appointment={selectedAppointment} onSaved={(vitals) => {
               setSelectedAppointment((current) => current ? { ...current, vitals } : current);
@@ -4280,6 +4338,7 @@ const DoctorDashboard = () => {
         </Modal.Footer>
       </Modal>
 
+      {remoteCompletion && <CompleteModal show onHide={() => { if (!remoteSaving) setRemoteCompletion(null); }} form={remoteForm} setForm={setRemoteForm} onSave={saveRemoteCompletion} appointment={remoteCompletion} patientName={remoteCompletion.name || 'Patient'} title="Check & Complete Appointment" saveLabel="Save & Complete" saving={remoteSaving} saveError={remoteError} />}
       {/* COMPLETE MODAL */}
       <CompleteModal
         show={showCompleteModal}

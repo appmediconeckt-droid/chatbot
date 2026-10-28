@@ -34,13 +34,35 @@ export function ReceptionistAppointments() {
  return <StaffAppointments clinicId={clinic} />;
 }
 export function ReceptionistLiveQueue() {
-  const { liveData: data, clinics, clinic, error } = useOutletContext();
+  const { liveData: data, clinics, clinic, error, refreshQueue } = useOutletContext();
   const [selected, setSelected] = useState(null);
+  const [availabilityBusy, setAvailabilityBusy] = useState('');
+  const [availabilityNotice, setAvailabilityNotice] = useState('');
+  const [availabilityError, setAvailabilityError] = useState('');
+  const updateAvailability = async (row, availability) => {
+    setAvailabilityBusy(patientKey(row)); setAvailabilityNotice(''); setAvailabilityError('');
+    try {
+      const result = await axios.patch(`/api/staff/appointments/${encodeURIComponent(row.id)}/availability`, { source: row.source, availability });
+      setAvailabilityNotice(result.data.message); refreshQueue();
+    } catch (err) { setAvailabilityError(err.response?.data?.message || 'Patient availability could not be updated. Please try again.'); }
+    finally { setAvailabilityBusy(''); }
+  };
+  const availabilityActions = row => <div className="rec-availability-actions">
+    <span className={`rec-badge ${row.availability?.status === 'unavailable' ? 'skipped' : 'waiting'}`}><PortalText text={row.availability?.status === 'unavailable' ? 'Patient unavailable' : row.availability?.returnedAt ? 'Returned — priority next' : row.availability?.status === 'available' ? 'Patient available' : 'Availability not confirmed'} /></span>
+    <button className="rec-button compact" disabled={Boolean(availabilityBusy)} onClick={() => updateAvailability(row, row.availability?.status === 'available' ? 'unavailable' : 'available')}><PortalText text={availabilityBusy === patientKey(row) ? 'Saving...' : row.availability?.status === 'available' ? 'Mark unavailable' : 'Patient available'} /></button>
+    {!row.availability?.status && <button className="rec-button compact" disabled={Boolean(availabilityBusy)} onClick={() => updateAvailability(row, 'unavailable')}><PortalText text="Mark unavailable" /></button>}
+  </div>;
   if (!data) return <Loading error={error} />;
   const patient = data.appointments.find(row => patientKey(row) === selected);
+  const availabilityPatients = [...data.waiting, ...(data.pendingPatients || []), ...data.currentPatients.filter(row => row.queueStatus === 'called' && !row.timing?.startedAt)];
   return <><div className="rec-queue-launch"><div><h3><PortalText text={"Display the live queue on your LED"} /></h3><p><PortalText text={"Open your doctor's clinic token screen from the front desk."} /></p></div><Link className="rec-button primary" to="/receptionist/led-display"><ExternalLink size={16} /><PortalText text={"Open LED Display"} /></Link></div><section className="rec-card"><div className="rec-card-heading"><div><h2><PortalText text={"Doctor's live display"} /></h2><p><PortalText text={"Today's current patients, tokens and consultation status."} /></p></div><span className="rec-live-label"><span className="rec-dot" /><PortalText text={"Live / "} />{data.date}</span></div><CurrentCheckups data={data} clinics={clinics} onView={setSelected} />
     {data.timing ? <div className="rec-queue-notice"><Clock3 size={20} /><div><strong>{data.timing.breakInfo?.headline}</strong><p><PortalText text={"Estimated wait: "} />{data.timing.estimatedWaitLabel || (data.timing.estimatedWaitMinutes != null ? `${data.timing.estimatedWaitMinutes} min` : <PortalText text={"Updating estimate"} />)}{data.timing.breakInfo?.expectedStart && ` / Expected start: ${data.timing.breakInfo.expectedStart}`}</p></div></div> : !clinic && <div className="rec-queue-notice"><Building2 size={20} /><p><PortalText text={"Select a clinic above to see its wait estimate and doctor break information."} /></p></div>}</section>
     <section className="rec-card"><div className="rec-card-heading"><div><h2><PortalText text={"Waiting queue "} /><span className="rec-count">{data.waiting.length}</span></h2><p><PortalText text={"Emergency patients appear first, followed by appointment time."} /></p></div></div>{data.waiting.length ? <div className="rec-waiting-list">{data.waiting.map((row, index) => <article className="rec-waiting-row" key={patientKey(row)}><span className="rec-queue-position">{index + 1}</span><span className="rec-token">#{row.token ?? '--'}</span><div className="rec-waiting-name"><strong>{row.patientName}</strong><small>{clinicName(clinics, row.clinicId)} / {row.time || <PortalText text={"Not scheduled"} />}</small></div>{row.emergency && <span className="rec-emergency-icon"><AlertCircle size={17} /><PortalText text={"Emergency"} /></span>}<Badge value={row.queueStatus} /><button className="rec-button compact" onClick={() => setSelected(patientKey(row))}><PortalText text={"View "} /><ArrowUpRight size={14} /></button></article>)}</div> : <Empty title="No patients waiting" description="New arrivals and bookings will appear in the queue here." />}</section>
+    {availabilityNotice && <p className="rec-settings-success" role="status">{availabilityNotice}</p>}
+    {availabilityError && <p className="rec-alert" role="alert">{availabilityError}</p>}
+    <section className="rec-card"><div className="rec-card-heading"><div><h2><PortalText text="Patient availability" /></h2><p><PortalText text="Inform the doctor when a patient is absent. Mark a returned patient available to prioritise them after the current consultation." /></p></div></div>
+      {availabilityPatients.length ? <div className="rec-waiting-list">{availabilityPatients.map(row => <article className="rec-waiting-row" key={`availability-${patientKey(row)}`}><span className="rec-token">#{row.token ?? '--'}</span><div className="rec-waiting-name"><strong>{row.patientName}</strong><small>{clinicName(clinics, row.clinicId)} / <PortalText text={row.queueStatus === 'skipped' || row.status === 'skipped' ? 'Pending — moved to Next' : 'Waiting'} /></small></div>{availabilityActions(row)}</article>)}</div> : <Empty title="No pending patients" />}
+    </section>
     <PatientDialog patient={patient} clinics={clinics} doctorName={data?.doctor?.fullName || data?.doctor?.name} close={() => setSelected(null)} />
   </>;
 }

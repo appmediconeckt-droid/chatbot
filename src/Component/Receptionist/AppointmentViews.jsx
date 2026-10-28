@@ -2,6 +2,7 @@ import EmergencyReason from '../common/EmergencyReason.jsx';
 import React, { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import PatientVitals, { canRecordVitals } from './PatientVitals.jsx';
+import PatientAvailabilityControl from './PatientAvailabilityControl.jsx';
 import { PortalText, PortalElement } from '../common/PortalTranslation';
 import { X, ArrowUpRight } from 'lucide-react';
 import { displayTime, statusLabel, clinicName, patientKey } from './receptionistView.js';
@@ -41,7 +42,7 @@ export function VitalsDialog({ patient, close, onSaved }) {
     </>}
   </dialog>;
 }
-export function AppointmentTable({ rows, clinics, onView, onCancelAppointment, cancelBusy, onVitalsSaved }) {
+export function AppointmentTable({ rows, clinics, onView, onCancelAppointment, cancelBusy, onVitalsSaved, onAvailabilitySaved }) {
   const [vitalsKey, setVitalsKey] = useState(null);
   const [savedVitals, setSavedVitals] = useState({});
   const context = useOutletContext();
@@ -51,10 +52,10 @@ export function AppointmentTable({ rows, clinics, onView, onCancelAppointment, c
     return saved && !(Date.parse(row.vitals?.recorded_at) > Date.parse(saved.recorded_at)) ? { ...row, vitals: saved } : row;
   };
   const selectedVitalsPatient = rows.find(row => patientKey(row) === vitalsKey);
-  return <div className="rec-table-scroll"><table className="rec-table"><thead><tr><th><PortalText text={"Patient"} /></th><th><PortalText text="Phone number" /></th>{isReceptionist && <th><PortalText text="Vitals" /></th>}<th><PortalText text={"Token"} /></th><th><PortalText text={"Appointment"} /></th><th><PortalText text={"Clinic / Hospital"} /></th><th><PortalText text={"Booking"} /></th><th><PortalText text={"Queue status"} /></th><th><span className="rec-sr-only"><PortalText text={"Details"} /></span></th></tr></thead><tbody>{rows.map(row => <tr key={patientKey(row)}>
+  return <div className="rec-table-scroll"><table className="rec-table"><thead><tr><th><PortalText text={"Patient"} /></th><th><PortalText text="Phone number" /></th>{isReceptionist && <><th><PortalText text="Vitals" /></th><th><PortalText text="Patient availability" /></th></>}<th><PortalText text={"Token"} /></th><th><PortalText text={"Appointment"} /></th><th><PortalText text={"Clinic / Hospital"} /></th><th><PortalText text={"Booking"} /></th><th><PortalText text={"Queue status"} /></th><th><span className="rec-sr-only"><PortalText text={"Details"} /></span></th></tr></thead><tbody>{rows.map(row => <tr key={patientKey(row)}>
     <td><div className="rec-table-patient"><span className="rec-patient-avatar">{row.patientName.slice(0, 1).toUpperCase()}</span><div><strong>{row.patientName}</strong><small>{row.phoneNumber || <PortalText text={"Phone not recorded"} />}</small>{row.emergency && <Badge emergency />}</div></div></td>
     <td>{row.phoneNumber || <PortalText text="Not recorded" />}</td>
-    {isReceptionist && <td>{canRecordVitals(row) ? <button type="button" className="rec-button primary compact" onClick={() => setVitalsKey(patientKey(row))}><PortalText text={withSavedVitals(row).vitals ? "Edit vitals" : "Add vitals"} /></button> : <span><PortalText text="Read-only" /></span>}</td>}
+    {isReceptionist && <><td className="rec-vitals-cell"><div className="rec-patient-intake-actions">{canRecordVitals(row) ? <button type="button" className="rec-button primary compact" onClick={() => setVitalsKey(patientKey(row))}><PortalText text={withSavedVitals(row).vitals ? "Edit vitals" : "Add vitals"} /></button> : <span><PortalText text="Read-only" /></span>}</div></td><td className="rec-availability-cell"><PatientAvailabilityControl key={patientKey(row)} patient={row} onSaved={onAvailabilitySaved} /></td></>}
     <td><span className="rec-token">{row.token != null ? `#${row.token}` : '--'}</span></td><td><small>{row.date}</small><strong>{row.time || <PortalText text={"Not scheduled"} />}</strong><small>{row.source === 'walkin' ? <PortalText text={"Walk-in patient"} /> : <PortalText text={"Online booking"} />}</small></td><td>{clinicName(clinics, row.clinicId)}</td><td><Badge value={row.status} /></td><td><Badge value={row.queueStatus} /></td><td><div className="rec-appointment-actions"><button className="rec-button compact" onClick={() => onView(patientKey(row))}><PortalText text={"View "} /><ArrowUpRight size={14} /></button>{onCancelAppointment && canCancelAppointment(row) && <button className="rec-button compact" disabled={Boolean(cancelBusy)} onClick={() => onCancelAppointment(row)}><PortalText text={cancelBusy === patientKey(row) ? "Cancelling..." : "Cancel Appointment"} /></button>}</div></td>
   </tr>)}</tbody></table><VitalsDialog patient={selectedVitalsPatient ? withSavedVitals(selectedVitalsPatient) : null} close={() => setVitalsKey(null)} onSaved={vitals => {
     setSavedVitals(current => ({ ...current, [vitalsKey]: vitals }));
