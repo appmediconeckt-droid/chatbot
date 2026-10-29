@@ -453,7 +453,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
     if (requestId && isOnlinePayment(paymentMethod)) {
       setBooking(true); setBookError('');
       try { await payForAppointment(requestId, paymentMethod); setStep('success'); }
-      catch (error) { if (error.code !== 'PAYMENT_CANCELLED') setBookError(error.response?.data?.message || error.message); }
+      catch (error) { if (error.slotReleased) setRequestId(''); if (error.code !== 'PAYMENT_CANCELLED') setBookError(error.response?.data?.message || error.message); }
       finally { setBooking(false); }
       return;
     }
@@ -531,6 +531,7 @@ const AppointmentBookingModal = ({ doctorData, onClose }) => {
       if (isOnlinePayment(paymentMethod)) await payForAppointment(appointmentId, paymentMethod);
       setStep('success');
     } catch (err) {
+      if (err.slotReleased) setRequestId('');
       if (err.code !== 'PAYMENT_CANCELLED') setBookError(err.response?.data?.message || err.message || 'Failed to book appointment. Please try again.');
     } finally {
       setBooking(false);

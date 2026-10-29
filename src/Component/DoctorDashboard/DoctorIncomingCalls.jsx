@@ -20,7 +20,7 @@ export default function DoctorIncomingCalls({ doctorId, user }) {
     const next = data.pendingRequests?.[0] || null;
     setIncoming(previous => previous?.callId === next?.callId ? previous : next);
   }, ["incoming_call_request", "call_rejected", "call_cancelled", "call_ended", "call_expired", "call_missed", "call_accepted"], enabled,
-  { allowHidden: true, pollWhileConnected: true, fallbackIntervalMs: 3000, refreshKey: String(doctorId) });
+  { allowHidden: true, refreshKey: String(doctorId) });
 
   useEffect(() => {
     if (incoming && enabled && !active) startRinging();

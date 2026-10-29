@@ -14,22 +14,35 @@ test('a configured list that omits Wallet cannot hide a Wallet returned in avail
   assert.ok(result.displayMethods.some(method => method.id === 'wallet'));
   assert.ok(result.methods.some(method => method.id === 'wallet'));
 });
-test('old test-mode APIs that omit Wallet still produce a visible Wallet choice with its restriction', () => {
+test('test-mode APIs that omit Wallet still produce a selectable internal Wallet choice', () => {
   const result = normalizeProviderPaymentOptions({ mode: 'test', currency: 'INR', methods: ['credit_card', 'upi'], configuredMethods: ['credit_card', 'upi'] });
-  assert.match(result.displayMethods.find(method => method.id === 'wallet').unavailableReason, /test bookings/);
-  assert.ok(!result.methods.some(method => method.id === 'wallet'));
+  assert.equal(result.displayMethods.find(method => method.id === 'wallet').unavailableReason, '');
+  assert.ok(result.methods.some(method => method.id === 'wallet'));
 });
-test('currency and server availability restrictions stay visible and cannot be selected', () => {
-  for (const data of [{ currency: 'EUR' }, { currency: 'INR', unavailableMethods: { wallet: 'Temporarily unavailable' } }]) {
+test('unsupported currency restrictions stay visible and cannot be selected', () => {
+  for (const data of [{ currency: 'EUR' }, { currency: 'USD' }]) {
     const result = normalizeProviderPaymentOptions({ mode: 'live', methods: ['wallet', 'cash'], ...data });
     assert.ok(result.displayMethods.some(method => method.id === 'wallet' && method.unavailableReason));
     assert.ok(!result.methods.some(method => method.id === 'wallet'));
   }
 });
-test('unknown environment never enables an unconfirmed Wallet payment and repeated lists never duplicate it', () => {
+test('Wallet does not depend on gateway mode and repeated lists never duplicate it', () => {
   const unknown = normalizeProviderPaymentOptions({ methods: [] });
-  assert.match(unknown.displayMethods.find(method => method.id === 'wallet').unavailableReason, /confirmed/);
-  assert.equal(unknown.methods.length, 0);
+  assert.equal(unknown.displayMethods.find(method => method.id === 'wallet').unavailableReason, '');
+  assert.ok(unknown.methods.some(method => method.id === 'wallet'));
   const duplicate = normalizeProviderPaymentOptions({ mode: 'live', methods: ['wallet', 'wallet'], configuredMethods: ['wallet', 'wallet'] });
   assert.equal(duplicate.displayMethods.filter(method => method.id === 'wallet').length, 1);
+});
+
+test('legacy API Wallet restrictions cannot disable the internal payment option', () => {
+  for (const mode of ['test', 'live', undefined]) {
+    const input = { mode, currency: 'INR', methods: ['cash'], configuredMethods: ['cash'], unavailableMethods: {
+      wallet: 'Wallet payments are not available for test bookings.', upi: 'UPI is unavailable.',
+    } };
+    const result = normalizeProviderPaymentOptions(input);
+    assert.ok(result.methods.some(method => method.id === 'wallet'));
+    assert.equal(result.displayMethods.find(method => method.id === 'wallet').unavailableReason, '');
+    assert.equal(result.unavailableMethods.upi, 'UPI is unavailable.');
+    assert.ok(input.unavailableMethods.wallet, 'normalization must not mutate the API response');
+  }
 });

@@ -52,8 +52,27 @@ export function loadPaymentCheckout() {
 }
 
 export async function payForAppointment(appointmentId, method) {
+  try {
+    return await performAppointmentPayment(appointmentId, method);
+  } catch (error) {
+    // Release only after the server checks for a captured/authorized payment.
+    // This also covers checkout script failures and order creation errors.
+    try {
+      const { data } = await api.post(`/api/payments/appointments/${appointmentId}/release`);
+      if (data?.paid) return data;
+      if (data?.released) {
+        error.slotReleased = true;
+        error.message = 'Payment was not completed. Your selected slot is available again. Please retry payment.';
+      }
+    } catch { /* Keep the original error if payment status cannot be established. */ }
+    throw error;
+  }
+}
+
+async function performAppointmentPayment(appointmentId, method) {
   if (method === 'wallet') {
     const { data } = await api.post(`/api/payments/appointments/${appointmentId}/internal`, { method: 'wallet' });
+    if (!data?.paid) throw new Error('Wallet payment was not successful. Your appointment has not been booked.');
     return data;
   }
   await loadPaymentCheckout();
@@ -79,7 +98,17 @@ export async function payForAppointment(appointmentId, method) {
           reject(new Error(error.response?.data?.message || error.message || 'Payment confirmation is pending.'));
         }
       },
-      modal: { ondismiss: () => { if (!confirming) reject(new Error('Payment was not completed. Your appointment is reserved and unpaid. You can retry payment.')); } },
+      modal: { ondismiss: async () => {
+        if (confirming) return;
+        confirming = true;
+        // UPI app redirects can close Checkout without delivering its handler.
+        // Ask the server to verify the order before treating this as cancelled.
+        try {
+          const { data } = await api.post(`/api/payments/appointments/${appointmentId}/reconcile`);
+          if (data?.paid) { resolve(data); return; }
+        } catch { /* An unverified payment must never confirm a booking. */ }
+        reject(new Error('Payment is not confirmed yet. Refresh My Appointments after payment succeeds, or retry payment.'));
+      } },
       theme: { color: '#004ac6' },
     });
     checkout.open();

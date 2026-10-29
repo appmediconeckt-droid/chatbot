@@ -40,3 +40,18 @@ test('cancelled history is fetched explicitly for the selected doctor and merged
   assert.ok(calls.every((call) => call.params.doctor_id === 'doctor'));
   assert.ok(calls.some((call) => call.params.appointment_status === 'cancelled'));
 });
+
+test('empty online appointments do not remove a real cancelled walk-in record', async () => {
+  const client = { get: async url => ({ data: url.endsWith('walkin-appointments')
+    ? { success: true, data: [{ id: 'walkin-1', appointment_status: 'cancelled', queue_status: 'canceled' }] }
+    : [] }) };
+  const rows = await loadDoctorAppointmentFeed(client, '/api', 'doctor', {});
+  const cancelled = getCancelledAppointmentHistory(rows);
+  assert.equal(cancelled.length, 1);
+  assert.equal(cancelled[0].__appointmentSource, 'walkin');
+});
+
+test('a fresh empty feed clears cancellation history after both sources are deleted', async () => {
+  const client = { get: async () => ({ data: [] }) };
+  assert.deepEqual(getCancelledAppointmentHistory(await loadDoctorAppointmentFeed(client, '/api', 'doctor', {})), []);
+});

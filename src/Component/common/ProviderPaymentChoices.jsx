@@ -13,7 +13,7 @@ export default function ProviderPaymentChoices({ options, value, onChange, disab
   ];
   return <div className="abm-pay-card provider-payment-choices">
     <h3>Choose Payment Method</h3>
-    {options.mode === "test" && <p role="status">Razorpay test mode: use test payment details in secure checkout. No real money is charged.</p>}
+    {options.mode === "test" && value !== 'wallet' && <p role="status">Razorpay test mode: use test payment details in secure checkout. No real money is charged.</p>}
     {options.loading && <p role="status">Loading payment options...</p>}
     {options.error && <p role="alert">{options.error}</p>}
     {!options.loading && !options.error && !options.methods.length && <p role="status">This provider has no payment method available yet.</p>}
@@ -30,7 +30,9 @@ export default function ProviderPaymentChoices({ options, value, onChange, disab
           {available.length > 1 && <div className="provider-card-types" role="group" aria-label="Card type">{available.map(method => <button key={method.id} type="button" disabled={disabled} aria-pressed={value === method.id} onClick={() => onChange(method.id)}>{method.label}</button>)}</div>}
           <p>{options.mode === 'test' ? 'Continue to Razorpay Checkout and use the official test card details.' : 'Continue with “Enter card details & pay” to enter your card number, expiry and CVV in secure checkout.'}</p>
         </div>}
-        {group.id === 'upi' && selected && <div className="provider-payment-expanded"><h4>Choose your UPI app</h4><UpiAppChoices value={upiApp} disabled={disabled} onChange={app => { setUpiApp(app); onChange('upi'); }} />{upiApp && <p>{upiApps.find(([id]) => id === upiApp)?.[1]} selected. {options.mode === 'test' ? 'Use the UPI test options offered by Razorpay Checkout. Test availability depends on your account.' : 'Continue to secure UPI checkout and approve the payment in your app.'}</p>}</div>}
+        {group.id === 'upi' && selected && <div className="provider-payment-expanded">{options.mode === 'test'
+          ? <p>In Razorpay test checkout, enter UPI ID <strong>success@razorpay</strong> for a successful test payment, or <strong>failure@razorpay</strong> to test failure. No real money is charged.</p>
+          : <><h4>Choose your UPI app</h4><UpiAppChoices value={upiApp} disabled={disabled} onChange={app => { setUpiApp(app); onChange('upi'); }} />{upiApp && <p>{upiApps.find(([id]) => id === upiApp)?.[1]} selected. Continue to secure UPI checkout and approve the payment in your app.</p>}</>}</div>}
       </section>;
     })}</div>
     {value === 'wallet' && options.methods.some(method => method.id === 'wallet' && !method.unavailableReason) && <p>The appointment fee will be deducted from your wallet and recorded in your doctor's earnings wallet.</p>}

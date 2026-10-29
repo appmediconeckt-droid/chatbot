@@ -2258,6 +2258,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       setBookingDate("");
       setBookingNotes("");
     } catch (error) {
+      if (error.slotReleased) setConsultantBookingId('');
       if (error.code === 'PAYMENT_CANCELLED') return;
       console.error("❌ Error booking appointment:", error);
         alert(error?.response?.data?.message || error.message || t('appointment_booking_failed'));

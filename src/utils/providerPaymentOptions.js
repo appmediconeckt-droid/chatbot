@@ -13,12 +13,11 @@ export function normalizeProviderPaymentOptions(data = {}) {
   const unavailableMethods = { ...data.unavailableMethods };
   if (currency !== 'INR') {
     unavailableMethods.wallet = 'Wallet payments currently support INR appointments only.';
-  } else if (data.mode === 'test') {
-    unavailableMethods.wallet ||= 'Wallet payments are not available for test bookings. Wallet is available for live INR appointments.';
-  } else if (data.mode === 'live' && !unavailableMethods.wallet) {
+  } else {
+    // Wallet is an internal payment method. Older responses may still include
+    // the removed test-mode/provider restriction; it must not disable Wallet.
+    delete unavailableMethods.wallet;
     available.add('wallet');
-  } else if (!available.has('wallet') && !unavailableMethods.wallet) {
-    unavailableMethods.wallet = 'Wallet payment availability could not be confirmed. Please refresh payment options.';
   }
   const choices = ids => Array.from(ids, id => ({ method: id, id, label: labels[id][0], icon: labels[id][1], unavailableReason: unavailableMethods[id] || '' }));
   return { ...data, currency, unavailableMethods,

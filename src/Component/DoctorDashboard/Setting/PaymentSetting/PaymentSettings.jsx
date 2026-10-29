@@ -29,7 +29,6 @@ export default function PaymentSettings({ onBack, theme = 'doctor' }) {
   const [saved, setSaved] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [availabilityNotice, setAvailabilityNotice] = useState('');
-  const [walletUnavailableReason, setWalletUnavailableReason] = useState('');
   const cardsEnabled = methods.some(method => ['credit_card', 'debit_card'].includes(method));
   const bankStarted = Object.values(bank).some(value => String(value || '').trim());
   useEffect(() => {
@@ -48,8 +47,7 @@ export default function PaymentSettings({ onBack, theme = 'doctor' }) {
       if (!active) return;
       if (!data?.success || !Array.isArray(data.methods)) throw new Error('Invalid payment settings response');
       setMethods(normalizePaymentMethods(data.methods));
-      setWalletUnavailableReason(data.currency && data.currency !== 'INR' ? 'Wallet payments currently support INR appointments only.' : data.unavailableMethods?.wallet || '');
-      setAvailabilityNotice([...new Set(Object.values(data.unavailableMethods || {}))].join(' '));
+      setAvailabilityNotice([...new Set(Object.entries(data.unavailableMethods || {}).filter(([method]) => method !== 'wallet').map(([, reason]) => reason))].join(' '));
       setBank({ ...EMPTY_BANK, ...data.bankAccount });
       setConfirmAccount(data.bankAccount?.accountNumber || '');
       setUpiId(data.upiId || '');
@@ -73,8 +71,7 @@ export default function PaymentSettings({ onBack, theme = 'doctor' }) {
       const savedMethods = normalizePaymentMethods(data.methods);
       if (savedMethods.length !== methods.length || methods.some(method => !savedMethods.includes(method))) throw new Error('Selected payment methods were not saved. Please try again.');
       setMethods(savedMethods);
-      setWalletUnavailableReason(data.currency && data.currency !== 'INR' ? 'Wallet payments currently support INR appointments only.' : data.unavailableMethods?.wallet || '');
-      setAvailabilityNotice([...new Set(Object.values(data.unavailableMethods || {}))].join(' '));
+      setAvailabilityNotice([...new Set(Object.entries(data.unavailableMethods || {}).filter(([method]) => method !== 'wallet').map(([, reason]) => reason))].join(' '));
       // Cache only enabled methods; receiving bank details stay on the server.
       try {
         const profile = JSON.parse(localStorage.getItem('userData') || '{}');
@@ -94,15 +91,15 @@ export default function PaymentSettings({ onBack, theme = 'doctor' }) {
     </header>
     {!loaded && !error && <p role="status" className="pps-notice">Loading payment settings...</p>}
     {loaded && availabilityNotice && <p role="status" className="pps-notice">{availabilityNotice} Your selected methods can still be saved.</p>}
-    <fieldset disabled={!loaded || saving} className="pps-body">
-      <div className="pps-section-heading"><h3>Accepted payment methods</h3><p>Select the methods you accept, then save your settings.</p></div>
-      <section className={`pps-method-card pps-payment-option pps-wallet-option ${loaded && !walletUnavailableReason ? 'is-enabled' : ''}`} aria-labelledby="pps-wallet-title">
+      <section className="pps-method-card pps-payment-option pps-wallet-option is-enabled" aria-labelledby="pps-wallet-title">
         <div className="pps-method-heading">
           <span className="pps-method-icon"><i className="fa-solid fa-wallet" aria-hidden="true" /></span>
-          <div className="pps-method-copy"><h3 id="pps-wallet-title">Patient Wallet</h3><p>{walletUnavailableReason || 'Always enabled for live INR appointments. Patients can pay from their wallet even when card, UPI and cash are disabled. Payments appear in your Earnings wallet.'}</p></div>
-          <span className="pps-wallet-status">{!loaded ? 'Checking availability' : walletUnavailableReason ? 'Unavailable' : 'Always enabled'}</span>
+          <div className="pps-method-copy"><h3 id="pps-wallet-title">Patient Wallet</h3><p>Always enabled for INR appointments in both test and live mode. Patients pay from their own wallet balance. Card, UPI, cash and receiving bank settings do not control Wallet payments.</p></div>
+          <span className="pps-wallet-status">Always enabled</span>
         </div>
       </section>
+    <fieldset disabled={!loaded || saving} className="pps-body">
+      <div className="pps-section-heading"><h3>Accepted payment methods</h3><p>Select the methods you accept, then save your settings.</p></div>
       {METHOD_OPTIONS.map(option => {
         const [id, label, description, Icon] = option;
         const checked = id === 'card' ? cardsEnabled : methods.includes(id);

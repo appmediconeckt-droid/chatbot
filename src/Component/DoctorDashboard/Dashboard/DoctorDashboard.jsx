@@ -3113,7 +3113,9 @@ const DoctorDashboard = () => {
   );
 
   // Fetch appointments from API
+  const appointmentFetchVersion = useRef(0);
   const fetchAppointments = async (silent = false) => {
+    const fetchVersion = ++appointmentFetchVersion.current;
     try {
       if (!silent) setLoading(true);
       setError(null);
@@ -3170,6 +3172,8 @@ const DoctorDashboard = () => {
       });
 
       const formattedTodayAppointments = todayAppointments.map((apt) => formatAppointment(apt, undefined, availabilityRanges));
+      // A refresh after deletion must win over any older request still running.
+      if (fetchVersion !== appointmentFetchVersion.current) return;
       setAppointments(formattedTodayAppointments);
       setSelectedAppointment(current => current ? formattedTodayAppointments.find(item => item.id === current.id) || current : current);
       const serverActiveAppointment = formattedTodayAppointments.find((apt) => apt.status === "in-progress");
@@ -3206,6 +3210,7 @@ const DoctorDashboard = () => {
         console.warn("Follow-up history could not be loaded separately:", followUpError);
       }
 
+      if (fetchVersion !== appointmentFetchVersion.current) return;
       setCompleted(
         completedList
           .filter((apt) => normalizeAppointmentStatus(apt) === "completed")
@@ -3241,10 +3246,11 @@ const DoctorDashboard = () => {
           })
       );
     } catch (err) {
+      if (fetchVersion !== appointmentFetchVersion.current) return;
       console.error('Error fetching appointments:', err);
       setError(err.response?.data?.message || err.response?.data?.error || 'Error loading appointments. Please check if the server is running.');
     } finally {
-      setLoading(false);
+      if (fetchVersion === appointmentFetchVersion.current) setLoading(false);
     }
   };
 
@@ -3268,6 +3274,7 @@ const DoctorDashboard = () => {
     }).catch((error) => console.warn('Doctor queue updates unavailable:', error.message));
     return () => {
       disposed = true;
+      appointmentFetchVersion.current++;
       clearTimeout(debounce);
       window.clearInterval(refreshTimer);
       socket?.off('appointments:updated', refresh);

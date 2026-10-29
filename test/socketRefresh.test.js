@@ -3,22 +3,26 @@ import assert from 'node:assert/strict';
 import { EventEmitter } from 'node:events';
 import { subscribeRefresh } from '../src/services/socketRefresh.js';
 
-test('incoming calls recover in a background tab even when a connected socket misses an event', async t => {
+test('incoming calls use background socket events and poll only while disconnected', async t => {
   t.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
   const previousDocument = globalThis.document;
   globalThis.document = { visibilityState: 'hidden', addEventListener() {}, removeEventListener() {} };
   const socket = new EventEmitter();
   let calls = 0;
-  const stop = subscribeRefresh({ connect: async () => socket, isConnected: () => true }, async () => { calls++; }, ['incoming_call_request'], { allowHidden: true, pollWhileConnected: true, fallbackIntervalMs: 3000 });
+  let connected = true;
+  const stop = subscribeRefresh({ connect: async () => socket, isConnected: () => connected }, async () => { calls++; }, ['incoming_call_request'], { allowHidden: true });
   t.after(() => { stop(); globalThis.document = previousDocument; });
   await Promise.resolve();
   assert.equal(calls, 1);
   socket.emit('incoming_call_request');
   t.mock.timers.tick(100); await Promise.resolve();
   assert.equal(calls, 2);
-  t.mock.timers.tick(3000); await Promise.resolve();
+  t.mock.timers.tick(60_000); await Promise.resolve();
+  assert.equal(calls, 2, 'an idle connected doctor must not make repeated requests');
+  connected = false;
+  t.mock.timers.tick(15_000); await Promise.resolve();
   assert.equal(calls, 3);
-  stop(); t.mock.timers.tick(6000);
+  stop(); t.mock.timers.tick(60_000);
   assert.equal(calls, 3);
 });
 
