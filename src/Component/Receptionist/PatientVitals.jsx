@@ -6,6 +6,7 @@ import { canRecordVitals } from './vitalsAppointments.jsx';
 export { canRecordVitals } from './vitalsAppointments.jsx';
 
 const fields = [
+  ['blood_group', 'Blood group', 'Select the confirmed blood group'],
   ['blood_pressure', 'Blood pressure (mmHg)', 'Blood pressure monitor: enter systolic/diastolic, e.g. 120/80'],
   ['pulse', 'Pulse (beats/min)', 'Record the measured heart rate', 1, 400, 1],
   ['temperature', 'Temperature (°C)', 'Record the thermometer reading in Celsius', 20, 50, 0.1],
@@ -21,7 +22,7 @@ const parse = value => {
 };
 function canonical(value) {
   const v = parse(value);
-  return { ...v, blood_pressure: v.blood_pressure ?? v.bp ?? v.bloodPressure ?? '', pulse: v.pulse ?? v.heartRate ?? v.heart_rate ?? '' };
+  return { ...v, blood_group: v.blood_group ?? v.bloodGroup ?? '', blood_pressure: v.blood_pressure ?? v.bp ?? v.bloodPressure ?? '', pulse: v.pulse ?? v.heartRate ?? v.heart_rate ?? '' };
 }
 export function VitalsSummary({ vitals }) {
   const values = canonical(vitals);
@@ -63,7 +64,12 @@ export default function PatientVitals({ patient, editable, onSaved }) {
   return <section className="patient-vitals"><h3><PortalText text="Patient vitals / Initial measurements" /></h3>
     {!patient.id && <p role="status"><PortalText text="Select a patient appointment above to save these readings." /></p>}
     <p><PortalText text="Record only measurements taken by trained staff or the doctor. Leave unmeasured fields blank. The doctor reviews readings and performs the clinical examination." /></p>
-    {draft && canEdit ? <form onSubmit={save}><fieldset disabled={busy}><div className="patient-vitals-inputs">{fields.map(([key, label, hint, min, max, step]) => <label key={key}><span><PortalText text={label} /></span><input type={key === 'blood_pressure' ? 'text' : 'number'} min={min} max={max} step={step} maxLength={key === 'blood_pressure' ? 9 : undefined} pattern={key === 'blood_pressure' ? '[0-9]{1,3}/[0-9]{1,3}' : undefined} value={draft[key]} onChange={event => setDraft(current => ({ ...current, [key]: event.target.value }))} /><small><PortalText text={hint} /></small></label>)}</div>
+    {draft && canEdit ? <form onSubmit={save}><fieldset disabled={busy}><div className="patient-vitals-inputs">{fields.map(([key, label, hint, min, max, step]) => <label key={key}><span><PortalText text={label} /></span>
+      {key === 'blood_group' ? <select value={draft[key]} onChange={event => setDraft(current => ({ ...current, [key]: event.target.value }))}>
+        <option value=""><PortalText text="Select blood group" /></option>
+        {['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'].map(group => <option key={group} value={group}>{group}</option>)}
+      </select> : <input type={key === 'blood_pressure' ? 'text' : 'number'} min={min} max={max} step={step} maxLength={key === 'blood_pressure' ? 9 : undefined} pattern={key === 'blood_pressure' ? '[0-9]{1,3}/[0-9]{1,3}' : undefined} value={draft[key]} onChange={event => setDraft(current => ({ ...current, [key]: event.target.value }))} />}
+      <small><PortalText text={hint} /></small></label>)}</div>
       <label className="patient-vitals-notes"><PortalText text="Measurement notes / Patient-reported concerns" /><textarea rows={3} maxLength={1000} value={draft.notes} onChange={event => setDraft(current => ({ ...current, notes: event.target.value }))} /></label>
       <div className="patient-vitals-actions"><button type="submit" className="rec-button primary" disabled={!patient.id}><PortalText text={busy ? 'Saving...' : 'Save vitals'} /></button>{patient.id && <button type="button" className="rec-button" onClick={() => { setDraft(null); setError(''); }}><PortalText text="Cancel" /></button>}</div>
     </fieldset></form> : <><VitalsSummary vitals={vitals} />{canEdit && <button type="button" className="rec-button primary" onClick={start}><PortalText text={vitals ? 'Edit vitals' : 'Add vitals'} /></button>}</>}

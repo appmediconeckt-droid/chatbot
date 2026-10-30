@@ -388,6 +388,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
   const filteredCalls = useMemo(
     () =>
       callsData
+        .filter((call) => currentUserType !== "user" || call.counterPartyType !== "doctor")
         .filter((call) => {
           if (activeFilter === "all") return true;
           if (activeFilter === "missed") return call.missed;
@@ -404,7 +405,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
         .filter((call) =>
           call.name.toLowerCase().includes(searchTerm.toLowerCase()),
         ),
-    [activeFilter, callsData, searchTerm, selectedDate],
+    [activeFilter, callsData, searchTerm, selectedDate, currentUserType],
   );
 
   // Group calls by date

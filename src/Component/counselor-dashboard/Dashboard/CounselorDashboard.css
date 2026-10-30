@@ -5047,6 +5047,29 @@ button:focus {
   gap: 39px;
 }
 
+.couns-sessions-page .stitch-apt-filter-tab {
+  color: #0759bd;
+  border-color: #a7b9d6 !important;
+}
+
+.couns-sessions-page .stitch-apt-filter-tab:hover {
+  color: #0759bd;
+  background: #eaf3ff !important;
+  border-color: #0875ef !important;
+}
+
+.couns-sessions-page .stitch-apt-filter-tab.active {
+  color: #fff !important;
+  background: linear-gradient(90deg, #0875ef, #0754b2) !important;
+  border-color: #0754b2 !important;
+  box-shadow: 0 8px 18px rgba(8, 117, 239, 0.2);
+}
+
+.couns-sessions-page .stitch-apt-filter-tab:focus-visible {
+  outline: 3px solid #9dc6ff;
+  outline-offset: 3px;
+}
+
 .couns-sessions-page .stitch-session-header {
   min-height: 122px;
   padding: 22px 24px;

@@ -648,6 +648,27 @@
   margin-bottom: 16px;
 }
 
+.patient-profile-modal-container .profile-demographics-row {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.patient-profile-modal-container .form-row > .form-group {
+  min-width: 0;
+}
+
+.patient-profile-modal-container .profile-demographics-row input,
+.patient-profile-modal-container .profile-demographics-row select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .patient-profile-modal-container .profile-demographics-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .form-group {
   display: flex;
   flex-direction: column;

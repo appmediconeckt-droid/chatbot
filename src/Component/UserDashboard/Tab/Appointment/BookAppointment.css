@@ -2336,6 +2336,17 @@
   font-size: 12px;
 }
 
+.booking-appointment-modal-unique .booking-field-card-unique input:focus,
+.booking-appointment-modal-unique .booking-field-card-unique input:focus-visible {
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+
+.booking-appointment-modal-unique .booking-field-card-unique input::-webkit-datetime-edit:focus {
+  outline: none;
+}
+
 .booking-appointment-modal-unique .form-group-unique {
   margin: 0;
 }

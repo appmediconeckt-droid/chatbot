@@ -329,6 +329,11 @@
 }
 
 /* Shared incoming-call design used by both user and counselor portals. */
+.ucm-overlay,
+.ucm-overlay * {
+  box-sizing: border-box;
+}
+
 .ucm-overlay {
   align-items: center;
   padding: 16px;
@@ -340,9 +345,9 @@
 .ucm-modal.ucm-video,
 .ucm-modal.ucm-voice {
   width: min(92vw, 448px);
-  height: min(82dvh, 668px);
-  min-height: 540px;
-  max-height: 720px;
+  height: auto;
+  min-height: 0;
+  max-height: min(calc(100dvh - 32px), 668px);
   color: #152638;
   background: #fff;
   border: 1px solid #edf0f2;
@@ -355,13 +360,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: clamp(38px, 6vh, 58px) 30px 34px;
-  overflow: hidden;
+  min-height: 0;
+  padding: 30px 30px 32px;
+  overflow-y: auto;
   color: #152638;
 }
 
 .ucm-kicker {
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   color: #71747b;
   font-size: 12px;
   font-weight: 500;
@@ -371,7 +377,7 @@
 .ucm-name {
   margin: 0;
   color: #102236;
-  font-size: clamp(34px, 4vw, 48px);
+  font-size: clamp(28px, 3.5vw, 40px);
   font-weight: 700;
   line-height: 1.05;
 }
@@ -395,9 +401,10 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 196px;
-  height: 196px;
-  margin: clamp(55px, 9vh, 78px) 0 45px;
+  flex: 0 0 auto;
+  width: 176px;
+  height: 176px;
+  margin: 28px 0 24px;
   background:
     radial-gradient(circle, transparent 35%, rgba(24, 143, 92, 0.14) 36%, transparent 38%),
     radial-gradient(circle, transparent 49%, rgba(24, 143, 92, 0.13) 50%, transparent 52%),
@@ -430,6 +437,7 @@
 }
 
 .ucm-encrypted {
+  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -453,8 +461,9 @@
   display: flex;
   justify-content: space-between;
   width: min(100%, 320px);
-  margin-top: auto;
-  padding-top: 34px;
+  flex-shrink: 0;
+  margin-top: 24px;
+  padding-top: 0;
   gap: 60px;
   flex-wrap: nowrap;
 }
@@ -475,6 +484,7 @@
 .ucm-btn svg {
   width: 64px;
   height: 64px;
+  flex-shrink: 0;
   padding: 20px;
   color: #fff;
   border-radius: 50%;
@@ -514,8 +524,9 @@
   .ucm-modal.ucm-video,
   .ucm-modal.ucm-voice {
     width: min(100%, 410px);
-    height: min(88dvh, 630px);
-    min-height: 500px;
+    height: auto;
+    min-height: 0;
+    max-height: min(calc(100dvh - 24px), 630px);
     border-radius: 26px;
   }
 
@@ -530,7 +541,7 @@
   .ucm-avatar-wrap {
     width: 176px;
     height: 176px;
-    margin: 42px 0 34px;
+    margin: 24px 0 20px;
   }
 
   .ucm-avatar {
@@ -556,7 +567,7 @@
   .ucm-modal,
   .ucm-modal.ucm-video,
   .ucm-modal.ucm-voice {
-    height: calc(100dvh - 20px);
+    height: auto;
     min-height: 0;
   }
 
@@ -580,6 +591,7 @@
   }
 
   .ucm-actions {
-    padding-top: 18px;
+    margin-top: 18px;
+    padding-top: 0;
   }
 }

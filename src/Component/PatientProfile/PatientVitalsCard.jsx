@@ -3,7 +3,7 @@ import axios from '../../axiosConfig';
 import socketService from '../../services/socketService';
 import { VitalsSummary } from '../Receptionist/PatientVitals';
 
-export default function PatientVitalsCard() {
+export default function PatientVitalsCard({ bloodGroup }) {
   const [latest, setLatest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -56,12 +56,13 @@ export default function PatientVitalsCard() {
     };
   }, [refreshKey]);
   const retry = () => { setLoading(true); setError(''); setRefreshKey(key => key + 1); };
+  const displayedVitals = latest || bloodGroup ? { ...latest?.vitals, blood_group: bloodGroup || latest?.vitals?.blood_group } : null;
   return <section className="info-card-modern" aria-label="Latest recorded vitals">
     <div className="card-header"><h2>Latest recorded vitals</h2><button type="button" className="profile-card-edit" onClick={retry} disabled={loading}>Refresh vitals</button></div>
     <p>These readings are recorded by your receptionist or doctor during an appointment. Editing your profile does not change them.</p>
     {loading && <p role="status">Loading vitals...</p>}
     {error && <p role="alert">{error}</p>}
-    {latest && <VitalsSummary vitals={latest.vitals} />}
-    {!loading && !error && !latest && <p>No vitals recorded yet. Your readings will appear here after your clinic records them.</p>}
+    {displayedVitals && <VitalsSummary vitals={displayedVitals} />}
+    {!loading && !error && !displayedVitals && <p>No vitals recorded yet. Your readings will appear here after your clinic records them.</p>}
   </section>;
 }

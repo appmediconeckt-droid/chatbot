@@ -1,6 +1,7 @@
 import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useState } from "react";
 import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
+import { formatQueueDelay } from '../formatQueueDelay.js';
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
@@ -351,7 +352,7 @@ export default function AppointmentList() {
       const orig = formatTimeParts(appointment.originalTime || appointment.rawTime);
       const est = formatTimeParts(appointment.estimatedTime);
       if (est) {
-        return orig ? `${orig} → ${est} (+${appointment.delayMinutes}m)` : `~${est} (+${appointment.delayMinutes}m)`;
+        return orig ? `${orig} → ${est} (+${formatQueueDelay(appointment.delayMinutes)})` : `~${est} (+${formatQueueDelay(appointment.delayMinutes)})`;
       }
     }
     if (!appointment.rawTime || appointment.rawTime === "N/A") return appointment.time;

@@ -1,6 +1,20 @@
 const first = (...values) => values.find(value => value !== null && value !== undefined && value !== "");
 const object = value => value && typeof value === "object" ? value : {};
 
+export const appointmentVisitDetails = appointment => {
+  const flagged = value => value === true || value === 1 || value === '1' || String(value).toLowerCase() === 'true';
+  const isEmergency = String(appointment.priority || '').trim().toLowerCase() === 'emergency' ||
+    flagged(appointment.isEmergency) || flagged(appointment.is_emergency);
+  const problem = first(
+    isEmergency ? appointment.emergency_reason : null,
+    isEmergency ? appointment.emergencyReason : null,
+    appointment.problem, appointment.symptoms, appointment.reason, appointment.issue,
+    appointment.health_issue, appointment.healthIssue, appointment.description, appointment.consultation_reason,
+    isEmergency ? 'Emergency consultation' : 'General consultation',
+  );
+  return { isEmergency, problem };
+};
+
 export const isPatientDirectoryRecord = appointment => {
   if (appointment.patient_deleted === true || appointment.patient?.isActive === false || appointment.patient?.isActive === 0) return false;
   if (appointment.appointment_type === 'online' && !appointment.patient) return false;

@@ -46,7 +46,6 @@ const calculateAge = (dateOfBirth) => {
   return age >= 0 ? age : "";
 };
 
-const BLOOD_GROUPS = ["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"];
 
 export const PHONE_COUNTRIES = [
   ["AF", "+93", "Afghanistan"], ["AL", "+355", "Albania"], ["DZ", "+213", "Algeria"],
@@ -616,7 +615,6 @@ const PatientProfile = () => {
       formData.append("phoneCountryCode", (PHONE_COUNTRIES.find(({ code }) => code === editFormData.phoneCountry) || PHONE_COUNTRIES[0]).dial);
       formData.append("age", String(calculatedAge));
       formData.append("gender", editFormData.gender);
-      formData.append("bloodGroup", editFormData.bloodGroup || "");
       formData.append("dateOfBirth", editFormData.dateOfBirth);
 
       const addressObj = {
@@ -834,10 +832,6 @@ const PatientProfile = () => {
               <span>{patientData.personalInfo.gender || t('profile.notSpecified')}</span>
             </div>
             <div className="info-item">
-              <label>{t('profile.bloodGroup')}</label>
-              <span>{patientData.personalInfo.bloodGroup || t('profile.notSpecified')}</span>
-            </div>
-            <div className="info-item">
               <label>{t('profile.email')}</label>
               <span>{patientData.personalInfo.email}</span>
             </div>
@@ -848,7 +842,7 @@ const PatientProfile = () => {
           </div>
         </div>
 
-        <PatientVitalsCard />
+        <PatientVitalsCard bloodGroup={patientData.personalInfo.bloodGroup} />
 
         {/* Address */}
         <div className="info-card-modern">
@@ -996,23 +990,6 @@ const PatientProfile = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>{t('blood_group')}</label>
-                    <select
-                      name="bloodGroup"
-                      value={editFormData.bloodGroup}
-                      onChange={handleEditFormChange}
-                    >
-                      <option value="">{t('select')} {t('blood_group')}</option>
-                      {BLOOD_GROUPS.map((bloodGroup) => (
-                        <option key={bloodGroup} value={bloodGroup}>
-                          {bloodGroup}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
                     <label>Anonymous Name (optional)</label>
                     <input
                       type="text"
@@ -1022,6 +999,8 @@ const PatientProfile = () => {
                       placeholder="Display name for anonymous chats"
                     />
                   </div>
+                </div>
+                <div className="form-row profile-demographics-row">
                   <div className="form-group">
                     <label>Gender *</label>
                     <select
@@ -1036,8 +1015,6 @@ const PatientProfile = () => {
                       <option value="other">{t('other')}</option>
                     </select>
                   </div>
-                </div>
-                <div className="form-row">
                   <div className="form-group">
                     <label>Date of Birth *</label>
                     <input

@@ -35,6 +35,7 @@ import { isUnscheduledEmergency } from './emergencyBooking.js';
 import { filterAppointments } from './appointmentFilters.js';
 import { canCancelAppointment } from '../../../../utils/appointmentCancellation.js';
 import { groupAppointmentsByProvider } from './appointmentProviderGroups.js';
+import { getAppointmentDuration } from './appointmentDuration.js';
 import ProfileAvatar from '../../../common/ProfileAvatar.jsx';
 const MyAppointments = () => {
   const { t, lang } = useUserTranslation();
@@ -519,8 +520,7 @@ const MyAppointments = () => {
       remainingMinutes,
     ).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
     const appointmentMode = getAppointmentMode(selectedApt);
-    const appointmentDuration =
-      selectedApt.duration || selectedApt.durationMinutes || 45;
+    const appointmentDuration = getAppointmentDuration(selectedApt);
 
     return createPortal(
       <PortalElement as="div"
@@ -610,7 +610,7 @@ const MyAppointments = () => {
               <FaStopwatch />
               <div>
                 <small>{t("duration")}</small>
-                <strong>{appointmentDuration} {t('minutes')}</strong>
+                <strong>{appointmentDuration != null ? <>{appointmentDuration} {t('minutes')}</> : tr('not_available', 'Not available')}</strong>
               </div>
             </div>
           </div>
@@ -816,6 +816,8 @@ const MyAppointments = () => {
                     {apt.cancellationReason === 'PATIENT_LATE' && <span><PortalText text={"Appointment Cancelled · Patient did not arrive before the adjusted appointment deadline."} /></span>}
                   </div>}
 
+                    {paymentNotice?.id === paymentId && <p role="status">{paymentNotice.message}</p>}
+                    {clinicRatingLoadError?.id === apt._id && <p role="alert">{clinicRatingLoadError.message}</p>}
                     <div className="user-appointment-actions">
                       {isOnlinePayment(apt.payment_method) && !paymentComplete && ['pending', 'confirmed', 'accepted', 'booked'].includes(apt.status) && <button type="button" className="user-appointment-action user-appointment-pay" disabled={Boolean(actionLoading)} onClick={async () => {
                         setActionLoading(`pay-${paymentId}`); setPaymentNotice(null);
@@ -826,8 +828,6 @@ const MyAppointments = () => {
                         } catch (error) { if (error.code !== 'PAYMENT_CANCELLED') setPaymentNotice({ id: paymentId, message: error.response?.data?.message || error.message || 'Payment could not be completed.' }); }
                         finally { setActionLoading(null); }
                       }}><i className="fa-solid fa-credit-card" aria-hidden="true" /><PortalText text={actionLoading === `pay-${paymentId}` ? 'Processing payment...' : 'Pay Now'} /></button>}
-                      {apt.payment_status === 'paid' && <span><PortalText text="Payment received" /></span>}
-                      {paymentNotice?.id === paymentId && <p role="status">{paymentNotice.message}</p>}
                       {getProfessionalRole(apt).isDoctor && ['pending', 'confirmed', 'accepted', 'booked', 'in-progress'].includes(apt.status)
                         && !['completed', 'canceled', 'cancelled', 'no_show', 'skipped'].includes(apt.queue_status) && (
                         <button type="button" className={`user-appointment-action user-appointment-emergency ${apt.priority === 'emergency' ? 'is-sent' : ''}`}
@@ -845,7 +845,6 @@ const MyAppointments = () => {
                             : <><span aria-hidden="true">★</span><PortalText text={"Rate Doctor"} /></>}
                         </button>
                       )}
-                      {clinicRatingLoadError?.id === apt._id && <p role="alert">{clinicRatingLoadError.message}</p>}
                       {apt.status === 'completed' && apt.clinic_id && (
                         <button type="button" className="user-appointment-action secondary" disabled={Boolean(ratedClinic(apt)) || Boolean(clinicRatingLoading)}
                           onClick={() => openClinicRating(apt)}>

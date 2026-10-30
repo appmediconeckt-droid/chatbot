@@ -1,6 +1,17 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { patientCardDetails, appointmentDoctorName, appointmentVitals, ageFromBirthDate, isPatientDirectoryRecord } from "../src/Component/DoctorDashboard/PatientAppointmentDetails/patientRecordDetails.js";
+import { patientCardDetails, appointmentDoctorName, appointmentVitals, ageFromBirthDate, isPatientDirectoryRecord, appointmentVisitDetails } from "../src/Component/DoctorDashboard/PatientAppointmentDetails/patientRecordDetails.js";
+
+test('emergency visit history uses emergency reasons and never falls back to general consultation', () => {
+  assert.deepEqual(appointmentVisitDetails({ priority: 'emergency', emergency_reason: 'Severe breathing difficulty', symptoms: 'General checkup' }), {
+    isEmergency: true, problem: 'Severe breathing difficulty',
+  });
+  assert.deepEqual(appointmentVisitDetails({ priority: 'Emergency' }), { isEmergency: true, problem: 'Emergency consultation' });
+  assert.equal(appointmentVisitDetails({ is_emergency: true, emergencyReason: 'Urgent review' }).problem, 'Urgent review');
+  assert.equal(appointmentVisitDetails({ isEmergency: 'true', symptoms: 'Pain' }).isEmergency, true);
+  assert.deepEqual(appointmentVisitDetails({}), { isEmergency: false, problem: 'General consultation' });
+  assert.deepEqual(appointmentVisitDetails({ priority: 'normal', symptoms: 'Headache', emergency_reason: 'Old reason' }), { isEmergency: false, problem: 'Headache' });
+});
 
 test("patient cards read registered profile fields and derive age from DOB", () => {
   const patient = { _id: "patient-1", fullName: "Vishal", phoneNumber: "+919876543210", gender: "Male", bloodGroup: "O+", dateOfBirth: "2000-09-24", age: 99 };

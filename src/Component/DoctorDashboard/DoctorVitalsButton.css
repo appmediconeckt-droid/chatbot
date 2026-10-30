@@ -1,9 +1,33 @@
-.doctor-vitals-dialog { width: min(760px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); overflow-y: auto; border: 0; border-radius: 16px; padding: 24px; color: #17233d; }
-.doctor-vitals-dialog::backdrop { background: rgb(15 23 42 / 55%); }
-.doctor-vitals-dialog-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
-.doctor-vitals-dialog-heading h2 { font-size: 20px; margin: 0 0 8px; }
+.doctor-vitals-dialog { position: fixed; inset: 0; margin: auto; box-sizing: border-box; width: min(760px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 40px); overflow-y: auto; border: 1px solid #e2e8f0; border-radius: 20px; padding: 0; color: #17233d; background: #fff; box-shadow: 0 24px 80px #0f172a33; }
+.doctor-vitals-dialog::backdrop { background: rgb(15 23 42 / 55%); backdrop-filter: blur(4px); }
+.doctor-vitals-dialog[open] { inset: 50% auto auto 50%; margin: 0; transform: translate(-50%, -50%); }
+.doctor-vitals-dialog-heading { display: flex; align-items: center; gap: 14px; padding: 22px 24px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.doctor-vitals-dialog-heading h2 { font-size: 21px; font-weight: 700; margin: 0 0 4px; line-height: 1.3; }
+.doctor-vitals-dialog-heading p { margin: 0; font-size: 14px; color: #64748b; overflow-wrap: anywhere; }
+.doctor-vitals-heading-icon { display: grid; place-items: center; flex: 0 0 46px; height: 46px; border-radius: 14px; background: #e8f0ff; color: #004ac6; }
+.doctor-vitals-heading-text { flex: 1; min-width: 0; }
+.doctor-vitals-close { display: grid; place-items: center; flex: 0 0 36px; height: 36px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; color: #475569; cursor: pointer; }
+.doctor-vitals-close:hover { background: #e8eef7; color: #17233d; }
+.doctor-vitals-dialog-body { padding: 24px; }
+.doctor-vitals-readonly { margin: 0 0 20px; padding: 12px 14px; border: 1px solid #dbeafe; border-radius: 10px; background: #eff6ff; color: #365780; font-size: 13px; line-height: 1.6; }
+.doctor-vitals-dialog .patient-vitals { margin: 0; padding: 0; border: 0; }
+.doctor-vitals-dialog .patient-vitals h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; line-height: 1.5; }
+.doctor-vitals-dialog .patient-vitals > p { margin: 0 0 20px; }
+.doctor-vitals-dialog .patient-vitals-summary dl { margin: 0 0 18px; gap: 12px; }
+.doctor-vitals-dialog .patient-vitals-summary dl > div { min-width: 0; padding: 14px 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: #f8fafc; }
+.doctor-vitals-dialog .patient-vitals-summary dt { font-size: 12px; font-weight: 500; color: #64748b; }
+.doctor-vitals-dialog .patient-vitals-summary dd { margin-top: 6px; font-size: 18px; line-height: 1.4; color: #17233d; }
+.doctor-vitals-dialog .patient-vitals input, .doctor-vitals-dialog .patient-vitals textarea { border-color: #cbd5e1; }
+.doctor-vitals-dialog :is(button, input, textarea):focus-visible { outline: 3px solid #93b8f7; outline-offset: 3px; }
 .doctor-vitals-dialog .rec-button { border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 16px; background: white; color: #17233d; cursor: pointer; }
 .doctor-vitals-dialog .rec-button.primary { background: #004ac6; border-color: #004ac6; color: white; }
 .doctor-vitals-dialog .rec-button:disabled { opacity: .6; cursor: wait; }
 .doctor-vitals-dialog .rec-alert { color: #b91c1c; }
 .appointment-vitals-cell .doctor-vitals-button { white-space: nowrap; }
+@media (max-width: 520px) {
+  .doctor-vitals-dialog { width: calc(100vw - 24px); max-height: calc(100dvh - 24px); border-radius: 16px; }
+  .doctor-vitals-dialog-heading { padding: 16px; gap: 10px; }
+  .doctor-vitals-dialog-heading h2 { font-size: 19px; }
+  .doctor-vitals-dialog-body { padding: 16px; }
+  .doctor-vitals-dialog .patient-vitals-summary dl { grid-template-columns: 1fr; }
+}

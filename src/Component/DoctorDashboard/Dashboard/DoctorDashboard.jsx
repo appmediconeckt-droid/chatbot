@@ -2174,6 +2174,7 @@ import { MAX_UNANSWERED_APPOINTMENT_CALLS, readAppointmentCallProgress, saveAppo
 import { resolveProfileImage } from "../../../utils/profileImage.js";
 import { VitalsSummary } from '../../Receptionist/PatientVitals.jsx';
 import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
+import { formatQueueDelay } from '../formatQueueDelay.js';
 import { appointmentVitals } from '../PatientAppointmentDetails/patientRecordDetails.js';
 import CompleteModal from '../ConsultationCompletionModal.jsx';
 import { createConsultationForm, remoteConsultationPayload, createEmptyMedicine, getFollowUpDateFromMedicines } from '../consultationPrescription.js';
@@ -4033,9 +4034,9 @@ const DoctorDashboard = () => {
                           {appt.availability?.status && <span className={appt.availability.status === 'unavailable' ? 'dd-patient-unavailable' : 'dd-patient-available'}><PortalText text={appt.availability.status === 'unavailable' ? 'Patient unavailable' : appt.availability.returnedAt ? 'Reception: patient returned — priority next' : 'Reception: patient available'} /></span>}
                           {appt.cancellationReason === 'PATIENT_LATE' && <span><PortalText text={"Patient did not arrive before the adjusted appointment deadline."} /></span>}
                           {appt.delayMinutes > 0 && appt.estimatedTime && (
-                            <span><i className="bi bi-hourglass-split"></i><PortalText text={"Estimated: "} />{appt.estimatedTime} (+{appt.delayMinutes}m)</span>
+                            <span><i className="bi bi-hourglass-split"></i><PortalText text={"Estimated: "} />{appt.estimatedTime} (+{formatQueueDelay(appt.delayMinutes)})</span>
                           )}
-                          {appt.delayMinutes > 0 && <span className="issue"><i className="bi bi-hourglass-split"></i><PortalText text={"Delayed "} />{appt.delayMinutes}<PortalText text={" min"} />{appt.delayReason ? ` - ${appt.delayReason}` : ""}</span>}
+                          {appt.delayMinutes > 0 && <span className="issue"><i className="bi bi-hourglass-split"></i><PortalText text={"Delayed "} />{formatQueueDelay(appt.delayMinutes)}{appt.delayReason ? ` - ${appt.delayReason}` : ""}</span>}
                           {appt.status === "completed" && appt.followUpRequired && (
                             <span className="dd-follow-up-history-date">
                               <i className="bi bi-calendar-check"></i><PortalText text={"Follow-up: "} />{appt.followUpDate ? formatDate(appt.followUpDate) : <PortalText text={"Date not available"} />}
@@ -4287,11 +4288,6 @@ const DoctorDashboard = () => {
             <EmergencyReason appointment={selectedAppointment} />
             {selectedAppointment?.availability?.status && <p role="status" className={selectedAppointment.availability.status === 'unavailable' ? 'dd-patient-unavailable' : 'dd-patient-available'}><PortalText text={selectedAppointment.availability.status === 'unavailable' ? 'Reception: patient unavailable. Move this appointment to Next until the patient returns.' : selectedAppointment.availability.returnedAt ? 'Reception: patient returned — priority next' : 'Reception: patient available'} /></p>}
             <h6 className="dd-patient-summary-title mb-3"><PortalText text={"Patient Vitals"} /></h6>
-            {selectedAppointment && <DoctorVitalsButton key={selectedAppointment.id} appointment={selectedAppointment} onSaved={(vitals) => {
-              setSelectedAppointment((current) => current ? { ...current, vitals } : current);
-              setAppointments((current) => current.map((row) => row.id === selectedAppointment.id ? { ...row, vitals } : row));
-              setActiveSession((current) => current?.appt?.id === selectedAppointment.id ? { ...current, appt: { ...current.appt, vitals } } : current);
-            }} />}
             {selectedAppointment?.vitals && <VitalsSummary vitals={selectedAppointment.vitals} />}
             {!selectedAppointment?.vitals && <div className="dd-vitals-display">
               <div className="dd-vital-item">
@@ -4317,6 +4313,11 @@ const DoctorDashboard = () => {
           </div>
         </Modal.Body>
         <Modal.Footer className="dd-consent-modal-footer p-3">
+          {selectedAppointment && <DoctorVitalsButton key={selectedAppointment.id} appointment={selectedAppointment} onSaved={(vitals) => {
+            setSelectedAppointment((current) => current ? { ...current, vitals } : current);
+            setAppointments((current) => current.map((row) => row.id === selectedAppointment.id ? { ...row, vitals } : row));
+            setActiveSession((current) => current?.appt?.id === selectedAppointment.id ? { ...current, appt: { ...current.appt, vitals } } : current);
+          }} />}
           <Button
             variant="outline-secondary"
             onClick={() => setShowConsentModal(false)}

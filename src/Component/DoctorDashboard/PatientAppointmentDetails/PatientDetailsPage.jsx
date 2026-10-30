@@ -8,12 +8,11 @@ import { filterPatients, dateKey } from "./patientFilters.js";
 import React, { useEffect, useRef, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
-import { User, Phone, Calendar, Clock, Heart, Pill, Stethoscope, ChevronLeft, RefreshCw, FileText, Download, Users, UserPlus, ClipboardList, TrendingUp, X } from "lucide-react";
+import { User, Phone, Calendar, Clock, Heart, Pill, Stethoscope, ChevronLeft, ChevronRight, RefreshCw, FileText, Download, Users, UserPlus, ClipboardList, TrendingUp, X } from "lucide-react";
 import "./PatientDetailsPage.css";
 import PatientPagination from "./PatientPagination.jsx";
-import { patientCardDetails, appointmentDoctorName, appointmentVitals, isPatientDirectoryRecord } from "./patientRecordDetails.js";
+import { patientCardDetails, appointmentDoctorName, appointmentVitals, isPatientDirectoryRecord, appointmentVisitDetails } from "./patientRecordDetails.js";
 import { VitalsSummary } from '../../Receptionist/PatientVitals.jsx';
-import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
 import { generatePrescriptionPDF } from "./pdfGenerator";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 
@@ -89,18 +88,6 @@ export default function PatientDetailsPage() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  const getProblem = (appointment) => {
-    return appointment.problem ||
-      appointment.symptoms ||
-      appointment.reason ||
-      appointment.issue ||
-      appointment.health_issue ||
-      appointment.healthIssue ||
-      appointment.description ||
-      appointment.consultation_reason ||
-      "General consultation";
-  };
-
   const parseMedicines = (value) => {
     if (Array.isArray(value)) return value;
     if (typeof value !== "string" || !value.trim()) return [];
@@ -149,7 +136,7 @@ export default function PatientDetailsPage() {
       time: formatTime(appointmentTime),
       ...appointmentVitals(appointment),
       vitals: appointment.vitals,
-      problem: getProblem(appointment),
+      ...appointmentVisitDetails(appointment),
       diagnosis: appointment.diagnosis || "N/A",
       tablets: formatMedicines(appointment),
       days: getMedicineDuration(appointment),
@@ -559,7 +546,15 @@ export default function PatientDetailsPage() {
                     <div
                       key={patient.id}
                       className="pd-patient-card"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => handlePatientClick(patient)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          handlePatientClick(patient);
+                        }
+                      }}
                     >
                       <div className="pd-patient-header">
                         <div className="pd-patient-avatar">
@@ -580,13 +575,20 @@ export default function PatientDetailsPage() {
                         <span>{patient.phone}</span>
                       </div>
                       <div className="pd-patient-footer">
+                        <div className="pd-patient-last-visit">
+                          <span><Calendar size={14} /><PortalText text="Last visit" /></span>
+                          <strong>{patient.lastVisit}</strong>
+                        </div>
                         <div className="pd-patient-doctor">
-                          <span><PortalText text={"Last visit: "} />{patient.lastVisit}</span><span><PortalText text={"Doctor"} /></span>
+                          <span><Stethoscope size={14} /><PortalText text={"Doctor"} /></span>
                           <strong>{patient.records[0]?.doctor || appointmentDoctorName({}, authUser || getStoredAuthUser())}</strong>
                         </div>
+                      </div>
+                      <div className="pd-patient-card-action">
                         <span className="pd-record-count">
                           {patient.records.length} {patient.records.length === 1 ? <PortalText text={"Visit"} /> : <PortalText text={"Visits"} />}
                         </span>
+                        <span className="pd-patient-view-records"><PortalText text="View visits" /><ChevronRight size={16} /></span>
                       </div>
                     </div>
                   ))}
@@ -655,6 +657,7 @@ export default function PatientDetailsPage() {
                           </div>
                         </td>
                         <td className="pd-problem-cell">
+                          {record.isEmergency && <span className="pd-emergency-visit"><PortalText text="Emergency appointment" /></span>}
                           <div className="pd-problem-tag">{record.problem}</div>
                         </td>
                         <td className="pd-doctor-cell">{record.doctor}</td>
@@ -734,12 +737,6 @@ export default function PatientDetailsPage() {
 
                 <div className="pd-detail-column">
                   <h5 className="pd-detail-column-title"><PortalText text={"Vital Signs"} /></h5>
-                  <DoctorVitalsButton key={`${selectedRecord.prescriptionRecord?.appointment_type}:${selectedRecord.id}`} appointment={selectedRecord} onSaved={(vitals) => {
-                    const update = (record) => record.id === selectedRecord.id && record.prescriptionRecord?.appointment_type === selectedRecord.prescriptionRecord?.appointment_type
-                      ? { ...record, vitals, prescriptionRecord: { ...record.prescriptionRecord, vitals } } : record;
-                    setSelectedRecord((current) => current ? update(current) : current);
-                    setPatients((current) => current.map((patient) => ({ ...patient, records: patient.records.map(update) })));
-                  }} />
                   {selectedRecord.vitals && <VitalsSummary vitals={selectedRecord.vitals} />}
                   {!selectedRecord.vitals && <div className="pd-vitals-grid">
                     <div className="pd-vital-card">
@@ -780,6 +777,7 @@ export default function PatientDetailsPage() {
                   <h5 className="pd-detail-column-title"><PortalText text={"Medical Information"} /></h5>
                   <div className="pd-detail-item">
                     <span className="pd-detail-label"><PortalText text={"Presenting Problem"} /></span>
+                    {selectedRecord.isEmergency && <span className="pd-emergency-visit"><PortalText text="Emergency appointment" /></span>}
                     <span className="pd-detail-value pd-problem-value">{selectedRecord.problem}</span>
                   </div>
                   <div className="pd-detail-item">

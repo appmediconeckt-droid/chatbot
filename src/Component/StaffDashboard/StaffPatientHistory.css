@@ -13,3 +13,7 @@
 
 .rec-history-dialog-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
 .rec-history-visit-details { margin-bottom: 16px; }
+.rec-history-page .rec-history-emergency-badge { display: inline-flex; padding: 5px 9px; border: 1px solid #fecaca; border-radius: 7px; color: #b42318; background: #fff1f2; font-size: 12px; font-weight: 700; }
+.rec-history-emergency-reason { display: block; margin-top: 6px; max-width: 240px; white-space: normal; overflow-wrap: anywhere; color: #9f3434; line-height: 1.5; }
+.rec-history-emergency-notice { padding: 12px 16px; margin-bottom: 16px; border: 1px solid #fecaca; border-radius: 10px; background: #fff1f2; color: #b42318; }
+.rec-history-emergency-notice p { margin: 6px 0 0; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }

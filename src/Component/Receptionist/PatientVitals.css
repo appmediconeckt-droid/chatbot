@@ -3,7 +3,7 @@
 .patient-vitals fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 .patient-vitals-inputs, .patient-vitals-summary dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .patient-vitals-inputs label, .patient-vitals-notes { display: grid; gap: 6px; font-size: 13px; }
-.patient-vitals input, .patient-vitals textarea { width: 100%; box-sizing: border-box; border: 1px solid #b9cec1; border-radius: 8px; padding: 10px; background: white; color: #213547; }
+.patient-vitals input, .patient-vitals textarea, .patient-vitals select { width: 100%; box-sizing: border-box; border: 1px solid #b9cec1; border-radius: 8px; padding: 10px; background: white; color: #213547; }
 .patient-vitals-inputs small { color: #526575; font-size: 12px; }
 .patient-vitals-notes { margin: 16px 0; }
 .patient-vitals-notes > input, .patient-vitals-notes > select { width: 100%; box-sizing: border-box; border: 1px solid #b9cec1; border-radius: 8px; padding: 12px; background: white; color: #213547; }

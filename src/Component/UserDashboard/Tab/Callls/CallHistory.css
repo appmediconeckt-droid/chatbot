@@ -1884,7 +1884,17 @@
 .pch-single-list .pch-controls { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 16px 22px; border-bottom: 1px solid #e5ece8; }
 .pch-single-list .pch-search { flex: 1 1 280px; max-width: 460px; margin: 0; }
 .pch-single-list .pch-filter-row { margin: 0; flex: 0 0 auto; display: flex; flex-wrap: wrap; gap: 8px; }
-.pch-single-list .pch-filter-row button { padding: 8px 16px; border-radius: 20px; }
+.pch-single-list .pch-filter-row button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  min-height: 36px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  line-height: 1.25;
+  text-align: center;
+}
 .portal-call-history.pch-single-list .pch-compact-list { display: flex; flex-direction: column; gap: 10px; width: 100%; padding: 16px 22px 24px; border: 0; max-height: none; }
 .pch-single-list .pch-compact-call { flex: 0 0 auto; min-height: 78px; gap: 14px; padding: 13px 16px; border: 1px solid #e1ece5; border-radius: 12px; background: #fff; box-shadow: 0 3px 12px #1e633408; }
 .pch-single-list .pch-compact-call:hover { border-color: #a4dcb9; background: #fbfffc; }

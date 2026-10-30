@@ -1192,8 +1192,6 @@ import AppointmentBookingModal from "./AppointmentBookingModal";
 import TokenStatusPage from "../Counselor/TokenStatusPage";
 import { getProfessionalId, mergeUniqueProfessionals } from '../Counselor/professionalDirectoryMerge.js';
 import { getCurrentPosition } from '../../../../authtication/locationHelper.js';
-import { useProviderPaymentOptions, payForAppointment, isOnlinePayment } from '../../../../utils/providerPayments.js';
-import ProviderPaymentChoices from '../../../common/ProviderPaymentChoices.jsx';
 
 const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const navigate = useNavigate();
@@ -1229,12 +1227,6 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const [selectedCounselorForRequest, setSelectedCounselorForRequest] =
     useState(null);
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [consultantPaymentMethod, setConsultantPaymentMethod] = useState('');
-  const [consultantBookingId, setConsultantBookingId] = useState('');
-  const consultantPaymentOptions = useProviderPaymentOptions(showBookingModal ? selectedCounselorForRequest?.id : null);
-  useEffect(() => {
-    if (!consultantBookingId && !consultantPaymentOptions.methods.some(method => method.id === consultantPaymentMethod)) setConsultantPaymentMethod(consultantPaymentOptions.methods[0]?.id || '');
-  }, [consultantPaymentOptions.methods, consultantPaymentMethod, consultantBookingId]);
   const [bookingDate, setBookingDate] = useState("");
   const [bookingNotes, setBookingNotes] = useState("");
   const [blockedPopup, setBlockedPopup] = useState({ show: false, reason: "" });
@@ -1526,8 +1518,6 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       setShowDoctorBookingModal(true);
     } else {
       // Consultant / counsellor – use the existing simple booking form
-      setConsultantBookingId('');
-      setConsultantPaymentMethod('');
       setSelectedCounselorForRequest(counselor);
       setShowBookingModal(true);
     }
@@ -2218,9 +2208,6 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
   const handleConfirmBooking = async (e) => {
     e.preventDefault();
     if (isLoading) return;
-    if (!consultantPaymentOptions.methods.some(method => method.id === consultantPaymentMethod)) {
-      alert('Select an available payment method.'); return;
-    }
     if (!bookingDate) {
       alert(t('please_select_date_time'));
       return;
@@ -2233,13 +2220,12 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       const appointmentDate = new Date(bookingDate);
       const isoDate = appointmentDate.toISOString();
 
-      const res = consultantBookingId ? { data: { _id: consultantBookingId } } : await axios.post(
+      await axios.post(
         `${API_BASE_URL}/api/appointments`,
         {
           counselorId: selectedCounselorForRequest.id,
           date: isoDate,
           notes: bookingNotes,
-          payment_method: consultantPaymentMethod,
         },
         {
           headers: {
@@ -2249,17 +2235,11 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
         },
       );
 
-      const booked = res.data?.data || res.data;
-      const bookedId = String(booked._id || booked.id || '');
-      setConsultantBookingId(bookedId);
-      const paymentResult = isOnlinePayment(consultantPaymentMethod) ? await payForAppointment(bookedId, consultantPaymentMethod) : null;
-      alert(paymentResult?.mode === 'test' ? 'Appointment booked. Razorpay test payment verified; no real money was charged.' : t('appointment_booked_success'));
+      alert(t('appointment_booked_success'));
       setShowBookingModal(false);
       setBookingDate("");
       setBookingNotes("");
     } catch (error) {
-      if (error.slotReleased) setConsultantBookingId('');
-      if (error.code === 'PAYMENT_CANCELLED') return;
       console.error("❌ Error booking appointment:", error);
         alert(error?.response?.data?.message || error.message || t('appointment_booking_failed'));
     } finally {
@@ -2728,7 +2708,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                       <FaCalendarAlt aria-hidden="true" /><PortalText text={"Date"} /></span>
                     <input
                       type="date"
-                      disabled={Boolean(consultantBookingId) || isLoading}
+                      disabled={isLoading}
                       value={bookingDate.split("T")[0] || ""}
                       onChange={(e) =>
                         setBookingDate(
@@ -2743,7 +2723,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                       <FaClock aria-hidden="true" /><PortalText text={"Time"} /></span>
                     <input
                       type="time"
-                      disabled={Boolean(consultantBookingId) || isLoading}
+                      disabled={isLoading}
                       value={bookingDate.split("T")[1] || ""}
                       onChange={(e) =>
                         setBookingDate(
@@ -2765,8 +2745,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                   ></textarea>
                   <small>{t("sent_for_counselor_confirmation")}</small>
                 </div>
-                <p>Consultation fee: {consultantPaymentOptions.currency || 'INR'} {consultantPaymentOptions.consultationFee ?? 0}</p>
-                <ProviderPaymentChoices options={consultantPaymentOptions} value={consultantPaymentMethod} onChange={setConsultantPaymentMethod} disabled={isLoading || Boolean(consultantBookingId)} />
+                <p><PortalText text="Your wallet is charged when you use chat, voice or video consultation." /></p>
               </div>
 
               <div className="booking-modal-footer-unique">
@@ -2778,9 +2757,9 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
                 <button
                   type="submit"
                   className="booking-confirm-btn-unique"
-                  disabled={isLoading || consultantPaymentOptions.loading || !consultantPaymentMethod || Boolean(consultantPaymentOptions.error)}
+                  disabled={isLoading}
                 >
-                  {isLoading ? <PortalText text={"Processing..."} /> : <PortalText text={consultantBookingId ? 'Retry Payment' : ['credit_card', 'debit_card'].includes(consultantPaymentMethod) ? 'Enter card details & pay' : isOnlinePayment(consultantPaymentMethod) ? 'Pay & Book' : 'Confirm'} />}
+                  {isLoading ? <PortalText text={"Processing..."} /> : <PortalText text="Confirm Booking" />}
                 </button>
               </div>
             </form>
