@@ -37,7 +37,10 @@
 .prescription-document th,.prescription-document td{padding:8px 6px;text-align:left;vertical-align:top;border-right:1px solid #c7cdd2;border-bottom:1px solid #c7cdd2;overflow-wrap:anywhere;line-height:1.5}
 .prescription-document th{background:#eef4f6;color:var(--rx-blue);font-weight:700}
 .prescription-document th:first-child{width:7%}
-.prescription-document th:nth-child(2){width:23%}
+.prescription-document th:nth-child(2){width:32%}
+.prescription-document th:nth-child(3){width:13%}
+.prescription-document th:nth-child(4){width:9%}
+.prescription-document th:nth-child(5){width:15%}
 .prescription-document th:last-child{width:24%}
 .prescription-document th:last-child,.prescription-document td:last-child{border-right:0}
 .prescription-document tr:last-child td{border-bottom:0}
@@ -154,22 +157,54 @@
 
 /* A fixed paper layout keeps downloads identical across phone and desktop. */
 .prescription-export{width:794px;background:#fff}
-.prescription-export .prescription-document{width:794px;max-width:794px;min-height:1122px;padding:30px 30px 22px}
-.prescription-export .prescription-document-header{grid-template-columns:120px minmax(0,1fr) 108px;gap:20px;padding:24px 20px 22px}
+.prescription-export .prescription-document{width:794px;max-width:794px;min-height:0;padding:24px 26px 18px}
+.prescription-export .prescription-document-header{grid-template-columns:100px minmax(0,1fr) 88px;gap:16px;padding:12px 14px}
 .prescription-export .prescription-brand{grid-column:auto;justify-self:stretch;text-align:center}
-.prescription-export .prescription-brand img{width:112px;height:100px;margin:auto}
+.prescription-export .prescription-brand img{width:90px;height:72px;margin:auto}
 .prescription-export .prescription-brand>strong{font-size:13px}
-.prescription-export .prescription-issuer{padding-left:20px;border-left:1px solid #cce7e2}
-.prescription-export .prescription-issuer h2{font-size:23px}
+.prescription-export .prescription-issuer{padding-left:14px;border-left:1px solid #cce7e2}
+.prescription-export .prescription-issuer h2{font-size:20px}
 .prescription-export .prescription-issuer p{font-size:12px}
 .prescription-export .prescription-issuer-label{font-size:9px;letter-spacing:1.8px}
 .prescription-export .prescription-doctor-contact p{padding:5px 8px;font-size:10px}
-.prescription-export .prescription-booking-qr{padding:9px 7px;font-size:9px}
-.prescription-export .prescription-booking-qr img{width:88px}
-.prescription-export .prescription-patient-row>div{grid-template-columns:108px minmax(0,1fr);gap:10px;padding:9px 12px;font-size:12px}
+.prescription-export .prescription-booking-qr{padding:5px;font-size:9px}
+.prescription-export .prescription-booking-qr img{width:72px}
+.prescription-export .prescription-patient-row>div{grid-template-columns:100px minmax(0,1fr);gap:8px;padding:5px 9px;font-size:12px}
 .prescription-export .prescription-title h3{font-size:18px}
 .prescription-export .prescription-document .prescription-clinical{grid-template-columns:1fr 1fr!important}
 .prescription-export .prescription-clinical p+p{border-left:1px solid #cbd5e1;border-top:0}
 .prescription-export .prescription-document table{font-size:12px}
-.prescription-export .prescription-document th,.prescription-export .prescription-document td{padding:8px 6px}
+.prescription-export .prescription-document th,.prescription-export .prescription-document td{padding:5px 6px;line-height:1.35}
 .prescription-export .prescription-brand-footer{flex-wrap:nowrap;font-size:9px}
+
+/* Compact spacing is shared by previews, PDF downloads and printed copies. */
+.prescription-document-header{grid-template-columns:100px minmax(0,1fr) 88px;gap:16px;padding:12px 14px}
+.prescription-brand img{width:90px;height:72px}
+.prescription-issuer{padding-left:14px}
+.prescription-document .prescription-issuer h2{font-size:20px;margin-bottom:4px}
+.prescription-issuer-label{margin-bottom:4px}
+.prescription-issuer p{margin:2px 0;line-height:1.35}
+.prescription-doctor-contact{margin-top:3px}
+.prescription-doctor-contact p{margin-top:3px;padding:3px 6px}
+.prescription-booking-qr{padding:5px;gap:3px}
+.prescription-booking-qr img{width:72px}
+.prescription-patient{margin:10px 0}
+.prescription-patient-row>div{padding:5px 9px;gap:8px;line-height:1.35}
+.prescription-title{margin:0 0 9px}
+.prescription-section{margin-bottom:10px}
+.prescription-document th,.prescription-document td{padding:5px 6px;line-height:1.35}
+.prescription-clinical p{padding:5px 8px}
+.prescription-advice p,.prescription-advice ul,.prescription-notes>p,.prescription-tests>p{padding-top:6px;padding-bottom:6px;line-height:1.45}
+.prescription-document-footer{min-height:84px;padding:3px 0 10px}
+@media screen and (max-width:650px){
+  .prescription-document-header{grid-template-columns:76px minmax(0,1fr) 72px;gap:9px;padding:10px}
+  .prescription-brand img{width:72px;height:60px}
+  .prescription-document .prescription-issuer h2{font-size:16px}
+  .prescription-issuer{padding-left:10px}
+  .prescription-booking-qr img{width:60px}
+}
+@media print{
+  .prescription-export,.prescription-export .prescription-document,.prescription-document{width:100%;max-width:none;min-height:0;height:auto;margin:0;border:0;padding:0}
+  .prescription-contact-footer{margin-top:10px}
+  .prescription-document thead{display:table-header-group}
+}

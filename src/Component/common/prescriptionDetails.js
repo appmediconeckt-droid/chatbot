@@ -1,4 +1,5 @@
 import { consultationData } from './consultationData.js';
+import { prescriptionNumber } from './prescriptionNumber.js';
 
 export const prescriptionDate = (value) => {
   if (!value) return "—";
@@ -27,7 +28,7 @@ export const prescriptionDetails = (input, doctorName) => {
   address: text(clinic.location || clinic.address),
   doctorPhone: text(clinic.phone_number || clinic.phoneNumber || clinic.phone || provider.phoneNumber || provider.phone),
   doctorEmail: text(provider.email),
-  prescriptionId: text(record.prescriptionNumber || record.id || record._id),
+  prescriptionId: prescriptionNumber(record),
   opd: text(record.opdNumber || record.token_number || record.token),
   patientId: text(patient.id || patient._id || record.patientId),
   age: text(patient.age ?? record.age),
