@@ -5,8 +5,26 @@ import { translationService } from '../../i18n/translationService';
 import { LanguageSelector } from './LanguageSelector';
 import { PortalLanguageScope } from './portalLanguageScope';
 const queued = new Map();
+const copyCache = new Map();
+const cacheKey = lang => `portal_ui_copy_v1_${lang}`;
+function languageCache(lang) {
+ if (!copyCache.has(lang)) {
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem(cacheKey(lang)) || '{}'); } catch { /* Storage may be unavailable. */ }
+  copyCache.set(lang, new Map(Object.entries(stored || {}).filter(([, value]) => typeof value === 'string')));
+ }
+ return copyCache.get(lang);
+}
+function saveCopy(text, lang, value) {
+ if (!value || value === text) return;
+ const cache = languageCache(lang);
+ cache.set(text, value);
+ try { localStorage.setItem(cacheKey(lang), JSON.stringify(Object.fromEntries(cache))); } catch { /* Keep the in-memory cache. */ }
+}
 let timer;
 function requestCopy(text, lang) {
+ const cached = languageCache(lang).get(text);
+ if (cached) return Promise.resolve(cached);
  const key = `${lang}:${text}`;
  if (queued.has(key)) return queued.get(key).promise;
  let resolve;
@@ -20,8 +38,15 @@ function requestCopy(text, lang) {
   await Promise.all(languages.map(async language => {
    const group = jobs.filter(([, job]) => job.lang === language);
    try {
-    const values = await translationService.translateBatch(group.map(([, job]) => job.text), language, 'en');
-    group.forEach(([jobKey, job], index) => { job.resolve(values[index] || job.text); queued.delete(jobKey); });
+    const values = await translationService.translateBatch(group.map(([, job]) => job.text), language, 'en', updates => {
+     updates.forEach(({ index, translated }) => {
+      const [jobKey, job] = group[index];
+      saveCopy(job.text, job.lang, translated);
+      job.resolve(translated || job.text);
+      queued.delete(jobKey);
+     });
+    });
+    group.forEach(([jobKey, job], index) => { saveCopy(job.text, job.lang, values[index]); job.resolve(values[index] || job.text); queued.delete(jobKey); });
    } catch {
     group.forEach(([jobKey, job]) => { job.resolve(job.text); queued.delete(jobKey); });
    }
@@ -32,11 +57,11 @@ function requestCopy(text, lang) {
 function usePortalCopy(text) {
  const scope = useContext(PortalLanguageScope);
  const { lang, messages } = usePortalLanguage(scope);
- const staticCopy = lookupPortalCopy(text, lang, messages);
+ const staticCopy = lookupPortalCopy(text, lang, messages) ?? languageCache(lang).get(text?.trim());
  const [translated, setTranslated] = useState(null);
  useEffect(() => {
   let active = true;
-  if (staticCopy === null && text) requestCopy(text.trim(), lang).then(value => {
+  if (staticCopy == null && text) requestCopy(text.trim(), lang).then(value => {
    if (active) setTranslated({ text, lang, value });
   });
   return () => { active = false; };
@@ -44,6 +69,16 @@ function usePortalCopy(text) {
  const copy = staticCopy ?? (translated?.text === text && translated?.lang === lang ? translated.value : text);
  if (!text || copy === text) return copy;
  return `${text.match(/^\s*/)?.[0] || ''}${copy.trim()}${text.match(/\s*$/)?.[0] || ''}`;
+}
+export function usePreloadPortalCopy(texts, scopeOverride) {
+ const scope = useContext(PortalLanguageScope);
+ const { lang, messages } = usePortalLanguage(scopeOverride || scope);
+ useEffect(() => {
+  if (lang.startsWith('en')) return;
+  texts.forEach(text => {
+   if (lookupPortalCopy(text, lang, messages) === null) requestCopy(text.trim(), lang);
+  });
+ }, [texts, lang, messages]);
 }
 export function PortalText({ text }) { return usePortalCopy(text); }
 export function PortalTemplate({ text, values }) {

@@ -2,7 +2,6 @@ import React from "react";
 import {
   FaMicrophone,
   FaMicrophoneSlash,
-  FaPaperPlane,
   FaPhoneSlash,
   FaRedoAlt,
   FaSpinner,
@@ -11,10 +10,9 @@ import {
   FaUserCircle,
   FaVolumeMute,
   FaVolumeUp,
-  FaWaveSquare,
 } from "react-icons/fa";
 import { API_BASE_URL } from "../../../../axiosConfig";
-import { logoIconCompact } from "../../../../assets/brandAssets";
+import AiFaceIcon from "../../../common/AiFaceIcon";
 const VOICE_LANGUAGES = [
   { label: 'English (India)', code: 'en-IN' },
   { label: 'English (US)',    code: 'en-US' },
@@ -498,7 +496,7 @@ export default function AiChatPopup({
           <div className="ud-chat-header-info">
             <div className="ud-chat-avatar-wrap">
               <div className="ud-chat-avatar ud-chat-avatar--bounce">
-                <img src={logoIconCompact} alt="" aria-hidden="true" />
+                <AiFaceIcon />
               </div>
               <span className="ud-chat-avatar-dot" />
             </div>
@@ -564,7 +562,7 @@ export default function AiChatPopup({
             >
               {message.sender === "ai" && (
                 <div className="ud-chat-avatar ud-small">
-                  <img src={logoIconCompact} alt="" aria-hidden="true" />
+                  <AiFaceIcon />
                 </div>
               )}
               <div className="ud-chat-bubble">
@@ -640,7 +638,7 @@ export default function AiChatPopup({
           {isLoading && (
             <div className="ud-chat-message-wrapper ai">
               <div className="ud-chat-avatar ud-small">
-                <img src={logoIconCompact} alt="" aria-hidden="true" />
+                <AiFaceIcon />
               </div>
               <div className="ud-chat-bubble">
                 <div className="ud-loading-dots">
@@ -660,7 +658,7 @@ export default function AiChatPopup({
                 {aiVoiceStatus === "connecting" ? (
                   <FaSpinner className="ud-tts-spinner" />
                 ) : (
-                  <img src={logoIconCompact} alt="" aria-hidden="true" />
+                  <AiFaceIcon />
                 )}
               </div>
               <h3>AI Assistant</h3>
@@ -786,10 +784,12 @@ export default function AiChatPopup({
           <button
             className="ud-send-btn"
             onClick={sendMessage}
-            disabled={isLoading || chatLimitReached}
-            aria-label={chatLimitReached ? "AI chat limit reached" : newMessage.trim() ? "Send message" : "AI voice input"}
+            disabled={isLoading || chatLimitReached || !newMessage.trim()}
+            aria-label={chatLimitReached ? "AI chat limit reached" : "Send message"}
           >
-            {newMessage.trim() ? <FaPaperPlane /> : <FaWaveSquare />}
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+              <path d="M3.4 20.4 21.85 12 3.4 3.6l-.02 6.53L16.55 12 3.38 13.87z" />
+            </svg>
           </button>
         </div>
       </div>

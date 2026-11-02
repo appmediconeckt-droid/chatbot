@@ -289,13 +289,13 @@ const NursePatientList = () => {
             <span className="nurseBadge">{filteredPatients.length} patients</span>
           </div>
           <div className="nurseFilters">
-            <div className="nurseSearch">
+            <div data-search-field className="nurseSearch">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
               </svg>
               <input
-                type="text"
+                type="search"
                 placeholder="Search patients..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

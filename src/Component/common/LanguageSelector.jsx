@@ -114,10 +114,10 @@ export function LanguageSelector({
             <div className="ud-lang-dropdown-header">
               {t ? t('select_language') : 'Select Language'}
             </div>
-            <div className="ud-lang-search">
+            <div data-search-field className="ud-lang-search">
               <FaSearch className="ud-lang-search-icon" aria-hidden="true" />
               <input
-                type="text"
+                type="search"
                 placeholder="Search language..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -175,9 +175,9 @@ export function LanguageSelector({
               <button type="button" className="lang-modal-close" onClick={() => setOpen(false)}>×</button>
             </div>
 
-            <div className="lang-modal-search">
+            <div data-search-field className="lang-modal-search">
               <FaSearch className="lang-modal-search-icon" aria-hidden="true" />
-              <input type="text" placeholder={t ? `${t('search')} ${t('language')}` : 'Search language'} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
+              <input type="search" placeholder={t ? `${t('search')} ${t('language')}` : 'Search language'} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
             </div>
 
             <div className="lang-modal-list">
@@ -250,10 +250,10 @@ export function LanguageSelector({
           <div className="lang-modal-divider" />
 
           {/* Search Bar */}
-          <div className="lang-modal-search">
+          <div data-search-field className="lang-modal-search">
             <FaSearch className="lang-modal-search-icon" aria-hidden="true" />
             <input
-              type="text"
+              type="search"
               placeholder="Search language..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

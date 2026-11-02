@@ -728,89 +728,8 @@
   }
 }
 
-/* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
-  .privacy-policy:not(.privacy-policy--public) {
-    background: #1a1a1a;
-  }
+/* Privacy follows the website styling; browser/OS dark mode must not override it. */
 
-  .privacy-policy:not(.privacy-policy--public) .privacy-feature-card,
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-expandable,
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-support {
-    background: #2a2a2a;
-    border-color: #404040;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-feature-card:hover {
-    border-color: #4a9eff;
-    box-shadow: 0 8px 20px rgba(74, 158, 255, 0.15);
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-feature-icon {
-    background: rgba(74, 158, 255, 0.1);
-    color: #4a9eff;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-feature-card h3,
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-expandable-header,
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-support-content h2 {
-    color: #ffffff;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-feature-card p,
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-expandable-content,
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-support-content p {
-    color: #b0b0b0;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-expandable summary {
-    background: #333333;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-expandable summary:hover {
-    background: #3d3d3d;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-expandable[open] {
-    border-color: #4a9eff;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-support {
-    background: #2a2a2a;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .support-btn--primary {
-    background: #0052cc;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .support-btn--primary:hover {
-    background: #4a9eff;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .support-btn--secondary {
-    background: #2a2a2a;
-    border-color: #0052cc;
-    color: #4a9eff;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .support-btn--secondary:hover {
-    background: #3d3d3d;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .support-btn--tertiary {
-    background: rgba(74, 158, 255, 0.15);
-    color: #4a9eff;
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .support-btn--tertiary:hover {
-    background: rgba(74, 158, 255, 0.25);
-  }
-
-  .privacy-policy:not(.privacy-policy--public) .privacy-policy-updated {
-    background: rgba(74, 158, 255, 0.15);
-    color: #4a9eff;
-  }
-}
 
 /* AI privacy controls share the existing accordion layout. */
 .privacy-ai-sharing { padding-top: 8px; }
@@ -825,10 +744,7 @@
 .privacy-ai-actions a:focus-visible, .privacy-ai-actions button:focus-visible { outline: 2px solid #2563eb; outline-offset: 4px; border-radius: 3px; }
 .privacy-ai-sharing .privacy-ai-note { font-size: 0.88em; line-height: 1.6; }
 #privacy-ai-processing { scroll-margin-top: 110px; }
-@media (prefers-color-scheme: dark) {
-  .privacy-policy:not(.privacy-policy--public) .privacy-ai-actions a,
-  .privacy-policy:not(.privacy-policy--public) .privacy-ai-actions button { color: #93c5fd; }
-}
+
 
 .privacy-ai-processing-copy h3 { margin: 18px 0 4px; font-size: 1em; line-height: 1.45; font-weight: 700; color: inherit; }
 .privacy-ai-processing-copy p { margin: 0 0 10px; overflow-wrap: anywhere; }

@@ -1317,7 +1317,7 @@ const SMSList = ({ pendingRequests, setPendingRequests, fetchPendingRequests }) 
 
   return (
     <div aria-busy={loading} className={`counselor-chat-workspace ${selectedConversation ? "has-open-chat" : ""}`}>
-      <div className="counselor-chat-search">
+      <div data-search-field className="counselor-chat-search">
         <FaSearch aria-hidden="true" />
         <input
           type="search"
@@ -1330,7 +1330,7 @@ const SMSList = ({ pendingRequests, setPendingRequests, fetchPendingRequests }) 
 
       <div className="smslist-container">
       {/* Header with Welcome */}
-      <div className="smslist-header portal-page-header">
+      <div className="smslist-header">
         <div className="smslist-welcome">
           <h1>{t(getTimeGreetingKey())}</h1>
         </div>

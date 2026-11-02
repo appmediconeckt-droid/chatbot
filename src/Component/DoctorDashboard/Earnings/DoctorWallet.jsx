@@ -65,7 +65,7 @@ export default function DoctorWallet() {
     {wallet && <><div className="dew-balances">{[['pending', 'Pending earnings'], ['available', 'Available balance'], ['processing', 'Settlement processing'], ['settled', 'Settled to bank'], ['platformFees', 'Platform fees'], ['held', 'Cancellation / refund review']].map(([key, title]) => <div key={key}><span>{title}</span><strong>{money(wallet.summary[key])}</strong></div>)}</div>
     <h2>Transaction history</h2>
     <div className="dew-filters">
-      <label>Search transactions<input type="search" value={search} placeholder="Patient, appointment, reference or clinic" onChange={event => { setSearch(event.target.value); setPage(1); }} /></label>
+      <label data-search-field>Search transactions<input type="search" value={search} placeholder="Patient, appointment, reference or clinic" onChange={event => { setSearch(event.target.value); setPage(1); }} /></label>
       <label>Status<select value={status} onChange={event => { setStatus(event.target.value); setPage(1); }}><option value="all">All statuses</option><option value="pending">Pending earnings</option><option value="available">Available balance</option><option value="processing">Processing</option><option value="settled">Settled to bank</option><option value="held">Refund review</option></select></label>
       <label>Payment method<select value={method} onChange={event => { setMethod(event.target.value); setPage(1); }}><option value="all">All methods</option><option value="credit_card">Credit card</option><option value="debit_card">Debit card</option><option value="upi">UPI</option><option value="wallet">Wallet</option></select></label>
     </div>

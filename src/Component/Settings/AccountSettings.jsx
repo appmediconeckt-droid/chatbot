@@ -437,7 +437,7 @@ const AccountSettings = ({ role = "user", onOpenProfile }) => {
     <section className={`account-settings settings-screen ${isCounselor ? "account-settings--counselor" : "account-settings--user"}`}>
       <header className="settings-screen__header portal-page-header">
         <div><h1>{title}</h1><p>{t('settings')} · {t('privacy')}</p></div>
-        <label className="settings-search"><FaSearch /><input type="search" placeholder={t('search_settings')} aria-label={t('search_settings')} /></label>
+        <label data-search-field className="settings-search"><FaSearch /><input type="search" placeholder={t('search_settings')} aria-label={t('search_settings')} /></label>
       </header>
 
       {notice.message && <div className={`account-settings__notice ${notice.type}`}>{notice.message}</div>}

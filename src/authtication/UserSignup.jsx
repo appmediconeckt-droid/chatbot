@@ -1,3 +1,4 @@
+import { phoneCountryLabel } from '../utils/phoneCountries.js';
 import { getLocalPhoneLengths, getLocalPhoneMaxLength, limitPhoneDigits } from '../utils/profileCompletion.js';
 import React, { useState, useEffect } from "react";
 import {
@@ -1189,7 +1190,7 @@ const UserSignup = ({ initialSignup = false, roleSelector }) => {
                       >
                         {PHONE_COUNTRIES.map((country) => (
                           <option key={country.code} value={country.code}>
-                            {country.label} ({country.dial})
+                            {phoneCountryLabel(country, phoneCountry)}
                           </option>
                         ))}
                       </select>

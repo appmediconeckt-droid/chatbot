@@ -1,4 +1,8 @@
 {
+  "city": "City",
+  "state": "State",
+  "pincode": "PIN / Postal code",
+  "country": "Country",
   "login": "Login",
   "profile": "Profile",
   "bookAppointment": "Book Appointment",

@@ -3,7 +3,24 @@
 .rec-portal h1, .rec-portal h2, .rec-portal h3, .rec-portal p { margin: 0; }
 .rec-portal button, .rec-portal input, .rec-portal select { font: inherit; }
 .rec-portal button, .rec-portal a, .rec-portal input, .rec-portal select { outline-offset: 4px; }
-.rec-portal :focus-visible { outline: 2px solid var(--rec-primary); }
+.rec-portal :focus,
+.rec-portal :focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+}
+.rec-portal :is(input, textarea, select):focus {
+  border-color: var(--rec-control-border, #e0e7ec) !important;
+}
+.rec-portal :is(.patient-vitals, .staff-dashboard, .receptionist-filters) { --rec-control-border: #b9cec1; }
+.rec-portal .rec-clinic-select { --rec-control-border: #ceded7; }
+/* Text fields can match :focus-visible after a click. Restore the indicator
+   only for Tab navigation, using the application's existing input modality. */
+:root[data-input-modality="keyboard"] .rec-portal :focus-visible {
+  outline: 2px solid var(--rec-primary) !important;
+  outline-offset: 3px !important;
+}
 .rec-sidebar { position: fixed; inset: 0 auto 0 0; width: 258px; background: #fff; border-right: 1px solid var(--rec-line); padding: 28px 18px 20px; display: flex; flex-direction: column; z-index: 1100; overflow-y: auto; }
 .rec-brand { display: flex; align-items: center; gap: 10px; padding: 0 4px; text-decoration: none; color: var(--rec-primary); font-size: 24px; font-weight: 750; }
 .rec-brand-logo { display: block; width: 56px; height: 56px; flex: 0 0 56px; object-fit: contain; }

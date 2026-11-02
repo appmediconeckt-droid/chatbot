@@ -704,6 +704,12 @@
   gap: 8px;
 }
 
+.phone-country-field--emergency {
+  width: 100%;
+  max-width: 360px;
+  grid-template-columns: min(140px, 40%) minmax(0, 1fr);
+}
+
 .phone-country-field .phone-country-select,
 .phone-country-field .phone-local-input {
   width: 100%;

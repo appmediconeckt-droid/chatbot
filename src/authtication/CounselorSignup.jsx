@@ -1,3 +1,6 @@
+import { phoneCountryLabel } from '../utils/phoneCountries.js';
+import { phoneCountryForLocation } from '../utils/locationApi.js';
+import LocationSelect from '../Component/common/LocationSelect.jsx';
 import { getLocalPhoneLengths, getLocalPhoneMaxLength, limitPhoneDigits } from '../utils/profileCompletion.js';
 import { isProfessionalRole } from "./authSession.js";
 import React, { useState, useEffect } from "react";
@@ -75,6 +78,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
   const isLogin = false;
   const [slideAnim, setSlideAnim] = useState("");
   const [phoneCountry, setPhoneCountry] = useState("IN");
+  const [signupAddress, setSignupAddress] = useState({ country: "", state: "", city: "" });
   const selectedPhoneDial = (PHONE_COUNTRIES.find(({ code }) => code === phoneCountry) || PHONE_COUNTRIES[0]).dial;
   const [formData, setFormData] = useState({
     email: "",
@@ -1099,7 +1103,7 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
                       >
                         {PHONE_COUNTRIES.map((country) => (
                           <option key={country.code} value={country.code}>
-                            {country.label} ({country.dial})
+                            {phoneCountryLabel(country, phoneCountry)}
                           </option>
                         ))}
                       </select>
@@ -1226,15 +1230,27 @@ const CounselorSignup = ({ roleSelector, accountRole = "consultant" }) => {
                       <FaMapMarkerAlt className="cs-field-icon" />
                       Location <span className="cs-required">*</span>
                     </label>
-                    <input
-                      type="text"
-                      name="location"
-                      value={formData.location}
-                      onChange={handleChange}
+                    {['country', 'state', 'city'].map(field => <LocationSelect
+                      key={field} field={field} address={signupAddress}
+                      onChange={patch => {
+                        const address = { ...signupAddress, ...patch };
+                        setSignupAddress(address);
+                        const phone = phoneCountryForLocation(patch.country);
+                        if (phone) {
+                          setPhoneCountry(phone.iso);
+                          if (phone.iso !== phoneCountry) {
+                            setPhoneVerified(false);
+                            resetPhoneOtpState();
+                          }
+                        }
+                        setFormData(previous => ({ ...previous,
+                          ...(phone ? { phoneNumber: limitPhoneDigits(previous.phoneNumber, phone.dial) } : {}),
+                          location: address.city ? [address.city, address.state, address.country].filter(Boolean).join(', ') : '' }));
+                        setErrors(previous => ({ ...previous, location: '' }));
+                      }}
                       className={`cs-input ${errors.location ? "cs-input-error" : ""}`}
-                      placeholder="City, State"
                       disabled={isLoading}
-                    />
+                    />)}
                     {errors.location && (
                       <span className="cs-error">{errors.location}</span>
                     )}

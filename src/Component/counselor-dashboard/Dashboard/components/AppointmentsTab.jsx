@@ -96,7 +96,7 @@ export default function AppointmentsTab({
     <div className="couns-tab-content-stitch counselor-appointments-reference" aria-busy={loading}>
       <div className="stitch-apt-layout stitch-apt-layout-cards-only">
         <div className="stitch-apt-left">
-          <section className="stitch-apt-summary">
+          <section className="stitch-apt-summary portal-page-header portal-page-header--summary">
             <div className="stitch-apt-summary-copy">
               <h1>{t("appointments")}</h1>
               <p>{t("Manage client sessions, review requests, and connect people with the right counselor.")}</p>
@@ -110,7 +110,7 @@ export default function AppointmentsTab({
           </section>
 
           <div className="stitch-apt-toolbar">
-            <label className="stitch-apt-search">
+            <label data-search-field className="stitch-apt-search">
               <FaSearch aria-hidden="true" />
               <input
                 type="search"

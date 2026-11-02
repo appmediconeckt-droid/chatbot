@@ -1,0 +1,22 @@
+/* Shared by all search fields, including translated and portal-rendered inputs.
+   Keep the existing border width/layout; focus must not add an inner ring. */
+input[type="search"],
+[data-search-field] {
+  border-color: var(--search-border-color, #d1d5db) !important;
+}
+
+input[type="search"]:focus,
+input[type="search"]:focus-visible,
+[data-search-field]:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+  --tw-ring-shadow: 0 0 #0000 !important;
+  --tw-ring-offset-shadow: 0 0 #0000 !important;
+}
+
+/* Text inputs can match :focus-visible after a mouse click too. Track Tab
+   navigation explicitly so pointer users do not see a keyboard focus ring. */
+:root[data-input-modality="keyboard"] input[type="search"]:focus-visible {
+  outline: 2px solid #00863a !important;
+  outline-offset: 3px !important;
+}

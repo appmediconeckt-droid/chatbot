@@ -665,7 +665,7 @@ const MyAppointments = () => {
       {/* ── Main Content ── */}
       <main className="flex-1 p-4 sm:p-8 min-w-0">
         {/* Header */}
-        <header className="user-appointments-hero">
+        <header className="user-appointments-hero portal-page-header">
           <div>
             <h1>{t('my_appointments')}</h1>
           <p>{t("appointments_subtitle")}</p>

@@ -449,9 +449,9 @@ const NurseEmergencyDashboard = () => {
               <i className="fas fa-clock"></i> Active Emergencies
             </h2>
             <div className="nurse-emergency-controls">
-              <div className="nurse-emergency-search">
+              <div data-search-field className="nurse-emergency-search">
                 <input
-                  type="text"
+                  type="search"
                   placeholder="Search emergencies..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

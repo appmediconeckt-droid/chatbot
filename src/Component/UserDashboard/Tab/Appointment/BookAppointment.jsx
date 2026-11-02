@@ -2383,7 +2383,7 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
       <div className="main-content-unique">
         {/* Counselors Grid */}
         <div className="counselors-section-unique">
-          <div className="directory-hero-unique">
+          <div className="directory-hero-unique portal-page-header">
             <span className="cr-eyebrow">{t("FIND THE RIGHT SUPPORT")}</span>
             <div className="cr-banner-photo" aria-hidden="true" />
             <span className="cr-banner-note" aria-hidden="true">Better<br />Mental Health<br />Brighter<br />Tomorrows</span>
@@ -2396,10 +2396,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
             <div className="search-section-unique">
               <div className="search-container-unique">
                 {/* Search by Name */}
-                <div className="search-input-wrapper-unique">
+                <div data-search-field className="search-input-wrapper-unique">
                   <FaSearch className="search-icon-unique" aria-hidden="true" />
                   <input
-                    type="text"
+                    type="search"
                     className="search-input-unique"
                     placeholder={t("Search consultants by name, specialization, or keyword...")}
                     value={searchTerm}
@@ -2417,10 +2417,10 @@ const CounselorRequestChat = ({ initialSearch = "", onOpenConversation }) => {
 
                 <button type="button" className="cr-filter-toggle" aria-label={t("Filter consultants")} aria-expanded={showDirectoryFilters} onClick={() => setShowDirectoryFilters((value) => !value)}><FaSlidersH /></button>
                 {/* Search by Location */}
-                <div className="location-input-wrapper-unique">
+                <div data-search-field className="location-input-wrapper-unique">
                   <FaMapMarkerAlt className="location-icon-unique" aria-hidden="true" />
                   <input
-                    type="text"
+                    type="search"
                     className="location-input-unique"
                     placeholder={`${t('search')} ${t('location').toLowerCase()}...`}
                     value={searchLocation}

@@ -56,7 +56,7 @@ const HelpSupport = ({ role = "user" }) => {
 
   return (
     <section className="help-support">
-      <header className="help-support-header">
+      <header className="help-support-header portal-page-header">
         <div className="help-support-header-badge">
           <FaHeadset />
           <div>

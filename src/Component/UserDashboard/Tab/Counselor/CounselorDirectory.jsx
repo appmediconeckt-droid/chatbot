@@ -366,7 +366,7 @@ const CounselorTable = () => {
 
   return (
     <div className="counselor-directory">
-      <div className="directory-header">
+      <div className="directory-header portal-page-header">
         <div className="header-badge">{t("mental_health_experts")}</div>
         <h2 className="directory-title">
           {t("find_your")} <span className="title-highlight">{t("counselor_label")}</span>
@@ -377,10 +377,10 @@ const CounselorTable = () => {
       </div>
 
       <div className="search-section">
-        <div className="search-wrapper">
+        <div data-search-field className="search-wrapper">
           <FaSearch className="search-icon" aria-hidden="true" />
           <input
-            type="text"
+            type="search"
             className="search-input"
             placeholder={t('search_counselors')}
             value={searchTerm}

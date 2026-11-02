@@ -62,13 +62,12 @@ export default function StaffAppointments({clinicId} = {}) {
  const patient=data?.appointments.find(row=>patientKey(row)===selected);
  return <section className="rec-card staff-appointments">
   <div className="rec-card-heading"><div><h2><PortalText text="All appointments" /></h2><p><PortalText text="Online and walk-in appointments across all dates, including completed visits." /></p></div><button className="rec-button" disabled={loading} onClick={()=>setRefresh(value=>value+1)}><RefreshCw size={16}/><PortalText text="Refresh" /></button></div>
-  <div className="rec-filters"><label className="rec-search"><Search size={18}/><PortalElement as="input" aria-label="Search patient, phone or token" placeholder="Search patient, phone or token..." value={filters.search} onChange={event=>update('search',event.target.value)} /></label>
+  <div className="rec-filters"><label data-search-field className="rec-search"><Search size={18}/><PortalElement type="search" as="input" aria-label="Search patient, phone or token" placeholder="Search patient, phone or token..." value={filters.search} onChange={event=>update('search',event.target.value)} /></label>
    <label><PortalText text="From date" /><input type="date" value={filters.from} onChange={event=>update('from',event.target.value)} /></label><label><PortalText text="To date" /><input type="date" value={filters.to} onChange={event=>update('to',event.target.value)} /></label>
    <label><PortalText text="Status" /><select value={filters.status} onChange={event=>update('status',event.target.value)}>{['all','completed','pending','confirmed','booked','waiting','called','in_progress','canceled','rejected','skipped','no_show'].map(value=><option key={value} value={value}><PortalText text={value==='all'?'All statuses':statusLabel(value)} /></option>)}</select></label>
    {clinicId===undefined&&<label><PortalText text="Clinic / Hospital" /><select value={filters.clinic_id} onChange={event=>update('clinic_id',event.target.value)}><option value=""><PortalText text="All clinics / hospitals" /></option>{data?.clinics.map(row=><option key={row._id||row.id} value={String(row._id||row.id)}>{row.clinic_name}</option>)}</select></label>}
    <button className="rec-button" onClick={()=>{const today=indiaToday();setFilters(current=>({...current,from:today,to:today}));setPage(1);setSelected(null);}}><PortalText text="Today" /></button>
    <button className="rec-button" onClick={reset}><PortalText text="All dates" /></button>
-   <button className="rec-button" onClick={()=>update('status','completed')}><PortalText text="Completed appointments" /></button>
   </div>
   {error&&<p className="rec-alert" role="alert">{error}</p>}
   {cancelError&&<p className="rec-alert" role="alert">{cancelError}</p>}

@@ -1,4 +1,8 @@
 {
+  "city": "शहर",
+  "state": "राज्य",
+  "pincode": "पिन / पोस्टल कोड",
+  "country": "देश",
   "login": "लॉगिन करें",
   "profile": "ख़ाका",
   "bookAppointment": "बुक अपॉइंटमेंट",

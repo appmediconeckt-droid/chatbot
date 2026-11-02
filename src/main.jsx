@@ -2,12 +2,15 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 import "./index.css";
+import "./searchFocus.css";
 import App from "./App.jsx";
 import "../setupAxios";
 import { LanguageProvider } from "./i18n/LanguageContext";
 import { initializeWebSession } from "./utils/webSession";
+import { initializeInputModality } from "./utils/inputModality";
 
 initializeWebSession();
+initializeInputModality();
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
 const app = (

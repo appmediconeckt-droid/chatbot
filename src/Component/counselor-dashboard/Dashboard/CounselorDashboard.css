@@ -4650,7 +4650,8 @@ button:focus {
 .couns-call-page-header {
   margin-bottom: 18px;
   padding: 22px 24px;
-  color: #fff;
+  color: #162238;
+  background: #fff;
   /* background: linear-gradient(112deg, #0875f2 0%, #0753ae 100%); */
   border: 1px solid transparent;
   border-radius: 18px;
@@ -5859,6 +5860,7 @@ button:focus {
 .couns-main-content.couns-main-content--calls {
   height: 100dvh;
   min-height: 0;
+  padding-inline: 0;
   overflow: hidden;
 }
 .couns-main-content--calls .couns-call-page:not([hidden]) {
@@ -5866,7 +5868,9 @@ button:focus {
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  padding-block: 0;
+  width: 100%;
+  max-width: none;
+  padding: 0;
   overflow: hidden;
 }
 .couns-main-content--calls .couns-call-page > .portal-page-header {

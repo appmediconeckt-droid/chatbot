@@ -285,7 +285,7 @@ export default function NotificationPage() {
             </PortalElement>
 
             <div className="doctor-notifications-toolbar">
-              <label className="doctor-notifications-search">
+              <label data-search-field className="doctor-notifications-search">
                 <Search size={17} />
                 <PortalElement as="input"
                   type="search"

@@ -6251,7 +6251,7 @@ const ChatBox = ({ manageIncomingCalls = true, embedded = false, conversation = 
   return (
     <div className={`chatContainerFull ${embedded ? "chatEmbedded" : ""}`}>
       <div className="chatBoxMain">
-        <div className="chatConversationSearch">
+        <div data-search-field className="chatConversationSearch">
           <FaSearch aria-hidden="true" />
           <input
             type="search"

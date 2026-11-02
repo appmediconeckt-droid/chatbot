@@ -37,11 +37,11 @@
 .prescription-document th,.prescription-document td{padding:8px 6px;text-align:left;vertical-align:top;border-right:1px solid #c7cdd2;border-bottom:1px solid #c7cdd2;overflow-wrap:anywhere;line-height:1.5}
 .prescription-document th{background:#eef4f6;color:var(--rx-blue);font-weight:700}
 .prescription-document th:first-child{width:7%}
-.prescription-document th:nth-child(2){width:32%}
-.prescription-document th:nth-child(3){width:13%}
-.prescription-document th:nth-child(4){width:9%}
-.prescription-document th:nth-child(5){width:15%}
-.prescription-document th:last-child{width:24%}
+.prescription-document th:nth-child(2){width:37%}
+.prescription-document th:nth-child(3){width:15%}
+.prescription-document th:nth-child(4){width:15%}
+
+.prescription-document th:last-child{width:26%}
 .prescription-document th:last-child,.prescription-document td:last-child{border-right:0}
 .prescription-document tr:last-child td{border-bottom:0}
 .prescription-medicines>p{padding:9px;border:1px solid var(--rx-line);border-top:0}
@@ -196,6 +196,15 @@
 .prescription-clinical p{padding:5px 8px}
 .prescription-advice p,.prescription-advice ul,.prescription-notes>p,.prescription-tests>p{padding-top:6px;padding-bottom:6px;line-height:1.45}
 .prescription-document-footer{min-height:84px;padding:3px 0 10px}
+.prescription-body{flex:1 0 auto;min-width:0}
+.prescription-page-footer{flex:none;margin-top:auto;padding-top:12px;break-inside:avoid}
+.prescription-page-footer .prescription-contact-footer{margin-top:0}
+.prescription-document-header{flex:none}
+.prescription-export .prescription-document{min-height:1122px}
+.prescription-export .prescription-paper-page{height:1122px;min-height:1122px;max-height:1122px;break-after:page;page-break-after:always}
+.prescription-export .prescription-paper-page:last-child{break-after:auto;page-break-after:auto}
+.prescription-paper-page .prescription-body{flex:1 1 0;min-height:0;overflow:hidden;padding-top:1px}
+.prescription-paper-page .prescription-page-footer{margin-top:0}
 @media screen and (max-width:650px){
   .prescription-document-header{grid-template-columns:76px minmax(0,1fr) 72px;gap:9px;padding:10px}
   .prescription-brand img{width:72px;height:60px}

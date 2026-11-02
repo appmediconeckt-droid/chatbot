@@ -596,7 +596,7 @@ export default function AppointmentList() {
       <PortalElement as="section" className="appointment-toolbar appointment-list-controls" aria-label="Appointment filters">
         <h2>{selectedDate === todayAppointmentDate() ? <PortalText text={"Today's Appointments"} /> : <PortalText text={"Appointments"} />} <span>({filteredAppointments.length})</span></h2>
         <div className="appointment-list-filter-controls">
-          <div className="appointment-search-input">
+          <div data-search-field className="appointment-search-input">
             <i className="fa-solid fa-magnifying-glass" aria-hidden="true"></i>
             <PortalElement as="input" type="search" aria-label="Search appointments" placeholder="Search by name, phone, token..." value={searchText} onChange={(event) => setSearchText(event.target.value)} />
           </div>

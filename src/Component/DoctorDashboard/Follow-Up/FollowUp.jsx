@@ -577,10 +577,10 @@ function FollowUp() {
 
       <section className="fup-list-card">
         <div className="fup-toolbar">
-          <label className="fup-search-box">
+          <label data-search-field className="fup-search-box">
             <Search size={18} />
             <PortalElement as="input"
-              type="text"
+              type="search"
               placeholder="Search patient..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}

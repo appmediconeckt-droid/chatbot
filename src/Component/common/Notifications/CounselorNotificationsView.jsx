@@ -34,7 +34,7 @@ export default function CounselorNotificationsView({ t, lang, notifications, loa
     ["appointment", "appointments", FaCalendarAlt], ["message", "chats", FaRegComment], ["call", "Calls", FaPhoneAlt],
   ];
   return <div className="counselor-notifications">
-    <header className="cn-hero">
+    <header className="cn-hero portal-page-header">
       <NotificationLeaves />
       <div className="cn-hero-copy"><h1>{t("notifications")}</h1><p>{t("Manage your reminders, chats, appointments, and updates")}</p></div>
       <button type="button" className="cn-mark-all" disabled={!unreadCount} onClick={onMarkAll}><FaCheck />{t("mark_all_read")}</button>

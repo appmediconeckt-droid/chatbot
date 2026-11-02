@@ -82,7 +82,7 @@ export default function PsychiatristsDirectory() {
           <h1>{t('psychiatrists')}</h1>
           <p>{t('psychiatrists_available') || 'View psychiatrists available on Humaeli.'}</p>
         </div>
-        <label>
+        <label data-search-field>
           <FaSearch aria-hidden="true" />
           <input
             type="search"

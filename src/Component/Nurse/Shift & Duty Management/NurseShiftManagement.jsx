@@ -691,9 +691,9 @@ const NurseShiftManagement = () => {
               <h2 className="nurse-shift-tab-title">
                 <i className="fas fa-bed"></i> Ward Assignments
               </h2>
-              <div className="nurse-ward-search">
+              <div data-search-field className="nurse-ward-search">
                 <input 
-                  type="text" 
+                  type="search" 
                   placeholder="Search wards..." 
                   className="nurse-ward-search-input"
                 />

@@ -489,9 +489,9 @@ const NurseNotifications = () => {
 
       {/* Filters and Search */}
       <div className="nurse-notifications-filters">
-        <div className="nurse-notif-search">
+        <div data-search-field className="nurse-notif-search">
           <input
-            type="text"
+            type="search"
             placeholder="Search notifications..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

@@ -477,10 +477,10 @@ const VitalSignsDashboard = () => {
           {/* Controls */}
           <div className="dashboard-controls">
             <div className="controls-left">
-              <div className="search-container">
+              <div data-search-field className="search-container">
                 <i className="fas fa-search"></i>
                 <input
-                  type="text"
+                  type="search"
                   placeholder="Search patients by name, room, or diagnosis..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}

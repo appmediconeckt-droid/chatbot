@@ -339,7 +339,7 @@ const PrivacyPolicy = ({ variant = "dashboard", role = "user", aiOnly = false })
         </>
       ) : (
         <>
-          <header className="privacy-policy-header">
+          <header className="privacy-policy-header portal-page-header">
             <div className="privacy-policy-header-badge">
               <FaShieldAlt />
               <div>
@@ -391,7 +391,8 @@ const PrivacyPolicy = ({ variant = "dashboard", role = "user", aiOnly = false })
       ))}
 
       <div className="privacy-policy-content">
-        {(aiOnly ? sections.slice(0, 2) : sections).map((section, index) => (
+        {/* Temporarily hide the two AI privacy sections on the public landing policy. */}
+        {(aiOnly ? sections.slice(0, 2) : isPublic ? sections.slice(2) : sections).map((section, index) => (
           <details
             key={section.title}
             id={section.id}

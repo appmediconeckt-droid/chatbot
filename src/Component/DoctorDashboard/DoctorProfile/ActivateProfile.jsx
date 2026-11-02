@@ -1,3 +1,5 @@
+import { phoneCountryForLocation } from '../../../utils/locationApi.js';
+import LocationSelect from '../../common/LocationSelect.jsx';
 import { PortalText, PortalElement } from "../../common/PortalTranslation";
 import { formatPhoneWithCountryCode } from '../../../utils/phoneDisplay.js';
 import { getProfileCompletion, getLocalPhoneMaxLength, limitPhoneDigits, normalizePhoneNumber } from "../../../utils/profileCompletion";
@@ -237,7 +239,8 @@ export default function DoctorProfileFlow() {
     setIsEditMode(true);
   };
 
-  const contactChanged = (type) => String(profile[type] || "").trim() !== String(savedContact[type] || "").trim();
+  const contactChanged = (type) => String(profile[type] || "").trim() !== String(savedContact[type] || "").trim()
+    || (type === 'mobile' && profile.phoneCountryCode !== (savedProfileData?.phoneCountryCode || '+91'));
 
   const updateContact = (type, value) => {
     if (type === 'mobile') value = limitPhoneDigits(value, profile.phoneCountryCode);
@@ -251,7 +254,7 @@ export default function DoctorProfileFlow() {
   const callOtpEndpoint = async (action, payload) => {
     const response = await axios.post(`${API_BASE_URL}/auth/profile-change/${action === 'send' ? 'send-otp' : 'verify-otp'}`, {
       field: payload.type === 'phone' ? 'phone' : 'email',
-      phoneCountryCode: savedProfileData?.phoneCountryCode || '+91',
+      phoneCountryCode: profile.phoneCountryCode || '+91',
       newValue: payload.value,
       ...(action === 'verify' ? { otp: payload.otp } : {}),
     }, { headers: getAuthHeaders() });
@@ -375,7 +378,7 @@ export default function DoctorProfileFlow() {
   const toApiProfile = (data) => ({
     role: 'doctor',
     fullName: data.name, email: data.email, phoneNumber: data.mobile,
-    phoneCountryCode: savedProfileData?.phoneCountryCode || '+91',
+    phoneCountryCode: data.phoneCountryCode || '+91',
     dateOfBirth: data.dob, gender: String(data.gender || '').toLowerCase(),
     address: { ...data.address, line1: data.currentAddress },
     qualification: data.qualification, experience: data.experience,
@@ -648,11 +651,19 @@ export default function DoctorProfileFlow() {
           </div>
 
           <div className="row mt-3">
-            {['city', 'state', 'pincode', 'country'].map((field) => (
+            {['country', 'state', 'city', 'pincode'].map((field) => (
               <div className="col-md-3 mb-3" key={field}>
                 <label className="form-label" htmlFor={`doctor-address-${field}`}>{field === 'pincode' ? <PortalText text={"PIN Code"} /> : field.charAt(0).toUpperCase() + field.slice(1)}</label>
-                <input id={`doctor-address-${field}`} className="form-input form-control" value={profile.address?.[field] || ''}
-                  onChange={(event) => setProfile((previous) => ({ ...previous, address: { ...previous.address, [field]: event.target.value } }))} />
+                {field === 'pincode' ? <input id={`doctor-address-${field}`} className="form-input form-control" value={profile.address?.[field] || ''}
+                  onChange={(event) => setProfile((previous) => ({ ...previous, address: { ...previous.address, [field]: event.target.value } }))} /> :
+                  <LocationSelect id={`doctor-address-${field}`} className="form-input form-control" field={field} address={profile.address}
+                    onChange={patch => {
+                      const phone = phoneCountryForLocation(patch.country);
+                      setProfile(previous => ({ ...previous, address: { ...previous.address, ...patch },
+                        ...(phone ? { phoneCountryCode: phone.dial,
+                          mobile: limitPhoneDigits(normalizePhoneNumber(previous.mobile, previous.phoneCountryCode, true).digits, phone.dial) } : {}) }));
+                      if (phone) setVerification(previous => ({ ...previous, mobile: { otp: '', sent: false, verified: false, loading: false, message: 'Verification required' } }));
+                    }} />}
               </div>
             ))}
           </div>

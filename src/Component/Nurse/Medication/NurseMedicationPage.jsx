@@ -219,9 +219,9 @@ const NurseMedicationPage = () => {
       </div>
 
       <div className="nurse-medication-controls">
-        <div className="nurse-search-box">
+        <div data-search-field className="nurse-search-box">
           <input
-            type="text"
+            type="search"
             placeholder="Search by medication or patient..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

@@ -537,9 +537,9 @@ const WalletDashboard = ({ userData }) => {
                             <p><span className="material-symbols-outlined">south</span> {t("wallet_transaction_summary")}</p>
                         </section>
                         <section className="wallet-history-tools">
-                            <label>
+                            <label data-search-field>
                                 <span className="material-symbols-outlined">search</span>
-                                <input value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder={t("search_transactions")} />
+                                <input type="search" value={historySearch} onChange={(e) => setHistorySearch(e.target.value)} placeholder={t("search_transactions")} />
                             </label>
                             <div>
                                 {[

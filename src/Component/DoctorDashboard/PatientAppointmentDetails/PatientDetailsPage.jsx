@@ -411,9 +411,9 @@ export default function PatientDetailsPage() {
           <div className="pd-patient-list-section">
             <div className="pd-directory-header">
               <h3 className="pd-section-title"><PortalText text={"Patients Directory"} /></h3>
-              <div className="pd-directory-search">
+              <div data-search-field className="pd-directory-search">
                 <PortalElement as="input"
-                  type="text"
+                  type="search"
                   placeholder="Search patient"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}

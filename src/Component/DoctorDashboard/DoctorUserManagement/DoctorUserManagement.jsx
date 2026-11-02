@@ -931,7 +931,7 @@ const DoctorUserManagement = () => {
           </div>
 
           <div className="docstaff-screen-header-tools">
-            <label className="docstaff-screen-top-search">
+            <label data-search-field className="docstaff-screen-top-search">
               <Search size={18} strokeWidth={2.2} />
               <PortalElement as="input"
                 type="search"
@@ -981,7 +981,7 @@ const DoctorUserManagement = () => {
         </div>
 
         <div className="docstaff-screen-toolbar">
-          <label className="docstaff-screen-table-search">
+          <label data-search-field className="docstaff-screen-table-search">
             <Search size={17} strokeWidth={2.1} />
             <PortalElement as="input"
               type="search"
@@ -1252,7 +1252,7 @@ const DoctorUserManagement = () => {
             {addStaffStep === 1 && (
               <>
             <div className="docstaff-screen-add-filters">
-              <label className="docstaff-screen-add-search">
+              <label data-search-field className="docstaff-screen-add-search">
                 <Search size={17} />
                 <PortalElement as="input"
                   type="search"

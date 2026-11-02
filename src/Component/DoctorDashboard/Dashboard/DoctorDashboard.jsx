@@ -2947,23 +2947,6 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
             </Col>
           </Row>
 
-          <Row className="mb-2">
-            <Col md={12}>
-              <div className="dd-additional-notes-section p-2 border rounded">
-                <Form.Group>
-                  <Form.Label className="dd-form-label"><PortalText text={"Additional Notes"} /></Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={2}
-                    placeholder="Any additional observations..."
-                    value={form.additionalNotes}
-                    onChange={(e) => handleInputChange("additionalNotes", e.target.value)}
-                    className="dd-form-control-sm dd-additional-notes-textarea"
-                  />
-                </Form.Group>
-              </div>
-            </Col>
-          </Row>
         </Form>
       </Modal.Body>
       <Modal.Footer className="dd-edit-modal-footer">

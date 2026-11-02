@@ -689,7 +689,7 @@ const ChatInterface = ({ setActiveTab, onOpenConversation, selectedChatId }) => 
         <div className="chatAppContainer">
             <div className="counselorSidebar">
                 <div className="counselorSidebarHeader">
-                    <div className="counselorSearchBox">
+                    <div data-search-field className="counselorSearchBox">
                         <FaSearch className="counselorSearchIcon" aria-hidden="true" />
                         <input
                             type="search"

@@ -498,9 +498,9 @@ export default function WalkInAppointment() {
       <section className="walkin-table-card">
         {/* ===== Working Filters Toolbar ===== */}
         <div className="walkin-table-toolbar">
-          <label>
+          <label data-search-field>
             <Search size={16} />
-            <PortalElement as="input"
+            <PortalElement type="search" as="input"
               placeholder="Search patient name, phone..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}

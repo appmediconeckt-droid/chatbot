@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import axios from '../../../axiosConfig.js';
 import { API_BASE_URL, getAuthHeaders, getDoctorUser } from '../doctorApi.js';
 import './QRcode.css';
+import DisplayAudioControl from '../../Receptionist/DisplayAudioControl.jsx';
 
 export default function QRcode() {
   const doctorId = useMemo(() => {
@@ -104,7 +105,8 @@ export default function QRcode() {
           <PortalElement as="input" aria-label="LED screen link" readOnly value={ledUrl} onFocus={event => event.target.select()} className="doctor-qr-led-url" />
           <button type="button" onClick={() => copy(ledUrl, 'LED link')}><PortalText text={"Copy LED link"} /></button>
           <p><a href={ledUrl} target="_blank" rel="noreferrer"><PortalText text={"Preview on this device"} /></a></p>
-          <p><PortalText text={"The LED refreshes every 3 seconds. Keep the laptop awake and connected to the internet. If the window is blocked, allow pop-ups or open the preview in a separate browser window."} /></p>
+          <DisplayAudioControl key={selectedId} displayId={selectedId} />
+          <p><PortalText text={"The LED updates when the queue changes. Keep the receiver awake and connected to the internet."} /></p>
         </section>
         {notice && <p role="status">{notice}</p>}
       </aside>

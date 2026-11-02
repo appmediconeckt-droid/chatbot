@@ -1263,9 +1263,9 @@ export default function UserDashboard() {
 
         <div className="ud-help-page-body">
             <h1>{t("how_can_we_help")}</h1>
-          <label className="ud-help-search">
+          <label data-search-field className="ud-help-search">
             <FaSearch />
-            <input value={helpSearch} onChange={(event) => setHelpSearch(event.target.value)} placeholder={t("support.searchPlaceholder")} />
+            <input type="search" value={helpSearch} onChange={(event) => setHelpSearch(event.target.value)} placeholder={t("support.searchPlaceholder")} />
           </label>
 
           <div className="ud-help-channel-grid">
@@ -1323,7 +1323,6 @@ export default function UserDashboard() {
               </section> */}
 
               <section className="ud-help-legal">
-            <button type="button"><FaFileAlt /> {t("terms_of_service")} <FaChevronRight /></button>
             <button type="button" onClick={() => setActive("privacy")}><FaShieldAlt /> {t("privacy_policy")} <FaChevronRight /></button>
               </section>
             </aside>
@@ -1635,7 +1634,7 @@ export default function UserDashboard() {
           <div className="ud-content-scrollable">
             <Suspense fallback={<DashboardPanelLoader />}>
               {active === "Chat" && !isDirectChatRoute && (
-                <header className="portal-page-header"><h1>{t("chat")}</h1></header>
+                <header className="ud-chat-page-header"><h1>{t("chat")}</h1></header>
               )}
               {active === "Chat" && (
                 <div className={`ud-chat-workspace ${selectedConversation ? "has-conversation" : ""} ${isDirectChatRoute ? "direct-conversation" : ""}`}>

@@ -1,4 +1,5 @@
-import { PortalElement, PortalText } from '../common/PortalTranslation';
+import { PortalElement, PortalText, PortalTemplate, usePreloadPortalCopy } from '../common/PortalTranslation';
+import receptionistCopy from '../../i18n/locales/receptionist-copy.json';
 import { usePortalLanguage } from '../../i18n/LanguageContext';
 import { PortalLanguageScope } from '../common/portalLanguageScope';
 import { LanguageSelector } from '../common/LanguageSelector';
@@ -18,6 +19,7 @@ import { logoIcon } from '../../assets/brandAssets.js';
 const icons = { dashboard: LayoutDashboard, appointments: CalendarDays, queue: ListOrdered, display: Monitor, patients: FileText, doctor: Stethoscope, profile: UserRound, settings: Settings };
 export default function ReceptionistLayout() {
   const { lang, setLang, t } = usePortalLanguage("receptionist");
+  usePreloadPortalCopy(receptionistCopy, 'receptionist');
   const navigate = useNavigate();
   const location = useLocation();
   const needsLiveDashboard = ['/receptionist/dashboard', '/receptionist/live-queue'].includes(location.pathname);
@@ -119,7 +121,7 @@ export default function ReceptionistLayout() {
     <div className="rec-body">
       <header className="rec-topbar"><PortalElement as="button" className="rec-menu-toggle rec-icon-button" aria-label="Open navigation" aria-controls="receptionist-sidebar" aria-expanded={open} onClick={() => setOpen(true)}><Menu size={22} /></PortalElement><div className="rec-breadcrumb"><PortalText text={"Receptionist "} /><span>/</span> <strong><PortalText text={page.title} /></strong></div><div className="rec-topbar-user"><ProfileAvatar photo={profile?.profilePhoto} name={profile?.fullName} fallback={initials} className="rec-avatar small" /><span>{profile?.fullName || <PortalText text={"Receptionist"} />}<small><PortalText text={"Front desk"} /></small></span></div></header>
       <main className="rec-content">
-        <div className="rec-page-heading"><div><p className="rec-eyebrow"><PortalText text={"FRONT DESK WORKSPACE"} /></p><h1><PortalText text={page.title} /></h1><p><PortalText text={page.description} /></p></div><div className="rec-page-actions">{needsDashboard && <><span className="rec-sync"><span className={`rec-dot ${error ? 'warning' : ''}`} />{refreshing ? <PortalText text={"Updating..."} /> : liveData ? `Updated ${displayTime(liveData.updatedAt)}` : <PortalText text={"Connecting"} />}</span><button className="rec-button" disabled={refreshing || !profile} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={16} className={refreshing ? 'rec-spin' : ''} /><PortalText text={"Refresh"} /></button></>}</div></div>
+        <div className="rec-page-heading"><div><p className="rec-eyebrow"><PortalText text={"FRONT DESK WORKSPACE"} /></p><h1><PortalText text={page.title} /></h1><p><PortalText text={page.description} /></p></div><div className="rec-page-actions">{needsDashboard && <><span className="rec-sync"><span className={`rec-dot ${error ? 'warning' : ''}`} />{refreshing ? <PortalText text={"Updating..."} /> : liveData ? <PortalTemplate text="Updated {0}" values={[displayTime(liveData.updatedAt)]} /> : <PortalText text={"Connecting"} />}</span><button className="rec-button" disabled={refreshing || !profile} onClick={() => setRefresh(value => value + 1)}><RefreshCw size={16} className={refreshing ? 'rec-spin' : ''} /><PortalText text={"Refresh"} /></button></>}</div></div>
         {accountError && <div className="rec-alert" role="alert">{accountError}</div>}
         {error && <div className="rec-alert" role="alert">{error} {data && <PortalText text={"The displayed data may be out of date."} />}</div>}
         {profile && <div className="rec-context-bar"><div><label className="rec-clinic-filter" htmlFor="receptionist-clinic"><PortalText text={"Clinic / Hospital"} /><span className="rec-clinic-select"><Building2 size={17} aria-hidden="true" /><PortalElement as="select" id="receptionist-clinic" aria-label="Select clinic or hospital" value={clinic} disabled onChange={event => setClinic(event.target.value)}><option value="">{!liveData && !clinics.length && !error ? <PortalText text={"Loading clinics..."} /> : <PortalText text={"Assigned clinic / hospital"} />}</option>{clinics.filter(row => row._id || row.id).map(row => <option key={String(row._id || row.id)} value={String(row._id || row.id)}>{row.clinic_name || row.name || <PortalText text={"Unnamed clinic"} />}{row.location ? ` - ${row.location}` : ''}</option>)}</PortalElement><ChevronDown size={16} aria-hidden="true" /></span></label></div><small><PortalText text={"Live queue refreshes every 10 seconds"} /></small></div>}

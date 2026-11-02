@@ -1,3 +1,6 @@
+import { phoneCountryLabel } from '../../../../utils/phoneCountries.js';
+import { phoneCountryForLocation } from '../../../../utils/locationApi.js';
+import LocationSelect from '../../../common/LocationSelect.jsx';
 import { currencyForCountry, feeCurrency, currencyDigits, validFee, formatFee } from '../../../../utils/consultationCurrency.js';
 import useSocketRefresh from "../../../../hooks/useSocketRefresh";
 import { formatPhoneWithCountryCode } from '../../../../utils/phoneDisplay.js';
@@ -3211,7 +3214,7 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                                             >
                                                 {PHONE_COUNTRIES.map((country) => (
                                                     <option key={country.code} value={country.code}>
-                                                        {country.label} ({country.dial})
+                                                        {phoneCountryLabel(country, phoneCountry)}
                                                     </option>
                                                 ))}
                                             </select>
@@ -3321,20 +3324,12 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                                     placeholder="Address Line 2"
                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
                                 />
-                                <input
-                                    type="text"
-                                    value={editedData.address?.city || ''}
-                                    onChange={(e) => handleNestedInputChange('address', 'city', e.target.value)}
-                                    placeholder="City"
-                                    className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                />
-                                <input
-                                    type="text"
-                                    value={editedData.address?.state || ''}
-                                    onChange={(e) => handleNestedInputChange('address', 'state', e.target.value)}
-                                    placeholder="State"
-                                    className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                />
+                                <LocationSelect field="city" address={editedData.address}
+                                    onChange={patch => setEditedData(previous => ({ ...previous, address: { ...previous.address, ...patch } }))}
+                                    className={`${COUNSELOR_PROFILE_CLASS}__input`} />
+                                <LocationSelect field="state" address={editedData.address}
+                                    onChange={patch => setEditedData(previous => ({ ...previous, address: { ...previous.address, ...patch } }))}
+                                    className={`${COUNSELOR_PROFILE_CLASS}__input`} />
                                 <input
                                     type="text"
                                     value={editedData.address?.pincode || ''}
@@ -3342,13 +3337,16 @@ const CounselorProfile = ({ initialEditing = false, onRequestClose, onSaved }) =
                                     placeholder="Pincode"
                                     className={`${COUNSELOR_PROFILE_CLASS}__input`}
                                 />
-                                <input
-                                    type="text"
-                                    value={editedData.address?.country || ''}
-                                    onChange={(e) => handleNestedInputChange('address', 'country', e.target.value)}
-                                    placeholder="Country"
-                                    className={`${COUNSELOR_PROFILE_CLASS}__input`}
-                                />
+                                <LocationSelect field="country" address={editedData.address}
+                                    onChange={patch => {
+                                      const phone = phoneCountryForLocation(patch.country);
+                                      if (phone) {
+                                        setPhoneCountry(phone.iso);
+                                        setPhoneLocalNumber(previous => limitPhoneDigits(previous, phone.dial));
+                                      }
+                                      setEditedData(previous => ({ ...previous, address: { ...previous.address, ...patch } }));
+                                    }}
+                                    className={`${COUNSELOR_PROFILE_CLASS}__input`} />
                             </div>
                         ) : (
                             <div className={`${COUNSELOR_PROFILE_CLASS}__address-display`}>

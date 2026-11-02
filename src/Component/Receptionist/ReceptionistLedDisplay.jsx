@@ -5,6 +5,7 @@ import { Monitor, ExternalLink, Copy, RefreshCw, ListOrdered, Building2, Clock3 
 import axios, { API_BASE_URL } from '../../axiosConfig.js';
 import { clinicDisplayUrl, selectDisplayClinic } from './receptionistDisplay.js';
 import { displayTime, statusLabel } from './receptionistView.js';
+import DisplayAudioControl from './DisplayAudioControl.jsx';
 
 export default function ReceptionistLedDisplay() {
   const { profile, clinic } = useOutletContext();
@@ -34,21 +35,35 @@ export default function ReceptionistLedDisplay() {
   useEffect(() => {
     if (!selectedId || loading) return;
     const controller = new AbortController();
-    let timer;
+    let pending = false;
+    let dirty = false;
     setQueue(null); setQueueError('');
     const load = async () => {
+      if (controller.signal.aborted) return;
+      if (pending) { dirty = true; return; }
+      pending = true;
       try {
-        const { data } = await axios.get(`/api/qr/walkin/${encodeURIComponent(selectedId)}/queue`, { signal: controller.signal });
+        if (document.hidden || navigator.onLine === false) return;
+        const { data } = await axios.get(`/api/qr/walkin/${encodeURIComponent(selectedId)}/queue`, { signal: controller.signal, timeout: 10000 });
         if (!controller.signal.aborted) { setQueue({ ...data, fetchedAt: new Date().toISOString() }); setQueueError(''); }
       } catch (err) {
         if (!controller.signal.aborted) {
           setQueueError(err.response?.data?.message || 'Live display data could not be refreshed.');
           if ([401, 403, 404, 410].includes(err.response?.status)) setQueue(null);
         }
-      } finally { if (!controller.signal.aborted) timer = setTimeout(load, 3000); }
+      } finally {
+        pending = false;
+        if (dirty && !controller.signal.aborted) { dirty = false; void load(); }
+      }
     };
-    load();
-    return () => { controller.abort(); clearTimeout(timer); };
+    const base = clinicDisplayUrl(API_BASE_URL, selectedId).split('/display/clinic/')[0];
+    const stream = new EventSource(`${base}/led-control/clinic/${encodeURIComponent(selectedId)}/events`);
+    stream.onopen = () => { void load(); };
+    stream.onmessage = () => { void load(); };
+    stream.onerror = () => setQueueError('Live connection reconnecting. Showing the last received update.');
+    const visible = () => { if (!document.hidden) void load(); };
+    document.addEventListener('visibilitychange', visible);
+    return () => { controller.abort(); stream.close(); document.removeEventListener('visibilitychange', visible); };
   }, [selectedId, loading, refresh]);
   const selected = displays.find(row => row.doctorClinicId === selectedId);
   const url = !loading && selected ? clinicDisplayUrl(API_BASE_URL, selectedId) : '';
@@ -62,7 +77,8 @@ export default function ReceptionistLedDisplay() {
       {loading && <p className="rec-loading" role="status"><PortalText text={"Loading your doctor's displays..."} /></p>}
       {error && <p className="rec-alert" role="alert">{error}</p>}
       {!loading && !error && !displays.length && <div className="rec-empty"><Monitor size={32} /><h3><PortalText text={"No clinic display available"} /></h3><p><PortalText text={"Ask your doctor to add an active clinic or hospital. Its LED display will appear here."} /></p></div>}
-      {url && <><div className="rec-led-actions"><a className="rec-button primary" href={url} target="_blank" rel="noopener noreferrer"><Monitor size={17} /><PortalText text={"Open LED screen"} /></a><button className="rec-button" onClick={() => window.open(url, '_blank', 'popup,width=1280,height=720,noopener,noreferrer')}><ExternalLink size={16} /><PortalText text={"Open separate LED window"} /></button><button className="rec-button" onClick={copyLink}><Copy size={16} /><PortalText text={"Copy LED link"} /></button></div><label className="rec-led-link-label"><PortalText text={"LED screen link"} /><PortalElement as="input" className="rec-led-link" aria-label="LED screen link" value={url} readOnly onFocus={event => event.target.select()} /></label><p className="rec-led-caption"><PortalText text={"The display updates every 3 seconds with current and next tokens, waiting count, room and doctor status."} /></p></>}
+      {url && <><div className="rec-led-actions"><a className="rec-button primary" href={url} target="_blank" rel="noopener noreferrer"><Monitor size={17} /><PortalText text={"Open LED screen"} /></a><button className="rec-button" onClick={() => window.open(url, '_blank', 'popup,width=1280,height=720,noopener,noreferrer')}><ExternalLink size={16} /><PortalText text={"Open separate LED window"} /></button><button className="rec-button" onClick={copyLink}><Copy size={16} /><PortalText text={"Copy LED link"} /></button></div><label className="rec-led-link-label"><PortalText text={"LED screen link"} /><PortalElement as="input" className="rec-led-link" aria-label="LED screen link" value={url} readOnly onFocus={event => event.target.select()} /></label><p className="rec-led-caption"><PortalText text={"The display updates when appointments or the queue change. There is no timed queue refresh."} /></p></>}
+      {url && <DisplayAudioControl key={selectedId} displayId={selectedId} queue={queue} />}
       {notice && <p className="rec-queue-notice" role="status">{notice}</p>}
     </section>
     {url && <div className="rec-overview-grid"><section className="rec-card rec-led-preview"><div className="rec-card-heading"><div><h2><PortalText text={"Live display preview"} /></h2><p><Building2 size={14} /> {selected.clinic.name}{queue?.roomId || selected.clinic.room ? ` / Room ${queue?.roomId || selected.clinic.room}` : ''}</p></div><span className="rec-live-label"><span className={`rec-dot ${queueError ? 'warning' : ''}`} />{queue ? `Updated ${displayTime(queue.fetchedAt)}` : <PortalText text={"Connecting"} />}</span></div>

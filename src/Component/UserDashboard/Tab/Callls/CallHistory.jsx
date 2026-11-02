@@ -449,7 +449,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
   return (
     <div
       className={`portal-call-history ${
-        isCounselorView ? "pch-theme-counselor" : "pch-theme-user pch-single-list"
+        isCounselorView ? "pch-theme-counselor pch-single-list" : "pch-theme-user pch-single-list"
       }`}
     >
       {showHeader && (
@@ -462,9 +462,9 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
       <div className="pch-layout">
         <aside className="pch-sidebar">
           <div className="pch-controls">
-            <div className="pch-search">
+            <div data-search-field className="pch-search">
               <FaSearch aria-hidden="true" />
-              <input type="text" placeholder={t("search_calls")} value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} aria-label="Search calls" />
+              <input type="search" placeholder={t("search_calls")} value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} aria-label="Search calls" />
               {searchTerm && <button type="button" onClick={() => setSearchTerm("")} aria-label="Clear search">×</button>}
             </div>
             <div className="pch-filter-row">
@@ -475,10 +475,10 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
           </div>
 
           <div className="pch-compact-list">
-            {!isCounselorView && callError && <div className="call-error-banner" role="alert">{callError}</div>}
+            {callError && <div className="call-error-banner" role="alert">{callError}</div>}
             {isLoadingCalls && <p className="pch-empty">{t("loading_calls")}</p>}
             {!isLoadingCalls && filteredCalls.map((call, index) => (
-              <button type="button" key={`${call.id}-compact-${index}`} className={`pch-compact-call ${isCounselorView && index === 0 ? "selected" : ""}`} onClick={() => openCallModal(call)}>
+              <button type="button" key={`${call.id}-compact-${index}`} className="pch-compact-call" onClick={() => openCallModal(call)}>
                 <span className="pch-avatar">
                   {isImageUrl(call.avatarUrl || call.profilePic) ? <img src={call.avatarUrl || call.profilePic} alt="" /> : <span>{call.avatar || call.profilePic || FALLBACK_AVATAR}</span>}
                   <i className={call.isOnline ? "online" : "offline"} aria-label={call.isOnline ? "Online" : "Offline"} />
@@ -487,7 +487,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
                   <strong>{call.name}</strong>
                   <small className={call.missed ? "missed" : ""}>{getCallIcon(call.type)} {call.missed ? `${t("missed")} ${t("calls")}` : (call.type === "video" ? t("video_call") : t("voice_call"))}{call.duration ? ` · ${call.duration}` : ""}</small>
                 </span>
-                <time>{!isCounselorView && <span>{call.date}</span>}<span>{call.time || (isCounselorView ? call.date : "")}</span></time>
+                <time><span>{call.date}</span><span>{call.time}</span></time>
                 {!isCounselorView && <span className="pch-compact-action" aria-hidden="true">{getCallIcon(call.type)}</span>}
               </button>
             ))}
@@ -495,41 +495,7 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
           </div>
         </aside>
 
-        {isCounselorView && <main className="pch-records" tabIndex={0} aria-label={t("call_history")}>
-          {callError && <div className="call-error-banner">{callError}</div>}
-          {!isLoadingCalls && Object.keys(groupedCalls).map((date) => (
-            <section className="pch-date-group" key={date}>
-              <div className="pch-date-heading"><h2>{date}</h2><span /></div>
-              <div className="pch-cards">
-                {groupedCalls[date].map((call) => (
-                  <article className={`pch-call-card ${call.missed ? "missed" : ""}`} key={call.id}>
-                    <span className="pch-avatar">
-                      {isImageUrl(call.avatarUrl || call.profilePic) ? <img src={call.avatarUrl || call.profilePic} alt={call.name} /> : <span>{call.avatar || call.profilePic || FALLBACK_AVATAR}</span>}
-                      <i className={call.isOnline ? "online" : "offline"} aria-label={call.isOnline ? "Online" : "Offline"} />
-                    </span>
-                    <div className="pch-card-info">
-                      <strong>{call.name}</strong>
-                      <span className="pch-call-role">
-                        {getCallIcon(call.type)}
-                        <span>{t(call.role === "receiver" ? "incoming" : "outgoing")}</span>
-                      </span>
-                      <small>{call.time}{call.duration ? ` | ${call.duration}` : ""}</small>
-                    </div>
-                    {call.missed ? (
-                      <span className="pch-missed-label">↙&nbsp; {t("missed")} {t("calls")}</span>
-                    ) : call.counterPartyType !== "doctor" ? (
-                      <button type="button" className="pch-call-action" onClick={() => openCallModal(call)} aria-label={`Call ${call.name}`}>
-                        {call.type === "video" ? <FaVideo aria-hidden="true" /> : <FaPhoneAlt aria-hidden="true" />}
-                      </button>
-                    ) : null}
-                  </article>
-                ))}
-              </div>
-            </section>
-          ))}
-          {isLoadingCalls && <div className="pch-main-empty"><p>{t("loading_calls")}</p></div>}
-          {!isLoadingCalls && !filteredCalls.length && <div className="pch-main-empty"><FaPhoneAlt /><p>{t("no_calls")}</p><small>{t("adjust_call_filters")}</small></div>}
-        </main>}
+
       </div>
 
       <VideoCallModal
@@ -564,10 +530,10 @@ const CallHistory = ({ currentUser, showHeader = true, translationRole = "user" 
 
         {/* Search Bar */}
         <div className="call-search-row">
-        <div className="call-search">
+        <div data-search-field className="call-search">
           <FaSearch className="call-search-icon" aria-hidden="true" />
           <input
-            type="text"
+            type="search"
             className="call-search-input"
             placeholder={t('search_calls')}
             value={searchTerm}

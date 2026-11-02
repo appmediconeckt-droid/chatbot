@@ -2728,9 +2728,9 @@ function PatientList({ consultationOnly = false }) {
             <button type="button">+</button>
           </div>
 
-          <label className="sms-search-box">
+          <label data-search-field className="sms-search-box">
             <FaSearch />
-            <PortalElement as="input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search conversations..." />
+            <PortalElement type="search" as="input" value={searchTerm} onChange={(event) => setSearchTerm(event.target.value)} placeholder="Search conversations..." />
           </label>
 
           <div className="sms-conversation-list">

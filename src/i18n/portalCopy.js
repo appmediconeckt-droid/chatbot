@@ -1,4 +1,5 @@
 import english from './locales/en-US.json';
+import receptionistHindi from './locales/receptionist-hi-IN.json';
 const normalize = text => String(text || '').trim().replace(/\s+/g, ' ').toLowerCase();
 const englishKeys = new Map();
 for (const [key, value] of Object.entries(english)) {
@@ -10,6 +11,7 @@ for (const [key, value] of Object.entries(english)) {
 }
 export const portalCopy = {
  'hi-IN': {
+  ...receptionistHindi,
   'Doctor Portal': '\u0921\u0949\u0915\u094d\u091f\u0930 \u092a\u094b\u0930\u094d\u091f\u0932',
   'DOCTOR PANEL': '\u0921\u0949\u0915\u094d\u091f\u0930 \u092a\u0948\u0928\u0932',
   'Patient Details': '\u092e\u0930\u0940\u091c \u0915\u093e \u0935\u093f\u0935\u0930\u0923',
@@ -30,9 +32,12 @@ export const portalCopy = {
   'Clinic Page': '\u0915\u094d\u0932\u093f\u0928\u093f\u0915',
  },
 };
+const normalizedPortalCopy = Object.fromEntries(Object.entries(portalCopy).map(([lang, copy]) => [
+ lang, new Map(Object.entries(copy).map(([text, value]) => [normalize(text), value])),
+]));
 export function lookupPortalCopy(text, lang, messages = {}) {
  if (!text || lang.startsWith('en')) return text;
- const explicit = portalCopy[lang]?.[text.trim()];
+ const explicit = normalizedPortalCopy[lang]?.get(normalize(text));
  if (explicit) return explicit;
  for (const key of englishKeys.get(normalize(text)) || []) {
   const value = messages[key];
