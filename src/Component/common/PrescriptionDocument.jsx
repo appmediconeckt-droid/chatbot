@@ -22,7 +22,7 @@ export default function PrescriptionDocument({ record, doctorName, bookingQrImag
       .catch(() => { if (active) setQr({ key: qrKey, image: '', error: true }); });
     return () => { active = false; };
   }, [qrKey, bookingQrImage]);
-  const qrImage = bookingQrImage ?? (source.image || (qr.key === qrKey ? qr.image : ''));
+  const qrImage = bookingQrImage ?? (qr.key === qrKey ? qr.image : '');
   const adviceLines = data.advice.split(/\n+/).map(line => line.replace(/^\s*[-*\u2022]\s*/, '').trim()).filter(Boolean);
   const detail = (label, value) => <div><span>{label}</span><strong>{value || '-' }</strong></div>;
   return <article className="prescription-document">
