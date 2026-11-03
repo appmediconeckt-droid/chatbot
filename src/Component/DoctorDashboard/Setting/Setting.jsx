@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalTranslator, PortalText, PortalElement } from "../../common/PortalTranslation";
 import { Stethoscope, Hospital, CreditCard, QrCode, KeyRound, LogOut, CircleHelp, ShieldCheck, Trash2, Star } from "lucide-react";
 import "./Setting.css";
 import { Link, useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ import PaymentSettings from "./PaymentSetting/PaymentSettings";
 import { API_BASE_URL } from "../doctorApi.js"; // path apne project ke hisab se check kar lena
 
 export default function SettingsPage() {
+  const translateUi = usePortalTranslator();
   const [active, setActive] = useState("profile");
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -36,12 +37,12 @@ export default function SettingsPage() {
     e.preventDefault();
 
     if (!passwordData.current_password || !passwordData.new_password || !passwordData.confirm_password) {
-      alert("Please fill all fields");
+      alert(translateUi("Please fill all fields"));
       return;
     }
 
     if (passwordData.new_password !== passwordData.confirm_password) {
-      alert("New password and confirm password do not match");
+      alert(translateUi("New password and confirm password do not match"));
       return;
     }
 
@@ -61,7 +62,7 @@ export default function SettingsPage() {
         }
       );
 
-      alert("Password changed successfully. Please sign in again.");
+      alert(translateUi("Password changed successfully. Please sign in again."));
       localStorage.clear();
       navigate("/login");
       setShowChangePassword(false);
@@ -72,7 +73,7 @@ export default function SettingsPage() {
       });
     } catch (error) {
       console.log("Change password error:", error);
-      alert(error.response?.data?.message || "Password change failed");
+      alert(translateUi(error.response?.data?.message || "Password change failed"));
     } finally {
       setLoading(false);
     }
@@ -80,7 +81,7 @@ export default function SettingsPage() {
 
   const handleDeleteAccount = async () => {
     if (!userId) {
-      alert("User ID not found");
+      alert(translateUi("User ID not found"));
       return;
     }
 
@@ -102,7 +103,7 @@ export default function SettingsPage() {
       }, 2500);
     } catch (error) {
       console.log("Delete account error:", error);
-      alert(error.response?.data?.message || "Account delete failed");
+      alert(translateUi(error.response?.data?.message || "Account delete failed"));
     } finally {
       setLoading(false);
     }

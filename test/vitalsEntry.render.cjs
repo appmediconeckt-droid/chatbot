@@ -19,8 +19,8 @@ async function check() {
       assert.ok(!receptionistMenu.some(item => item.path === '/receptionist/vitals' || item.title === 'Add Vitals'));
       const table = render(<AppointmentTable rows={[patient]} clinics={[]} onView={()=>{}}/>);
       assert.match(table, /Add vitals/);
-      assert.match(table, /rec-patient-intake-actions.*Add vitals.*Patient availability.*Patient unavailable/);
-      assert.match(table, /Patient available/);
+      assert.match(table, /rec-patient-intake-actions.*Add vitals.*Patient availability.*Unavailable/);
+      assert.match(table, /Available/);
       assert.match(table, /Phone number/);
       assert.match(table, /9876543210/);
       const oldTable = render(<AppointmentTable rows={[{...patient,date:'2000-01-01'}]} clinics={[]} onView={()=>{}}/>);
@@ -32,11 +32,11 @@ async function check() {
       const runningTable = render(<AppointmentTable rows={[{...patient,queueStatus:'in_progress',timing:{startedAt:new Date().toISOString()}}]} clinics={[]} onView={()=>{}}/>);
       assert.doesNotMatch(runningTable, /rec-mark-unavailable/);
       const absentTable = render(<AppointmentTable rows={[{...patient,availability:{status:'unavailable'}}]} clinics={[]} onView={()=>{}}/>);
-      assert.match(absentTable, /Patient unavailable/);
-      assert.match(absentTable, /Patient available/);
+      assert.match(absentTable, /Unavailable/);
+      assert.match(absentTable, /Available/);
       assert.doesNotMatch(absentTable, /rec-mark-unavailable/);
       const skippedTable = render(<AppointmentTable rows={[{...patient,queueStatus:'skipped',availability:{status:'unavailable'}}]} clinics={[]} onView={()=>{}}/>);
-      assert.match(skippedTable, /Patient available/);
+      assert.match(skippedTable, /Available/);
       const modal = render(<VitalsDialog patient={patient} close={()=>{}} onSaved={()=>{}}/>);
       assert.match(modal, /<dialog/);
       assert.match(modal, /Test Patient/);
@@ -66,7 +66,7 @@ async function check() {
       builder.onResolve({ filter: /PortalTranslation$/ }, () => ({ path: 'translation', namespace: 'test' }));
       builder.onResolve({ filter: /axiosConfig\.js$/ }, () => ({ path: 'api', namespace: 'test' }));
       builder.onLoad({ filter: /.*/, namespace: 'test' }, args => ({
-        contents: args.path === 'translation' ? 'export const PortalText = ({text}) => text; export const PortalElement = () => null;' : 'export default {get: async()=>({data:{appointments:[],total:0}})};', loader: 'js',
+        contents: args.path === 'translation' ? 'export const PortalText = ({text}) => text; export const PortalElement = () => null; export const usePortalLocale = () => "en-US"; export const usePortalTranslator = () => text => text;' : 'export default {get: async()=>({data:{appointments:[],total:0}})};', loader: 'js',
       }));
     } }],
   });

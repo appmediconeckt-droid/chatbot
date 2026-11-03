@@ -1,4 +1,4 @@
-import { PortalTemplate, PortalElement, PortalText } from "../../common/PortalTranslation";
+import { usePortalTranslator, PortalTemplate, PortalElement, PortalText } from "../../common/PortalTranslation";
 import PatientProfileImage from "../../common/PatientProfileImage";
 // import React, { useEffect, useMemo, useRef, useState } from "react";
 // import { useLocation } from "react-router-dom";
@@ -1632,6 +1632,7 @@ const normalizeChatMessage = (msg, index, currentUserId) => {
 };
 
 function PatientList({ consultationOnly = false }) {
+  const translateUi = usePortalTranslator();
   const location = useLocation();
   const navigate = useNavigate();
   const appointmentCallTarget = location.state?.callTargetId || "";
@@ -2684,7 +2685,7 @@ function PatientList({ consultationOnly = false }) {
   return (
     <div className="patient-list-container sms-communications-screen">
       {consultationOnly ? <section className="doctor-call-connecting" aria-live="polite">
-        {error ? <><p role="alert">{error}</p><button type="button" onClick={() => navigate('/doctordashboard', { replace: true })}>Back to dashboard</button></> : null}
+        {error ? <><p role="alert">{translateUi(error)}</p><button type="button" onClick={() => navigate('/doctordashboard', { replace: true })}><PortalText text={"Back to dashboard"} /></button></> : null}
       </section> : <>
       <header className="sms-page-header">
         <h1><PortalText text={"Patient Communications"} /></h1>
@@ -2746,7 +2747,7 @@ function PatientList({ consultationOnly = false }) {
                 <div className="sms-conversation-main">
                   <div>
                     <strong><PatientProfileImage patient={patient} size={32} />{patient.name}</strong>
-                    <span className={`sms-status-pill ${getStatusClass(patient.status)}`}>{patient.status}</span>
+                    <span className={`sms-status-pill ${getStatusClass(patient.status)}`}>{<PortalText text={patient.status} />}</span>
                   </div>
                   <small>{patient.previewTitle || patient.condition}</small>
                   <p>{patient.lastMessage || <PortalText text={"No messages yet"} />}</p>
@@ -2766,7 +2767,7 @@ function PatientList({ consultationOnly = false }) {
             <div className="sms-chat-title">
               <h2>
                 {selectedPatient?.name || <PortalText text={"Select a patient"} />}
-                {selectedPatient?.status && <span className={`sms-status-pill ${getStatusClass(selectedPatient.status)}`}>{selectedPatient.status}</span>}
+                {selectedPatient?.status && <span className={`sms-status-pill ${getStatusClass(selectedPatient.status)}`}>{translateUi(selectedPatient.status)}</span>}
               </h2>
               <p>
                 {selectedPatient
@@ -2817,7 +2818,7 @@ function PatientList({ consultationOnly = false }) {
             <button type="button"><PortalText text={"⟳ Follow Up"} /></button>
           </div>
 
-          {error && <div className="sms-send-error">{error}</div>}
+          {error && <div className="sms-send-error">{translateUi(error)}</div>}
 
           <input ref={fileInputRef} type="file" className="sms-hidden-file-input" onChange={handleAttachmentChange} />
 
@@ -2878,9 +2879,9 @@ function PatientList({ consultationOnly = false }) {
             </div>
             <div className="sms-call-avatar">{<PatientProfileImage patient={selectedPatient} fallback={getInitials(selectedPatient?.name)} />}</div>
             <h2>{selectedPatient?.name || <PortalText text={"Patient"} />}</h2>
-            {error && <p role="alert">{error}</p>}
+            {error && <p role="alert">{translateUi(error)}</p>}
             <p>
-              {activeCall.status === 'initiating' ? 'Connecting call...' : activeCall.status === "missed"
+              {activeCall.status === 'initiating' ? <PortalText text={"Connecting call..."} /> : activeCall.status === "missed"
                 ? <PortalText text={"Patient did not answer. Call marked as missed."} />
                 : activeCall.status === "ringing"
                   ? <PortalText text={"Calling patient..."} />
@@ -2978,7 +2979,7 @@ function PatientList({ consultationOnly = false }) {
         </div>
       )}
 
-      {postCallAppointment && <ConsultationCompletionModal
+      {postCallAppointment && <PortalElement as={ConsultationCompletionModal}
         show={showPostCallForm}
         onHide={() => { if (!savingConsultation) setShowPostCallForm(false); }}
         form={remoteConsultationForm}

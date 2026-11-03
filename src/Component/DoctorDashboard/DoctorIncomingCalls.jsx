@@ -1,3 +1,4 @@
+import { usePortalTranslator } from "../common/PortalTranslation";
 import { useEffect, useRef, useState } from "react";
 import axios from "../../axiosConfig";
 import useSocketRefresh from "../../hooks/useSocketRefresh";
@@ -7,6 +8,7 @@ import VideoCallModal from "../UserDashboard/Tab/CallModal/VideoCallModal";
 
 // One incoming-call owner across every doctor page, including chat.
 export default function DoctorIncomingCalls({ doctorId, user }) {
+  const translateUi = usePortalTranslator();
   const [incoming, setIncoming] = useState(null);
   const [active, setActive] = useState(null);
   const [error, setError] = useState("");
@@ -57,7 +59,7 @@ export default function DoctorIncomingCalls({ doctorId, user }) {
     <IncomingCallModal key={incoming?.callId || "none"} isOpen={Boolean(incoming) && enabled && !active}
       callData={incoming} callType={incoming?.callType} callerName={incoming?.from?.displayName || incoming?.from?.fullName}
       onAccept={accept} onReject={reject} onClose={() => {}} />
-    {error && incoming && enabled && <div role="alert" style={{ position: "fixed", bottom: 20, left: "10%", zIndex: 100000, background: "white", color: "#b91c1c", padding: 16 }}>{error}</div>}
+    {error && incoming && enabled && <div role="alert" style={{ position: "fixed", bottom: 20, left: "10%", zIndex: 100000, background: "white", color: "#b91c1c", padding: 16 }}>{translateUi(error)}</div>}
     <VideoCallModal isOpen={Boolean(active)} callData={active} callMode={active?.callType}
       currentUser={{ ...user, id: doctorId, role: "doctor" }} onClose={() => setActive(null)}
       onEndCall={async callId => { await axios.put(`/api/video/calls/${callId}/end`, { userId: doctorId, endedBy: "doctor" }); }} />

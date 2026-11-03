@@ -1,4 +1,4 @@
-import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalLocale, PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import PatientProfileImage from "../../common/PatientProfileImage";
 // DoctorChat.js
 import React, { useState, useEffect, useRef } from 'react';
@@ -73,6 +73,7 @@ const mockPatients = [
 ];
 
 const PatientChat = () => {
+  const portalLocale = usePortalLocale();
   const { patientId } = useParams();
   const navigate = useNavigate();
   const authUser = useDoctorUser();
@@ -197,7 +198,7 @@ const PatientChat = () => {
       id: msg.id || msg._id || index + 1,
       text: cleanAttachmentMessageText(msg.message || msg.text || msg.content || '', file),
       sender: senderRole || (String(senderId) === String(currentUserId) ? 'doctor' : 'patient'),
-      time: Number.isNaN(date.getTime()) ? createdAt : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: Number.isNaN(date.getTime()) ? createdAt : date.toLocaleTimeString(portalLocale, { hour: '2-digit', minute: '2-digit' }),
       file,
       senderName: msg.sender_name || msg.senderName,
       senderPhone: msg.sender_phone || msg.senderPhone || msg.phone || msg.phone_number,
@@ -337,7 +338,7 @@ const PatientChat = () => {
         id: `local-${Date.now()}`,
         text: messageText,
         sender: 'doctor',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        time: new Date().toLocaleTimeString(portalLocale, { hour: '2-digit', minute: '2-digit' })
       };
       setMessages([...messages, newMessage]);
       setMessage('');
@@ -373,7 +374,7 @@ const PatientChat = () => {
         id: `file-${Date.now()}`,
         text: `File: ${fileName}`,
         sender: 'doctor',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString(portalLocale, { hour: '2-digit', minute: '2-digit' }),
         file: {
           name: fileName,
           type: fileType,
@@ -410,20 +411,20 @@ const PatientChat = () => {
     if (!timeString) return '';
 
     if (timeString.toLowerCase() === 'today') {
-      return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return new Date().toLocaleTimeString(portalLocale, { hour: '2-digit', minute: '2-digit' });
     }
 
     if (timeString.toLowerCase() === 'yesterday') {
       const yesterday = new Date(now);
       yesterday.setDate(yesterday.getDate() - 1);
-      return yesterday.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return yesterday.toLocaleTimeString(portalLocale, { hour: '2-digit', minute: '2-digit' });
     }
 
     if (timeString.includes('days ago')) {
       const days = parseInt(timeString);
       const pastDate = new Date(now);
       pastDate.setDate(pastDate.getDate() - days);
-      return pastDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return pastDate.toLocaleTimeString(portalLocale, { hour: '2-digit', minute: '2-digit' });
     }
 
     return timeString;
@@ -593,7 +594,7 @@ const PatientChat = () => {
               <div className="dc-conversation-main">
                 <div>
                   <strong>{patient.name}</strong>
-                  <span className={`dc-status-tag ${patient.status.toLowerCase().replace(/\s+/g, '-')}`}>{patient.status}</span>
+                  <span className={`dc-status-tag ${patient.status.toLowerCase().replace(/\s+/g, '-')}`}>{<PortalText text={patient.status} />}</span>
                 </div>
                 <small>{patient.previewTitle}</small>
                 <p>{patient.preview}</p>
@@ -610,8 +611,8 @@ const PatientChat = () => {
           <div className="dc-chat-profile">
             <div className="dc-chat-avatar">{<PatientProfileImage patient={currentPatient} fallback={getInitials(currentPatient.name)} />}</div>
             <div className="dc-chat-profile-info">
-              <h2>{currentPatient.name} <span className={`dc-status-tag ${currentPatient.status.toLowerCase().replace(/\s+/g, '-')}`}>{currentPatient.status}</span></h2>
-              <p>{currentPatient.age}{currentPatient.gender?.[0] || 'M'}<PortalText text={" • Blood "} />{currentPatient.bloodGroup || 'O+'} • {currentPatient.condition}</p>
+              <h2>{currentPatient.name} <span className={`dc-status-tag ${currentPatient.status.toLowerCase().replace(/\s+/g, '-')}`}>{<PortalText text={currentPatient.status} />}</span></h2>
+              <p>{currentPatient.age}{currentPatient.gender?.[0] || <PortalText text={"M"} />}<PortalText text={" • Blood "} />{currentPatient.bloodGroup || <PortalText text={"O+"} />} • {currentPatient.condition}</p>
             </div>
             <div className="dc-profile-actions">
               <PortalElement as="button" type="button" onClick={handlePhoneCall} title="Voice call"><FaPhone /></PortalElement>

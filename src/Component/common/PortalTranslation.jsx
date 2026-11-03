@@ -1,4 +1,4 @@
-import React, { forwardRef, useContext, useEffect, useState } from 'react';
+import React, { forwardRef, useCallback, useContext, useEffect, useState } from 'react';
 import { usePortalLanguage } from '../../i18n/LanguageContext';
 import { formatPortalTemplate, lookupPortalCopy } from '../../i18n/portalCopy';
 import { translationService } from '../../i18n/translationService';
@@ -6,17 +6,17 @@ import { LanguageSelector } from './LanguageSelector';
 import { PortalLanguageScope } from './portalLanguageScope';
 const queued = new Map();
 const copyCache = new Map();
-const cacheKey = lang => `portal_ui_copy_v1_${lang}`;
+const cacheKey = lang => `portal_ui_copy_v2_${lang}`;
 function languageCache(lang) {
  if (!copyCache.has(lang)) {
   let stored = {};
   try { stored = JSON.parse(localStorage.getItem(cacheKey(lang)) || '{}'); } catch { /* Storage may be unavailable. */ }
-  copyCache.set(lang, new Map(Object.entries(stored || {}).filter(([, value]) => typeof value === 'string')));
+  copyCache.set(lang, new Map(Object.entries(stored || {}).filter(([text, value]) => translationService.validTranslation(text, value))));
  }
  return copyCache.get(lang);
 }
 function saveCopy(text, lang, value) {
- if (!value || value === text) return;
+ if (!translationService.validTranslation(text, value) || value === text) return;
  const cache = languageCache(lang);
  cache.set(text, value);
  try { localStorage.setItem(cacheKey(lang), JSON.stringify(Object.fromEntries(cache))); } catch { /* Keep the in-memory cache. */ }
@@ -61,14 +61,36 @@ function usePortalCopy(text) {
  const [translated, setTranslated] = useState(null);
  useEffect(() => {
   let active = true;
-  if (staticCopy == null && text) requestCopy(text.trim(), lang).then(value => {
-   if (active) setTranslated({ text, lang, value });
-  });
-  return () => { active = false; };
+  let timer;
+  let attempts = 0;
+  const load = () => {
+   if (staticCopy != null || !text) return;
+   requestCopy(text.trim(), lang).then(value => {
+    if (!active) return;
+    setTranslated({ text, lang, value });
+    if (value === text.trim() && attempts++ < 2) timer = setTimeout(load, attempts * 1500);
+   });
+  };
+  load();
+  window.addEventListener('online', load);
+  return () => { active = false; clearTimeout(timer); window.removeEventListener('online', load); };
  }, [text, lang, staticCopy]);
  const copy = staticCopy ?? (translated?.text === text && translated?.lang === lang ? translated.value : text);
  if (!text || copy === text) return copy;
  return `${text.match(/^\s*/)?.[0] || ''}${copy.trim()}${text.match(/\s*$/)?.[0] || ''}`;
+}
+// For native alerts and derived UI labels. Bundled copy keeps these synchronous
+// and preserves the original text/value if it is user-provided content.
+export function usePortalTranslator() {
+ const scope = useContext(PortalLanguageScope);
+ const { lang, messages } = usePortalLanguage(scope);
+ return useCallback(text => typeof text === 'string'
+  ? lookupPortalCopy(text, lang, messages) ?? languageCache(lang).get(text.trim()) ?? text
+  : text, [lang, messages]);
+}
+export function usePortalLocale() {
+ const scope = useContext(PortalLanguageScope);
+ return usePortalLanguage(scope).lang;
 }
 export function usePreloadPortalCopy(texts, scopeOverride) {
  const scope = useContext(PortalLanguageScope);

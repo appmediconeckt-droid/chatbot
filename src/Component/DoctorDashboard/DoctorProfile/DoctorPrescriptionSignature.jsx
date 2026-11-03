@@ -2,10 +2,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import { PenLine, Upload, Check } from 'lucide-react';
 import axios, { API_BASE_URL } from '../../../axiosConfig.js';
 import { normalizeProfileImage } from '../../../utils/profileImage.js';
-import { PortalText } from '../../common/PortalTranslation';
+import { usePortalTranslator, PortalElement, PortalText } from '../../common/PortalTranslation';
 import './DoctorPrescriptionSignature.css';
 
 export default function DoctorPrescriptionSignature({ profile, loading, onSaved }) {
+  const translateUi = usePortalTranslator();
   const [mode, setMode] = useState('upload');
   const [hasInk, setHasInk] = useState(false);
   const canvas = useRef(null);
@@ -109,17 +110,17 @@ export default function DoctorPrescriptionSignature({ profile, loading, onSaved 
   return <section className="doctor-signature-card" aria-labelledby="doctor-signature-title">
     <div className="doctor-signature-heading"><span><PenLine size={23} aria-hidden="true" /></span><div><h3 id="doctor-signature-title"><PortalText text="Prescription Signature" /></h3><p><PortalText text="Draw or upload your signature once to use it on your prescriptions." /></p></div></div>
     <form onSubmit={save} aria-busy={saving}>
-      <div className="doctor-signature-modes" role="group" aria-label="Signature method"><button type="button" aria-pressed={mode === 'upload'} disabled={saving} onClick={() => switchMode('upload')}><Upload size={16} aria-hidden="true" /><PortalText text="Upload Image" /></button><button type="button" aria-pressed={mode === 'draw'} disabled={saving} onClick={() => switchMode('draw')}><PenLine size={16} aria-hidden="true" /><PortalText text="Draw Signature" /></button></div>
+      <PortalElement as="div" className="doctor-signature-modes" role="group" aria-label="Signature method"><button type="button" aria-pressed={mode === 'upload'} disabled={saving} onClick={() => switchMode('upload')}><Upload size={16} aria-hidden="true" /><PortalText text="Upload Image" /></button><button type="button" aria-pressed={mode === 'draw'} disabled={saving} onClick={() => switchMode('draw')}><PenLine size={16} aria-hidden="true" /><PortalText text="Draw Signature" /></button></PortalElement>
       <div className="doctor-signature-drawing" hidden={mode !== 'draw'}>
         <p id="doctor-signature-draw-help"><PortalText text="Sign below using your mouse, finger or stylus." /></p>
-        <div className="doctor-signature-pad"><canvas ref={canvas} width={900} height={240} aria-label="Draw your signature here" aria-describedby="doctor-signature-draw-help" aria-disabled={disabled} onPointerDown={beginStroke} onPointerMove={continueStroke} onPointerUp={endStroke} onPointerCancel={endStroke} onLostPointerCapture={endStroke} /><span aria-hidden="true"><PortalText text="Sign here" /></span></div>
+        <div className="doctor-signature-pad"><PortalElement as="canvas" ref={canvas} width={900} height={240} aria-label="Draw your signature here" aria-describedby="doctor-signature-draw-help" aria-disabled={disabled} onPointerDown={beginStroke} onPointerMove={continueStroke} onPointerUp={endStroke} onPointerCancel={endStroke} onLostPointerCapture={endStroke} /><span aria-hidden="true"><PortalText text="Sign here" /></span></div>
         <button type="button" className="doctor-signature-clear" disabled={disabled || !hasInk} onClick={clearDrawing}><PortalText text="Clear Signature" /></button>
       </div>
       <div className="doctor-signature-content" hidden={mode !== 'upload'}><div className="doctor-signature-preview">
         {preview || savedUrl ? <img src={preview || savedUrl} alt={file ? 'Selected signature preview' : 'Saved doctor signature'} onLoad={() => { if (file) setValidPreview(true); }} onError={() => { if (file) { setValidPreview(false); setError('This image could not be opened. Choose another signature image.'); } else setError('Saved signature preview could not be loaded.'); }} /> : <span><PenLine size={30} aria-hidden="true" /><PortalText text={loading ? 'Loading signature...' : 'No signature saved yet'} /></span>}
       </div><div className="doctor-signature-controls"><label htmlFor="doctor-prescription-signature"><PortalText text={savedUrl ? 'Replace signature image' : 'Upload signature image'} /></label><input ref={input} id="doctor-prescription-signature" name="prescriptionSignature" type="file" accept="image/png,image/jpeg,image/webp" disabled={loading || saving || !userId} onChange={choose} aria-describedby="doctor-signature-help" /><p id="doctor-signature-help"><PortalText text="PNG, JPG or WebP, up to 5 MB. Use a clear signature on a white or transparent background." /></p></div></div>
-      {error && <p className="doctor-signature-error" role="alert">{error}</p>}
-      {notice && <p className="doctor-signature-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
+      {error && <p className="doctor-signature-error" role="alert">{translateUi(error)}</p>}
+      {notice && <p className="doctor-signature-success" role="status"><Check size={17} aria-hidden="true" />{translateUi(notice)}</p>}
       <div className="doctor-signature-actions">{mode === 'upload' && file && <button type="button" disabled={saving} onClick={clear}><PortalText text="Cancel" /></button>}<button className="doctor-signature-save" type="submit" disabled={disabled || (mode === 'draw' ? !hasInk : !file || !validPreview)}><Check size={16} aria-hidden="true" /><PortalText text={saving ? 'Saving signature...' : 'Save Signature'} /></button></div>
     </form>
   </section>;

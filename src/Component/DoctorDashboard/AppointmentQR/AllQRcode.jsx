@@ -1,11 +1,13 @@
-import { PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalTranslator, PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useMemo, useState } from 'react';
 import axios from '../../../axiosConfig.js';
 import { API_BASE_URL, getAuthHeaders, getDoctorUser } from '../doctorApi.js';
 import './QRcode.css';
 import DisplayAudioControl from '../../Receptionist/DisplayAudioControl.jsx';
+import { localizeQr } from '../../../utils/localQr.js';
 
 export default function QRcode() {
+  const translateUi = usePortalTranslator();
   const doctorId = useMemo(() => {
     const stored = getDoctorUser() || {};
     const user = stored.user || stored.data?.user || stored;
@@ -26,9 +28,10 @@ export default function QRcode() {
     if (!doctorId) { setError('Doctor ID not found. Please sign in again.'); setLoading(false); return; }
     axios.get(`${API_BASE_URL}/qr/doctors/${encodeURIComponent(doctorId)}/clinics`, {
       headers: getAuthHeaders(), signal: controller.signal,
-    }).then(response => {
+    }).then(async response => {
       if (controller.signal.aborted) return;
-      const items = response.data?.data?.clinics || [];
+      const items = await Promise.all((response.data?.data?.clinics || []).map(item => localizeQr(item)));
+      if (controller.signal.aborted) return;
       setClinics(items);
       setSelectedId(current => items.some(c => c.doctorClinicId === current) ? current : items[0]?.doctorClinicId || '');
     }).catch(err => {
@@ -69,13 +72,13 @@ export default function QRcode() {
     <div className="doctor-qr-clinic-selector">
       <label htmlFor="qr-clinic"><PortalText text={"Clinic"} /></label>
       <select id="qr-clinic" value={selectedId} disabled={loading || savingRoom || !clinics.length} onChange={event => { setSelectedId(event.target.value); setNotice(''); }}>
-        {!clinics.length && <PortalElement as="option" value="">Select clinic</PortalElement>}
+        {!clinics.length && <PortalElement as="option" value=""><PortalText text={"Select clinic"} /></PortalElement>}
         {clinics.map(c => <option key={c.doctorClinicId} value={c.doctorClinicId}>{c.clinic.name}</option>)}
       </select>
       <button type="button" disabled={loading || savingRoom} onClick={() => setRefresh(n => n + 1)}><PortalText text={"Refresh"} /></button>
     </div>
     {loading && <p role="status"><PortalText text={"Fetching clinics..."} /></p>}
-    {error && <p role="alert">{error}</p>}
+    {error && <p role="alert">{translateUi(error)}</p>}
     {!loading && !error && !clinics.length && <p><PortalText text={"Add a clinic in Clinic Settings to view its QR."} /></p>}
     {!loading && !error && selected && <div className="doctor-qr-layout">
       <section className="doctor-qr-card">
@@ -83,6 +86,7 @@ export default function QRcode() {
         {selected.clinic.room && <p><strong><PortalText text={"Room "} />{selected.clinic.room}</strong></p>}
         <div className="doctor-qr-frame"><img src={selected.walkinQrCode} alt={`Appointment QR for ${selected.clinic.name}`} /></div>
         <p><PortalText text={"Scan to join today's queue at "} />{selected.clinic.name}.</p>
+        {import.meta.env.DEV && <p><a href={selected.walkinQrUrl} target="_blank" rel="noreferrer">{selected.walkinQrUrl}</a></p>}
       </section>
       <aside className="doctor-qr-side">
         <section className="doctor-qr-panel"><h3><PortalText text={"QR Management"} /></h3>
@@ -108,7 +112,7 @@ export default function QRcode() {
           <DisplayAudioControl key={selectedId} displayId={selectedId} />
           <p><PortalText text={"The LED updates when the queue changes. Keep the receiver awake and connected to the internet."} /></p>
         </section>
-        {notice && <p role="status">{notice}</p>}
+        {notice && <p role="status">{translateUi(notice)}</p>}
       </aside>
     </div>}
   </div>;

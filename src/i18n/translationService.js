@@ -2,8 +2,8 @@ import axios from 'axios';
 import { API_BASE_URL } from '../axiosConfig';
 
 const CACHE_PREFIX = 'translation_cache_';
-const CACHE_VERSION = 'v3';
-const TRANSLATION_ERROR_PATTERN = /please select two distinct languages|invalid language pair|translation failed/i;
+const CACHE_VERSION = 'v4';
+const TRANSLATION_ERROR_PATTERN = /please select two distinct languages|invalid language pair|translation failed|query length|quota exceeded|daily limit|too many requests|invalid target language|mymemory warning|used all available free|unsupported language/i;
 
 class TranslationService {
   constructor() {
@@ -42,7 +42,29 @@ class TranslationService {
   }
 
   getShortLang(lang) {
-    return String(lang || 'en-US').split('-')[0].toLowerCase();
+    const code = String(lang || 'en-US').replace('_', '-').toLowerCase();
+    // These variants have different writing systems and must remain distinct.
+    if (code === 'zh-tw' || code === 'zh-hant') return 'zh-TW';
+    if (code === 'zh-cn' || code === 'zh-hans') return 'zh-CN';
+    return code.split('-')[0];
+  }
+
+  translationEndpoints(action) {
+    const base = API_BASE_URL.replace(/\/+$/, '').replace(/\/api$/, '');
+    return [`${base}/api/translate/${action}`, `${base}/translate/${action}`];
+  }
+
+  validTranslation(original, translated) {
+    return typeof translated === 'string' && translated.trim()
+      && !TRANSLATION_ERROR_PATTERN.test(translated)
+      && [...original.matchAll(/\{\d+\}/g)].every(([token]) => translated.includes(token));
+  }
+
+  cacheTranslation(text, targetLang, sourceLang, translated) {
+    if (!this.validTranslation(text, translated) || translated === text) return;
+    const key = this.getCacheKey(text, targetLang, sourceLang);
+    this.cache.set(key, translated);
+    try { localStorage.setItem(key, JSON.stringify(translated)); } catch { /* In-memory cache remains available. */ }
   }
 
   normalizeHinglishText(text) {
@@ -136,14 +158,11 @@ class TranslationService {
 
       let res = null;
       let lastError = null;
-      const endpoints = [
-        `${API_BASE_URL}/api/translate/text`,
-        `${API_BASE_URL}/translate/text`,
-      ];
+      const endpoints = this.translationEndpoints('text');
 
       for (const endpoint of endpoints) {
         try {
-          res = await axios.post(endpoint, payload);
+          res = await axios.post(endpoint, payload, { timeout: 20000 });
           break;
         } catch (error) {
           lastError = error;
@@ -156,12 +175,12 @@ class TranslationService {
 
       let translated = res.data?.translatedText || res.data?.text || text;
 
-      if (typeof translated !== 'string' || TRANSLATION_ERROR_PATTERN.test(translated)) {
+      if (!this.validTranslation(text, translated)) {
         translated = text;
       }
 
       if (translated === text) {
-        translated = await this.fetchPublicFallbackTranslation(text, targetLang);
+        translated = await this.fetchPublicFallbackTranslation(text, targetLang, sourceLang);
       }
 
       if (translated === text && this.looksLikeRomanHindi(text)) {
@@ -172,7 +191,7 @@ class TranslationService {
       }
 
       // Cache the result
-      if (translated && translated !== text && !TRANSLATION_ERROR_PATTERN.test(translated)) {
+      if (this.validTranslation(text, translated) && translated !== text) {
         this.cache.set(cacheKey, translated);
         try {
           localStorage.setItem(cacheKey, JSON.stringify(translated));
@@ -184,25 +203,25 @@ class TranslationService {
         }
       }
 
-      return translated;
+      return this.validTranslation(text, translated) ? translated : text;
     } catch (err) {
       console.error('Translation API error:', err);
-      const fallback = await this.fetchPublicFallbackTranslation(text, targetLang);
-      return fallback || text;
+      const fallback = await this.fetchPublicFallbackTranslation(text, targetLang, sourceLang);
+      return this.validTranslation(text, fallback) ? fallback : text;
     }
   }
 
-  async fetchPublicFallbackTranslation(text, targetLang) {
+  async fetchPublicFallbackTranslation(text, targetLang, sourceLang = 'auto') {
     const target = this.getShortLang(targetLang);
     if (!target || !text || !text.trim()) return text;
 
     try {
-      const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(`Autodetect|${target}`)}`;
+      const source = sourceLang === 'auto' ? 'Autodetect' : this.getShortLang(sourceLang);
+      const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(`${source}|${target}`)}`;
       const response = await axios.get(myMemoryUrl, { timeout: 8000 });
       const translated = response.data?.responseData?.translatedText;
       if (
-        translated &&
-        !TRANSLATION_ERROR_PATTERN.test(translated) &&
+        this.validTranslation(text, translated) &&
         translated.toLowerCase() !== text.toLowerCase()
       ) {
         return translated;
@@ -232,15 +251,17 @@ class TranslationService {
     if (!Array.isArray(texts) || !texts.length) return [];
     if (this.getShortLang(targetLang) === this.getShortLang(sourceLang)) return texts;
     const results = new Array(texts.length);
-
-    // Send several UI strings through the application's existing translator in
-    // one request. The unusual markers survive Azure/Google/MyMemory output and
-    // let us safely restore each original translation afterwards.
     const chunks = [];
     let currentChunk = [];
     let currentLength = 0;
     texts.forEach((text, index) => {
-      if (currentChunk.length >= 18 || (currentChunk.length && currentLength + text.length > 2200)) {
+      const cached = this.cache.get(this.getCacheKey(text, targetLang, sourceLang));
+      if (this.validTranslation(text, cached)) {
+        results[index] = cached;
+        onProgress?.([{ index, original: text, translated: cached }]);
+        return;
+      }
+      if (currentChunk.length >= 30 || (currentChunk.length && currentLength + text.length > 4000)) {
         chunks.push(currentChunk);
         currentChunk = [];
         currentLength = 0;
@@ -254,23 +275,30 @@ class TranslationService {
     const worker = async () => {
       while (nextChunk < chunks.length) {
         const chunk = chunks[nextChunk++];
-        const packed = chunk
-          .map(({ text }, index) => `${index ? `\nZXQ${index}QXZ\n` : ''}${text}`)
-          .join('');
-        const translatedPacked = await this.translate(packed, targetLang, sourceLang);
-        const parts = translatedPacked.split(/\s*ZXQ\d+QXZ\s*/i);
-
-        if (parts.length === chunk.length) {
-          chunk.forEach(({ text, index }, partIndex) => {
-            results[index] = parts[partIndex]?.trim() || text;
-          });
-        } else {
-          // Provider changed a marker: fall back only for this small chunk.
-          for (const { text, index } of chunk) {
-            results[index] = await this.translate(text, targetLang, sourceLang);
+        let values;
+        for (const endpoint of this.translationEndpoints('batch')) {
+          try {
+            const response = await axios.post(endpoint, {
+              texts: chunk.map(({ text }) => text), to: targetLang,
+              ...(sourceLang !== 'auto' ? { from: sourceLang } : {}),
+            }, { timeout: 45000 });
+            if (Array.isArray(response.data?.translatedTexts) && response.data.translatedTexts.length === chunk.length) values = response.data.translatedTexts;
+            break;
+          } catch (error) {
+            if (error?.response?.status !== 404) break;
           }
         }
-
+        // Unchanged batch output is a failure too. Previously the English
+        // response retained all markers, so it was incorrectly accepted.
+        for (let start = 0; start < chunk.length; start += 4) {
+          await Promise.all(chunk.slice(start, start + 4).map(async ({ text, index }, offset) => {
+            const value = values?.[start + offset];
+            const translated = this.validTranslation(text, value) && value !== text
+              ? value : await this.translate(text, targetLang, sourceLang);
+            results[index] = this.validTranslation(text, translated) ? translated : text;
+            this.cacheTranslation(text, targetLang, sourceLang, results[index]);
+          }));
+        }
         if (typeof onProgress === 'function') {
           onProgress(
             chunk.map(({ text, index }) => ({

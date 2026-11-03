@@ -1,4 +1,4 @@
-import { PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalTranslator, PortalText, PortalElement } from "../../common/PortalTranslation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDoctorUser } from "../doctorApi.js";
@@ -157,6 +157,7 @@ const normalizeNotification = (item, index) => {
 };
 
 export default function NotificationPage() {
+  const translateUi = usePortalTranslator();
   const navigate = useNavigate();
   const authUser = useDoctorUser();
   const user = useMemo(() => authUser || getStoredAuthUser() || {}, [authUser]);
@@ -231,7 +232,7 @@ export default function NotificationPage() {
       await axios.patch(`${NOTIFICATION_BASE_URL}/${id}/read`, {}, { headers: getAuthHeaders() });
     } catch (err) {
       setNotifications(current);
-      alert(err.response?.data?.message || err.response?.data?.error || "Failed to mark notification as read");
+      alert(translateUi(err.response?.data?.message || err.response?.data?.error || "Failed to mark notification as read"));
     }
   };
 
@@ -249,7 +250,7 @@ export default function NotificationPage() {
       );
     } catch (err) {
       setNotifications(current);
-      alert(err.response?.data?.message || err.response?.data?.error || "Failed to mark all notifications as read");
+      alert(translateUi(err.response?.data?.message || err.response?.data?.error || "Failed to mark all notifications as read"));
     }
   };
 
@@ -319,7 +320,7 @@ export default function NotificationPage() {
 
             <div className="doctor-notifications-divider" />
 
-            {error && <div className="doctor-notifications-error">{error}</div>}
+            {error && <div className="doctor-notifications-error">{translateUi(error)}</div>}
 
             <section className="doctor-notifications-today">
               <h2><PortalText text={"Today"} /></h2>
@@ -355,7 +356,7 @@ export default function NotificationPage() {
                           <div className="doctor-notifications-title-row">
                             <h3>{item.title}</h3>
                             <span className={`doctor-notifications-badge doctor-notifications-badge-${item.priority}`}>
-                              {item.priority}
+                              {translateUi(item.priority)}
                             </span>
                           </div>
 

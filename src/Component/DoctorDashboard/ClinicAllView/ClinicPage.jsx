@@ -1,5 +1,5 @@
 import { normalizeClinicDoctor } from './clinicDoctorDetails.js';
-import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalTranslator, PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
@@ -245,6 +245,7 @@ const normalizeClinic = (clinic, index = 0) => {
 };
 
 export default function ClinicPage() {
+  const translateUi = usePortalTranslator();
   const authUser = useDoctorUser();
   const user = useMemo(() => authUser || getStoredAuthUser() || {}, [authUser]);
   const doctorId = useMemo(() => getDoctorId(user), [user]);
@@ -428,7 +429,7 @@ export default function ClinicPage() {
 
   const handleDeleteClinic = async () => {
     if (isDeleting || !clinics.length) return;
-    if (!window.confirm(`Delete ${clinic.name}? This cannot be undone. Clinics with staff, appointments or saved timings cannot be deleted.`)) return;
+    if (!window.confirm(translateUi(`Delete ${clinic.name}? This cannot be undone. Clinics with staff, appointments or saved timings cannot be deleted.`))) return;
     setIsDeleting(true);
     setDeleteError("");
     try {
@@ -473,14 +474,14 @@ export default function ClinicPage() {
   if (!clinics.length) return (
     <div className="doctor-clinic-profile-page">
       <h1><PortalText text={"Clinics / Hospitals"} /></h1>
-      {error && <p role="alert">{error}</p>}
+      {error && <p role="alert">{translateUi(error)}</p>}
       <p>{status === "loading" || status === "idle" ? <PortalText text={"Loading clinics..."} /> : <PortalText text={"No clinics or hospitals added. Add one from Clinic Settings."} />}</p>
     </div>
   );
 
   return (
     <div className="doctor-clinic-profile-page">
-      {error && <div className="doctor-clinic-profile-error">{error}</div>}
+      {error && <div className="doctor-clinic-profile-error">{translateUi(error)}</div>}
       <div className="doctor-clinic-management">
         <label><PortalText text={"Clinic / Hospital"} /><select disabled={saving || editing || isDeleting} value={activeClinicIndex} onChange={(event) => {
             setActiveClinicIndex(Number(event.target.value)); setActiveTab("Overview"); setDeleteError("");
@@ -489,7 +490,7 @@ export default function ClinicPage() {
           </select>
         </label>
       </div>
-      {deleteError && <p className="doctor-clinic-profile-error" role="alert">{deleteError}</p>}
+      {deleteError && <p className="doctor-clinic-profile-error" role="alert">{translateUi(deleteError)}</p>}
 
       {editMessage && !editing && <p role="status">{editMessage}</p>}
       {editing && <dialog ref={editDialogRef} className="clinic-edit-modal" aria-labelledby="clinic-edit-title" aria-describedby="clinic-edit-description" onCancel={event => { event.preventDefault(); closeEditor(); }} onClick={event => {
@@ -499,19 +500,19 @@ export default function ClinicPage() {
       }}>
       <form className="clinic-edit-form" onSubmit={saveClinic} aria-busy={saving}>
         <header className="clinic-edit-modal-header">
-          <div><h2 id="clinic-edit-title"><PortalText text="Edit Clinic" /></h2><p id="clinic-edit-description">Update your clinic details and consultation fee.</p></div>
-          <button type="button" className="clinic-edit-close" aria-label="Close edit clinic" disabled={saving} onClick={closeEditor}><X size={20} aria-hidden="true" /></button>
+          <div><h2 id="clinic-edit-title"><PortalText text="Edit Clinic" /></h2><p id="clinic-edit-description"><PortalText text={"Update your clinic details and consultation fee."} /></p></div>
+          <PortalElement as="button" type="button" className="clinic-edit-close" aria-label="Close edit clinic" disabled={saving} onClick={closeEditor}><X size={20} aria-hidden="true" /></PortalElement>
         </header>
         <div className="clinic-edit-modal-body">
         {editMessage && <p className="clinic-edit-error" role="alert">{editMessage}</p>}
         <fieldset disabled={saving}>
           <div className="clinic-edit-details-grid">
-          <label>Clinic Name<input autoFocus required maxLength={2000} value={editForm.clinic_name} onChange={e => setEditForm({ ...editForm, clinic_name: e.target.value })} /></label>
-          <label>Phone Number<input required type="tel" maxLength={2000} value={editForm.phone_number} onChange={e => setEditForm({ ...editForm, phone_number: e.target.value })} /></label>
+          <label><PortalText text={"Clinic Name"} /><input autoFocus required maxLength={2000} value={editForm.clinic_name} onChange={e => setEditForm({ ...editForm, clinic_name: e.target.value })} /></label>
+          <label><PortalText text={"Phone Number"} /><input required type="tel" maxLength={2000} value={editForm.phone_number} onChange={e => setEditForm({ ...editForm, phone_number: e.target.value })} /></label>
           </div>
-          <label>Address<textarea required rows={3} maxLength={2000} value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} /></label>
-          <section className="clinic-edit-fee-section" aria-label="Consultation fee"><ClinicFeeFields value={editForm.fee} onChange={fee => setEditForm({ ...editForm, fee })} videoFee={editForm.videoConsultationAdditionalFee ?? 0} onVideoFeeChange={videoConsultationAdditionalFee => setEditForm({ ...editForm, videoConsultationAdditionalFee })} doctor={user} /></section>
-          <label>Clinic Photo (optional)<input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => {
+          <label><PortalText text={"Address"} /><textarea required rows={3} maxLength={2000} value={editForm.location} onChange={e => setEditForm({ ...editForm, location: e.target.value })} /></label>
+          <PortalElement as="section" className="clinic-edit-fee-section" aria-label="Consultation fee"><ClinicFeeFields value={editForm.fee} onChange={fee => setEditForm({ ...editForm, fee })} videoFee={editForm.videoConsultationAdditionalFee ?? 0} onVideoFeeChange={videoConsultationAdditionalFee => setEditForm({ ...editForm, videoConsultationAdditionalFee })} doctor={user} /></PortalElement>
+          <label><PortalText text={"Clinic Photo (optional)"} /><input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => {
             const file = e.target.files?.[0];
             if (file && (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 5 * 1024 * 1024)) {
               setEditMessage("Choose a JPG, PNG or WebP image of 5 MB or smaller."); e.target.value = ''; setEditPhoto(null); return;
@@ -521,8 +522,8 @@ export default function ClinicPage() {
         </fieldset>
         </div>
         <footer className="clinic-edit-form-actions">
-          <button className="doctor-clinic-action doctor-clinic-cancel" disabled={saving} type="button" onClick={closeEditor}>Cancel</button>
-          <button className="doctor-clinic-action doctor-clinic-edit" disabled={saving} type="submit">{saving ? "Saving..." : "Save Changes"}</button>
+          <button className="doctor-clinic-action doctor-clinic-cancel" disabled={saving} type="button" onClick={closeEditor}><PortalText text={"Cancel"} /></button>
+          <button className="doctor-clinic-action doctor-clinic-edit" disabled={saving} type="submit">{saving ? <PortalText text={"Saving..."} /> : <PortalText text={"Save Changes"} />}</button>
         </footer>
       </form></dialog>}
       <section className="doctor-clinic-hero">
@@ -533,15 +534,15 @@ export default function ClinicPage() {
           onError={handleClinicImageError}
         />
         <div className="doctor-clinic-hero-overlay" />
-        <div className="doctor-clinic-image-actions" role="group" aria-label="Clinic actions">
-          <button ref={editButtonRef} type="button" className="doctor-clinic-image-action" aria-label="Edit Clinic" title="Edit Clinic" disabled={saving || isDeleting || editing} onClick={() => {
+        <PortalElement as="div" className="doctor-clinic-image-actions" role="group" aria-label="Clinic actions">
+          <PortalElement as="button" ref={editButtonRef} type="button" className="doctor-clinic-image-action" aria-label="Edit Clinic" title="Edit Clinic" disabled={saving || isDeleting || editing} onClick={() => {
             setEditForm({ clinic_name: clinic.name, phone_number: clinic.phone, location: clinic.raw?.location || clinic.address, fee: clinic.raw?.fee ?? user.consultationFee ?? '', videoConsultationAdditionalFee: clinic.raw?.videoConsultationAdditionalFee ?? 0 });
             setEditPhoto(null); setEditMessage(''); setEditing(true);
-          }}><Pencil size={18} aria-hidden="true" /></button>
+          }}><Pencil size={18} aria-hidden="true" /></PortalElement>
           <button type="button" className="doctor-clinic-image-action doctor-clinic-image-delete" aria-label={isDeleting ? 'Deleting clinic' : 'Delete Clinic'} title={isDeleting ? 'Deleting...' : 'Delete Clinic'} aria-busy={isDeleting} disabled={isDeleting || editing || saving} onClick={handleDeleteClinic}>
             <Trash2 size={18} aria-hidden="true" />
           </button>
-        </div>
+        </PortalElement>
 
         <div className="doctor-clinic-hero-content">
           <div className="doctor-clinic-status-row">

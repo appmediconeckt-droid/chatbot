@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from '../../axiosConfig.js';
-import { PortalText } from '../common/PortalTranslation';
+import { PortalText, usePortalLocale, usePortalTranslator } from '../common/PortalTranslation';
 import './PatientVitals.css';
 import { canRecordVitals } from './vitalsAppointments.jsx';
 export { canRecordVitals } from './vitalsAppointments.jsx';
@@ -25,10 +25,11 @@ function canonical(value) {
   return { ...v, blood_group: v.blood_group ?? v.bloodGroup ?? '', blood_pressure: v.blood_pressure ?? v.bp ?? v.bloodPressure ?? '', pulse: v.pulse ?? v.heartRate ?? v.heart_rate ?? '' };
 }
 export function VitalsSummary({ vitals }) {
+  const portalLocale = usePortalLocale();
   const values = canonical(vitals);
-  return <div className="patient-vitals-summary"><dl>{fields.map(([key, label]) => <div key={key}><dt><PortalText text={label} /></dt><dd>{values[key] ?? 'Not recorded'}{values[key] === '' ? 'Not recorded' : ''}{key === 'temperature' && values.temperature_unit && values.temperature_unit !== 'C' ? ` (${values.temperature_unit})` : ''}</dd></div>)}</dl>
+  return <div className="patient-vitals-summary"><dl>{fields.map(([key, label]) => <div key={key}><dt><PortalText text={label} /></dt><dd>{values[key] == null || values[key] === '' ? <PortalText text="Not recorded" /> : values[key]}{key === 'temperature' && values.temperature_unit && values.temperature_unit !== 'C' ? ` (${values.temperature_unit})` : ''}</dd></div>)}</dl>
     {values.notes && <p><strong><PortalText text="Measurement notes" />: </strong>{values.notes}</p>}
-    {values.recorded_at && <p><PortalText text="Last recorded" />: {new Date(values.recorded_at).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST{values.recorded_role ? ` (${values.recorded_role})` : ''}</p>}
+    {values.recorded_at && <p><PortalText text="Last recorded" />: {new Date(values.recorded_at).toLocaleString(portalLocale, { timeZone: 'Asia/Kolkata' })} IST{values.recorded_role ? <> (<PortalText text={values.recorded_role} />)</> : ''}</p>}
   </div>;
 }
 function initialDraft(vitals) {
@@ -37,6 +38,7 @@ function initialDraft(vitals) {
   return Object.fromEntries([...fields.map(([key]) => [key, value[key] ?? '']), ['notes', value.notes || '']]);
 }
 export default function PatientVitals({ patient, editable, onSaved }) {
+  const translateUi = usePortalTranslator();
   const [saved, setSaved] = useState(null);
   const [draft, setDraft] = useState(() => editable && (!patient.id || canRecordVitals(patient)) ? initialDraft(patient.vitals) : null);
   const [busy, setBusy] = useState(false);
@@ -74,6 +76,6 @@ export default function PatientVitals({ patient, editable, onSaved }) {
       <div className="patient-vitals-actions"><button type="submit" className="rec-button primary" disabled={!patient.id}><PortalText text={busy ? 'Saving...' : 'Save vitals'} /></button>{patient.id && <button type="button" className="rec-button" onClick={() => { setDraft(null); setError(''); }}><PortalText text="Cancel" /></button>}</div>
     </fieldset></form> : <><VitalsSummary vitals={vitals} />{canEdit && <button type="button" className="rec-button primary" onClick={start}><PortalText text={vitals ? 'Edit vitals' : 'Add vitals'} /></button>}</>}
     {editable && !canEdit && <p><PortalText text="Vitals can only be added for today's active appointments. This visit is read-only." /></p>}
-    {error && <p role="alert" className="rec-alert">{error}</p>}{success && <p role="status">{success}</p>}
+    {error && <p role="alert" className="rec-alert">{translateUi(error)}</p>}{success && <p role="status">{translateUi(success)}</p>}
   </section>;
 }

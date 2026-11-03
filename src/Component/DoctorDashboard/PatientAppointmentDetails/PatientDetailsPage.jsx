@@ -1,4 +1,4 @@
-import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalLocale, usePortalTranslator, PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import { medicineTiming, medicineDuration } from "../../common/prescriptionDetails.js";
 import PatientProfileImage from "../../common/PatientProfileImage";
 import { filterPatients, dateKey } from "./patientFilters.js";
@@ -17,6 +17,8 @@ import { generatePrescriptionPDF } from "./pdfGenerator";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 
 export default function PatientDetailsPage() {
+  const portalLocale = usePortalLocale();
+  const translateUi = usePortalTranslator();
   const authUser = useDoctorUser();
   const [search, setSearch] = useState("");
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -78,14 +80,14 @@ export default function PatientDetailsPage() {
     if (!value) return "N/A";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString();
+    return date.toLocaleDateString(portalLocale);
   };
 
   const formatTime = (value) => {
     if (!value) return "N/A";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString(portalLocale, { hour: "2-digit", minute: "2-digit" });
   };
 
   const parseMedicines = (value) => {
@@ -292,7 +294,7 @@ export default function PatientDetailsPage() {
       await generatePrescriptionPDF(selectedPatient, selectedRecord);
     } catch (error) {
       console.error("Error downloading prescription:", error);
-      alert("Failed to download prescription. Please try again.");
+      alert(translateUi("Failed to download prescription. Please try again."));
     } finally {
       setIsDownloading(false);
     }
@@ -404,7 +406,7 @@ export default function PatientDetailsPage() {
         </>
       )}
 
-      {error && status !== "failed" && <p className="pd-directory-error" role="alert">{error}</p>}
+      {error && status !== "failed" && <p className="pd-directory-error" role="alert">{translateUi(error)}</p>}
       <div className="pd-main-layout">
         {/* Patient List Section - Only shown when no patient selected */}
         {showPatientList && (
@@ -430,10 +432,10 @@ export default function PatientDetailsPage() {
                   onChange={(e) => setGenderFilter(e.target.value)}
                   aria-label="Filter by gender"
                 >
-                  <PortalElement as="option" value="All">Gender: All</PortalElement>
-                  <PortalElement as="option" value="Male">Male</PortalElement>
-                  <PortalElement as="option" value="Female">Female</PortalElement>
-                  <PortalElement as="option" value="Other">Other</PortalElement>
+                  <PortalElement as="option" value="All"><PortalText text={"Gender: All"} /></PortalElement>
+                  <PortalElement as="option" value="Male"><PortalText text={"Male"} /></PortalElement>
+                  <PortalElement as="option" value="Female"><PortalText text={"Female"} /></PortalElement>
+                  <PortalElement as="option" value="Other"><PortalText text={"Other"} /></PortalElement>
                 </PortalElement>
 
                 <PortalElement as="select"
@@ -442,15 +444,15 @@ export default function PatientDetailsPage() {
                   onChange={(e) => setBloodGroupFilter(e.target.value)}
                   aria-label="Filter by blood group"
                 >
-                  <PortalElement as="option" value="All">Blood Group: All</PortalElement>
-                  <PortalElement as="option" value="O+">O+</PortalElement>
-                  <PortalElement as="option" value="O-">O-</PortalElement>
-                  <PortalElement as="option" value="A+">A+</PortalElement>
-                  <PortalElement as="option" value="A-">A-</PortalElement>
-                  <PortalElement as="option" value="B+">B+</PortalElement>
-                  <PortalElement as="option" value="B-">B-</PortalElement>
-                  <PortalElement as="option" value="AB+">AB+</PortalElement>
-                  <PortalElement as="option" value="AB-">AB-</PortalElement>
+                  <PortalElement as="option" value="All"><PortalText text={"Blood Group: All"} /></PortalElement>
+                  <PortalElement as="option" value="O+"><PortalText text={"O+"} /></PortalElement>
+                  <PortalElement as="option" value="O-"><PortalText text={"O-"} /></PortalElement>
+                  <PortalElement as="option" value="A+"><PortalText text={"A+"} /></PortalElement>
+                  <PortalElement as="option" value="A-"><PortalText text={"A-"} /></PortalElement>
+                  <PortalElement as="option" value="B+"><PortalText text={"B+"} /></PortalElement>
+                  <PortalElement as="option" value="B-"><PortalText text={"B-"} /></PortalElement>
+                  <PortalElement as="option" value="AB+"><PortalText text={"AB+"} /></PortalElement>
+                  <PortalElement as="option" value="AB-"><PortalText text={"AB-"} /></PortalElement>
                 </PortalElement>
 
                 <PortalElement as="select"
@@ -459,7 +461,7 @@ export default function PatientDetailsPage() {
                   onChange={(e) => setAgeFilter(e.target.value)}
                   aria-label="Filter by age"
                 >
-                  <PortalElement as="option" value="All">Age: All</PortalElement>
+                  <PortalElement as="option" value="All"><PortalText text={"Age: All"} /></PortalElement>
                   <PortalElement as="option" value="0-18">0 - 18</PortalElement>
                   <PortalElement as="option" value="19-35">19 - 35</PortalElement>
                   <PortalElement as="option" value="36-50">36 - 50</PortalElement>
@@ -473,11 +475,11 @@ export default function PatientDetailsPage() {
                   onChange={(e) => setLastVisitFilter(e.target.value)}
                   aria-label="Filter by last visit"
                 >
-                  <PortalElement as="option" value="All">Last Visit: All</PortalElement>
-                  <PortalElement as="option" value="Today">Today</PortalElement>
-                  <PortalElement as="option" value="This Week">This Week</PortalElement>
-                  <PortalElement as="option" value="This Month">This Month</PortalElement>
-                  <PortalElement as="option" value="Last 3 Months">Last 3 Months</PortalElement>
+                  <PortalElement as="option" value="All"><PortalText text={"Last Visit: All"} /></PortalElement>
+                  <PortalElement as="option" value="Today"><PortalText text={"Today"} /></PortalElement>
+                  <PortalElement as="option" value="This Week"><PortalText text={"This Week"} /></PortalElement>
+                  <PortalElement as="option" value="This Month"><PortalText text={"This Month"} /></PortalElement>
+                  <PortalElement as="option" value="Last 3 Months"><PortalText text={"Last 3 Months"} /></PortalElement>
                 </PortalElement>
 
                 {hasActiveFilters && (
@@ -495,14 +497,14 @@ export default function PatientDetailsPage() {
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                 >
-                  <PortalElement as="option" value={"Newest First"}>Newest First</PortalElement>
-                  <PortalElement as="option" value={"Oldest First"}>Oldest First</PortalElement>
-                  <PortalElement as="option" value={"Name A-Z"}>Name A-Z</PortalElement>
+                  <PortalElement as="option" value={"Newest First"}><PortalText text={"Newest First"} /></PortalElement>
+                  <PortalElement as="option" value={"Oldest First"}><PortalText text={"Oldest First"} /></PortalElement>
+                  <PortalElement as="option" value={"Name A-Z"}><PortalText text={"Name A-Z"} /></PortalElement>
                 </select>
               </label>
             </div>
 
-            {error && status === "succeeded" && <p role="status">{error}</p>}
+            {error && status === "succeeded" && <p role="status">{translateUi(error)}</p>}
             {/* ===== Active Filter Summary ===== */}
             {hasActiveFilters && status === "succeeded" && (
               <div className="pd-filter-summary">
@@ -519,7 +521,7 @@ export default function PatientDetailsPage() {
             ) : status === "failed" ? (
               <div className="pd-empty-state">
                 <FileText size={48} />
-                <p>{error}</p>
+                <p>{translateUi(error)}</p>
               </div>
             ) : filteredPatients.length === 0 ? (
               <div className="pd-empty-state">
@@ -849,21 +851,21 @@ export default function PatientDetailsPage() {
               <label><PortalText text={"Age"} /><input type="number" min="0" value={newPatient.age} onChange={(event) => updateNewPatient("age", event.target.value)} placeholder="54" />
               </label>
               <label><PortalText text={"Gender"} /><select value={newPatient.gender} onChange={(event) => updateNewPatient("gender", event.target.value)}>
-                  <PortalElement as="option" value={"Male"}>Male</PortalElement>
-                  <PortalElement as="option" value={"Female"}>Female</PortalElement>
-                  <PortalElement as="option" value={"Other"}>Other</PortalElement>
+                  <PortalElement as="option" value={"Male"}><PortalText text={"Male"} /></PortalElement>
+                  <PortalElement as="option" value={"Female"}><PortalText text={"Female"} /></PortalElement>
+                  <PortalElement as="option" value={"Other"}><PortalText text={"Other"} /></PortalElement>
                 </select>
               </label>
               <label><PortalText text={"Blood Group"} /><select value={newPatient.bloodGroup} onChange={(event) => updateNewPatient("bloodGroup", event.target.value)}>
-                  <PortalElement as="option" value="">Select blood group</PortalElement>
-                  <PortalElement as="option" value={"O+"}>O+</PortalElement>
-                  <PortalElement as="option" value={"O-"}>O-</PortalElement>
-                  <PortalElement as="option" value={"A+"}>A+</PortalElement>
-                  <PortalElement as="option" value={"A-"}>A-</PortalElement>
-                  <PortalElement as="option" value={"B+"}>B+</PortalElement>
-                  <PortalElement as="option" value={"B-"}>B-</PortalElement>
-                  <PortalElement as="option" value={"AB+"}>AB+</PortalElement>
-                  <PortalElement as="option" value={"AB-"}>AB-</PortalElement>
+                  <PortalElement as="option" value=""><PortalText text={"Select blood group"} /></PortalElement>
+                  <PortalElement as="option" value={"O+"}><PortalText text={"O+"} /></PortalElement>
+                  <PortalElement as="option" value={"O-"}><PortalText text={"O-"} /></PortalElement>
+                  <PortalElement as="option" value={"A+"}><PortalText text={"A+"} /></PortalElement>
+                  <PortalElement as="option" value={"A-"}><PortalText text={"A-"} /></PortalElement>
+                  <PortalElement as="option" value={"B+"}><PortalText text={"B+"} /></PortalElement>
+                  <PortalElement as="option" value={"B-"}><PortalText text={"B-"} /></PortalElement>
+                  <PortalElement as="option" value={"AB+"}><PortalText text={"AB+"} /></PortalElement>
+                  <PortalElement as="option" value={"AB-"}><PortalText text={"AB-"} /></PortalElement>
                 </select>
               </label>
               <label><PortalText text={"Doctor"} /><PortalElement as="input" value={newPatient.doctor} onChange={(event) => updateNewPatient("doctor", event.target.value)} placeholder="Doctor name" />

@@ -3,6 +3,7 @@ import enUS from './locales/en-US.json';
 import landingHiIN from './locales/landing-hi-IN.json';
 import { translations as localeTranslations } from './locales';
 import { translationService } from './translationService';
+import { portalCopy } from './portalCopy';
 
 const USER_LANG_KEY = 'userLang';
 const COUNSELOR_LANG_KEY = 'counselorLang';
@@ -87,6 +88,17 @@ const DEFAULT_TRANSLATIONS = {
     ...landingHiIN,
   },
 };
+// Share the shipped doctor copy with keyed controls such as the language
+// selector, so they do not start a second network translation for the same UI.
+for (const [lang, copy] of Object.entries(portalCopy)) {
+  const byText = new Map(Object.entries(copy).map(([text, value]) => [text.trim().replace(/\s+/g, ' ').toLowerCase(), value]));
+  const overrides = {};
+  for (const [key, text] of Object.entries(enUS)) {
+    const value = typeof text === 'string' && byText.get(text.trim().replace(/\s+/g, ' ').toLowerCase());
+    if (value) overrides[key] = value;
+  }
+  DEFAULT_TRANSLATIONS[lang] = { ...DEFAULT_TRANSLATIONS[lang], ...overrides };
+}
 const STATIC_LANDING_TRANSLATIONS = {
   'hi-IN': landingHiIN,
 };
@@ -193,6 +205,7 @@ async function translateMissingMessages(lang, localeMessages, onProgress) {
 
 export function LanguageProvider({ children }) {
   const siteLanguageRequestRef = useRef(0);
+  const requestedLanguagesRef = useRef(new Set());
   const [userLang, setUserLangState] = useState(() => {
     const saved = localStorage.getItem(USER_LANG_KEY);
     const normalized = normalizeLanguageCode(saved);
@@ -214,6 +227,10 @@ export function LanguageProvider({ children }) {
 
   const ensureLanguageLoaded = useCallback((lang) => {
     const normalized = normalizeLanguageCode(lang);
+    // Partial translation results update loadedTranslations. Do not start the
+    // same full-catalog request again on each progress render (or on failure).
+    if (requestedLanguagesRef.current.has(normalized)) return;
+    requestedLanguagesRef.current.add(normalized);
     const mergeLandingMessages = (landingMessages) => {
       if (!Object.keys(landingMessages).length) return;
       setLoadedTranslations((prev) => ({
@@ -658,9 +675,11 @@ function makeT(lang, translations) {
 
 export function useUserTranslation() {
   const ctx = useContext(LanguageContext);
+  const lang = ctx?.userLang;
+  const messages = ctx?.translations;
   const t = useMemo(
-    () => ctx ? makeT(ctx.userLang, ctx.translations) : null,
-    [ctx?.userLang, ctx?.translations],
+    () => messages ? makeT(lang, messages) : null,
+    [lang, messages],
   );
   if (!ctx) throw new Error('useUserTranslation must be used within LanguageProvider');
   return { t, lang: ctx.userLang, setLang: ctx.setUserLang };
@@ -675,10 +694,12 @@ export function useSiteTranslation() {
 
 export function useCounselorTranslation() {
   const ctx = useContext(LanguageContext);
+  const lang = ctx?.counselorLang;
+  const messages = ctx?.translations;
   // Effects consuming t must not restart after unrelated component state updates.
   const t = useMemo(
-    () => ctx ? makeT(ctx.counselorLang, ctx.translations) : null,
-    [ctx?.counselorLang, ctx?.translations],
+    () => messages ? makeT(lang, messages) : null,
+    [lang, messages],
   );
   if (!ctx) throw new Error('useCounselorTranslation must be used within LanguageProvider');
   return { t, lang: ctx.counselorLang, setLang: ctx.setCounselorLang };

@@ -1,4 +1,4 @@
-import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalLocale, usePortalTranslator, PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 // DoctorCalendar.jsx
 import { useEffect, useRef, useState } from "react";
 import { useDoctorUser } from "../doctorApi.js";
@@ -284,6 +284,8 @@ const sortAvailabilityRanges = (ranges = []) =>
   );
 
 const DoctorCalendar = () => {
+  const portalLocale = usePortalLocale();
+  const translateUi = usePortalTranslator();
   const authUser = useDoctorUser();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeCalendarTab, setActiveCalendarTab] = useState("specific");
@@ -647,26 +649,26 @@ const DoctorCalendar = () => {
     }
 
     if (!start || !end) {
-      return alert("Start and End time required");
+      return alert(translateUi("Start and End time required"));
     }
 
     // Check if the time is in the past
     const [sh, sm] = start.split(":").map(Number);
     if (isPastDateTime(year, month, day, sh, sm)) {
-      return alert("Cannot add time in the past");
+      return alert(translateUi("Cannot add time in the past"));
     }
 
     const [eh, em] = end.split(":").map(Number);
     const sMinutes = sh * 60 + sm;
     const eMinutes = eh * 60 + em;
     if (!(eMinutes > sMinutes))
-      return alert("End time must be after Start time");
-    if (!(duration > 0)) return alert("Duration must be a positive number");
+      return alert(translateUi("End time must be after Start time"));
+    if (!(duration > 0)) return alert(translateUi("Duration must be a positive number"));
     const conflict = getRangeConflict(
       { start, end },
       availabilityDateMap[dateKey]?.ranges || []
     );
-    if (conflict) return alert(conflict);
+    if (conflict) return alert(translateUi(conflict));
 
     let savedRange;
     const requestedClinicId = selectedClinicIdRef.current;
@@ -677,7 +679,7 @@ const DoctorCalendar = () => {
       );
     } catch (error) {
       if (String(selectedClinicIdRef.current) !== String(requestedClinicId)) return;
-      return alert(error.response?.data?.message || error.response?.data?.error || "Failed to save availability range");
+      return alert(translateUi(error.response?.data?.message || error.response?.data?.error || "Failed to save availability range"));
     }
 
     setAvailabilityDateMap((prev) => {
@@ -713,13 +715,13 @@ const DoctorCalendar = () => {
     }
 
     if (!start || !end) {
-      return alert("Start and End time required");
+      return alert(translateUi("Start and End time required"));
     }
     if (!selectedDays.length) {
       if (recurringWeekdays.length) {
         return addAdditionalTimingToWeekdays();
       }
-      return alert("Please select a calendar date or at least one recurring weekday first");
+      return alert(translateUi("Please select a calendar date or at least one recurring weekday first"));
     }
 
     const [sh, sm] = start.split(":").map(Number);
@@ -728,8 +730,8 @@ const DoctorCalendar = () => {
     const eMinutes = eh * 60 + em;
 
     if (!(eMinutes > sMinutes))
-      return alert("End time must be after Start time");
-    if (!(duration > 0)) return alert("Duration must be a positive number");
+      return alert(translateUi("End time must be after Start time"));
+    if (!(duration > 0)) return alert(translateUi("Duration must be a positive number"));
 
     const month = currentDate.getMonth();
     const year = currentDate.getFullYear();
@@ -741,13 +743,13 @@ const DoctorCalendar = () => {
         { start, end },
         newAvailabilityDateMap[dateKey]?.ranges || []
       );
-      if (conflict) return alert(`${dateKey}: ${conflict}`);
+      if (conflict) return alert(translateUi(`${dateKey}: ${conflict}`));
     }
 
     for (const day of selectedDays) {
       if (isPastDate(year, month, day)) continue;
       if (isPastDateTime(year, month, day, sh, sm)) {
-        alert(`Cannot add time in the past for date ${day}`);
+        alert(translateUi(`Cannot add time in the past for date ${day}`));
         continue;
       }
 
@@ -768,7 +770,7 @@ const DoctorCalendar = () => {
           ranges: sortAvailabilityRanges(arr),
         };
       } catch (error) {
-        return alert(error.response?.data?.message || error.response?.data?.error || `Failed to save range for ${dateKey}`);
+        return alert(translateUi(error.response?.data?.message || error.response?.data?.error || `Failed to save range for ${dateKey}`));
       }
     }
 
@@ -792,10 +794,10 @@ const DoctorCalendar = () => {
     }
 
     if (!start || !end) {
-      return alert("Start and End time required");
+      return alert(translateUi("Start and End time required"));
     }
     if (!recurringWeekdays.length) {
-      return alert("Please select at least one recurring weekday first");
+      return alert(translateUi("Please select at least one recurring weekday first"));
     }
 
     const [sh, sm] = start.split(":").map(Number);
@@ -804,8 +806,8 @@ const DoctorCalendar = () => {
     const eMinutes = eh * 60 + em;
 
     if (!(eMinutes > sMinutes))
-      return alert("End time must be after Start time");
-    if (!(duration > 0)) return alert("Duration must be a positive number");
+      return alert(translateUi("End time must be after Start time"));
+    if (!(duration > 0)) return alert(translateUi("Duration must be a positive number"));
 
     const newAvailabilityWeekdayMap = { ...availabilityWeekdayMap };
 
@@ -814,7 +816,7 @@ const DoctorCalendar = () => {
         { start, end },
         newAvailabilityWeekdayMap[weekday] || []
       );
-      if (conflict) return alert(`${days[weekday]}: ${conflict}`);
+      if (conflict) return alert(translateUi(`${days[weekday]}: ${conflict}`));
     }
 
     for (const weekday of recurringWeekdays) {
@@ -830,7 +832,7 @@ const DoctorCalendar = () => {
         arr.push(savedRange);
         newAvailabilityWeekdayMap[weekday] = sortAvailabilityRanges(arr);
       } catch (error) {
-        return alert(error.response?.data?.message || error.response?.data?.error || `Failed to save range for weekday ${days[weekday]}`);
+        return alert(translateUi(error.response?.data?.message || error.response?.data?.error || `Failed to save range for weekday ${days[weekday]}`));
       }
     }
 
@@ -853,24 +855,24 @@ const DoctorCalendar = () => {
     }));
 
     if (rows.some((range) => !range.start || !range.end)) {
-      return alert("Please fill Start Time and End Time for every time range.");
+      return alert(translateUi("Please fill Start Time and End Time for every time range."));
     }
     if (rows.some((range) => !isUsableTimeRange(range))) {
-      return alert("Every End Time must be after its Start Time.");
+      return alert(translateUi("Every End Time must be after its Start Time."));
     }
     if (rows.some((range) => !(range.duration > 0))) {
-      return alert("Every Slot Duration must be a positive number.");
+      return alert(translateUi("Every Slot Duration must be a positive number."));
     }
 
     const sortedRows = sortAvailabilityRanges(rows);
     for (let index = 0; index < sortedRows.length; index += 1) {
       const conflict = getRangeConflict(sortedRows[index], sortedRows.slice(0, index));
-      if (conflict) return alert(`Time range ${index + 1}: ${conflict}`);
+      if (conflict) return alert(translateUi(`Time range ${index + 1}: ${conflict}`));
     }
 
     if (targetType === "weekday") {
       if (!recurringWeekdays.length) {
-        return alert("Please select at least one recurring weekday first.");
+        return alert(translateUi("Please select at least one recurring weekday first."));
       }
 
       const nextWeekdayMap = { ...availabilityWeekdayMap };
@@ -878,7 +880,7 @@ const DoctorCalendar = () => {
         const combined = [...(nextWeekdayMap[weekday] || [])];
         for (const range of sortedRows) {
           const conflict = getRangeConflict(range, combined);
-          if (conflict) return alert(`${days[weekday]}: ${conflict}`);
+          if (conflict) return alert(translateUi(`${days[weekday]}: ${conflict}`));
           let savedRange;
           try {
             savedRange = await persistRange(range, {
@@ -887,9 +889,9 @@ const DoctorCalendar = () => {
             });
           } catch (error) {
             return alert(
-              error.response?.data?.message ||
+              translateUi(error.response?.data?.message ||
                 error.response?.data?.error ||
-                `Failed to save ${days[weekday]} availability range.`
+                `Failed to save ${days[weekday]} availability range.`)
             );
           }
           combined.push(savedRange);
@@ -904,7 +906,7 @@ const DoctorCalendar = () => {
       );
     } else {
       if (!selectedDays.length) {
-        return alert("Please select at least one calendar date first.");
+        return alert(translateUi("Please select at least one calendar date first."));
       }
 
       const month = currentDate.getMonth();
@@ -922,10 +924,10 @@ const DoctorCalendar = () => {
         for (const range of sortedRows) {
           const [hours, minutes] = range.start.split(":").map(Number);
           if (isPastDateTime(year, month, day, hours, minutes)) {
-            return alert(`Cannot add a past time for ${dateKey}.`);
+            return alert(translateUi(`Cannot add a past time for ${dateKey}.`));
           }
           const conflict = getRangeConflict(range, combined);
-          if (conflict) return alert(`${dateKey}: ${conflict}`);
+          if (conflict) return alert(translateUi(`${dateKey}: ${conflict}`));
           let savedRange;
           try {
             savedRange = await persistRange(range, {
@@ -934,9 +936,9 @@ const DoctorCalendar = () => {
             });
           } catch (error) {
             return alert(
-              error.response?.data?.message ||
+              translateUi(error.response?.data?.message ||
                 error.response?.data?.error ||
-                `Failed to save ${dateKey} availability range.`
+                `Failed to save ${dateKey} availability range.`)
             );
           }
           combined.push(savedRange);
@@ -1189,10 +1191,9 @@ const DoctorCalendar = () => {
                                   >
                                     {defaultDurations.map((d) => (
                                       <option key={d} value={d}>
-                                        {d} min
-                                      </option>
+                                        {d}<PortalText text={" min"} /></option>
                                     ))}
-                                    <PortalElement as="option" value="custom">Custom</PortalElement>
+                                    <PortalElement as="option" value="custom"><PortalText text={"Custom"} /></PortalElement>
                                   </select>
 
                                   {quickRanges[dateKey] &&
@@ -1268,7 +1269,7 @@ const DoctorCalendar = () => {
 
   const openEditorForDate = (year, month, day) => {
     if (isPastDate(year, month, day)) {
-      alert("Cannot edit past dates");
+      alert(translateUi("Cannot edit past dates"));
       return;
     }
     const dateKey = formatDateKey(year, month, day);
@@ -1356,7 +1357,7 @@ const DoctorCalendar = () => {
 
   const saveRange = async () => {
     if (!newRange.start || !newRange.end)
-      return alert("Start and End time required");
+      return alert(translateUi("Start and End time required"));
 
     // Check if editing a date (not weekday)
     if (editingTarget.type === "date") {
@@ -1371,7 +1372,7 @@ const DoctorCalendar = () => {
           sm
         )
       ) {
-        return alert("Cannot add time in the past");
+        return alert(translateUi("Cannot add time in the past"));
       }
     }
 
@@ -1380,14 +1381,14 @@ const DoctorCalendar = () => {
     const sMinutes = sh * 60 + sm;
     const eMinutes = eh * 60 + em;
     if (!(eMinutes > sMinutes))
-      return alert("End time must be after Start time");
+      return alert(translateUi("End time must be after Start time"));
 
     const existingRanges =
       editingTarget.type === "date"
         ? availabilityDateMap[editingTarget.key]?.ranges || []
         : availabilityWeekdayMap[editingTarget.key] || [];
     const conflict = getRangeConflict(newRange, existingRanges);
-    if (conflict) return alert(conflict);
+    if (conflict) return alert(translateUi(conflict));
 
     try {
       const savedRange = await persistRange(newRange);
@@ -1423,7 +1424,7 @@ const DoctorCalendar = () => {
     // Don't clear the form, allow adding multiple ranges
     setNewRange({ start: "", end: "", duration: 15 });
     } catch (error) {
-      alert(error.response?.data?.message || error.response?.data?.error || "Failed to save availability range");
+      alert(translateUi(error.response?.data?.message || error.response?.data?.error || "Failed to save availability range"));
     }
   };
 
@@ -1439,7 +1440,7 @@ const DoctorCalendar = () => {
       if (
         isPastDate(editingTarget.year, editingTarget.month, editingTarget.day)
       ) {
-        return alert("Cannot modify past dates");
+        return alert(translateUi("Cannot modify past dates"));
       }
 
       const info = availabilityDateMap[editingTarget.key] || { ranges: [], blocked: false };
@@ -1448,7 +1449,7 @@ const DoctorCalendar = () => {
         try {
           await axios.delete(`${AVAILABILITY_BASE_URL}/ranges/${range.id}`, { headers: getAuthHeaders() });
         } catch (error) {
-          return alert(error.response?.data?.message || error.response?.data?.error || "Failed to delete range");
+          return alert(translateUi(error.response?.data?.message || error.response?.data?.error || "Failed to delete range"));
         }
       }
 
@@ -1467,7 +1468,7 @@ const DoctorCalendar = () => {
         try {
           await axios.delete(`${AVAILABILITY_BASE_URL}/ranges/${range.id}`, { headers: getAuthHeaders() });
         } catch (error) {
-          return alert(error.response?.data?.message || error.response?.data?.error || "Failed to delete range");
+          return alert(translateUi(error.response?.data?.message || error.response?.data?.error || "Failed to delete range"));
         }
       }
 
@@ -1482,7 +1483,7 @@ const DoctorCalendar = () => {
 
   const toggleBlockDate = async (dateKey, year, month, day) => {
     if (isPastDate(year, month, day)) {
-      alert("Cannot modify past dates");
+      alert(translateUi("Cannot modify past dates"));
       return;
     }
 
@@ -1515,7 +1516,7 @@ const DoctorCalendar = () => {
 
   const removeAllRangesForDate = async (dateKey, year, month, day) => {
     if (isPastDate(year, month, day)) {
-      alert("Cannot modify past dates");
+      alert(translateUi("Cannot modify past dates"));
       return;
     }
 
@@ -1525,7 +1526,7 @@ const DoctorCalendar = () => {
         data: { doctor_id: doctorId, clinic_id: selectedClinic.id, date: dateKey },
       });
     } catch (error) {
-      return alert(error.response?.data?.message || error.response?.data?.error || "Failed to clear date ranges");
+      return alert(translateUi(error.response?.data?.message || error.response?.data?.error || "Failed to clear date ranges"));
     }
 
     setAvailabilityDateMap((prev) => {
@@ -1638,12 +1639,12 @@ const DoctorCalendar = () => {
 
     setSlotPreview(preview);
     if (!preview.length) {
-      alert(`No valid time ranges found for ${selectedClinic?.name || "the selected hospital"}. Please add Start Time, End Time and Slot Duration first.`);
+      alert(translateUi(`No valid time ranges found for ${selectedClinic?.name || "the selected hospital"}. Please add Start Time, End Time and Slot Duration first.`));
     }
   };
 
   const clearAll = async () => {
-    if (!window.confirm("Clear selected days, weekdays and availability?"))
+    if (!window.confirm(translateUi("Clear selected days, weekdays and availability?")))
       return;
 
     try {
@@ -1652,7 +1653,7 @@ const DoctorCalendar = () => {
         data: { doctor_id: doctorId, clinic_id: selectedClinic.id },
       });
     } catch (error) {
-      return alert(error.response?.data?.message || error.response?.data?.error || "Failed to clear availability");
+      return alert(translateUi(error.response?.data?.message || error.response?.data?.error || "Failed to clear availability"));
     }
 
     setSelectedDays([]);
@@ -1676,7 +1677,7 @@ const DoctorCalendar = () => {
 
   const month = currentDate.getMonth();
   const year = currentDate.getFullYear();
-  const monthName = currentDate.toLocaleString("en-US", { month: "long" });
+  const monthName = currentDate.toLocaleString(portalLocale, { month: "long" });
   const monthDays = getDaysInMonth(month, year);
   const firstDayIndex = new Date(year, month, 1).getDay();
   const previousMonthDays = getDaysInMonth(month === 0 ? 11 : month - 1, month === 0 ? year - 1 : year);
@@ -1829,7 +1830,7 @@ const DoctorCalendar = () => {
         {activeCalendarTab === "unavailable" && <PortalText text={"Select a calendar date to mark it unavailable or make it available again."} />}
       </p>
 
-      {apiError && <div className="calendar-api-note">{apiError}</div>}
+      {apiError && <div className="calendar-api-note">{translateUi(apiError)}</div>}
 
       <section className="calendar-main-grid">
         <div className="calendar-left-stack">
@@ -2103,10 +2104,10 @@ const DoctorCalendar = () => {
                           updateAdditionalTimeRow(index, "duration", event.target.value)
                         }
                       >
-                        <PortalElement as="option" value={10}>10 min</PortalElement>
-                        <PortalElement as="option" value={15}>15 min</PortalElement>
-                        <PortalElement as="option" value={30}>30 min</PortalElement>
-                        <PortalElement as="option" value={45}>45 min</PortalElement>
+                        <PortalElement as="option" value={10}><PortalText text={"10 min"} /></PortalElement>
+                        <PortalElement as="option" value={15}><PortalText text={"15 min"} /></PortalElement>
+                        <PortalElement as="option" value={30}><PortalText text={"30 min"} /></PortalElement>
+                        <PortalElement as="option" value={45}><PortalText text={"45 min"} /></PortalElement>
                       </select>
                     </label>
                     <button
@@ -2181,7 +2182,7 @@ const DoctorCalendar = () => {
             <div className="calendar-unavailable-panel">
               <p><PortalText text={"Stop new bookings for this date at "} />{selectedClinic?.name}<PortalText text={". Your saved timings and existing appointments are kept."} /></p>
               {availabilityDateMap[editingTarget.key]?.globalBlocked && <p><PortalText text={"This date has an all-clinic block. Restoring it removes that block across clinics."} /></p>}
-              {unavailableError && <p role="alert" className="text-danger">{unavailableError}</p>}
+              {unavailableError && <p role="alert" className="text-danger">{translateUi(unavailableError)}</p>}
               <button
                 type="button"
                 className={availabilityDateMap[editingTarget.key]?.blocked ? "apply-weekdays-btn" : "calendar-danger-btn"}
@@ -2239,7 +2240,7 @@ const DoctorCalendar = () => {
                       onChange={(event) => setNewRange((prev) => ({ ...prev, duration: Number(event.target.value) }))}
                     >
                       {defaultDurations.map((duration) => (
-                        <option value={duration} key={duration}>{duration} min</option>
+                        <option value={duration} key={duration}>{duration}<PortalText text={" min"} /></option>
                       ))}
                     </select>
                   </label>
@@ -2394,7 +2395,7 @@ const DoctorCalendar = () => {
         <div className="alert alert-info py-2"><PortalText text={"Loading clinics and availability..."} /></div>
       )}
       {apiError && (
-        <div className="alert alert-danger py-2">{apiError}</div>
+        <div className="alert alert-danger py-2">{translateUi(apiError)}</div>
       )}
 
       <div className="weekday-bar d-flex justify-content-between gap-2 mb-2">
@@ -2452,7 +2453,7 @@ const DoctorCalendar = () => {
         </PortalElement>
         <div className="month-title text-center px-3 mt-2">
           <strong>
-            {currentDate.toLocaleString("default", { month: "long" })}{" "}
+            {currentDate.toLocaleString(portalLocale, { month: "long" })}{" "}
             {currentDate.getFullYear()}
           </strong>
         </div>
@@ -2672,10 +2673,9 @@ const DoctorCalendar = () => {
                   >
                     {defaultDurations.map((d) => (
                       <option key={d} value={d}>
-                        {d} min
-                      </option>
+                        {d}<PortalText text={" min"} /></option>
                     ))}
-                    <PortalElement as="option" value="custom">Custom</PortalElement>
+                    <PortalElement as="option" value="custom"><PortalText text={"Custom"} /></PortalElement>
                   </select>
 
                   {additionalTime.durationMode === "custom" && (
@@ -2948,7 +2948,7 @@ const DoctorCalendar = () => {
                         className="btn btn-outline-warning"
                         onClick={() => {
                           if (
-                            !window.confirm("Remove all ranges for this date?")
+                            !window.confirm(translateUi("Remove all ranges for this date?"))
                           )
                             return;
                           removeAllRangesForDate(

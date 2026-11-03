@@ -1,4 +1,4 @@
-import { PatientLanguageControl, PortalText } from "../common/PortalTranslation";
+import { usePortalTranslator, PatientLanguageControl, PortalText } from "../common/PortalTranslation";
 import React, { useEffect, useState } from 'react';
 import { Link, Navigate, useLocation, useParams } from 'react-router-dom';
 import AppointmentForm from './Walk-in/AppointmentForm.jsx';
@@ -9,8 +9,9 @@ import './ClinicQrPages.css';
 const address = value => typeof value === 'string' ? value : Object.values(value || {}).filter(v => typeof v === 'string').join(', ');
 export function LegacyWalkinPage() {
   const params = new URLSearchParams(useLocation().search);
-  return params.get('source') === 'qr' && params.get('doctorId')
-    ? <Navigate replace to={`/doctor/${encodeURIComponent(params.get('doctorId'))}`} /> : <AppointmentForm />;
+  const clinicId = params.get('doctorClinicId');
+  return clinicId
+    ? <Navigate replace to={`/walkin/${encodeURIComponent(clinicId)}`} /> : <AppointmentForm key={params.get('doctorId') || 'walkin'} />;
 }
 function Timings({ items = [] }) {
   const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -21,18 +22,21 @@ function useQrData(path) {
   useEffect(() => {
     const controller = new AbortController();
     setState({});
-    axios.get(`${API_BASE_URL}/qr/${path}`, { signal: controller.signal }).then(res => setState({ data: res.data.data })).catch(err => {
-      if (!controller.signal.aborted) setState({ error: err.response?.data?.message || 'Unable to load. Please refresh to try again.' });
+    axios.get(`${API_BASE_URL}/qr/${path}`, { signal: controller.signal }).then(res => {
+      if (!controller.signal.aborted) setState({ path, data: res.data.data });
+    }).catch(err => {
+      if (!controller.signal.aborted) setState({ path, error: err.response?.data?.message || 'Unable to load. Please refresh to try again.' });
     });
     return () => controller.abort();
   }, [path]);
-  return state;
+  return state.path === path ? state : {};
 }
 export function DoctorProfilePage() {
+  const translateUi = usePortalTranslator();
   const { doctorId } = useParams();
   const { data, error } = useQrData(`doctors/${encodeURIComponent(doctorId)}/profile`);
   return <main className="clinic-qr-public"><PatientLanguageControl />
-    {error ? <p role="alert">{error}</p> : !data ? <p role="status"><PortalText text={"Loading doctor profile…"} /></p> : <>
+    {error ? <p role="alert">{translateUi(error)}</p> : !data ? <p role="status"><PortalText text={"Loading doctor profile…"} /></p> : <>
       <h1>{data.name}</h1><p>{[].concat(data.specialization || []).join(', ')}</p>
       <p>{data.qualification}</p>{data.experience && <p><PortalText text={"Experience: "} />{data.experience}</p>}<p>{data.about}</p>
       <h2><PortalText text={"Available clinics"} /></h2><div className="clinic-qr-grid">{data.clinics.map(c => <article key={c.doctorClinicId}>
@@ -43,33 +47,11 @@ export function DoctorProfilePage() {
   </main>;
 }
 export function ClinicWalkinPage() {
+  const translateUi = usePortalTranslator();
   const { doctorClinicId } = useParams();
   const { data, error } = useQrData(`walkin/${encodeURIComponent(doctorClinicId)}`);
-  const [form, setForm] = useState({ patientName: '', phoneNumber: '', symptoms: '' });
-  const [booking, setBooking] = useState({});
-  const [requestId, setRequestId] = useState(() => crypto.randomUUID());
-  useEffect(() => { setBooking({}); setRequestId(crypto.randomUUID()); }, [doctorClinicId]);
-  const submit = async event => {
-    event.preventDefault();
-    if (booking.busy) return;
-    setBooking({ busy: true });
-    try {
-      const response = await axios.post(`${API_BASE_URL}/qr/walkin/${encodeURIComponent(doctorClinicId)}`, { ...form, requestId });
-      setBooking({ result: response.data.data });
-    } catch (err) { setBooking({ error: err.response?.data?.message || 'Unable to confirm. Please retry.' }); }
-  };
+  if (data) return <AppointmentForm key={doctorClinicId} clinicBooking={data} />;
   return <main className="clinic-qr-public"><PatientLanguageControl />
-    {error ? <p role="alert">{error}</p> : !data ? <p role="status"><PortalText text={"Loading clinic…"} /></p> : <>
-      <h1><PortalText text={"Clinic Walk-in"} /></h1><h2>{data.doctor.name}</h2><h3>{data.clinic.name}</h3><p>{address(data.clinic.address)}</p>
-      {data.clinic.room && <p><PortalText text={"Room: "} />{data.clinic.room}</p>}
-      <p><PortalText text={"Your appointment is for today at this clinic."} /></p>
-      {booking.result ? <section role="status"><h2><PortalText text={"Your token: "} />{booking.result.tokenNumber}</h2><p><PortalText text={"You have joined this clinic's queue. Please keep your token."} /></p></section> :
-        <form onSubmit={submit}>
-          <label><PortalText text={"Patient name"} /><input required maxLength={150} autoComplete="name" value={form.patientName} onChange={e => setForm({ ...form, patientName: e.target.value })} /></label>
-          <label><PortalText text={"Phone number"} /><input required type="tel" maxLength={25} autoComplete="tel" value={form.phoneNumber} onChange={e => setForm({ ...form, phoneNumber: e.target.value })} /></label>
-          <label><PortalText text={"Symptoms"} /><textarea required maxLength={2000} value={form.symptoms} onChange={e => setForm({ ...form, symptoms: e.target.value })} /></label>
-          {booking.error && <p role="alert">{booking.error}</p>}<button disabled={booking.busy}>{booking.busy ? <PortalText text={"Confirming…"} /> : <PortalText text={"Get walk-in token"} />}</button>
-        </form>}
-    </>}
+    {error ? <p role="alert">{translateUi(error)}</p> : <p role="status"><PortalText text="Loading clinic…" /></p>}
   </main>;
 }

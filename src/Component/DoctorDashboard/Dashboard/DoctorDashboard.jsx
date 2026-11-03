@@ -1,4 +1,4 @@
-import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalTranslator, usePortalLocale, PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import socketService from "../../../services/socketService";
 import { getDoctorDashboardSummary, getTodayCompletedAppointments } from './doctorDashboardSummary.js';
 import { getConsultationDurationMs } from '../AppointmentList/appointmentListSummary.js';
@@ -2864,7 +2864,7 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
           </div>
           <div className="dd-patient-details">
             <small className="text-muted">
-              <i className="bi bi-calendar me-1"></i><PortalText text={"Completed on: "} />{appointment?.endTime ? formatDateTime(appointment.endTime) : 'N/A'}
+              <i className="bi bi-calendar me-1"></i><PortalText text={"Completed on: "} />{appointment?.endTime ? formatDateTime(appointment.endTime) : <PortalText text={"N/A"} />}
             </small>
           </div>
         </div>
@@ -2969,6 +2969,7 @@ const EditCompletedModal = ({ show, onHide, appointment, onSave }) => {
 };
 
 const SummaryModal = ({ show, onHide, appointmentData, doctorName, doctorProfile, onCompleteWithoutPrint }) => {
+  const translateUi = usePortalTranslator();
   const [downloading, setDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState("");
   const clinicId = String(appointmentData?.clinicId || appointmentData?.clinic_id?._id || appointmentData?.clinic_id?.id || appointmentData?.clinic_id || '');
@@ -3009,9 +3010,9 @@ const SummaryModal = ({ show, onHide, appointmentData, doctorName, doctorProfile
         <Modal.Title className="dd-summary-modal-title"><PortalText text={"Consultation Prescription"} /></Modal.Title>
       </Modal.Header>
       <Modal.Body className="dd-summary-modal-body" style={{ maxHeight: "70vh", overflowY: "auto" }}>
-        {downloadError && <div className="alert alert-danger" role="alert">{downloadError}</div>}
-        {headerError && <div className="alert alert-danger" role="alert">{headerError}</div>}
-        {headerReady ? <PrescriptionDocument record={prescriptionRecord} doctorName={doctorName} /> : !headerError && <p role="status">Loading doctor and clinic details...</p>}
+        {downloadError && <div className="alert alert-danger" role="alert">{translateUi(downloadError)}</div>}
+        {headerError && <div className="alert alert-danger" role="alert">{translateUi(headerError)}</div>}
+        {headerReady ? <PrescriptionDocument record={prescriptionRecord} doctorName={doctorName} /> : !headerError && <p role="status"><PortalText text={"Loading doctor and clinic details..."} /></p>}
       </Modal.Body>
       <Modal.Footer className="dd-summary-modal-footer">
         <Button className="dd-summary-close-btn" variant="outline-secondary" onClick={onHide}><PortalText text={"Close"} /></Button>
@@ -3026,6 +3027,8 @@ const SummaryModal = ({ show, onHide, appointmentData, doctorName, doctorProfile
 
 // Main DoctorDashboard Component
 const DoctorDashboard = () => {
+  const translateUi = usePortalTranslator();
+  const portalLocale = usePortalLocale();
   const navigate = useNavigate();
   const location = useLocation();
   const [remoteCompletion, setRemoteCompletion] = useState(location.state?.remoteCompletion || null);
@@ -3843,7 +3846,7 @@ const DoctorDashboard = () => {
       queueTurnReached: isQueueTurnAvailable(appointment),
     });
   };
-  const dateParts = new Date(now).toLocaleDateString("en-US", {
+  const dateParts = new Date(now).toLocaleDateString(portalLocale, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -3862,7 +3865,7 @@ const DoctorDashboard = () => {
     if (status === "in-progress") return <Badge bg="primary"><PortalText text={"In Progress"} /></Badge>;
     if (status === "completed") return <Badge bg="success"><PortalText text={"Completed"} /></Badge>;
     if (status === "cancelled") return <Badge bg="secondary"><PortalText text={"Cancelled"} /></Badge>;
-    return <Badge bg="secondary">{status}</Badge>;
+    return <Badge bg="secondary">{<PortalText text={status} />}</Badge>;
   };
 
   const getQueueStatusLabel = (appt, isActive) => {
@@ -3894,7 +3897,7 @@ const DoctorDashboard = () => {
       <div className="dd-error-container p-4">
         <Alert variant="danger">
           <Alert.Heading><PortalText text={"Error Loading Dashboard"} /></Alert.Heading>
-          <p>{error}</p>
+          <p>{translateUi(error)}</p>
           <Button onClick={fetchAppointments} variant="outline-danger"><PortalText text={"Retry"} /></Button>
         </Alert>
       </div>
@@ -3929,7 +3932,7 @@ const DoctorDashboard = () => {
               {statCards.map((card) => (
                 <div className="dd-stat-card" key={card.label}>
                   <div>
-                    <span>{card.label}</span>
+                    <span>{<PortalText text={card.label} />}</span>
                     <strong>
                       {card.value}
                       {card.suffix && <small>{card.suffix}</small>}
@@ -4005,7 +4008,7 @@ const DoctorDashboard = () => {
                         <div className="dd-queue-meta">
                           <span className={appt.isEmergency ? "dd-emergency-label" : ""}>{appt.isEmergency && <i className="bi bi-exclamation-triangle-fill" aria-hidden="true" />}{appt.isEmergency ? <PortalText text="Emergency Request" /> : appt.appointmentType}</span>
                           {getRemoteConsultationMode(appt) && <span><i className={`bi ${getRemoteConsultationMode(appt) === "video" ? "bi-camera-video" : "bi-telephone"}`}></i>{getRemoteConsultationMode(appt) === "video" ? <PortalText text={"Video"} /> : <PortalText text={"Voice"} />}</span>}
-                          <span>{appt.gender}</span>
+                          <span>{translateUi(appt.gender)}</span>
                           <span className="issue">{appt.issue}</span>
                           <span>
                             <i className="bi bi-clock"></i>
@@ -4028,8 +4031,8 @@ const DoctorDashboard = () => {
                         </div>
                         <EmergencyReason appointment={appt} />
                         <div className="dd-vital-tags">
-                          <span><PortalText text={"BP: "} />{appt.bp || "N/A"}</span>
-                          <span><PortalText text={"BG: "} />{appt.bloodGroup || "N/A"}</span>
+                          <span><PortalText text={"BP: "} />{appt.bp || <PortalText text={"N/A"} />}</span>
+                          <span><PortalText text={"BG: "} />{appt.bloodGroup || <PortalText text={"N/A"} />}</span>
                         </div>
                       </div>
                       <div className="dd-row-actions">
@@ -4175,7 +4178,7 @@ const DoctorDashboard = () => {
                     {min}<PortalText text={" min"} /></button>
                 ))}
                 <InputGroup size="sm" className="dd-custom-break-input-group">
-                  <FormControl
+                  <PortalElement as={FormControl}
                     placeholder="Custom"
                     value={customBreakMin}
                     onChange={(e) => setCustomBreakMin(e.target.value.replace(/\D/g, ""))}
@@ -4250,7 +4253,7 @@ const DoctorDashboard = () => {
               </div>
               <div className="dd-patient-detail">
                 <span className="dd-detail-label"><PortalText text={"Token:"} /></span>
-                <span className="dd-detail-value">{selectedAppointment ? getTokenLabel(selectedAppointment) : "N/A"}</span>
+                <span className="dd-detail-value">{selectedAppointment ? getTokenLabel(selectedAppointment) : <PortalText text={"N/A"} />}</span>
               </div>
               <div className="dd-patient-detail">
                 <span className="dd-detail-label"><PortalText text={"Phone:"} /></span>
@@ -4260,7 +4263,7 @@ const DoctorDashboard = () => {
                       {selectedAppointment.phone}
                     </a>
                   ) : (
-                    "N/A"
+                    <PortalText text={"N/A"} />
                   )}
                 </span>
               </div>
@@ -4329,7 +4332,7 @@ const DoctorDashboard = () => {
         </Modal.Footer>
       </Modal>
 
-      {remoteCompletion && <CompleteModal show onHide={() => { if (!remoteSaving) setRemoteCompletion(null); }} form={remoteForm} setForm={setRemoteForm} onSave={saveRemoteCompletion} appointment={remoteCompletion} patientName={remoteCompletion.name || 'Patient'} title="Check & Complete Appointment" saveLabel="Save & Complete" saving={remoteSaving} saveError={remoteError} />}
+      {remoteCompletion && <PortalElement as={CompleteModal} show onHide={() => { if (!remoteSaving) setRemoteCompletion(null); }} form={remoteForm} setForm={setRemoteForm} onSave={saveRemoteCompletion} appointment={remoteCompletion} patientName={remoteCompletion.name || 'Patient'} title="Check & Complete Appointment" saveLabel="Save & Complete" saving={remoteSaving} saveError={remoteError} />}
       {/* COMPLETE MODAL */}
       <CompleteModal
         show={showCompleteModal}

@@ -1,11 +1,13 @@
-import { PortalText } from "../../../common/PortalTranslation";
+import { usePortalTranslator, PortalText } from "../../../common/PortalTranslation";
 import React, { useEffect, useState } from "react";
 import axios from "../../../../axiosConfig.js";
 import { API_BASE_URL, getDoctorUser } from "../../doctorApi.js";
 import { publicDoctorProfile } from "./profileQrData.js";
 import "./ProfileCard.css";
+import { localizeQr } from '../../../../utils/localQr.js';
 
 export default function ProfileCard() {
+  const translateUi = usePortalTranslator();
   const [profile, setProfile] = useState(null);
   const [qrSrc, setQrSrc] = useState("");
   const [profileLink, setProfileLink] = useState("");
@@ -32,9 +34,10 @@ export default function ProfileCard() {
         if (!details.name) throw new Error("Please complete your doctor profile before generating a QR.");
         setProfile(details);
         const qr = await axios.get(`${API_BASE_URL}/qr/doctors/${doctorId}/codes`);
+        const codes = await localizeQr(qr.data.data);
         if (!active) return;
-        setProfileLink(qr.data.data.profileQrUrl);
-        setQrSrc(qr.data.data.profileQrCode);
+        setProfileLink(codes.profileQrUrl);
+        setQrSrc(codes.profileQrCode);
       } catch (err) {
         if (active) setError(err.response?.data?.message || err.message || "Unable to load doctor profile.");
       } finally {
@@ -46,14 +49,14 @@ export default function ProfileCard() {
   }, [attempt]);
 
   if (loading) return <p role="status"><PortalText text={"Loading doctor profile QR..."} /></p>;
-  if (error) return <div role="alert"><p>{error}</p><button type="button" onClick={() => setAttempt((value) => value + 1)}><PortalText text={"Retry"} /></button></div>;
+  if (error) return <div role="alert"><p>{translateUi(error)}</p><button type="button" onClick={() => setAttempt((value) => value + 1)}><PortalText text={"Retry"} /></button></div>;
 
   return (
     <section className="doctor-profile-qr">
       <header className="doctor-profile-qr-header"><div className="doctor-profile-qr-header-icon"><i className="bi bi-qr-code" aria-hidden="true" /></div><div><h1><PortalText text="Profile QR" /></h1><p><PortalText text="An easy way for patients to find your profile and clinics." /></p></div></header>
       <div className="doctor-profile-qr-card">
         <div className="doctor-profile-qr-info">
-          <div className="doctor-profile-qr-brand"><img src="/favicon-96.png" width="32" height="32" alt="" /><span>Humaeli</span></div>
+          <div className="doctor-profile-qr-brand"><img src="/favicon-96.png" width="32" height="32" alt="" /><span><PortalText text={"Humaeli"} /></span></div>
           <span className="doctor-profile-qr-eyebrow"><PortalText text="DOCTOR PROFILE" /></span>
           <h2>{profile.name}</h2>
           {profile.speciality && <p className="doctor-profile-qr-speciality">{profile.speciality}</p>}

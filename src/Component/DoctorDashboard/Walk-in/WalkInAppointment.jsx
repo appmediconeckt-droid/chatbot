@@ -1,4 +1,4 @@
-import { PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalTranslator, usePortalLocale, PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useDoctorUser } from "../doctorApi.js";
@@ -10,6 +10,8 @@ import "./WalkInAppointment.css";
 const WALKIN_BASE_URL = `${API_BASE_URL}/walkin-appointments`;
 
 export default function WalkInAppointment() {
+  const translateUi = usePortalTranslator();
+  const portalLocale = usePortalLocale();
   const location = useLocation();
   const authUser = useDoctorUser();
   const [appointments, setAppointments] = useState([]);
@@ -68,14 +70,14 @@ export default function WalkInAppointment() {
     if (!value) return "—";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString();
+    return date.toLocaleDateString(portalLocale);
   };
 
   const formatAppointmentTime = (value) => {
     if (!value) return "";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return date.toLocaleTimeString(portalLocale, { hour: "2-digit", minute: "2-digit" });
   };
 
   const normalizeAppointment = (item) => {
@@ -341,7 +343,7 @@ export default function WalkInAppointment() {
   };
 
   const deleteAppointment = async (id) => {
-    if (window.confirm("Are you sure you want to delete this appointment?")) {
+    if (window.confirm(translateUi("Are you sure you want to delete this appointment?"))) {
       try {
         setApiError("");
         await axios.delete(`${WALKIN_BASE_URL}/${id}`, {
@@ -425,10 +427,10 @@ export default function WalkInAppointment() {
               <div className="walkin-form-group">
                 <label htmlFor="gender"><PortalText text={"Gender"} /></label>
                 <select id="gender" name="gender" value={formData.gender} onChange={handleInputChange}>
-                  <PortalElement as="option" value="">Select Gender</PortalElement>
-                  <PortalElement as="option" value="Male">Male</PortalElement>
-                  <PortalElement as="option" value="Female">Female</PortalElement>
-                  <PortalElement as="option" value="Other">Other</PortalElement>
+                  <PortalElement as="option" value=""><PortalText text={"Select Gender"} /></PortalElement>
+                  <PortalElement as="option" value="Male"><PortalText text={"Male"} /></PortalElement>
+                  <PortalElement as="option" value="Female"><PortalText text={"Female"} /></PortalElement>
+                  <PortalElement as="option" value="Other"><PortalText text={"Other"} /></PortalElement>
                 </select>
               </div>
               <div className="walkin-form-group">
@@ -438,19 +440,19 @@ export default function WalkInAppointment() {
               <div className="walkin-form-group">
                 <label htmlFor="department"><PortalText text={"Department"} /></label>
                 <select id="department" name="department" value={formData.department} onChange={handleInputChange}>
-                  <PortalElement as="option" value="">Select Department</PortalElement>
-                  <PortalElement as="option" value="General Medicine">General Medicine</PortalElement>
-                  <PortalElement as="option" value="Orthopedics">Orthopedics</PortalElement>
-                  <PortalElement as="option" value="Cardiology">Cardiology</PortalElement>
-                  <PortalElement as="option" value="Pediatrics">Pediatrics</PortalElement>
+                  <PortalElement as="option" value=""><PortalText text={"Select Department"} /></PortalElement>
+                  <PortalElement as="option" value="General Medicine"><PortalText text={"General Medicine"} /></PortalElement>
+                  <PortalElement as="option" value="Orthopedics"><PortalText text={"Orthopedics"} /></PortalElement>
+                  <PortalElement as="option" value="Cardiology"><PortalText text={"Cardiology"} /></PortalElement>
+                  <PortalElement as="option" value="Pediatrics"><PortalText text={"Pediatrics"} /></PortalElement>
                 </select>
               </div>
               <div className="walkin-form-group">
                 <label htmlFor="priority"><PortalText text={"Priority"} /></label>
                 <select id="priority" name="priority" value={formData.priority} onChange={handleInputChange}>
-                  <PortalElement as="option" value="Low">Low</PortalElement>
-                  <PortalElement as="option" value="Med">Med</PortalElement>
-                  <PortalElement as="option" value="High">High</PortalElement>
+                  <PortalElement as="option" value="Low"><PortalText text={"Low"} /></PortalElement>
+                  <PortalElement as="option" value="Med"><PortalText text={"Med"} /></PortalElement>
+                  <PortalElement as="option" value="High"><PortalText text={"High"} /></PortalElement>
                 </select>
               </div>
               <div className="walkin-form-group walkin-wide-field">
@@ -477,7 +479,7 @@ export default function WalkInAppointment() {
         </div>
       </header>
 
-      {apiError && <div className="walkin-api-error">{apiError}</div>}
+      {apiError && <div className="walkin-api-error">{translateUi(apiError)}</div>}
 
       <section className="walkin-summary-grid">
         <article><div className="blue"><Users size={20} /></div><strong>{appointments.length}</strong><span><PortalText text={"Total Walk-ins"} /></span></article>
@@ -521,7 +523,7 @@ export default function WalkInAppointment() {
             onChange={(e) => setDoctorFilter(e.target.value)}
             aria-label="Filter by doctor"
           >
-            <PortalElement as="option" value="">All Doctors</PortalElement>
+            <PortalElement as="option" value=""><PortalText text={"All Doctors"} /></PortalElement>
             {doctorOptions.map((doctor) => (
               <option key={doctor} value={doctor}>{doctor}</option>
             ))}
@@ -532,7 +534,7 @@ export default function WalkInAppointment() {
             onChange={(e) => setDepartmentFilter(e.target.value)}
             aria-label="Filter by department"
           >
-            <PortalElement as="option" value="">All Departments</PortalElement>
+            <PortalElement as="option" value=""><PortalText text={"All Departments"} /></PortalElement>
             {departmentOptions.map((dept) => (
               <option key={dept} value={dept}>{dept}</option>
             ))}
@@ -543,12 +545,12 @@ export default function WalkInAppointment() {
             onChange={(e) => setStatusFilter(e.target.value)}
             aria-label="Filter by status"
           >
-            <PortalElement as="option" value="">Status: All</PortalElement>
-            <PortalElement as="option" value="BOOKED">Waiting / Booked</PortalElement>
-            <PortalElement as="option" value="WAITING">Waiting</PortalElement>
-            <PortalElement as="option" value="IN_CONSULTATION">In Consultation</PortalElement>
-            <PortalElement as="option" value="COMPLETED">Completed</PortalElement>
-            <PortalElement as="option" value="CANCELLED">Cancelled</PortalElement>
+            <PortalElement as="option" value=""><PortalText text={"Status: All"} /></PortalElement>
+            <PortalElement as="option" value="BOOKED"><PortalText text={"Waiting / Booked"} /></PortalElement>
+            <PortalElement as="option" value="WAITING"><PortalText text={"Waiting"} /></PortalElement>
+            <PortalElement as="option" value="IN_CONSULTATION"><PortalText text={"In Consultation"} /></PortalElement>
+            <PortalElement as="option" value="COMPLETED"><PortalText text={"Completed"} /></PortalElement>
+            <PortalElement as="option" value="CANCELLED"><PortalText text={"Cancelled"} /></PortalElement>
           </PortalElement>
 
           {hasActiveFilters && (
@@ -601,7 +603,7 @@ export default function WalkInAppointment() {
                       </div>
                     </td>
                     <td><div className="walkin-time-cell"><strong>{apt.time || "—"}</strong></div></td>
-                    <td><span className={`walkin-priority ${String(apt.priority).toLowerCase()}`}>{apt.priority}</span></td>
+                    <td><span className={`walkin-priority ${String(apt.priority).toLowerCase()}`}>{translateUi(apt.priority)}</span></td>
                     <td>{renderStatusBadge(apt.status)}</td>
                     <td>
                       <div className="walkin-action-buttons">

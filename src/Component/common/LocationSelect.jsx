@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { PortalElement, PortalText } from './PortalTranslation';
 import { loadLocations, locationPatch } from '../../utils/locationApi.js';
 
 export default function LocationSelect({ field, address = {}, onChange, ...props }) {
@@ -21,15 +22,15 @@ export default function LocationSelect({ field, address = {}, onChange, ...props
   const label = field.charAt(0).toUpperCase() + field.slice(1);
   const value = address?.[field] || '';
   return <>
-    <select {...props} aria-label={props['aria-label'] || label} value={value}
+    <PortalElement as="select" {...props} aria-label={props['aria-label'] || label} value={value}
       disabled={!ready || result.loading || props.disabled}
       onChange={event => onChange(locationPatch(field, event.target.value))}>
-      <option value="">{!ready ? `Select ${field === 'state' || !country ? 'country' : 'state'} first` : result.loading ? `Loading ${label.toLowerCase()}...` : `Select ${label}`}</option>
+      <option value=""><PortalText text={!ready ? `Select ${field === 'state' || !country ? 'country' : 'state'} first` : result.loading ? `Loading ${label.toLowerCase()}...` : `Select ${label}`} /></option>
       {value && !result.options.includes(value) && <option value={value}>{value}</option>}
       {result.options.map(option => <option key={option} value={option}>{option}</option>)}
-    </select>
-    {ready && result.error && <span role="alert">Could not load {label.toLowerCase()}. <button type="button" onClick={() => setRetry(count => count + 1)}>Retry</button></span>}
-    {ready && !result.loading && !result.error && !result.options.length && <input
+    </PortalElement>
+    {ready && result.error && <span role="alert"><PortalText text={`Could not load ${label.toLowerCase()}.`} /> <button type="button" onClick={() => setRetry(count => count + 1)}><PortalText text="Retry" /></button></span>}
+    {ready && !result.loading && !result.error && !result.options.length && <PortalElement as="input"
       {...props} aria-label={`${label} (enter manually)`} placeholder={`Enter ${label}`} value={value}
       onChange={event => onChange(locationPatch(field, event.target.value))} />}
   </>;

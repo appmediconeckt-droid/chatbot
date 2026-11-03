@@ -1,4 +1,4 @@
-import { PortalText, PortalElement } from "../../../common/PortalTranslation";
+import { usePortalTranslator, PortalText, PortalElement } from "../../../common/PortalTranslation";
 import React, { useState } from "react";
 import { useDoctorUser } from "../../doctorApi.js";
 import axios from "../../../../axiosConfig.js";
@@ -7,8 +7,10 @@ import "./ClinicSettings.css";
 import "../../ClinicQrPages.css";
 import ClinicFeeFields from '../../ClinicFeeFields.jsx';
 import { feeCurrency, validFee } from '../../../../utils/consultationCurrency.js';
+import { localizeQr } from '../../../../utils/localQr.js';
 
 export default function ClinicSettings() {
+  const translateUi = usePortalTranslator();
   const [clinicName, setClinicName] = useState("");
   const [fee, setFee] = useState('');
   const [videoFee, setVideoFee] = useState('0');
@@ -43,7 +45,7 @@ export default function ClinicSettings() {
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert("Geolocation not supported");
+      alert(translateUi("Geolocation not supported"));
       return;
     }
 
@@ -54,7 +56,7 @@ export default function ClinicSettings() {
           lng: pos.coords.longitude,
         });
       },
-      () => alert("Unable to fetch current location")
+      () => alert(translateUi("Unable to fetch current location"))
     );
   };
 
@@ -119,7 +121,7 @@ export default function ClinicSettings() {
       setMessage(feeSaved
         ? 'Clinic created successfully. Its walk-in QR is ready.'
         : 'Clinic was created, but its fee was not saved. Open Edit Clinic to retry saving the fee, or contact support.');
-      setSavedQr({ ...response.data, name: clinicName });
+      setSavedQr(await localizeQr({ ...response.data, name: clinicName }));
     } catch (error) {
       setStatus('failed');
       const errorMessage = error.response?.data?.message || error.message || 'Failed to create clinic';

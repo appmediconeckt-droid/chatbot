@@ -30,6 +30,24 @@ test("doctor API client removes a configured /api suffix and sends the current b
   await client.get("/api/auth/me");
 });
 
+test('local development uses the frontend proxy when opened from a phone on the LAN', async () => {
+  const previousWindow = globalThis.window;
+  globalThis.window = { location: { origin: 'http://192.168.0.138:5173', hostname: '192.168.0.138' } };
+  try {
+    const developmentSource = source.replace('import.meta.env?.DEV', 'true');
+    const { default: client, API_BASE_URL } = await import(`data:text/javascript;base64,${Buffer.from(developmentSource).toString('base64')}#dev`);
+    assert.equal(API_BASE_URL, 'http://192.168.0.138:5173');
+    client.defaults.adapter = async config => {
+      assert.equal(client.getUri(config), 'http://192.168.0.138:5173/api/qr/walkin/clinic-1');
+      return { data: {}, headers: {}, status: 200, config };
+    };
+    await client.get('/api/qr/walkin/clinic-1');
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
 test("doctor pages can recognize cancellation without masking the original error", async () => {
   const { default: client } = await loadClient();
   assert.equal(client.isCancel(new axios.CanceledError()), true);

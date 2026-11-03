@@ -16,7 +16,15 @@ const completeProfessional = () => ({
   certifications: [{ name: 'Degree', documentUrl: '/degree.pdf' }],
 });
 
-const bundled = await build({ entryPoints: ['src/Component/common/ProfileCompletion.jsx'], bundle: true, write: false, format: 'cjs', platform: 'node', external: ['react'], loader: { '.css': 'empty' } });
+globalThis.localStorage ??= { getItem: () => null, setItem: () => {} };
+const bundled = await build({
+  stdin: { contents: `import React from 'react'; import Progress from './src/Component/common/ProfileCompletion.jsx'; import { LanguageProvider } from './src/i18n/LanguageContext.jsx'; export default props => React.createElement(LanguageProvider, null, React.createElement(Progress, props));`, resolveDir: process.cwd(), loader: 'jsx' },
+  bundle: true, write: false, format: 'cjs', platform: 'node', external: ['react'], loader: { '.css': 'empty' },
+  plugins: [{ name: 'no-translation-network', setup(builder) {
+    builder.onResolve({ filter: /translationService$/ }, () => ({ path: 'translations', namespace: 'test' }));
+    builder.onLoad({ filter: /.*/, namespace: 'test' }, () => ({ contents: 'export const translationService = { translateBatch: async texts => texts };' }));
+  } }],
+});
 const compiled = { exports: {} };
 new Function('require', 'module', 'exports', bundled.outputFiles[0].text)(createRequire(import.meta.url), compiled, compiled.exports);
 const Progress = compiled.exports.default;

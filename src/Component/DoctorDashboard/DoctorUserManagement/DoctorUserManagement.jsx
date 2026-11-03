@@ -1,4 +1,4 @@
-import { PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalTranslator, PortalText, PortalElement } from "../../common/PortalTranslation";
 import ProfileAvatar from '../../common/ProfileAvatar.jsx';
 import { defaultShiftTimes, staffIdentity, staffShiftTiming } from '../../StaffDashboard/staffProfileDetails.js';
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -347,6 +347,7 @@ const normalizeStaffRow = (staff, index = 0) => {
 };
 
 const DoctorUserManagement = () => {
+  const translateUi = usePortalTranslator();
   const authUser = useDoctorUser();
   const user = useMemo(() => authUser || getStoredAuthUser() || {}, [authUser]);
   const doctorId = useMemo(() => getDoctorId(user), [user]);
@@ -568,9 +569,9 @@ const DoctorUserManagement = () => {
     try {
       const result = await axios.post(`${API_BASE_URL}/staff/${staff.rawId}/resend-welcome-email`,
         { password: 'Temp@12345' }, { headers: getAuthHeaders() });
-      alert(result.data?.message || 'Staff login email sent.');
+      alert(translateUi(result.data?.message || 'Staff login email sent.'));
     } catch (error) {
-      alert(error.response?.data?.message || 'Staff login email nahi bheja ja saka. Please try again.');
+      alert(translateUi(error.response?.data?.message || 'Staff login email nahi bheja ja saka. Please try again.'));
     }
   };
 
@@ -606,7 +607,7 @@ const DoctorUserManagement = () => {
   };
 
   const handleDeleteStaff = async (staff) => {
-    const shouldDelete = window.confirm(`Delete ${staff.name}?`);
+    const shouldDelete = window.confirm(translateUi(`Delete ${staff.name}?`));
     setOpenActionId(null);
 
     if (!shouldDelete) return;
@@ -617,7 +618,7 @@ const DoctorUserManagement = () => {
       }
       setStaffRows((currentRows) => currentRows.filter((row) => row.id !== staff.id));
     } catch (error) {
-      alert(error.response?.data?.message || "Staff delete nahi ho paya.");
+      alert(translateUi(error.response?.data?.message || "Staff delete nahi ho paya."));
     }
   };
 
@@ -629,7 +630,7 @@ const DoctorUserManagement = () => {
         await axios.patch(`${API_BASE_URL}/staff/${staff.rawId}`, { status: "Suspended", isActive: false }, { headers: getAuthHeaders() });
       }
     } catch (error) {
-      alert(error.response?.data?.message || "Staff suspend nahi ho paya.");
+      alert(translateUi(error.response?.data?.message || "Staff suspend nahi ho paya."));
       return;
     }
 
@@ -649,8 +650,8 @@ const DoctorUserManagement = () => {
   const handleSaveStaffUpdate = async (event) => {
     event.preventDefault();
     if (isSavingStaff) return;
-    if (!editForm.clinicId) return alert("Please select a clinic or hospital.");
-    if (!editForm.shiftStartTime || !editForm.shiftEndTime) return alert("Please enter shift start and end timings.");
+    if (!editForm.clinicId) return alert(translateUi("Please select a clinic or hospital."));
+    if (!editForm.shiftStartTime || !editForm.shiftEndTime) return alert(translateUi("Please enter shift start and end timings."));
 
     try {
       setIsSavingStaff(true);
@@ -689,7 +690,7 @@ const DoctorUserManagement = () => {
       setEditingStaff(null);
       setEditForm(null);
     } catch (error) {
-      alert(error.response?.data?.message || "Staff update nahi ho paya.");
+      alert(translateUi(error.response?.data?.message || "Staff update nahi ho paya."));
     } finally { setIsSavingStaff(false); }
   };
 
@@ -704,7 +705,7 @@ const DoctorUserManagement = () => {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
-      alert("Please select a JPG, PNG or WebP image, 5 MB or smaller.");
+      alert(translateUi("Please select a JPG, PNG or WebP image, 5 MB or smaller."));
       event.target.value = "";
       return;
     }
@@ -742,13 +743,13 @@ const DoctorUserManagement = () => {
     if (!file) return;
 
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      alert("Please select a JPG, PNG or WebP image.");
+      alert(translateUi("Please select a JPG, PNG or WebP image."));
       event.target.value = "";
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Profile image must be 5 MB or smaller.");
+      alert(translateUi("Profile image must be 5 MB or smaller."));
       event.target.value = "";
       return;
     }
@@ -782,13 +783,13 @@ const DoctorUserManagement = () => {
       if (!newStaffForm.shiftStartTime || !newStaffForm.shiftEndTime) missingFields.push("shift start and end timings");
 
       if (missingFields.length) {
-        alert(`Please enter ${missingFields.join(", ")}.`);
+        alert(translateUi(`Please enter ${missingFields.join(", ")}.`));
         return;
       }
 
       const country = staffPhoneCountry(newStaffForm.phoneCountry);
       if (!country.lengths.includes(newStaffForm.phone.length)) {
-        alert(`Enter ${country.lengths.join(' or ')} digits after ${country.dial} for ${country.name}.`);
+        alert(translateUi(`Enter ${country.lengths.join(' or ')} digits after ${country.dial} for ${country.name}.`));
         return;
       }
       setAddStaffStep(3);
@@ -877,12 +878,12 @@ const DoctorUserManagement = () => {
       setClinicFilter(newStaffForm.clinicId);
       closeAddStaffModal();
       if (response.data?.emailSent === false) {
-        alert(response.data.message || 'Staff account ban gaya hai, lekin login email nahi gaya. Staff ke actions se Resend login email karein.');
+        alert(translateUi(response.data.message || 'Staff account ban gaya hai, lekin login email nahi gaya. Staff ke actions se Resend login email karein.'));
       } else if (response.data?.emailSent === undefined) {
-        alert('Staff account ban gaya hai, lekin backend ne email delivery confirm nahi ki. Updated backend restart/deploy karein, phir Resend login email karein.');
+        alert(translateUi('Staff account ban gaya hai, lekin backend ne email delivery confirm nahi ki. Updated backend restart/deploy karein, phir Resend login email karein.'));
       }
     } catch (error) {
-      alert(error.response?.data?.message || error.response?.data?.error || "Staff create nahi ho paya.");
+      alert(translateUi(error.response?.data?.message || error.response?.data?.error || "Staff create nahi ho paya."));
     } finally { setIsSavingStaff(false); }
   };
 
@@ -905,7 +906,7 @@ const DoctorUserManagement = () => {
       >
         {options.map((option) => (
           <option key={option} value={option}>
-            {<PortalText text={label} />}: {option}
+            {<PortalText text={label} />}: <PortalText text={option} />
           </option>
         ))}
       </select>
@@ -948,12 +949,12 @@ const DoctorUserManagement = () => {
           </div>
         </div>
 
-        {clinicError && <p role="alert">{clinicError}</p>}
+        {clinicError && <p role="alert">{translateUi(clinicError)}</p>}
         {!isLoadingClinics && !clinicError && !clinics.length && <p><PortalText text={"Add a clinic or hospital in Clinic Settings before adding staff."} /></p>}
         <label className="docstaff-clinic-filter"><PortalText text={"Clinic / Hospital"} /><select value={clinicFilter} onChange={(event) => setClinicFilter(event.target.value)}>
-            <PortalElement as="option" value="all">All clinics / hospitals</PortalElement>
+            <PortalElement as="option" value="all"><PortalText text={"All clinics / hospitals"} /></PortalElement>
             {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
-            <PortalElement as="option" value="unassigned">Unassigned staff</PortalElement>
+            <PortalElement as="option" value="unassigned"><PortalText text={"Unassigned staff"} /></PortalElement>
           </select>
         </label>
 
@@ -1027,7 +1028,7 @@ const DoctorUserManagement = () => {
                 {!isLoadingStaff && staffError && (
                   <tr>
                     <td className="docstaff-screen-empty" colSpan="7">
-                      {staffError}
+                      {translateUi(staffError)}
                     </td>
                   </tr>
                 )}
@@ -1047,11 +1048,11 @@ const DoctorUserManagement = () => {
                       <div className="docstaff-screen-role-stack">
                         <span>{staff.department}</span>
                         <b className={`docstaff-screen-role-pill docstaff-screen-role-${staff.role.replace(/\s+/g, "").toLowerCase()}`}>
-                          {staff.role}
+                          {<PortalText text={staff.role} />}
                         </b>
                       </div>
                     </td>
-                    <td>{staff.shift}</td>
+                    <td>{<PortalText text={staff.shift} />}</td>
                     <td>
                       <span
                         className={`docstaff-screen-verify docstaff-screen-verify-${
@@ -1063,7 +1064,7 @@ const DoctorUserManagement = () => {
                         ) : (
                           <CalendarClock size={14} />
                         )}
-                        {staff.verification}
+                        {<PortalText text={staff.verification} />}
                       </span>
                     </td>
                     <td>
@@ -1072,7 +1073,7 @@ const DoctorUserManagement = () => {
                           staff.status === "Active" ? "active" : staff.status === "Suspended" ? "suspended" : "leave"
                         }`}
                       >
-                        {staff.status}
+                        {<PortalText text={staff.status} />}
                       </span>
                     </td>
                     <td className="docstaff-screen-login">{staff.lastLogin}</td>
@@ -1163,14 +1164,14 @@ const DoctorUserManagement = () => {
                 </p>
                 <div className="docstaff-screen-profile-badges">
                   <span className={`docstaff-screen-role-pill docstaff-screen-role-${viewStaff.role.replace(/\s+/g, "").toLowerCase()}`}>
-                    {viewStaff.role}
+                    {<PortalText text={viewStaff.role} />}
                   </span>
                   <span
                     className={`docstaff-screen-status docstaff-screen-status-${
                       viewStaff.status === "Active" ? "active" : viewStaff.status === "Suspended" ? "suspended" : "leave"
                     }`}
                   >
-                    {viewStaff.status}
+                    {<PortalText text={viewStaff.status} />}
                   </span>
                 </div>
                 <div className="docstaff-screen-profile-actions">
@@ -1188,7 +1189,7 @@ const DoctorUserManagement = () => {
                   <strong>{viewStaff.department}</strong>
                   <span><PortalText text={"Shift"} /></span>
                   <strong>
-                    {viewStaff.shift} ({viewStaff.shiftTime})
+                    {<PortalText text={viewStaff.shift} />} ({viewStaff.shiftTime})
                   </strong>
                   <span><PortalText text={"Join Date"} /></span>
                   <strong>{viewStaff.joinDate}</strong>
@@ -1203,7 +1204,7 @@ const DoctorUserManagement = () => {
                   {viewStaff.permissions.map((permission) => (
                     <label key={permission}>
                       <input type="checkbox" checked readOnly />
-                      {permission}
+                      {<PortalText text={permission} />}
                     </label>
                   ))}
                 </div>
@@ -1262,20 +1263,20 @@ const DoctorUserManagement = () => {
                 />
               </label>
               <select value={roleDepartmentFilter} onChange={(event) => setRoleDepartmentFilter(event.target.value)}>
-                <PortalElement as="option" value={"All"}>All</PortalElement>
-                <PortalElement as="option" value={"Admin"}>Admin</PortalElement>
-                <PortalElement as="option" value={"Clinical"}>Clinical</PortalElement>
-                <PortalElement as="option" value={"Pathology"}>Pathology</PortalElement>
-                <PortalElement as="option" value={"Finance"}>Finance</PortalElement>
-                <PortalElement as="option" value={"Operations"}>Operations</PortalElement>
+                <PortalElement as="option" value={"All"}><PortalText text={"All"} /></PortalElement>
+                <PortalElement as="option" value={"Admin"}><PortalText text={"Admin"} /></PortalElement>
+                <PortalElement as="option" value={"Clinical"}><PortalText text={"Clinical"} /></PortalElement>
+                <PortalElement as="option" value={"Pathology"}><PortalText text={"Pathology"} /></PortalElement>
+                <PortalElement as="option" value={"Finance"}><PortalText text={"Finance"} /></PortalElement>
+                <PortalElement as="option" value={"Operations"}><PortalText text={"Operations"} /></PortalElement>
               </select>
               <select value={roleCategoryFilter} onChange={(event) => setRoleCategoryFilter(event.target.value)}>
-                <PortalElement as="option" value={"All"}>All</PortalElement>
-                <PortalElement as="option" value={"Care Team"}>Care Team</PortalElement>
-                <PortalElement as="option" value={"Diagnostics"}>Diagnostics</PortalElement>
-                <PortalElement as="option" value={"Administration"}>Administration</PortalElement>
-                <PortalElement as="option" value={"Support"}>Support</PortalElement>
-                <PortalElement as="option" value={"Leadership"}>Leadership</PortalElement>
+                <PortalElement as="option" value={"All"}><PortalText text={"All"} /></PortalElement>
+                <PortalElement as="option" value={"Care Team"}><PortalText text={"Care Team"} /></PortalElement>
+                <PortalElement as="option" value={"Diagnostics"}><PortalText text={"Diagnostics"} /></PortalElement>
+                <PortalElement as="option" value={"Administration"}><PortalText text={"Administration"} /></PortalElement>
+                <PortalElement as="option" value={"Support"}><PortalText text={"Support"} /></PortalElement>
+                <PortalElement as="option" value={"Leadership"}><PortalText text={"Leadership"} /></PortalElement>
               </select>
             </div>
 
@@ -1299,8 +1300,8 @@ const DoctorUserManagement = () => {
                         <CheckCircle2 size={14} />
                       </span>
                     )}
-                    <strong>{role.title}</strong>
-                    <p>{role.description}</p>
+                    <strong>{<PortalText text={role.title} />}</strong>
+                    <p>{<PortalText text={role.description} />}</p>
                     <div className="docstaff-screen-role-meta">
                       <span>
                         <Users size={12} />
@@ -1322,7 +1323,7 @@ const DoctorUserManagement = () => {
                 <section className="docstaff-screen-details-section">
                   <h3><PortalText text={"Personal Information"} /></h3>
                   <label className="docstaff-clinic-filter"><PortalText text={"Clinic / Hospital *"} /><select required value={newStaffForm.clinicId} onChange={(event) => handleNewStaffFormChange("clinicId", event.target.value)}>
-                      <PortalElement as="option" value="">Select a clinic or hospital</PortalElement>
+                      <PortalElement as="option" value=""><PortalText text={"Select a clinic or hospital"} /></PortalElement>
                       {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
                     </select>
                   </label>
@@ -1366,7 +1367,7 @@ const DoctorUserManagement = () => {
                         onChange={(event) => handleNewStaffFormChange("lastName", event.target.value)}
                       />
                     </label>
-                    <label><PortalText text={"Email Address"} /><input
+                    <label><PortalText text={"Email Address"} /><PortalElement as="input"
                         type="email"
                         placeholder="jane.doe@example.com"
                         value={newStaffForm.email}
@@ -1376,9 +1377,9 @@ const DoctorUserManagement = () => {
                     <div className="docstaff-phone-field">
                       <label htmlFor="staff-phone-number"><PortalText text={"Phone Number"} /></label>
                       <div className="docstaff-phone-control">
-                      <select id="staff-phone-country" aria-label="Phone country code" title={staffPhoneCountry(newStaffForm.phoneCountry).name} value={newStaffForm.phoneCountry} onChange={event => handleNewStaffFormChange('phoneCountry', event.target.value)}>
+                      <PortalElement as="select" id="staff-phone-country" aria-label="Phone country code" title={staffPhoneCountry(newStaffForm.phoneCountry).name} value={newStaffForm.phoneCountry} onChange={event => handleNewStaffFormChange('phoneCountry', event.target.value)}>
                         {staffPhoneCountries.map(country => <option key={country.iso} value={country.iso}>{country.iso} ({country.dial})</option>)}
-                      </select>
+                      </PortalElement>
                       <input id="staff-phone-number" type="tel" inputMode="numeric" autoComplete="tel-national" required
                         aria-describedby="staff-phone-help"
                         placeholder={`${staffPhoneCountry(newStaffForm.phoneCountry).lengths.join(' or ')} digits`}
@@ -1386,7 +1387,7 @@ const DoctorUserManagement = () => {
                         value={newStaffForm.phone}
                         onChange={event => handleNewStaffFormChange('phone', event.target.value)} />
                       </div>
-                      <small id="staff-phone-help">Enter {staffPhoneCountry(newStaffForm.phoneCountry).lengths.join(' or ')} digits after {staffPhoneCountry(newStaffForm.phoneCountry).dial}.</small>
+                      <small id="staff-phone-help"><PortalText text={"Enter "} />{staffPhoneCountry(newStaffForm.phoneCountry).lengths.join(' or ')}<PortalText text={" digits after "} />{staffPhoneCountry(newStaffForm.phoneCountry).dial}.</small>
                     </div>
                   </div>
                 </section>
@@ -1403,22 +1404,22 @@ const DoctorUserManagement = () => {
                       />
                     </label>
                     <label><PortalText text={"Gender"} /><select value={newStaffForm.gender} onChange={(event) => handleNewStaffFormChange("gender", event.target.value)}>
-                        <PortalElement as="option" value="">Select gender</PortalElement>
-                        <PortalElement as="option" value={"Female"}>Female</PortalElement>
-                        <PortalElement as="option" value={"Male"}>Male</PortalElement>
-                        <PortalElement as="option" value={"Other"}>Other</PortalElement>
+                        <PortalElement as="option" value=""><PortalText text={"Select gender"} /></PortalElement>
+                        <PortalElement as="option" value={"Female"}><PortalText text={"Female"} /></PortalElement>
+                        <PortalElement as="option" value={"Male"}><PortalText text={"Male"} /></PortalElement>
+                        <PortalElement as="option" value={"Other"}><PortalText text={"Other"} /></PortalElement>
                       </select>
                     </label>
                     <label><PortalText text={"Department"} /><select
                         value={newStaffForm.department}
                         onChange={(event) => handleNewStaffFormChange("department", event.target.value)}
                       >
-                        <PortalElement as="option" value={"Nursing"}>Nursing</PortalElement>
-                        <PortalElement as="option" value={"Emergency"}>Emergency</PortalElement>
-                        <PortalElement as="option" value={"Pathology"}>Pathology</PortalElement>
-                        <PortalElement as="option" value={"Finance"}>Finance</PortalElement>
-                        <PortalElement as="option" value={"Operations"}>Operations</PortalElement>
-                        <PortalElement as="option" value={"Admin"}>Admin</PortalElement>
+                        <PortalElement as="option" value={"Nursing"}><PortalText text={"Nursing"} /></PortalElement>
+                        <PortalElement as="option" value={"Emergency"}><PortalText text={"Emergency"} /></PortalElement>
+                        <PortalElement as="option" value={"Pathology"}><PortalText text={"Pathology"} /></PortalElement>
+                        <PortalElement as="option" value={"Finance"}><PortalText text={"Finance"} /></PortalElement>
+                        <PortalElement as="option" value={"Operations"}><PortalText text={"Operations"} /></PortalElement>
+                        <PortalElement as="option" value={"Admin"}><PortalText text={"Admin"} /></PortalElement>
                       </select>
                     </label>
                     <label><PortalText text={"Hire Date"} /><input
@@ -1429,9 +1430,9 @@ const DoctorUserManagement = () => {
                       />
                     </label>
                     <label><PortalText text={"Shift Preference"} /><select value={newStaffForm.shift} onChange={(event) => handleNewStaffFormChange("shift", event.target.value)}>
-                        <PortalElement as="option" value={"Morning"}>Morning</PortalElement>
-                        <PortalElement as="option" value={"Evening"}>Evening</PortalElement>
-                        <PortalElement as="option" value={"Night"}>Night</PortalElement>
+                        <PortalElement as="option" value={"Morning"}><PortalText text={"Morning"} /></PortalElement>
+                        <PortalElement as="option" value={"Evening"}><PortalText text={"Evening"} /></PortalElement>
+                        <PortalElement as="option" value={"Night"}><PortalText text={"Night"} /></PortalElement>
                       </select>
                     </label>
                     <label><PortalText text={"Shift start time"} /><input type="time" required value={newStaffForm.shiftStartTime || ''} onChange={event => handleNewStaffFormChange('shiftStartTime', event.target.value)} /></label>
@@ -1496,7 +1497,7 @@ const DoctorUserManagement = () => {
                       </div>
                       <div className="docstaff-screen-review-field">
                         <small><PortalText text={"Role"} /></small>
-                        <span className="docstaff-screen-review-role">{selectedStaffRole.title}</span>
+                        <span className="docstaff-screen-review-role">{<PortalText text={selectedStaffRole.title} />}</span>
                       </div>
                       <div className="docstaff-screen-review-field">
                         <small><PortalText text={"Employee ID"} /></small>
@@ -1594,7 +1595,7 @@ const DoctorUserManagement = () => {
                 </div>
               </div>
               <label><PortalText text={"Clinic / Hospital *"} /><select required value={editForm.clinicId} onChange={(event) => handleEditFormChange("clinicId", event.target.value)}>
-                  <PortalElement as="option" value="">Select a clinic or hospital</PortalElement>
+                  <PortalElement as="option" value=""><PortalText text={"Select a clinic or hospital"} /></PortalElement>
                   {clinics.map((clinic) => <option key={clinic.id} value={clinic.id}>{clinic.name}{clinic.location ? ` — ${clinic.location}` : ""}</option>)}
                 </select>
               </label>
@@ -1616,10 +1617,10 @@ const DoctorUserManagement = () => {
                   value={editForm.department}
                   onChange={(event) => handleEditFormChange("department", event.target.value)}
                 >
-                  <PortalElement as="option" value={"Emergency"}>Emergency</PortalElement>
-                  <PortalElement as="option" value={"Pathology"}>Pathology</PortalElement>
-                  <PortalElement as="option" value={"Finance"}>Finance</PortalElement>
-                  <PortalElement as="option" value={"Admin"}>Admin</PortalElement>
+                  <PortalElement as="option" value={"Emergency"}><PortalText text={"Emergency"} /></PortalElement>
+                  <PortalElement as="option" value={"Pathology"}><PortalText text={"Pathology"} /></PortalElement>
+                  <PortalElement as="option" value={"Finance"}><PortalText text={"Finance"} /></PortalElement>
+                  <PortalElement as="option" value={"Admin"}><PortalText text={"Admin"} /></PortalElement>
                 </select>
               </label>
               <label><PortalText text={"Role"} /><select value={editForm.role} onChange={(event) => handleEditFormChange("role", event.target.value)}>
@@ -1627,16 +1628,16 @@ const DoctorUserManagement = () => {
                 </select>
               </label>
               <label><PortalText text={"Shift"} /><select value={editForm.shift} onChange={(event) => handleEditFormChange("shift", event.target.value)}>
-                  <PortalElement as="option" value={"Morning"}>Morning</PortalElement>
-                  <PortalElement as="option" value={"Night"}>Night</PortalElement>
-                  <PortalElement as="option" value={"Evening"}>Evening</PortalElement>
+                  <PortalElement as="option" value={"Morning"}><PortalText text={"Morning"} /></PortalElement>
+                  <PortalElement as="option" value={"Night"}><PortalText text={"Night"} /></PortalElement>
+                  <PortalElement as="option" value={"Evening"}><PortalText text={"Evening"} /></PortalElement>
                 </select>
               </label>
               <label><PortalText text={"Shift start time"} /><input type="time" required value={editForm.shiftStartTime || ''} onChange={event => handleEditFormChange('shiftStartTime', event.target.value)} /></label>
               <label><PortalText text={"Shift end time"} /><input type="time" required value={editForm.shiftEndTime || ''} onChange={event => handleEditFormChange('shiftEndTime', event.target.value)} /></label>
               <label><PortalText text={"Status"} /><select value={editForm.status} onChange={(event) => handleEditFormChange("status", event.target.value)}>
-                  <PortalElement as="option" value={"Active"}>Active</PortalElement>
-                  <PortalElement as="option" value={"On Leave"}>On Leave</PortalElement>
+                  <PortalElement as="option" value={"Active"}><PortalText text={"Active"} /></PortalElement>
+                  <PortalElement as="option" value={"On Leave"}><PortalText text={"On Leave"} /></PortalElement>
                 </select>
               </label>
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Star, MessageSquare, Building2, Stethoscope, RefreshCw, Users } from 'lucide-react';
 import axios, { API_BASE_URL, getAuthHeaders } from '../doctorApi.js';
 import useSocketRefresh from '../../../hooks/useSocketRefresh';
-import { PortalText } from '../../common/PortalTranslation';
+import { usePortalTranslator, usePortalLocale, PortalElement, PortalText } from '../../common/PortalTranslation';
 import './DoctorRatings.css';
 
 const REVIEWS_PER_PAGE = 10;
@@ -14,6 +14,8 @@ function Stars({ value }) {
 }
 
 export default function DoctorRatings() {
+  const translateUi = usePortalTranslator();
+  const portalLocale = usePortalLocale();
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState('');
   const [tab, setTab] = useState('doctor');
@@ -52,24 +54,24 @@ export default function DoctorRatings() {
   const firstPageButton = Math.max(1, Math.min(currentPage - 2, pageCount - 4));
   const pageNumbers = Array.from({ length: Math.min(5, pageCount) }, (_, index) => firstPageButton + index);
 
-  return <section className="doctor-reviews" aria-label="Reviews">
+  return <PortalElement as="section" className="doctor-reviews" aria-label="Reviews">
     <header className="dr-header">
       <div><span className="dr-eyebrow"><PortalText text="PATIENT FEEDBACK" /></span><h2><PortalText text="Reviews & Ratings" /></h2>
         <p><PortalText text="See what patients appreciate and where you can improve." /></p></div>
       <button type="button" className="dr-refresh" onClick={load} disabled={refreshing}><RefreshCw size={16} /><PortalText text={refreshing ? 'Refreshing...' : 'Refresh'} /></button>
     </header>
-    <div className="dr-tabs" role="tablist" aria-label="Review category">
+    <PortalElement as="div" className="dr-tabs" role="tablist" aria-label="Review category">
       {[['doctor', 'Doctor Reviews', Stethoscope, summary?.ratingCount || 0], ['clinic', 'Clinic Reviews', Building2, clinics.reduce((total, clinic) => total + clinic.ratingCount, 0)]].map(([id, label, Icon, total]) =>
         <button key={id} id={`dr-tab-${id}`} type="button" role="tab" aria-selected={tab === id} aria-controls="dr-panel" className={tab === id ? 'active' : ''} onClick={() => { setTab(id); setPage(1); }}>
           <Icon size={18} /><PortalText text={label} /><span>{total}</span>
         </button>)}
-    </div>
-    {error && <div className="dr-error" role="alert">{error} <button type="button" onClick={load}><PortalText text="Retry" /></button></div>}
+    </PortalElement>
+    {error && <div className="dr-error" role="alert">{translateUi(error)} <button type="button" onClick={load}><PortalText text="Retry" /></button></div>}
     {!summary && !error ? <div className="dr-empty" role="status"><PortalText text="Loading reviews..." /></div> : summary &&
       <div id="dr-panel" role="tabpanel" aria-labelledby={`dr-tab-${tab}`}>
         {!isDoctor && <div className="dr-clinic-filter"><label htmlFor="dr-clinic"><Building2 size={17} /><PortalText text="Clinic" /></label>
           <select id="dr-clinic" value={clinicId} onChange={event => { setClinicId(event.target.value); setPage(1); }}>
-            <option value="all">All clinics</option>{clinics.map(clinic => <option key={clinic.clinicId} value={clinic.clinicId}>{clinic.name}</option>)}
+            <option value="all"><PortalText text={"All clinics"} /></option>{clinics.map(clinic => <option key={clinic.clinicId} value={clinic.clinicId}>{clinic.name}</option>)}
           </select></div>}
         <div className="dr-overview">
           <div className="dr-score"><span className="dr-score-label"><PortalText text="Average Rating" /></span>
@@ -96,28 +98,28 @@ export default function DoctorRatings() {
               </tr></thead>
               <tbody>{visibleReviews.map((review, index) => <tr key={`${review.clinicId || ''}-${review.id || index}`}>
                 <td><div className="dr-reviewer"><span className="dr-avatar" aria-hidden="true">{(review.reviewerName || 'Patient').trim().slice(0, 1).toUpperCase()}</span>
-                  <div><strong>{review.reviewerName || 'Patient'}</strong><span><PortalText text="Completed appointment" /></span></div></div></td>
+                  <div><strong>{review.reviewerName || <PortalText text={"Patient"} />}</strong><span><PortalText text="Completed appointment" /></span></div></div></td>
                 {!isDoctor && <td className="dr-table-clinic">{review.clinicName}</td>}
                 <td><div className="dr-table-rating"><Stars value={review.stars} /><strong>{review.stars}.0 <span>/ 5</span></strong></div></td>
                 <td className="dr-table-comment"><p className={review.review ? 'dr-comment' : 'dr-no-comment'}>{review.review || <PortalText text="Rating given without a written review." />}</p></td>
-                <td className="dr-table-date">{review.submittedAt ? <time dateTime={review.submittedAt}>{new Date(review.submittedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })}</time> : <span>&mdash;</span>}</td>
+                <td className="dr-table-date">{review.submittedAt ? <time dateTime={review.submittedAt}>{new Date(review.submittedAt).toLocaleDateString(portalLocale, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' })}</time> : <span>&mdash;</span>}</td>
               </tr>)}</tbody>
             </table>
           </div>}
 
-        {reviews.length > 0 && <nav className="dr-pagination" aria-label="Review pages">
+        {reviews.length > 0 && <PortalElement as="nav" className="dr-pagination" aria-label="Review pages">
           <span className="dr-pagination-summary" role="status" aria-live="polite">
             <PortalText text="Showing" /> {firstReview + 1}–{firstReview + visibleReviews.length} <PortalText text="of" /> {reviews.length} <PortalText text="reviews" />
             <span className="dr-pagination-size">10 <PortalText text="per page" /></span>
           </span>
           <div className="dr-pagination-controls">
             <button type="button" disabled={currentPage === 1} onClick={() => setPage(currentPage - 1)}><PortalText text="Previous" /></button>
-            {firstPageButton > 1 && <><button type="button" aria-label="Page 1" onClick={() => setPage(1)}>1</button>{firstPageButton > 2 && <span aria-hidden="true">…</span>}</>}
+            {firstPageButton > 1 && <><PortalElement as="button" type="button" aria-label="Page 1" onClick={() => setPage(1)}>1</PortalElement>{firstPageButton > 2 && <span aria-hidden="true">…</span>}</>}
             {pageNumbers.map(number => <button key={number} type="button" aria-label={`Page ${number}`} aria-current={currentPage === number ? 'page' : undefined} onClick={() => setPage(number)}>{number}</button>)}
             {pageNumbers.at(-1) < pageCount && <>{pageNumbers.at(-1) < pageCount - 1 && <span aria-hidden="true">…</span>}<button type="button" aria-label={`Page ${pageCount}`} onClick={() => setPage(pageCount)}>{pageCount}</button></>}
             <button type="button" disabled={currentPage === pageCount} onClick={() => setPage(currentPage + 1)}><PortalText text="Next" /></button>
           </div>
-        </nav>}
+        </PortalElement>}
       </div>}
-  </section>;
+  </PortalElement>;
 }

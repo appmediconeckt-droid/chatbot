@@ -21,7 +21,11 @@ const resolveApiBaseUrl = (url) => {
   return normalizedUrl;
 };
 
-const envApiBaseUrl = resolveApiBaseUrl(rawEnvApiBaseUrl);
+// During Vite development, use its same-origin proxy. This also lets a phone
+// on the LAN reach a localhost backend without CORS or device-local URLs.
+const envApiBaseUrl = import.meta.env?.DEV && typeof window !== 'undefined'
+  ? window.location.origin
+  : resolveApiBaseUrl(rawEnvApiBaseUrl);
 if (!envApiBaseUrl) {
   throw new Error(
     "Missing VITE_API_BASE_URL. Set it in your frontend .env file.",

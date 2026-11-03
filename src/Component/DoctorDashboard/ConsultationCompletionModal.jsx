@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
-import { PortalText, PortalElement } from '../common/PortalTranslation';
+import { usePortalTranslator, usePortalLocale, PortalText, PortalElement } from '../common/PortalTranslation';
 import { appointmentVitals } from './PatientAppointmentDetails/patientRecordDetails.js';
 import { MEDICINE_TIMINGS, createEmptyMedicine, createEmptyRecommendedTest, formatMedicineLine, hasValidMedicine, toDateInputValue, getFollowUpDateFromMedicines } from './consultationPrescription.js';
 import './Dashboard/DoctorDashboard.css';
@@ -8,6 +8,8 @@ import './ConsultationCompletionModal.css';
 
 // CompleteModal component
 const ConsultationCompletionModal = ({ show, onHide, form, setForm, onSave, patientName, appointment, title = 'Complete Appointment', saveLabel = 'Save & Continue', saving = false, saveError = '' }) => {
+  const translateUi = usePortalTranslator();
+  const portalLocale = usePortalLocale();
   const today = new Date();
   const minDate = toDateInputValue(today);
   const defaultFollowUpDateStr = getFollowUpDateFromMedicines(form.medicines || [createEmptyMedicine()], appointment);
@@ -147,7 +149,7 @@ const ConsultationCompletionModal = ({ show, onHide, form, setForm, onSave, pati
           </div>
         </div>
 
-        {saveError && <div className="alert alert-danger" role="alert">{saveError}</div>}
+        {saveError && <div className="alert alert-danger" role="alert">{translateUi(saveError)}</div>}
         <Form>
           <Row className="mb-2">
             <Col md={12}>
@@ -277,9 +279,9 @@ const ConsultationCompletionModal = ({ show, onHide, form, setForm, onSave, pati
                             onChange={(e) => updateMedicine(index, "durationType", e.target.value)}
                             className="dd-form-control-sm"
                           >
-                            <PortalElement as="option" value={"Days"}>Days</PortalElement>
-                            <PortalElement as="option" value={"Weeks"}>Weeks</PortalElement>
-                            <PortalElement as="option" value={"Months"}>Months</PortalElement>
+                            <PortalElement as="option" value={"Days"}><PortalText text={"Days"} /></PortalElement>
+                            <PortalElement as="option" value={"Weeks"}><PortalText text={"Weeks"} /></PortalElement>
+                            <PortalElement as="option" value={"Months"}><PortalText text={"Months"} /></PortalElement>
                           </Form.Select>
                         </Form.Group>
                       </Col>
@@ -351,7 +353,7 @@ const ConsultationCompletionModal = ({ show, onHide, form, setForm, onSave, pati
                     </div>
                     {form.followUpDate && (
                       <div className="mt-1 text-info dd-follow-up-date-info">
-                        <i className="bi bi-calendar-check me-1"></i><PortalText text={"Follow-up: "} />{new Date(form.followUpDate).toLocaleDateString('en-US', { 
+                        <i className="bi bi-calendar-check me-1"></i><PortalText text={"Follow-up: "} />{new Date(form.followUpDate).toLocaleDateString(portalLocale, { 
                           day: '2-digit',
                           month: 'short', 
                           year: 'numeric' 

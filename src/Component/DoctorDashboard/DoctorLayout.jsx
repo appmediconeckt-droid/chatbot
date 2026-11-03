@@ -95,7 +95,7 @@ export default function DoctorLayout() {
     <PortalLanguageScope.Provider value="doctor"><div className="doctor-layout" lang={lang} dir={/^(ar|fa|he|ur)(-|$)/.test(lang) ? "rtl" : "ltr"}>
       {open && <PortalElement as="button" className="doctor-nav-backdrop" aria-label="Close navigation" onClick={() => setOpen(false)} />}
       <aside id="doctor-sidebar" className={`doctor-sidebar ${open ? "is-open" : ""}`}>
-        <Link to="/doctorprofile" className="doctor-sidebar-profile" aria-label="View my doctor profile">
+        <PortalElement as={Link} to="/doctorprofile" className="doctor-sidebar-profile" aria-label="View my doctor profile">
           <div className="doctor-profile-avatar-wrap">
             <img className="doctor-profile-avatar" key={doctorPhoto} src={doctorPhoto || "/favicon-96.png"} alt={`${doctorName} profile`} onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/favicon-96.png"; }} />
             <span className="doctor-profile-status" aria-hidden="true" />
@@ -103,7 +103,7 @@ export default function DoctorLayout() {
           <h3 className="doctor-profile-name" title={doctorName}>{doctorName}</h3>
           {doctorEmail && <p className="doctor-profile-meta doctor-profile-email" title={doctorEmail}><i className="fa-solid fa-envelope" aria-hidden="true" /><span>{doctorEmail}</span></p>}
           {doctorPhone && <p className="doctor-profile-meta" title={doctorPhone}><i className="fa-solid fa-phone" aria-hidden="true" /><span>{doctorPhone}</span></p>}
-        </Link>
+        </PortalElement>
         <p className="doctor-sidebar-label"><PortalText text={"DOCTOR PANEL"} /></p>
         <PortalElement as="nav" aria-label="Doctor navigation">
           {doctorMenuItems.map(({ path, icon, text }) => <NavLink key={path} to={path} className={({ isActive }) => `doctor-nav-link ${isActive || (path === "/patient-sms" && location.pathname.startsWith("/patient-chat/")) ? "active" : ""}`}><i className={`fa-solid ${icon}`} aria-hidden="true" /><span><PortalText text={text} /></span></NavLink>)}
@@ -140,7 +140,7 @@ export default function DoctorLayout() {
         <header className="doctor-topbar">
           <PortalElement as="button" className="doctor-menu-toggle" aria-label="Toggle doctor navigation" aria-controls="doctor-sidebar" aria-expanded={open} onClick={() => setOpen(!open)}><i className="fa-solid fa-bars" aria-hidden="true" /></PortalElement>
           <span className="doctor-topbar-title"><PortalText text={"Doctor Portal"} /></span>
-          <div className="doctor-topbar-actions"><Link to="/doctor-notifications" aria-label="Notifications"><i className="fa-solid fa-bell" aria-hidden="true" /></Link><Link to="/doctorprofile">{doctorName}</Link></div>
+          <div className="doctor-topbar-actions"><PortalElement as={Link} to="/doctor-notifications" aria-label="Notifications"><i className="fa-solid fa-bell" aria-hidden="true" /></PortalElement><Link to="/doctorprofile">{doctorName}</Link></div>
         </header>
         <main className="doctor-page-content" data-card-theme={['/appointmentlist', '/walkinappointment'].includes(location.pathname.replace(/\/$/, '')) ? 'original' : 'shared'}><Outlet /></main>
       </div>

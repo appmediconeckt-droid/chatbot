@@ -1,4 +1,4 @@
-import { PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalLocale, usePortalTranslator, PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import React, { useEffect, useState } from "react";
 import DoctorVitalsButton from '../DoctorVitalsButton.jsx';
 import { formatQueueDelay } from '../formatQueueDelay.js';
@@ -47,6 +47,8 @@ function AppointmentReview({ value }) {
 }
 
 export default function AppointmentList() {
+  const portalLocale = usePortalLocale();
+  const translateUi = usePortalTranslator();
   const authUser = useDoctorUser();
   const [appointments, setAppointments] = useState([]);
   const [status, setStatus] = useState("idle");
@@ -148,7 +150,7 @@ export default function AppointmentList() {
     if (!value) return "N/A";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString("en-IN", {
+    return date.toLocaleDateString(portalLocale, {
       day: "2-digit",
       month: "short",
       year: "numeric",
@@ -170,7 +172,7 @@ export default function AppointmentList() {
     if (!value) return "All Dates";
     const date = new Date(`${value}T00:00:00`);
     if (Number.isNaN(date.getTime())) return value;
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(portalLocale, {
       month: "short",
       day: "2-digit",
       year: "numeric",
@@ -181,7 +183,7 @@ export default function AppointmentList() {
     if (!value) return "N/A";
     const date = new Date(value);
     if (!Number.isNaN(date.getTime())) {
-      return date.toLocaleTimeString("en-IN", {
+      return date.toLocaleTimeString(portalLocale, {
         hour: "2-digit",
         minute: "2-digit",
       });
@@ -191,7 +193,7 @@ export default function AppointmentList() {
     if (!hours || !minutes) return value;
     const time = new Date();
     time.setHours(Number(hours), Number(minutes), 0, 0);
-    return time.toLocaleTimeString("en-IN", {
+    return time.toLocaleTimeString(portalLocale, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -460,10 +462,10 @@ export default function AppointmentList() {
 
   const handleCreateAppointment = (event) => {
     event.preventDefault();
-    if (!newAppointment.paymentMethod) return alert("Enable and select a payment method in Payment Settings first.");
-    if (!(Number(newAppointment.paymentAmount) > 0)) return alert("Enter a valid payment amount.");
+    if (!newAppointment.paymentMethod) return alert(translateUi("Enable and select a payment method in Payment Settings first."));
+    if (!(Number(newAppointment.paymentAmount) > 0)) return alert(translateUi("Enter a valid payment amount."));
     if (newAppointment.paymentMethod !== "cash" && !newAppointment.paymentReference.trim()) {
-      return alert("Enter the UPI or online transaction reference number.");
+      return alert(translateUi("Enter the UPI or online transaction reference number."));
     }
     const localAppointment = buildAppointmentFromForm(newAppointment);
 
@@ -505,10 +507,10 @@ export default function AppointmentList() {
 
   const handleUpdateAppointment = (event) => {
     event.preventDefault();
-    if (!editAppointment.form.paymentMethod) return alert("Select a payment method.");
-    if (!(Number(editAppointment.form.paymentAmount) > 0)) return alert("Enter a valid payment amount.");
+    if (!editAppointment.form.paymentMethod) return alert(translateUi("Select a payment method."));
+    if (!(Number(editAppointment.form.paymentAmount) > 0)) return alert(translateUi("Enter a valid payment amount."));
     if (editAppointment.form.paymentMethod !== "cash" && !editAppointment.form.paymentReference.trim()) {
-      return alert("Enter the UPI or online transaction reference number.");
+      return alert(translateUi("Enter the UPI or online transaction reference number."));
     }
     setAppointments((prev) =>
       prev.map((appointment) =>
@@ -522,7 +524,7 @@ export default function AppointmentList() {
   };
 
   const handleDeleteAppointment = async (appointment) => {
-    if (!window.confirm(`Delete appointment for ${appointment.patientName}?`)) return;
+    if (!window.confirm(translateUi(`Delete appointment for ${appointment.patientName}?`))) return;
     setAppointments((prev) => prev.filter((item) => item.id !== appointment.id));
     setSelectedRows((prev) => prev.filter((id) => id !== appointment.id));
     setActiveActionsId(null);
@@ -581,7 +583,7 @@ export default function AppointmentList() {
       <PortalElement as="nav" className="appointment-source-tabs" aria-label="Appointment type">
         {[{key:"all",label:"All Appointments",count:summary.total}, {key:"online",label:"Online Appointments",count:summary.online}, {key:"walkin",label:"Walk-in Appointments",count:summary.walkin}].map((tab) => (
           <button type="button" key={tab.key} className={`${tab.key} ${appointmentTab === tab.key ? "active" : ""}`} aria-pressed={appointmentTab === tab.key} onClick={() => setAppointmentTab(tab.key)}>
-            {tab.label}<span>{tab.count}</span>
+            {<PortalText text={tab.label} />}<span>{tab.count}</span>
           </button>
         ))}
       </PortalElement>
@@ -602,7 +604,7 @@ export default function AppointmentList() {
           </div>
           <label className="appointment-status-selector"><i className="fa-solid fa-filter" aria-hidden="true" />
             <PortalElement as="select" aria-label="Filter by appointment status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              <PortalElement as="option" value={"All"}>All</PortalElement><PortalElement as="option" value={"Pending"}>Pending</PortalElement><PortalElement as="option" value={"Confirmed"}>Confirmed</PortalElement><PortalElement as="option" value={"Completed"}>Completed</PortalElement><PortalElement as="option" value={"Cancelled"}>Cancelled</PortalElement>
+              <PortalElement as="option" value={"All"}><PortalText text={"All"} /></PortalElement><PortalElement as="option" value={"Pending"}><PortalText text={"Pending"} /></PortalElement><PortalElement as="option" value={"Confirmed"}><PortalText text={"Confirmed"} /></PortalElement><PortalElement as="option" value={"Completed"}><PortalText text={"Completed"} /></PortalElement><PortalElement as="option" value={"Cancelled"}><PortalText text={"Cancelled"} /></PortalElement>
             </PortalElement>
           </label>
           <button type="button" className="clear-filters-btn" onClick={clearAllFilters} disabled={activeFilterChips.length === 0}><PortalText text={"Clear"} /></button>
@@ -611,7 +613,7 @@ export default function AppointmentList() {
 
       {status === "failed" && (
         <div className="appointment-alert" role="alert">
-          {error}
+          {translateUi(error)}
         </div>
       )}
 
@@ -678,7 +680,7 @@ export default function AppointmentList() {
                     <td>
                       <span className={`status-pill ${statusMeta.className}`}>
                         <i className={statusMeta.icon}></i>
-                        {statusMeta.label}
+                        {<PortalText text={statusMeta.label} />}
                       </span>
                     </td>
                     <td className="appointment-vitals-cell">
@@ -777,27 +779,27 @@ export default function AppointmentList() {
                 />
               </label>
               <label><PortalText text={"Type"} /><select value={newAppointment.type} onChange={(event) => updateNewAppointment("type", event.target.value)}>
-                  <PortalElement as="option" value={"Clinic"}>Clinic</PortalElement>
-                  <PortalElement as="option" value={"Video Call"}>Video Call</PortalElement>
-                  <PortalElement as="option" value={"Voice Call"}>Voice Call</PortalElement>
-                  <PortalElement as="option" value={"Online"}>Online</PortalElement>
+                  <PortalElement as="option" value={"Clinic"}><PortalText text={"Clinic"} /></PortalElement>
+                  <PortalElement as="option" value={"Video Call"}><PortalText text={"Video Call"} /></PortalElement>
+                  <PortalElement as="option" value={"Voice Call"}><PortalText text={"Voice Call"} /></PortalElement>
+                  <PortalElement as="option" value={"Online"}><PortalText text={"Online"} /></PortalElement>
                 </select>
               </label>
               <label><PortalText text={"Status"} /><select value={newAppointment.status} onChange={(event) => updateNewAppointment("status", event.target.value)}>
-                  <PortalElement as="option" value="Pending">Pending</PortalElement>
-                  <PortalElement as="option" value="Confirmed">Confirmed</PortalElement>
-                  <PortalElement as="option" value="Completed">Completed</PortalElement>
-                  <PortalElement as="option" value="Cancelled">Cancelled</PortalElement>
+                  <PortalElement as="option" value="Pending"><PortalText text={"Pending"} /></PortalElement>
+                  <PortalElement as="option" value="Confirmed"><PortalText text={"Confirmed"} /></PortalElement>
+                  <PortalElement as="option" value="Completed"><PortalText text={"Completed"} /></PortalElement>
+                  <PortalElement as="option" value="Cancelled"><PortalText text={"Cancelled"} /></PortalElement>
                 </select>
               </label>
               <div className="appointment-payment-section wide-field">
                 <div className="appointment-payment-heading"><span><i className="fa-solid fa-wallet" /><PortalText text={" Payment Details"} /></span><small><PortalText text={"Methods enabled in Doctor Settings"} /></small></div>
                 {getEnabledPaymentMethods().length ? (
                   <div className="appointment-payment-grid">
-                    <label><PortalText text={"Payment Method"} /><select value={newAppointment.paymentMethod} onChange={(event) => updateNewAppointment("paymentMethod", event.target.value)}>{getEnabledPaymentMethods().map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}</select></label>
+                    <label><PortalText text={"Payment Method"} /><select value={newAppointment.paymentMethod} onChange={(event) => updateNewAppointment("paymentMethod", event.target.value)}>{getEnabledPaymentMethods().map((method) => <option key={method.value} value={method.value}>{<PortalText text={method.label} />}</option>)}</select></label>
                     <label>{newAppointment.paymentMethod === "cash" ? <PortalText text={"Cash Amount"} /> : <PortalText text={"Payment Amount"} />}<PortalElement as="input" type="number" min="1" step="0.01" required value={newAppointment.paymentAmount} onChange={(event) => updateNewAppointment("paymentAmount", event.target.value)} placeholder="Enter amount" /></label>
                     {newAppointment.paymentMethod !== "cash" && <label>{newAppointment.paymentMethod === "upi" ? <PortalText text={"UPI Reference ID"} /> : <PortalText text={"Transaction ID"} />}<PortalElement as="input" required value={newAppointment.paymentReference} onChange={(event) => updateNewAppointment("paymentReference", event.target.value)} placeholder="Enter payment reference" /></label>}
-                    <label><PortalText text={"Payment Status"} /><select value={newAppointment.paymentStatus} onChange={(event) => updateNewAppointment("paymentStatus", event.target.value)}><PortalElement as="option" value="pending">Pending</PortalElement><PortalElement as="option" value="paid">Paid</PortalElement><PortalElement as="option" value="partial">Partially Paid</PortalElement></select></label>
+                    <label><PortalText text={"Payment Status"} /><select value={newAppointment.paymentStatus} onChange={(event) => updateNewAppointment("paymentStatus", event.target.value)}><PortalElement as="option" value="pending"><PortalText text={"Pending"} /></PortalElement><PortalElement as="option" value="paid"><PortalText text={"Paid"} /></PortalElement><PortalElement as="option" value="partial"><PortalText text={"Partially Paid"} /></PortalElement></select></label>
                   </div>
                 ) : <p className="appointment-payment-empty"><PortalText text={"No payment method is enabled. Enable one from Settings → Payment."} /></p>}
               </div>
@@ -838,26 +840,26 @@ export default function AppointmentList() {
               <label className="wide-field"><PortalText text={"Location"} /><input value={editAppointment.form.location} onChange={(event) => updateEditAppointment("location", event.target.value)} />
               </label>
               <label><PortalText text={"Type"} /><select value={editAppointment.form.type} onChange={(event) => updateEditAppointment("type", event.target.value)}>
-                  <PortalElement as="option" value={"Clinic"}>Clinic</PortalElement>
-                  <PortalElement as="option" value={"Video Call"}>Video Call</PortalElement>
-                  <PortalElement as="option" value={"Voice Call"}>Voice Call</PortalElement>
-                  <PortalElement as="option" value={"Online"}>Online</PortalElement>
+                  <PortalElement as="option" value={"Clinic"}><PortalText text={"Clinic"} /></PortalElement>
+                  <PortalElement as="option" value={"Video Call"}><PortalText text={"Video Call"} /></PortalElement>
+                  <PortalElement as="option" value={"Voice Call"}><PortalText text={"Voice Call"} /></PortalElement>
+                  <PortalElement as="option" value={"Online"}><PortalText text={"Online"} /></PortalElement>
                 </select>
               </label>
               <label><PortalText text={"Status"} /><select value={editAppointment.form.status} onChange={(event) => updateEditAppointment("status", event.target.value)}>
-                  <PortalElement as="option" value="Pending">Pending</PortalElement>
-                  <PortalElement as="option" value="Confirmed">Confirmed</PortalElement>
-                  <PortalElement as="option" value="Completed">Completed</PortalElement>
-                  <PortalElement as="option" value="Cancelled">Cancelled</PortalElement>
+                  <PortalElement as="option" value="Pending"><PortalText text={"Pending"} /></PortalElement>
+                  <PortalElement as="option" value="Confirmed"><PortalText text={"Confirmed"} /></PortalElement>
+                  <PortalElement as="option" value="Completed"><PortalText text={"Completed"} /></PortalElement>
+                  <PortalElement as="option" value="Cancelled"><PortalText text={"Cancelled"} /></PortalElement>
                 </select>
               </label>
               <div className="appointment-payment-section wide-field">
                 <div className="appointment-payment-heading"><span><i className="fa-solid fa-wallet" /><PortalText text={" Payment Details"} /></span><small><PortalText text={"Methods enabled in Doctor Settings"} /></small></div>
                 <div className="appointment-payment-grid">
-                  <label><PortalText text={"Payment Method"} /><select value={editAppointment.form.paymentMethod} onChange={(event) => { updateEditAppointment("paymentMethod", event.target.value); updateEditAppointment("paymentReference", ""); }}>{getEnabledPaymentMethods().map((method) => <option key={method.value} value={method.value}>{method.label}</option>)}</select></label>
+                  <label><PortalText text={"Payment Method"} /><select value={editAppointment.form.paymentMethod} onChange={(event) => { updateEditAppointment("paymentMethod", event.target.value); updateEditAppointment("paymentReference", ""); }}>{getEnabledPaymentMethods().map((method) => <option key={method.value} value={method.value}>{<PortalText text={method.label} />}</option>)}</select></label>
                   <label>{editAppointment.form.paymentMethod === "cash" ? <PortalText text={"Cash Amount"} /> : <PortalText text={"Payment Amount"} />}<input type="number" min="1" step="0.01" required value={editAppointment.form.paymentAmount} onChange={(event) => updateEditAppointment("paymentAmount", event.target.value)} /></label>
                   {editAppointment.form.paymentMethod !== "cash" && <label>{editAppointment.form.paymentMethod === "upi" ? <PortalText text={"UPI Reference ID"} /> : <PortalText text={"Transaction ID"} />}<input required value={editAppointment.form.paymentReference} onChange={(event) => updateEditAppointment("paymentReference", event.target.value)} /></label>}
-                  <label><PortalText text={"Payment Status"} /><select value={editAppointment.form.paymentStatus} onChange={(event) => updateEditAppointment("paymentStatus", event.target.value)}><PortalElement as="option" value="pending">Pending</PortalElement><PortalElement as="option" value="paid">Paid</PortalElement><PortalElement as="option" value="partial">Partially Paid</PortalElement></select></label>
+                  <label><PortalText text={"Payment Status"} /><select value={editAppointment.form.paymentStatus} onChange={(event) => updateEditAppointment("paymentStatus", event.target.value)}><PortalElement as="option" value="pending"><PortalText text={"Pending"} /></PortalElement><PortalElement as="option" value="paid"><PortalText text={"Paid"} /></PortalElement><PortalElement as="option" value="partial"><PortalText text={"Partially Paid"} /></PortalElement></select></label>
                 </div>
               </div>
             </div>
@@ -896,10 +898,10 @@ export default function AppointmentList() {
               {viewAppointment.isEmergency && <div className="doctor-emergency-reason"><span><PortalText text={"Emergency reason"} /></span><strong>{viewAppointment.emergencyReason || <PortalText text={"Emergency appointment"} />}</strong></div>}
               <div><span><PortalText text={"Phone No"} /></span><strong>{viewAppointment.phone}</strong></div>
               <div><span><PortalText text={"Test"} /></span><strong>{viewAppointment.test}</strong></div>
-              <div><span><PortalText text={"Status"} /></span><strong>{getUiStatus(viewAppointment.status).label}</strong></div>
-              <div><span><PortalText text={"Payment Method"} /></span><strong>{viewAppointment.paymentMethod ? viewAppointment.paymentMethod.toUpperCase() : "N/A"}</strong></div>
-              <div><span><PortalText text={"Amount"} /></span><strong>{viewAppointment.paymentAmount ? `₹${viewAppointment.paymentAmount}` : "N/A"}</strong></div>
-              <div><span><PortalText text={"Payment Status"} /></span><strong>{viewAppointment.paymentStatus || "N/A"}</strong></div>
+              <div><span><PortalText text={"Status"} /></span><strong>{<PortalText text={getUiStatus(viewAppointment.status).label} />}</strong></div>
+              <div><span><PortalText text={"Payment Method"} /></span><strong>{viewAppointment.paymentMethod ? viewAppointment.paymentMethod.toUpperCase() : <PortalText text={"N/A"} />}</strong></div>
+              <div><span><PortalText text={"Amount"} /></span><strong>{viewAppointment.paymentAmount ? `₹${viewAppointment.paymentAmount}` : <PortalText text={"N/A"} />}</strong></div>
+              <div><span><PortalText text={"Payment Status"} /></span><strong>{viewAppointment.paymentStatus || <PortalText text={"N/A"} />}</strong></div>
               {viewAppointment.paymentReference && <div><span><PortalText text={"Payment Reference"} /></span><strong>{viewAppointment.paymentReference}</strong></div>}
               <div className="wide-field"><span><PortalText text={"Location"} /></span><strong>{viewAppointment.location}</strong></div>
             </div>

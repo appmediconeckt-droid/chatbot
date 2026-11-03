@@ -1,6 +1,6 @@
 import { phoneCountryForLocation } from '../../../utils/locationApi.js';
 import LocationSelect from '../../common/LocationSelect.jsx';
-import { PortalText, PortalElement } from "../../common/PortalTranslation";
+import { usePortalTranslator, PortalText, PortalElement } from "../../common/PortalTranslation";
 import { formatPhoneWithCountryCode } from '../../../utils/phoneDisplay.js';
 import { getProfileCompletion, getLocalPhoneMaxLength, limitPhoneDigits, normalizePhoneNumber } from "../../../utils/profileCompletion";
 import useProfileCompletion from "../../../hooks/useProfileCompletion";
@@ -42,6 +42,7 @@ const isSectionComplete = (profileData, requiredFields) =>
   requiredFields.every((field) => hasProfileValue(profileData?.[field]));
 
 export default function DoctorProfileFlow() {
+  const translateUi = usePortalTranslator();
   const authUser = useDoctorUser();
   const [savedProfileData, setSavedProfileData] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
@@ -221,7 +222,7 @@ export default function DoctorProfileFlow() {
       setEditingSection(null);
       setEditFormData({});
       setIsEditMode(false);
-      alert("Profile updated successfully!");
+      alert(translateUi("Profile updated successfully!"));
     }
   };
 
@@ -515,16 +516,16 @@ export default function DoctorProfileFlow() {
         </div>
 
         {/* Progress Tracker */}
-        <div className="progress-track" role="list" aria-label="Profile sections">
+        <PortalElement as="div" className="progress-track" role="list" aria-label="Profile sections">
           <div role="listitem" className={`progress-step ${statusPersonal === "Completed" ? "active" : ""}`}>
-            <div className="doctor-profile-step-number">{statusPersonal === "Completed" ? <i className="bi bi-check-lg" aria-label="Completed" /> : '1'}</div>
+            <div className="doctor-profile-step-number">{statusPersonal === "Completed" ? <PortalElement as="i" className="bi bi-check-lg" aria-label="Completed" /> : '1'}</div>
             <div className="doctor-profile-step-label"><PortalText text={"Personal"} /></div>
           </div>
           <div role="listitem" className={`progress-step ${statusProfessional === "Completed" ? "active" : ""}`}>
-            <div className="doctor-profile-step-number">{statusProfessional === "Completed" ? <i className="bi bi-check-lg" aria-label="Completed" /> : '2'}</div>
+            <div className="doctor-profile-step-number">{statusProfessional === "Completed" ? <PortalElement as="i" className="bi bi-check-lg" aria-label="Completed" /> : '2'}</div>
             <div className="doctor-profile-step-label"><PortalText text={"Professional"} /></div>
           </div>
-        </div>
+        </PortalElement>
 
         {/* PERSONAL DETAILS - Edit Mode */}
         <div className="profile-card">
@@ -536,12 +537,12 @@ export default function DoctorProfileFlow() {
           </div>
 
           <div className="doctor-edit-photo-row">
-            <button type="button" className="doctor-edit-avatar" aria-label="Change profile photo" onClick={() => document.getElementById('photoInput').click()}>
+            <PortalElement as="button" type="button" className="doctor-edit-avatar" aria-label="Change profile photo" onClick={() => document.getElementById('photoInput').click()}>
               <span className="doctor-edit-avatar-image">
                 {profile.photo ? <img src={profile.photo} alt="Profile" /> : <i className="bi bi-person" aria-hidden="true" />}
               </span>
               <span className="doctor-edit-avatar-camera"><i className="bi bi-camera-fill" aria-hidden="true" /></span>
-            </button>
+            </PortalElement>
             <div><strong><PortalText text="Profile photo" /></strong><p><PortalText text="Add a clear photo so patients can recognise you." /></p>
               <button type="button" className="doctor-edit-upload-button" onClick={() => document.getElementById('photoInput').click()}><PortalText text="Change photo" /></button>
             </div>
@@ -627,10 +628,10 @@ export default function DoctorProfileFlow() {
                 value={profile.gender}
                 onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
               >
-                <PortalElement as="option" value="">Select Gender</PortalElement>
-                <PortalElement as="option" value="Male">Male</PortalElement>
-                <PortalElement as="option" value="Female">Female</PortalElement>
-                <PortalElement as="option" value="Other">Other</PortalElement>
+                <PortalElement as="option" value=""><PortalText text={"Select Gender"} /></PortalElement>
+                <PortalElement as="option" value="Male"><PortalText text={"Male"} /></PortalElement>
+                <PortalElement as="option" value="Female"><PortalText text={"Female"} /></PortalElement>
+                <PortalElement as="option" value="Other"><PortalText text={"Other"} /></PortalElement>
               </select>
             </div>
 
@@ -858,7 +859,7 @@ export default function DoctorProfileFlow() {
         <div className="alert alert-info" role="status"><PortalText text={"Loading doctor profile..."} /></div>
       )}
       {profileError && (
-        <div className="alert alert-warning" role="alert">{profileError}</div>
+        <div className="alert alert-warning" role="alert">{translateUi(profileError)}</div>
       )}
       {isEditMode ? renderEditForm() : renderProfileView()}
       {renderEditModal()}
