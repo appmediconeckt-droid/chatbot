@@ -1,10 +1,37 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dashboardIndiaDate, getDoctorDashboardSummary, getTodayCompletedAppointments } from '../src/Component/DoctorDashboard/Dashboard/doctorDashboardSummary.js';
+import { dashboardIndiaDate, getDoctorDashboardSummary, getTodayCompletedAppointments, getTodayActiveAppointments } from '../src/Component/DoctorDashboard/Dashboard/doctorDashboardSummary.js';
 
 const now = Date.parse('2026-10-10T12:00:00+05:30');
 const row = (id, status = 'completed', date = '2026-10-10', changes = {}) => ({
   id, appointmentSource: 'online', status, appointmentDate: date, ...changes,
+});
+
+test('a doctor with two today completions and only old pending/emergency/payment history has no active work', () => {
+  const records = [
+    row('online-today', 'completed'),
+    row('walkin-today', 'completed', '2026-10-10', { appointmentSource: 'walkin' }),
+    row('old-pending', 'pending', '2026-10-09', { estimated_start_at: '2026-10-10T10:00:00+05:30' }),
+    row('old-emergency', 'confirmed', '2026-10-09', { priority: 'emergency' }),
+    row('old-skipped', 'skipped', '2026-10-09'),
+    row('unpaid', 'awaiting_payment'),
+    row('rejected', 'rejected'),
+    { id: 'undated', status: 'pending', priority: 'emergency' },
+  ];
+  assert.deepEqual(getTodayActiveAppointments(records, now), []);
+  assert.equal(getDoctorDashboardSummary(records, now).completedToday, 2);
+  assert.equal(records.length, 8);
+});
+
+test('mobile completion signals remove appointments from the active queue without deleting history', () => {
+  const records = [
+    row('queue-completed', 'confirmed', '2026-10-10', { queue_status: 'completed' }),
+    row('json-completed', 'pending', '2026-10-10', { consultation_timing: JSON.stringify({ state: 'completed', endedAt: '2026-10-10T06:00:00Z' }) }),
+    row('timestamp-completed', 'confirmed', '2026-10-10', { consultation_ended_at: '2026-10-10T06:00:00Z' }),
+    row('real-pending', 'confirmed'),
+  ];
+  assert.deepEqual(getTodayActiveAppointments(records, now).map(record => record.id), ['real-pending']);
+  assert.equal(getTodayCompletedAppointments(records, now).length, 3);
 });
 
 test('completed tab contains only today online and walk-in completions and rolls over at India midnight', () => {

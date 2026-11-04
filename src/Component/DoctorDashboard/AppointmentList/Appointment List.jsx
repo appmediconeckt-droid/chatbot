@@ -7,7 +7,7 @@ import axios from "../../../axiosConfig.js";
 import { API_BASE_URL, getAuthHeaders } from "../doctorApi.js";
 import "./Appointment List.css";
 import { getAppointmentPatientDetails } from "./patientDetails.js";
-import { getAppointmentSource, getAppointmentApiId, mergeAppointmentLists } from "../appointmentFeed.js";
+import { getAppointmentSource, getAppointmentApiId, mergeAppointmentLists, getAppointmentCancellationState, isActiveDoctorAppointment } from "../appointmentFeed.js";
 import { todayAppointmentDate, getAppointmentListSummary, getConsultationDurationMs, getAppointmentListType } from "./appointmentListSummary.js";
 
 const getPatientInitials = (name = "") => {
@@ -53,10 +53,10 @@ export default function AppointmentList() {
   const [appointments, setAppointments] = useState([]);
   const [status, setStatus] = useState("idle");
   const [error, setError] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All");
+  const [statusFilter, setStatusFilter] = useState("Active");
   const [searchText, setSearchText] = useState("");
   const [selectedRows, setSelectedRows] = useState([]);
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(todayAppointmentDate);
   const [appointmentTab, setAppointmentTab] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
@@ -256,7 +256,8 @@ export default function AppointmentList() {
       time: formatTime(appointment.appointment_time || appointment.time || appointment.created_at),
       rawTime: appointment.appointment_time || appointment.time || appointment.created_at,
       type: normalizeType(appointment.consultation_mode || appointment.type || appointment.mode),
-      status: normalizeStatus(appointment.appointment_status || appointment.status),
+      status: getAppointmentCancellationState(appointment).completed ? 'Completed' : normalizeStatus(appointment.appointment_status || appointment.status),
+      active: isActiveDoctorAppointment(appointment),
       isEmergency: String(appointment.priority || '').toLowerCase() === 'emergency',
       emergencyReason: appointment.emergency_reason || appointment.emergencyReason || '',
       awaitingEmergency: String(appointment.priority || '').toLowerCase() === 'emergency' && !appointment.appointment_time,
@@ -283,8 +284,10 @@ export default function AppointmentList() {
 
   useEffect(() => {
     const controller = new AbortController();
+    let fetchVersion = 0;
 
-    const loadAppointments = async () => {
+    const loadAppointments = async (silent = false) => {
+      const version = ++fetchVersion;
       const doctorId = getDoctorId();
       if (!doctorId) {
         setError("Doctor id not found. Please login again.");
@@ -293,7 +296,7 @@ export default function AppointmentList() {
       }
 
       try {
-        setStatus("loading");
+        if (!silent) setStatus("loading");
         setError("");
         const options = {
           headers: getAuthHeaders(),
@@ -304,6 +307,7 @@ export default function AppointmentList() {
           axios.get(`${API_BASE_URL}/appointments`, options),
           axios.get(`${API_BASE_URL}/walkin-appointments`, options),
         ]);
+        if (controller.signal.aborted || version !== fetchVersion) return;
 
         const rows = mergeAppointmentLists(unwrapApiArray(response.data),
           unwrapApiArray(walkinResponse.data).map((record) => ({ ...record, __appointmentSource: "walkin" })))
@@ -313,6 +317,7 @@ export default function AppointmentList() {
         setAppointments(rows);
         setStatus("succeeded");
       } catch (error) {
+        if (controller.signal.aborted || version !== fetchVersion) return;
         if (axios.isCancel(error)) return;
         setError(error.response?.data?.message || error.response?.data?.error || error.message || "Failed to load appointments");
         setStatus("failed");
@@ -320,8 +325,11 @@ export default function AppointmentList() {
     };
 
     loadAppointments();
-
-    return () => controller.abort();
+    const refresh = () => { if (document.visibilityState !== 'hidden') loadAppointments(true); };
+    const timer = window.setInterval(refresh, 10000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { controller.abort(); window.clearInterval(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
   }, [authUser, reloadKey]);
 
   const getUiStatus = (appointmentStatus) => {
@@ -366,7 +374,7 @@ export default function AppointmentList() {
 
   const filteredAppointments = appointments.filter((appointment) => {
     const matchesTab = appointmentTab === "all" || appointment.appointmentType === appointmentTab;
-    const matchesStatus = statusFilter === "All" || appointment.status === statusFilter;
+    const matchesStatus = statusFilter === 'Active' ? appointment.active : statusFilter === "All" || appointment.status === statusFilter;
     const matchesDate = !selectedDate || appointment.rawDate === selectedDate;
     const query = searchText.trim().toLowerCase();
     const matchesSearch =
@@ -604,6 +612,7 @@ export default function AppointmentList() {
           </div>
           <label className="appointment-status-selector"><i className="fa-solid fa-filter" aria-hidden="true" />
             <PortalElement as="select" aria-label="Filter by appointment status" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
+              <PortalElement as="option" value="Active"><PortalText text="Active" /></PortalElement>
               <PortalElement as="option" value={"All"}><PortalText text={"All"} /></PortalElement><PortalElement as="option" value={"Pending"}><PortalText text={"Pending"} /></PortalElement><PortalElement as="option" value={"Confirmed"}><PortalText text={"Confirmed"} /></PortalElement><PortalElement as="option" value={"Completed"}><PortalText text={"Completed"} /></PortalElement><PortalElement as="option" value={"Cancelled"}><PortalText text={"Cancelled"} /></PortalElement>
             </PortalElement>
           </label>

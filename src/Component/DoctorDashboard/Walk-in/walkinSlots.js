@@ -1,9 +1,26 @@
 import { buildSlotsFromAvailabilityRanges, timeToMinutes } from '../../UserDashboard/Tab/Appointment/appointmentSlotTokens.js';
 
+function indiaTimeParts(now) {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+    .formatToParts(now).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+}
+
+export function hideElapsedWalkinSlots(data, now = new Date()) {
+  if (!data || !Array.isArray(data.slots)) return data;
+  const parts = indiaTimeParts(now);
+  const today = `${parts.year}-${parts.month}-${parts.day}`;
+  const date = String(data.date || '').slice(0, 10);
+  const minutes = Number(parts.hour) * 60 + Number(parts.minute);
+  return { ...data, slots: data.slots.filter(slot => {
+    const slotMinutes = timeToMinutes(slot.time);
+    return slot.status !== 'expired' && Number.isFinite(slotMinutes)
+      && (date > today || (date === today && slotMinutes > minutes));
+  }) };
+}
+
 // Compatibility with servers that still expose the existing availability API.
 export function walkinSlotsFromRanges(data, clinicId, now = new Date()) {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Kolkata', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
-    .formatToParts(now).reduce((result, part) => ({ ...result, [part.type]: part.value }), {});
+  const parts = indiaTimeParts(now);
   const date = `${parts.year}-${parts.month}-${parts.day}`;
   const weekday = new Date(`${date}T00:00:00Z`).getUTCDay();
   const ranges = data.existingRanges || data.ranges || data.data || [];
@@ -22,7 +39,7 @@ export function walkinSlotsFromRanges(data, clinicId, now = new Date()) {
   const booked = new Set((data.bookedSlots || []).filter(slot => String(slot.date).slice(0, 10) === date).map(slot => timeToMinutes(slot.time)));
   return { date, slots: buildSlotsFromAvailabilityRanges({ ranges: applicable, isToday: true, nowMinutes: Number(parts.hour) * 60 + Number(parts.minute),
     formatMinutes: minutes => `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}:00`,
-  }).map(slot => ({ time: slot.time, duration: slot.duration, booked: booked.has(slot.minutes), available: !slot.disabled && !booked.has(slot.minutes),
+  }).filter(slot => !slot.isPast).map(slot => ({ time: slot.time, duration: slot.duration, booked: booked.has(slot.minutes), available: !slot.disabled && !booked.has(slot.minutes),
     status: booked.has(slot.minutes) ? 'booked' : slot.disabled ? 'expired' : 'available' })) };
 }
 
@@ -30,7 +47,7 @@ export async function loadWalkinSlots(api, baseUrl, doctorId, clinicBooking, sig
   const path = clinicBooking?.doctorClinicId ? `walkin/${encodeURIComponent(clinicBooking.doctorClinicId)}` : `doctors/${encodeURIComponent(doctorId)}`;
   try {
     const response = await api.get(`${baseUrl}/qr/${path}/slots`, { signal });
-    return response.data?.data;
+    return hideElapsedWalkinSlots(response.data?.data);
   } catch (error) {
     if (error.response?.status !== 404) throw error;
     const response = await api.get(`${baseUrl}/availability/ranges`, { signal, params: { doctor_id: doctorId } });

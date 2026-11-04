@@ -3,23 +3,19 @@ import React, { useCallback, useEffect, useState } from "react";
 import { FaCheck, FaEye, FaFilePrescription, FaRedo, FaSpinner, FaTimes, FaUser } from "react-icons/fa";
 import axiosInstance, { API_BASE_URL } from "../../../../axiosConfig";
 import { CalendarDays, CircleCheck, Clock3, Image, Pill, ShieldCheck, Stethoscope } from "lucide-react";
-import { logoIcon } from "../../../../assets/brandAssets";
+import PrescriptionDocument from "../../../common/PrescriptionDocument";
 import { getPrescriptionFestivalTheme, PRESCRIPTION_FESTIVAL_THEMES } from "../../../common/prescriptionFestivalThemes";
 import "./PrescriptionReviews.css";
 
 const PrescriptionPreview = ({ item, patientPhoto, onClose, onThemeChange, savingTheme }) => {
   const theme = getPrescriptionFestivalTheme(item.festivalTheme);
-  const specialization = Array.isArray(item.psychiatrist?.specialization)
-    ? item.psychiatrist.specialization.join(", ")
-    : item.psychiatrist?.specialization;
-  const verified = item.verificationStatus === "verified";
 
   return (
     <div className="crx-preview-overlay" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
       <section className="crx-preview-modal" role="dialog" aria-modal="true" aria-label="Prescription preview">
         <header>
           <div><FaFilePrescription /><strong>Prescription preview</strong><span>{theme.label} </span></div>
-          <button type="button" onClick={onClose} aria-label="Close"><FaTimes /></button>
+          <button className="crx-preview-close" type="button" onClick={onClose} aria-label="Close prescription preview" title="Close prescription preview"><FaTimes aria-hidden="true" /></button>
         </header>
         <div className="crx-theme-gallery-wrap">
           <div className="crx-theme-gallery-heading"><div><strong>Choose prescription theme</strong><span>Scroll and select a festival </span></div>{savingTheme && <FaSpinner className="spinning" />}</div>
@@ -31,29 +27,9 @@ const PrescriptionPreview = ({ item, patientPhoto, onClose, onThemeChange, savin
           </div>
         </div>
         <div className="crx-preview-scroll">
-          <article className="crx-prescription-sheet">
-            <img className="crx-watermark" src={theme.image} alt="" aria-hidden="true" />
-            <header className="crx-document-header">
-              <img className="crx-document-logo" src={logoIcon} alt="Humaeli" />
-              <div className="crx-doctor-details">
-                <h2>{item.psychiatrist?.name || "Psychiatrist"}</h2>
-                <p>{specialization || "Psychiatrist"}</p>
-                <small>Practitioner ID: {item.psychiatrist?.id}</small>
-                <small>Date: {new Date(item.issuedAt).toLocaleDateString("en-IN")}</small>
-              </div>
-              <div className="crx-document-label">Digital prescription</div>
-              <span className={verified ? "verified" : "not-verified"}>Identity: {verified ? "Verified" : "Not Verified"}</span>
-            </header>
-            <section className="crx-patient">
-              <div className="crx-patient-avatar">{patientPhoto ? <img src={patientPhoto} alt={item.patient?.name || "Patient"} /> : <FaUser />}</div>
-              <div><small>Patient</small><h3>{item.patient?.name}</h3><p><b>Problem:</b> {item.problem}</p></div>
-            </section>
-            <h3>Medicines</h3>
-            <table><thead><tr><th>#</th><th>Medicine</th><th>Dosage</th><th>Time</th><th>How to take</th><th>Duration</th></tr></thead><tbody>{(item.medicines || []).map((medicine, index) => <tr key={`${medicine.name}-${index}`}><td>{index + 1}</td><td>{medicine.name || medicine.medicine}</td><td>{medicine.dosage}</td><td>{(medicine.timeOfDay || []).join(", ")}</td><td>{medicine.timing}</td><td>{medicine.duration}</td></tr>)}</tbody></table>
-            {item.instructions && <section className="crx-instructions"><b>Additional instructions</b><p>{item.instructions}</p></section>}
-            <div className="crx-signature">Digitally prescribed by<br /><b>{item.psychiatrist?.name || "Psychiatrist"}</b></div>
-            <footer>This prescription was issued through <b>Humaeli</b> · www.humaeli.com · support@humaeli.com</footer>
-          </article>
+          <div className="crx-prescription-document">
+            <PrescriptionDocument record={item} watermarkImage={theme.image} patientPhoto={patientPhoto || ""} />
+          </div>
         </div>
       </section>
     </div>

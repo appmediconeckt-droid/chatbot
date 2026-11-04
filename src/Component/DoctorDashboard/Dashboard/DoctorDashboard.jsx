@@ -1,6 +1,6 @@
 import { usePortalTranslator, usePortalLocale, PortalTemplate, PortalText, PortalElement } from "../../common/PortalTranslation";
 import socketService from "../../../services/socketService";
-import { getDoctorDashboardSummary, getTodayCompletedAppointments } from './doctorDashboardSummary.js';
+import { getDoctorDashboardSummary, getTodayCompletedAppointments, getTodayActiveAppointments } from './doctorDashboardSummary.js';
 import { getConsultationDurationMs } from '../AppointmentList/appointmentListSummary.js';
 import { getPatientAvailability } from '../appointmentFeed.js';
 import { normalizeApiList, getAppointmentSource, getAppointmentApiId, loadDoctorAppointmentFeed, formatBookedAppointmentTime, getAppointmentSchedule, normalizeAvailabilityRanges, getAppointmentStatusUrl, isAppointmentSlotExpired, getCancelledAppointmentHistory, getAppointmentCancellationState, shouldShowStartConsultation, canStartConsultation, isBookedAppointmentStartTimeReached } from "../appointmentFeed.js";
@@ -2287,13 +2287,11 @@ const getDoctorIdFromUser = (user) => {
 
 const getAppointmentDateValue = (appointment) =>
   pickFirst(
-    appointment?.estimated_start_at,
-    appointment?.estimatedStartAt,
-    appointment?.original_appointment_at,
-    appointment?.originalAppointmentAt,
     appointment?.appointment_date,
     appointment?.appointmentDate,
     appointment?.date,
+    appointment?.original_appointment_at,
+    appointment?.originalAppointmentAt,
     appointment?.booking_date,
     appointment?.bookingDate,
     appointment?.scheduled_date,
@@ -3128,13 +3126,7 @@ const DoctorDashboard = () => {
       } catch (availabilityError) {
         console.warn("Doctor availability schedules could not be loaded:", availabilityError);
       }
-      const todayAppointments = appointmentList.filter((apt) => {
-        const status = normalizeAppointmentStatus(apt);
-        return (
-          isTodayAppointment(apt) &&
-          ["pending", "confirmed", "in-progress", "skipped"].includes(status)
-        );
-      });
+      const todayAppointments = getTodayActiveAppointments(appointmentList);
 
       todayAppointments.sort((a, b) => {
         const isEmergA = String(a?.priority || "").toLowerCase() === "emergency" || a?.isEmergency;
@@ -3162,11 +3154,11 @@ const DoctorDashboard = () => {
       // A refresh after deletion must win over any older request still running.
       if (fetchVersion !== appointmentFetchVersion.current) return;
       setAppointments(formattedTodayAppointments);
-      setSelectedAppointment(current => current ? formattedTodayAppointments.find(item => item.id === current.id) || current : current);
+      setSelectedAppointment(current => current ? formattedTodayAppointments.find(item => item.id === current.id) || null : current);
       const serverActiveAppointment = formattedTodayAppointments.find((apt) => apt.status === "in-progress");
-      if (serverActiveAppointment) {
         setActiveSession((current) => {
-          if (current?.appt) return current;
+          if (!serverActiveAppointment) return current?.status === 'break' ? { ...current, appt: null } : null;
+          if (current?.appt?.id === serverActiveAppointment.id) return { ...current, appt: serverActiveAppointment };
           const startTime = Date.parse(serverActiveAppointment.consultationStartedAt) || Date.now();
           if (current?.status === "break") return { ...current, appt: serverActiveAppointment, startTime };
           return {
@@ -3180,7 +3172,6 @@ const DoctorDashboard = () => {
             status: "started",
           };
         });
-      }
       setCancelledAppointments(
         getCancelledAppointmentHistory(appointmentList.map((apt) => formatAppointment(apt, undefined, availabilityRanges))),
       );
@@ -3252,6 +3243,9 @@ const DoctorDashboard = () => {
     };
     fetchAppointments();
     const refreshTimer = window.setInterval(() => { if (!disposed && document.visibilityState !== 'hidden') fetchAppointments(true); }, 10000);
+    window.addEventListener('focus', refresh);
+    const visibleRefresh = () => { if (document.visibilityState === 'visible') refresh(); };
+    document.addEventListener('visibilitychange', visibleRefresh);
     socketService.connect().then((connection) => {
       if (disposed) return;
       socket = connection;
@@ -3264,6 +3258,8 @@ const DoctorDashboard = () => {
       appointmentFetchVersion.current++;
       clearTimeout(debounce);
       window.clearInterval(refreshTimer);
+      window.removeEventListener('focus', refresh);
+      document.removeEventListener('visibilitychange', visibleRefresh);
       socket?.off('appointments:updated', refresh);
       socket?.off('queueUpdated', refresh);
       socket?.off('connect', refresh);

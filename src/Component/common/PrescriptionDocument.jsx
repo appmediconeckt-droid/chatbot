@@ -8,7 +8,7 @@ import { getApprovedPrescriptionSignature } from "./prescriptionSignature.js";
 import "./PrescriptionDocument.css";
 import { prescriptionDate, prescriptionDetails, medicineTiming, medicineDuration } from "./prescriptionDetails";
 
-export default function PrescriptionDocument({ record, doctorName, bookingQrImage }) {
+export default function PrescriptionDocument({ record, doctorName, bookingQrImage, watermarkImage, patientPhoto }) {
   const data = prescriptionDetails(record, doctorName);
   const signature = getApprovedPrescriptionSignature(record);
   const source = prescriptionBookingSource(record);
@@ -25,12 +25,14 @@ export default function PrescriptionDocument({ record, doctorName, bookingQrImag
   const qrImage = bookingQrImage ?? (qr.key === qrKey ? qr.image : '');
   const adviceLines = data.advice.split(/\n+/).map(line => line.replace(/^\s*[-*\u2022]\s*/, '').trim()).filter(Boolean);
   const detail = (label, value) => <div><span>{label}</span><strong>{value || '-' }</strong></div>;
-  return <article className="prescription-document">
-    <img className="prescription-watermark" src={logoIcon} alt="" aria-hidden="true" />
+  return <article className={`prescription-document${watermarkImage ? " prescription-document-themed" : ""}`}>
+    <img className="prescription-watermark" src={watermarkImage || logoIcon} alt="" aria-hidden="true" />
     <header className="prescription-document-header">
       <div className="prescription-brand"><img src={brandLogo} alt="Humaeli - Talk. Connect. Feel Supported." />{data.clinic && <strong>{data.clinic}</strong>}</div>
       <div className="prescription-issuer"><span className="prescription-issuer-label">Consulting doctor</span><h2>{data.doctor}</h2>{data.qualification && <p className="prescription-qualification">{data.qualification}</p>}{data.specialization && <p className="prescription-specialization">{data.specialization}</p>}<div className="prescription-doctor-contact">{data.registration && <p><Stethoscope aria-hidden="true" /><span>Reg. No.: {data.registration}</span></p>}</div></div>
-      <div className="prescription-booking-qr">{qrImage ? <><img src={qrImage} alt="Doctor appointment booking QR" /><span>Scan to book<br />an appointment</span></> : (source.doctorId || qr.error) ? <span>{qr.key === qrKey && qr.error ? 'Booking QR unavailable' : 'Loading booking QR...'}</span> : null}</div>
+      {patientPhoto !== undefined ? <div className="prescription-patient-photo" aria-label="Patient photo">
+        {patientPhoto ? <img src={patientPhoto} alt={`${data.patient} - patient photo`} /> : <span>Patient photo<br />not available</span>}
+      </div> : <div className="prescription-booking-qr">{qrImage ? <><img src={qrImage} alt="Doctor appointment booking QR" /><span>Scan to book<br />an appointment</span></> : (source.doctorId || qr.error) ? <span>{qr.key === qrKey && qr.error ? 'Booking QR unavailable' : 'Loading booking QR...'}</span> : null}</div>}
     </header>
     <div className="prescription-body">
     <section className="prescription-patient" aria-label="Patient and visit details">

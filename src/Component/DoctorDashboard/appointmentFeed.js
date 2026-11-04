@@ -366,11 +366,28 @@ export const getAppointmentCancellationState = (appointment) => {
   // A completed lifecycle still wins over an old canceled queue flag.
   if (['canceled', 'cancelled'].includes(status)) return { cancelled: true, noShow: false };
   if (['completed', 'complete', 'done'].includes(status)) return { cancelled: false, noShow: false, completed: true };
+  let timing = appointment.consultation_timing || appointment.consultationTiming || {};
+  if (typeof timing === 'string') { try { timing = JSON.parse(timing); } catch { timing = {}; } }
+  const ended = appointment.consultation_ended_at || appointment.consultationEndedAt || timing.endedAt;
+  const completed = [appointment.status, appointment.appointment_status, appointment.appointmentStatus, appointment.walkin_status, queueStatus]
+    .some(value => ['completed', 'complete', 'done'].includes(normalize(value))) ||
+    ['completed', 'complete', 'done'].includes(normalize(timing.state)) ||
+    (Boolean(ended) && Number.isFinite(Date.parse(ended)));
+  if (completed) return { cancelled: false, noShow: false, completed: true };
   const cancelled = ['canceled', 'cancelled'].includes(queueStatus);
   if (cancelled) return { cancelled: true, noShow: false };
   if (['in_progress', 'in_consultation', 'consulting', 'serving'].includes(status) ||
       ['completed', 'in_progress', 'in_consultation'].includes(queueStatus)) return { cancelled: false, noShow: false };
   return { cancelled: false, noShow: status === 'no_show' || queueStatus === 'no_show' || Boolean(appointment.isNoShow) };
+};
+
+export const isActiveDoctorAppointment = appointment => {
+  const lifecycle = getAppointmentCancellationState(appointment);
+  if (lifecycle.completed || lifecycle.cancelled || lifecycle.noShow) return false;
+  const status = String(getAppointmentSource(appointment) === 'walkin'
+    ? pickFirst(appointment.appointment_status, appointment.status, appointment.walkin_status)
+    : pickFirst(appointment.status, appointment.appointment_status, appointment.walkin_status)).trim().toLowerCase().replace(/[\s-]+/g, '_');
+  return ['pending', 'confirmed', 'booked', 'scheduled', 'accepted', 'approved', 'active', 'waiting', 'queued', 'called', 'skipped', 'in_progress', 'in_consultation', 'consulting', 'serving'].includes(status);
 };
 
 export const getCancelledAppointmentHistory = (appointments) =>

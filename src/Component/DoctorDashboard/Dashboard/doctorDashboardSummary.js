@@ -1,4 +1,4 @@
-import { getAppointmentCancellationState, mergeAppointmentLists } from '../appointmentFeed.js';
+import { getAppointmentCancellationState, mergeAppointmentLists, isActiveDoctorAppointment } from '../appointmentFeed.js';
 import { getConsultationDurationMs } from '../AppointmentList/appointmentListSummary.js';
 
 // Daily cards use the booked date in the clinic's timezone, never createdAt,
@@ -15,6 +15,8 @@ export const dashboardIndiaDate = (value) => {
 const appointmentDay = (record) => dashboardIndiaDate(
   record.appointment_date || record.appointmentDate || record.date || record.scheduled_date || record.scheduledDate,
 );
+export const getTodayActiveAppointments = (records, now = Date.now()) => mergeAppointmentLists(records)
+  .filter(record => appointmentDay(record) === dashboardIndiaDate(now) && isActiveDoctorAppointment(record));
 const normalize = (value) => String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
 const isStarted = (record) => Boolean(record.consultationStartedAt || record.consultation_started_at || record.consultation_timing?.startedAt);
 

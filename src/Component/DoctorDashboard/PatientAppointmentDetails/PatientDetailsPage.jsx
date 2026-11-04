@@ -775,7 +775,7 @@ export default function PatientDetailsPage() {
                   </div>}
                 </div>
 
-                <div className="pd-detail-column">
+                <div className="pd-detail-column pd-medical-information">
                   <h5 className="pd-detail-column-title"><PortalText text={"Medical Information"} /></h5>
                   <div className="pd-detail-item">
                     <span className="pd-detail-label"><PortalText text={"Presenting Problem"} /></span>

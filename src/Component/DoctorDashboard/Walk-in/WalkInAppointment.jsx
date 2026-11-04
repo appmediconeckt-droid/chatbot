@@ -1,5 +1,7 @@
 import { usePortalTranslator, usePortalLocale, PortalText, PortalElement } from "../../common/PortalTranslation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { todayAppointmentDate } from '../AppointmentList/appointmentListSummary.js';
+import { getAppointmentCancellationState, isActiveDoctorAppointment } from '../appointmentFeed.js';
 import { useLocation } from "react-router-dom";
 import { useDoctorUser } from "../doctorApi.js";
 import axios from "../../../axiosConfig.js";
@@ -24,10 +26,11 @@ export default function WalkInAppointment() {
 
   // ===== Filter States =====
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState(todayAppointmentDate);
   const [doctorFilter, setDoctorFilter] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("ACTIVE");
+  const feedVersion = useRef(0);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -81,7 +84,7 @@ export default function WalkInAppointment() {
   };
 
   const normalizeAppointment = (item) => {
-    const createdAt = item.created_at || item.createdAt || item.date || item.appointment_date;
+    const createdAt = item.appointment_date || item.date || item.created_at || item.createdAt;
     return {
       id: item.id || item._id,
       name:
@@ -98,7 +101,8 @@ export default function WalkInAppointment() {
       gender: item.gender || "Not specified",
       problem: item.problem || item.symptoms || item.reason || item.description || "",
       type: item.type || "WALK_IN",
-      status: (
+      active: isActiveDoctorAppointment({ ...item, __appointmentSource: 'walkin' }),
+      status: getAppointmentCancellationState({ ...item, __appointmentSource: 'walkin' }).completed ? 'COMPLETED' : (
         item.appointment_status ||
         item.appointmentStatus ||
         item.walkin_status ||
@@ -128,7 +132,8 @@ export default function WalkInAppointment() {
     };
   };
 
-  const loadAppointments = async () => {
+  const loadAppointments = async (silent = false) => {
+    const version = ++feedVersion.current;
     if (!doctorId) {
       setApiError("Doctor ID not found. Please login again.");
       setAppointments([]);
@@ -136,15 +141,17 @@ export default function WalkInAppointment() {
     }
 
     try {
-      setStatus("loading");
+      if (!silent) setStatus("loading");
       setApiError("");
       const response = await axios.get(WALKIN_BASE_URL, {
         headers: getAuthHeaders(),
         params: { doctor_id: doctorId },
       });
+      if (version !== feedVersion.current) return;
       setAppointments(unwrapApiArray(response.data).map(normalizeAppointment));
       setStatus("succeeded");
     } catch (error) {
+      if (version !== feedVersion.current) return;
       setApiError(error.response?.data?.message || error.response?.data?.error || error.message || "Failed to load walk-in appointments");
       setAppointments([]);
       setStatus("failed");
@@ -154,6 +161,11 @@ export default function WalkInAppointment() {
   useEffect(() => {
     if (isQrForm) return;
     loadAppointments();
+    const refresh = () => { if (document.visibilityState !== 'hidden') loadAppointments(true); };
+    const timer = window.setInterval(refresh, 10000);
+    window.addEventListener('focus', refresh);
+    document.addEventListener('visibilitychange', refresh);
+    return () => { feedVersion.current++; window.clearInterval(timer); window.removeEventListener('focus', refresh); document.removeEventListener('visibilitychange', refresh); };
   }, [doctorId, isQrForm]);
 
   useEffect(() => {
@@ -194,7 +206,7 @@ export default function WalkInAppointment() {
 
       // Status filter
       const matchesStatus =
-        !statusFilter || apt.status === statusFilter;
+        statusFilter === 'ACTIVE' ? apt.active : !statusFilter || apt.status === statusFilter;
 
       return matchesSearch && matchesDate && matchesDoctor && matchesDepartment && matchesStatus;
     });
@@ -546,6 +558,7 @@ export default function WalkInAppointment() {
             aria-label="Filter by status"
           >
             <PortalElement as="option" value=""><PortalText text={"Status: All"} /></PortalElement>
+            <PortalElement as="option" value="ACTIVE"><PortalText text="Active" /></PortalElement>
             <PortalElement as="option" value="BOOKED"><PortalText text={"Waiting / Booked"} /></PortalElement>
             <PortalElement as="option" value="WAITING"><PortalText text={"Waiting"} /></PortalElement>
             <PortalElement as="option" value="IN_CONSULTATION"><PortalText text={"In Consultation"} /></PortalElement>
